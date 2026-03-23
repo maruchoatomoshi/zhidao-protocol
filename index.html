@@ -11,7 +11,7 @@
         body {
             background: #050510;
             color: #ffffff;
-            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            font-family: -apple-system, sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -42,7 +42,6 @@
             text-align: center;
             margin-top: 30px;
             margin-bottom: 25px;
-            animation: fadeInDown 0.6s ease;
         }
 
         .logo-img {
@@ -86,7 +85,6 @@
             width: 100%;
             max-width: 360px;
             margin-bottom: 15px;
-            animation: fadeInUp 0.7s ease;
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.05);
         }
 
@@ -104,7 +102,7 @@
             letter-spacing: 2px;
         }
 
-        .status-active {
+        .status-badge {
             background: rgba(212, 175, 55, 0.15);
             color: #d4af37;
             padding: 4px 14px;
@@ -141,7 +139,9 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
-        }.traffic-text {
+        }
+
+        .traffic-text {
             font-size: 11px;
             color: #666;
             text-transform: uppercase;
@@ -180,7 +180,6 @@
             cursor: pointer;
             margin-bottom: 12px;
             transition: all 0.2s;
-            animation: fadeInUp 0.8s ease;
         }
 
         .btn-primary {
@@ -191,7 +190,6 @@
 
         .btn-primary:active {
             transform: scale(0.97);
-            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
         }
 
         .btn-secondary {
@@ -200,7 +198,9 @@
             color: #d4af37;
         }
 
-        .btn-secondary:active { transform: scale(0.97); }
+        .btn-secondary:active {
+            transform: scale(0.97);
+        }
 
         .config-box {
             background: #0a0a18;
@@ -215,7 +215,6 @@
             color: rgba(212, 175, 55, 0.7);
             display: none;
             font-family: monospace;
-            animation: fadeIn 0.3s ease;
         }
 
         .divider {
@@ -240,21 +239,6 @@
             color: #050510 !important;
         }
 
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         @keyframes pulse {
             0%, 100% { filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)); }
             50% { filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.7)); }
@@ -274,10 +258,12 @@
         <div class="card">
             <div class="status-row">
                 <span class="status-label">Статус</span>
-                <span class="status-active" id="status">● Загрузка...</span>
+                <span class="status-badge" id="status">● Загрузка...</span>
             </div>
             <div class="username" id="username">Загрузка...</div>
-            <div class="server-tag">🇭🇰 Hong Kong</div><div class="traffic-section">
+            <div class="server-tag">🇭🇰 Hong Kong</div>
+
+            <div class="traffic-section">
                 <div class="traffic-label">
                     <span class="traffic-text">Использовано трафика</span>
                     <span class="traffic-value" id="trafficValue">—</span>
@@ -289,7 +275,7 @@
         </div>
 
         <button class="btn btn-primary" id="getConfig" onclick="getConfig()">
-            ⚡️ Получить конфиг
+            ⚡ Получить конфиг
         </button>
 
         <div class="config-box" id="configBox"></div>
@@ -331,7 +317,7 @@
 
         async function loadUserData(telegramId) {
             try {
-                const r = await fetch(${API_URL}/api/user/${telegramId});
+                const r = await fetch(`${API_URL}/api/user/${telegramId}`);
                 if (r.ok) {
                     const data = await r.json();
                     userConfig = data.link;
@@ -346,9 +332,13 @@
                     setTimeout(() => {
                         document.getElementById('progressFill').style.width = percent + '%';
                     }, 300);
+                } else {
+                    document.getElementById('status').textContent = '● Не найден';
+                    document.getElementById('username').textContent = 'Нет подписки';
                 }
             } catch(e) {
                 document.getElementById('status').textContent = '● Офлайн';
+                document.getElementById('username').textContent = 'Ошибка связи';
             }
         }
 
@@ -363,7 +353,7 @@
                 document.getElementById('configBox').style.display = 'block';
                 document.getElementById('copyBtn').style.display = 'block';
             } else {
-                tg.showAlert('Конфиг не найден. Сначала активируйте код через /start КОД');
+                tg.showAlert('Конфиг не найден. Сначала активируйте код через /start КОД в боте.');
             }
         }
 
@@ -378,7 +368,9 @@
                     btn.classList.remove('success');
                 }, 2000);
             }
-        }function showHelp() {
+        }
+
+        function showHelp() {
             tg.showPopup({
                 title: 'Инструкция',
                 message: '1. Нажмите "Получить конфиг"\n2. Нажмите "Скопировать ссылку"\n3. Откройте Happ → + → вставьте ссылку\n4. Подключитесь!',
