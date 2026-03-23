@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZHIDAO Protocol</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #0a0a1a;
+            color: #ffffff;
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-top: 40px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .card {
+            background: #111128;
+            border: 1px solid #1e1e3a;
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 360px;
+            margin-bottom: 15px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .status-label {
+            color: #666;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-active {
+            background: rgba(0, 255, 136, 0.15);
+            color: #00ff88;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .username {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .server-tag {
+            background: rgba(79, 172, 254, 0.15);
+            color: #4facfe;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .btn {
+            width: 100%;
+            max-width: 360px;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #0a0a1a;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: #111128;
+            border: 1px solid #1e1e3a;
+            color: #4facfe;
+        }
+
+        .divider {
+            width: 100%;
+            max-width: 360px;
+            height: 1px;
+            background: #1e1e3a;
+            margin: 10px 0 20px;
+        }
+
+        .footer {
+            color: #333;
+            font-size: 11px;
+            text-align: center;
+            margin-top: auto;
+            padding: 20px 0;
+            letter-spacing: 2px;
+        }
+
+        .copied {
+            background: linear-gradient(135deg, #00ff88, #00c853) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🔐</div>
+        <div class="title">ZHIDAO</div>
+        <div class="subtitle">Protocol</div>
+    </div>
+
+    <div class="card">
+        <div class="status-row">
+            <span class="status-label">Статус</span>
+
+
+<span class="status-active">● Активен</span>
+        </div>
+        <div class="username" id="username">Загрузка...</div>
+        <div class="server-tag">🇭🇰 Hong Kong</div>
+    </div>
+
+    <button class="btn btn-primary" id="getConfig" onclick="getConfig()">
+        Получить конфиг
+    </button>
+
+    <button class="btn btn-secondary" onclick="showHelp()">
+        📖 Инструкция
+    </button>
+
+    <div class="divider"></div>
+
+    <button class="btn btn-secondary" onclick="contactAdmin()">
+        💬 Написать администратору
+    </button>
+
+    <div class="footer">ZHIDAO PROTOCOL © 2026</div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        // Имя пользователя из Telegram
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('username').textContent = 
+                user.first_name + (user.last_name ? ' ' + user.last_name : '');
+        } else {
+            document.getElementById('username').textContent = 'Пользователь';
+        }
+
+        function getConfig() {
+            tg.sendData('get_config');
+            const btn = document.getElementById('getConfig');
+            btn.textContent = '✅ Запрос отправлен';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'Получить конфиг';
+                btn.classList.remove('copied');
+            }, 2000);
+        }
+
+        function showHelp() {
+            tg.showPopup({
+                title: 'Инструкция',
+                message: '1. Скачайте Happ\n2. Нажмите "Получить конфиг"\n3. Скопируйте ссылку в Happ\n4. Подключитесь!',
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        function contactAdmin() {
+            tg.openTelegramLink('https://t.me/christianpastor');
+        }
+    </script>
+</body>
+</html>
