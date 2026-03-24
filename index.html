@@ -7,7 +7,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             background: #050510;
             color: #ffffff;
@@ -19,7 +18,6 @@
             padding: 20px;
             overflow-x: hidden;
         }
-
         .glow-bg {
             position: fixed;
             top: 0; left: 0;
@@ -28,7 +26,6 @@
             pointer-events: none;
             z-index: 0;
         }
-
         .content {
             position: relative;
             z-index: 1;
@@ -37,492 +34,130 @@
             flex-direction: column;
             align-items: center;
         }
-
-        .header {
-            text-align: center;
-            margin-top: 30px;
-            margin-bottom: 25px;
-        }
-
+        .header { text-align: center; margin-top: 30px; margin-bottom: 25px; }
         .logo-img {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            margin-bottom: 15px;
+            width: 120px; height: 120px;
+            object-fit: contain; margin-bottom: 15px;
             filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4));
             animation: pulse 3s infinite;
         }
-
         .title {
-            font-size: 32px;
-            font-weight: 800;
+            font-size: 32px; font-weight: 800;
             background: linear-gradient(135deg, #f5d05a, #d4af37, #b8860b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: 4px;
         }
-
         .subtitle {
-            font-size: 11px;
-            color: #d4af37;
-            margin-top: 4px;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            opacity: 0.7;
+            font-size: 11px; color: #d4af37;
+            margin-top: 4px; letter-spacing: 6px;
+            text-transform: uppercase; opacity: 0.7;
         }
-
-        .subtitle::before, .subtitle::after {
-            content: '—';
-            margin: 0 8px;
-            opacity: 0.5;
-        }
-
+        .subtitle::before, .subtitle::after { content: '—'; margin: 0 8px; opacity: 0.5; }
         .tabs {
-            display: flex;
-            width: 100%;
-            max-width: 360px;
+            display: flex; width: 100%; max-width: 360px;
             margin-bottom: 20px;
             background: rgba(212, 175, 55, 0.05);
             border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 16px;
-            padding: 4px;
-            gap: 4px;
-            overflow-x: auto;
+            border-radius: 16px; padding: 4px; gap: 4px; overflow-x: auto;
         }
-
         .tab {
-            flex: 1;
-            padding: 8px 4px;
-            border-radius: 12px;
-            border: none;
-            background: transparent;
-            color: #666;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
+            flex: 1; padding: 8px 4px; border-radius: 12px;
+            border: none; background: transparent; color: #666;
+            font-size: 11px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
         }
-
-        .tab.active {
-            background: linear-gradient(135deg, #d4af37, #f5d05a);
-            color: #050510;
-        }
-
-        .tab-content {
-            display: none;
-            width: 100%;
-        }
-
-        .tab-content.active {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
+        .tab.active { background: linear-gradient(135deg, #d4af37, #f5d05a); color: #050510; }
+        .tab-content { display: none; width: 100%; }
+        .tab-content.active { display: flex; flex-direction: column; align-items: center; }
         .card {
             background: linear-gradient(145deg, #0d0d1f, #111128);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 20px;
-            padding: 25px;
-            width: 100%;
-            max-width: 360px;
-            margin-bottom: 15px;
+            border-radius: 20px; padding: 25px;
+            width: 100%; max-width: 360px; margin-bottom: 15px;
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.05);
         }
-
         .card-title {
-            color: #666;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
+            color: #666; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;
         }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-        }
-
-        .status-label {
-            color: #666;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
+        .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .status-label { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
         .status-badge {
-            background: rgba(212, 175, 55, 0.15);
-            color: #d4af37;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
+            background: rgba(212, 175, 55, 0.15); color: #d4af37;
+            padding: 4px 14px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
-
-        .username {
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-
+        .username { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
         .server-tag {
-            background: rgba(212, 175, 55, 0.1);
-            color: #d4af37;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 11px;
-            display: inline-block;
+            background: rgba(212, 175, 55, 0.1); color: #d4af37;
+            padding: 4px 14px; border-radius: 20px;
+            font-size: 11px; display: inline-block;
             border: 1px solid rgba(212, 175, 55, 0.2);
         }
-
-        .traffic-section {
-            margin-top: 18px;
-            padding-top: 18px;
-            border-top: 1px solid rgba(212, 175, 55, 0.1);
-        }
-
-        .traffic-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .traffic-text {
-            font-size: 11px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .traffic-value {
-            font-size: 11px;
-            color: #d4af37;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
+        .traffic-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(212, 175, 55, 0.1); }
+        .traffic-label { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .traffic-text { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .traffic-value { font-size: 11px; color: #d4af37; }
+        .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
         .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #b8860b, #f5d05a);
-            border-radius: 2px;
-            width: 0%;
-            transition: width 1s ease;
+            height: 100%; background: linear-gradient(90deg, #b8860b, #f5d05a);
+            border-radius: 2px; width: 0%; transition: width 1s ease;
         }
-
-        .weather-main {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .weather-temp {
-            font-size: 48px;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1;
-        }
-
-        .weather-temp span {
-            font-size: 22px;
-            color: #d4af37;
-        }
-
+        .weather-main { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .weather-temp { font-size: 48px; font-weight: 700; color: #fff; line-height: 1; }
+        .weather-temp span { font-size: 22px; color: #d4af37; }
         .weather-icon { font-size: 48px; }
-
-        .weather-desc {
-            color: #888;
-            font-size: 13px;
-            margin-bottom: 12px;
-        }
-
-        .weather-details {
-            display: flex;
-            gap: 15px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(212, 175, 55, 0.1);
-            flex-wrap: wrap;
-        }
-
-        .weather-detail {
-            font-size: 11px;
-            color: #666;
-        }
-
+        .weather-desc { color: #888; font-size: 13px; margin-bottom: 12px; }
+        .weather-details { display: flex; gap: 15px; padding-top: 12px; border-top: 1px solid rgba(212, 175, 55, 0.1); flex-wrap: wrap; }
+        .weather-detail { font-size: 11px; color: #666; }
         .weather-detail span { color: #d4af37; }
-
-        .yuan-rate {
-            font-size: 48px;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1;
-        }
-
-        .yuan-rate span {
-            font-size: 22px;
-            color: #d4af37;
-        }
-
-        .schedule-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.08);
-            gap: 12px;
-        }
-
+        .yuan-rate { font-size: 48px; font-weight: 700; color: #fff; line-height: 1; }
+        .yuan-rate span { font-size: 22px; color: #d4af37; }
+        .schedule-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.08); gap: 12px; }
         .schedule-item:last-child { border-bottom: none; }
-
-        .schedule-time {
-            color: #d4af37;
-            font-size: 13px;
-            font-weight: 600;
-            min-width: 45px;
-        }
-
+        .schedule-time { color: #d4af37; font-size: 13px; font-weight: 600; min-width: 45px; }
         .schedule-info { flex: 1; }
-
-        .schedule-subject {
-            color: #fff;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .schedule-location {
-            color: #666;
-            font-size: 11px;
-            margin-top: 2px;
-        }
-
-        .schedule-day {
-            color: #d4af37;
-            font-size: 12px;
-            font-weight: 700;
-            margin: 15px 0 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .announcement-item {
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.08);
-        }
-
+        .schedule-subject { color: #fff; font-size: 14px; font-weight: 600; }
+        .schedule-location { color: #666; font-size: 11px; margin-top: 2px; }
+        .schedule-day { color: #d4af37; font-size: 12px; font-weight: 700; margin: 15px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .announcement-item { padding: 15px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.08); }
         .announcement-item:last-child { border-bottom: none; }
-
-        .announcement-text {
-            color: #fff;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .announcement-date {
-            color: #666;
-            font-size: 11px;
-            margin-top: 6px;
-        }
-
-        .laundry-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            width: 100%;
-        }
-
-        .laundry-slot {
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
+        .announcement-text { color: #fff; font-size: 14px; line-height: 1.5; }
+        .announcement-date { color: #666; font-size: 11px; margin-top: 6px; }
+        .laundry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .laundry-slot { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .laundry-slot:active { transform: scale(0.97); }
-
-        .laundry-slot.booked {
-            background: rgba(255, 80, 80, 0.1);
-            border-color: rgba(255, 80, 80, 0.3);
-            cursor: default;
-        }
-
-        .laundry-slot.my-booking {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: rgba(212, 175, 55, 0.4);
-        }
-
-        .laundry-time {
-            color: #d4af37;
-            font-size: 15px;
-            font-weight: 700;
-        }
-
-        .laundry-status {
-            font-size: 11px;
-            color: #666;
-            margin-top: 4px;
-        }
-
+        .laundry-slot.booked { background: rgba(255, 80, 80, 0.1); border-color: rgba(255, 80, 80, 0.3); cursor: default; }
+        .laundry-slot.my-booking { background: rgba(212, 175, 55, 0.15); border-color: rgba(212, 175, 55, 0.4); }
+        .laundry-time { color: #d4af37; font-size: 15px; font-weight: 700; }
+        .laundry-status { font-size: 11px; color: #666; margin-top: 4px; }
         .laundry-slot.booked .laundry-status { color: #ff5050; }
         .laundry-slot.my-booking .laundry-status { color: #d4af37; }
-
-        .laundry-date-selector {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            width: 100%;
-        }
-
-        .date-btn {
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 10px;
-            padding: 8px 14px;
-            color: #666;
-            font-size: 12px;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-
-        .date-btn.active {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: rgba(212, 175, 55, 0.4);
-            color: #d4af37;
-        }
-
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            width: 100%;
-            max-width: 360px;
-            margin-bottom: 15px;
-        }
-
-        .admin-btn {
-            background: rgba(212, 175, 55, 0.08);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 16px;
-            padding: 18px 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
+        .laundry-date-selector { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 4px; width: 100%; }
+        .date-btn { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 10px; padding: 8px 14px; color: #666; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .date-btn.active { background: rgba(212, 175, 55, 0.15); border-color: rgba(212, 175, 55, 0.4); color: #d4af37; }
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; margin-bottom: 15px; }
+        .admin-btn { background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .admin-btn:active { transform: scale(0.97); }
         .admin-btn-icon { font-size: 28px; margin-bottom: 8px; }
         .admin-btn-text { color: #d4af37; font-size: 12px; font-weight: 600; }
-
         .form-group { width: 100%; margin-bottom: 12px; }
-
-        .form-label {
-            color: #666;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .form-input {
-            width: 100%;
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 10px;
-            padding: 12px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-        }
-
+        .form-label { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+        .form-input { width: 100%; background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; padding: 12px; color: #fff; font-size: 14px; outline: none; }
         .form-input:focus { border-color: rgba(212, 175, 55, 0.5); }
         textarea.form-input { resize: vertical; min-height: 80px; }
-
-        .btn {
-            width: 100%;
-            max-width: 360px;
-            padding: 16px;
-            border-radius: 16px;
-            border: none;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 12px;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #d4af37, #f5d05a, #b8860b);
-            color: #050510;
-            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
-        }
-
+        .btn { width: 100%; max-width: 360px; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #d4af37, #f5d05a, #b8860b); color: #050510; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3); }
         .btn-primary:active { transform: scale(0.97); }
-
-        .btn-secondary {
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            color: #d4af37;
-        }
-
+        .btn-secondary { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); color: #d4af37; }
         .btn-secondary:active { transform: scale(0.97); }
-
-        .config-box {
-            background: #0a0a18;
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 12px;
-            padding: 15px;
-            width: 100%;
-            max-width: 360px;
-            margin-bottom: 12px;
-            word-break: break-all;
-            font-size: 10px;
-            color: rgba(212, 175, 55, 0.7);
-            display: none;
-            font-family: monospace;
-        }
-
-        .divider {
-            width: 100%;
-            max-width: 360px;
-            height: 1px;
-            background: rgba(212, 175, 55, 0.1);
-            margin: 5px 0 15px;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #444;
-            padding: 30px 0;
-            font-size: 14px;
-        }
-
-        .footer {
-            color: rgba(212, 175, 55, 0.2);
-            font-size: 10px;
-            text-align: center;
-            margin-top: auto;
-            padding: 20px 0;
-            letter-spacing: 3px;
-        }
-
+        .config-box { background: #0a0a18; border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 12px; padding: 15px; width: 100%; max-width: 360px; margin-bottom: 12px; word-break: break-all; font-size: 10px; color: rgba(212, 175, 55, 0.7); display: none; font-family: monospace; }
+        .divider { width: 100%; max-width: 360px; height: 1px; background: rgba(212, 175, 55, 0.1); margin: 5px 0 15px; }
+        .empty-state { text-align: center; color: #444; padding: 30px 0; font-size: 14px; }
+        .footer { color: rgba(212, 175, 55, 0.2); font-size: 10px; text-align: center; margin-top: auto; padding: 20px 0; letter-spacing: 3px; }
         .success { background: linear-gradient(135deg, #d4af37, #f5d05a) !important; color: #050510 !important; }
-
         @keyframes pulse {
             0%, 100% { filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)); }
             50% { filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.7)); }
@@ -565,7 +200,6 @@
                     </div>
                 </div>
             </div>
-
             <button class="btn btn-primary" onclick="getConfig()">⚡ Получить конфиг</button>
             <div class="config-box" id="configBox"></div>
             <button class="btn btn-secondary" id="copyBtn" style="display:none" onclick="copyConfig()">📋 Скопировать ссылку</button>
@@ -717,6 +351,7 @@
 
         const API_URL = 'https://hk.marucho.icu:8443';
         const WEATHER_KEY = '03232b342b9270f8b24ed68e2c55d8f4';
+        const EXCHANGE_KEY = '7dd743fceb96a3460f7d846e';
         const ADMIN_IDS = [389741116];
 
         let userConfig = null;
@@ -809,9 +444,9 @@
 
         async function loadYuanRate() {
             try {
-                const r = await fetch('https://api.frankfurter.app/latest?from=CNY&to=RUB');
+                const r = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_KEY}/latest/CNY`);
                 const data = await r.json();
-                const rate = data.rates.RUB.toFixed(2);
+                const rate = data.conversion_rates.RUB.toFixed(2);
                 document.getElementById('yuanRate').innerHTML = `${rate}<span> ₽</span>`;
                 document.getElementById('rateUpdated').textContent = new Date().toLocaleDateString('ru-RU');
             } catch(e) {
@@ -1066,4 +701,45 @@
                     headers: {'x-telegram-id': currentUserId}
                 });
                 loadAdminLaundry();
-                load
+                loadLaundry();
+            } catch(e) {}
+        }
+
+        async function getConfig() {
+            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+            if (userConfig) {
+                document.getElementById('configBox').textContent = userConfig;
+                document.getElementById('configBox').style.display = 'block';
+                document.getElementById('copyBtn').style.display = 'block';
+            } else {
+                tg.showAlert('Конфиг не найден. Активируйте код через /start КОД в боте.');
+            }
+        }
+
+        function copyConfig() {
+            if (userConfig) {
+                navigator.clipboard.writeText(userConfig);
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ Скопировано!';
+                btn.classList.add('success');
+                setTimeout(() => {
+                    btn.textContent = '📋 Скопировать ссылку';
+                    btn.classList.remove('success');
+                }, 2000);
+            }
+        }
+
+        function showHelp() {
+            tg.showPopup({
+                title: 'Инструкция',
+                message: '1. Нажмите "Получить конфиг"\n2. Нажмите "Скопировать ссылку"\n3. Откройте Happ → + → вставьте ссылку\n4. Подключитесь!',
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        function contactAdmin() {
+            tg.openTelegramLink('https://t.me/christianpastor');
+        }
+    </script>
+</body>
+</html>
