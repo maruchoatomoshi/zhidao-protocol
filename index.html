@@ -19,92 +19,38 @@
             overflow-x: hidden;
         }
         .glow-bg {
-            position: fixed;
-            top: 0; left: 0;
+            position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             background: radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+            pointer-events: none; z-index: 0;
         }
-        .content {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .content { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; }
         .header { text-align: center; margin-top: 30px; margin-bottom: 25px; }
-        .logo-img {
-            width: 120px; height: 120px;
-            object-fit: contain; margin-bottom: 15px;
-            filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4));
-            animation: pulse 3s infinite;
-        }
-        .title {
-            font-size: 32px; font-weight: 800;
-            background: linear-gradient(135deg, #f5d05a, #d4af37, #b8860b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 4px;
-        }
-        .subtitle {
-            font-size: 11px; color: #d4af37;
-            margin-top: 4px; letter-spacing: 6px;
-            text-transform: uppercase; opacity: 0.7;
-        }
+        .logo-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)); animation: pulse 3s infinite; }
+        .title { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #f5d05a, #d4af37, #b8860b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 4px; }
+        .subtitle { font-size: 11px; color: #d4af37; margin-top: 4px; letter-spacing: 6px; text-transform: uppercase; opacity: 0.7; }
         .subtitle::before, .subtitle::after { content: '—'; margin: 0 8px; opacity: 0.5; }
-        .tabs {
-            display: flex; width: 100%; max-width: 360px;
-            margin-bottom: 20px;
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 16px; padding: 4px; gap: 4px; overflow-x: auto;
-        }
-        .tab {
-            flex: 1; padding: 8px 4px; border-radius: 12px;
-            border: none; background: transparent; color: #666;
-            font-size: 11px; font-weight: 600; cursor: pointer;
-            transition: all 0.2s; white-space: nowrap;
-        }
+        .tabs { display: flex; width: 100%; max-width: 360px; margin-bottom: 20px; background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 16px; padding: 4px; gap: 4px; overflow-x: auto; }
+        .tab { flex: 1; padding: 8px 4px; border-radius: 12px; border: none; background: transparent; color: #666; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .tab.active { background: linear-gradient(135deg, #d4af37, #f5d05a); color: #050510; }
         .tab-content { display: none; width: 100%; }
         .tab-content.active { display: flex; flex-direction: column; align-items: center; }
-        .card {
-            background: linear-gradient(145deg, #0d0d1f, #111128);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 20px; padding: 25px;
-            width: 100%; max-width: 360px; margin-bottom: 15px;
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.05);
-        }
-        .card-title {
-            color: #666; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;
-        }
+        .card { background: linear-gradient(145deg, #0d0d1f, #111128); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 20px; padding: 25px; width: 100%; max-width: 360px; margin-bottom: 15px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.05); }
+        .card-title { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
         .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
         .status-label { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
-        .status-badge {
-            background: rgba(212, 175, 55, 0.15); color: #d4af37;
-            padding: 4px 14px; border-radius: 20px;
-            font-size: 11px; font-weight: 600;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
+        .status-badge { background: rgba(212, 175, 55, 0.15); color: #d4af37; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid rgba(212, 175, 55, 0.3); }
         .username { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-        .server-tag {
-            background: rgba(212, 175, 55, 0.1); color: #d4af37;
-            padding: 4px 14px; border-radius: 20px;
-            font-size: 11px; display: inline-block;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-        }
+        .server-tag { background: rgba(212, 175, 55, 0.1); color: #d4af37; padding: 4px 14px; border-radius: 20px; font-size: 11px; display: inline-block; border: 1px solid rgba(212, 175, 55, 0.2); }
         .traffic-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(212, 175, 55, 0.1); }
         .traffic-label { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .traffic-text { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
         .traffic-value { font-size: 11px; color: #d4af37; }
         .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
-        .progress-fill {
-            height: 100%; background: linear-gradient(90deg, #b8860b, #f5d05a);
-            border-radius: 2px; width: 0%; transition: width 1s ease;
-        }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #b8860b, #f5d05a); border-radius: 2px; width: 0%; transition: width 1s ease; }
+        .points-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(212, 175, 55, 0.1); display: flex; justify-content: space-between; align-items: center; }
+        .points-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .points-value { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #f5d05a, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .weather-main { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
         .weather-temp { font-size: 48px; font-weight: 700; color: #fff; line-height: 1; }
         .weather-temp span { font-size: 22px; color: #d4af37; }
@@ -138,6 +84,17 @@
         .laundry-date-selector { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 4px; width: 100%; }
         .date-btn { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 10px; padding: 8px 14px; color: #666; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .date-btn.active { background: rgba(212, 175, 55, 0.15); border-color: rgba(212, 175, 55, 0.4); color: #d4af37; }
+        /* Рейтинг */
+        .leaderboard-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.08); gap: 12px; }
+        .leaderboard-item:last-child { border-bottom: none; }
+        .leaderboard-rank { font-size: 20px; min-width: 35px; text-align: center; }
+        .leaderboard-name { flex: 1; font-size: 15px; font-weight: 600; color: #fff; }
+        .leaderboard-points { font-size: 15px; font-weight: 700; color: #d4af37; }
+        .my-rank-card { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 15px; width: 100%; max-width: 360px; }
+        .my-rank-label { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .my-rank-points { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #f5d05a, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+        .my-rank-sub { color: #666; font-size: 12px; margin-top: 6px; }
+        /* Админ */
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; margin-bottom: 15px; }
         .admin-btn { background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .admin-btn:active { transform: scale(0.97); }
@@ -179,6 +136,7 @@
             <button class="tab" onclick="showTab('schedule', this)">📅 Расписание</button>
             <button class="tab" onclick="showTab('laundry', this)">🧺 Стирка</button>
             <button class="tab" onclick="showTab('news', this)">📢 Новости</button>
+            <button class="tab" onclick="showTab('rating', this)">🏆 Рейтинг</button>
         </div>
 
         <!-- Главная -->
@@ -198,6 +156,10 @@
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
+                </div>
+                <div class="points-section">
+                    <span class="points-label">⭐ Мои баллы</span>
+                    <span class="points-value" id="myPoints">—</span>
                 </div>
             </div>
             <button class="btn btn-primary" onclick="getConfig()">⚡ Получить конфиг</button>
@@ -225,7 +187,6 @@
                     <div class="weather-detail">🌡 Ощущается: <span id="weatherFeels">—</span>°C</div>
                 </div>
             </div>
-
             <div class="card">
                 <div class="card-title">💴 Курс юаня к рублю</div>
                 <div class="weather-main">
@@ -245,9 +206,7 @@
         <div class="tab-content" id="tab-schedule">
             <div class="card">
                 <div class="card-title">📅 Расписание занятий</div>
-                <div id="scheduleContent">
-                    <div class="empty-state">Загрузка расписания...</div>
-                </div>
+                <div id="scheduleContent"><div class="empty-state">Загрузка...</div></div>
             </div>
         </div>
 
@@ -266,9 +225,20 @@
         <div class="tab-content" id="tab-news">
             <div class="card">
                 <div class="card-title">📢 Объявления</div>
-                <div id="announcementsContent">
-                    <div class="empty-state">Загрузка...</div>
-                </div>
+                <div id="announcementsContent"><div class="empty-state">Загрузка...</div></div>
+            </div>
+        </div>
+
+        <!-- Рейтинг -->
+        <div class="tab-content" id="tab-rating">
+            <div class="my-rank-card">
+                <div class="my-rank-label">⭐ Мои баллы</div>
+                <div class="my-rank-points" id="myPointsBig">—</div>
+                <div class="my-rank-sub" id="myRankSub">Загрузка...</div>
+            </div>
+            <div class="card">
+                <div class="card-title">🏆 Таблица лидеров</div>
+                <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
             </div>
         </div>
 
@@ -296,22 +266,10 @@
             <div id="admin-schedule" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Добавить занятие</div>
-                    <div class="form-group">
-                        <label class="form-label">День</label>
-                        <input class="form-input" id="schDay" placeholder="Понедельник">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Время</label>
-                        <input class="form-input" id="schTime" placeholder="09:00">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Предмет</label>
-                        <input class="form-input" id="schSubject" placeholder="Китайский язык">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Аудитория</label>
-                        <input class="form-input" id="schLocation" placeholder="Корпус A, 301">
-                    </div>
+                    <div class="form-group"><label class="form-label">День</label><input class="form-input" id="schDay" placeholder="Понедельник"></div>
+                    <div class="form-group"><label class="form-label">Время</label><input class="form-input" id="schTime" placeholder="09:00"></div>
+                    <div class="form-group"><label class="form-label">Предмет</label><input class="form-input" id="schSubject" placeholder="Китайский язык"></div>
+                    <div class="form-group"><label class="form-label">Аудитория</label><input class="form-input" id="schLocation" placeholder="Корпус A, 301"></div>
                     <button class="btn btn-primary" onclick="addScheduleItem()">Добавить</button>
                 </div>
             </div>
@@ -319,9 +277,7 @@
             <div id="admin-announce" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Новое объявление</div>
-                    <div class="form-group">
-                        <textarea class="form-input" id="announceText" placeholder="Текст объявления..."></textarea>
-                    </div>
+                    <div class="form-group"><textarea class="form-input" id="announceText" placeholder="Текст объявления..."></textarea></div>
                     <button class="btn btn-primary" onclick="addAnnouncement()">Опубликовать</button>
                 </div>
             </div>
@@ -367,6 +323,7 @@
             document.getElementById('username').textContent =
                 user.first_name + (user.last_name ? ' ' + user.last_name : '');
             loadUserData(user.id);
+            loadPoints(user.id);
         } else {
             document.getElementById('username').textContent = 'Пользователь';
             document.getElementById('status').textContent = '● Нет данных';
@@ -385,6 +342,7 @@
         loadYuanRate();
         loadSchedule();
         loadAnnouncements();
+        loadLeaderboard();
         initLaundry();
 
         function showTab(name, btn) {
@@ -406,9 +364,7 @@
                     const usedGB = (used / 1024 / 1024 / 1024).toFixed(2);
                     document.getElementById('trafficValue').textContent = usedGB + ' GB';
                     const percent = Math.min((used / (10 * 1024 * 1024 * 1024)) * 100, 100);
-                    setTimeout(() => {
-                        document.getElementById('progressFill').style.width = percent + '%';
-                    }, 300);
+                    setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
                 } else {
                     document.getElementById('status').textContent = '● Не найден';
                     document.getElementById('username').textContent = 'Нет подписки';
@@ -419,11 +375,50 @@
             }
         }
 
+        async function loadPoints(telegramId) {
+            try {
+                const r = await fetch(`${API_URL}/api/points/${telegramId}`);
+                if (r.ok) {
+                    const data = await r.json();
+                    document.getElementById('myPoints').textContent = data.points + ' ⭐';
+                    document.getElementById('myPointsBig').textContent = data.points;
+                }
+            } catch(e) {}
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const r = await fetch(`${API_URL}/api/leaderboard`);
+                const data = await r.json();
+                const container = document.getElementById('leaderboardContent');
+                if (!data.length) {
+                    container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>';
+                    return;
+                }
+                const medals = ['🥇', '🥈', '🥉'];
+                let myRank = '—';
+                let html = '';
+                data.forEach((item, i) => {
+                    const medal = medals[i] || (i + 1) + '.';
+                    const isMe = currentUserId && item.telegram_id === currentUserId;
+                    if (isMe) myRank = i + 1;
+                    html += `
+                        <div class="leaderboard-item" style="${isMe ? 'background:rgba(212,175,55,0.05);border-radius:10px;padding:12px;' : ''}">
+                            <div class="leaderboard-rank">${medal}</div>
+                            <div class="leaderboard-name">${item.name}${isMe ? ' 👈' : ''}</div>
+                            <div class="leaderboard-points">${item.points} ⭐</div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+                document.getElementById('myRankSub').textContent = myRank !== '—' ? `Место в рейтинге: #${myRank}` : 'Участвуй чтобы попасть в рейтинг!';
+            } catch(e) {
+                document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+            }
+        }
+
         async function loadWeather() {
             try {
-                const r = await fetch(
-                    `https://api.openweathermap.org/data/2.5/weather?id=1816670&appid=${WEATHER_KEY}&units=metric&lang=ru`
-                );
+                const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?id=1816670&appid=${WEATHER_KEY}&units=metric&lang=ru`);
                 const data = await r.json();
                 const temp = Math.round(data.main.temp);
                 const feels = Math.round(data.main.feels_like);
@@ -437,9 +432,7 @@
                 document.getElementById('weatherWind').textContent = wind;
                 document.getElementById('weatherFeels').textContent = feels;
                 document.getElementById('weatherIcon').textContent = getWeatherIcon(weatherId);
-            } catch(e) {
-                document.getElementById('weatherDesc').textContent = 'Недоступно';
-            }
+            } catch(e) { document.getElementById('weatherDesc').textContent = 'Недоступно'; }
         }
 
         async function loadYuanRate() {
@@ -449,9 +442,7 @@
                 const rate = data.conversion_rates.RUB.toFixed(2);
                 document.getElementById('yuanRate').innerHTML = `${rate}<span> ₽</span>`;
                 document.getElementById('rateUpdated').textContent = new Date().toLocaleDateString('ru-RU');
-            } catch(e) {
-                document.getElementById('yuanRate').innerHTML = `—<span> ₽</span>`;
-            }
+            } catch(e) { document.getElementById('yuanRate').innerHTML = `—<span> ₽</span>`; }
         }
 
         function getWeatherIcon(id) {
@@ -471,10 +462,7 @@
                 const r = await fetch(`${API_URL}/api/schedule`);
                 const data = await r.json();
                 const container = document.getElementById('scheduleContent');
-                if (!data.length) {
-                    container.innerHTML = '<div class="empty-state">Расписание пока не добавлено</div>';
-                    return;
-                }
+                if (!data.length) { container.innerHTML = '<div class="empty-state">Расписание пока не добавлено</div>'; return; }
                 const byDay = {};
                 data.forEach(item => {
                     if (!byDay[item.day]) byDay[item.day] = [];
@@ -484,21 +472,18 @@
                 for (const day in byDay) {
                     html += `<div class="schedule-day">${day}</div>`;
                     byDay[day].forEach(item => {
-                        html += `
-                            <div class="schedule-item">
-                                <div class="schedule-time">${item.time}</div>
-                                <div class="schedule-info">
-                                    <div class="schedule-subject">${item.subject}</div>
-                                    <div class="schedule-location">📍 ${item.location}</div>
-                                </div>
-                                ${isAdmin ? `<button onclick="deleteSchedule(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:16px;">✕</button>` : ''}
-                            </div>`;
+                        html += `<div class="schedule-item">
+                            <div class="schedule-time">${item.time}</div>
+                            <div class="schedule-info">
+                                <div class="schedule-subject">${item.subject}</div>
+                                <div class="schedule-location">📍 ${item.location}</div>
+                            </div>
+                            ${isAdmin ? `<button onclick="deleteSchedule(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:16px;">✕</button>` : ''}
+                        </div>`;
                     });
                 }
                 container.innerHTML = html;
-            } catch(e) {
-                document.getElementById('scheduleContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-            }
+            } catch(e) { document.getElementById('scheduleContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
         }
 
         async function loadAnnouncements() {
@@ -506,19 +491,14 @@
                 const r = await fetch(`${API_URL}/api/announcements`);
                 const data = await r.json();
                 const container = document.getElementById('announcementsContent');
-                if (!data.length) {
-                    container.innerHTML = '<div class="empty-state">Объявлений пока нет</div>';
-                    return;
-                }
+                if (!data.length) { container.innerHTML = '<div class="empty-state">Объявлений пока нет</div>'; return; }
                 container.innerHTML = data.map(item => `
                     <div class="announcement-item">
                         <div class="announcement-text">${item.text}</div>
                         <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
                         ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:12px;margin-top:6px;">Удалить</button>` : ''}
                     </div>`).join('');
-            } catch(e) {
-                document.getElementById('announcementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-            }
+            } catch(e) { document.getElementById('announcementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
         }
 
         function initLaundry() {
@@ -551,9 +531,7 @@
                 const r = await fetch(`${API_URL}/api/laundry`);
                 laundryData = await r.json();
                 renderLaundrySlots();
-            } catch(e) {
-                document.getElementById('laundrySlots').innerHTML = '<div class="empty-state" style="grid-column:span 2">Ошибка загрузки</div>';
-            }
+            } catch(e) { document.getElementById('laundrySlots').innerHTML = '<div class="empty-state" style="grid-column:span 2">Ошибка загрузки</div>'; }
         }
 
         function renderLaundrySlots() {
@@ -567,15 +545,8 @@
                 let cls = 'laundry-slot';
                 let status = '✅ Свободно';
                 let onclick = `bookLaundry('${time}')`;
-                if (isMyBooking) {
-                    cls += ' my-booking';
-                    status = '⭐ Моя запись';
-                    onclick = `cancelLaundry(${booking.id})`;
-                } else if (isBooked) {
-                    cls += ' booked';
-                    status = '❌ Занято';
-                    onclick = '';
-                }
+                if (isMyBooking) { cls += ' my-booking'; status = '⭐ Моя запись'; onclick = `cancelLaundry(${booking.id})`; }
+                else if (isBooked) { cls += ' booked'; status = '❌ Занято'; onclick = ''; }
                 return `<div class="${cls}" ${onclick ? `onclick="${onclick}"` : ''}>
                     <div class="laundry-time">${time}</div>
                     <div class="laundry-status">${status}</div>
@@ -592,10 +563,8 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({date: selectedLaundryDate, time, telegram_id: currentUserId, username})
                 });
-                if (r.ok) {
-                    tg.showAlert(`✅ Записан на ${time}!`);
-                    loadLaundry();
-                } else {
+                if (r.ok) { tg.showAlert(`✅ Записан на ${time}!`); loadLaundry(); }
+                else {
                     const err = await r.json();
                     tg.showAlert(err.detail === 'Already booked for this day' ? 'У вас уже есть запись на этот день' : 'Это время уже занято');
                 }
@@ -604,18 +573,13 @@
 
         async function cancelLaundry(id) {
             try {
-                const r = await fetch(`${API_URL}/api/laundry/${id}`, {
-                    method: 'DELETE',
-                    headers: {'x-telegram-id': currentUserId}
-                });
+                const r = await fetch(`${API_URL}/api/laundry/${id}`, { method: 'DELETE', headers: {'x-telegram-id': currentUserId} });
                 if (r.ok) { tg.showAlert('Запись отменена'); loadLaundry(); }
             } catch(e) { tg.showAlert('Ошибка'); }
         }
 
         function showAdminSection(name) {
-            ['schedule','announce','laundry','users'].forEach(s => {
-                document.getElementById('admin-' + s).style.display = 'none';
-            });
+            ['schedule','announce','laundry','users'].forEach(s => { document.getElementById('admin-' + s).style.display = 'none'; });
             document.getElementById('admin-' + name).style.display = 'block';
             if (name === 'laundry') loadAdminLaundry();
         }
@@ -632,22 +596,12 @@
                     headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
                     body: JSON.stringify({day, time, subject, location})
                 });
-                if (r.ok) {
-                    tg.showAlert('✅ Добавлено!');
-                    ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value = '');
-                    loadSchedule();
-                }
+                if (r.ok) { tg.showAlert('✅ Добавлено!'); ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value = ''); loadSchedule(); }
             } catch(e) { tg.showAlert('Ошибка'); }
         }
 
         async function deleteSchedule(id) {
-            try {
-                await fetch(`${API_URL}/api/schedule/${id}`, {
-                    method: 'DELETE',
-                    headers: {'x-admin-id': currentUserId}
-                });
-                loadSchedule();
-            } catch(e) {}
+            try { await fetch(`${API_URL}/api/schedule/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadSchedule(); } catch(e) {}
         }
 
         async function addAnnouncement() {
@@ -659,22 +613,12 @@
                     headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
                     body: JSON.stringify({text})
                 });
-                if (r.ok) {
-                    tg.showAlert('✅ Опубликовано!');
-                    document.getElementById('announceText').value = '';
-                    loadAnnouncements();
-                }
+                if (r.ok) { tg.showAlert('✅ Опубликовано!'); document.getElementById('announceText').value = ''; loadAnnouncements(); }
             } catch(e) { tg.showAlert('Ошибка'); }
         }
 
         async function deleteAnnouncement(id) {
-            try {
-                await fetch(`${API_URL}/api/announcements/${id}`, {
-                    method: 'DELETE',
-                    headers: {'x-admin-id': currentUserId}
-                });
-                loadAnnouncements();
-            } catch(e) {}
+            try { await fetch(`${API_URL}/api/announcements/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadAnnouncements(); } catch(e) {}
         }
 
         async function loadAdminLaundry() {
@@ -695,14 +639,7 @@
         }
 
         async function adminCancelLaundry(id) {
-            try {
-                await fetch(`${API_URL}/api/laundry/${id}`, {
-                    method: 'DELETE',
-                    headers: {'x-telegram-id': currentUserId}
-                });
-                loadAdminLaundry();
-                loadLaundry();
-            } catch(e) {}
+            try { await fetch(`${API_URL}/api/laundry/${id}`, { method: 'DELETE', headers: {'x-telegram-id': currentUserId} }); loadAdminLaundry(); loadLaundry(); } catch(e) {}
         }
 
         async function getConfig() {
@@ -711,35 +648,9 @@
                 document.getElementById('configBox').textContent = userConfig;
                 document.getElementById('configBox').style.display = 'block';
                 document.getElementById('copyBtn').style.display = 'block';
-            } else {
-                tg.showAlert('Конфиг не найден. Активируйте код через /start КОД в боте.');
-            }
+            } else { tg.showAlert('Конфиг не найден. Активируйте код через /start КОД в боте.'); }
         }
 
         function copyConfig() {
             if (userConfig) {
-                navigator.clipboard.writeText(userConfig);
-                const btn = document.getElementById('copyBtn');
-                btn.textContent = '✅ Скопировано!';
-                btn.classList.add('success');
-                setTimeout(() => {
-                    btn.textContent = '📋 Скопировать ссылку';
-                    btn.classList.remove('success');
-                }, 2000);
-            }
-        }
-
-        function showHelp() {
-            tg.showPopup({
-                title: 'Инструкция',
-                message: '1. Нажмите "Получить конфиг"\n2. Нажмите "Скопировать ссылку"\n3. Откройте Happ → + → вставьте ссылку\n4. Подключитесь!',
-                buttons: [{type: 'ok'}]
-            });
-        }
-
-        function contactAdmin() {
-            tg.openTelegramLink('https://t.me/christianpastor');
-        }
-    </script>
-</body>
-</html>
+     
