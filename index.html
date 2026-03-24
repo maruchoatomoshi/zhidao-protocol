@@ -653,4 +653,24 @@
 
         function copyConfig() {
             if (userConfig) {
-     
+
+navigator.clipboard.writeText(userConfig);
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ Скопировано!';
+                btn.classList.add('success');
+                setTimeout(() => { btn.textContent = '📋 Скопировать ссылку'; btn.classList.remove('success'); }, 2000);
+            }
+        }
+
+        function showHelp() {
+            tg.showPopup({
+                title: 'Инструкция',
+                message: '1. Нажмите "Получить конфиг"\n2. Нажмите "Скопировать ссылку"\n3. Откройте Happ → + → вставьте ссылку\n4. Подключитесь!',
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        function contactAdmin() { tg.openTelegramLink('https://t.me/christianpastor'); }
+    </script>
+</body>
+</html>
