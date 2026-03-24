@@ -77,7 +77,6 @@
             opacity: 0.5;
         }
 
-        /* Табы */
         .tabs {
             display: flex;
             width: 100%;
@@ -121,7 +120,6 @@
             align-items: center;
         }
 
-        /* Карточки */
         .card {
             background: linear-gradient(145deg, #0d0d1f, #111128);
             border: 1px solid rgba(212, 175, 55, 0.2);
@@ -222,7 +220,6 @@
             transition: width 1s ease;
         }
 
-        /* Погода */
         .weather-main {
             display: flex;
             align-items: center;
@@ -265,7 +262,18 @@
 
         .weather-detail span { color: #d4af37; }
 
-        /* Расписание */
+        .yuan-rate {
+            font-size: 48px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .yuan-rate span {
+            font-size: 22px;
+            color: #d4af37;
+        }
+
         .schedule-item {
             display: flex;
             align-items: center;
@@ -306,7 +314,6 @@
             letter-spacing: 1px;
         }
 
-        /* Объявления */
         .announcement-item {
             padding: 15px 0;
             border-bottom: 1px solid rgba(212, 175, 55, 0.08);
@@ -326,7 +333,6 @@
             margin-top: 6px;
         }
 
-        /* Стирка */
         .laundry-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -399,7 +405,6 @@
             color: #d4af37;
         }
 
-        /* Админ */
         .admin-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -420,20 +425,10 @@
         }
 
         .admin-btn:active { transform: scale(0.97); }
-
         .admin-btn-icon { font-size: 28px; margin-bottom: 8px; }
+        .admin-btn-text { color: #d4af37; font-size: 12px; font-weight: 600; }
 
-        .admin-btn-text {
-            color: #d4af37;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        /* Форма */
-        .form-group {
-            width: 100%;
-            margin-bottom: 12px;
-        }
+        .form-group { width: 100%; margin-bottom: 12px; }
 
         .form-label {
             color: #666;
@@ -455,16 +450,9 @@
             outline: none;
         }
 
-        .form-input:focus {
-            border-color: rgba(212, 175, 55, 0.5);
-        }
+        .form-input:focus { border-color: rgba(212, 175, 55, 0.5); }
+        textarea.form-input { resize: vertical; min-height: 80px; }
 
-        textarea.form-input {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        /* Кнопки */
         .btn {
             width: 100%;
             max-width: 360px;
@@ -492,13 +480,7 @@
             color: #d4af37;
         }
 
-        .btn-danger {
-            background: rgba(255, 80, 80, 0.1);
-            border: 1px solid rgba(255, 80, 80, 0.3);
-            color: #ff5050;
-        }
-
-        .btn-secondary:active, .btn-danger:active { transform: scale(0.97); }
+        .btn-secondary:active { transform: scale(0.97); }
 
         .config-box {
             background: #0a0a18;
@@ -556,13 +538,12 @@
             <div class="subtitle">Protocol</div>
         </div>
 
-        <!-- Табы -->
         <div class="tabs" id="tabs">
-            <button class="tab active" onclick="showTab('home')">🏠 Главная</button>
-            <button class="tab" onclick="showTab('weather')">🌤 Погода</button>
-            <button class="tab" onclick="showTab('schedule')">📅 Расписание</button>
-            <button class="tab" onclick="showTab('laundry')">🧺 Стирка</button>
-            <button class="tab" onclick="showTab('news')">📢 Новости</button>
+            <button class="tab active" onclick="showTab('home', this)">🏠 Главная</button>
+            <button class="tab" onclick="showTab('weather', this)">🌤 Погода</button>
+            <button class="tab" onclick="showTab('schedule', this)">📅 Расписание</button>
+            <button class="tab" onclick="showTab('laundry', this)">🧺 Стирка</button>
+            <button class="tab" onclick="showTab('news', this)">📢 Новости</button>
         </div>
 
         <!-- Главная -->
@@ -585,20 +566,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" id="getConfig" onclick="getConfig()">
-                ⚡ Получить конфиг
-            </button>
-
+            <button class="btn btn-primary" onclick="getConfig()">⚡ Получить конфиг</button>
             <div class="config-box" id="configBox"></div>
-
-            <button class="btn btn-secondary" id="copyBtn" style="display:none" onclick="copyConfig()">
-                📋 Скопировать ссылку
-            </button>
-
+            <button class="btn btn-secondary" id="copyBtn" style="display:none" onclick="copyConfig()">📋 Скопировать ссылку</button>
             <button class="btn btn-secondary" onclick="showHelp()">📖 Инструкция</button>
-
             <div class="divider"></div>
-
             <button class="btn btn-secondary" onclick="contactAdmin()">💬 Написать администратору</button>
         </div>
 
@@ -619,6 +591,20 @@
                     <div class="weather-detail">🌡 Ощущается: <span id="weatherFeels">—</span>°C</div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-title">💴 Курс юаня к рублю</div>
+                <div class="weather-main">
+                    <div>
+                        <div class="yuan-rate" id="yuanRate">—<span> ₽</span></div>
+                        <div class="weather-desc">за 1 китайский юань (CNY)</div>
+                    </div>
+                    <div class="weather-icon">🇨🇳</div>
+                </div>
+                <div class="weather-details">
+                    <div class="weather-detail">🔄 Обновлено: <span id="rateUpdated">—</span></div>
+                </div>
+            </div>
         </div>
 
         <!-- Расписание -->
@@ -637,7 +623,7 @@
                 <div class="card-title">🧺 Запись на стирку</div>
                 <div class="laundry-date-selector" id="laundryDates"></div>
                 <div class="laundry-grid" id="laundrySlots">
-                    <div class="empty-state" style="grid-column: span 2;">Загрузка...</div>
+                    <div class="empty-state" style="grid-column:span 2">Загрузка...</div>
                 </div>
             </div>
         </div>
@@ -652,7 +638,7 @@
             </div>
         </div>
 
-        <!-- Админ панель (скрыта по умолчанию) -->
+        <!-- Админ -->
         <div class="tab-content" id="tab-admin">
             <div class="admin-grid">
                 <div class="admin-btn" onclick="showAdminSection('schedule')">
@@ -673,7 +659,6 @@
                 </div>
             </div>
 
-            <!-- Добавить расписание -->
             <div id="admin-schedule" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Добавить занятие</div>
@@ -697,7 +682,6 @@
                 </div>
             </div>
 
-            <!-- Добавить объявление -->
             <div id="admin-announce" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Новое объявление</div>
@@ -708,7 +692,6 @@
                 </div>
             </div>
 
-            <!-- Управление стиркой -->
             <div id="admin-laundry" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Все записи на стирку</div>
@@ -716,11 +699,10 @@
                 </div>
             </div>
 
-            <!-- Пользователи -->
             <div id="admin-users" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Пользователи</div>
-                    <div id="adminUsersList">Загрузка...</div>
+                    <div id="adminUsersList">Используйте /listusers в боте</div>
                 </div>
             </div>
         </div>
@@ -755,26 +737,26 @@
             document.getElementById('status').textContent = '● Нет данных';
         }
 
-        // Добавляем таб админа если нужно
         if (isAdmin) {
             const tabs = document.getElementById('tabs');
             const adminTab = document.createElement('button');
             adminTab.className = 'tab';
             adminTab.textContent = '👑 Админ';
-            adminTab.onclick = () => showTab('admin');
+            adminTab.onclick = () => showTab('admin', adminTab);
             tabs.appendChild(adminTab);
         }
 
         loadWeather();
+        loadYuanRate();
         loadSchedule();
         loadAnnouncements();
         initLaundry();
 
-        function showTab(name) {
+        function showTab(name, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById('tab-' + name).classList.add('active');
-            event.target.classList.add('active');
+            if (btn) btn.classList.add('active');
         }
 
         async function loadUserData(telegramId) {
@@ -822,6 +804,18 @@
                 document.getElementById('weatherIcon').textContent = getWeatherIcon(weatherId);
             } catch(e) {
                 document.getElementById('weatherDesc').textContent = 'Недоступно';
+            }
+        }
+
+        async function loadYuanRate() {
+            try {
+                const r = await fetch('https://api.frankfurter.app/latest?from=CNY&to=RUB');
+                const data = await r.json();
+                const rate = data.rates.RUB.toFixed(2);
+                document.getElementById('yuanRate').innerHTML = `${rate}<span> ₽</span>`;
+                document.getElementById('rateUpdated').textContent = new Date().toLocaleDateString('ru-RU');
+            } catch(e) {
+                document.getElementById('yuanRate').innerHTML = `—<span> ₽</span>`;
             }
         }
 
@@ -955,34 +949,22 @@
         }
 
         async function bookLaundry(time) {
-            if (!currentUserId) {
-                tg.showAlert('Откройте через Telegram бота');
-                return;
-            }
+            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
             const username = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Пользователь';
             try {
                 const r = await fetch(`${API_URL}/api/laundry`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        date: selectedLaundryDate,
-                        time: time,
-                        telegram_id: currentUserId,
-                        username: username
-                    })
+                    body: JSON.stringify({date: selectedLaundryDate, time, telegram_id: currentUserId, username})
                 });
                 if (r.ok) {
                     tg.showAlert(`✅ Записан на ${time}!`);
                     loadLaundry();
                 } else {
                     const err = await r.json();
-                    tg.showAlert(err.detail === 'Already booked for this day' ?
-                        'У вас уже есть запись на этот день' :
-                        'Это время уже занято');
+                    tg.showAlert(err.detail === 'Already booked for this day' ? 'У вас уже есть запись на этот день' : 'Это время уже занято');
                 }
-            } catch(e) {
-                tg.showAlert('Ошибка записи');
-            }
+            } catch(e) { tg.showAlert('Ошибка записи'); }
         }
 
         async function cancelLaundry(id) {
@@ -991,23 +973,16 @@
                     method: 'DELETE',
                     headers: {'x-telegram-id': currentUserId}
                 });
-                if (r.ok) {
-                    tg.showAlert('Запись отменена');
-                    loadLaundry();
-                }
-            } catch(e) {
-                tg.showAlert('Ошибка');
-            }
+                if (r.ok) { tg.showAlert('Запись отменена'); loadLaundry(); }
+            } catch(e) { tg.showAlert('Ошибка'); }
         }
 
-        // Админ функции
         function showAdminSection(name) {
             ['schedule','announce','laundry','users'].forEach(s => {
                 document.getElementById('admin-' + s).style.display = 'none';
             });
             document.getElementById('admin-' + name).style.display = 'block';
             if (name === 'laundry') loadAdminLaundry();
-            if (name === 'users') loadAdminUsers();
         }
 
         async function addScheduleItem() {
@@ -1015,10 +990,7 @@
             const time = document.getElementById('schTime').value;
             const subject = document.getElementById('schSubject').value;
             const location = document.getElementById('schLocation').value;
-            if (!day || !time || !subject || !location) {
-                tg.showAlert('Заполните все поля');
-                return;
-            }
+            if (!day || !time || !subject || !location) { tg.showAlert('Заполните все поля'); return; }
             try {
                 const r = await fetch(`${API_URL}/api/schedule`, {
                     method: 'POST',
@@ -1030,9 +1002,7 @@
                     ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value = '');
                     loadSchedule();
                 }
-            } catch(e) {
-                tg.showAlert('Ошибка');
-            }
+            } catch(e) { tg.showAlert('Ошибка'); }
         }
 
         async function deleteSchedule(id) {
@@ -1059,9 +1029,7 @@
                     document.getElementById('announceText').value = '';
                     loadAnnouncements();
                 }
-            } catch(e) {
-                tg.showAlert('Ошибка');
-            }
+            } catch(e) { tg.showAlert('Ошибка'); }
         }
 
         async function deleteAnnouncement(id) {
@@ -1079,10 +1047,7 @@
                 const r = await fetch(`${API_URL}/api/laundry`);
                 const data = await r.json();
                 const container = document.getElementById('adminLaundryList');
-                if (!data.length) {
-                    container.innerHTML = '<div class="empty-state">Записей нет</div>';
-                    return;
-                }
+                if (!data.length) { container.innerHTML = '<div class="empty-state">Записей нет</div>'; return; }
                 container.innerHTML = data.map(b => `
                     <div class="schedule-item">
                         <div class="schedule-info">
@@ -1101,56 +1066,4 @@
                     headers: {'x-telegram-id': currentUserId}
                 });
                 loadAdminLaundry();
-                loadLaundry();
-            } catch(e) {}
-        }
-
-        async function loadAdminUsers() {
-            try {
-                const r = await fetch(`${API_URL}/api/users/list`, {
-                    headers: {'x-admin-id': currentUserId}
-                });
-                // Используем локальный API
-                const container = document.getElementById('adminUsersList');
-                container.innerHTML = '<div class="empty-state">Используйте /listusers в боте</div>';
-            } catch(e) {}
-        }
-
-        async function getConfig() {
-            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-            if (userConfig) {
-                document.getElementById('configBox').textContent = userConfig;
-                document.getElementById('configBox').style.display = 'block';
-                document.getElementById('copyBtn').style.display = 'block';
-            } else {
-                tg.showAlert('Конфиг не найден. Активируйте код через /start КОД в боте.');
-            }
-        }
-
-        function copyConfig() {
-            if (userConfig) {
-                navigator.clipboard.writeText(userConfig);
-                const btn = document.getElementById('copyBtn');
-                btn.textContent = '✅ Скопировано!';
-                btn.classList.add('success');
-                setTimeout(() => {
-                    btn.textContent = '📋 Скопировать ссылку';
-                    btn.classList.remove('success');
-                }, 2000);
-            }
-        }
-
-        function showHelp() {
-            tg.showPopup({
-                title: 'Инструкция',
-                message: '1. Нажмите "Получить конфиг"\n2. Нажмите "Скопировать ссылку"\n3. Откройте Happ → + → вставьте ссылку\n4. Подключитесь!',
-                buttons: [{type: 'ok'}]
-            });
-        }
-
-        function contactAdmin() {
-            tg.openTelegramLink('https://t.me/christianpastor');
-        }
-    </script>
-</body>
-</html>
+                load
