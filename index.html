@@ -83,12 +83,46 @@
         .achievement-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #b8860b, #f5d05a, #b8860b); }
         .achievement-card.locked { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.06); filter: grayscale(1); opacity: 0.35; }
         .achievement-card.locked::before { display: none; }
-        .achievement-card:not(.locked):active { transform: scale(0.95); box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+        .achievement-card:not(.locked):active { transform: scale(0.95); }
         .achievement-svg { width: 52px; height: 52px; margin: 0 auto 8px; display: block; }
         .achievement-name { font-size: 10px; color: #d4af37; font-weight: 700; line-height: 1.3; }
         .achievement-card.locked .achievement-name { color: #333; }
         .achievement-count { font-size: 12px; color: #666; margin-bottom: 15px; text-align: center; }
         .achievement-earned-badge { position: absolute; top: 6px; right: 6px; font-size: 10px; }
+
+        /* МАГАЗИН */
+        .shop-balance { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 16px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; width: 100%; max-width: 360px; }
+        .shop-balance-label { color: #666; font-size: 12px; }
+        .shop-balance-value { font-size: 24px; font-weight: 800; color: #d4af37; }
+        .shop-frozen-banner { background: rgba(255, 80, 80, 0.1); border: 1px solid rgba(255, 80, 80, 0.3); border-radius: 12px; padding: 12px 16px; color: #ff5050; font-size: 13px; text-align: center; margin-bottom: 15px; width: 100%; max-width: 360px; }
+        .shop-category { color: #d4af37; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin: 15px 0 10px; width: 100%; max-width: 360px; }
+        .shop-item { background: linear-gradient(145deg, #0d0d1f, #111128); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 15px; width: 100%; max-width: 360px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden; }
+        .shop-item.unavailable { opacity: 0.5; }
+        .shop-item.unavailable::after { content: 'РАЗОБРАНО'; position: absolute; top: 8px; right: 8px; background: rgba(255,80,80,0.2); color: #ff5050; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 1px; }
+        .shop-item-icon { font-size: 36px; min-width: 44px; text-align: center; }
+        .shop-item-info { flex: 1; }
+        .shop-item-name { color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+        .shop-item-desc { color: #666; font-size: 11px; line-height: 1.4; }
+        .shop-item-limit { color: #888; font-size: 10px; margin-top: 3px; }
+        .shop-item-buy { background: linear-gradient(135deg, #d4af37, #f5d05a); color: #050510; border: none; border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .shop-item-buy:active { transform: scale(0.95); }
+        .shop-item-buy:disabled { opacity: 0.4; cursor: not-allowed; }
+        .shop-tabs { display: flex; gap: 8px; margin-bottom: 15px; width: 100%; max-width: 360px; }
+        .shop-tab { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.2); background: transparent; color: #666; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .shop-tab.active { background: rgba(212, 175, 55, 0.15); border-color: rgba(212, 175, 55, 0.4); color: #d4af37; }
+
+        /* ИНВЕНТАРЬ */
+        .inventory-item { background: linear-gradient(145deg, #0d0d1f, #111128); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 16px; padding: 15px; width: 100%; max-width: 360px; margin-bottom: 10px; }
+        .inventory-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .inventory-icon { font-size: 32px; }
+        .inventory-name { color: #fff; font-size: 15px; font-weight: 700; }
+        .inventory-date { color: #666; font-size: 11px; margin-top: 2px; }
+        .inventory-actions { display: flex; gap: 8px; }
+        .inv-btn { flex: 1; padding: 8px; border-radius: 10px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .inv-btn-use { background: linear-gradient(135deg, #d4af37, #f5d05a); color: #050510; }
+        .inv-btn-gift { background: rgba(100, 200, 100, 0.15); border: 1px solid rgba(100, 200, 100, 0.3); color: #4cff88; }
+        .inv-btn-sell { background: rgba(255, 80, 80, 0.1); border: 1px solid rgba(255, 80, 80, 0.3); color: #ff5050; }
+        .inv-btn:active { transform: scale(0.97); }
 
         /* КАЗИНО */
         .casino-header { text-align: center; margin-bottom: 20px; }
@@ -98,11 +132,9 @@
         .casino-balance-label { color: #666; font-size: 12px; }
         .casino-balance-value { font-size: 24px; font-weight: 800; color: #d4af37; }
         .casino-cost { font-size: 11px; color: #888; text-align: center; margin-bottom: 15px; }
-
-        /* Рулетка */
         .roulette-wrapper { width: 100%; max-width: 360px; position: relative; margin-bottom: 20px; }
         .roulette-pointer { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 16px solid #d4af37; z-index: 10; filter: drop-shadow(0 0 6px rgba(212,175,55,0.8)); }
-        .roulette-pointer-bottom { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 16px solid #d4af37; z-index: 10; filter: drop-shadow(0 0 6px rgba(212,175,55,0.8)); }
+        .roulette-pointer-bottom { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 16px solid #d4af37; z-index: 10; }
         .roulette-track { overflow: hidden; border-radius: 16px; border: 2px solid rgba(212, 175, 55, 0.4); background: #080818; position: relative; }
         .roulette-track::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to right, #080818, transparent); z-index: 5; pointer-events: none; }
         .roulette-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to left, #080818, transparent); z-index: 5; pointer-events: none; }
@@ -117,8 +149,6 @@
         .roulette-item-name { font-size: 9px; color: #aaa; text-align: center; line-height: 1.2; padding: 0 4px; }
         .roulette-item.jackpot .roulette-item-name { color: #f5d05a; font-weight: 700; }
         .roulette-item.winner { border-color: #f5d05a !important; box-shadow: 0 0 25px rgba(212, 175, 55, 0.6) !important; transform: scale(1.05); }
-
-        /* Результат */
         .prize-result { display: none; text-align: center; padding: 20px; background: linear-gradient(145deg, #0d0d1f, #111128); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 20px; width: 100%; max-width: 360px; margin-bottom: 15px; animation: fadeInUp 0.5s ease; }
         .prize-result.show { display: block; }
         .prize-result-icon { font-size: 60px; margin-bottom: 10px; }
@@ -128,24 +158,10 @@
         .prize-result-points.positive { color: #4cff88; }
         .prize-result-points.negative { color: #ff5050; }
         .prize-result-points.special { color: #d4af37; }
-
-        /* Конфетти */
         .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; overflow: hidden; }
         .confetti-piece { position: absolute; width: 10px; height: 10px; top: -10px; animation: confettiFall linear forwards; }
         @keyframes confettiFall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
 
-        .btn { width: 100%; max-width: 360px; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
-        .btn-primary { background: linear-gradient(135deg, #d4af37, #f5d05a, #b8860b); color: #050510; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3); }
-        .btn-primary:active { transform: scale(0.97); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-secondary { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); color: #d4af37; }
-        .btn-secondary:active { transform: scale(0.97); }
-        .btn-casino { background: linear-gradient(135deg, #8b0000, #cc2200, #ff4400); color: #fff; box-shadow: 0 4px 20px rgba(255, 68, 0, 0.4); font-size: 17px; padding: 18px; }
-        .btn-casino:active { transform: scale(0.97); }
-        .btn-casino:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .config-box { background: #0a0a18; border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 12px; padding: 15px; width: 100%; max-width: 360px; margin-bottom: 12px; word-break: break-all; font-size: 10px; color: rgba(212, 175, 55, 0.7); display: none; font-family: monospace; }
-        .divider { width: 100%; max-width: 360px; height: 1px; background: rgba(212, 175, 55, 0.1); margin: 5px 0 15px; }
-        .empty-state { text-align: center; color: #444; padding: 30px 0; font-size: 14px; }
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; margin-bottom: 15px; }
         .admin-btn { background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .admin-btn:active { transform: scale(0.97); }
@@ -156,21 +172,22 @@
         .form-input { width: 100%; background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; padding: 12px; color: #fff; font-size: 14px; outline: none; }
         .form-input:focus { border-color: rgba(212, 175, 55, 0.5); }
         textarea.form-input { resize: vertical; min-height: 80px; }
+        .btn { width: 100%; max-width: 360px; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #d4af37, #f5d05a, #b8860b); color: #050510; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); color: #d4af37; }
+        .btn-secondary:active { transform: scale(0.97); }
+        .btn-casino { background: linear-gradient(135deg, #8b0000, #cc2200, #ff4400); color: #fff; box-shadow: 0 4px 20px rgba(255, 68, 0, 0.4); font-size: 17px; padding: 18px; }
+        .btn-casino:disabled { opacity: 0.5; cursor: not-allowed; }
+        .config-box { background: #0a0a18; border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 12px; padding: 15px; width: 100%; max-width: 360px; margin-bottom: 12px; word-break: break-all; font-size: 10px; color: rgba(212, 175, 55, 0.7); display: none; font-family: monospace; }
+        .divider { width: 100%; max-width: 360px; height: 1px; background: rgba(212, 175, 55, 0.1); margin: 5px 0 15px; }
+        .empty-state { text-align: center; color: #444; padding: 30px 0; font-size: 14px; }
         .footer { color: rgba(212, 175, 55, 0.2); font-size: 10px; text-align: center; margin-top: auto; padding: 20px 0; letter-spacing: 3px; }
         .success { background: linear-gradient(135deg, #d4af37, #f5d05a) !important; color: #050510 !important; }
-        @keyframes pulse {
-            0%, 100% { filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)); }
-            50% { filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.7)); }
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-            0% { box-shadow: 0 0 10px rgba(212,175,55,0.3); }
-            50% { box-shadow: 0 0 30px rgba(212,175,55,0.8), 0 0 60px rgba(212,175,55,0.4); }
-            100% { box-shadow: 0 0 10px rgba(212,175,55,0.3); }
-        }
+        @keyframes pulse { 0%, 100% { filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)); } 50% { filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.7)); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer { 0% { box-shadow: 0 0 10px rgba(212,175,55,0.3); } 50% { box-shadow: 0 0 30px rgba(212,175,55,0.8); } 100% { box-shadow: 0 0 10px rgba(212,175,55,0.3); } }
     </style>
 </head>
 <body>
@@ -191,29 +208,21 @@
             <button class="tab" onclick="showTab('news', this)">📢 Новости</button>
             <button class="tab" onclick="showTab('rating', this)">🏆 Рейтинг</button>
             <button class="tab" onclick="showTab('achievements', this)">🏅 Ачивки</button>
+            <button class="tab" onclick="showTab('shop', this)">🛒 Магазин</button>
             <button class="tab" onclick="showTab('casino', this)">🎰 Кейсы</button>
         </div>
 
         <!-- Главная -->
         <div class="tab-content active" id="tab-home">
             <div class="card">
-                <div class="status-row">
-                    <span class="status-label">Статус</span>
-                    <span class="status-badge" id="status">● Загрузка...</span>
-                </div>
+                <div class="status-row"><span class="status-label">Статус</span><span class="status-badge" id="status">● Загрузка...</span></div>
                 <div class="username" id="username">Загрузка...</div>
                 <div class="server-tag">🇭🇰 Hong Kong</div>
                 <div class="traffic-section">
-                    <div class="traffic-label">
-                        <span class="traffic-text">Использовано трафика</span>
-                        <span class="traffic-value" id="trafficValue">—</span>
-                    </div>
+                    <div class="traffic-label"><span class="traffic-text">Использовано трафика</span><span class="traffic-value" id="trafficValue">—</span></div>
                     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
                 </div>
-                <div class="points-section">
-                    <span class="points-label">⭐ Мои баллы</span>
-                    <span class="points-value" id="myPoints">—</span>
-                </div>
+                <div class="points-section"><span class="points-label">⭐ Мои баллы</span><span class="points-value" id="myPoints">—</span></div>
             </div>
             <button class="btn btn-primary" onclick="getConfig()">⚡ Получить конфиг</button>
             <div class="config-box" id="configBox"></div>
@@ -227,13 +236,7 @@
         <div class="tab-content" id="tab-weather">
             <div class="card">
                 <div class="card-title">📍 Пекин, Китай</div>
-                <div class="weather-main">
-                    <div>
-                        <div class="weather-temp" id="weatherTemp">—<span>°C</span></div>
-                        <div class="weather-desc" id="weatherDesc">Загрузка...</div>
-                    </div>
-                    <div class="weather-icon" id="weatherIcon">🌤</div>
-                </div>
+                <div class="weather-main"><div><div class="weather-temp" id="weatherTemp">—<span>°C</span></div><div class="weather-desc" id="weatherDesc">Загрузка...</div></div><div class="weather-icon" id="weatherIcon">🌤</div></div>
                 <div class="weather-details">
                     <div class="weather-detail">💧 Влажность: <span id="weatherHumidity">—</span>%</div>
                     <div class="weather-detail">💨 Ветер: <span id="weatherWind">—</span> м/с</div>
@@ -242,109 +245,83 @@
             </div>
             <div class="card">
                 <div class="card-title">💴 Курс юаня к рублю</div>
-                <div class="weather-main">
-                    <div>
-                        <div class="yuan-rate" id="yuanRate">—<span> ₽</span></div>
-                        <div class="weather-desc">за 1 китайский юань (CNY)</div>
-                    </div>
-                    <div class="weather-icon">🇨🇳</div>
-                </div>
-                <div class="weather-details">
-                    <div class="weather-detail">🔄 Обновлено: <span id="rateUpdated">—</span></div>
-                </div>
+                <div class="weather-main"><div><div class="yuan-rate" id="yuanRate">—<span> ₽</span></div><div class="weather-desc">за 1 китайский юань (CNY)</div></div><div class="weather-icon">🇨🇳</div></div>
+                <div class="weather-details"><div class="weather-detail">🔄 Обновлено: <span id="rateUpdated">—</span></div></div>
             </div>
         </div>
 
         <!-- Расписание -->
         <div class="tab-content" id="tab-schedule">
-            <div class="card">
-                <div class="card-title">📅 Расписание занятий</div>
-                <div id="scheduleContent"><div class="empty-state">Загрузка...</div></div>
-            </div>
+            <div class="card"><div class="card-title">📅 Расписание занятий</div><div id="scheduleContent"><div class="empty-state">Загрузка...</div></div></div>
         </div>
 
         <!-- Стирка -->
         <div class="tab-content" id="tab-laundry">
-            <div class="card">
-                <div class="card-title">🧺 Запись на стирку</div>
-                <div class="laundry-date-selector" id="laundryDates"></div>
-                <div class="laundry-grid" id="laundrySlots">
-                    <div class="empty-state" style="grid-column:span 2">Загрузка...</div>
-                </div>
-            </div>
+            <div class="card"><div class="card-title">🧺 Запись на стирку</div><div class="laundry-date-selector" id="laundryDates"></div><div class="laundry-grid" id="laundrySlots"><div class="empty-state" style="grid-column:span 2">Загрузка...</div></div></div>
         </div>
 
         <!-- Объявления -->
         <div class="tab-content" id="tab-news">
-            <div class="card">
-                <div class="card-title">📢 Объявления</div>
-                <div id="announcementsContent"><div class="empty-state">Загрузка...</div></div>
-            </div>
+            <div class="card"><div class="card-title">📢 Объявления</div><div id="announcementsContent"><div class="empty-state">Загрузка...</div></div></div>
         </div>
 
         <!-- Рейтинг -->
         <div class="tab-content" id="tab-rating">
-            <div class="my-rank-card">
-                <div class="my-rank-label">⭐ Мои баллы</div>
-                <div class="my-rank-points" id="myPointsBig">—</div>
-                <div class="my-rank-sub" id="myRankSub">Загрузка...</div>
-            </div>
-            <div class="card">
-                <div class="card-title">🏆 Таблица лидеров</div>
-                <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
-            </div>
+            <div class="my-rank-card"><div class="my-rank-label">⭐ Мои баллы</div><div class="my-rank-points" id="myPointsBig">—</div><div class="my-rank-sub" id="myRankSub">Загрузка...</div></div>
+            <div class="card"><div class="card-title">🏆 Таблица лидеров</div><div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div></div>
         </div>
 
         <!-- Ачивки -->
         <div class="tab-content" id="tab-achievements">
-            <div class="card">
-                <div class="card-title">🏅 Мои достижения</div>
-                <div id="achievementsContent"><div class="empty-state">Загрузка...</div></div>
+            <div class="card"><div class="card-title">🏅 Мои достижения</div><div id="achievementsContent"><div class="empty-state">Загрузка...</div></div></div>
+        </div>
+
+        <!-- Магазин -->
+        <div class="tab-content" id="tab-shop">
+            <div class="shop-tabs">
+                <button class="shop-tab active" onclick="switchShopTab('store', this)">🛒 Магазин</button>
+                <button class="shop-tab" onclick="switchShopTab('inventory', this)">🎒 Инвентарь</button>
+            </div>
+
+            <div id="shopFrozenBanner" class="shop-frozen-banner" style="display:none">
+                🔒 Магазин заморожен администратором
+            </div>
+
+            <div class="shop-balance">
+                <div><div class="shop-balance-label">Твой баланс</div><div class="shop-balance-value" id="shopPoints">—</div></div>
+                <div style="text-align:right"><div class="shop-balance-label">Обновление</div><div class="shop-balance-value" style="font-size:14px;color:#666">19:00 🕗</div></div>
+            </div>
+
+            <div id="shopStoreContent" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+                <div class="empty-state">Загрузка...</div>
+            </div>
+
+            <div id="shopInventoryContent" style="width:100%;display:none;flex-direction:column;align-items:center;">
+                <div class="empty-state">Загрузка...</div>
             </div>
         </div>
 
         <!-- Казино -->
         <div class="tab-content" id="tab-casino">
-            <div class="casino-header">
-                <div class="casino-title">🎰 ZHIDAO КЕЙСЫ</div>
-                <div class="casino-subtitle">Испытай удачу! 1 кейс в день</div>
-            </div>
-
+            <div class="casino-header"><div class="casino-title">🎰 ZHIDAO КЕЙСЫ</div><div class="casino-subtitle">Испытай удачу! 3 кейса в день</div></div>
             <div class="casino-balance" id="casinoBalance">
-                <div>
-                    <div class="casino-balance-label">Твой баланс</div>
-                    <div class="casino-balance-value" id="casinoPoints">—</div>
-                </div>
-                <div style="text-align:right">
-                    <div class="casino-balance-label">Стоимость</div>
-                    <div class="casino-balance-value" style="color:#ff8844">50 ⭐</div>
-                </div>
+                <div><div class="casino-balance-label">Твой баланс</div><div class="casino-balance-value" id="casinoPoints">—</div></div>
+                <div style="text-align:right"><div class="casino-balance-label">Стоимость</div><div class="casino-balance-value" style="color:#ff8844">50 ⭐</div></div>
             </div>
-
             <div class="roulette-wrapper" id="rouletteWrapper">
                 <div class="roulette-pointer"></div>
                 <div class="roulette-pointer-bottom"></div>
-                <div class="roulette-track">
-                    <div class="roulette-center-line"></div>
-                    <div class="roulette-strip" id="rouletteStrip"></div>
-                </div>
+                <div class="roulette-track"><div class="roulette-center-line"></div><div class="roulette-strip" id="rouletteStrip"></div></div>
             </div>
-
-            <div class="casino-cost">⚠️ Казино вредит кошельку! Минимум 80 баллов для участия</div>
-
+            <div class="casino-cost">⚠️ Минимум 80 баллов для участия • Лимит 3 кейса в день</div>
             <div class="prize-result" id="prizeResult">
                 <div class="prize-result-icon" id="prizeIcon">🎁</div>
                 <div class="prize-result-name" id="prizeName">—</div>
                 <div class="prize-result-desc" id="prizeDesc">—</div>
                 <div class="prize-result-points" id="prizePoints">—</div>
             </div>
-
-            <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">
-                🎰 Открыть кейс за 50 ⭐
-            </button>
-            <button class="btn btn-secondary" id="playAgainBtn" style="display:none" onclick="resetCasino()">
-                🔄 Сыграть снова
-            </button>
+            <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">🎰 Открыть кейс за 50 ⭐</button>
+            <button class="btn btn-secondary" id="playAgainBtn" style="display:none" onclick="resetCasino()">🔄 Ещё раз</button>
         </div>
 
         <!-- Админ -->
@@ -354,10 +331,10 @@
                 <div class="admin-btn" onclick="showAdminSection('announce')"><div class="admin-btn-icon">📢</div><div class="admin-btn-text">Объявление</div></div>
                 <div class="admin-btn" onclick="showAdminSection('laundry')"><div class="admin-btn-icon">🧺</div><div class="admin-btn-text">Стирка</div></div>
                 <div class="admin-btn" onclick="showAdminSection('users')"><div class="admin-btn-icon">👥</div><div class="admin-btn-text">Пользователи</div></div>
+                <div class="admin-btn" onclick="resetShop()"><div class="admin-btn-icon">🔄</div><div class="admin-btn-text">Сбросить магазин</div></div>
             </div>
             <div id="admin-schedule" style="display:none; width:100%; max-width:360px;">
-                <div class="card">
-                    <div class="card-title">Добавить занятие</div>
+                <div class="card"><div class="card-title">Добавить занятие</div>
                     <div class="form-group"><label class="form-label">День</label><input class="form-input" id="schDay" placeholder="Понедельник"></div>
                     <div class="form-group"><label class="form-label">Время</label><input class="form-input" id="schTime" placeholder="09:00"></div>
                     <div class="form-group"><label class="form-label">Предмет</label><input class="form-input" id="schSubject" placeholder="Китайский язык"></div>
@@ -366,23 +343,16 @@
                 </div>
             </div>
             <div id="admin-announce" style="display:none; width:100%; max-width:360px;">
-                <div class="card">
-                    <div class="card-title">Новое объявление</div>
+                <div class="card"><div class="card-title">Новое объявление</div>
                     <div class="form-group"><textarea class="form-input" id="announceText" placeholder="Текст объявления..."></textarea></div>
                     <button class="btn btn-primary" onclick="addAnnouncement()">Опубликовать</button>
                 </div>
             </div>
             <div id="admin-laundry" style="display:none; width:100%; max-width:360px;">
-                <div class="card">
-                    <div class="card-title">Все записи на стирку</div>
-                    <div id="adminLaundryList">Загрузка...</div>
-                </div>
+                <div class="card"><div class="card-title">Все записи на стирку</div><div id="adminLaundryList">Загрузка...</div></div>
             </div>
             <div id="admin-users" style="display:none; width:100%; max-width:360px;">
-                <div class="card">
-                    <div class="card-title">Пользователи</div>
-                    <div id="adminUsersList">Используйте /listusers в боте</div>
-                </div>
+                <div class="card"><div class="card-title">Пользователи</div><div id="adminUsersList">Используйте /listusers в боте</div></div>
             </div>
         </div>
 
@@ -407,37 +377,33 @@
         let currentPoints = 0;
         let isSpinning = false;
 
-        // Призы для рулетки
         const PRIZES = [
-            { code: 'minus',   icon: '💀', name: 'Не повезло!',          desc: '-20 баллов',                 points: -20,  rarity: 'uncommon' },
-            { code: 'small',   icon: '⭐', name: '+10 баллов',           desc: 'Небольшой выигрыш',          points: 10,   rarity: 'common' },
-            { code: 'medium',  icon: '💫', name: '+30 баллов',           desc: 'Неплохо!',                   points: 30,   rarity: 'common' },
-            { code: 'good',    icon: '💎', name: '+50 баллов',           desc: 'Хороший выигрыш!',           points: 50,   rarity: 'uncommon' },
-            { code: 'great',   icon: '🔥', name: '+100 баллов',          desc: 'Отличный выигрыш!',          points: 100,  rarity: 'rare' },
-            { code: 'laundry', icon: '🧺', name: 'Вне очереди!',        desc: 'Первый на стирку завтра',     points: 0,    rarity: 'rare' },
-            { code: 'skip',    icon: '🛡', name: 'Иммунитет!',          desc: 'Пропуск переклички без штрафа', points: 0, rarity: 'rare' },
-            { code: 'jackpot', icon: '👑', name: 'ДЖЕКПОТ!',            desc: '+200 баллов! Невероятно!',    points: 200,  rarity: 'jackpot' },
+            { code: 'empty',   icon: '🍚', name: 'Пустая миска риса', desc: 'Ничего не выпало...',       points: 0,   rarity: 'common' },
+            { code: 'small',   icon: '⭐', name: '+10 баллов',        desc: 'Небольшой бонус',           points: 10,  rarity: 'common' },
+            { code: 'medium',  icon: '💫', name: '+30 баллов',        desc: 'Неплохо!',                  points: 30,  rarity: 'uncommon' },
+            { code: 'walk',    icon: '🕐', name: '+30 мин прогулки',  desc: 'Покажи скрин вожатому',     points: 0,   rarity: 'uncommon' },
+            { code: 'laundry', icon: '🧺', name: 'Вне очереди!',     desc: 'Первым на стирку/за водой', points: 0,   rarity: 'rare' },
+            { code: 'skip',    icon: '🛡', name: 'Иммунитет!',       desc: 'Один пропуск без штрафа',   points: 0,   rarity: 'rare' },
+            { code: 'jackpot', icon: '👑', name: 'ДЖЕКПОТ!',         desc: '+200 баллов! Невероятно!',  points: 200, rarity: 'jackpot' },
         ];
-
         const PRIZE_MAP = {};
         PRIZES.forEach(p => PRIZE_MAP[p.code] = p);
 
-        // SVG иконки ачивок
         const ACHIEVEMENT_ICONS = {
-            early_bird: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="22" r="7" fill="url(#g1)"/><path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 36 L26 28 L32 36" fill="url(#g1)"/><circle cx="26" cy="10" r="3" fill="url(#g1)"/></svg>`,
-            iron_mode: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/><path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="26" r="5" fill="url(#g2)"/></svg>`,
-            legend: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/></svg>`,
-            curious: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/><line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/></svg>`,
-            polyglot: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/><text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text></svg>`,
-            explorer: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="26" cy="18" r="4" fill="url(#g6)"/></svg>`,
-            brave: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="36" r="2" fill="url(#g7)"/><circle cx="34" cy="36" r="2" fill="url(#g7)"/></svg>`,
-            exemplary: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/><path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
-            helper: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/></svg>`,
-            dragon: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/><path d="M30 18 L34 12 M34 18 L38 14" stroke="url(#g10)" stroke-width="2" stroke-linecap="round"/><circle cx="32" cy="22" r="2" fill="#050510"/></svg>`,
-            night_watch: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="22" cy="22" r="4" fill="url(#g11)"/><circle cx="30" cy="22" r="4" fill="url(#g11)"/><circle cx="22" cy="22" r="2" fill="#050510"/><circle cx="30" cy="22" r="2" fill="#050510"/><path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M16 24 L10 22 M36 24 L42 22" stroke="url(#g11)" stroke-width="2" stroke-linecap="round"/></svg>`,
-            master: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/><rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/><rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/></svg>`,
-            gambler: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/><text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text><text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text><text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text></svg>`,
-            lucky: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/><path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/><circle cx="26" cy="26" r="2" fill="url(#g14)"/></svg>`
+            early_bird: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="22" r="7" fill="url(#g1)"/><path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 36 L26 28 L32 36" fill="url(#g1)"/><circle cx="26" cy="10" r="3" fill="url(#g1)"/></svg>`,
+            iron_mode: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/><path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="26" r="5" fill="url(#g2)"/></svg>`,
+            legend: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/></svg>`,
+            curious: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/><line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/></svg>`,
+            polyglot: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/><text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text></svg>`,
+            explorer: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="26" cy="18" r="4" fill="url(#g6)"/></svg>`,
+            brave: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="36" r="2" fill="url(#g7)"/><circle cx="34" cy="36" r="2" fill="url(#g7)"/></svg>`,
+            exemplary: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/><path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+            helper: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/></svg>`,
+            dragon: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/><circle cx="32" cy="22" r="2" fill="#050510"/></svg>`,
+            night_watch: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="22" cy="22" r="4" fill="url(#g11)"/><circle cx="30" cy="22" r="4" fill="url(#g11)"/><circle cx="22" cy="22" r="2" fill="#050510"/><circle cx="30" cy="22" r="2" fill="#050510"/><path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+            master: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/><rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/><rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/></svg>`,
+            gambler: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/><text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text><text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text><text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text></svg>`,
+            lucky: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/><path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/><circle cx="26" cy="26" r="2" fill="url(#g14)"/></svg>`
         };
 
         const user = tg.initDataUnsafe?.user;
@@ -475,28 +441,216 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById('tab-' + name).classList.add('active');
             if (btn) btn.classList.add('active');
+            if (name === 'shop') loadShop();
+        }
+
+        // ===== МАГАЗИН =====
+        let shopMode = 'store';
+
+        function switchShopTab(mode, btn) {
+            shopMode = mode;
+            document.querySelectorAll('.shop-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (mode === 'store') {
+                document.getElementById('shopStoreContent').style.display = 'flex';
+                document.getElementById('shopInventoryContent').style.display = 'none';
+                loadShop();
+            } else {
+                document.getElementById('shopStoreContent').style.display = 'none';
+                document.getElementById('shopInventoryContent').style.display = 'flex';
+                loadInventory();
+            }
+        }
+
+        async function loadShop() {
+            try {
+                const r = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId || 0}`);
+                const data = await r.json();
+                const container = document.getElementById('shopStoreContent');
+
+                document.getElementById('shopPoints').textContent = currentPoints + ' ⭐';
+
+                if (data.frozen) {
+                    document.getElementById('shopFrozenBanner').style.display = 'block';
+                }
+
+                const categories = {
+                    'privilege': { name: '⚡ Привилегии', items: [] },
+                    'points': { name: '⭐ Баллы', items: [] },
+                    'social': { name: '🤝 Социальное', items: [] },
+                    'food': { name: '🍽 Еда', items: [] },
+                    'vip': { name: '👑 VIP', items: [] },
+                };
+
+                data.items.forEach(item => {
+                    if (categories[item.category]) categories[item.category].items.push(item);
+                });
+
+                let html = '';
+                for (const cat of Object.values(categories)) {
+                    if (!cat.items.length) continue;
+                    html += `<div class="shop-category" style="width:100%;max-width:360px;">${cat.name}</div>`;
+                    cat.items.forEach(item => {
+                        const canBuy = item.available && currentPoints >= item.price;
+                        const limitText = item.daily_limit > 0
+                            ? `Осталось: ${item.daily_limit - item.sold_today} из ${item.daily_limit}`
+                            : 'Без ограничений';
+                        html += `<div class="shop-item ${!item.available ? 'unavailable' : ''}">
+                            <div class="shop-item-icon">${item.icon}</div>
+                            <div class="shop-item-info">
+                                <div class="shop-item-name">${item.name}</div>
+                                <div class="shop-item-desc">${item.description}</div>
+                                <div class="shop-item-limit">${limitText}</div>
+                            </div>
+                            <button class="shop-item-buy" onclick="buyItem('${item.code}', '${item.name}', ${item.price})"
+                                ${!canBuy ? 'disabled' : ''}>
+                                ${item.price} ⭐
+                            </button>
+                        </div>`;
+                    });
+                }
+                container.innerHTML = html || '<div class="empty-state">Магазин пуст</div>';
+            } catch(e) {
+                document.getElementById('shopStoreContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+            }
+        }
+
+        async function buyItem(code, name, price) {
+            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+            tg.showPopup({
+                title: `Купить ${name}?`,
+                message: `Стоимость: ${price} ⭐\nТвой баланс: ${currentPoints} ⭐`,
+                buttons: [
+                    { id: 'confirm', type: 'default', text: '✅ Купить' },
+                    { type: 'cancel' }
+                ]
+            }, async (btnId) => {
+                if (btnId !== 'confirm') return;
+                try {
+                    const r = await fetch(`${API_URL}/api/shop/buy`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({telegram_id: currentUserId, item_code: code})
+                    });
+                    if (r.ok) {
+                        const data = await r.json();
+                        currentPoints = data.new_points;
+                        document.getElementById('myPoints').textContent = currentPoints + ' ⭐';
+                        document.getElementById('myPointsBig').textContent = currentPoints;
+                        document.getElementById('shopPoints').textContent = currentPoints + ' ⭐';
+                        document.getElementById('casinoPoints').textContent = currentPoints + ' ⭐';
+                        tg.HapticFeedback.notificationOccurred('success');
+                        tg.showAlert(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ⭐`);
+                        loadShop();
+                    } else {
+                        const err = await r.json();
+                        if (err.detail === 'Daily limit reached') tg.showAlert('Этот товар уже разобрали на сегодня!');
+                        else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
+                        else if (err.detail === 'Account frozen') tg.showAlert('Твой аккаунт заморожен!');
+                        else tg.showAlert('Ошибка покупки');
+                    }
+                } catch(e) { tg.showAlert('Ошибка соединения'); }
+            });
+        }
+
+        async function loadInventory() {
+            try {
+                const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
+                const data = await r.json();
+                const container = document.getElementById('shopInventoryContent');
+                if (!data.length) {
+                    container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купи что-нибудь в магазине!</div>';
+                    return;
+                }
+                container.innerHTML = data.map(item => `
+                    <div class="inventory-item">
+                        <div class="inventory-header">
+                            <div class="inventory-icon">${item.icon}</div>
+                            <div>
+                                <div class="inventory-name">${item.name}</div>
+                                <div class="inventory-date">${new Date(item.purchased_at).toLocaleDateString('ru-RU')}</div>
+                            </div>
+                        </div>
+                        <div class="inventory-actions">
+                            <button class="inv-btn inv-btn-use" onclick="useItem(${item.id}, '${item.name}')">✅ Использовать</button>
+                            <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id}, '${item.name}')">🎁 Подарить</button>
+                            <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id}, '${item.name}', ${item.price})">💰 Продать</button>
+                        </div>
+                    </div>`).join('');
+            } catch(e) {
+                document.getElementById('shopInventoryContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+            }
+        }
+
+        function useItem(id, name) {
+            tg.showPopup({
+                title: `Использовать ${name}?`,
+                message: 'Покажи этот экран вожатому для подтверждения.',
+                buttons: [{ type: 'ok' }]
+            });
+        }
+
+        async function giftItem(id, name) {
+            tg.showPopup({
+                title: `Подарить ${name}?`,
+                message: 'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов',
+                buttons: [{ type: 'ok' }]
+            });
+        }
+
+        async function sellItem(id, name, price) {
+            const refund = Math.floor(price / 2);
+            tg.showPopup({
+                title: `Продать ${name}?`,
+                message: `Ты получишь ${refund} ⭐ (50% от стоимости ${price} ⭐)`,
+                buttons: [
+                    { id: 'confirm', type: 'destructive', text: `💰 Продать за ${refund} ⭐` },
+                    { type: 'cancel' }
+                ]
+            }, async (btnId) => {
+                if (btnId !== 'confirm') return;
+                try {
+                    const r = await fetch(`${API_URL}/api/shop/sell`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({purchase_id: id, telegram_id: currentUserId})
+                    });
+                    if (r.ok) {
+                        const data = await r.json();
+                        currentPoints = data.new_points;
+                        document.getElementById('myPoints').textContent = currentPoints + ' ⭐';
+                        document.getElementById('myPointsBig').textContent = currentPoints;
+                        tg.showAlert(`✅ Продано! +${data.refund} ⭐`);
+                        loadInventory();
+                    }
+                } catch(e) { tg.showAlert('Ошибка'); }
+            });
+        }
+
+        async function resetShop() {
+            try {
+                const r = await fetch(`${API_URL}/api/admin/reset_shop`, {
+                    method: 'POST',
+                    headers: {'x-admin-id': currentUserId}
+                });
+                if (r.ok) tg.showAlert('✅ Магазин сброшен! Лимиты обновлены.');
+            } catch(e) { tg.showAlert('Ошибка'); }
         }
 
         // ===== КАЗИНО =====
         function initRoulette() {
             const strip = document.getElementById('rouletteStrip');
             strip.innerHTML = '';
-            // Генерируем длинную полосу (50 элементов)
-            const items = [];
             for (let i = 0; i < 50; i++) {
                 const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
-                items.push(prize);
-            }
-            items.forEach((prize, idx) => {
                 const el = document.createElement('div');
                 el.className = `roulette-item ${prize.rarity}`;
-                el.dataset.idx = idx;
+                el.dataset.idx = i;
                 el.innerHTML = `<div class="roulette-item-icon">${prize.icon}</div><div class="roulette-item-name">${prize.name}</div>`;
                 strip.appendChild(el);
-            });
-            // Центрируем на среднем элементе
-            const itemWidth = 98; // 90px + 2*4px margin
-            const trackWidth = document.querySelector('.roulette-track').offsetWidth || 360;
+            }
+            const itemWidth = 98;
+            const trackWidth = document.querySelector('.roulette-track')?.offsetWidth || 360;
             const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
             strip.style.transform = `translateX(${centerOffset}px)`;
         }
@@ -505,60 +659,38 @@
             if (isSpinning) return;
             if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
             if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужно минимум 80 ⭐'); return; }
-
             isSpinning = true;
             document.getElementById('openCaseBtn').disabled = true;
             document.getElementById('prizeResult').classList.remove('show');
-
             try {
                 const r = await fetch(`${API_URL}/api/casino/open`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({telegram_id: currentUserId})
                 });
-
                 if (!r.ok) {
                     const err = await r.json();
-                    if (err.detail === 'Daily limit reached') {
-                        tg.showAlert('Ты уже открывал кейс сегодня! Приходи завтра 😄');
-                    } else if (err.detail === 'Not enough points') {
-                        tg.showAlert('Недостаточно баллов! Нужно минимум 80 ⭐');
-                    } else {
-                        tg.showAlert('Ошибка! Попробуй снова.');
-                    }
+                    if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день исчерпан! Приходи завтра 😄');
+                    else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
+                    else tg.showAlert('Ошибка!');
                     isSpinning = false;
                     document.getElementById('openCaseBtn').disabled = false;
                     return;
                 }
-
                 const data = await r.json();
                 const prize = PRIZE_MAP[data.prize.code] || PRIZES[0];
-
-                // Запускаем анимацию
                 await spinRoulette(prize);
-
-                // Показываем результат
                 showPrizeResult(prize, data.new_points);
                 currentPoints = data.new_points;
                 document.getElementById('myPoints').textContent = data.new_points + ' ⭐';
                 document.getElementById('myPointsBig').textContent = data.new_points;
                 document.getElementById('casinoPoints').textContent = data.new_points + ' ⭐';
-
-                // Вибрация и конфетти
-                if (prize.code === 'jackpot') {
-                    tg.HapticFeedback.notificationOccurred('success');
-                    launchConfetti(100);
-                } else if (prize.points > 50) {
-                    tg.HapticFeedback.notificationOccurred('success');
-                    launchConfetti(30);
-                } else if (prize.code === 'minus') {
-                    tg.HapticFeedback.notificationOccurred('error');
-                } else {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-
+                document.getElementById('shopPoints').textContent = data.new_points + ' ⭐';
+                if (prize.code === 'jackpot') { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(100); }
+                else if (prize.points > 50) { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(30); }
+                else if (prize.code === 'empty') tg.HapticFeedback.notificationOccurred('error');
+                else tg.HapticFeedback.impactOccurred('medium');
                 document.getElementById('playAgainBtn').style.display = 'block';
-
             } catch(e) {
                 tg.showAlert('Ошибка соединения');
                 isSpinning = false;
@@ -573,80 +705,47 @@
                 const itemWidth = 98;
                 const trackWidth = document.querySelector('.roulette-track').offsetWidth || 360;
                 const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
-
-                // Подставляем приз на позицию ~40 (ближе к концу)
                 const targetIdx = 38 + Math.floor(Math.random() * 4);
                 items[targetIdx].querySelector('.roulette-item-icon').textContent = targetPrize.icon;
                 items[targetIdx].querySelector('.roulette-item-name').textContent = targetPrize.name;
                 items[targetIdx].className = `roulette-item ${targetPrize.rarity}`;
-
-                // Финальная позиция — центрируем на targetIdx
                 const finalX = centerOffset - targetIdx * itemWidth;
-
-                // Анимация
-                let startTime = null;
-                const duration = 4500;
                 const startX = centerOffset;
-                const totalDistance = Math.abs(finalX - startX);
-
-                function easeOut(t) {
-                    return 1 - Math.pow(1 - t, 4);
-                }
-
+                const duration = 4500;
+                let startTime = null;
+                function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
                 function animate(timestamp) {
                     if (!startTime) startTime = timestamp;
                     const elapsed = timestamp - startTime;
                     const progress = Math.min(elapsed / duration, 1);
                     const eased = easeOut(progress);
                     const currentX = startX + (finalX - startX) * eased;
-
                     strip.style.transition = 'none';
                     strip.style.transform = `translateX(${currentX}px)`;
-
-                    // Вибрация при прохождении каждого элемента
-                    const currentIdx = Math.round((centerOffset - currentX) / itemWidth);
-                    if (currentIdx >= 0 && currentIdx < items.length) {
-                        const speed = 1 - eased;
-                        if (speed > 0.1 && Math.random() < speed * 0.3) {
-                            try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
-                        }
+                    const speed = 1 - eased;
+                    if (speed > 0.1 && Math.random() < speed * 0.3) {
+                        try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
                     }
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        // Подсвечиваем победителя
+                    if (progress < 1) requestAnimationFrame(animate);
+                    else {
                         items[targetIdx].classList.add('winner');
-                        if (targetPrize.code === 'jackpot') {
-                            items[targetIdx].style.animation = 'shimmer 0.5s infinite';
-                        }
+                        if (targetPrize.code === 'jackpot') items[targetIdx].style.animation = 'shimmer 0.5s infinite';
                         resolve();
                     }
                 }
-
                 requestAnimationFrame(animate);
             });
         }
 
         function showPrizeResult(prize, newPoints) {
-            const result = document.getElementById('prizeResult');
             document.getElementById('prizeIcon').textContent = prize.icon;
             document.getElementById('prizeName').textContent = prize.name;
             document.getElementById('prizeDesc').textContent = prize.desc;
-
             const pointsEl = document.getElementById('prizePoints');
-            if (prize.points > 0) {
-                pointsEl.textContent = '+' + prize.points + ' ⭐';
-                pointsEl.className = 'prize-result-points positive';
-            } else if (prize.points < 0) {
-                pointsEl.textContent = prize.points + ' ⭐';
-                pointsEl.className = 'prize-result-points negative';
-            } else {
-                pointsEl.textContent = '🎁 Специальный приз!';
-                pointsEl.className = 'prize-result-points special';
-            }
-
-            result.classList.add('show');
+            if (prize.points > 0) { pointsEl.textContent = '+' + prize.points + ' ⭐'; pointsEl.className = 'prize-result-points positive'; }
+            else if (prize.code === 'empty') { pointsEl.textContent = 'Не повезло 😅'; pointsEl.className = 'prize-result-points negative'; }
+            else { pointsEl.textContent = '🎁 Специальный приз!'; pointsEl.className = 'prize-result-points special'; }
+            document.getElementById('prizeResult').classList.add('show');
         }
 
         function resetCasino() {
@@ -654,11 +753,7 @@
             document.getElementById('prizeResult').classList.remove('show');
             document.getElementById('playAgainBtn').style.display = 'none';
             document.getElementById('openCaseBtn').disabled = false;
-            // Убираем winner класс
-            document.querySelectorAll('.roulette-item').forEach(el => {
-                el.classList.remove('winner');
-                el.style.animation = '';
-            });
+            document.querySelectorAll('.roulette-item').forEach(el => { el.classList.remove('winner'); el.style.animation = ''; });
             initRoulette();
         }
 
@@ -713,6 +808,7 @@
                     document.getElementById('myPoints').textContent = currentPoints + ' ⭐';
                     document.getElementById('myPointsBig').textContent = currentPoints;
                     document.getElementById('casinoPoints').textContent = currentPoints + ' ⭐';
+                    document.getElementById('shopPoints').textContent = currentPoints + ' ⭐';
                 }
             } catch(e) {}
         }
@@ -792,15 +888,10 @@
         }
 
         function getWeatherIcon(id) {
-            if (id >= 200 && id < 300) return '⛈';
-            if (id >= 300 && id < 400) return '🌦';
-            if (id >= 500 && id < 600) return '🌧';
-            if (id >= 600 && id < 700) return '❄️';
-            if (id >= 700 && id < 800) return '🌫';
-            if (id === 800) return '☀️';
-            if (id === 801) return '🌤';
-            if (id === 802) return '⛅';
-            return '☁️';
+            if (id >= 200 && id < 300) return '⛈'; if (id >= 300 && id < 400) return '🌦';
+            if (id >= 500 && id < 600) return '🌧'; if (id >= 600 && id < 700) return '❄️';
+            if (id >= 700 && id < 800) return '🌫'; if (id === 800) return '☀️';
+            if (id === 801) return '🌤'; if (id === 802) return '⛅'; return '☁️';
         }
 
         async function loadSchedule() {
@@ -817,10 +908,7 @@
                     byDay[day].forEach(item => {
                         html += `<div class="schedule-item">
                             <div class="schedule-time">${item.time}</div>
-                            <div class="schedule-info">
-                                <div class="schedule-subject">${item.subject}</div>
-                                <div class="schedule-location">📍 ${item.location}</div>
-                            </div>
+                            <div class="schedule-info"><div class="schedule-subject">${item.subject}</div><div class="schedule-location">📍 ${item.location}</div></div>
                             ${isAdmin ? `<button onclick="deleteSchedule(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:16px;">✕</button>` : ''}
                         </div>`;
                     });
@@ -952,10 +1040,7 @@
                 if (!data.length) { container.innerHTML = '<div class="empty-state">Записей нет</div>'; return; }
                 container.innerHTML = data.map(b => `
                     <div class="schedule-item">
-                        <div class="schedule-info">
-                            <div class="schedule-subject">${b.username}</div>
-                            <div class="schedule-location">${b.date} в ${b.time}</div>
-                        </div>
+                        <div class="schedule-info"><div class="schedule-subject">${b.username}</div><div class="schedule-location">${b.date} в ${b.time}</div></div>
                         <button onclick="adminCancelLaundry(${b.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;">✕</button>
                     </div>`).join('');
             } catch(e) {}
