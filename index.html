@@ -301,28 +301,71 @@
             </div>
         </div>
 
-        <!-- Казино -->
-        <div class="tab-content" id="tab-casino">
-            <div class="casino-header"><div class="casino-title">🎰 ZHIDAO КЕЙСЫ</div><div class="casino-subtitle">Испытай удачу! 3 кейса в день</div></div>
-            <div class="casino-balance" id="casinoBalance">
-                <div><div class="casino-balance-label">Твой баланс</div><div class="casino-balance-value" id="casinoPoints">—</div></div>
-                <div style="text-align:right"><div class="casino-balance-label">Стоимость</div><div class="casino-balance-value" style="color:#ff8844">50 ⭐</div></div>
-            </div>
-            <div class="roulette-wrapper" id="rouletteWrapper">
-                <div class="roulette-pointer"></div>
-                <div class="roulette-pointer-bottom"></div>
-                <div class="roulette-track"><div class="roulette-center-line"></div><div class="roulette-strip" id="rouletteStrip"></div></div>
-            </div>
-            <div class="casino-cost">⚠️ Минимум 80 баллов для участия • Лимит 3 кейса в день</div>
-            <div class="prize-result" id="prizeResult">
-                <div class="prize-result-icon" id="prizeIcon">🎁</div>
-                <div class="prize-result-name" id="prizeName">—</div>
-                <div class="prize-result-desc" id="prizeDesc">—</div>
-                <div class="prize-result-points" id="prizePoints">—</div>
-            </div>
-            <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">🎰 Открыть кейс за 50 ⭐</button>
-            <button class="btn btn-secondary" id="playAgainBtn" style="display:none" onclick="resetCasino()">🔄 Ещё раз</button>
+       <!-- Казино -->
+<div class="tab-content" id="tab-casino">
+    <div class="shop-tabs">
+        <button class="shop-tab active" onclick="switchCasinoTab('play', this)">🎰 Играть</button>
+        <button class="shop-tab" onclick="switchCasinoTab('rules', this)">📋 Правила</button>
+    </div>
+
+    <div id="casinoPlayContent" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+        <div class="casino-header"><div class="casino-title">🎰 ZHIDAO КЕЙСЫ</div><div class="casino-subtitle">Испытай удачу! 3 кейса в день</div></div>
+        <div class="casino-balance" id="casinoBalance">
+            <div><div class="casino-balance-label">Твой баланс</div><div class="casino-balance-value" id="casinoPoints">—</div></div>
+            <div style="text-align:right"><div class="casino-balance-label">Стоимость</div><div class="casino-balance-value" style="color:#ff8844">50 ★</div></div>
         </div>
+        <div class="roulette-wrapper" id="rouletteWrapper">
+            <div class="roulette-pointer"></div>
+            <div class="roulette-pointer-bottom"></div>
+            <div class="roulette-track"><div class="roulette-center-line"></div><div class="roulette-strip" id="rouletteStrip"></div></div>
+        </div>
+        <div class="casino-cost">⚠️ Минимум 80 баллов для участия • Лимит 3 кейса в день</div>
+        <div class="prize-result" id="prizeResult">
+            <div class="prize-result-icon" id="prizeIcon">🎁</div>
+            <div class="prize-result-name" id="prizeName">—</div>
+            <div class="prize-result-desc" id="prizeDesc">—</div>
+            <div class="prize-result-points" id="prizePoints">—</div>
+        </div>
+        <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">🎰 Открыть кейс за 50 ★</button>
+        <button class="btn btn-secondary" id="playAgainBtn" style="display:none" onclick="resetCasino()">🔄 Ещё раз</button>
+    </div>
+
+    <div id="casinoRulesContent" style="width:100%;display:none;flex-direction:column;align-items:center;">
+        <div class="card">
+            <div class="card-title">📋 Правила кейсов</div>
+            <div style="margin-bottom:15px;">
+                <div style="color:#d4af37;font-size:13px;font-weight:700;margin-bottom:8px;">💰 Условия</div>
+                <div style="color:#aaa;font-size:13px;line-height:1.8;">
+                    • Стоимость кейса: <b style="color:#fff">50 баллов</b><br>
+                    • Лимит в день: <b style="color:#fff">3 кейса</b><br>
+                    • Минимальный баланс: <b style="color:#fff">80 баллов</b><br>
+                    • Баллы списываются сразу при открытии
+                </div>
+            </div>
+            <div style="border-top:1px solid rgba(212,175,55,0.1);padding-top:15px;margin-bottom:15px;">
+                <div style="color:#d4af37;font-size:13px;font-weight:700;margin-bottom:8px;">🎁 Призы</div>
+                <div style="color:#aaa;font-size:13px;line-height:2;">
+                    🍚 Пустая миска риса — ничего (20%)<br>
+                    ⭐ +30 баллов (35%)<br>
+                    💫 +60 баллов (25%)<br>
+                    🕐 +30 мин свободного времени (10%)<br>
+                    🧺 Вне очереди на стирку/воду (6%)<br>
+                    🛡 Иммунитет — пропуск без штрафа (3%)<br>
+                    👑 ДЖЕКПОТ +250 баллов (1%)
+                </div>
+            </div>
+            <div style="border-top:1px solid rgba(212,175,55,0.1);padding-top:15px;">
+                <div style="color:#d4af37;font-size:13px;font-weight:700;margin-bottom:8px;">⚠️ Важно</div>
+                <div style="color:#aaa;font-size:13px;line-height:1.8;">
+                    • Иммунитет нельзя копить — только 1 активный<br>
+                    • Физические призы показывай вожатому<br>
+                    • Кейсы обновляются каждый день в 00:00<br>
+                    • ⚠️Кейсы — это азарт, не способ заработать⚠️
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- Админ -->
         <div class="tab-content" id="tab-admin">
@@ -670,7 +713,7 @@
                 });
                 if (!r.ok) {
                     const err = await r.json();
-                    if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день исчерпан! Приходи завтра 😄');
+                    if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день исчерпан! Приходите завтра');
                     else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
                     else tg.showAlert('Ошибка!');
                     isSpinning = false;
@@ -756,6 +799,17 @@
             document.querySelectorAll('.roulette-item').forEach(el => { el.classList.remove('winner'); el.style.animation = ''; });
             initRoulette();
         }
+function switchCasinoTab(mode, btn) {
+    document.querySelectorAll('.shop-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (mode === 'play') {
+        document.getElementById('casinoPlayContent').style.display = 'flex';
+        document.getElementById('casinoRulesContent').style.display = 'none';
+    } else {
+        document.getElementById('casinoPlayContent').style.display = 'none';
+        document.getElementById('casinoRulesContent').style.display = 'flex';
+    }
+}
 
         function launchConfetti(count) {
             const container = document.getElementById('confettiContainer');
