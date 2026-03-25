@@ -89,6 +89,63 @@
         .achievement-card.locked .achievement-name { color: #333; }
         .achievement-count { font-size: 12px; color: #666; margin-bottom: 15px; text-align: center; }
         .achievement-earned-badge { position: absolute; top: 6px; right: 6px; font-size: 10px; }
+
+        /* КАЗИНО */
+        .casino-header { text-align: center; margin-bottom: 20px; }
+        .casino-title { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #f5d05a, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .casino-subtitle { font-size: 12px; color: #666; margin-top: 4px; }
+        .casino-balance { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 16px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%; max-width: 360px; }
+        .casino-balance-label { color: #666; font-size: 12px; }
+        .casino-balance-value { font-size: 24px; font-weight: 800; color: #d4af37; }
+        .casino-cost { font-size: 11px; color: #888; text-align: center; margin-bottom: 15px; }
+
+        /* Рулетка */
+        .roulette-wrapper { width: 100%; max-width: 360px; position: relative; margin-bottom: 20px; }
+        .roulette-pointer { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 16px solid #d4af37; z-index: 10; filter: drop-shadow(0 0 6px rgba(212,175,55,0.8)); }
+        .roulette-pointer-bottom { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 16px solid #d4af37; z-index: 10; filter: drop-shadow(0 0 6px rgba(212,175,55,0.8)); }
+        .roulette-track { overflow: hidden; border-radius: 16px; border: 2px solid rgba(212, 175, 55, 0.4); background: #080818; position: relative; }
+        .roulette-track::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to right, #080818, transparent); z-index: 5; pointer-events: none; }
+        .roulette-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to left, #080818, transparent); z-index: 5; pointer-events: none; }
+        .roulette-center-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(212, 175, 55, 0.6); transform: translateX(-50%); z-index: 6; }
+        .roulette-strip { display: flex; padding: 8px 0; transition: none; will-change: transform; }
+        .roulette-item { min-width: 90px; height: 90px; margin: 0 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid transparent; flex-shrink: 0; }
+        .roulette-item.rare { background: linear-gradient(145deg, #1a0a2e, #2d1550); border-color: rgba(180, 100, 255, 0.5); }
+        .roulette-item.uncommon { background: linear-gradient(145deg, #0a1a2e, #153050); border-color: rgba(100, 180, 255, 0.5); }
+        .roulette-item.common { background: linear-gradient(145deg, #0d0d1f, #111128); border-color: rgba(212, 175, 55, 0.3); }
+        .roulette-item.jackpot { background: linear-gradient(145deg, #2e1a00, #503000); border-color: rgba(255, 200, 50, 0.8); box-shadow: 0 0 15px rgba(255, 200, 50, 0.3); }
+        .roulette-item-icon { font-size: 32px; margin-bottom: 4px; }
+        .roulette-item-name { font-size: 9px; color: #aaa; text-align: center; line-height: 1.2; padding: 0 4px; }
+        .roulette-item.jackpot .roulette-item-name { color: #f5d05a; font-weight: 700; }
+        .roulette-item.winner { border-color: #f5d05a !important; box-shadow: 0 0 25px rgba(212, 175, 55, 0.6) !important; transform: scale(1.05); }
+
+        /* Результат */
+        .prize-result { display: none; text-align: center; padding: 20px; background: linear-gradient(145deg, #0d0d1f, #111128); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 20px; width: 100%; max-width: 360px; margin-bottom: 15px; animation: fadeInUp 0.5s ease; }
+        .prize-result.show { display: block; }
+        .prize-result-icon { font-size: 60px; margin-bottom: 10px; }
+        .prize-result-name { font-size: 20px; font-weight: 800; color: #d4af37; margin-bottom: 6px; }
+        .prize-result-desc { font-size: 13px; color: #888; }
+        .prize-result-points { font-size: 32px; font-weight: 800; margin-top: 10px; }
+        .prize-result-points.positive { color: #4cff88; }
+        .prize-result-points.negative { color: #ff5050; }
+        .prize-result-points.special { color: #d4af37; }
+
+        /* Конфетти */
+        .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; overflow: hidden; }
+        .confetti-piece { position: absolute; width: 10px; height: 10px; top: -10px; animation: confettiFall linear forwards; }
+        @keyframes confettiFall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+        .btn { width: 100%; max-width: 360px; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #d4af37, #f5d05a, #b8860b); color: #050510; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); color: #d4af37; }
+        .btn-secondary:active { transform: scale(0.97); }
+        .btn-casino { background: linear-gradient(135deg, #8b0000, #cc2200, #ff4400); color: #fff; box-shadow: 0 4px 20px rgba(255, 68, 0, 0.4); font-size: 17px; padding: 18px; }
+        .btn-casino:active { transform: scale(0.97); }
+        .btn-casino:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .config-box { background: #0a0a18; border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 12px; padding: 15px; width: 100%; max-width: 360px; margin-bottom: 12px; word-break: break-all; font-size: 10px; color: rgba(212, 175, 55, 0.7); display: none; font-family: monospace; }
+        .divider { width: 100%; max-width: 360px; height: 1px; background: rgba(212, 175, 55, 0.1); margin: 5px 0 15px; }
+        .empty-state { text-align: center; color: #444; padding: 30px 0; font-size: 14px; }
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; margin-bottom: 15px; }
         .admin-btn { background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .admin-btn:active { transform: scale(0.97); }
@@ -99,24 +156,26 @@
         .form-input { width: 100%; background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 10px; padding: 12px; color: #fff; font-size: 14px; outline: none; }
         .form-input:focus { border-color: rgba(212, 175, 55, 0.5); }
         textarea.form-input { resize: vertical; min-height: 80px; }
-        .btn { width: 100%; max-width: 360px; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
-        .btn-primary { background: linear-gradient(135deg, #d4af37, #f5d05a, #b8860b); color: #050510; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3); }
-        .btn-primary:active { transform: scale(0.97); }
-        .btn-secondary { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); color: #d4af37; }
-        .btn-secondary:active { transform: scale(0.97); }
-        .config-box { background: #0a0a18; border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 12px; padding: 15px; width: 100%; max-width: 360px; margin-bottom: 12px; word-break: break-all; font-size: 10px; color: rgba(212, 175, 55, 0.7); display: none; font-family: monospace; }
-        .divider { width: 100%; max-width: 360px; height: 1px; background: rgba(212, 175, 55, 0.1); margin: 5px 0 15px; }
-        .empty-state { text-align: center; color: #444; padding: 30px 0; font-size: 14px; }
         .footer { color: rgba(212, 175, 55, 0.2); font-size: 10px; text-align: center; margin-top: auto; padding: 20px 0; letter-spacing: 3px; }
         .success { background: linear-gradient(135deg, #d4af37, #f5d05a) !important; color: #050510 !important; }
         @keyframes pulse {
             0%, 100% { filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)); }
             50% { filter: drop-shadow(0 0 35px rgba(212, 175, 55, 0.7)); }
         }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+            0% { box-shadow: 0 0 10px rgba(212,175,55,0.3); }
+            50% { box-shadow: 0 0 30px rgba(212,175,55,0.8), 0 0 60px rgba(212,175,55,0.4); }
+            100% { box-shadow: 0 0 10px rgba(212,175,55,0.3); }
+        }
     </style>
 </head>
 <body>
     <div class="glow-bg"></div>
+    <div class="confetti-container" id="confettiContainer"></div>
     <div class="content">
         <div class="header">
             <img src="https://i.ibb.co/zWKdX5fR/1774282029359.png" class="logo-img" alt="ZHIDAO Logo">
@@ -132,6 +191,7 @@
             <button class="tab" onclick="showTab('news', this)">📢 Новости</button>
             <button class="tab" onclick="showTab('rating', this)">🏆 Рейтинг</button>
             <button class="tab" onclick="showTab('achievements', this)">🏅 Ачивки</button>
+            <button class="tab" onclick="showTab('casino', this)">🎰 Кейсы</button>
         </div>
 
         <!-- Главная -->
@@ -243,6 +303,50 @@
             </div>
         </div>
 
+        <!-- Казино -->
+        <div class="tab-content" id="tab-casino">
+            <div class="casino-header">
+                <div class="casino-title">🎰 ZHIDAO КЕЙСЫ</div>
+                <div class="casino-subtitle">Испытай удачу! 1 кейс в день</div>
+            </div>
+
+            <div class="casino-balance" id="casinoBalance">
+                <div>
+                    <div class="casino-balance-label">Твой баланс</div>
+                    <div class="casino-balance-value" id="casinoPoints">—</div>
+                </div>
+                <div style="text-align:right">
+                    <div class="casino-balance-label">Стоимость</div>
+                    <div class="casino-balance-value" style="color:#ff8844">50 ⭐</div>
+                </div>
+            </div>
+
+            <div class="roulette-wrapper" id="rouletteWrapper">
+                <div class="roulette-pointer"></div>
+                <div class="roulette-pointer-bottom"></div>
+                <div class="roulette-track">
+                    <div class="roulette-center-line"></div>
+                    <div class="roulette-strip" id="rouletteStrip"></div>
+                </div>
+            </div>
+
+            <div class="casino-cost">⚠️ Казино вредит кошельку! Минимум 80 баллов для участия</div>
+
+            <div class="prize-result" id="prizeResult">
+                <div class="prize-result-icon" id="prizeIcon">🎁</div>
+                <div class="prize-result-name" id="prizeName">—</div>
+                <div class="prize-result-desc" id="prizeDesc">—</div>
+                <div class="prize-result-points" id="prizePoints">—</div>
+            </div>
+
+            <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">
+                🎰 Открыть кейс за 50 ⭐
+            </button>
+            <button class="btn btn-secondary" id="playAgainBtn" style="display:none" onclick="resetCasino()">
+                🔄 Сыграть снова
+            </button>
+        </div>
+
         <!-- Админ -->
         <div class="tab-content" id="tab-admin">
             <div class="admin-grid">
@@ -300,153 +404,47 @@
         let isAdmin = false;
         let selectedLaundryDate = null;
         let laundryData = [];
+        let currentPoints = 0;
+        let isSpinning = false;
 
-        // SVG иконки для ачивок
+        // Призы для рулетки
+        const PRIZES = [
+            { code: 'minus',   icon: '💀', name: 'Не повезло!',          desc: '-20 баллов',                 points: -20,  rarity: 'uncommon' },
+            { code: 'small',   icon: '⭐', name: '+10 баллов',           desc: 'Небольшой выигрыш',          points: 10,   rarity: 'common' },
+            { code: 'medium',  icon: '💫', name: '+30 баллов',           desc: 'Неплохо!',                   points: 30,   rarity: 'common' },
+            { code: 'good',    icon: '💎', name: '+50 баллов',           desc: 'Хороший выигрыш!',           points: 50,   rarity: 'uncommon' },
+            { code: 'great',   icon: '🔥', name: '+100 баллов',          desc: 'Отличный выигрыш!',          points: 100,  rarity: 'rare' },
+            { code: 'laundry', icon: '🧺', name: 'Вне очереди!',        desc: 'Первый на стирку завтра',     points: 0,    rarity: 'rare' },
+            { code: 'skip',    icon: '🛡', name: 'Иммунитет!',          desc: 'Пропуск переклички без штрафа', points: 0, rarity: 'rare' },
+            { code: 'jackpot', icon: '👑', name: 'ДЖЕКПОТ!',            desc: '+200 баллов! Невероятно!',    points: 200,  rarity: 'jackpot' },
+        ];
+
+        const PRIZE_MAP = {};
+        PRIZES.forEach(p => PRIZE_MAP[p.code] = p);
+
+        // SVG иконки ачивок
         const ACHIEVEMENT_ICONS = {
-            early_bird: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <circle cx="26" cy="22" r="7" fill="url(#g1)"/>
-                <path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/>
-                <path d="M20 36 L26 28 L32 36" fill="url(#g1)"/>
-                <path d="M10 22 L16 20 L14 26Z" fill="url(#g1)"/>
-                <path d="M42 22 L36 20 L38 26Z" fill="url(#g1)"/>
-                <circle cx="26" cy="10" r="3" fill="url(#g1)"/>
-                <line x1="26" y1="6" x2="26" y2="4" stroke="url(#g1)" stroke-width="1.5"/>
-            </svg>`,
-
-            iron_mode: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/>
-                <circle cx="26" cy="26" r="8" fill="url(#g2)" opacity="0.3"/>
-                <path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M17 17 L20 20 M32 32 L35 35 M17 35 L20 32 M32 20 L35 17" stroke="url(#g2)" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="26" cy="26" r="3" fill="url(#g2)"/>
-            </svg>`,
-
-            legend: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/>
-            </svg>`,
-
-            curious: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/>
-                <line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/>
-                <circle cx="23" cy="23" r="5" fill="url(#g4)" opacity="0.4"/>
-            </svg>`,
-
-            polyglot: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/>
-                <text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text>
-            </svg>`,
-
-            explorer: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
-                <circle cx="26" cy="18" r="4" fill="url(#g6)"/>
-                <line x1="26" y1="14" x2="26" y2="10" stroke="url(#g6)" stroke-width="2"/>
-                <path d="M22 10 L26 6 L30 10" fill="url(#g6)"/>
-            </svg>`,
-
-            brave: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M18 28 L22 28 M30 24 L30 28 L38 28" stroke="url(#g7)" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="22" cy="36" r="2" fill="url(#g7)"/>
-                <circle cx="34" cy="36" r="2" fill="url(#g7)"/>
-            </svg>`,
-
-            exemplary: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M26 10 L28 16 L26 12 L24 16 Z" fill="url(#g8)"/>
-                <circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/>
-                <path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <circle cx="26" cy="10" r="2" fill="url(#g8)"/>
-                <circle cx="26" cy="42" r="2" fill="url(#g8)"/>
-                <circle cx="10" cy="26" r="2" fill="url(#g8)"/>
-                <circle cx="42" cy="26" r="2" fill="url(#g8)"/>
-            </svg>`,
-
-            helper: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/>
-            </svg>`,
-
-            dragon: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/>
-                <path d="M30 18 L34 12 M34 18 L38 14" stroke="url(#g10)" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="32" cy="22" r="2" fill="#050510"/>
-                <path d="M20 30 Q24 28 28 30" stroke="url(#g10)" stroke-width="1.5" fill="none"/>
-                <path d="M10 36 Q8 40 6 42" stroke="url(#g10)" stroke-width="2" stroke-linecap="round"/>
-            </svg>`,
-
-            night_watch: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <circle cx="26" cy="24" r="10" fill="url(#g11)" opacity="0.3" stroke="url(#g11)" stroke-width="1.5"/>
-                <circle cx="22" cy="22" r="4" fill="url(#g11)"/>
-                <circle cx="30" cy="22" r="4" fill="url(#g11)"/>
-                <circle cx="22" cy="22" r="2" fill="#050510"/>
-                <circle cx="30" cy="22" r="2" fill="#050510"/>
-                <path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/>
-                <path d="M16 24 L10 22 M36 24 L42 22" stroke="url(#g11)" stroke-width="2" stroke-linecap="round"/>
-                <path d="M20 14 L18 10 M26 12 L26 8 M32 14 L34 10" stroke="url(#g11)" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>`,
-
-            master: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M26 10 L26 42 M14 18 L38 18 M14 34 L38 34" stroke="url(#g12)" stroke-width="1.5"/>
-                <rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/>
-                <rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/>
-                <rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/>
-                <circle cx="26" cy="18" r="3" fill="url(#g12)"/>
-            </svg>`,
-
-            gambler: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/>
-                <rect x="16" y="20" width="6" height="14" rx="2" fill="url(#g13)" opacity="0.5"/>
-                <rect x="23" y="20" width="6" height="14" rx="2" fill="url(#g13)" opacity="0.5"/>
-                <rect x="30" y="20" width="6" height="14" rx="2" fill="url(#g13)" opacity="0.5"/>
-                <text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text>
-                <text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text>
-                <text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text>
-                <rect x="20" y="38" width="12" height="4" rx="2" fill="url(#g13)"/>
-            </svg>`,
-
-            lucky: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
-                <circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
-                <path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/>
-                <path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/>
-                <circle cx="14" cy="20" r="2" fill="url(#g14)" opacity="0.6"/>
-                <circle cx="38" cy="20" r="2" fill="url(#g14)" opacity="0.6"/>
-                <circle cx="14" cy="32" r="2" fill="url(#g14)" opacity="0.6"/>
-                <circle cx="38" cy="32" r="2" fill="url(#g14)" opacity="0.6"/>
-                <circle cx="26" cy="26" r="2" fill="url(#g14)"/>
-            </svg>`
+            early_bird: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="22" r="7" fill="url(#g1)"/><path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 36 L26 28 L32 36" fill="url(#g1)"/><circle cx="26" cy="10" r="3" fill="url(#g1)"/></svg>`,
+            iron_mode: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/><path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="26" r="5" fill="url(#g2)"/></svg>`,
+            legend: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/></svg>`,
+            curious: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/><line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/></svg>`,
+            polyglot: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/><text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text></svg>`,
+            explorer: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="26" cy="18" r="4" fill="url(#g6)"/></svg>`,
+            brave: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="36" r="2" fill="url(#g7)"/><circle cx="34" cy="36" r="2" fill="url(#g7)"/></svg>`,
+            exemplary: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/><path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+            helper: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/></svg>`,
+            dragon: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/><path d="M30 18 L34 12 M34 18 L38 14" stroke="url(#g10)" stroke-width="2" stroke-linecap="round"/><circle cx="32" cy="22" r="2" fill="#050510"/></svg>`,
+            night_watch: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="22" cy="22" r="4" fill="url(#g11)"/><circle cx="30" cy="22" r="4" fill="url(#g11)"/><circle cx="22" cy="22" r="2" fill="#050510"/><circle cx="30" cy="22" r="2" fill="#050510"/><path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M16 24 L10 22 M36 24 L42 22" stroke="url(#g11)" stroke-width="2" stroke-linecap="round"/></svg>`,
+            master: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/><rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/><rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/></svg>`,
+            gambler: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/><text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text><text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text><text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text></svg>`,
+            lucky: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/><path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/><circle cx="26" cy="26" r="2" fill="url(#g14)"/></svg>`
         };
 
         const user = tg.initDataUnsafe?.user;
         if (user) {
             currentUserId = user.id;
             isAdmin = ADMIN_IDS.includes(user.id);
-            document.getElementById('username').textContent =
-                user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            document.getElementById('username').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
             loadUserData(user.id);
             loadPoints(user.id);
         } else {
@@ -463,6 +461,7 @@
             tabs.appendChild(adminTab);
         }
 
+        initRoulette();
         loadWeather();
         loadYuanRate();
         loadSchedule();
@@ -478,6 +477,210 @@
             if (btn) btn.classList.add('active');
         }
 
+        // ===== КАЗИНО =====
+        function initRoulette() {
+            const strip = document.getElementById('rouletteStrip');
+            strip.innerHTML = '';
+            // Генерируем длинную полосу (50 элементов)
+            const items = [];
+            for (let i = 0; i < 50; i++) {
+                const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
+                items.push(prize);
+            }
+            items.forEach((prize, idx) => {
+                const el = document.createElement('div');
+                el.className = `roulette-item ${prize.rarity}`;
+                el.dataset.idx = idx;
+                el.innerHTML = `<div class="roulette-item-icon">${prize.icon}</div><div class="roulette-item-name">${prize.name}</div>`;
+                strip.appendChild(el);
+            });
+            // Центрируем на среднем элементе
+            const itemWidth = 98; // 90px + 2*4px margin
+            const trackWidth = document.querySelector('.roulette-track').offsetWidth || 360;
+            const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
+            strip.style.transform = `translateX(${centerOffset}px)`;
+        }
+
+        async function openCase() {
+            if (isSpinning) return;
+            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+            if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужно минимум 80 ⭐'); return; }
+
+            isSpinning = true;
+            document.getElementById('openCaseBtn').disabled = true;
+            document.getElementById('prizeResult').classList.remove('show');
+
+            try {
+                const r = await fetch(`${API_URL}/api/casino/open`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({telegram_id: currentUserId})
+                });
+
+                if (!r.ok) {
+                    const err = await r.json();
+                    if (err.detail === 'Daily limit reached') {
+                        tg.showAlert('Ты уже открывал кейс сегодня! Приходи завтра 😄');
+                    } else if (err.detail === 'Not enough points') {
+                        tg.showAlert('Недостаточно баллов! Нужно минимум 80 ⭐');
+                    } else {
+                        tg.showAlert('Ошибка! Попробуй снова.');
+                    }
+                    isSpinning = false;
+                    document.getElementById('openCaseBtn').disabled = false;
+                    return;
+                }
+
+                const data = await r.json();
+                const prize = PRIZE_MAP[data.prize.code] || PRIZES[0];
+
+                // Запускаем анимацию
+                await spinRoulette(prize);
+
+                // Показываем результат
+                showPrizeResult(prize, data.new_points);
+                currentPoints = data.new_points;
+                document.getElementById('myPoints').textContent = data.new_points + ' ⭐';
+                document.getElementById('myPointsBig').textContent = data.new_points;
+                document.getElementById('casinoPoints').textContent = data.new_points + ' ⭐';
+
+                // Вибрация и конфетти
+                if (prize.code === 'jackpot') {
+                    tg.HapticFeedback.notificationOccurred('success');
+                    launchConfetti(100);
+                } else if (prize.points > 50) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                    launchConfetti(30);
+                } else if (prize.code === 'minus') {
+                    tg.HapticFeedback.notificationOccurred('error');
+                } else {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+
+                document.getElementById('playAgainBtn').style.display = 'block';
+
+            } catch(e) {
+                tg.showAlert('Ошибка соединения');
+                isSpinning = false;
+                document.getElementById('openCaseBtn').disabled = false;
+            }
+        }
+
+        async function spinRoulette(targetPrize) {
+            return new Promise(resolve => {
+                const strip = document.getElementById('rouletteStrip');
+                const items = strip.querySelectorAll('.roulette-item');
+                const itemWidth = 98;
+                const trackWidth = document.querySelector('.roulette-track').offsetWidth || 360;
+                const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
+
+                // Подставляем приз на позицию ~40 (ближе к концу)
+                const targetIdx = 38 + Math.floor(Math.random() * 4);
+                items[targetIdx].querySelector('.roulette-item-icon').textContent = targetPrize.icon;
+                items[targetIdx].querySelector('.roulette-item-name').textContent = targetPrize.name;
+                items[targetIdx].className = `roulette-item ${targetPrize.rarity}`;
+
+                // Финальная позиция — центрируем на targetIdx
+                const finalX = centerOffset - targetIdx * itemWidth;
+
+                // Анимация
+                let startTime = null;
+                const duration = 4500;
+                const startX = centerOffset;
+                const totalDistance = Math.abs(finalX - startX);
+
+                function easeOut(t) {
+                    return 1 - Math.pow(1 - t, 4);
+                }
+
+                function animate(timestamp) {
+                    if (!startTime) startTime = timestamp;
+                    const elapsed = timestamp - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const eased = easeOut(progress);
+                    const currentX = startX + (finalX - startX) * eased;
+
+                    strip.style.transition = 'none';
+                    strip.style.transform = `translateX(${currentX}px)`;
+
+                    // Вибрация при прохождении каждого элемента
+                    const currentIdx = Math.round((centerOffset - currentX) / itemWidth);
+                    if (currentIdx >= 0 && currentIdx < items.length) {
+                        const speed = 1 - eased;
+                        if (speed > 0.1 && Math.random() < speed * 0.3) {
+                            try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
+                        }
+                    }
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        // Подсвечиваем победителя
+                        items[targetIdx].classList.add('winner');
+                        if (targetPrize.code === 'jackpot') {
+                            items[targetIdx].style.animation = 'shimmer 0.5s infinite';
+                        }
+                        resolve();
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            });
+        }
+
+        function showPrizeResult(prize, newPoints) {
+            const result = document.getElementById('prizeResult');
+            document.getElementById('prizeIcon').textContent = prize.icon;
+            document.getElementById('prizeName').textContent = prize.name;
+            document.getElementById('prizeDesc').textContent = prize.desc;
+
+            const pointsEl = document.getElementById('prizePoints');
+            if (prize.points > 0) {
+                pointsEl.textContent = '+' + prize.points + ' ⭐';
+                pointsEl.className = 'prize-result-points positive';
+            } else if (prize.points < 0) {
+                pointsEl.textContent = prize.points + ' ⭐';
+                pointsEl.className = 'prize-result-points negative';
+            } else {
+                pointsEl.textContent = '🎁 Специальный приз!';
+                pointsEl.className = 'prize-result-points special';
+            }
+
+            result.classList.add('show');
+        }
+
+        function resetCasino() {
+            isSpinning = false;
+            document.getElementById('prizeResult').classList.remove('show');
+            document.getElementById('playAgainBtn').style.display = 'none';
+            document.getElementById('openCaseBtn').disabled = false;
+            // Убираем winner класс
+            document.querySelectorAll('.roulette-item').forEach(el => {
+                el.classList.remove('winner');
+                el.style.animation = '';
+            });
+            initRoulette();
+        }
+
+        function launchConfetti(count) {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#f5d05a', '#d4af37', '#fff', '#ff8844', '#44ff88', '#ff44aa'];
+            for (let i = 0; i < count; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                piece.style.width = (Math.random() * 8 + 6) + 'px';
+                piece.style.height = (Math.random() * 8 + 6) + 'px';
+                piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                piece.style.animationDelay = (Math.random() * 1) + 's';
+                container.appendChild(piece);
+                setTimeout(() => piece.remove(), 4000);
+            }
+        }
+
+        // ===== ОСТАЛЬНЫЕ ФУНКЦИИ =====
         async function loadUserData(telegramId) {
             try {
                 const r = await fetch(`${API_URL}/api/user/${telegramId}`);
@@ -506,8 +709,10 @@
                 const r = await fetch(`${API_URL}/api/points/${telegramId}`);
                 if (r.ok) {
                     const data = await r.json();
-                    document.getElementById('myPoints').textContent = data.points + ' ⭐';
-                    document.getElementById('myPointsBig').textContent = data.points;
+                    currentPoints = data.points || 0;
+                    document.getElementById('myPoints').textContent = currentPoints + ' ⭐';
+                    document.getElementById('myPointsBig').textContent = currentPoints;
+                    document.getElementById('casinoPoints').textContent = currentPoints + ' ⭐';
                 }
             } catch(e) {}
         }
@@ -519,8 +724,7 @@
                 const container = document.getElementById('leaderboardContent');
                 if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
                 const medals = ['🥇', '🥈', '🥉'];
-                let myRank = '—';
-                let html = '';
+                let myRank = '—', html = '';
                 data.forEach((item, i) => {
                     const medal = medals[i] || (i + 1) + '.';
                     const isMe = currentUserId && item.telegram_id === currentUserId;
@@ -543,13 +747,10 @@
                 const data = await r.json();
                 const container = document.getElementById('achievementsContent');
                 const earned = data.filter(a => a.earned).length;
-                const total = data.length;
-                let html = `<div class="achievement-count">Получено: <b style="color:#d4af37">${earned}</b> из ${total}</div>`;
-                html += '<div class="achievements-grid">';
+                let html = `<div class="achievement-count">Получено: <b style="color:#d4af37">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
                 data.forEach(a => {
                     const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
-                    html += `<div class="achievement-card ${a.earned ? '' : 'locked'}"
-                        onclick="showAchievementInfo('${a.name}', '${a.description}', ${a.earned})">
+                    html += `<div class="achievement-card ${a.earned ? '' : 'locked'}" onclick="showAchievementInfo('${a.name}', '${a.description}', ${a.earned})">
                         ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
                         <div class="achievement-svg">${svgIcon}</div>
                         <div class="achievement-name">${a.name}</div>
@@ -644,8 +845,7 @@
         }
 
         function initLaundry() {
-            const dates = [];
-            const today = new Date();
+            const dates = [], today = new Date();
             for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); dates.push(d); }
             const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
             document.getElementById('laundryDates').innerHTML = dates.map((d, i) => {
