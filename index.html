@@ -18,12 +18,7 @@
             padding: 20px;
             overflow-x: hidden;
         }
-        .glow-bg {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
-            pointer-events: none; z-index: 0;
-        }
+        .glow-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
         .content { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; }
         .header { text-align: center; margin-top: 30px; margin-bottom: 25px; }
         .logo-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)); animation: pulse 3s infinite; }
@@ -84,7 +79,6 @@
         .laundry-date-selector { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 4px; width: 100%; }
         .date-btn { background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 10px; padding: 8px 14px; color: #666; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .date-btn.active { background: rgba(212, 175, 55, 0.15); border-color: rgba(212, 175, 55, 0.4); color: #d4af37; }
-        /* Рейтинг */
         .leaderboard-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.08); gap: 12px; }
         .leaderboard-item:last-child { border-bottom: none; }
         .leaderboard-rank { font-size: 20px; min-width: 35px; text-align: center; }
@@ -94,7 +88,14 @@
         .my-rank-label { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
         .my-rank-points { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #f5d05a, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
         .my-rank-sub { color: #666; font-size: 12px; margin-top: 6px; }
-        /* Админ */
+        .achievements-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
+        .achievement-card { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 16px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .achievement-card.locked { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); filter: grayscale(1); opacity: 0.4; }
+        .achievement-card:active { transform: scale(0.95); }
+        .achievement-icon { font-size: 32px; margin-bottom: 6px; }
+        .achievement-name { font-size: 10px; color: #d4af37; font-weight: 600; line-height: 1.2; }
+        .achievement-card.locked .achievement-name { color: #444; }
+        .achievement-count { font-size: 11px; color: #666; margin-bottom: 12px; text-align: center; }
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; margin-bottom: 15px; }
         .admin-btn { background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .admin-btn:active { transform: scale(0.97); }
@@ -137,6 +138,7 @@
             <button class="tab" onclick="showTab('laundry', this)">🧺 Стирка</button>
             <button class="tab" onclick="showTab('news', this)">📢 Новости</button>
             <button class="tab" onclick="showTab('rating', this)">🏆 Рейтинг</button>
+            <button class="tab" onclick="showTab('achievements', this)">🏅 Ачивки</button>
         </div>
 
         <!-- Главная -->
@@ -242,6 +244,14 @@
             </div>
         </div>
 
+        <!-- Ачивки -->
+        <div class="tab-content" id="tab-achievements">
+            <div class="card">
+                <div class="card-title">🏅 Мои достижения</div>
+                <div id="achievementsContent"><div class="empty-state">Загрузка...</div></div>
+            </div>
+        </div>
+
         <!-- Админ -->
         <div class="tab-content" id="tab-admin">
             <div class="admin-grid">
@@ -343,6 +353,7 @@
         loadSchedule();
         loadAnnouncements();
         loadLeaderboard();
+        loadAchievements();
         initLaundry();
 
         function showTab(name, btn) {
@@ -391,10 +402,7 @@
                 const r = await fetch(`${API_URL}/api/leaderboard`);
                 const data = await r.json();
                 const container = document.getElementById('leaderboardContent');
-                if (!data.length) {
-                    container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>';
-                    return;
-                }
+                if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
                 const medals = ['🥇', '🥈', '🥉'];
                 let myRank = '—';
                 let html = '';
@@ -402,18 +410,45 @@
                     const medal = medals[i] || (i + 1) + '.';
                     const isMe = currentUserId && item.telegram_id === currentUserId;
                     if (isMe) myRank = i + 1;
-                    html += `
-                        <div class="leaderboard-item" style="${isMe ? 'background:rgba(212,175,55,0.05);border-radius:10px;padding:12px;' : ''}">
-                            <div class="leaderboard-rank">${medal}</div>
-                            <div class="leaderboard-name">${item.name}${isMe ? ' 👈' : ''}</div>
-                            <div class="leaderboard-points">${item.points} ⭐</div>
-                        </div>`;
+                    html += `<div class="leaderboard-item" style="${isMe ? 'background:rgba(212,175,55,0.05);border-radius:10px;padding:12px;' : ''}">
+                        <div class="leaderboard-rank">${medal}</div>
+                        <div class="leaderboard-name">${item.name}${isMe ? ' 👈' : ''}</div>
+                        <div class="leaderboard-points">${item.points} ⭐</div>
+                    </div>`;
                 });
                 container.innerHTML = html;
                 document.getElementById('myRankSub').textContent = myRank !== '—' ? `Место в рейтинге: #${myRank}` : 'Участвуй чтобы попасть в рейтинг!';
-            } catch(e) {
-                document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-            }
+            } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+        }
+
+        async function loadAchievements() {
+            if (!currentUserId) return;
+            try {
+                const r = await fetch(`${API_URL}/api/achievements/${currentUserId}`);
+                const data = await r.json();
+                const container = document.getElementById('achievementsContent');
+                const earned = data.filter(a => a.earned).length;
+                const total = data.length;
+                let html = `<div class="achievement-count">Получено: ${earned} из ${total}</div>`;
+                html += '<div class="achievements-grid">';
+                data.forEach(a => {
+                    html += `<div class="achievement-card ${a.earned ? '' : 'locked'}"
+                        onclick="showAchievementInfo('${a.name}', '${a.description}', ${a.earned})">
+                        <div class="achievement-icon">${a.icon}</div>
+                        <div class="achievement-name">${a.name}</div>
+                    </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } catch(e) { document.getElementById('achievementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+        }
+
+        function showAchievementInfo(name, description, earned) {
+            tg.showPopup({
+                title: earned ? '✅ ' + name : '🔒 ' + name,
+                message: description + (earned ? '\n\n✨ Получено!' : '\n\n❌ Ещё не получено'),
+                buttons: [{type: 'ok'}]
+            });
         }
 
         async function loadWeather() {
@@ -464,10 +499,7 @@
                 const container = document.getElementById('scheduleContent');
                 if (!data.length) { container.innerHTML = '<div class="empty-state">Расписание пока не добавлено</div>'; return; }
                 const byDay = {};
-                data.forEach(item => {
-                    if (!byDay[item.day]) byDay[item.day] = [];
-                    byDay[item.day].push(item);
-                });
+                data.forEach(item => { if (!byDay[item.day]) byDay[item.day] = []; byDay[item.day].push(item); });
                 let html = '';
                 for (const day in byDay) {
                     html += `<div class="schedule-day">${day}</div>`;
@@ -504,11 +536,7 @@
         function initLaundry() {
             const dates = [];
             const today = new Date();
-            for (let i = 0; i < 7; i++) {
-                const d = new Date(today);
-                d.setDate(today.getDate() + i);
-                dates.push(d);
-            }
+            for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); dates.push(d); }
             const datesContainer = document.getElementById('laundryDates');
             const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
             datesContainer.innerHTML = dates.map((d, i) => {
@@ -564,10 +592,7 @@
                     body: JSON.stringify({date: selectedLaundryDate, time, telegram_id: currentUserId, username})
                 });
                 if (r.ok) { tg.showAlert(`✅ Записан на ${time}!`); loadLaundry(); }
-                else {
-                    const err = await r.json();
-                    tg.showAlert(err.detail === 'Already booked for this day' ? 'У вас уже есть запись на этот день' : 'Это время уже занято');
-                }
+                else { const err = await r.json(); tg.showAlert(err.detail === 'Already booked for this day' ? 'У вас уже есть запись на этот день' : 'Это время уже занято'); }
             } catch(e) { tg.showAlert('Ошибка записи'); }
         }
 
@@ -653,8 +678,7 @@
 
         function copyConfig() {
             if (userConfig) {
-
-navigator.clipboard.writeText(userConfig);
+                navigator.clipboard.writeText(userConfig);
                 const btn = document.getElementById('copyBtn');
                 btn.textContent = '✅ Скопировано!';
                 btn.classList.add('success');
