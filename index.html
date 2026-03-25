@@ -1011,11 +1011,33 @@
         }
 
 function askAnonymous() {
-    tg.showPopup({
-        title: '🤫 Анонимный вопрос',
-        message: 'Введи вопрос в боте командой:\n\n/вопрос ТЕКСТ ВОПРОСА\n\nНапример:\n/вопрос Когда следующая экскурсия?',
-        buttons: [{type: 'ok'}]
-    });
+    document.getElementById('questionText').value = '';
+    document.getElementById('questionModal').style.display = 'flex';
+}
+
+function closeQuestion() {
+    document.getElementById('questionModal').style.display = 'none';
+}
+
+async function submitQuestion() {
+    const text = document.getElementById('questionText').value.trim();
+    if (!text) { tg.showAlert('Напиши вопрос!'); return; }
+    try {
+        const r = await fetch(`${API_URL}/api/question`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question: text})
+        });
+        if (r.ok) {
+            closeQuestion();
+            tg.showAlert('✅ Вопрос отправлен анонимно!');
+            tg.HapticFeedback.notificationOccurred('success');
+        } else {
+            tg.showAlert('Ошибка отправки');
+        }
+    } catch(e) {
+        tg.showAlert('Ошибка соединения');
+    }
 }
 
         function initLaundry() {
