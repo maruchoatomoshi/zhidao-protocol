@@ -7,17 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #050510;
-            color: #ffffff;
-            font-family: -apple-system, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            overflow-x: hidden;
-        }
+        body { background: #050510; color: #ffffff; font-family: -apple-system, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; }
         .glow-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
         .content { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; }
         .header { text-align: center; margin-top: 30px; margin-bottom: 25px; }
@@ -88,14 +78,17 @@
         .my-rank-label { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
         .my-rank-points { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #f5d05a, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
         .my-rank-sub { color: #666; font-size: 12px; margin-top: 6px; }
-        .achievements-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
-        .achievement-card { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 16px; padding: 15px 10px; text-align: center; cursor: pointer; transition: all 0.2s; }
-        .achievement-card.locked { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); filter: grayscale(1); opacity: 0.4; }
-        .achievement-card:active { transform: scale(0.95); }
-        .achievement-icon { font-size: 32px; margin-bottom: 6px; }
-        .achievement-name { font-size: 10px; color: #d4af37; font-weight: 600; line-height: 1.2; }
-        .achievement-card.locked .achievement-name { color: #444; }
-        .achievement-count { font-size: 11px; color: #666; margin-bottom: 12px; text-align: center; }
+        .achievements-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; width: 100%; }
+        .achievement-card { background: linear-gradient(145deg, #0d0d20, #111130); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 16px; padding: 14px 8px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+        .achievement-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #b8860b, #f5d05a, #b8860b); }
+        .achievement-card.locked { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.06); filter: grayscale(1); opacity: 0.35; }
+        .achievement-card.locked::before { display: none; }
+        .achievement-card:not(.locked):active { transform: scale(0.95); box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+        .achievement-svg { width: 52px; height: 52px; margin: 0 auto 8px; display: block; }
+        .achievement-name { font-size: 10px; color: #d4af37; font-weight: 700; line-height: 1.3; }
+        .achievement-card.locked .achievement-name { color: #333; }
+        .achievement-count { font-size: 12px; color: #666; margin-bottom: 15px; text-align: center; }
+        .achievement-earned-badge { position: absolute; top: 6px; right: 6px; font-size: 10px; }
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; margin-bottom: 15px; }
         .admin-btn { background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 16px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
         .admin-btn:active { transform: scale(0.97); }
@@ -155,9 +148,7 @@
                         <span class="traffic-text">Использовано трафика</span>
                         <span class="traffic-value" id="trafficValue">—</span>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
                 </div>
                 <div class="points-section">
                     <span class="points-label">⭐ Мои баллы</span>
@@ -255,24 +246,11 @@
         <!-- Админ -->
         <div class="tab-content" id="tab-admin">
             <div class="admin-grid">
-                <div class="admin-btn" onclick="showAdminSection('schedule')">
-                    <div class="admin-btn-icon">📅</div>
-                    <div class="admin-btn-text">Расписание</div>
-                </div>
-                <div class="admin-btn" onclick="showAdminSection('announce')">
-                    <div class="admin-btn-icon">📢</div>
-                    <div class="admin-btn-text">Объявление</div>
-                </div>
-                <div class="admin-btn" onclick="showAdminSection('laundry')">
-                    <div class="admin-btn-icon">🧺</div>
-                    <div class="admin-btn-text">Стирка</div>
-                </div>
-                <div class="admin-btn" onclick="showAdminSection('users')">
-                    <div class="admin-btn-icon">👥</div>
-                    <div class="admin-btn-text">Пользователи</div>
-                </div>
+                <div class="admin-btn" onclick="showAdminSection('schedule')"><div class="admin-btn-icon">📅</div><div class="admin-btn-text">Расписание</div></div>
+                <div class="admin-btn" onclick="showAdminSection('announce')"><div class="admin-btn-icon">📢</div><div class="admin-btn-text">Объявление</div></div>
+                <div class="admin-btn" onclick="showAdminSection('laundry')"><div class="admin-btn-icon">🧺</div><div class="admin-btn-text">Стирка</div></div>
+                <div class="admin-btn" onclick="showAdminSection('users')"><div class="admin-btn-icon">👥</div><div class="admin-btn-text">Пользователи</div></div>
             </div>
-
             <div id="admin-schedule" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Добавить занятие</div>
@@ -283,7 +261,6 @@
                     <button class="btn btn-primary" onclick="addScheduleItem()">Добавить</button>
                 </div>
             </div>
-
             <div id="admin-announce" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Новое объявление</div>
@@ -291,14 +268,12 @@
                     <button class="btn btn-primary" onclick="addAnnouncement()">Опубликовать</button>
                 </div>
             </div>
-
             <div id="admin-laundry" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Все записи на стирку</div>
                     <div id="adminLaundryList">Загрузка...</div>
                 </div>
             </div>
-
             <div id="admin-users" style="display:none; width:100%; max-width:360px;">
                 <div class="card">
                     <div class="card-title">Пользователи</div>
@@ -325,6 +300,146 @@
         let isAdmin = false;
         let selectedLaundryDate = null;
         let laundryData = [];
+
+        // SVG иконки для ачивок
+        const ACHIEVEMENT_ICONS = {
+            early_bird: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <circle cx="26" cy="22" r="7" fill="url(#g1)"/>
+                <path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M20 36 L26 28 L32 36" fill="url(#g1)"/>
+                <path d="M10 22 L16 20 L14 26Z" fill="url(#g1)"/>
+                <path d="M42 22 L36 20 L38 26Z" fill="url(#g1)"/>
+                <circle cx="26" cy="10" r="3" fill="url(#g1)"/>
+                <line x1="26" y1="6" x2="26" y2="4" stroke="url(#g1)" stroke-width="1.5"/>
+            </svg>`,
+
+            iron_mode: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/>
+                <circle cx="26" cy="26" r="8" fill="url(#g2)" opacity="0.3"/>
+                <path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M17 17 L20 20 M32 32 L35 35 M17 35 L20 32 M32 20 L35 17" stroke="url(#g2)" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="26" cy="26" r="3" fill="url(#g2)"/>
+            </svg>`,
+
+            legend: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/>
+            </svg>`,
+
+            curious: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/>
+                <line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="23" cy="23" r="5" fill="url(#g4)" opacity="0.4"/>
+            </svg>`,
+
+            polyglot: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/>
+                <text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text>
+            </svg>`,
+
+            explorer: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+                <circle cx="26" cy="18" r="4" fill="url(#g6)"/>
+                <line x1="26" y1="14" x2="26" y2="10" stroke="url(#g6)" stroke-width="2"/>
+                <path d="M22 10 L26 6 L30 10" fill="url(#g6)"/>
+            </svg>`,
+
+            brave: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 28 L22 28 M30 24 L30 28 L38 28" stroke="url(#g7)" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="22" cy="36" r="2" fill="url(#g7)"/>
+                <circle cx="34" cy="36" r="2" fill="url(#g7)"/>
+            </svg>`,
+
+            exemplary: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M26 10 L28 16 L26 12 L24 16 Z" fill="url(#g8)"/>
+                <circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/>
+                <path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <circle cx="26" cy="10" r="2" fill="url(#g8)"/>
+                <circle cx="26" cy="42" r="2" fill="url(#g8)"/>
+                <circle cx="10" cy="26" r="2" fill="url(#g8)"/>
+                <circle cx="42" cy="26" r="2" fill="url(#g8)"/>
+            </svg>`,
+
+            helper: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/>
+            </svg>`,
+
+            dragon: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/>
+                <path d="M30 18 L34 12 M34 18 L38 14" stroke="url(#g10)" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="32" cy="22" r="2" fill="#050510"/>
+                <path d="M20 30 Q24 28 28 30" stroke="url(#g10)" stroke-width="1.5" fill="none"/>
+                <path d="M10 36 Q8 40 6 42" stroke="url(#g10)" stroke-width="2" stroke-linecap="round"/>
+            </svg>`,
+
+            night_watch: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <circle cx="26" cy="24" r="10" fill="url(#g11)" opacity="0.3" stroke="url(#g11)" stroke-width="1.5"/>
+                <circle cx="22" cy="22" r="4" fill="url(#g11)"/>
+                <circle cx="30" cy="22" r="4" fill="url(#g11)"/>
+                <circle cx="22" cy="22" r="2" fill="#050510"/>
+                <circle cx="30" cy="22" r="2" fill="#050510"/>
+                <path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M16 24 L10 22 M36 24 L42 22" stroke="url(#g11)" stroke-width="2" stroke-linecap="round"/>
+                <path d="M20 14 L18 10 M26 12 L26 8 M32 14 L34 10" stroke="url(#g11)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>`,
+
+            master: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M26 10 L26 42 M14 18 L38 18 M14 34 L38 34" stroke="url(#g12)" stroke-width="1.5"/>
+                <rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/>
+                <rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/>
+                <rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/>
+                <circle cx="26" cy="18" r="3" fill="url(#g12)"/>
+            </svg>`,
+
+            gambler: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/>
+                <rect x="16" y="20" width="6" height="14" rx="2" fill="url(#g13)" opacity="0.5"/>
+                <rect x="23" y="20" width="6" height="14" rx="2" fill="url(#g13)" opacity="0.5"/>
+                <rect x="30" y="20" width="6" height="14" rx="2" fill="url(#g13)" opacity="0.5"/>
+                <text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text>
+                <text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text>
+                <text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text>
+                <rect x="20" y="38" width="12" height="4" rx="2" fill="url(#g13)"/>
+            </svg>`,
+
+            lucky: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+                <circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/>
+                <path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/>
+                <path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/>
+                <circle cx="14" cy="20" r="2" fill="url(#g14)" opacity="0.6"/>
+                <circle cx="38" cy="20" r="2" fill="url(#g14)" opacity="0.6"/>
+                <circle cx="14" cy="32" r="2" fill="url(#g14)" opacity="0.6"/>
+                <circle cx="38" cy="32" r="2" fill="url(#g14)" opacity="0.6"/>
+                <circle cx="26" cy="26" r="2" fill="url(#g14)"/>
+            </svg>`
+        };
 
         const user = tg.initDataUnsafe?.user;
         if (user) {
@@ -429,12 +544,14 @@
                 const container = document.getElementById('achievementsContent');
                 const earned = data.filter(a => a.earned).length;
                 const total = data.length;
-                let html = `<div class="achievement-count">Получено: ${earned} из ${total}</div>`;
+                let html = `<div class="achievement-count">Получено: <b style="color:#d4af37">${earned}</b> из ${total}</div>`;
                 html += '<div class="achievements-grid">';
                 data.forEach(a => {
+                    const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
                     html += `<div class="achievement-card ${a.earned ? '' : 'locked'}"
                         onclick="showAchievementInfo('${a.name}', '${a.description}', ${a.earned})">
-                        <div class="achievement-icon">${a.icon}</div>
+                        ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
+                        <div class="achievement-svg">${svgIcon}</div>
                         <div class="achievement-name">${a.name}</div>
                     </div>`;
                 });
@@ -455,18 +572,12 @@
             try {
                 const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?id=1816670&appid=${WEATHER_KEY}&units=metric&lang=ru`);
                 const data = await r.json();
-                const temp = Math.round(data.main.temp);
-                const feels = Math.round(data.main.feels_like);
-                const desc = data.weather[0].description;
-                const humidity = data.main.humidity;
-                const wind = data.wind.speed;
-                const weatherId = data.weather[0].id;
-                document.getElementById('weatherTemp').innerHTML = `${temp}<span>°C</span>`;
-                document.getElementById('weatherDesc').textContent = desc.charAt(0).toUpperCase() + desc.slice(1);
-                document.getElementById('weatherHumidity').textContent = humidity;
-                document.getElementById('weatherWind').textContent = wind;
-                document.getElementById('weatherFeels').textContent = feels;
-                document.getElementById('weatherIcon').textContent = getWeatherIcon(weatherId);
+                document.getElementById('weatherTemp').innerHTML = `${Math.round(data.main.temp)}<span>°C</span>`;
+                document.getElementById('weatherDesc').textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
+                document.getElementById('weatherHumidity').textContent = data.main.humidity;
+                document.getElementById('weatherWind').textContent = data.wind.speed;
+                document.getElementById('weatherFeels').textContent = Math.round(data.main.feels_like);
+                document.getElementById('weatherIcon').textContent = getWeatherIcon(data.weather[0].id);
             } catch(e) { document.getElementById('weatherDesc').textContent = 'Недоступно'; }
         }
 
@@ -474,8 +585,7 @@
             try {
                 const r = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_KEY}/latest/CNY`);
                 const data = await r.json();
-                const rate = data.conversion_rates.RUB.toFixed(2);
-                document.getElementById('yuanRate').innerHTML = `${rate}<span> ₽</span>`;
+                document.getElementById('yuanRate').innerHTML = `${data.conversion_rates.RUB.toFixed(2)}<span> ₽</span>`;
                 document.getElementById('rateUpdated').textContent = new Date().toLocaleDateString('ru-RU');
             } catch(e) { document.getElementById('yuanRate').innerHTML = `—<span> ₽</span>`; }
         }
@@ -537,9 +647,8 @@
             const dates = [];
             const today = new Date();
             for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); dates.push(d); }
-            const datesContainer = document.getElementById('laundryDates');
             const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-            datesContainer.innerHTML = dates.map((d, i) => {
+            document.getElementById('laundryDates').innerHTML = dates.map((d, i) => {
                 const dateStr = d.toISOString().split('T')[0];
                 return `<button class="date-btn ${i===0?'active':''}" onclick="selectLaundryDate('${dateStr}', this)">${days[d.getDay()]} ${d.getDate()}</button>`;
             }).join('');
@@ -565,20 +674,14 @@
         function renderLaundrySlots() {
             const times = ['08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
             const dayBookings = laundryData.filter(b => b.date === selectedLaundryDate);
-            const container = document.getElementById('laundrySlots');
-            container.innerHTML = times.map(time => {
+            document.getElementById('laundrySlots').innerHTML = times.map(time => {
                 const booking = dayBookings.find(b => b.time === time);
                 const isMyBooking = booking && booking.telegram_id === currentUserId;
                 const isBooked = !!booking && !isMyBooking;
-                let cls = 'laundry-slot';
-                let status = '✅ Свободно';
-                let onclick = `bookLaundry('${time}')`;
+                let cls = 'laundry-slot', status = '✅ Свободно', onclick = `bookLaundry('${time}')`;
                 if (isMyBooking) { cls += ' my-booking'; status = '⭐ Моя запись'; onclick = `cancelLaundry(${booking.id})`; }
                 else if (isBooked) { cls += ' booked'; status = '❌ Занято'; onclick = ''; }
-                return `<div class="${cls}" ${onclick ? `onclick="${onclick}"` : ''}>
-                    <div class="laundry-time">${time}</div>
-                    <div class="laundry-status">${status}</div>
-                </div>`;
+                return `<div class="${cls}" ${onclick ? `onclick="${onclick}"` : ''}><div class="laundry-time">${time}</div><div class="laundry-status">${status}</div></div>`;
             }).join('');
         }
 
@@ -587,8 +690,7 @@
             const username = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Пользователь';
             try {
                 const r = await fetch(`${API_URL}/api/laundry`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({date: selectedLaundryDate, time, telegram_id: currentUserId, username})
                 });
                 if (r.ok) { tg.showAlert(`✅ Записан на ${time}!`); loadLaundry(); }
@@ -610,15 +712,12 @@
         }
 
         async function addScheduleItem() {
-            const day = document.getElementById('schDay').value;
-            const time = document.getElementById('schTime').value;
-            const subject = document.getElementById('schSubject').value;
-            const location = document.getElementById('schLocation').value;
+            const day = document.getElementById('schDay').value, time = document.getElementById('schTime').value;
+            const subject = document.getElementById('schSubject').value, location = document.getElementById('schLocation').value;
             if (!day || !time || !subject || !location) { tg.showAlert('Заполните все поля'); return; }
             try {
                 const r = await fetch(`${API_URL}/api/schedule`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
                     body: JSON.stringify({day, time, subject, location})
                 });
                 if (r.ok) { tg.showAlert('✅ Добавлено!'); ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value = ''); loadSchedule(); }
@@ -634,8 +733,7 @@
             if (!text) { tg.showAlert('Введите текст'); return; }
             try {
                 const r = await fetch(`${API_URL}/api/announcements`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
                     body: JSON.stringify({text})
                 });
                 if (r.ok) { tg.showAlert('✅ Опубликовано!'); document.getElementById('announceText').value = ''; loadAnnouncements(); }
