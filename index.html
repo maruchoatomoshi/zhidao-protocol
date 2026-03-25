@@ -740,7 +740,7 @@
             }
         }
 
-function initRoulette() {
+       function initRoulette() {
     const strip = document.getElementById('rouletteStrip');
     strip.innerHTML = '';
     for (let i = 0; i < 50; i++) {
@@ -755,7 +755,7 @@ function initRoulette() {
     strip.style.transform = `translateX(${centerOffset}px)`;
 }
 
-async function spinRoulette(targetPrize) {
+        async function spinRoulette(targetPrize) {
     return new Promise(resolve => {
         const strip = document.getElementById('rouletteStrip');
         const items = strip.querySelectorAll('.roulette-item');
