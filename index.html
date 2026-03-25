@@ -207,6 +207,17 @@
     </style>
 </head>
 <body>
+<div class="modal-overlay" id="questionModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-title">🤫 Анонимный вопрос</div>
+        <div class="modal-desc">Никто не узнает кто спросил — вопрос придёт вожатым анонимно</div>
+        <textarea class="modal-textarea" id="questionText" placeholder="Напиши свой вопрос..."></textarea>
+        <div class="modal-buttons">
+            <button class="modal-btn-send" onclick="submitQuestion()">✉️ Отправить</button>
+            <button class="modal-btn-cancel" onclick="closeQuestion()">Отмена</button>
+        </div>
+    </div>
+</div>
     <div class="glow-bg"></div>
     <div class="confetti-container" id="confettiContainer"></div>
     <div class="content">
