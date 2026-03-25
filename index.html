@@ -141,22 +141,34 @@
         .casino-balance-value { font-size: 24px; font-weight: 800; color: #d4af37; }
         .casino-cost { font-size: 11px; color: #888; text-align: center; margin-bottom: 15px; }
         .roulette-wrapper { width: 100%; max-width: 360px; position: relative; margin-bottom: 20px; }
-        .roulette-pointer { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 16px solid #d4af37; z-index: 10; }
+        .roulette-pointer { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 16px solid #d4af37; z-index: 10; filter: drop-shadow(0 0 6px rgba(212,175,55,0.8)); }
         .roulette-pointer-bottom { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 16px solid #d4af37; z-index: 10; }
         .roulette-track { overflow: hidden; border-radius: 16px; border: 2px solid rgba(212, 175, 55, 0.4); background: #080818; position: relative; }
-        .roulette-track::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to right, #080818, transparent); z-index: 5; pointer-events: none; }
+.roulette-track::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to right, #080818, transparent); z-index: 5; pointer-events: none; }
         .roulette-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to left, #080818, transparent); z-index: 5; pointer-events: none; }
         .roulette-center-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(212, 175, 55, 0.6); transform: translateX(-50%); z-index: 6; }
         .roulette-strip { display: flex; padding: 8px 0; transition: none; will-change: transform; }
-        .roulette-item { min-width: 90px; height: 90px; margin: 0 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid transparent; flex-shrink: 0; }
-        .roulette-item.rare { background: linear-gradient(145deg, #1a0a2e, #2d1550); border-color: rgba(180, 100, 255, 0.5); }
-        .roulette-item.uncommon { background: linear-gradient(145deg, #0a1a2e, #153050); border-color: rgba(100, 180, 255, 0.5); }
-        .roulette-item.common { background: linear-gradient(145deg, #0d0d1f, #111128); border-color: rgba(212, 175, 55, 0.3); }
-        .roulette-item.jackpot { background: linear-gradient(145deg, #2e1a00, #503000); border-color: rgba(255, 200, 50, 0.8); }
-        .roulette-item-icon { font-size: 32px; margin-bottom: 4px; }
-        .roulette-item-name { font-size: 9px; color: #aaa; text-align: center; line-height: 1.2; padding: 0 4px; }
-        .roulette-item.jackpot .roulette-item-name { color: #f5d05a; font-weight: 700; }
-        .roulette-item.winner { border-color: #f5d05a !important; box-shadow: 0 0 25px rgba(212, 175, 55, 0.6) !important; transform: scale(1.05); }
+.roulette-item { min-width: 90px; height: 90px; margin: 0 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid rgba(212,175,55,0.3); background: linear-gradient(145deg, #0d0d1f, #111128); flex-shrink: 0; position: relative; overflow: hidden; }
+        .roulette-item-icon { font-size: 40px; transition: all 0.3s; }
+.roulette-item-name { font-size: 9px; color: #aaa; text-align: center; line-height: 1.2; padding: 0 4px; }
+        .roulette-item.winner { border-color: #f5d05a !important; box-shadow: 0 0 25px rgba(212, 175, 55, 0.6) !important; }
+.roulette-item.opening { animation: shakeBox 0.5s ease; }
+        .roulette-item.opened { border-color: #f5d05a; box-shadow: 0 0 30px rgba(212,175,55,0.8); background: linear-gradient(145deg, #1a1a00, #2a2a00); }
+        .roulette-prize-reveal { animation: revealPrize 0.4s ease forwards; }
+@keyframes shakeBox {
+    0% { transform: translateX(0) rotate(0deg); }
+    15% { transform: translateX(-8px) rotate(-5deg); }
+    30% { transform: translateX(8px) rotate(5deg); }
+    45% { transform: translateX(-6px) rotate(-3deg); }
+    60% { transform: translateX(6px) rotate(3deg); }
+    75% { transform: translateX(-3px) rotate(-1deg); }
+    100% { transform: translateX(0) rotate(0deg); }
+}
+@keyframes revealPrize {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
         .prize-result { display: none; text-align: center; padding: 20px; background: linear-gradient(145deg, #0d0d1f, #111128); border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 20px; width: 100%; max-width: 360px; margin-bottom: 15px; }
         .prize-result.show { display: block; }
         .prize-result-icon { font-size: 60px; margin-bottom: 10px; }
@@ -728,93 +740,62 @@
             }
         }
 
-        function initRoulette() {
-            const strip = document.getElementById('rouletteStrip');
-            strip.innerHTML = '';
-            for (let i = 0; i < 50; i++) {
-                const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
-                const el = document.createElement('div');
-                el.className = `roulette-item ${prize.rarity}`;
-                el.innerHTML = `<div class="roulette-item-icon">${prize.icon}</div><div class="roulette-item-name">${prize.name}</div>`;
-                strip.appendChild(el);
-            }
-            const itemWidth = 98;
-            const trackWidth = document.querySelector('.roulette-track')?.offsetWidth || 360;
-            const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
-            strip.style.transform = `translateX(${centerOffset}px)`;
-        }
+function initRoulette() {
+    const strip = document.getElementById('rouletteStrip');
+    strip.innerHTML = '';
+    for (let i = 0; i < 50; i++) {
+        const el = document.createElement('div');
+        el.className = 'roulette-item';
+        el.innerHTML = `<div class="roulette-item-icon">📦</div><div class="roulette-item-name">Кейс</div>`;
+        strip.appendChild(el);
+    }
+    const itemWidth = 98;
+    const trackWidth = document.querySelector('.roulette-track')?.offsetWidth || 360;
+    const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
+    strip.style.transform = `translateX(${centerOffset}px)`;
+}
 
-        async function openCase() {
-            if (isSpinning) return;
-            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-            if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужно минимум 80 ★'); return; }
-            isSpinning = true;
-            document.getElementById('openCaseBtn').disabled = true;
-            document.getElementById('prizeResult').classList.remove('show');
-            try {
-                const r = await fetch(`${API_URL}/api/casino/open`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({telegram_id: currentUserId})
-                });
-                if (!r.ok) {
-                    const err = await r.json();
-                    if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день исчерпан! Приходите завтра или приобретите в магазине дополнительную попытку');
-                    else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
-                    else tg.showAlert('Ошибка!');
-                    isSpinning = false;
-                    document.getElementById('openCaseBtn').disabled = false;
-                    return;
-                }
-                const data = await r.json();
-                const prize = PRIZE_MAP[data.prize.code] || PRIZES[0];
-                await spinRoulette(prize);
-                showPrizeResult(prize, data.new_points);
-                currentPoints = data.new_points;
-                updatePoints();
-                if (prize.code === 'jackpot') { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(100); }
-                else if (prize.points > 50) { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(30); }
-                else if (prize.code === 'empty') tg.HapticFeedback.notificationOccurred('error');
-                else tg.HapticFeedback.impactOccurred('medium');
-                document.getElementById('playAgainBtn').style.display = 'block';
-            } catch(e) {
-                tg.showAlert('Ошибка соединения');
-                isSpinning = false;
-                document.getElementById('openCaseBtn').disabled = false;
-            }
-        }
-
-        async function spinRoulette(targetPrize) {
-            return new Promise(resolve => {
-                const strip = document.getElementById('rouletteStrip');
-                const items = strip.querySelectorAll('.roulette-item');
-                const itemWidth = 98;
-                const trackWidth = document.querySelector('.roulette-track').offsetWidth || 360;
-                const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
-                const targetIdx = 38 + Math.floor(Math.random() * 4);
-                items[targetIdx].querySelector('.roulette-item-icon').textContent = targetPrize.icon;
-                items[targetIdx].querySelector('.roulette-item-name').textContent = targetPrize.name;
-                items[targetIdx].className = `roulette-item ${targetPrize.rarity}`;
-                const finalX = centerOffset - targetIdx * itemWidth;
-                const startX = centerOffset;
-                const duration = 4500;
-                let startTime = null;
-                function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
-                function animate(timestamp) {
-                    if (!startTime) startTime = timestamp;
-                    const elapsed = timestamp - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const eased = easeOut(progress);
-                    const currentX = startX + (finalX - startX) * eased;
-                    strip.style.transition = 'none';
-                    strip.style.transform = `translateX(${currentX}px)`;
-                    const speed = 1 - eased;
-                    if (speed > 0.1 && Math.random() < speed * 0.3) { try { tg.HapticFeedback.selectionChanged(); } catch(e) {} }
-                    if (progress < 1) requestAnimationFrame(animate);
-                    else { items[targetIdx].classList.add('winner'); if (targetPrize.code === 'jackpot') items[targetIdx].style.animation = 'shimmer 0.5s infinite'; resolve(); }
-                }
+async function spinRoulette(targetPrize) {
+    return new Promise(resolve => {
+        const strip = document.getElementById('rouletteStrip');
+        const items = strip.querySelectorAll('.roulette-item');
+        const itemWidth = 98;
+        const trackWidth = document.querySelector('.roulette-track').offsetWidth || 360;
+        const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
+        const targetIdx = 38 + Math.floor(Math.random() * 4);
+        const finalX = centerOffset - targetIdx * itemWidth;
+        const startX = centerOffset;
+        const duration = 4500;
+        let startTime = null;
+        function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+        function animate(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeOut(progress);
+            const currentX = startX + (finalX - startX) * eased;
+            strip.style.transition = 'none';
+            strip.style.transform = `translateX(${currentX}px)`;
+            const speed = 1 - eased;
+            if (speed > 0.1 && Math.random() < speed * 0.3) { try { tg.HapticFeedback.selectionChanged(); } catch(e) {} }
+            if (progress < 1) {
                 requestAnimationFrame(animate);
-            });
+            } else {
+                const winner = items[targetIdx];
+                winner.classList.add('winner');
+                winner.classList.add('opening');
+                setTimeout(() => {
+                    winner.classList.remove('opening');
+                    winner.classList.add('opened');
+                    winner.innerHTML = `<div class="roulette-item-icon roulette-prize-reveal">${targetPrize.icon}</div><div class="roulette-item-name">${targetPrize.name}</div>`;
+                    if (targetPrize.code === 'jackpot') winner.style.animation = 'shimmer 0.5s infinite';
+                    resolve();
+                }, 600);
+            }
         }
+        requestAnimationFrame(animate);
+    });
+}
 
         function showPrizeResult(prize) {
             document.getElementById('prizeIcon').textContent = prize.icon;
