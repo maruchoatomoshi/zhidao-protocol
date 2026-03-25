@@ -423,6 +423,12 @@
             </div>
         </div>
 
+<div class="card" style="text-align:center;margin-top:5px;max-width:360px;width:100%;">
+            <div style="color:#d4af37;font-size:13px;font-weight:700;margin-bottom:8px;">🤫 Анонимный вопрос</div>
+            <div style="color:#888;font-size:12px;margin-bottom:12px;">Задай вопрос команде анонимно — никто не узнает кто спросил</div>
+            <button class="team-member-btn" onclick="askAnonymous()">✉️ Задать вопрос</button>
+        </div>
+
         <!-- Админ -->
         <div class="tab-content" id="tab-admin">
             <div class="admin-grid">
@@ -983,6 +989,14 @@
                     </div>`).join('');
             } catch(e) { document.getElementById('announcementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
         }
+
+function askAnonymous() {
+    tg.showPopup({
+        title: '🤫 Анонимный вопрос',
+        message: 'Введи вопрос в боте командой:\n\n/вопрос ТЕКСТ ВОПРОСА\n\nНапример:\n/вопрос Когда следующая экскурсия?',
+        buttons: [{type: 'ok'}]
+    });
+}
 
         function initLaundry() {
             const dates = [], today = new Date();
