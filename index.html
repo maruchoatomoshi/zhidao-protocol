@@ -498,81 +498,81 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+tg.ready();
+tg.expand();
 
-        const API_URL = 'https://hk.marucho.icu:8443';
-        const WEATHER_KEY = '03232b342b9270f8b24ed68e2c55d8f4';
-        const EXCHANGE_KEY = '7dd743fceb96a3460f7d846e';
-        const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
+const API_URL = 'https://hk.marucho.icu:8443';
+const WEATHER_KEY = '03232b342b9270f8b24ed68e2c55d8f4';
+const EXCHANGE_KEY = '7dd743fceb96a3460f7d846e';
+const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
 
-        let userConfig = null;
-        let currentUserId = null;
-        let isAdmin = false;
-        let selectedLaundryDate = null;
-        let laundryData = [];
-        let currentPoints = 0;
-        let isSpinning = false;
+let userConfig = null;
+let currentUserId = null;
+let isAdmin = false;
+let selectedLaundryDate = null;
+let laundryData = [];
+let currentPoints = 0;
+let isSpinning = false;
 
-        const PRIZES = [
-            { code: 'empty',   icon: '🍚', name: 'Пустая миска риса', desc: 'Ничего не выпало...',       points: 0,   rarity: 'common' },
-            { code: 'small',   icon: '⭐', name: '+30 баллов',        desc: 'Небольшой бонус',           points: 30,  rarity: 'common' },
-            { code: 'medium',  icon: '💫', name: '+60 баллов',        desc: 'Неплохо!',                  points: 60,  rarity: 'uncommon' },
-            { code: 'walk',    icon: '🕐', name: '+30 мин свободы',   desc: 'Покажи скрин вожатому',     points: 0,   rarity: 'uncommon' },
-            { code: 'laundry', icon: '🧺', name: 'Вне очереди!',     desc: 'Первым на стирку/за водой', points: 0,   rarity: 'rare' },
-            { code: 'skip',    icon: '🛡', name: 'Иммунитет!',       desc: 'Один пропуск без штрафа',   points: 0,   rarity: 'rare' },
-            { code: 'jackpot', icon: '👑', name: 'ДЖЕКПОТ!',         desc: '+250 баллов! Невероятно!',  points: 250, rarity: 'jackpot' },
-        ];
-        const PRIZE_MAP = {};
-        PRIZES.forEach(p => PRIZE_MAP[p.code] = p);
+const PRIZES = [
+    { code: 'empty',   icon: '🍚', name: 'Пустая миска риса', desc: 'Ничего не выпало...',       points: 0,   rarity: 'common' },
+    { code: 'small',   icon: '⭐', name: '+30 баллов',        desc: 'Небольшой бонус',           points: 30,  rarity: 'common' },
+    { code: 'medium',  icon: '💫', name: '+60 баллов',        desc: 'Неплохо!',                  points: 60,  rarity: 'uncommon' },
+    { code: 'walk',    icon: '🕐', name: '+30 мин свободы',   desc: 'Покажи скрин вожатому',     points: 0,   rarity: 'uncommon' },
+    { code: 'laundry', icon: '🧺', name: 'Вне очереди!',      desc: 'Первым на стирку/за водой', points: 0,   rarity: 'rare' },
+    { code: 'skip',    icon: '🛡', name: 'Иммунитет!',        desc: 'Один пропуск без штрафа',   points: 0,   rarity: 'rare' },
+    { code: 'jackpot', icon: '👑', name: 'ДЖЕКПОТ!',          desc: '+250 баллов! Невероятно!',  points: 250, rarity: 'jackpot' },
+];
+const PRIZE_MAP = {};
+PRIZES.forEach(p => PRIZE_MAP[p.code] = p);
 
-        const ACHIEVEMENT_ICONS = {
-            early_bird: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="22" r="7" fill="url(#g1)"/><path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 36 L26 28 L32 36" fill="url(#g1)"/><circle cx="26" cy="10" r="3" fill="url(#g1)"/></svg>`,
-            iron_mode: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/><path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="26" r="5" fill="url(#g2)"/></svg>`,
-            legend: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/></svg>`,
-            curious: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/><line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/></svg>`,
-            polyglot: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/><text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text></svg>`,
-            explorer: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="26" cy="18" r="4" fill="url(#g6)"/></svg>`,
-            brave: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="36" r="2" fill="url(#g7)"/><circle cx="34" cy="36" r="2" fill="url(#g7)"/></svg>`,
-            exemplary: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/><path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
-            helper: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/></svg>`,
-            dragon: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/><circle cx="32" cy="22" r="2" fill="#050510"/></svg>`,
-            night_watch: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="22" cy="22" r="4" fill="url(#g11)"/><circle cx="30" cy="22" r="4" fill="url(#g11)"/><circle cx="22" cy="22" r="2" fill="#050510"/><circle cx="30" cy="22" r="2" fill="#050510"/><path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
-            master: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/><rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/><rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/></svg>`,
-            gambler: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/><text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text><text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text><text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text></svg>`,
-            lucky: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/><path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/><circle cx="26" cy="26" r="2" fill="url(#g14)"/></svg>`
-        };
+const ACHIEVEMENT_ICONS = {
+    early_bird: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="22" r="7" fill="url(#g1)"/><path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 36 L26 28 L32 36" fill="url(#g1)"/><circle cx="26" cy="10" r="3" fill="url(#g1)"/></svg>`,
+    iron_mode: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/><path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="26" r="5" fill="url(#g2)"/></svg>`,
+    legend: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/></svg>`,
+    curious: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/><line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/></svg>`,
+    polyglot: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/><text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text></svg>`,
+    explorer: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="26" cy="18" r="4" fill="url(#g6)"/></svg>`,
+    brave: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="36" r="2" fill="url(#g7)"/><circle cx="34" cy="36" r="2" fill="url(#g7)"/></svg>`,
+    exemplary: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/><path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+    helper: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/></svg>`,
+    dragon: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/><circle cx="32" cy="22" r="2" fill="#050510"/></svg>`,
+    night_watch: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="22" cy="22" r="4" fill="url(#g11)"/><circle cx="30" cy="22" r="4" fill="url(#g11)"/><circle cx="22" cy="22" r="2" fill="#050510"/><circle cx="30" cy="22" r="2" fill="#050510"/><path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+    master: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/><rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/><rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/></svg>`,
+    gambler: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/><text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text><text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text><text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text></svg>`,
+    lucky: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/><path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/><circle cx="26" cy="26" r="2" fill="url(#g14)"/></svg>`
+};
 
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            currentUserId = user.id;
-            isAdmin = ADMIN_IDS.includes(user.id);
-            document.getElementById('username').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-            loadUserData(user.id);
-            loadPoints(user.id);
-        } else {
-            document.getElementById('username').textContent = 'Пользователь';
-            document.getElementById('status').textContent = '● Нет данных';
-        }
+const user = tg.initDataUnsafe?.user;
+if (user) {
+    currentUserId = user.id;
+    isAdmin = ADMIN_IDS.includes(user.id);
+    document.getElementById('username').textContent = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+    loadUserData(user.id);
+    loadPoints(user.id);
+} else {
+    document.getElementById('username').textContent = 'Пользователь';
+    document.getElementById('status').textContent = '● Нет данных';
+}
 
-        if (isAdmin) {
-            const tabs = document.getElementById('tabs');
-            const adminTab = document.createElement('button');
-            adminTab.className = 'tab';
-            adminTab.textContent = '👑 Админ';
-            adminTab.onclick = () => showTab('admin', adminTab);
-            tabs.appendChild(adminTab);
-        }
+if (isAdmin) {
+    const tabs = document.getElementById('tabs');
+    const adminTab = document.createElement('button');
+    adminTab.className = 'tab';
+    adminTab.textContent = '👑 Админ';
+    adminTab.onclick = () => showTab('admin', adminTab);
+    tabs.appendChild(adminTab);
+}
 
-        loadWeather();
-        loadYuanRate();
-        loadSchedule();
-        loadAnnouncements();
-        loadLeaderboard();
-        loadAchievements();
-        initLaundry();
+loadWeather();
+loadYuanRate();
+loadSchedule();
+loadAnnouncements();
+loadLeaderboard();
+loadAchievements();
+initLaundry();
 
-        function showTab(name, btn) {
+function showTab(name, btn) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
@@ -581,166 +581,166 @@
     if (name === 'casino') setTimeout(initRoulette, 50);
 }
 
-        // ===== МАГАЗИН =====
-        let shopMode = 'store';
+// ===== МАГАЗИН =====
+let shopMode = 'store';
 
-        function switchShopTab(mode, btn) {
-            shopMode = mode;
-            document.querySelectorAll('#tab-shop .shop-tab').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (mode === 'store') {
-                document.getElementById('shopStoreContent').style.display = 'flex';
-                document.getElementById('shopInventoryContent').style.display = 'none';
+function switchShopTab(mode, btn) {
+    shopMode = mode;
+    document.querySelectorAll('#tab-shop .shop-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (mode === 'store') {
+        document.getElementById('shopStoreContent').style.display = 'flex';
+        document.getElementById('shopInventoryContent').style.display = 'none';
+        loadShop();
+    } else {
+        document.getElementById('shopStoreContent').style.display = 'none';
+        document.getElementById('shopInventoryContent').style.display = 'flex';
+        loadInventory();
+    }
+}
+
+async function loadShop() {
+    try {
+        const r = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId || 0}`);
+        const data = await r.json();
+        const container = document.getElementById('shopStoreContent');
+        document.getElementById('shopPoints').textContent = currentPoints + ' ★';
+        if (data.frozen) document.getElementById('shopFrozenBanner').style.display = 'block';
+        const categories = {
+            'privilege': { name: '⚡ Привилегии', items: [] },
+            'points':    { name: '⭐ Баллы', items: [] },
+            'social':    { name: '🤝 Социальное', items: [] },
+            'food':      { name: '🍽 Еда', items: [] },
+            'vip':       { name: '👑 VIP', items: [] },
+        };
+        data.items.forEach(item => { if (categories[item.category]) categories[item.category].items.push(item); });
+        let html = '';
+        for (const cat of Object.values(categories)) {
+            if (!cat.items.length) continue;
+            html += `<div class="shop-category" style="width:100%;max-width:360px;">${cat.name}</div>`;
+            cat.items.forEach(item => {
+                const canBuy = item.available && currentPoints >= item.price;
+                const limitText = item.daily_limit > 0 ? `Осталось: ${item.daily_limit - item.sold_today} из ${item.daily_limit}` : 'Без ограничений';
+                html += `<div class="shop-item ${!item.available ? 'unavailable' : ''}">
+                    <div class="shop-item-icon">${item.icon}</div>
+                    <div class="shop-item-info">
+                        <div class="shop-item-name">${item.name}</div>
+                        <div class="shop-item-desc">${item.description}</div>
+                        <div class="shop-item-limit">${limitText}</div>
+                    </div>
+                    <button class="shop-item-buy" onclick="buyItem('${item.code}', '${item.name}', ${item.price})" ${!canBuy ? 'disabled' : ''}>${item.price} ★</button>
+                </div>`;
+            });
+        }
+        container.innerHTML = html || '<div class="empty-state">Магазин пуст</div>';
+    } catch(e) { document.getElementById('shopStoreContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+async function buyItem(code, name, price) {
+    if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+    tg.showPopup({
+        title: `Купить ${name}?`,
+        message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
+        buttons: [{ id: 'confirm', type: 'default', text: '✅ Купить' }, { type: 'cancel' }]
+    }, async (btnId) => {
+        if (btnId !== 'confirm') return;
+        try {
+            const r = await fetch(`${API_URL}/api/shop/buy`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({telegram_id: currentUserId, item_code: code})
+            });
+            if (r.ok) {
+                const data = await r.json();
+                currentPoints = data.new_points;
+                updatePoints();
+                tg.HapticFeedback.notificationOccurred('success');
+                tg.showAlert(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`);
                 loadShop();
             } else {
-                document.getElementById('shopStoreContent').style.display = 'none';
-                document.getElementById('shopInventoryContent').style.display = 'flex';
+                const err = await r.json();
+                if (err.detail === 'Daily limit reached') tg.showAlert('Этот товар уже разобрали!');
+                else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
+                else if (err.detail === 'Account frozen') tg.showAlert('Твой аккаунт заморожен!');
+                else tg.showAlert('Ошибка покупки');
+            }
+        } catch(e) { tg.showAlert('Ошибка соединения'); }
+    });
+}
+
+async function loadInventory() {
+    try {
+        const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
+        const data = await r.json();
+        const container = document.getElementById('shopInventoryContent');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купи что-нибудь в магазине!</div>'; return; }
+        container.innerHTML = data.map(item => `
+            <div class="inventory-item">
+                <div class="inventory-header">
+                    <div class="inventory-icon">${item.icon}</div>
+                    <div><div class="inventory-name">${item.name}</div><div class="inventory-date">${new Date(item.purchased_at).toLocaleDateString('ru-RU')}</div></div>
+                </div>
+                <div class="inventory-actions">
+                    <button class="inv-btn inv-btn-use" onclick="useItem(${item.id}, '${item.name}')">✅ Использовать</button>
+                    <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id}, '${item.name}')">🎁 Подарить</button>
+                    <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id}, '${item.name}', ${item.price})">💰 Продать</button>
+                </div>
+            </div>`).join('');
+    } catch(e) { document.getElementById('shopInventoryContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+function useItem(id, name) {
+    tg.showPopup({ title: `Использовать ${name}?`, message: 'Покажи этот экран вожатому для подтверждения.', buttons: [{ type: 'ok' }] });
+}
+
+function giftItem(id, name) {
+    tg.showPopup({ title: `Подарить ${name}?`, message: 'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов', buttons: [{ type: 'ok' }] });
+}
+
+async function sellItem(id, name, price) {
+    const refund = Math.floor(price / 2);
+    tg.showPopup({
+        title: `Продать ${name}?`,
+        message: `Ты получишь ${refund} ★ (50% от стоимости ${price} ★)`,
+        buttons: [{ id: 'confirm', type: 'destructive', text: `💰 Продать за ${refund} ★` }, { type: 'cancel' }]
+    }, async (btnId) => {
+        if (btnId !== 'confirm') return;
+        try {
+            const r = await fetch(`${API_URL}/api/shop/sell`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({purchase_id: id, telegram_id: currentUserId})
+            });
+            if (r.ok) {
+                const data = await r.json();
+                currentPoints = data.new_points;
+                updatePoints();
+                tg.showAlert(`✅ Продано! +${data.refund} ★`);
                 loadInventory();
             }
-        }
+        } catch(e) { tg.showAlert('Ошибка'); }
+    });
+}
 
-        async function loadShop() {
-            try {
-                const r = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId || 0}`);
-                const data = await r.json();
-                const container = document.getElementById('shopStoreContent');
-                document.getElementById('shopPoints').textContent = currentPoints + ' ★';
-                if (data.frozen) document.getElementById('shopFrozenBanner').style.display = 'block';
-                const categories = {
-                    'privilege': { name: '⚡ Привилегии', items: [] },
-                    'points': { name: '⭐ Баллы', items: [] },
-                    'social': { name: '🤝 Социальное', items: [] },
-                    'food': { name: '🍽 Еда', items: [] },
-                    'vip': { name: '👑 VIP', items: [] },
-                };
-                data.items.forEach(item => { if (categories[item.category]) categories[item.category].items.push(item); });
-                let html = '';
-                for (const cat of Object.values(categories)) {
-                    if (!cat.items.length) continue;
-                    html += `<div class="shop-category" style="width:100%;max-width:360px;">${cat.name}</div>`;
-                    cat.items.forEach(item => {
-                        const canBuy = item.available && currentPoints >= item.price;
-                        const limitText = item.daily_limit > 0 ? `Осталось: ${item.daily_limit - item.sold_today} из ${item.daily_limit}` : 'Без ограничений';
-                        html += `<div class="shop-item ${!item.available ? 'unavailable' : ''}">
-                            <div class="shop-item-icon">${item.icon}</div>
-                            <div class="shop-item-info">
-                                <div class="shop-item-name">${item.name}</div>
-                                <div class="shop-item-desc">${item.description}</div>
-                                <div class="shop-item-limit">${limitText}</div>
-                            </div>
-                            <button class="shop-item-buy" onclick="buyItem('${item.code}', '${item.name}', ${item.price})" ${!canBuy ? 'disabled' : ''}>${item.price} ★</button>
-                        </div>`;
-                    });
-                }
-                container.innerHTML = html || '<div class="empty-state">Магазин пуст</div>';
-            } catch(e) { document.getElementById('shopStoreContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
-        }
+async function resetShop() {
+    try {
+        const r = await fetch(`${API_URL}/api/admin/reset_shop`, { method: 'POST', headers: {'x-admin-id': currentUserId} });
+        if (r.ok) tg.showAlert('✅ Магазин сброшен!');
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
 
-        async function buyItem(code, name, price) {
-            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-            tg.showPopup({
-                title: `Купить ${name}?`,
-                message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
-                buttons: [{ id: 'confirm', type: 'default', text: '✅ Купить' }, { type: 'cancel' }]
-            }, async (btnId) => {
-                if (btnId !== 'confirm') return;
-                try {
-                    const r = await fetch(`${API_URL}/api/shop/buy`, {
-                        method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({telegram_id: currentUserId, item_code: code})
-                    });
-                    if (r.ok) {
-                        const data = await r.json();
-                        currentPoints = data.new_points;
-                        updatePoints();
-                        tg.HapticFeedback.notificationOccurred('success');
-                        tg.showAlert(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`);
-                        loadShop();
-                    } else {
-                        const err = await r.json();
-                        if (err.detail === 'Daily limit reached') tg.showAlert('Этот товар уже разобрали!');
-                        else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
-                        else if (err.detail === 'Account frozen') tg.showAlert('Твой аккаунт заморожен!');
-                        else tg.showAlert('Ошибка покупки');
-                    }
-                } catch(e) { tg.showAlert('Ошибка соединения'); }
-            });
-        }
+// ===== КАЗИНО =====
+function switchCasinoTab(mode, btn) {
+    document.querySelectorAll('#casinoTabs .shop-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (mode === 'play') {
+        document.getElementById('casinoPlayContent').style.display = 'flex';
+        document.getElementById('casinoRulesContent').style.display = 'none';
+    } else {
+        document.getElementById('casinoPlayContent').style.display = 'none';
+        document.getElementById('casinoRulesContent').style.display = 'flex';
+    }
+}
 
-        async function loadInventory() {
-            try {
-                const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
-                const data = await r.json();
-                const container = document.getElementById('shopInventoryContent');
-                if (!data.length) { container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купи что-нибудь в магазине!</div>'; return; }
-                container.innerHTML = data.map(item => `
-                    <div class="inventory-item">
-                        <div class="inventory-header">
-                            <div class="inventory-icon">${item.icon}</div>
-                            <div><div class="inventory-name">${item.name}</div><div class="inventory-date">${new Date(item.purchased_at).toLocaleDateString('ru-RU')}</div></div>
-                        </div>
-                        <div class="inventory-actions">
-                            <button class="inv-btn inv-btn-use" onclick="useItem(${item.id}, '${item.name}')">✅ Использовать</button>
-                            <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id}, '${item.name}')">🎁 Подарить</button>
-                            <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id}, '${item.name}', ${item.price})">💰 Продать</button>
-                        </div>
-                    </div>`).join('');
-            } catch(e) { document.getElementById('shopInventoryContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
-        }
-
-        function useItem(id, name) {
-            tg.showPopup({ title: `Использовать ${name}?`, message: 'Покажи этот экран вожатому для подтверждения.', buttons: [{ type: 'ok' }] });
-        }
-
-        function giftItem(id, name) {
-            tg.showPopup({ title: `Подарить ${name}?`, message: 'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов', buttons: [{ type: 'ok' }] });
-        }
-
-        async function sellItem(id, name, price) {
-            const refund = Math.floor(price / 2);
-            tg.showPopup({
-                title: `Продать ${name}?`,
-                message: `Ты получишь ${refund} ★ (50% от стоимости ${price} ★)`,
-                buttons: [{ id: 'confirm', type: 'destructive', text: `💰 Продать за ${refund} ★` }, { type: 'cancel' }]
-            }, async (btnId) => {
-                if (btnId !== 'confirm') return;
-                try {
-                    const r = await fetch(`${API_URL}/api/shop/sell`, {
-                        method: 'POST', headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({purchase_id: id, telegram_id: currentUserId})
-                    });
-                    if (r.ok) {
-                        const data = await r.json();
-                        currentPoints = data.new_points;
-                        updatePoints();
-                        tg.showAlert(`✅ Продано! +${data.refund} ★`);
-                        loadInventory();
-                    }
-                } catch(e) { tg.showAlert('Ошибка'); }
-            });
-        }
-
-        async function resetShop() {
-            try {
-                const r = await fetch(`${API_URL}/api/admin/reset_shop`, { method: 'POST', headers: {'x-admin-id': currentUserId} });
-                if (r.ok) tg.showAlert('✅ Магазин сброшен!');
-            } catch(e) { tg.showAlert('Ошибка'); }
-        }
-
-        // ===== КАЗИНО =====
-        function switchCasinoTab(mode, btn) {
-            document.querySelectorAll('#casinoTabs .shop-tab').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (mode === 'play') {
-                document.getElementById('casinoPlayContent').style.display = 'flex';
-                document.getElementById('casinoRulesContent').style.display = 'none';
-            } else {
-                document.getElementById('casinoPlayContent').style.display = 'none';
-                document.getElementById('casinoRulesContent').style.display = 'flex';
-            }
-        }
-
-       function initRoulette() {
+function initRoulette() {
     const strip = document.getElementById('rouletteStrip');
     if (!strip) return;
     strip.innerHTML = '';
@@ -751,6 +751,49 @@
         strip.appendChild(el);
     }
     strip.style.transform = `translateX(135px)`;
+    isSpinning = false;
+    document.getElementById('openCaseBtn').disabled = false;
+    document.getElementById('playAgainBtn').style.display = 'none';
+    document.getElementById('prizeResult').classList.remove('show');
+}
+
+async function openCase() {
+    if (isSpinning) return;
+    if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+    if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужно минимум 80 ★'); return; }
+    isSpinning = true;
+    document.getElementById('openCaseBtn').disabled = true;
+    document.getElementById('prizeResult').classList.remove('show');
+    try {
+        const r = await fetch(`${API_URL}/api/casino/open`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({telegram_id: currentUserId})
+        });
+        if (!r.ok) {
+            const err = await r.json();
+            if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день! Купи доп кейс в магазине 😄');
+            else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
+            else tg.showAlert('Ошибка!');
+            isSpinning = false;
+            document.getElementById('openCaseBtn').disabled = false;
+            return;
+        }
+        const data = await r.json();
+        const prize = PRIZE_MAP[data.prize.code] || PRIZES[0];
+        await spinRoulette(prize);
+        showPrizeResult(prize);
+        currentPoints = data.new_points;
+        updatePoints();
+        if (prize.code === 'jackpot') { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(100); }
+        else if (prize.points > 50) { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(30); }
+        else if (prize.code === 'empty') tg.HapticFeedback.notificationOccurred('error');
+        else tg.HapticFeedback.impactOccurred('medium');
+        document.getElementById('playAgainBtn').style.display = 'block';
+    } catch(e) {
+        tg.showAlert('Ошибка соединения');
+        isSpinning = false;
+        document.getElementById('openCaseBtn').disabled = false;
+    }
 }
 
 async function spinRoulette(targetPrize) {
@@ -794,199 +837,748 @@ async function spinRoulette(targetPrize) {
     });
 }
 
-        function showPrizeResult(prize) {
-            document.getElementById('prizeIcon').textContent = prize.icon;
-            document.getElementById('prizeName').textContent = prize.name;
-            document.getElementById('prizeDesc').textContent = prize.desc;
-            const pointsEl = document.getElementById('prizePoints');
-            if (prize.points > 0) { pointsEl.textContent = '+' + prize.points + ' ★'; pointsEl.className = 'prize-result-points positive'; }
-            else if (prize.code === 'empty') { pointsEl.textContent = 'Не повезло 😅'; pointsEl.className = 'prize-result-points negative'; }
-            else { pointsEl.textContent = '🎁 Специальный приз!'; pointsEl.className = 'prize-result-points special'; }
-            document.getElementById('prizeResult').classList.add('show');
-        }
+function showPrizeResult(prize) {
+    document.getElementById('prizeIcon').textContent = prize.icon;
+    document.getElementById('prizeName').textContent = prize.name;
+    document.getElementById('prizeDesc').textContent = prize.desc;
+    const pointsEl = document.getElementById('prizePoints');
+    if (prize.points > 0) { pointsEl.textContent = '+' + prize.points + ' ★'; pointsEl.className = 'prize-result-points positive'; }
+    else if (prize.code === 'empty') { pointsEl.textContent = 'Не повезло 😅'; pointsEl.className = 'prize-result-points negative'; }
+    else { pointsEl.textContent = '🎁 Специальный приз!'; pointsEl.className = 'prize-result-points special'; }
+    document.getElementById('prizeResult').classList.add('show');
+}
 
-        function resetCasino() {
+function resetCasino() {
+    isSpinning = false;
+    document.getElementById('prizeResult').classList.remove('show');
+    document.getElementById('playAgainBtn').style.display = 'none';
+    document.getElementById('openCaseBtn').disabled = false;
+    initRoulette();
+}
+
+function launchConfetti(count) {
+    const container = document.getElementById('confettiContainer');
+    const colors = ['#f5d05a', '#d4af37', '#fff', '#ff8844', '#44ff88', '#ff44aa'];
+    for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        piece.style.width = (Math.random() * 8 + 6) + 'px';
+        piece.style.height = (Math.random() * 8 + 6) + 'px';
+        piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        piece.style.animationDelay = (Math.random() * 1) + 's';
+        container.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+    }
+}
+
+function updatePoints() {
+    document.getElementById('myPoints').textContent = currentPoints + ' ★';
+    document.getElementById('myPointsBig').textContent = currentPoints;
+    document.getElementById('casinoPoints').textContent = currentPoints + ' ★';
+    document.getElementById('shopPoints').textContent = currentPoints + ' ★';
+}
+
+async function loadUserData(telegramId) {
+    try {
+        const r = await fetch(`${API_URL}/api/user/${telegramId}`);
+        if (r.ok) {
+            const data = await r.json();
+            userConfig = data.link;
+            document.getElementById('status').textContent = '● Активен';
+            document.getElementById('username').textContent = data.username;
+            const used = data.used_traffic || 0;
+            const usedGB = (used / 1024 / 1024 / 1024).toFixed(2);
+            document.getElementById('trafficValue').textContent = usedGB + ' GB';
+            const percent = Math.min((used / (10 * 1024 * 1024 * 1024)) * 100, 100);
+            setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
+        } else {
+            document.getElementById('status').textContent = '● Не найден';
+            document.getElementById('username').textContent = 'Нет подписки';
+        }
+    } catch(e) {
+        document.getElementById('status').textContent = '● Офлайн';
+        document.getElementById('username').textContent = 'Ошибка связи';
+    }
+}
+
+async function loadPoints(telegramId) {
+    try {
+        const r = await fetch(`${API_URL}/api/points/${telegramId}`);
+        if (r.ok) {
+            const data = await r.json();
+            currentPoints = data.points || 0;
+            updatePoints();
+        }
+    } catch(e) {}
+}
+
+async function loadLeaderboard() {
+    try {
+        const r = await fetch(`${API_URL}/api/leaderboard`);
+        const data = await r.json();
+        const container = document.getElementById('leaderboardContent');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
+        const medals = ['🥇', '🥈', '🥉'];
+        let myRank = '—', html = '';
+        data.forEach((item, i) => {
+            const medal = medals[i] || (i + 1) + '.';
+            const isMe = currentUserId && item.telegram_id === currentUserId;
+            if (isMe) myRank = i + 1;
+            const titleBadge = item.has_title ? ' 👑' : '';
+            html += `<div class="leaderboard-item" style="${isMe ? 'background:rgba(212,175,55,0.05);border-radius:10px;padding:12px;' : ''}">
+                <div class="leaderboard-rank">${medal}</div>
+                <div class="leaderboard-name">${item.name}${titleBadge}${isMe ? ' 👈' : ''}</div>
+                <div class="leaderboard-points">${item.points} ★</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+        document.getElementById('myRankSub').textContent = myRank !== '—' ? `Место в рейтинге: #${myRank}` : 'Участвуй чтобы попасть в рейтинг!';
+    } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+async function loadAchievements() {
+    if (!currentUserId) return;
+    try {
+        const r = await fetch(`${API_URL}/api/achievements/${currentUserId}`);
+        const data = await r.json();
+        const container = document.getElementById('achievementsContent');
+        const earned = data.filter(a => a.earned).length;
+        let html = `<div class="achievement-count">Получено: <b style="color:#d4af37">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
+        data.forEach(a => {
+            const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
+            html += `<div class="achievement-card ${a.earned ? '' : 'locked'}" onclick="showAchievementInfo('${a.name}', '${a.description}', ${a.earned})">
+                ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
+                <div class="achievement-svg">${svgIcon}</div>
+                <div class="achievement-name">${a.name}</div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch(e) { document.getElementById('achievementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+function showAchievementInfo(name, description, earned) {
+    tg.showPopup({ title: earned ? '✅ ' + name : '🔒 ' + name, message: description + (earned ? '\n\n✨ Получено!' : '\n\n❌ Ещё не получено'), buttons: [{type: 'ok'}] });
+}
+
+async function loadWeather() {
+    try {
+        const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?id=1816670&appid=${WEATHER_KEY}&units=metric&lang=ru`);
+        const data = await r.json();
+        document.getElementById('weatherTemp').innerHTML = `${Math.round(data.main.temp)}<span>°C</span>`;
+        document.getElementById('weatherDesc').textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
+        document.getElementById('weatherHumidity').textContent = data.main.humidity;
+        document.getElementById('weatherWind').textContent = data.wind.speed;
+        document.getElementById('weatherFeels').textContent = Math.round(data.main.feels_like);
+        document.getElementById('weatherIcon').textContent = getWeatherIcon(data.weather[0].id);
+    } catch(e) { document.getElementById('weatherDesc').textContent = 'Недоступно'; }
+}
+
+async function loadYuanRate() {
+    try {
+        const r = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_KEY}/latest/CNY`);
+        const data = await r.json();
+        document.getElementById('yuanRate').innerHTML = `${data.conversion_rates.RUB.toFixed(2)}<span> ₽</span>`;
+        document.getElementById('rateUpdated').textContent = new Date().toLocaleDateString('ru-RU');
+    } catch(e) { document.getElementById('yuanRate').innerHTML = `—<span> ₽</span>`; }
+}
+
+function getWeatherIcon(id) {
+    if (id >= 200 && id < 300) return '⛈'; if (id >= 300 && id < 400) return '🌦';
+    if (id >= 500 && id < 600) return '🌧'; if (id >= 600 && id < 700) return '❄️';
+    if (id >= 700 && id < 800) return '🌫'; if (id === 800) return '☀️';
+    if (id === 801) return '🌤'; if (id === 802) return '⛅'; return '☁️';
+}
+
+async function loadSchedule() {
+    try {
+        const r = await fetch(`${API_URL}/api/schedule`);
+        const data = await r.json();
+        const container = document.getElementById('scheduleContent');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Расписание пока не добавлено</div>'; return; }
+        const byDay = {};
+        data.forEach(item => { if (!byDay[item.day]) byDay[item.day] = []; byDay[item.day].push(item); });
+        let html = '';
+        for (const day in byDay) {
+            html += `<div class="schedule-day">${day}</div>`;
+            byDay[day].forEach(item => {
+                html += `<div class="schedule-item">
+                    <div class="schedule-time">${item.time}</div>
+                    <div class="schedule-info"><div class="schedule-subject">${item.subject}</div><div class="schedule-location">📍 ${item.location}</div></div>
+                    ${isAdmin ? `<button onclick="deleteSchedule(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:16px;">✕</button>` : ''}
+                </div>`;
+            });
+        }
+        container.innerHTML = html;
+    } catch(e) { document.getElementById('scheduleContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+async function loadAnnouncements() {
+    try {
+        const r = await fetch(`${API_URL}/api/announcements`);
+        const data = await r.json();
+        const container = document.getElementById('announcementsContent');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Объявлений пока нет</div>'; return; }
+        container.innerHTML = data.map(item => `
+            <div class="announcement-item">
+                <div class="announcement-text">${item.text}</div>
+                <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
+                ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:12px;margin-top:6px;">Удалить</button>` : ''}
+            </div>`).join('');
+    } catch(e) { document.getElementById('announcementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+function initLaundry() {
+    const dates = [], today = new Date();
+    for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); dates.push(d); }
+    const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    document.getElementById('laundryDates').innerHTML = dates.map((d, i) => {
+        const dateStr = d.toISOString().split('T')[0];
+        return `<button class="date-btn ${i===0?'active':''}" onclick="selectLaundryDate('${dateStr}', this)">${days[d.getDay()]} ${d.getDate()}</button>`;
+    }).join('');
+    selectedLaundryDate = dates[0].toISOString().split('T')[0];
+    loadLaundry();
+}
+
+function selectLaundryDate(date, btn) {
+    selectedLaundryDate = date;
+    document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadLaundry();
+}
+
+async function loadLaundry() {
+    try {
+        const r = await fetch(`${API_URL}/api/laundry`);
+        laundryData = await r.json();
+        renderLaundrySlots();
+    } catch(e) { document.getElementById('laundrySlots').innerHTML = '<div class="empty-state" style="grid-column:span 2">Ошибка загрузки</div>'; }
+}
+
+function renderLaundrySlots() {
+    const times = ['08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
+    const dayBookings = laundryData.filter(b => b.date === selectedLaundryDate);
+    document.getElementById('laundrySlots').innerHTML = times.map(time => {
+        const booking = dayBookings.find(b => b.time === time);
+        const isMyBooking = booking && booking.telegram_id === currentUserId;
+        const isBooked = !!booking && !isMyBooking;
+        let cls = 'laundry-slot', status = '✅ Свободно', onclick = `bookLaundry('${time}')`;
+        if (isMyBooking) { cls += ' my-booking'; status = '⭐ Моя запись'; onclick = `cancelLaundry(${booking.id})`; }
+        else if (isBooked) { cls += ' booked'; status = '❌ Занято'; onclick = ''; }
+        return `<div class="${cls}" ${onclick ? `onclick="${onclick}"` : ''}><div class="laundry-time">${time}</div><div class="laundry-status">${status}</div></div>`;
+    }).join('');
+}
+
+async function bookLaundry(time) {
+    if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+    const username = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Пользователь';
+    try {
+        const r = await fetch(`${API_URL}/api/laundry`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({date: selectedLaundryDate, time, telegram_id: currentUserId, username})
+        });
+        if (r.ok) { tg.showAlert(`✅ Записан на ${time}!`); loadLaundry(); }
+        else { const err = await r.json(); tg.showAlert(err.detail === 'Already booked for this day' ? 'У вас уже есть запись на этот день' : 'Это время уже занято'); }
+    } catch(e) { tg.showAlert('Ошибка записи'); }
+}
+
+async function cancelLaundry(id) {
+    try {
+        const r = await fetch(`${API_URL}/api/laundry/${id}`, { method: 'DELETE', headers: {'x-telegram-id': currentUserId} });
+        if (r.ok) { tg.showAlert('Запись отменена'); loadLaundry(); }
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+function showAdminSection(name) {
+    ['schedule','announce','laundry','users'].forEach(s => { document.getElementById('admin-' + s).style.display = 'none'; });
+    document.getElementById('admin-' + name).style.display = 'block';
+    if (name === 'laundry') loadAdminLaundry();
+}
+
+async function addScheduleItem() {
+    const day = document.getElementById('schDay').value, time = document.getElementById('schTime').value;
+    const subject = document.getElementById('schSubject').value, location = document.getElementById('schLocation').value;
+    if (!day || !time || !subject || !location) { tg.showAlert('Заполните все поля'); return; }
+    try {
+        const r = await fetch(`${API_URL}/api/schedule`, {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+            body: JSON.stringify({day, time, subject, location})
+        });
+        if (r.ok) { tg.showAlert('✅ Добавлено!'); ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value = ''); loadSchedule(); }
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+async function deleteSchedule(id) {
+    try { await fetch(`${API_URL}/api/schedule/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadSchedule(); } catch(e) {}
+}
+
+async function addAnnouncement() {
+    const text = document.getElementById('announceText').value;
+    if (!text) { tg.showAlert('Введите текст'); return; }
+    try {
+        const r = await fetch(`${API_URL}/api/announcements`, {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+            body: JSON.stringify({text})
+        });
+        if (r.ok) { tg.showAlert('✅ Опубликовано!'); document.getElementById('announceText').value = ''; loadAnnouncements(); }
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+async function deleteAnnouncement(id) {
+    try { await fetch(`${API_URL}/api/announcements/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} });
+        if (r.ok) tg.showAlert('✅ Магазин сброшен!');
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+// ===== КАЗИНО =====
+function switchCasinoTab(mode, btn) {
+    document.querySelectorAll('#casinoTabs .shop-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (mode === 'play') {
+        document.getElementById('casinoPlayContent').style.display = 'flex';
+        document.getElementById('casinoRulesContent').style.display = 'none';
+    } else {
+        document.getElementById('casinoPlayContent').style.display = 'none';
+        document.getElementById('casinoRulesContent').style.display = 'flex';
+    }
+}
+
+function initRoulette() {
+    const strip = document.getElementById('rouletteStrip');
+    if (!strip) return;
+    strip.innerHTML = '';
+    for (let i = 0; i < 50; i++) {
+        const el = document.createElement('div');
+        el.className = 'roulette-item';
+        el.innerHTML = `<div class="roulette-item-icon">📦</div><div class="roulette-item-name">Кейс</div>`;
+        strip.appendChild(el);
+    }
+    strip.style.transform = `translateX(135px)`;
+    isSpinning = false;
+    document.getElementById('openCaseBtn').disabled = false;
+    document.getElementById('playAgainBtn').style.display = 'none';
+    document.getElementById('prizeResult').classList.remove('show');
+}
+
+async function openCase() {
+    if (isSpinning) return;
+    if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+    if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужно минимум 80 ★'); return; }
+    isSpinning = true;
+    document.getElementById('openCaseBtn').disabled = true;
+    document.getElementById('prizeResult').classList.remove('show');
+    try {
+        const r = await fetch(`${API_URL}/api/casino/open`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({telegram_id: currentUserId})
+        });
+        if (!r.ok) {
+            const err = await r.json();
+            if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день! Купи доп кейс в магазине 😄');
+            else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
+            else tg.showAlert('Ошибка!');
             isSpinning = false;
-            document.getElementById('prizeResult').classList.remove('show');
-            document.getElementById('playAgainBtn').style.display = 'none';
             document.getElementById('openCaseBtn').disabled = false;
-            document.querySelectorAll('.roulette-item').forEach(el => { el.classList.remove('winner'); el.style.animation = ''; });
-            initRoulette();
+            return;
         }
+        const data = await r.json();
+        const prize = PRIZE_MAP[data.prize.code] || PRIZES[0];
+        await spinRoulette(prize);
+        showPrizeResult(prize);
+        currentPoints = data.new_points;
+        updatePoints();
+        if (prize.code === 'jackpot') { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(100); }
+        else if (prize.points > 50) { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(30); }
+        else if (prize.code === 'empty') tg.HapticFeedback.notificationOccurred('error');
+        else tg.HapticFeedback.impactOccurred('medium');
+        document.getElementById('playAgainBtn').style.display = 'block';
+    } catch(e) {
+        tg.showAlert('Ошибка соединения');
+        isSpinning = false;
+        document.getElementById('openCaseBtn').disabled = false;
+    }
+}
 
-        function launchConfetti(count) {
-            const container = document.getElementById('confettiContainer');
-            const colors = ['#f5d05a', '#d4af37', '#fff', '#ff8844', '#44ff88', '#ff44aa'];
-            for (let i = 0; i < count; i++) {
-                const piece = document.createElement('div');
-                piece.className = 'confetti-piece';
-                piece.style.left = Math.random() * 100 + '%';
-                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-                piece.style.width = (Math.random() * 8 + 6) + 'px';
-                piece.style.height = (Math.random() * 8 + 6) + 'px';
-                piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                piece.style.animationDelay = (Math.random() * 1) + 's';
-                container.appendChild(piece);
-                setTimeout(() => piece.remove(), 4000);
+async function spinRoulette(targetPrize) {
+    return new Promise(resolve => {
+        const strip = document.getElementById('rouletteStrip');
+        const items = strip.querySelectorAll('.roulette-item');
+        const itemWidth = 98;
+        const centerOffset = 135;
+        const targetIdx = 38 + Math.floor(Math.random() * 4);
+        const finalX = centerOffset - targetIdx * itemWidth;
+        const startX = centerOffset;
+        const duration = 4500;
+        let startTime = null;
+        function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+        function animate(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeOut(progress);
+            const currentX = startX + (finalX - startX) * eased;
+            strip.style.transition = 'none';
+            strip.style.transform = `translateX(${currentX}px)`;
+            const speed = 1 - eased;
+            if (speed > 0.1 && Math.random() < speed * 0.3) { try { tg.HapticFeedback.selectionChanged(); } catch(e) {} }
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                const winner = items[targetIdx];
+                winner.classList.add('winner');
+                winner.classList.add('opening');
+                setTimeout(() => {
+                    winner.classList.remove('opening');
+                    winner.classList.add('opened');
+                    winner.innerHTML = `<div class="roulette-item-icon roulette-prize-reveal">${targetPrize.icon}</div><div class="roulette-item-name">${targetPrize.name}</div>`;
+                    if (targetPrize.code === 'jackpot') winner.style.animation = 'shimmer 0.5s infinite';
+                    resolve();
+                }, 600);
             }
         }
+        requestAnimationFrame(animate);
+    });
+}
 
-        function updatePoints() {
-            document.getElementById('myPoints').textContent = currentPoints + ' ★';
-            document.getElementById('myPointsBig').textContent = currentPoints;
-            document.getElementById('casinoPoints').textContent = currentPoints + ' ★';
-            document.getElementById('shopPoints').textContent = currentPoints + ' ★';
-        }
+function showPrizeResult(prize) {
+    document.getElementById('prizeIcon').textContent = prize.icon;
+    document.getElementById('prizeName').textContent = prize.name;
+    document.getElementById('prizeDesc').textContent = prize.desc;
+    const pointsEl = document.getElementById('prizePoints');
+    if (prize.points > 0) { pointsEl.textContent = '+' + prize.points + ' ★'; pointsEl.className = 'prize-result-points positive'; }
+    else if (prize.code === 'empty') { pointsEl.textContent = 'Не повезло 😅'; pointsEl.className = 'prize-result-points negative'; }
+    else { pointsEl.textContent = '🎁 Специальный приз!'; pointsEl.className = 'prize-result-points special'; }
+    document.getElementById('prizeResult').classList.add('show');
+}
 
-        async function loadUserData(telegramId) {
-            try {
-                const r = await fetch(`${API_URL}/api/user/${telegramId}`);
-                if (r.ok) {
-                    const data = await r.json();
-                    userConfig = data.link;
-                    document.getElementById('status').textContent = '● Активен';
-                    document.getElementById('username').textContent = data.username;
-                    const used = data.used_traffic || 0;
-                    const usedGB = (used / 1024 / 1024 / 1024).toFixed(2);
-                    document.getElementById('trafficValue').textContent = usedGB + ' GB';
-                    const percent = Math.min((used / (10 * 1024 * 1024 * 1024)) * 100, 100);
-                    setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
-                } else {
-                    document.getElementById('status').textContent = '● Не найден';
-                    document.getElementById('username').textContent = 'Нет подписки';
-                }
-            } catch(e) {
-                document.getElementById('status').textContent = '● Офлайн';
-                document.getElementById('username').textContent = 'Ошибка связи';
-            }
-        }
+function resetCasino() {
+    isSpinning = false;
+    document.getElementById('prizeResult').classList.remove('show');
+    document.getElementById('playAgainBtn').style.display = 'none';
+    document.getElementById('openCaseBtn').disabled = false;
+    initRoulette();
+}
 
-        async function loadPoints(telegramId) {
-            try {
-                const r = await fetch(`${API_URL}/api/points/${telegramId}`);
-                if (r.ok) {
-                    const data = await r.json();
-                    currentPoints = data.points || 0;
-                    updatePoints();
-                }
-            } catch(e) {}
-        }
+function launchConfetti(count) {
+    const container = document.getElementById('confettiContainer');
+    const colors = ['#f5d05a', '#d4af37', '#fff', '#ff8844', '#44ff88', '#ff44aa'];
+    for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        piece.style.width = (Math.random() * 8 + 6) + 'px';
+        piece.style.height = (Math.random() * 8 + 6) + 'px';
+        piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        piece.style.animationDelay = (Math.random() * 1) + 's';
+        container.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+    }
+}
 
-        async function loadLeaderboard() {
-            try {
-                const r = await fetch(`${API_URL}/api/leaderboard`);
-                const data = await r.json();
-                const container = document.getElementById('leaderboardContent');
-                if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
-                const medals = ['🥇', '🥈', '🥉'];
-                let myRank = '—', html = '';
-                data.forEach((item, i) => {
-                    const medal = medals[i] || (i + 1) + '.';
-                    const isMe = currentUserId && item.telegram_id === currentUserId;
-                    if (isMe) myRank = i + 1;
-                    html += `<div class="leaderboard-item" style="${isMe ? 'background:rgba(212,175,55,0.05);border-radius:10px;padding:12px;' : ''}">
-                        <div class="leaderboard-rank">${medal}</div>
-                        <div class="leaderboard-name">${item.name}${isMe ? ' 👈' : ''}</div>
-                        <div class="leaderboard-points">${item.points} ★</div>
-                    </div>`;
-                });
-                container.innerHTML = html;
-                document.getElementById('myRankSub').textContent = myRank !== '—' ? `Место в рейтинге: #${myRank}` : 'Участвуй чтобы попасть в рейтинг!';
-            } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
-        }
+function updatePoints() {
+    document.getElementById('myPoints').textContent = currentPoints + ' ★';
+    document.getElementById('myPointsBig').textContent = currentPoints;
+    document.getElementById('casinoPoints').textContent = currentPoints + ' ★';
+    document.getElementById('shopPoints').textContent = currentPoints + ' ★';
+}
 
-        async function loadAchievements() {
-            if (!currentUserId) return;
-            try {
-                const r = await fetch(`${API_URL}/api/achievements/${currentUserId}`);
-                const data = await r.json();
-                const container = document.getElementById('achievementsContent');
-                const earned = data.filter(a => a.earned).length;
-                let html = `<div class="achievement-count">Получено: <b style="color:#d4af37">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
-                data.forEach(a => {
-                    const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
-                    html += `<div class="achievement-card ${a.earned ? '' : 'locked'}" onclick="showAchievementInfo('${a.name}', '${a.description}', ${a.earned})">
-                        ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
-                        <div class="achievement-svg">${svgIcon}</div>
-                        <div class="achievement-name">${a.name}</div>
-                    </div>`;
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            } catch(e) { document.getElementById('achievementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+async function loadUserData(telegramId) {
+    try {
+        const r = await fetch(`${API_URL}/api/user/${telegramId}`);
+        if (r.ok) {
+            const data = await r.json();
+            userConfig = data.link;
+            document.getElementById('status').textContent = '● Активен';
+            document.getElementById('username').textContent = data.username;
+            const used = data.used_traffic || 0;
+            const usedGB = (used / 1024 / 1024 / 1024).toFixed(2);
+            document.getElementById('trafficValue').textContent = usedGB + ' GB';
+            const percent = Math.min((used / (10 * 1024 * 1024 * 1024)) * 100, 100);
+            setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
+        } else {
+            document.getElementById('status').textContent = '● Не найден';
+            document.getElementById('username').textContent = 'Нет подписки';
         }
+    } catch(e) {
+        document.getElementById('status').textContent = '● Офлайн';
+        document.getElementById('username').textContent = 'Ошибка связи';
+    }
+}
 
-        function showAchievementInfo(name, description, earned) {
-            tg.showPopup({ title: earned ? '✅ ' + name : '🔒 ' + name, message: description + (earned ? '\n\n✨ Получено!' : '\n\n❌ Ещё не получено'), buttons: [{type: 'ok'}] });
+async function loadPoints(telegramId) {
+    try {
+        const r = await fetch(`${API_URL}/api/points/${telegramId}`);
+        if (r.ok) {
+            const data = await r.json();
+            currentPoints = data.points || 0;
+            updatePoints();
         }
+    } catch(e) {}
+}
 
-        async function loadWeather() {
-            try {
-                const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?id=1816670&appid=${WEATHER_KEY}&units=metric&lang=ru`);
-                const data = await r.json();
-                document.getElementById('weatherTemp').innerHTML = `${Math.round(data.main.temp)}<span>°C</span>`;
-                document.getElementById('weatherDesc').textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
-                document.getElementById('weatherHumidity').textContent = data.main.humidity;
-                document.getElementById('weatherWind').textContent = data.wind.speed;
-                document.getElementById('weatherFeels').textContent = Math.round(data.main.feels_like);
-                document.getElementById('weatherIcon').textContent = getWeatherIcon(data.weather[0].id);
-            } catch(e) { document.getElementById('weatherDesc').textContent = 'Недоступно'; }
-        }
+async function loadLeaderboard() {
+    try {
+        const r = await fetch(`${API_URL}/api/leaderboard`);
+        const data = await r.json();
+        const container = document.getElementById('leaderboardContent');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
+        const medals = ['🥇', '🥈', '🥉'];
+        let myRank = '—', html = '';
+        data.forEach((item, i) => {
+            const medal = medals[i] || (i + 1) + '.';
+            const isMe = currentUserId && item.telegram_id === currentUserId;
+            if (isMe) myRank = i + 1;
+            const titleBadge = item.has_title ? ' 👑' : '';
+            html += `<div class="leaderboard-item" style="${isMe ? 'background:rgba(212,175,55,0.05);border-radius:10px;padding:12px;' : ''}">
+                <div class="leaderboard-rank">${medal}</div>
+                <div class="leaderboard-name">${item.name}${titleBadge}${isMe ? ' 👈' : ''}</div>
+                <div class="leaderboard-points">${item.points} ★</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+        document.getElementById('myRankSub').textContent = myRank !== '—' ? `Место в рейтинге: #${myRank}` : 'Участвуй чтобы попасть в рейтинг!';
+    } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
 
-        async function loadYuanRate() {
-            try {
-                const r = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_KEY}/latest/CNY`);
-                const data = await r.json();
-                document.getElementById('yuanRate').innerHTML = `${data.conversion_rates.RUB.toFixed(2)}<span> ₽</span>`;
-                document.getElementById('rateUpdated').textContent = new Date().toLocaleDateString('ru-RU');
-            } catch(e) { document.getElementById('yuanRate').innerHTML = `—<span> ₽</span>`; }
-        }
+async function loadAchievements() {
+    if (!currentUserId) return;
+    try {
+        const r = await fetch(`${API_URL}/api/achievements/${currentUserId}`);
+        const data = await r.json();
+        const container = document.getElementById('achievementsContent');
+        const earned = data.filter(a => a.earned).length;
+        let html = `<div class="achievement-count">Получено: <b style="color:#d4af37">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
+        data.forEach(a => {
+            const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
+            html += `<div class="achievement-card ${a.earned ? '' : 'locked'}" onclick="showAchievementInfo('${a.name}', '${a.description}', ${a.earned})">
+                ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
+                <div class="achievement-svg">${svgIcon}</div>
+                <div class="achievement-name">${a.name}</div>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch(e) { document.getElementById('achievementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
 
-        function getWeatherIcon(id) {
-            if (id >= 200 && id < 300) return '⛈'; if (id >= 300 && id < 400) return '🌦';
-            if (id >= 500 && id < 600) return '🌧'; if (id >= 600 && id < 700) return '❄️';
-            if (id >= 700 && id < 800) return '🌫'; if (id === 800) return '☀️';
-            if (id === 801) return '🌤'; if (id === 802) return '⛅'; return '☁️';
-        }
+function showAchievementInfo(name, description, earned) {
+    tg.showPopup({ title: earned ? '✅ ' + name : '🔒 ' + name, message: description + (earned ? '\n\n✨ Получено!' : '\n\n❌ Ещё не получено'), buttons: [{type: 'ok'}] });
+}
 
-        async function loadSchedule() {
-            try {
-                const r = await fetch(`${API_URL}/api/schedule`);
-                const data = await r.json();
-                const container = document.getElementById('scheduleContent');
-                if (!data.length) { container.innerHTML = '<div class="empty-state">Расписание пока не добавлено</div>'; return; }
-                const byDay = {};
-                data.forEach(item => { if (!byDay[item.day]) byDay[item.day] = []; byDay[item.day].push(item); });
-                let html = '';
-                for (const day in byDay) {
-                    html += `<div class="schedule-day">${day}</div>`;
-                    byDay[day].forEach(item => {
-                        html += `<div class="schedule-item">
-                            <div class="schedule-time">${item.time}</div>
-                            <div class="schedule-info"><div class="schedule-subject">${item.subject}</div><div class="schedule-location">📍 ${item.location}</div></div>
-                            ${isAdmin ? `<button onclick="deleteSchedule(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:16px;">✕</button>` : ''}
-                        </div>`;
-                    });
-                }
-                container.innerHTML = html;
-            } catch(e) { document.getElementById('scheduleContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
-        }
+async function loadWeather() {
+    try {
+        const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?id=1816670&appid=${WEATHER_KEY}&units=metric&lang=ru`);
+        const data = await r.json();
+        document.getElementById('weatherTemp').innerHTML = `${Math.round(data.main.temp)}<span>°C</span>`;
+        document.getElementById('weatherDesc').textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
+        document.getElementById('weatherHumidity').textContent = data.main.humidity;
+        document.getElementById('weatherWind').textContent = data.wind.speed;
+        document.getElementById('weatherFeels').textContent = Math.round(data.main.feels_like);
+        document.getElementById('weatherIcon').textContent = getWeatherIcon(data.weather[0].id);
+    } catch(e) { document.getElementById('weatherDesc').textContent = 'Недоступно'; }
+}
 
-        async function loadAnnouncements() {
-            try {
-                const r = await fetch(`${API_URL}/api/announcements`);
-                const data = await r.json();
-                const container = document.getElementById('announcementsContent');
-                if (!data.length) { container.innerHTML = '<div class="empty-state">Объявлений пока нет</div>'; return; }
-                container.innerHTML = data.map(item => `
-                    <div class="announcement-item">
-                        <div class="announcement-text">${item.text}</div>
-                        <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
-                        ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:12px;margin-top:6px;">Удалить</button>` : ''}
-                    </div>`).join('');
-            } catch(e) { document.getElementById('announcementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+async function loadYuanRate() {
+    try {
+        const r = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_KEY}/latest/CNY`);
+        const data = await r.json();
+        document.getElementById('yuanRate').innerHTML = `${data.conversion_rates.RUB.toFixed(2)}<span> ₽</span>`;
+        document.getElementById('rateUpdated').textContent = new Date().toLocaleDateString('ru-RU');
+    } catch(e) { document.getElementById('yuanRate').innerHTML = `—<span> ₽</span>`; }
+}
+
+function getWeatherIcon(id) {
+    if (id >= 200 && id < 300) return '⛈'; if (id >= 300 && id < 400) return '🌦';
+    if (id >= 500 && id < 600) return '🌧'; if (id >= 600 && id < 700) return '❄️';
+    if (id >= 700 && id < 800) return '🌫'; if (id === 800) return '☀️';
+    if (id === 801) return '🌤'; if (id === 802) return '⛅'; return '☁️';
+}
+
+async function loadSchedule() {
+    try {
+        const r = await fetch(`${API_URL}/api/schedule`);
+        const data = await r.json();
+        const container = document.getElementById('scheduleContent');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Расписание пока не добавлено</div>'; return; }
+        const byDay = {};
+        data.forEach(item => { if (!byDay[item.day]) byDay[item.day] = []; byDay[item.day].push(item); });
+        let html = '';
+        for (const day in byDay) {
+            html += `<div class="schedule-day">${day}</div>`;
+            byDay[day].forEach(item => {
+                html += `<div class="schedule-item">
+                    <div class="schedule-time">${item.time}</div>
+                    <div class="schedule-info"><div class="schedule-subject">${item.subject}</div><div class="schedule-location">📍 ${item.location}</div></div>
+                    ${isAdmin ? `<button onclick="deleteSchedule(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:16px;">✕</button>` : ''}
+                </div>`;
+            });
         }
+        container.innerHTML = html;
+    } catch(e) { document.getElementById('scheduleContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+async function loadAnnouncements() {
+    try {
+        const r = await fetch(`${API_URL}/api/announcements`);
+        const data = await r.json();
+        const container = document.getElementById('announcementsContent');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Объявлений пока нет</div>'; return; }
+        container.innerHTML = data.map(item => `
+            <div class="announcement-item">
+                <div class="announcement-text">${item.text}</div>
+                <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
+                ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:12px;margin-top:6px;">Удалить</button>` : ''}
+            </div>`).join('');
+    } catch(e) { document.getElementById('announcementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+function initLaundry() {
+    const dates = [], today = new Date();
+    for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); dates.push(d); }
+    const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    document.getElementById('laundryDates').innerHTML = dates.map((d, i) => {
+        const dateStr = d.toISOString().split('T')[0];
+        return `<button class="date-btn ${i===0?'active':''}" onclick="selectLaundryDate('${dateStr}', this)">${days[d.getDay()]} ${d.getDate()}</button>`;
+    }).join('');
+    selectedLaundryDate = dates[0].toISOString().split('T')[0];
+    loadLaundry();
+}
+
+function selectLaundryDate(date, btn) {
+    selectedLaundryDate = date;
+    document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadLaundry();
+}
+
+async function loadLaundry() {
+    try {
+        const r = await fetch(`${API_URL}/api/laundry`);
+        laundryData = await r.json();
+        renderLaundrySlots();
+    } catch(e) { document.getElementById('laundrySlots').innerHTML = '<div class="empty-state" style="grid-column:span 2">Ошибка загрузки</div>'; }
+}
+
+function renderLaundrySlots() {
+    const times = ['08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
+    const dayBookings = laundryData.filter(b => b.date === selectedLaundryDate);
+    document.getElementById('laundrySlots').innerHTML = times.map(time => {
+        const booking = dayBookings.find(b => b.time === time);
+        const isMyBooking = booking && booking.telegram_id === currentUserId;
+        const isBooked = !!booking && !isMyBooking;
+        let cls = 'laundry-slot', status = '✅ Свободно', onclick = `bookLaundry('${time}')`;
+        if (isMyBooking) { cls += ' my-booking'; status = '⭐ Моя запись'; onclick = `cancelLaundry(${booking.id})`; }
+        else if (isBooked) { cls += ' booked'; status = '❌ Занято'; onclick = ''; }
+        return `<div class="${cls}" ${onclick ? `onclick="${onclick}"` : ''}><div class="laundry-time">${time}</div><div class="laundry-status">${status}</div></div>`;
+    }).join('');
+}
+
+async function bookLaundry(time) {
+    if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+    const username = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Пользователь';
+    try {
+        const r = await fetch(`${API_URL}/api/laundry`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({date: selectedLaundryDate, time, telegram_id: currentUserId, username})
+        });
+        if (r.ok) { tg.showAlert(`✅ Записан на ${time}!`); loadLaundry(); }
+        else { const err = await r.json(); tg.showAlert(err.detail === 'Already booked for this day' ? 'У вас уже есть запись на этот день' : 'Это время уже занято'); }
+    } catch(e) { tg.showAlert('Ошибка записи'); }
+}
+
+async function cancelLaundry(id) {
+    try {
+        const r = await fetch(`${API_URL}/api/laundry/${id}`, { method: 'DELETE', headers: {'x-telegram-id': currentUserId} });
+        if (r.ok) { tg.showAlert('Запись отменена'); loadLaundry(); }
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+function showAdminSection(name) {
+    ['schedule','announce','laundry','users'].forEach(s => { document.getElementById('admin-' + s).style.display = 'none'; });
+    document.getElementById('admin-' + name).style.display = 'block';
+    if (name === 'laundry') loadAdminLaundry();
+}
+
+async function addScheduleItem() {
+    const day = document.getElementById('schDay').value, time = document.getElementById('schTime').value;
+    const subject = document.getElementById('schSubject').value, location = document.getElementById('schLocation').value;
+    if (!day || !time || !subject || !location) { tg.showAlert('Заполните все поля'); return; }
+    try {
+        const r = await fetch(`${API_URL}/api/schedule`, {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+            body: JSON.stringify({day, time, subject, location})
+        });
+        if (r.ok) { tg.showAlert('✅ Добавлено!'); ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value = ''); loadSchedule(); }
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+async function deleteSchedule(id) {
+    try { await fetch(`${API_URL}/api/schedule/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadSchedule(); } catch(e) {}
+}
+
+async function addAnnouncement() {
+    const text = document.getElementById('announceText').value;
+    if (!text) { tg.showAlert('Введите текст'); return; }
+    try {
+        const r = await fetch(`${API_URL}/api/announcements`, {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+            body: JSON.stringify({text})
+        });
+        if (r.ok) { tg.showAlert('✅ Опубликовано!'); document.getElementById('announceText').value = ''; loadAnnouncements(); }
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+async function deleteAnnouncement(id) {
+    try { await fetch(`${API_URL}/api/announcements/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadAnnouncements(); } catch(e) {}
+}
+
+async function loadAdminLaundry() {
+    try {
+        const r = await fetch(`${API_URL}/api/laundry`);
+        const data = await r.json();
+        const container = document.getElementById('adminLaundryList');
+        if (!data.length) { container.innerHTML = '<div class="empty-state">Записей нет</div>'; return; }
+        container.innerHTML = data.map(b => `
+            <div class="schedule-item">
+                <div class="schedule-info"><div class="schedule-subject">${b.username}</div><div class="schedule-location">${b.date} в ${b.time}</div></div>
+                <button onclick="adminCancelLaundry(${b.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;">✕</button>
+            </div>`).join('');
+    } catch(e) {}
+}
+
+async function adminCancelLaundry(id) {
+    try { await fetch(`${API_URL}/api/laundry/${id}`, { method: 'DELETE', headers: {'x-telegram-id': currentUserId} }); loadAdminLaundry(); loadLaundry(); } catch(e) {}
+}
+
+async function getConfig() {
+    if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+    if (userConfig) {
+        document.getElementById('configBox').textContent = userConfig;
+        document.getElementById('configBox').style.display = 'block';
+        document.getElementById('copyBtn').style.display = 'block';
+    } else { tg.showAlert('Конфиг не найден. Активируйте код через /start КОД в боте.'); }
+}
+
+function copyConfig() {
+    if (userConfig) {
+        navigator.clipboard.writeText(userConfig);
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✅ Скопировано!';
+        btn.classList.add('success');
+        setTimeout(() => { btn.textContent = '📋 Скопировать ссылку'; btn.classList.remove('success'); }, 2000);
+    }
+}
+
+function showHelp() {
+    tg.showPopup({ title: 'Инструкция', message: '1. Нажмите "Получить конфиг"\n2. Нажмите "Скопировать ссылку"\n3. Откройте Happ → + → вставьте ссылку\n4. Подключитесь!', buttons: [{type: 'ok'}] });
+}
+
+function contactAdmin() { tg.openTelegramLink('https://t.me/christianpastor'); }
 
 function askAnonymous() {
     document.getElementById('questionText').value = '';
@@ -1002,164 +1594,16 @@ async function submitQuestion() {
     if (!text) { tg.showAlert('Напиши вопрос!'); return; }
     try {
         const r = await fetch(`${API_URL}/api/question`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({question: text})
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question: text, telegram_id: currentUserId})
         });
         if (r.ok) {
             closeQuestion();
             tg.showAlert('✅ Вопрос отправлен анонимно!');
             tg.HapticFeedback.notificationOccurred('success');
-        } else {
-            tg.showAlert('Ошибка отправки');
-        }
-    } catch(e) {
-        tg.showAlert('Ошибка соединения');
-    }
+        } else { tg.showAlert('Ошибка отправки'); }
+    } catch(e) { tg.showAlert('Ошибка соединения'); }
 }
-
-        function initLaundry() {
-            const dates = [], today = new Date();
-            for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); dates.push(d); }
-            const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-            document.getElementById('laundryDates').innerHTML = dates.map((d, i) => {
-                const dateStr = d.toISOString().split('T')[0];
-                return `<button class="date-btn ${i===0?'active':''}" onclick="selectLaundryDate('${dateStr}', this)">${days[d.getDay()]} ${d.getDate()}</button>`;
-            }).join('');
-            selectedLaundryDate = dates[0].toISOString().split('T')[0];
-            loadLaundry();
-        }
-
-        function selectLaundryDate(date, btn) {
-            selectedLaundryDate = date;
-            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            loadLaundry();
-        }
-
-        async function loadLaundry() {
-            try {
-                const r = await fetch(`${API_URL}/api/laundry`);
-                laundryData = await r.json();
-                renderLaundrySlots();
-            } catch(e) { document.getElementById('laundrySlots').innerHTML = '<div class="empty-state" style="grid-column:span 2">Ошибка загрузки</div>'; }
-        }
-
-        function renderLaundrySlots() {
-            const times = ['08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
-            const dayBookings = laundryData.filter(b => b.date === selectedLaundryDate);
-            document.getElementById('laundrySlots').innerHTML = times.map(time => {
-                const booking = dayBookings.find(b => b.time === time);
-                const isMyBooking = booking && booking.telegram_id === currentUserId;
-                const isBooked = !!booking && !isMyBooking;
-                let cls = 'laundry-slot', status = '✅ Свободно', onclick = `bookLaundry('${time}')`;
-                if (isMyBooking) { cls += ' my-booking'; status = '⭐ Моя запись'; onclick = `cancelLaundry(${booking.id})`; }
-                else if (isBooked) { cls += ' booked'; status = '❌ Занято'; onclick = ''; }
-                return `<div class="${cls}" ${onclick ? `onclick="${onclick}"` : ''}><div class="laundry-time">${time}</div><div class="laundry-status">${status}</div></div>`;
-            }).join('');
-        }
-
-        async function bookLaundry(time) {
-            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-            const username = user ? (user.first_name + (user.last_name ? ' ' + user.last_name : '')) : 'Пользователь';
-            try {
-                const r = await fetch(`${API_URL}/api/laundry`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({date: selectedLaundryDate, time, telegram_id: currentUserId, username})
-                });
-                if (r.ok) { tg.showAlert(`✅ Записан на ${time}!`); loadLaundry(); }
-                else { const err = await r.json(); tg.showAlert(err.detail === 'Already booked for this day' ? 'У вас уже есть запись на этот день' : 'Это время уже занято'); }
-            } catch(e) { tg.showAlert('Ошибка записи'); }
-        }
-
-        async function cancelLaundry(id) {
-            try {
-                const r = await fetch(`${API_URL}/api/laundry/${id}`, { method: 'DELETE', headers: {'x-telegram-id': currentUserId} });
-                if (r.ok) { tg.showAlert('Запись отменена'); loadLaundry(); }
-            } catch(e) { tg.showAlert('Ошибка'); }
-        }
-
-        function showAdminSection(name) {
-            ['schedule','announce','laundry','users'].forEach(s => { document.getElementById('admin-' + s).style.display = 'none'; });
-            document.getElementById('admin-' + name).style.display = 'block';
-            if (name === 'laundry') loadAdminLaundry();
-        }
-
-        async function addScheduleItem() {
-            const day = document.getElementById('schDay').value, time = document.getElementById('schTime').value;
-            const subject = document.getElementById('schSubject').value, location = document.getElementById('schLocation').value;
-            if (!day || !time || !subject || !location) { tg.showAlert('Заполните все поля'); return; }
-            try {
-                const r = await fetch(`${API_URL}/api/schedule`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-                    body: JSON.stringify({day, time, subject, location})
-                });
-                if (r.ok) { tg.showAlert('✅ Добавлено!'); ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value = ''); loadSchedule(); }
-            } catch(e) { tg.showAlert('Ошибка'); }
-        }
-
-        async function deleteSchedule(id) {
-            try { await fetch(`${API_URL}/api/schedule/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadSchedule(); } catch(e) {}
-        }
-
-        async function addAnnouncement() {
-            const text = document.getElementById('announceText').value;
-            if (!text) { tg.showAlert('Введите текст'); return; }
-            try {
-                const r = await fetch(`${API_URL}/api/announcements`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-                    body: JSON.stringify({text})
-                });
-                if (r.ok) { tg.showAlert('✅ Опубликовано!'); document.getElementById('announceText').value = ''; loadAnnouncements(); }
-            } catch(e) { tg.showAlert('Ошибка'); }
-        }
-
-        async function deleteAnnouncement(id) {
-            try { await fetch(`${API_URL}/api/announcements/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadAnnouncements(); } catch(e) {}
-        }
-
-        async function loadAdminLaundry() {
-            try {
-                const r = await fetch(`${API_URL}/api/laundry`);
-                const data = await r.json();
-                const container = document.getElementById('adminLaundryList');
-                if (!data.length) { container.innerHTML = '<div class="empty-state">Записей нет</div>'; return; }
-                container.innerHTML = data.map(b => `
-                    <div class="schedule-item">
-                        <div class="schedule-info"><div class="schedule-subject">${b.username}</div><div class="schedule-location">${b.date} в ${b.time}</div></div>
-                        <button onclick="adminCancelLaundry(${b.id})" style="background:none;border:none;color:#ff5050;cursor:pointer;">✕</button>
-                    </div>`).join('');
-            } catch(e) {}
-        }
-
-        async function adminCancelLaundry(id) {
-            try { await fetch(`${API_URL}/api/laundry/${id}`, { method: 'DELETE', headers: {'x-telegram-id': currentUserId} }); loadAdminLaundry(); loadLaundry(); } catch(e) {}
-        }
-
-        async function getConfig() {
-            if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-            if (userConfig) {
-                document.getElementById('configBox').textContent = userConfig;
-                document.getElementById('configBox').style.display = 'block';
-                document.getElementById('copyBtn').style.display = 'block';
-            } else { tg.showAlert('Конфиг не найден. Активируйте код через /start КОД в боте.'); }
-        }
-
-        function copyConfig() {
-            if (userConfig) {
-                navigator.clipboard.writeText(userConfig);
-                const btn = document.getElementById('copyBtn');
-                btn.textContent = '✅ Скопировано!';
-                btn.classList.add('success');
-                setTimeout(() => { btn.textContent = '📋 Скопировать ссылку'; btn.classList.remove('success'); }, 2000);
-            }
-        }
-
-        function showHelp() {
-            tg.showPopup({ title: 'Инструкция', message: '1. Нажмите "Получить конфиг"\n2. Нажмите "Скопировать ссылку"\n3. Откройте Happ → + → вставьте ссылку\n4. Подключитесь!', buttons: [{type: 'ok'}] });
-        }
-
-        function contactAdmin() { tg.openTelegramLink('https://t.me/christianpastor'); }
     </script>
 </body>
 </html>
