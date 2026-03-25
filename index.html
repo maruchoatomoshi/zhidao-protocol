@@ -799,8 +799,9 @@
             document.querySelectorAll('.roulette-item').forEach(el => { el.classList.remove('winner'); el.style.animation = ''; });
             initRoulette();
         }
-function switchCasinoTab(mode, btn) {
-    document.querySelectorAll('.shop-tab').forEach(b => b.classList.remove('active'));
+
+        function switchCasinoTab(mode, btn) {
+    document.querySelectorAll('#tab-casino .shop-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     if (mode === 'play') {
         document.getElementById('casinoPlayContent').style.display = 'flex';
