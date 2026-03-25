@@ -578,7 +578,7 @@
     document.getElementById('tab-' + name).classList.add('active');
     if (btn) btn.classList.add('active');
     if (name === 'shop') loadShop();
-    if (name === 'casino') initRoulette();
+    if (name === 'casino') setTimeout(initRoulette, 50);
 }
 
         // ===== МАГАЗИН =====
