@@ -302,11 +302,11 @@
         <!-- Казино -->
         <div class="tab-content" id="tab-casino">
             <div class="shop-tabs" id="casinoTabs">
-                <button class="shop-tab active" onclick="switchCasinoTab('play', this)">🎰 Играть</button>
+                <button class="shop-tab active" onclick="switchCasinoTab('play', this)">🧧 Играть</button>
                 <button class="shop-tab" onclick="switchCasinoTab('rules', this)">📋 Правила</button>
             </div>
             <div id="casinoPlayContent" style="width:100%;display:flex;flex-direction:column;align-items:center;">
-                <div class="casino-header"><div class="casino-title">🎰 ZHIDAO КЕЙСЫ</div><div class="casino-subtitle">Испытай удачу! 3 кейса в день</div></div>
+                <div class="casino-header"><div class="casino-title">🧧 ZHIDAO КЕЙСЫ</div><div class="casino-subtitle">Испытай удачу! 3 кейса в день</div></div>
                 <div class="casino-balance">
                     <div><div class="casino-balance-label">Твой баланс</div><div class="casino-balance-value" id="casinoPoints">—</div></div>
                     <div style="text-align:right"><div class="casino-balance-label">Стоимость</div><div class="casino-balance-value" style="color:#ff8844">50 ★</div></div>
@@ -323,7 +323,7 @@
                     <div class="prize-result-desc" id="prizeDesc">—</div>
                     <div class="prize-result-points" id="prizePoints">—</div>
                 </div>
-                <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">🎰 Открыть кейс за 50 ★</button>
+                <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">🎁 Открыть кейс за 50 ★</button>
                 <button class="btn btn-secondary" id="playAgainBtn" style="display:none" onclick="resetCasino()">🔄 Ещё раз</button>
             </div>
             <div id="casinoRulesContent" style="width:100%;display:none;flex-direction:column;align-items:center;">
@@ -347,7 +347,7 @@
                             🕐 +30 мин свободного времени (10%)<br>
                             🧺 Вне очереди на стирку/воду (6%)<br>
                             🛡 Иммунитет — пропуск без штрафа (3%)<br>
-                            👑 ДЖЕКПОТ +250 баллов (1%)
+                            🎉 ДЖЕКПОТ +250 баллов (1%)
                         </div>
                     </div>
                     <div style="border-top:1px solid rgba(212,175,55,0.1);padding-top:15px;">
@@ -356,7 +356,7 @@
                             • Иммунитет нельзя копить — только 1 активный<br>
                             • Физические призы показывай вожатому<br>
                             • Кейсы обновляются каждый день в 00:00<br>
-                            • ⚠️ Кейсы — это азарт, не способ заработать ⚠️
+                            • ⚠️Кейсы — это азарт, не способ заработать⚠️
                         </div>
                     </div>
                 </div>
@@ -393,13 +393,13 @@
                     </div>
                 </div>
                 <div class="team-member-rank">Сигма стаи</div>
-                <div class="team-member-desc">Отвечает за чистоту и здоровье. Вопросы по самочувствию, медицине и порядку — к ней.</div>
+                <div class="team-member-desc">Отвечает за здоровье и дисциплину. Вопросы по самочувствию, медицине — к ней.</div>
                 <button class="team-member-btn" onclick="tg.openTelegramLink('https://t.me/Trufanova_Yulia')">💬 Написать</button>
             </div>
 
             <div class="team-member">
                 <div class="team-member-header">
-                    <div class="team-member-emoji">🌸</div>
+                    <div class="team-member-emoji">☯️</div>
                     <div class="team-member-info">
                         <div class="team-member-name">Елизавета Сергеевна</div>
                         <div class="team-member-role">Вожатый</div>
@@ -467,7 +467,7 @@
         const API_URL = 'https://hk.marucho.icu:8443';
         const WEATHER_KEY = '03232b342b9270f8b24ed68e2c55d8f4';
         const EXCHANGE_KEY = '7dd743fceb96a3460f7d846e';
-        const ADMIN_IDS = [389741116, 244487659, 1190015933];
+        const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
 
         let userConfig = null;
         let currentUserId = null;
