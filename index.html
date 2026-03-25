@@ -405,7 +405,7 @@
 
             <div class="team-member">
                 <div class="team-member-header">
-                    <div class="team-member-emoji">⚕️</div>
+                    <div class="team-member-emoji">㊗️</div>
                     <div class="team-member-info">
                         <div class="team-member-name">Юлия Витальевна</div>
                         <div class="team-member-role">Вожатый</div>
@@ -445,7 +445,7 @@
 
 <div class="card" style="text-align:center;margin-top:5px;max-width:360px;width:100%;">
             <div style="color:#d4af37;font-size:13px;font-weight:700;margin-bottom:8px;">🤫 Анонимный вопрос</div>
-            <div style="color:#888;font-size:12px;margin-bottom:12px;">Вопрос придёт вожатым анонимно. ⚠️ Анонимки модерируются — отправитель непристойного содержания вычисляется по IP. В зависимости от содержания штраф 80 баллов или заморозка магазина на 24 часа.</div>
+            <div style="color:#888;font-size:12px;margin-bottom:12px;">Вопрос придёт вожатым анонимно. ⚠️ Анонимки модерируются — отправитель непристойного содержания/спамер/ вычисляется по IP. В зависимости от содержания штраф 80 баллов или заморозка магазина на 24 часа. Уважайте наше время!</div>
             <button class="team-member-btn" onclick="askAnonymous()">✉️ Задать вопрос</button>
         </div>
 
@@ -758,7 +758,7 @@
                 });
                 if (!r.ok) {
                     const err = await r.json();
-                    if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день исчерпан! 😄');
+                    if (err.detail === 'Daily limit reached') tg.showAlert('Лимит 3 кейса в день исчерпан! Приходите завтра или приобретите в магазине дополнительную попытку');
                     else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
                     else tg.showAlert('Ошибка!');
                     isSpinning = false;
