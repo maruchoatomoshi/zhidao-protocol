@@ -750,18 +750,15 @@
         el.innerHTML = `<div class="roulette-item-icon">📦</div><div class="roulette-item-name">Кейс</div>`;
         strip.appendChild(el);
     }
-    const itemWidth = 98;
-    const centerOffset = 135;
-    strip.style.transform = `translateX(${centerOffset}px)`;
+    strip.style.transform = `translateX(135px)`;
 }
 
-        async function spinRoulette(targetPrize) {
+async function spinRoulette(targetPrize) {
     return new Promise(resolve => {
         const strip = document.getElementById('rouletteStrip');
         const items = strip.querySelectorAll('.roulette-item');
         const itemWidth = 98;
-        const trackWidth = document.querySelector('.roulette-track').offsetWidth || 360;
-        const centerOffset = Math.floor(trackWidth / 2) - Math.floor(itemWidth / 2);
+        const centerOffset = 135;
         const targetIdx = 38 + Math.floor(Math.random() * 4);
         const finalX = centerOffset - targetIdx * itemWidth;
         const startX = centerOffset;
