@@ -939,6 +939,7 @@ async function loadPoints(telegramId) {
         const r = await fetch(`${API_URL}/api/points/${telegramId}`);
         if (r.ok) {
             const data = await r.json();
+console.log('points data:', data);
             currentPoints = data.points || 0;
             updatePoints();
             const banner = document.getElementById('casinoBonusBanner');
@@ -951,7 +952,7 @@ async function loadPoints(telegramId) {
                 banner.style.display = text ? 'block' : 'none';
             }
         }
-    } catch(e) {}
+    } catch(e) { console.log('loadPoints error:', e); }
 }
 
 async function loadLeaderboard() {
