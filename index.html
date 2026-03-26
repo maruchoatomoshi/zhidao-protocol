@@ -761,13 +761,31 @@ async function resetShop() {
 
 // ===== КАЗИНО =====
 function switchCasinoTab(mode, btn) {
+    loadPoints(currentUserId);
     document.querySelectorAll('#casinoTabs .shop-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     if (mode === 'play') {
         document.getElementById('casinoPlayContent').style.display = 'flex';
+        document.getElementById('casinoInventoryContent').style.display = 'none';
+        document.getElementById('casinoHistoryContent').style.display = 'none';
         document.getElementById('casinoRulesContent').style.display = 'none';
+        setTimeout(initRoulette, 50);
+    } else if (mode === 'inventory') {
+        document.getElementById('casinoPlayContent').style.display = 'none';
+        document.getElementById('casinoInventoryContent').style.display = 'flex';
+        document.getElementById('casinoHistoryContent').style.display = 'none';
+        document.getElementById('casinoRulesContent').style.display = 'none';
+        loadCasinoInventory();
+    } else if (mode === 'history') {
+        document.getElementById('casinoPlayContent').style.display = 'none';
+        document.getElementById('casinoInventoryContent').style.display = 'none';
+        document.getElementById('casinoHistoryContent').style.display = 'flex';
+        document.getElementById('casinoRulesContent').style.display = 'none';
+        loadCasinoHistory();
     } else {
         document.getElementById('casinoPlayContent').style.display = 'none';
+        document.getElementById('casinoInventoryContent').style.display = 'none';
+        document.getElementById('casinoHistoryContent').style.display = 'none';
         document.getElementById('casinoRulesContent').style.display = 'flex';
     }
 }
