@@ -939,7 +939,7 @@ async function loadPoints(telegramId) {
         const r = await fetch(`${API_URL}/api/points/${telegramId}`);
         if (r.ok) {
             const data = await r.json();
-console.log('points data:', data);
+tg.showAlert('double_win: ' + data.double_win + ', immunity: ' + data.immunity);
             currentPoints = data.points || 0;
             updatePoints();
             const banner = document.getElementById('casinoBonusBanner');
