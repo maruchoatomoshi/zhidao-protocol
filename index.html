@@ -1227,7 +1227,7 @@ async function spinRoulette(targetPrize) {
             if (progress < 1) {
                 requestAnimationFrame(animate);
             } else {
-                const winner = items[targetIdx];
+                const winner = items[targetIdx - 1];
                 winner.classList.add('winner');
                 winner.classList.add('opening');
                 setTimeout(() => {
