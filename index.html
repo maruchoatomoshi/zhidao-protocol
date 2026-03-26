@@ -604,8 +604,16 @@ function showTab(name, btn) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     if (btn) btn.classList.add('active');
+    ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
     if (name === 'shop') loadShop();
-    if (name === 'casino') { setTimeout(initRoulette, 50); loadPoints(currentUserId); }
+    if (name === 'casino') {
+        document.getElementById('casinoPlayContent').style.display = 'flex';
+        setTimeout(initRoulette, 50);
+        setTimeout(() => loadPoints(currentUserId), 300);
+    }
 }
 
 // ===== МАГАЗИН =====
