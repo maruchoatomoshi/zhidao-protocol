@@ -497,6 +497,7 @@
                 <div class="admin-btn" onclick="showAdminSection('laundry')"><div class="admin-btn-icon">🧺</div><div class="admin-btn-text">Стирка</div></div>
                 <div class="admin-btn" onclick="showAdminSection('users')"><div class="admin-btn-icon">👥</div><div class="admin-btn-text">Пользователи</div></div>
                 <div class="admin-btn" onclick="resetShop()"><div class="admin-btn-icon">🔄</div><div class="admin-btn-text">Сбросить магазин</div></div>
+                <div class="admin-btn" onclick="toggleBlackwall()"><div class="admin-btn-icon">🚫</div><div class="admin-btn-text">BlackWall</div></div>
             </div>
             <div id="admin-schedule" style="display:none; width:100%; max-width:360px;">
                 <div class="card"><div class="card-title">Добавить занятие</div>
@@ -1004,7 +1005,7 @@ async function loadLeaderboard() {
             </div>`;
         });
         container.innerHTML = html;
-        document.getElementById('myRankSub').textContent = myRank !== '—' ? `Место в рейтинге: #${myRank}` : 'Участвуй чтобы попасть в рейтинг!';
+        document.getElementById('myRankSub').textContent = myRank !== '—' ? `Место в рейтинге: #${myRank}` : 'Участвуй, чтобы попасть в рейтинг!';
     } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
@@ -1197,8 +1198,37 @@ async function addAnnouncement() {
 }
 
 async function deleteAnnouncement(id) {
-    try { await fetch(`${API_URL}/api/announcements/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} });
+    try { await fetch(`${API_URL}/api/announcements/${id}`, { method: 'DELETE', headers: {'x-admin-id': currentUserId} }); loadAnnouncements(); } catch(e) {}
+}
+
+async function resetShop() {
+    try {
+        const r = await fetch(`${API_URL}/api/admin/reset_shop`, { method: 'POST', headers: {'x-admin-id': currentUserId} });
         if (r.ok) tg.showAlert('✅ Магазин сброшен!');
+    } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+async function toggleBlackwall() {
+    try {
+        const r = await fetch(`${API_URL}/api/settings`);
+        const data = await r.json();
+        const current = data.blackwall;
+        tg.showPopup({
+            title: current ? '🚫 BlackWall активен' : '✅ BlackWall выключен',
+            message: current ? 'Выключить BlackWall?' : 'Активировать BlackWall?\nМагазин и кейсы будут недоступны для всех.',
+            buttons: [
+                { id: 'confirm', type: current ? 'default' : 'destructive', text: current ? '✅ Выключить' : '🚫 Активировать' },
+                { type: 'cancel' }
+            ]
+        }, async (btnId) => {
+            if (btnId !== 'confirm') return;
+            const r2 = await fetch(`${API_URL}/api/admin/blackwall`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+                body: JSON.stringify({enabled: !current})
+            });
+            if (r2.ok) tg.showAlert(current ? '✅ BlackWall выключен!' : '🚫 BlackWall активирован!');
+        });
     } catch(e) { tg.showAlert('Ошибка'); }
 }
 
