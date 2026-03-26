@@ -692,30 +692,28 @@ async function buyItem(code, name, price) {
 
 async function loadInventory() {
     try {
-        const r = await fetch(${API_URL}/api/shop/inventory/${currentUserId});
+        const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
         const data = await r.json();
         const container = document.getElementById('shopInventoryContent');
-        
-        // Фильтруем цифровые товары
         const digital = ['extra_case', 'double_win', 'title_player', 'immunity'];
         const physical = data.filter(item => !digital.includes(item.code));
-        
-        if (!physical.length) { 
-            container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купите что-нибудь в магазине</div>'; 
-            return; 
+        if (!physical.length) {
+            container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купи что-нибудь в магазине!</div>';
+            return;
         }
-        container.innerHTML = physical.map(item => 
-            <div class="inventory-item">
-                <div class="inventory-header">
-                    <div class="inventory-icon">${item.icon}</div>
-                    <div><div class="inventory-name">${item.name}</div><div class="inventory-date">${new Date(item.purchased_at).toLocaleDateString('ru-RU')}</div></div>
-                </div>
-                <div class="inventory-actions">
-                    <button class="inv-btn inv-btn-use" onclick="useItem(${item.id}, '${item.name}')">✅ Использовать</button>
-                    <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id}, '${item.name}')">🎁 Подарить</button>
-                    <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id}, '${item.name}', ${item.price})">💰 Продать</button>
-                </div>
-            </div>).join('');
+        container.innerHTML = physical.map(item =>
+            '<div class="inventory-item">' +
+            '<div class="inventory-header">' +
+            '<div class="inventory-icon">' + item.icon + '</div>' +
+            '<div><div class="inventory-name">' + item.name + '</div>' +
+            '<div class="inventory-date">' + new Date(item.purchased_at).toLocaleDateString('ru-RU') + '</div></div>' +
+            '</div>' +
+            '<div class="inventory-actions">' +
+            '<button class="inv-btn inv-btn-use" onclick="useItem(' + item.id + ', \'' + item.name + '\')">✅ Использовать</button>' +
+            '<button class="inv-btn inv-btn-gift" onclick="giftItem(' + item.id + ', \'' + item.name + '\')">🎁 Подарить</button>' +
+            '<button class="inv-btn inv-btn-sell" onclick="sellItem(' + item.id + ', \'' + item.name + '\', ' + item.price + ')">💰 Продать</button>' +
+            '</div></div>'
+        ).join('');
     } catch(e) { document.getElementById('shopInventoryContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
