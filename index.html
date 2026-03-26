@@ -148,7 +148,7 @@
         .roulette-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to left, #080818, transparent); z-index: 5; pointer-events: none; }
         .roulette-center-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(212, 175, 55, 0.6); transform: translateX(-50%); z-index: 6; }
         .roulette-strip { display: flex; padding: 8px 0; transition: none; will-change: transform; }
-.roulette-item { min-width: 90px; height: 90px; margin: 0 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid rgba(212,175,55,0.3); background: linear-gradient(145deg, #0d0d1f, #111128); flex-shrink: 0; position: relative; overflow: hidden; }
+.roulette-item { min-width: 110px; height: 110px; margin: 0 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid rgba(212,175,55,0.3); background: linear-gradient(145deg, #0d0d1f, #111128); flex-shrink: 0; position: relative; overflow: hidden; }
         .roulette-item-icon { font-size: 40px; transition: all 0.3s; }
 .roulette-item-name { font-size: 9px; color: #aaa; text-align: center; line-height: 1.2; padding: 0 4px; }
         .roulette-item.winner { border-color: #f5d05a !important; box-shadow: 0 0 25px rgba(212, 175, 55, 0.6) !important; }
@@ -800,7 +800,7 @@ async function spinRoulette(targetPrize) {
     return new Promise(resolve => {
         const strip = document.getElementById('rouletteStrip');
         const items = strip.querySelectorAll('.roulette-item');
-        const itemWidth = 98;
+        const itemWidth = 118;
         const centerOffset = 135;
         const targetIdx = 38 + Math.floor(Math.random() * 4);
         const finalX = centerOffset - targetIdx * itemWidth;
