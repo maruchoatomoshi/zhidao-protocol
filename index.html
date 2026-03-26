@@ -940,6 +940,15 @@ async function loadPoints(telegramId) {
             const data = await r.json();
             currentPoints = data.points || 0;
             updatePoints();
+            const banner = document.getElementById('casinoBonusBanner');
+            if (banner) {
+                let text = '';
+                if (data.double_win) text += '🃏 Удвоение активно! ';
+                if (data.extra_cases) text += '🎰 Доп кейсов: ' + data.extra_cases + ' ';
+                if (data.immunity) text += '🛡 Иммунитет активен!';
+                banner.textContent = text;
+                banner.style.display = text ? 'block' : 'none';
+            }
         }
     } catch(e) {}
 }
