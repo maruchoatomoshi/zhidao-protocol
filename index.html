@@ -624,7 +624,7 @@ function showTab(name, btn) {
     if (name === 'shop') loadShop();
     if (name === 'casino') {
         fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
-            if (settings.blackwall) {
+            if (settings.blackwall && !isAdmin) {
                 document.getElementById('tab-casino').innerHTML =
                     '<div style="min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;border-radius:20px;border:1px solid #ff0000;padding:30px;text-align:center;">' +
                     '<div style="font-size:36px;font-weight:900;color:#ff2200;text-shadow:0 0 20px #ff2200;letter-spacing:4px;margin-bottom:15px;white-space:nowrap;animation:glitch 2s infinite;">BlackWall 已激活</div>' +
@@ -660,7 +660,7 @@ async function loadShop() {
     try {
 const settingsR = await fetch(`${API_URL}/api/settings`);
 const settings = await settingsR.json();
-if (settings.blackwall) {
+if (settings.blackwall && !isAdmin) {
     document.getElementById('tab-shop').innerHTML =
         '<div style="min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;border-radius:20px;border:1px solid #ff0000;padding:30px;text-align:center;">' +
         '<div style="font-size:36px;font-weight:900;color:#ff2200;text-shadow:0 0 20px #ff2200;letter-spacing:4px;margin-bottom:15px;animation:glitch 2s infinite;white-space:nowrap;">BlackWall 已激活</div>' +
