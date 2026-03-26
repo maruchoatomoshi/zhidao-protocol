@@ -333,10 +333,12 @@
 
         <!-- Казино -->
         <div class="tab-content" id="tab-casino">
-            <div class="shop-tabs" id="casinoTabs">
-                <button class="shop-tab active" onclick="switchCasinoTab('play', this)">🧧 Играть</button>
-                <button class="shop-tab" onclick="switchCasinoTab('rules', this)">📋 Правила</button>
-            </div>
+          <div class="shop-tabs" id="casinoTabs">
+    <button class="shop-tab active" onclick="switchCasinoTab('play', this)">🧧 Играть</button>
+    <button class="shop-tab" onclick="switchCasinoTab('inventory', this)">🎒 Призы</button>
+    <button class="shop-tab" onclick="switchCasinoTab('history', this)">📊 История</button>
+    <button class="shop-tab" onclick="switchCasinoTab('rules', this)">📋 Правила</button>
+</div>
             <div id="casinoPlayContent" style="width:100%;display:flex;flex-direction:column;align-items:center;">
                 <div class="casino-header"><div class="casino-title">📦 ZHIDAO КЕЙСЫ</div><div class="casino-subtitle">Испытай удачу! 3 кейса в день</div></div>
                 <div class="casino-balance">
@@ -366,6 +368,19 @@
                 <button class="btn btn-casino" id="openCaseBtn" onclick="openCase()">🎁 Открыть кейс за 50 ★</button>
                 <button class="btn btn-secondary" id="playAgainBtn" style="display:none" onclick="resetCasino()">🔄 Ещё раз</button>
             </div>
+            <div id="casinoInventoryContent" style="width:100%;display:none;flex-direction:column;align-items:center;">
+    <div class="card" style="width:100%;max-width:360px;">
+        <div class="card-title">🎒 Мои призы из кейсов</div>
+        <div id="casinoInventoryList"><div class="empty-state">Загрузка...</div></div>
+    </div>
+</div>
+
+<div id="casinoHistoryContent" style="width:100%;display:none;flex-direction:column;align-items:center;">
+    <div class="card" style="width:100%;max-width:360px;">
+        <div class="card-title">📊 История прокруток</div>
+        <div id="casinoHistoryList"><div class="empty-state">Загрузка...</div></div>
+    </div>
+</div>
             <div id="casinoRulesContent" style="width:100%;display:none;flex-direction:column;align-items:center;">
                 <div class="card">
                     <div class="card-title">📋 Правила кейсов</div>
@@ -1145,11 +1160,20 @@ async function deleteAnnouncement(id) {
 function switchCasinoTab(mode, btn) {
     document.querySelectorAll('#casinoTabs .shop-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    document.getElementById('casinoPlayContent').style.display = 'none';
+    document.getElementById('casinoInventoryContent').style.display = 'none';
+    document.getElementById('casinoHistoryContent').style.display = 'none';
+    document.getElementById('casinoRulesContent').style.display = 'none';
     if (mode === 'play') {
         document.getElementById('casinoPlayContent').style.display = 'flex';
-        document.getElementById('casinoRulesContent').style.display = 'none';
+        setTimeout(initRoulette, 50);
+    } else if (mode === 'inventory') {
+        document.getElementById('casinoInventoryContent').style.display = 'flex';
+        loadCasinoInventory();
+    } else if (mode === 'history') {
+        document.getElementById('casinoHistoryContent').style.display = 'flex';
+        loadCasinoHistory();
     } else {
-        document.getElementById('casinoPlayContent').style.display = 'none';
         document.getElementById('casinoRulesContent').style.display = 'flex';
     }
 }
@@ -1612,6 +1636,93 @@ async function submitQuestion() {
         } else { tg.showAlert('Ошибка отправки'); }
     } catch(e) { tg.showAlert('Ошибка соединения'); }
 }
+
+async function loadCasinoInventory() {
+    if (!currentUserId) return;
+    try {
+        const r = await fetch(`${API_URL}/api/casino/inventory/${currentUserId}`);
+        const data = await r.json();
+        const container = document.getElementById('casinoInventoryList');
+        if (!data.length) {
+            container.innerHTML = '<div class="empty-state">Призов пока нет<br>Открывай кейсы!</div>';
+            return;
+        }
+        container.innerHTML = data.map(item => {
+            const expires = item.expires_at
+                ? `<div style="color:#ff8844;font-size:10px;margin-top:3px;">⏰ До ${item.expires_at.slice(11,16)}</div>`
+                : '';
+            return `<div class="inventory-item">
+                <div class="inventory-header">
+                    <div class="inventory-icon">${item.icon}</div>
+                    <div>
+                        <div class="inventory-name">${item.name}</div>
+                        <div class="inventory-date">${item.desc}</div>
+                        ${expires}
+                    </div>
+                </div>
+                <div class="inventory-actions">
+                    <button class="inv-btn inv-btn-use" onclick="useCasinoPrize(${item.id}, '${item.name}')">✅ Использовать</button>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        document.getElementById('casinoInventoryList').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+    }
+}
+
+async function useCasinoPrize(id, name) {
+    tg.showPopup({
+        title: `Использовать ${name}?`,
+        message: 'Покажи этот экран вожатому для подтверждения.',
+        buttons: [
+            { id: 'confirm', type: 'default', text: '✅ Показать вожатому' },
+            { type: 'cancel' }
+        ]
+    }, async (btnId) => {
+        if (btnId !== 'confirm') return;
+        try {
+            const r = await fetch(`${API_URL}/api/casino/use/${id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({telegram_id: currentUserId})
+            });
+            if (r.ok) {
+                tg.showAlert('✅ Приз использован!');
+                loadCasinoInventory();
+            } else {
+                const err = await r.json();
+                if (err.detail === 'Prize expired') tg.showAlert('⏰ Приз истёк!');
+                else tg.showAlert('Ошибка');
+            }
+        } catch(e) { tg.showAlert('Ошибка соединения'); }
+    });
+}
+
+async function loadCasinoHistory() {
+    if (!currentUserId) return;
+    try {
+        const r = await fetch(`${API_URL}/api/casino/history/${currentUserId}`);
+        const data = await r.json();
+        const container = document.getElementById('casinoHistoryList');
+        if (!data.length) {
+            container.innerHTML = '<div class="empty-state">История пуста<br>Открой первый кейс!</div>';
+            return;
+        }
+        container.innerHTML = data.map(item => {
+            const date = new Date(item.created_at).toLocaleDateString('ru-RU');
+            const time = item.created_at.slice(11,16);
+            return `<div class="schedule-item">
+                <div style="font-size:24px;min-width:35px;text-align:center;">${item.icon}</div>
+                <div class="schedule-info">
+                    <div class="schedule-subject">${item.name}</div>
+                    <div class="schedule-location">${date} в ${time}</div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        document.getElementById('casinoHistoryList').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+    }
+}      
     </script>
 </body>
 </html>
