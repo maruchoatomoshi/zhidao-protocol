@@ -20,8 +20,8 @@
   --bg3: rgba(255,255,255,0.06);
   --border: rgba(255,255,255,0.07);
   --text: #ffffff;
-  --text2: #888;
-  --text3: #444;
+  --text2: #cccccc;
+  --text3: #888888;
   --purple: #9b59b6;
   --purple-dim: rgba(155,89,182,0.15);
   --purple-border: rgba(155,89,182,0.3);
@@ -103,7 +103,7 @@ body::before {
   background: linear-gradient(90deg, transparent, rgba(200,50,50,0.8), transparent);
 }
 .nav-icon { font-size: 18px; }
-.nav-cn { font-size: 8px; font-family: serif; }
+.nav-cn { font-size: 9px; font-family: serif; color: inherit; }
 
 /* ===== СТРАНИЦЫ ===== */
 .page { display: none; padding: 0 0 10px; position: relative; z-index: 1; }
@@ -133,14 +133,14 @@ body::before {
 }
 .page-title-cn {
   font-size: 11px;
-  color: rgba(212,175,55,0.4);
+  color: rgba(212,175,55,0.7);
   font-family: serif;
   font-weight: 400;
   letter-spacing: 2px;
 }
 .page-sub {
-  font-size: 8px;
-  color: rgba(200,50,50,0.4);
+  font-size: 9px;
+  color: rgba(200,80,80,0.6);
   font-family: monospace;
   letter-spacing: 1px;
   margin-top: 3px;
@@ -165,7 +165,7 @@ body::before {
 .card-inner { padding: 12px; }
 .card-label {
   font-size: 8px;
-  color: rgba(200,50,50,0.5);
+  color: rgba(200,80,80,0.85);
   letter-spacing: 2px;
   font-family: monospace;
   margin-bottom: 8px;
@@ -186,8 +186,8 @@ body::before {
   align-items: center;
   gap: 6px;
   padding: 8px 12px 4px;
-  font-size: 8px;
-  color: rgba(200,50,50,0.45);
+  font-size: 10px;
+  color: rgba(200,80,80,0.75);
   letter-spacing: 1px;
   font-family: monospace;
 }
@@ -258,12 +258,12 @@ body::before {
   text-shadow: 2px 0 #cc0022, -2px 0 rgba(0,200,255,0.3);
   position: relative;
 }
-.main-pinyin { font-size: 10px; color: rgba(212,175,55,0.5); letter-spacing: 3px; font-family: serif; margin-top: 3px; }
+.main-pinyin { font-size: 10px; color: rgba(212,175,55,0.8); letter-spacing: 3px; font-family: serif; margin-top: 3px; }
 .proto-tag {
   display: inline-flex; align-items: center; gap: 5px;
   background: var(--red-dim);
   border: 1px solid var(--red-border);
-  color: rgba(200,60,60,0.7);
+  color: rgba(200,80,80,0.9);
   font-size: 8px; padding: 3px 10px; border-radius: 3px;
   letter-spacing: 1px; margin-top: 6px; font-family: monospace;
 }
@@ -282,7 +282,7 @@ body::before {
   position: absolute; top: 0; left: 0; right: 0; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(212,175,55,0.3), transparent);
 }
-.stat-cn { font-size: 9px; color: rgba(212,175,55,0.3); font-family: serif; }
+.stat-cn { font-size: 10px; color: rgba(212,175,55,0.65); font-family: serif; }
 .stat-num { font-size: 20px; font-weight: 800; color: var(--gold); }
 .stat-lbl { font-size: 7px; color: var(--text3); letter-spacing: 1px; font-family: monospace; margin-top: 1px; }
 
@@ -290,7 +290,7 @@ body::before {
 .neuro-card { margin: 4px 12px; }
 .neuro-status { font-size: 8px; color: #cc4444; font-family: monospace; }
 .neuro-name { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 2px; }
-.neuro-sub { font-size: 8px; color: var(--text3); font-family: monospace; }
+.neuro-sub { font-size: 9px; color: #888; font-family: monospace; }
 .traffic-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 8px; overflow: hidden; }
 .traffic-fill { height: 100%; background: linear-gradient(90deg, #8b0000, var(--gold)); border-radius: 2px; width: 0%; transition: width 1s ease; }
 
@@ -309,8 +309,8 @@ body::before {
 }
 .implant-icon.legendary { background: var(--red-dim); border-color: var(--red-border); }
 .implant-cn { font-size: 10px; color: #ccc; font-family: monospace; }
-.implant-py { font-size: 8px; color: rgba(212,175,55,0.4); font-family: serif; font-style: italic; margin-top: 1px; }
-.implant-sub { font-size: 8px; color: var(--text3); margin-top: 1px; }
+.implant-py { font-size: 9px; color: rgba(212,175,55,0.7); font-family: serif; font-style: italic; margin-top: 1px; }
+.implant-sub { font-size: 9px; color: #aaa; margin-top: 1px; }
 .implant-dur { margin-left: auto; display: flex; gap: 3px; }
 .dur-dot { width: 5px; height: 5px; border-radius: 50%; }
 .dur-dot.on { background: rgba(155,89,182,0.7); }
@@ -346,8 +346,8 @@ body::before {
   font-size: 12px; font-weight: 700; color: var(--gold);
   font-family: monospace; min-width: 42px;
 }
-.schedule-subject { font-size: 13px; font-weight: 600; color: var(--text); }
-.schedule-location { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.schedule-subject { font-size: 14px; font-weight: 600; color: var(--text); }
+.schedule-location { font-size: 12px; color: var(--text2); margin-top: 2px; }
 
 /* ===== РЕЙТИНГ ===== */
 .my-rank-card {
@@ -417,10 +417,10 @@ body::before {
   border-radius: 8px; display: flex; align-items: center; justify-content: center;
   font-size: 18px; flex-shrink: 0;
 }
-.shop-item-name { font-size: 11px; color: var(--text); font-weight: 600; }
-.shop-item-cn { font-size: 9px; color: rgba(212,175,55,0.35); font-family: serif; }
-.shop-item-desc { font-size: 9px; color: var(--text3); margin-top: 1px; }
-.shop-item-limit { font-size: 8px; color: var(--text3); margin-top: 1px; font-family: monospace; }
+.shop-item-name { font-size: 13px; color: var(--text); font-weight: 600; }
+.shop-item-cn { font-size: 11px; color: rgba(212,175,55,0.75); font-family: serif; }
+.shop-item-desc { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.shop-item-limit { font-size: 10px; color: var(--text3); margin-top: 1px; font-family: monospace; }
 .shop-item-buy {
   margin-left: auto; flex-shrink: 0;
   background: var(--gold-dim); border: 1px solid var(--gold-border);
@@ -632,8 +632,8 @@ body::before {
   margin-bottom: 3px;
 }
 .team-name { font-size: 14px; font-weight: 700; color: var(--text); }
-.team-role { font-size: 9px; color: rgba(212,175,55,0.5); font-family: serif; }
-.team-desc { font-size: 11px; color: var(--text2); line-height: 1.5; margin-top: 5px; }
+.team-role { font-size: 10px; color: rgba(212,175,55,0.75); font-family: serif; }
+.team-desc { font-size: 13px; color: #aaa; line-height: 1.6; margin-top: 5px; }
 .team-btn {
   display: inline-flex; align-items: center; gap: 4px;
   background: var(--red-dim); border: 1px solid var(--red-border);
@@ -871,17 +871,17 @@ body::before {
     <div class="cases-grid">
       <div class="case-card gold">
         <div class="case-cn g">金色</div>
-        <div class="case-img">📦</div>
+        <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png" style="width:60px;height:60px;object-fit:contain;margin:4px auto;display:block;">
         <div class="case-pct g">78.9%</div>
       </div>
       <div class="case-card purple">
         <div class="case-cn p">紫色</div>
-        <div class="case-img">🟣</div>
+        <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png" style="width:60px;height:60px;object-fit:contain;margin:4px auto;display:block;">
         <div class="case-pct p">21%</div>
       </div>
       <div class="case-card black">
         <div class="case-cn b">传奇</div>
-        <div class="case-img">⬛</div>
+        <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png" style="width:60px;height:60px;object-fit:contain;margin:4px auto;display:block;">
         <div class="case-pct b">0.1%</div>
       </div>
     </div>
@@ -931,20 +931,46 @@ body::before {
   <div id="casinoRulesContent" style="display:none;flex-direction:column;">
     <div style="padding:8px 0;">
       <div class="rules-row">
-        <div class="rules-icon">📦</div>
-        <div><div class="rules-title">金色 Золотой — 78.9%</div><div class="rules-desc">Стандартные призы: баллы, иммунитет, свобода, стирка, ДЖЕКПОТ +250★</div></div>
+        <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png" style="width:32px;height:32px;object-fit:contain;"></div>
+        <div><div class="rules-title">金色 Золотой — 78.9%</div>
+        <div class="rules-desc">
+          🍚 Пустая миска — не повезло (20%)<br>
+          ⭐ +30 баллов (35%)<br>
+          💫 +60 баллов (25%)<br>
+          🕐 +30 мин свободы (10%)<br>
+          🧺 Вне очереди на стирку (6%)<br>
+          🛡 Иммунитет от штрафа (3%)<br>
+          👑 ДЖЕКПОТ +250 баллов (1%)
+        </div></div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon">🟣</div>
-        <div><div class="rules-title">紫色 Фиолетовый — 21%</div><div class="rules-desc">Редкие импланты: Гуаньси 关系 (-10% в магазине), Терракота 兵马俑 (блок штрафа)</div></div>
+        <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png" style="width:32px;height:32px;object-fit:contain;"></div>
+        <div><div class="rules-title">紫色 Фиолетовый — 21%</div>
+        <div class="rules-desc">
+          🤝 Имплант Гуаньси 关系 — -10% в магазине (50%)<br>
+          🗿 Имплант Терракота 兵马俑 — блок штрафа (50%)
+        </div></div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon">⬛</div>
-        <div><div class="rules-title">传奇 Легендарный — 0.1%</div><div class="rules-desc">Красный Дракон 红龙 — легендарный протокол. +20% к баллам + красный ник</div></div>
+        <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png" style="width:32px;height:32px;object-fit:contain;"></div>
+        <div><div class="rules-title">传奇 Легендарный — 0.1%</div>
+        <div class="rules-desc">
+          🐉 Красный Дракон 红龙 — легендарный протокол<br>
+          +20% баллов + бесплатный кейс + красный ник
+        </div></div>
       </div>
       <div class="rules-row">
         <div class="rules-icon">💰</div>
-        <div><div class="rules-title">Стоимость и лимиты</div><div class="rules-desc">50★ за кейс • Минимум 80★ • Лимит 3 кейса в день • Доп кейс — в магазине</div></div>
+        <div><div class="rules-title">Стоимость и лимиты</div>
+        <div class="rules-desc">
+          50★ за кейс • Минимум 80★ на балансе<br>
+          Лимит 3 кейса в день<br>
+          Дополнительный кейс можно купить в магазине
+        </div></div>
+      </div>
+      <div style="margin:10px 12px;padding:12px;background:rgba(180,20,20,0.06);border:1px solid rgba(180,20,20,0.2);border-radius:8px;">
+        <div style="font-size:9px;color:rgba(200,50,50,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">⚠️ ДИСКЛЕЙМЕР</div>
+        <div style="font-size:11px;color:#888;line-height:1.7;">Кейсы — это игровая механика для развлечения и мотивации. Призы выдаются случайно. Это не способ заработка баллов — открытие кейса стоит 50★ и чаще всего возвращает меньше. Играй ради удовольствия, а не ради прибыли 🎲</div>
       </div>
     </div>
   </div>
@@ -1125,6 +1151,132 @@ body::before {
   </div>
 </div>
 
+<!-- ===== ИМПЛАНТЫ ===== -->
+<div class="page" id="page-implants">
+  <div class="page-header">
+    <div class="page-title">ИМПЛАНТЫ <span class="page-title-cn">植入物</span></div>
+    <div class="page-sub">> zhí rù wù // нейроимпланты протокола</div>
+  </div>
+
+  <!-- Мои импланты -->
+  <div class="cn-divider">⚡ 我的植入物 МОИ ИМПЛАНТЫ</div>
+  <div class="card" style="margin:4px 12px;">
+    <div class="card-inner" id="myImplantsPage">
+      <div class="empty-state" style="padding:12px;">Импланты не установлены<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Открывай фиолетовые и чёрные кейсы!</span></div>
+    </div>
+  </div>
+
+  <!-- Каталог всех имплантов -->
+  <div class="cn-divider">📖 植入物目录 КАТАЛОГ</div>
+
+  <!-- ГУАНЬСИ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true" style="width:80px;height:80px;object-fit:contain;border-radius:10px;border:1px solid rgba(155,89,182,0.4);flex-shrink:0;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.3);color:#9b59b6;font-size:8px;padding:1px 6px;border-radius:3px;font-family:monospace;">РЕДКИЙ</span>
+            <span style="font-size:8px;color:rgba(212,175,55,0.4);font-family:monospace;">ФИОЛЕТОВЫЙ КЕЙС</span>
+          </div>
+          <div style="font-size:16px;font-weight:800;color:#fff;">关系 ГУАНЬСИ</div>
+          <div style="font-size:10px;color:rgba(212,175,55,0.5);font-family:serif;font-style:italic;margin-top:1px;">guān xi — связи, отношения</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:5px;">// ЛОР</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.7;">Имплант разработан корпорацией Юйлун для агентов-переговорщиков. Встроенный нейрочип анализирует поведение продавца и автоматически находит оптимальную точку давления на цену. В народе называют «Гуаньси» — потому что с ним у тебя есть связи везде.</div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+          <span style="font-size:16px;">💰</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Торговый протокол</div><div style="font-size:11px;color:#aaa;margin-top:1px;">-10% к цене всех товаров в магазине</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+          <span style="font-size:16px;">🔋</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Прочность</div><div style="font-size:11px;color:#aaa;margin-top:1px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ТЕРРАКОТА -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true" style="width:80px;height:80px;object-fit:contain;border-radius:10px;border:1px solid rgba(155,89,182,0.4);flex-shrink:0;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.3);color:#9b59b6;font-size:8px;padding:1px 6px;border-radius:3px;font-family:monospace;">РЕДКИЙ</span>
+            <span style="font-size:8px;color:rgba(212,175,55,0.4);font-family:monospace;">ФИОЛЕТОВЫЙ КЕЙС</span>
+          </div>
+          <div style="font-size:16px;font-weight:800;color:#fff;">兵马俑 ТЕРРАКОТА</div>
+          <div style="font-size:10px;color:rgba(212,175,55,0.5);font-family:serif;font-style:italic;margin-top:1px;">bīng mǎ yǒng — терракотовая армия</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:5px;">// ЛОР</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.7;">Субдермальная бронеплита, вдохновлённая терракотовыми воинами династии Цинь. Имплант создаёт нейроэкран, который перехватывает один штрафной импульс в день и рассеивает его. NetWatch называет таких носителей «фарфоровыми» — снаружи хрупкие, внутри несокрушимые.</div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+          <span style="font-size:16px;">🛡</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Нейроблок</div><div style="font-size:11px;color:#aaa;margin-top:1px;">Блокирует 1 штраф в день автоматически</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+          <span style="font-size:16px;">🔋</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Прочность</div><div style="font-size:11px;color:#aaa;margin-top:1px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- КРАСНЫЙ ДРАКОН -->
+  <div class="card" style="margin:6px 12px 16px;">
+    <div class="card-inner" style="background:linear-gradient(135deg,rgba(180,20,20,0.05),rgba(212,175,55,0.03));">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true" style="width:80px;height:80px;object-fit:contain;border-radius:10px;border:1px solid rgba(180,20,20,0.5);flex-shrink:0;box-shadow:0 0 16px rgba(180,0,0,0.2);">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span style="background:rgba(180,20,20,0.2);border:1px solid rgba(180,20,20,0.5);color:#cc3333;font-size:8px;padding:1px 6px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</span>
+            <span style="font-size:8px;color:rgba(212,175,55,0.4);font-family:monospace;">ЧЁРНЫЙ КЕЙС</span>
+          </div>
+          <div style="font-size:16px;font-weight:800;color:#fff;text-shadow:0 0 10px rgba(200,0,0,0.4);">红龙 КРАСНЫЙ ДРАКОН</div>
+          <div style="font-size:10px;color:rgba(212,175,55,0.5);font-family:serif;font-style:italic;margin-top:1px;">hóng lóng — красный дракон</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.15);">
+        <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:5px;">// ЛОР</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.7;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Стену. Носители получают статус 红龙节点 — «Узел Красного Дракона». Один из ста тысяч.</div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.15);">
+        <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+          <span style="font-size:16px;">📈</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Усиленный протокол</div><div style="font-size:11px;color:#aaa;margin-top:1px;">+20% к начисляемым баллам за все действия</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+          <span style="font-size:16px;">🎁</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Бесплатный взлом</div><div style="font-size:11px;color:#aaa;margin-top:1px;">+1 бесплатный кейс каждый день</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+          <span style="font-size:16px;">🔴</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Красный ник</div><div style="font-size:11px;color:#aaa;margin-top:1px;">Красное имя в таблице лидеров</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+          <span style="font-size:16px;">🔋</span>
+          <div><div style="font-size:12px;color:#fff;font-weight:600;">Прочность</div><div style="font-size:11px;color:#aaa;margin-top:1px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding:8px;background:rgba(180,20,20,0.08);border:1px solid rgba(180,20,20,0.2);border-radius:6px;font-size:9px;color:rgba(200,50,50,0.6);font-family:monospace;text-align:center;letter-spacing:1px;">
+        ⚠️ ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="showPage('home',this)">
@@ -1146,6 +1298,10 @@ body::before {
   <button class="nav-item" onclick="showPage('casino',this)">
     <span class="nav-icon">⬡</span>
     <span class="nav-cn">箱子</span>
+  </button>
+  <button class="nav-item" onclick="showPage('implants',this)">
+    <span class="nav-icon">⚡</span>
+    <span class="nav-cn">植入物</span>
   </button>
   <button class="nav-item" onclick="showPage('more',this)">
     <span class="nav-icon">≡</span>
@@ -1184,11 +1340,11 @@ const PRIZES = [
   { code:'jackpot', icon:'👑', name:'ДЖЕКПОТ!',          desc:'+250 баллов! Невероятно!', points:250, rarity:'jackpot' },
 ];
 const PURPLE_PRIZES = [
-  { code:'implant_guanxi',    icon:'🤝', name:'Гуаньси 关系',    desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
-  { code:'implant_terracota', icon:'🗿', name:'Терракота 兵马俑', desc:'Имплант: блок 1 штрафа в день',    points:0, rarity:'rare' },
+  { code:'implant_guanxi',    icon:'🤝', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true', name:'Гуаньси 关系',    desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
+  { code:'implant_terracota', icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',          name:'Терракота 兵马俑', desc:'Имплант: блок 1 штрафа в день',    points:0, rarity:'rare' },
 ];
 const BLACK_PRIZES = [
-  { code:'implant_red_dragon', icon:'🐉', name:'Красный Дракон 红龙', desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
+  { code:'implant_red_dragon', icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true', name:'Красный Дракон 红龙', desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
 ];
 const PRIZE_MAP = {};
 [...PRIZES, ...PURPLE_PRIZES, ...BLACK_PRIZES].forEach(p => PRIZE_MAP[p.code] = p);
@@ -1244,6 +1400,7 @@ function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
 
+  if (name === 'implants') loadImplants(currentUserId);
   if (name === 'shop') loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'casino') {
@@ -1324,22 +1481,38 @@ async function loadPoints(telegramId) {
 
 async function loadImplants(telegramId) {
   if (!telegramId) return;
+  const IMPLANT_IMGS = {
+    'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
+    'implant_terracota':  'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',
+    'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
+  };
   try {
     const r = await fetch(`${API_URL}/api/casino/implants/${telegramId}`);
     if (!r.ok) return;
     const data = await r.json();
-    const container = document.getElementById('homeImplants');
+
+    // Обновляем главную страницу
+    const homeContainer = document.getElementById('homeImplants');
+    // Обновляем страницу имплантов
+    const pageContainer = document.getElementById('myImplantsPage');
+
     if (!data.length) {
-      container.innerHTML = '<div class="empty-state" style="padding:12px;">Импланты не установлены<br><span style="font-size:9px;font-family:monospace;">Открывай фиолетовые и чёрные кейсы!</span></div>';
+      const empty = '<div class="empty-state" style="padding:12px;">Импланты не установлены<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Открывай фиолетовые и чёрные кейсы!</span></div>';
+      if (homeContainer) homeContainer.innerHTML = empty;
+      if (pageContainer) pageContainer.innerHTML = empty;
       return;
     }
-    container.innerHTML = data.map(imp => {
-      const dots = Array(3).fill(0).map((_, i) => {
-        const cls = i < imp.durability ? (imp.implant_id === 'implant_red_dragon' ? 'dur-dot on-r' : 'dur-dot on') : 'dur-dot off';
+
+    const homeHtml = data.map(imp => {
+      const img = IMPLANT_IMGS[imp.implant_id];
+      const dots = Array(3).fill(0).map((_,i) => {
+        const cls = i < imp.durability ? (imp.implant_id==='implant_red_dragon'?'dur-dot on-r':'dur-dot on') : 'dur-dot off';
         return `<div class="${cls}"></div>`;
       }).join('');
       return `<div class="implant-row">
-        <div class="implant-icon ${imp.implant_id === 'implant_red_dragon' ? 'legendary' : ''}">${imp.icon}</div>
+        <div class="implant-icon ${imp.implant_id==='implant_red_dragon'?'legendary':''}">
+          ${img ? `<img src="${img}" style="width:24px;height:24px;object-fit:contain;border-radius:4px;">` : imp.icon}
+        </div>
         <div>
           <div class="implant-cn">${imp.name}</div>
           <div class="implant-py">${imp.desc}</div>
@@ -1347,6 +1520,30 @@ async function loadImplants(telegramId) {
         <div class="implant-dur">${dots}</div>
       </div>`;
     }).join('');
+    if (homeContainer) homeContainer.innerHTML = homeHtml;
+
+    const pageHtml = data.map(imp => {
+      const img = IMPLANT_IMGS[imp.implant_id];
+      const isLeg = imp.implant_id === 'implant_red_dragon';
+      const dots = Array(3).fill(0).map((_,i) => {
+        const cls = i < imp.durability ? (isLeg?'dur-dot on-r':'dur-dot on') : 'dur-dot off';
+        return `<div class="${cls}"></div>`;
+      }).join('');
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        ${img ? `<img src="${img}" style="width:48px;height:48px;object-fit:contain;border-radius:8px;border:1px solid ${isLeg?'rgba(180,20,20,0.4)':'rgba(155,89,182,0.3)'};flex-shrink:0;">` : `<div style="font-size:28px;">${imp.icon}</div>`}
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:#fff;">${imp.name}</div>
+          <div style="font-size:10px;color:rgba(212,175,55,0.5);font-family:serif;font-style:italic;">${imp.desc}</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <div style="font-size:8px;color:var(--text3);font-family:monospace;">ЗАРЯДЫ</div>
+          <div class="implant-dur">${dots}</div>
+        </div>
+      </div>`;
+    }).join('');
+    if (pageContainer) pageContainer.innerHTML = pageHtml;
+
   } catch(e) {}
 }
 
@@ -1713,7 +1910,10 @@ async function spinRoulette(targetPrize, caseType = 'gold') {
         setTimeout(() => {
           winner.classList.remove('opening');
           winner.classList.add('opened');
-          winner.innerHTML = `<div class="roulette-item-icon roulette-prize-reveal">${targetPrize.icon}</div><div class="roulette-item-name">${targetPrize.name}</div>`;
+          const prizeContent = targetPrize.img
+            ? `<img src="${targetPrize.img}" class="roulette-prize-reveal" style="width:80px;height:80px;object-fit:contain;border-radius:10px;"><div class="roulette-item-name">${targetPrize.name}</div>`
+            : `<div class="roulette-item-icon roulette-prize-reveal">${targetPrize.icon}</div><div class="roulette-item-name">${targetPrize.name}</div>`;
+          winner.innerHTML = prizeContent;
           if (targetPrize.code==='jackpot') winner.style.animation='shimmer 0.5s infinite';
           resolve();
         }, 600);
@@ -1724,7 +1924,12 @@ async function spinRoulette(targetPrize, caseType = 'gold') {
 }
 
 function showPrizeResult(prize, caseType = 'gold') {
-  document.getElementById('prizeIcon').textContent = prize.icon;
+  const iconEl = document.getElementById('prizeIcon');
+  if (prize.img) {
+    iconEl.innerHTML = `<img src="${prize.img}" style="width:80px;height:80px;object-fit:contain;border-radius:12px;">`;
+  } else {
+    iconEl.innerHTML = prize.icon;
+  }
   document.getElementById('prizeName').textContent = prize.name;
   document.getElementById('prizeDesc').textContent = prize.desc || '';
   const pointsEl = document.getElementById('prizePoints');
