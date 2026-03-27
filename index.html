@@ -240,18 +240,13 @@ body::before {
 /* ===== ГЛАВНАЯ ===== */
 .main-logo-wrap { text-align: center; padding: 16px 16px 8px; position: relative; }
 .main-logo {
-  width: 72px; height: 72px;
-  background: linear-gradient(135deg, #1a0005, #2d0008);
-  border: 1px solid rgba(180,20,20,0.5);
-  border-radius: 18px;
+  width: 140px; height: 140px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 36px; font-family: serif;
   margin: 0 auto 10px;
-  box-shadow: 0 0 24px rgba(180,0,0,0.2), inset 0 0 20px rgba(180,0,0,0.05);
   position: relative;
 }
-.main-logo::before { content: '龙'; position: absolute; bottom: -8px; right: -8px; font-size: 14px; color: rgba(212,175,55,0.25); font-family: serif; }
-.main-logo::after { content: '福'; position: absolute; top: -8px; left: -8px; font-size: 14px; color: rgba(212,175,55,0.25); font-family: serif; }
+.main-logo::before { content: none; }
+.main-logo::after { content: none; }
 .main-title {
   font-size: 26px; font-weight: 900; letter-spacing: 6px;
   color: var(--text);
@@ -399,12 +394,13 @@ body::before {
 }
 .subtab.active { background: var(--red-dim); border-color: var(--red-border); color: #cc4444; }
 .shop-cat {
-  font-size: 8px; color: rgba(200,50,50,0.5);
+  font-size: 11px; color: rgba(220,100,100,0.9);
   letter-spacing: 1px; font-family: monospace;
-  padding: 8px 14px 3px;
+  padding: 10px 14px 4px;
   display: flex; align-items: center; gap: 6px;
+  font-weight: 700;
 }
-.shop-cat .cn { font-size: 11px; color: rgba(212,175,55,0.3); font-family: serif; }
+.shop-cat .cn { font-size: 13px; color: rgba(212,175,55,0.7); font-family: serif; }
 .shop-cat::after { content: ''; flex:1; height:1px; background: linear-gradient(90deg, var(--red-border), transparent); }
 .shop-item {
   display: flex; align-items: center; gap: 10px;
@@ -735,10 +731,9 @@ body::before {
 <!-- ===== ГЛАВНАЯ ===== -->
 <div class="page active" id="page-home">
   <div class="main-logo-wrap">
-    <div class="main-logo"><img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true" style="width:60px;height:60px;object-fit:contain;"></div>
-    <div class="main-title">ZHIDAO</div>
-    <div class="main-pinyin">zhī dào — 知道协议</div>
-    <div class="proto-tag">🏮 PROTOCOL v2.0 // ACTIVE 🏮</div>
+    <div class="main-logo"><img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true" style="width:140px;height:140px;object-fit:contain;"></div>
+    <div class="main-pinyin">智能电子解决方案</div>
+    <div class="proto-tag">🏮 PROTOCOL v1.4 // ACTIVE 🏮</div>
   </div>
 
   <div class="stats-row">
