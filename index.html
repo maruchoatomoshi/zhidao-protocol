@@ -563,8 +563,21 @@ const PRIZES = [
     { code: 'skip',    icon: '🛡', name: 'Иммунитет!',        desc: 'Один пропуск без штрафа',   points: 0,   rarity: 'rare' },
     { code: 'jackpot', icon: '👑', name: 'ДЖЕКПОТ!',          desc: '+250 баллов! Невероятно!',  points: 250, rarity: 'jackpot' },
 ];
+const PURPLE_PRIZES = [
+    { code: 'implant_guanxi',    icon: '🤝', name: 'Гуаньси 关系',    desc: 'Имплант: -10% к ценам в магазине',  points: 0, rarity: 'rare' },
+    { code: 'implant_terracota', icon: '🗿', name: 'Терракота 兵马俑', desc: 'Имплант: блок 1 штрафа в день',     points: 0, rarity: 'rare' },
+];
+const BLACK_PRIZES = [
+    { code: 'implant_red_dragon', icon: '🐉', name: 'Красный Дракон 红龙', desc: '⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ! +20% баллов', points: 0, rarity: 'jackpot' },
+];
 const PRIZE_MAP = {};
-PRIZES.forEach(p => PRIZE_MAP[p.code] = p);
+[...PRIZES, ...PURPLE_PRIZES, ...BLACK_PRIZES].forEach(p => PRIZE_MAP[p.code] = p);
+
+const CASE_IMAGES = {
+    gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
+    purple: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png',
+    black:  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png',
+};
 
 const ACHIEVEMENT_ICONS = {
     early_bird: `<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="22" r="7" fill="url(#g1)"/><path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 36 L26 28 L32 36" fill="url(#g1)"/><circle cx="26" cy="10" r="3" fill="url(#g1)"/></svg>`,
@@ -1284,14 +1297,17 @@ function switchCasinoTab(mode, btn) {
     }
 }
 
-function initRoulette() {
+function initRoulette(caseType = 'gold') {
     const strip = document.getElementById('rouletteStrip');
     if (!strip) return;
     strip.innerHTML = '';
+    const imgUrl = CASE_IMAGES[caseType] || CASE_IMAGES.gold;
+    const borderColor = caseType === 'black' ? '#cc0000' : caseType === 'purple' ? '#9b59b6' : 'rgba(212,175,55,0.3)';
     for (let i = 0; i < 50; i++) {
         const el = document.createElement('div');
         el.className = 'roulette-item';
-        el.innerHTML = `<img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png" style="width:130px;height:130px;object-fit:contain;">`;
+        el.style.borderColor = borderColor;
+        el.innerHTML = `<img src="${imgUrl}" style="width:130px;height:130px;object-fit:contain;">`;
         strip.appendChild(el);
     }
     strip.style.transform = `translateX(135px)`;
@@ -1299,6 +1315,13 @@ function initRoulette() {
     document.getElementById('openCaseBtn').disabled = false;
     document.getElementById('playAgainBtn').style.display = 'none';
     document.getElementById('prizeResult').classList.remove('show');
+    // Обновляем цвет трека под тип кейса
+    const track = document.querySelector('.roulette-track');
+    if (track) {
+        if (caseType === 'black') track.style.borderColor = 'rgba(180,0,0,0.6)';
+        else if (caseType === 'purple') track.style.borderColor = 'rgba(155,89,182,0.6)';
+        else track.style.borderColor = 'rgba(212,175,55,0.4)';
+    }
 }
 
 async function openCase() {
@@ -1323,15 +1346,26 @@ async function openCase() {
             return;
         }
         const data = await r.json();
-        const prize = PRIZE_MAP[data.prize.code] || PRIZES[0];
-        await spinRoulette(prize);
-        showPrizeResult(prize);
+        const caseType = data.prize.case_type || 'gold';
+        initRoulette(caseType);
+        isSpinning = true;
+        document.getElementById('openCaseBtn').disabled = true;
+        const prize = PRIZE_MAP[data.prize.code] || { code: data.prize.code, icon: data.prize.icon || '🎁', name: data.prize.name, desc: 'Редкий приз!', points: data.prize.points || 0 };
+        await spinRoulette(prize, caseType);
+        showPrizeResult(prize, caseType);
         currentPoints = data.new_points;
         updatePoints();
-        if (prize.code === 'jackpot') { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(100); }
-        else if (prize.points > 50) { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(30); }
-        else if (prize.code === 'empty') tg.HapticFeedback.notificationOccurred('error');
-        else tg.HapticFeedback.impactOccurred('medium');
+        if (prize.code === 'jackpot' || prize.code === 'implant_red_dragon') {
+            tg.HapticFeedback.notificationOccurred('success'); launchConfetti(100);
+        } else if (prize.code.startsWith('implant_')) {
+            tg.HapticFeedback.notificationOccurred('success'); launchConfetti(50);
+        } else if (prize.points > 50) {
+            tg.HapticFeedback.notificationOccurred('success'); launchConfetti(30);
+        } else if (prize.code === 'empty') {
+            tg.HapticFeedback.notificationOccurred('error');
+        } else {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
         document.getElementById('playAgainBtn').style.display = 'block';
     } catch(e) {
         tg.showAlert('Ошибка соединения');
@@ -1340,7 +1374,7 @@ async function openCase() {
     }
 }
 
-async function spinRoulette(targetPrize) {
+async function spinRoulette(targetPrize, caseType = 'gold') {
     return new Promise(resolve => {
         const strip = document.getElementById('rouletteStrip');
         const items = strip.querySelectorAll('.roulette-item');
@@ -1381,14 +1415,29 @@ async function spinRoulette(targetPrize) {
     });
 }
 
-function showPrizeResult(prize) {
+function showPrizeResult(prize, caseType = 'gold') {
     document.getElementById('prizeIcon').textContent = prize.icon;
     document.getElementById('prizeName').textContent = prize.name;
-    document.getElementById('prizeDesc').textContent = prize.desc;
+    document.getElementById('prizeDesc').textContent = prize.desc || '';
     const pointsEl = document.getElementById('prizePoints');
-    if (prize.points > 0) { pointsEl.textContent = '+' + prize.points + ' ★'; pointsEl.className = 'prize-result-points positive'; }
-    else if (prize.code === 'empty') { pointsEl.textContent = 'Не повезло 😅'; pointsEl.className = 'prize-result-points negative'; }
-    else { pointsEl.textContent = '🎁 Специальный приз!'; pointsEl.className = 'prize-result-points special'; }
+    if (prize.points > 0) {
+        pointsEl.textContent = '+' + prize.points + ' ★';
+        pointsEl.className = 'prize-result-points positive';
+    } else if (prize.code === 'empty') {
+        pointsEl.textContent = 'Не повезло 😅';
+        pointsEl.className = 'prize-result-points negative';
+    } else if (prize.code.startsWith('implant_')) {
+        const label = caseType === 'black' ? '🐉 ЛЕГЕНДАРНЫЙ ИМПЛАНТ!' : '💜 Имплант получен!';
+        pointsEl.textContent = label;
+        pointsEl.className = 'prize-result-points special';
+        // Подсвечиваем результат под тип кейса
+        const resultEl = document.getElementById('prizeResult');
+        if (caseType === 'black') resultEl.style.borderColor = 'rgba(180,0,0,0.6)';
+        else if (caseType === 'purple') resultEl.style.borderColor = 'rgba(155,89,182,0.6)';
+    } else {
+        pointsEl.textContent = '🎁 Специальный приз!';
+        pointsEl.className = 'prize-result-points special';
+    }
     document.getElementById('prizeResult').classList.add('show');
 }
 
