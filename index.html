@@ -1735,9 +1735,9 @@ async function loadRaidStatus() {
         <div style="text-align:center;padding:8px 0;">
           <div style="font-size:11px;color:var(--text2);font-family:monospace;">Рейдов сегодня ещё не было</div>
           <div style="font-size:10px;color:var(--text3);margin-top:4px;">Будь первым — начни рейд!</div>
-          <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;margin-top:4px;">Осталось рейдов сегодня: ${2 - (data.finished_today || 0)}/2</div>
+          <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;margin-top:4px;">${isAdmin ? "// АДМИН — РЕЙДЫ БЕЗ ЛИМИТА //" : "Осталось рейдов сегодня: " + (2 - (data.finished_today || 0)) + "/2"}</div>
         </div>`;
-      btn.style.display = data.finished_today >= 2 ? 'none' : 'block';
+      btn.style.display = (data.finished_today >= 2 && !isAdmin) ? 'none' : 'block';
       return;
     }
 
@@ -1749,8 +1749,8 @@ async function loadRaidStatus() {
       container.innerHTML = `
         <div style="text-align:center;padding:8px;background:${success?'rgba(46,204,113,0.08)':'rgba(180,20,20,0.08)'};border:1px solid ${success?'rgba(46,204,113,0.3)':'rgba(180,20,20,0.3)'};border-radius:8px;margin-bottom:8px;">
           <div style="font-size:20px;margin-bottom:4px;">${success ? '🏆' : '🛡'}</div>
-          <div style="font-size:13px;font-weight:700;color:${success?'#2ecc71':'#cc4444'};">${success ? 'РЕЙД УСПЕШЕН!' : 'МЮ ЗАЩИТИЛСЯ!'}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:4px;">${success ? 'Каждый получил +150 ★' : 'Ставки сгорели 🔥'}</div>
+          <div style="font-size:13px;font-weight:700;color:${success?'#2ecc71':'#cc4444'};">${success ? 'РЕЙД УСПЕШЕН!' : 'АЛЬФАБОСС ЗАЩИТИЛСЯ!'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px;">${success ? 'Каждый получил +150 ★' : 'Альфабосс отбил атаку 🛡 Ставки сгорели 🔥'}</div>
           <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:6px;">Участники: ${participants.map(p => p.name).join(', ')}</div>
         </div>
         <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;text-align:center;">
@@ -1776,7 +1776,7 @@ async function loadRaidStatus() {
       </div>
       ${participants.length ? `<div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:8px;">⚔️ ${participants.map(p => p.name).join(' • ')}</div>` : ''}
       ${alreadyJoined ? '<div style="font-size:10px;color:#2ecc71;font-family:monospace;text-align:center;">✅ Ты уже в отряде! Ждём ещё бойцов...</div>' : ''}
-      <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;text-align:center;margin-top:4px;">Осталось рейдов сегодня: ${2 - finished_today}/2</div>`;
+      <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;text-align:center;margin-top:4px;">${isAdmin ? "// АДМИН — РЕЙДЫ БЕЗ ЛИМИТА //" : (canRaidAgain ? "Осталось рейдов сегодня: " + (2 - finished_today) + "/2" : "// Следующий рейд — завтра //")}</div>`;
 
     btn.style.display = alreadyJoined ? 'none' : 'block';
   } catch(e) {
@@ -1813,7 +1813,7 @@ async function joinRaid() {
             tg.showAlert('🏆 РЕЙД УСПЕШЕН!\n\nМЮ не устоял! +150 ★ каждому бойцу!');
           } else {
             tg.HapticFeedback.notificationOccurred('error');
-            tg.showAlert('🛡 МЮ ЗАЩИТИЛСЯ!\n\nРейд провалился. Ставки сгорели 🔥');
+            tg.showAlert('🛡 АЛЬФАБОСС ЗАЩИТИЛСЯ!\n\nРейд провалился. Ставки сгорели 🔥');
           }
         } else {
           tg.showAlert(`⚔️ Ты в отряде!\n\nБойцов: ${data.count}/3\nЖди ещё участников!`);
