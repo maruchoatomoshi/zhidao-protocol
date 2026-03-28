@@ -1735,24 +1735,28 @@ async function loadRaidStatus() {
         <div style="text-align:center;padding:8px 0;">
           <div style="font-size:11px;color:var(--text2);font-family:monospace;">Рейдов сегодня ещё не было</div>
           <div style="font-size:10px;color:var(--text3);margin-top:4px;">Будь первым — начни рейд!</div>
+          <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;margin-top:4px;">Осталось рейдов сегодня: ${2 - (data.finished_today || 0)}/2</div>
         </div>`;
-      btn.style.display = 'block';
+      btn.style.display = data.finished_today >= 2 ? 'none' : 'block';
       return;
     }
 
-    const { raid, participants, count } = data;
+    const { raid, participants, count, finished_today } = data;
 
     if (raid.status === 'finished') {
       const success = raid.result === 'success';
+      const canRaidAgain = finished_today < 2;
       container.innerHTML = `
-        <div style="text-align:center;padding:8px;background:${success?'rgba(46,204,113,0.08)':'rgba(180,20,20,0.08)'};border:1px solid ${success?'rgba(46,204,113,0.3)':'rgba(180,20,20,0.3)'};border-radius:8px;">
+        <div style="text-align:center;padding:8px;background:${success?'rgba(46,204,113,0.08)':'rgba(180,20,20,0.08)'};border:1px solid ${success?'rgba(46,204,113,0.3)':'rgba(180,20,20,0.3)'};border-radius:8px;margin-bottom:8px;">
           <div style="font-size:20px;margin-bottom:4px;">${success ? '🏆' : '🛡'}</div>
           <div style="font-size:13px;font-weight:700;color:${success?'#2ecc71':'#cc4444'};">${success ? 'РЕЙД УСПЕШЕН!' : 'МЮ ЗАЩИТИЛСЯ!'}</div>
           <div style="font-size:10px;color:var(--text2);margin-top:4px;">${success ? 'Каждый получил +150 ★' : 'Ставки сгорели 🔥'}</div>
           <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:6px;">Участники: ${participants.map(p => p.name).join(', ')}</div>
-          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">Следующий рейд — завтра</div>
+        </div>
+        <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;text-align:center;">
+          ${canRaidAgain ? `⚔️ Можно ещё ${2 - finished_today} рейд сегодня!` : '// Следующий рейд — завтра //'}
         </div>`;
-      btn.style.display = 'none';
+      btn.style.display = canRaidAgain ? 'block' : 'none';
       return;
     }
 
@@ -1771,7 +1775,8 @@ async function loadRaidStatus() {
         </div>
       </div>
       ${participants.length ? `<div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:8px;">⚔️ ${participants.map(p => p.name).join(' • ')}</div>` : ''}
-      ${alreadyJoined ? '<div style="font-size:10px;color:#2ecc71;font-family:monospace;text-align:center;">✅ Ты уже в отряде! Ждём ещё бойцов...</div>' : ''}`;
+      ${alreadyJoined ? '<div style="font-size:10px;color:#2ecc71;font-family:monospace;text-align:center;">✅ Ты уже в отряде! Ждём ещё бойцов...</div>' : ''}
+      <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;text-align:center;margin-top:4px;">Осталось рейдов сегодня: ${2 - finished_today}/2</div>`;
 
     btn.style.display = alreadyJoined ? 'none' : 'block';
   } catch(e) {
@@ -1802,13 +1807,13 @@ async function joinRaid() {
         tg.HapticFeedback.notificationOccurred('success');
         if (data.launched) {
           if (data.result === 'success') {
-            tg.showAlert('🏆 РЕЙД УСПЕШЕН!\n\nМЮ не устоял! +150 ★ каждому бойцу!');
             currentPoints += 150;
             updatePoints();
             launchConfetti(80);
+            tg.showAlert('🏆 РЕЙД УСПЕШЕН!\n\nМЮ не устоял! +150 ★ каждому бойцу!');
           } else {
-            tg.showAlert('🛡 МЮ ЗАЩИТИЛСЯ!\n\nРейд провалился. Ставки сгорели 🔥');
             tg.HapticFeedback.notificationOccurred('error');
+            tg.showAlert('🛡 МЮ ЗАЩИТИЛСЯ!\n\nРейд провалился. Ставки сгорели 🔥');
           }
         } else {
           tg.showAlert(`⚔️ Ты в отряде!\n\nБойцов: ${data.count}/3\nЖди ещё участников!`);
@@ -1816,11 +1821,9 @@ async function joinRaid() {
         await loadRaidStatus();
         loadLeaderboard();
       } else {
-        const err = await r.json();
-        if (err.detail === 'Already joined') tg.showAlert('Ты уже в этом рейде!');
-        else if (err.detail === 'Raid already finished today') tg.showAlert('Рейд сегодня уже завершён. Приходи завтра!');
-        else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
-        else if (err.detail === 'Admins cannot raid') tg.showAlert('Админы не могут участвовать в рейде 😄');
+        if (data.detail === 'Already joined') tg.showAlert('Ты уже в этом рейде!');
+        else if (data.detail === 'Daily raid limit reached') tg.showAlert('Сегодня уже было 2 рейда. Приходи завтра!');
+        else if (data.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
         else tg.showAlert('Ошибка!');
       }
     } catch(e) { tg.showAlert('Ошибка соединения'); }
