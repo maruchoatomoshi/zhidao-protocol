@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.5.6</title>
-<!-- ZHIDAO Protocol // version 2.5.6 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.5.7</title>
+<!-- ZHIDAO Protocol // version 2.5.7 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -2633,7 +2633,7 @@ function gsBuildCard(cardId, cardInfo) {
   front.innerHTML = `
     <div style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;position:relative;">
       <div style="position:absolute;inset:4px;border-radius:10px;background:${c.frontBg||'rgba(74,122,204,0.08)'};border:1px solid ${(c.frontBorder||'rgba(74,122,204,0.7)').replace(/[\d.]+\)$/,'0.2)')}"></div>
-      <div style="font-size:58px;position:relative;z-index:2;filter:drop-shadow(0 4px 10px ${c.petalColor||'rgba(74,122,204,0.5)'})">${c.emoji||'✦'}</div>
+      ${(c.img) ? `<img src="${c.img}" style="width:110px;height:130px;object-fit:contain;position:relative;z-index:2;border-radius:8px;">` : `<div style="font-size:58px;position:relative;z-index:2;filter:drop-shadow(0 4px 10px ${c.petalColor||'rgba(74,122,204,0.5)'})">${c.emoji||'✦'}</div>`}
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding-bottom:2px;">
       <div style="font-size:10px;font-weight:700;color:#2a2040;font-family:serif;letter-spacing:1px;text-align:center;">${cardInfo?cardInfo.name:''}</div>
@@ -2750,8 +2750,10 @@ function switchImplantsTab(tab) {
 async function loadCards(telegramId) {
   if (!telegramId) return;
   const container = document.getElementById('myCardsContent');
+  if (!container) return;
   try {
     const r = await fetch(`${API_URL}/api/cards/${telegramId}`);
+    if (!r.ok) { container.innerHTML = '<div class="empty-state">Карточек пока нет</div>'; return; }
     const data = await r.json();
     if (!data.length) {
       container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Кейсы!</span></div>';
