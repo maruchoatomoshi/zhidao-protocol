@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.5.7</title>
-<!-- ZHIDAO Protocol // version 2.5.7 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.5.8</title>
+<!-- ZHIDAO Protocol // version 2.5.8 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -2748,7 +2748,11 @@ function switchImplantsTab(tab) {
 }
 
 async function loadCards(telegramId) {
-  if (!telegramId) return;
+  if (!telegramId) {
+    const container = document.getElementById('myCardsContent');
+    if (container) container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Кейсы!</span></div>';
+    return;
+  }
   const container = document.getElementById('myCardsContent');
   if (!container) return;
   try {
