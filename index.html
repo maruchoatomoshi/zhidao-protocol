@@ -27,6 +27,103 @@
   --purple-dim: rgba(155,89,182,0.15);
   --purple-border: rgba(155,89,182,0.3);
   --nav-h: 68px;
+  --font-ui: -apple-system, sans-serif;
+  --btn-radius: 8px;
+  --card-radius: 10px;
+  --scan-opacity: 0.025;
+}
+
+/* ===== NETWATCH LIGHT ===== */
+body.theme-nw-light {
+  --red: #993333;
+  --red-dim: rgba(180,20,20,0.08);
+  --red-border: rgba(180,20,20,0.22);
+  --gold: #7a5010;
+  --gold-dim: rgba(150,100,20,0.1);
+  --gold-border: rgba(150,100,20,0.25);
+  --bg: #f4f1ed;
+  --bg2: rgba(0,0,0,0.03);
+  --bg3: rgba(0,0,0,0.05);
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a1a;
+  --text2: #555555;
+  --text3: #999999;
+  --scan-opacity: 0.01;
+}
+
+/* ===== GENSHIN LIGHT ===== */
+body.theme-genshin-light {
+  --red: #4b5366;
+  --red-dim: rgba(75,83,102,0.08);
+  --red-border: rgba(75,83,102,0.2);
+  --gold: #8a6820;
+  --gold-dim: rgba(219,177,101,0.12);
+  --gold-border: rgba(219,177,101,0.3);
+  --bg: #ece5d8;
+  --bg2: rgba(255,255,255,0.6);
+  --bg3: rgba(255,255,255,0.8);
+  --border: rgba(219,177,101,0.2);
+  --text: #3d4555;
+  --text2: #5f6674;
+  --text3: #9a9faa;
+  --font-ui: Georgia, serif;
+  --btn-radius: 20px;
+  --card-radius: 12px;
+  --scan-opacity: 0.005;
+}
+body.theme-genshin-light .bottom-nav {
+  background: rgba(236,229,216,0.97);
+  border-top-color: rgba(219,177,101,0.25);
+}
+body.theme-genshin-light .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(219,177,101,0.5), transparent);
+}
+body.theme-genshin-light .btn-primary {
+  border-radius: 20px;
+  font-family: Georgia, serif;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+body.theme-genshin-light .page-title {
+  font-family: Georgia, serif;
+}
+
+/* ===== GENSHIN DARK ===== */
+body.theme-genshin-dark {
+  --red: rgba(219,177,101,0.8);
+  --red-dim: rgba(219,177,101,0.08);
+  --red-border: rgba(219,177,101,0.2);
+  --gold: rgba(219,177,101,0.9);
+  --gold-dim: rgba(219,177,101,0.1);
+  --gold-border: rgba(219,177,101,0.25);
+  --bg: #1a1628;
+  --bg2: rgba(255,255,255,0.04);
+  --bg3: rgba(255,255,255,0.07);
+  --border: rgba(219,177,101,0.1);
+  --text: #e8e0d0;
+  --text2: #a09880;
+  --text3: #5a5248;
+  --font-ui: Georgia, serif;
+  --btn-radius: 20px;
+  --card-radius: 12px;
+  --scan-opacity: 0.02;
+}
+body.theme-genshin-dark .bottom-nav {
+  background: rgba(26,22,40,0.97);
+  border-top-color: rgba(219,177,101,0.15);
+}
+body.theme-genshin-dark .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(219,177,101,0.4), transparent);
+}
+body.theme-genshin-dark .btn-primary {
+  border-radius: 20px;
+  font-family: Georgia, serif;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+body.theme-genshin-dark .page-title {
+  font-family: Georgia, serif;
+  text-shadow: none;
 }
 
 body {
@@ -1042,6 +1139,11 @@ body::before {
     <div class="page-sub">> gèng duō // все функции</div>
   </div>
   <div class="more-grid">
+    <div class="more-item" onclick="openMore('themes')">
+      <i class="ti ti-palette more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
+      <div class="more-item-name">ТЕМЫ</div>
+      <div class="more-item-cn">主题 zhǔ tí</div>
+    </div>
     <div class="more-item" onclick="openMore('weather')">
       <i class="ti ti-cloud-storm more-item-icon" style="color:#60b4d4;"></i>
       <div class="more-item-name">ПОГОДА</div>
@@ -1070,6 +1172,57 @@ body::before {
   </div>
 
   <!-- Субстраницы More -->
+  <div id="more-themes" style="display:none;">
+    <div class="cn-divider">🎨 主题 ТЕМЫ ИНТЕРФЕЙСА</div>
+    <div style="padding:0 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+
+      <div onclick="setTheme('')" id="theme-btn-default" class="theme-card active-theme" style="background:#050510;border:2px solid rgba(180,20,20,0.5);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:#cc4444;font-family:monospace;letter-spacing:1px;margin-bottom:6px;">NETWATCH DARK</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#cc2200;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#050510;border:1px solid rgba(255,255,255,0.1);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#d4af37;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#666;font-family:monospace;">Красно-чёрный</div>
+        <div id="check-default" style="position:absolute;top:8px;right:8px;color:#cc4444;font-size:14px;">✓</div>
+      </div>
+
+      <div onclick="setTheme('nw-light')" id="theme-btn-nw-light" class="theme-card" style="background:#f4f1ed;border:2px solid rgba(180,20,20,0.15);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:#993333;font-family:monospace;letter-spacing:1px;margin-bottom:6px;">NETWATCH LIGHT</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#993333;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#f4f1ed;border:1px solid rgba(0,0,0,0.1);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#7a5010;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#999;font-family:monospace;">Светлый</div>
+        <div id="check-nw-light" style="position:absolute;top:8px;right:8px;color:#993333;font-size:14px;display:none;">✓</div>
+      </div>
+
+      <div onclick="setTheme('genshin-light')" id="theme-btn-genshin-light" class="theme-card" style="background:#ece5d8;border:2px solid rgba(219,177,101,0.25);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:#8a6820;font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">GENSHIN · ЛИ ЮЭ</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#4b5366;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#ece5d8;border:1px solid rgba(219,177,101,0.3);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#dbb165;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#9a9faa;font-family:Georgia,serif;">Дневной свиток ☀️</div>
+        <div id="check-genshin-light" style="position:absolute;top:8px;right:8px;color:#8a6820;font-size:14px;display:none;">✓</div>
+      </div>
+
+      <div onclick="setTheme('genshin-dark')" id="theme-btn-genshin-dark" class="theme-card" style="background:#1a1628;border:2px solid rgba(219,177,101,0.15);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:rgba(219,177,101,0.8);font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">GENSHIN · НОЧЬ</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#1a1628;border:1px solid rgba(219,177,101,0.2);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#2a2040;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#dbb165;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#5a5248;font-family:Georgia,serif;">Ночной Ли Юэ 🌙</div>
+        <div id="check-genshin-dark" style="position:absolute;top:8px;right:8px;color:rgba(219,177,101,0.8);font-size:14px;display:none;">✓</div>
+      </div>
+
+    </div>
+  </div>
+
   <div id="more-weather" style="display:none;">
     <div class="cn-divider">🌤 天气 ПОГОДА 北京</div>
     <div class="card"><div class="card-inner">
@@ -1443,6 +1596,7 @@ if (user) {
   }
 }
 
+loadSavedTheme();
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -1478,7 +1632,7 @@ function showPage(name, btn) {
 
 function openMore(section) {
   // Скрываем все субстраницы
-  ['weather','laundry','news','achievements','team','admin'].forEach(s => {
+  ['themes','weather','laundry','news','achievements','team','admin'].forEach(s => {
     const el = document.getElementById('more-' + s);
     if (el) el.style.display = 'none';
   });
@@ -1713,6 +1867,37 @@ async function deleteSchedule(id) {
 }
 
 // ===== РЕЙТИНГ =====
+// ===== ТЕМЫ =====
+const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark'];
+
+function setTheme(theme) {
+  // Убираем все классы тем
+  THEMES.forEach(t => {
+    if (t) document.body.classList.remove('theme-' + t);
+  });
+  // Применяем новую
+  if (theme) document.body.classList.add('theme-' + theme);
+
+  // Сохраняем
+  try { localStorage.setItem('zhidao_theme', theme); } catch(e) {}
+
+  // Обновляем галочки
+  THEMES.forEach(t => {
+    const key = t || 'default';
+    const el = document.getElementById('check-' + key);
+    if (el) el.style.display = (t === theme) ? 'block' : 'none';
+  });
+
+  tg.HapticFeedback.impactOccurred('light');
+}
+
+function loadSavedTheme() {
+  try {
+    const saved = localStorage.getItem('zhidao_theme') || '';
+    setTheme(saved);
+  } catch(e) {}
+}
+
 async function showRaid() {
   const panel = document.getElementById('raidPanel');
   if (panel.style.display === 'none') {
