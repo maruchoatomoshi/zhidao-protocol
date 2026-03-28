@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol</title>
+<title>ZHIDAO Protocol v2.5</title>
+<!-- ZHIDAO Protocol // version 2.5 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -213,7 +214,45 @@ body::before {
 }
 .nav-cn { font-size: 8px; font-family: serif; color: inherit; line-height: 1; }
 
-/* ===== СТРАНИЦЫ ===== */
+/* ===== СВЕТЛЫЕ ТЕМЫ — ТЁМНЫЙ ТЕКСТ ===== */
+body.theme-nw-light .page-title,
+body.theme-nw-light .page-sub,
+body.theme-nw-light .cn-divider,
+body.theme-nw-light .card-label,
+body.theme-nw-light .neuro-label,
+body.theme-nw-light .stat-label,
+body.theme-nw-light .team-name,
+body.theme-nw-light .more-item-name,
+body.theme-nw-light .shop-item-name,
+body.theme-nw-light .announcement-text,
+body.theme-nw-light .lb-name,
+body.theme-nw-light .lb-points
+{ color: #1a1a1a !important; }
+
+body.theme-nw-light .page-sub,
+body.theme-nw-light .team-role,
+body.theme-nw-light .shop-item-desc,
+body.theme-nw-light .announcement-date
+{ color: #555555 !important; }
+
+body.theme-genshin-light .page-title,
+body.theme-genshin-light .lb-name,
+body.theme-genshin-light .lb-points,
+body.theme-genshin-light .more-item-name,
+body.theme-genshin-light .shop-item-name,
+body.theme-genshin-light .announcement-text,
+body.theme-genshin-light .team-name
+{ color: #2a2040 !important; }
+
+body.theme-genshin-light .page-sub,
+body.theme-genshin-light .team-role,
+body.theme-genshin-light .shop-item-desc,
+body.theme-genshin-light .announcement-date
+{ color: #5f6674 !important; }
+
+body.theme-genshin-dark .lb-name,
+body.theme-genshin-dark .lb-points
+{ color: #e8e0d0 !important; }
 .page { display: none; padding: 0 0 10px; position: relative; z-index: 1; }
 .page.active { display: block; }
 
@@ -788,7 +827,22 @@ body::before {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes shakeBox { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-3deg)} 75%{transform:rotate(3deg)} }
 @keyframes revealPrize { from{transform:scale(0.5) rotate(-20deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
-@keyframes glitch {
+@keyframes cyberOverlayIn{0%{opacity:0}100%{opacity:1}}
+@keyframes cyberOverlayOut{0%{opacity:1}100%{opacity:0}}
+@keyframes cyberItemIn{0%{transform:scale(0.2) translateY(40px);opacity:0}60%{transform:scale(1.15) translateY(-5px)}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes cyberRayIn{0%{height:0;opacity:0}100%{opacity:1}}
+@keyframes cyberPulse{0%,100%{filter:drop-shadow(0 0 10px rgba(155,89,182,0.5))}50%{filter:drop-shadow(0 0 22px rgba(155,89,182,0.9))}}
+@keyframes cyberPartFloat{0%{opacity:0;transform:translate(0,0) scale(0)}15%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0.3)}}
+@keyframes cyberBlink{0%,100%{opacity:0.2}50%{opacity:0.6}}
+@keyframes fadeUpAnim{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes gsBlinkHint{0%,100%{opacity:0.3}50%{opacity:0.8}}
+@keyframes gsCardInNew{0%{transform:scale(0.2) translateY(50px);opacity:0}60%{transform:scale(1.08) translateY(-4px)}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes gsVortexSpin{0%{transform:rotate(0deg) scale(0.3);opacity:0}30%{opacity:1}100%{transform:rotate(720deg) scale(1.5);opacity:0}}
+@keyframes gsRayIn{0%{height:0;opacity:0}100%{opacity:1}}
+@keyframes gsCardIn{0%{transform:scale(0.2) translateY(50px);opacity:0}60%{transform:scale(1.08) translateY(-4px)}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes gsStarPop{0%{transform:translate(0,0) scale(0) rotate(0deg);opacity:0}40%{opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(1) rotate(var(--tr));opacity:0}}
+@keyframes gsPartFloat{0%{opacity:0;transform:translate(0,0) scale(0)}15%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0.3)}}
+@keyframes gsFlashIn{0%{opacity:0}15%{opacity:0.85}50%{opacity:0}100%{opacity:0}}
   0%,100%{text-shadow:2px 0 #ff0033,-2px 0 rgba(0,255,255,0.5)}
   25%{text-shadow:-2px 0 #ff0033,2px 0 rgba(0,255,255,0.5)}
   50%{text-shadow:2px 2px #ff0033,-2px -2px rgba(0,255,255,0.5)}
@@ -1063,7 +1117,6 @@ body::before {
 
     <div style="padding:0 12px 6px;display:flex;flex-direction:column;gap:6px;">
       <button class="btn btn-primary" id="openCaseBtn" onclick="openCase()">🏮 [ 开箱 // ОТКРЫТЬ КЕЙС — 50 ★ ] 🏮</button>
-      <button class="btn" id="playAgainBtn" style="display:none;padding:9px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:monospace;font-size:9px;cursor:pointer;border-radius:8px;" onclick="resetCasino()">🔄 ЕЩЁ РАЗ</button>
     </div>
   </div>
 
@@ -1137,37 +1190,29 @@ body::before {
         <div style="font-size:18px;font-weight:900;color:var(--gold);font-family:serif;letter-spacing:2px;">祈愿 МОЛИТВЫ</div>
         <div style="font-size:9px;color:rgba(219,177,101,0.5);font-family:serif;margin-top:2px;">qí yuàn · испытай судьбу</div>
       </div>
-      <!-- Пулы -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
-        <div style="background:var(--bg2);border:1px solid rgba(75,83,102,0.3);border-radius:10px;padding:8px 4px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:3px;">💙</div>
-          <div style="font-size:8px;color:var(--text2);font-family:serif;">Синий</div>
-          <div style="font-size:9px;color:var(--gold);font-weight:700;">79%</div>
+      <!-- Экран молитвы -->
+      <div id="gsPrayScreen" style="width:100%;height:320px;border-radius:16px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:8px;background:radial-gradient(ellipse at 50% 40%,#e0d0f0 0%,#d8c8e8 60%,#c8b8d8 100%);">
+        <div id="gsBgLayer" style="position:absolute;inset:0;transition:background 0.5s;"></div>
+        <div id="gsVortex" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"></div>
+        <div id="gsParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+        <div id="gsRays" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;"></div>
+        <div id="gsFlash" style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:30;border-radius:16px;"></div>
+        <div id="gsCardWrap" style="position:relative;z-index:20;opacity:0;">
+          <div id="gsCardStars" style="position:absolute;inset:-30px;z-index:21;pointer-events:none;"></div>
+          <div style="width:150px;height:210px;perspective:700px;">
+            <div class="gs-card-3d-new" id="gsCard3dNew" style="width:100%;height:100%;transform-style:preserve-3d;transition:transform 1s cubic-bezier(0.4,0,0.2,1);position:relative;">
+              <div id="gsCardBack" style="position:absolute;inset:0;border-radius:14px;overflow:hidden;backface-visibility:hidden;"></div>
+              <div id="gsCardFront" style="position:absolute;inset:0;border-radius:14px;overflow:hidden;backface-visibility:hidden;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 8px 8px;"></div>
+            </div>
+          </div>
         </div>
-        <div style="background:var(--bg2);border:1px solid rgba(155,89,182,0.3);border-radius:10px;padding:8px 4px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:3px;">💜</div>
-          <div style="font-size:8px;color:var(--text2);font-family:serif;">Фиолет.</div>
-          <div style="font-size:9px;color:var(--gold);font-weight:700;">20%</div>
-        </div>
-        <div style="background:var(--bg2);border:1px solid rgba(219,177,101,0.4);border-radius:10px;padding:8px 4px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:3px;">✨</div>
-          <div style="font-size:8px;color:var(--text2);font-family:serif;">Золотой</div>
-          <div style="font-size:9px;color:var(--gold);font-weight:700;">1%</div>
-        </div>
+        <div id="gsTapHint" style="position:absolute;bottom:12px;font-size:9px;font-family:serif;color:rgba(75,83,102,0.5);letter-spacing:1px;animation:gsBlinkHint 2s ease-in-out infinite;display:none;">✦ нажми чтобы открыть ✦</div>
       </div>
-      <!-- Рулетка Геншин -->
-      <div id="genshinRouletteWrap" style="background:var(--bg2);border:1px solid var(--gold-border);border-radius:10px;height:90px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;margin-bottom:8px;">
-        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid rgba(219,177,101,0.6);z-index:2;"></div>
-        <div id="genshinRoulette" style="display:flex;gap:8px;transition:transform 0.8s cubic-bezier(0.17,0.67,0.12,0.99);">
-          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">🌸</div>
-          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">✨</div>
-          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">💙</div>
-          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">💜</div>
-          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">🌙</div>
-        </div>
+      <div id="gsResultInfo" style="text-align:center;opacity:0;transition:opacity 0.4s;margin-bottom:8px;">
+        <div id="gsResStars" style="font-size:14px;letter-spacing:4px;"></div>
+        <div id="gsResName" style="font-size:13px;font-weight:700;color:var(--text);font-family:serif;margin-top:3px;"></div>
+        <div id="gsResPassive" style="font-size:9px;color:var(--text2);font-family:serif;margin-top:2px;line-height:1.5;"></div>
       </div>
-      <div id="genshinResult" style="min-height:40px;margin-bottom:8px;text-align:center;"></div>
-      <div style="font-size:8px;color:var(--text3);font-family:serif;text-align:center;margin-bottom:8px;">Минимум 80 ✦ · Лимит 3 молитвы в день</div>
       <button onclick="openGenshinCase()" id="genshinOpenBtn" class="btn btn-gold" style="width:100%;padding:10px;border-radius:20px;font-family:serif;font-size:10px;letter-spacing:1px;">✦ Совершить молитву — 50 ✦ ✦</button>
     </div>
   </div>
@@ -1285,9 +1330,23 @@ body::before {
   </div>
 
   <div id="more-laundry" style="display:none;">
-    <div class="cn-divider">🧺 洗衣 СТИРКА</div>
-    <div class="date-scroll" id="laundryDates"></div>
-    <div class="laundry-grid" id="laundrySlots"></div>
+    <div class="cn-divider">🧺 洗衣饮水 СТИРКА И ВОДА</div>
+
+    <!-- Табы -->
+    <div style="display:flex;gap:6px;padding:0 12px 8px;">
+      <button id="ltab-laundry" onclick="switchLaundryTab('laundry')" class="subtab active" style="flex:1;padding:7px;font-size:9px;font-family:monospace;letter-spacing:1px;"><i class="ti ti-wash"></i> СТИРКА</button>
+      <button id="ltab-water" onclick="switchLaundryTab('water')" class="subtab" style="flex:1;padding:7px;font-size:9px;font-family:monospace;letter-spacing:1px;"><i class="ti ti-droplet"></i> ВОДА</button>
+    </div>
+
+    <!-- СТИРКА -->
+    <div id="laundry-tab">
+      <div id="laundryScheduleContent" style="padding:0 12px;"></div>
+    </div>
+
+    <!-- ВОДА -->
+    <div id="water-tab" style="display:none;">
+      <div id="waterScheduleContent" style="padding:0 12px;"></div>
+    </div>
   </div>
 
   <div id="more-news" style="display:none;">
@@ -2145,94 +2204,206 @@ const SHOP_ICONS = {
   'title_player': '<i class="ti ti-crown" style="color:var(--gold);font-size:22px;"></i>',
 };
 
-// ===== ГЕНШИН КЕЙС =====
-const GENSHIN_EMOJIS = {
-  'card_zhongli': '🪨', 'card_pyro': '🔥', 'card_fox': '🦊',
-  'card_fairy': '🌸', 'card_literature': '📜', 'card_forest': '🌿',
-  'card_sea': '🌊', 'card_star': '⭐', 'card_moon': '🌙'
+const GS_CARD_CONFIGS = {
+  card_zhongli:   {emoji:'🪨',stars:'★★★★★',starsColor:'#c0a040',pool:'gold',backCn:'岩',petals:['✦','★','🌟','◆','✧'],petalColor:'rgba(255,215,0,0.75)',rayColor:'rgba(255,215,0,0.85)',rayCount:24,partCount:50,vortexColor:'rgba(255,200,0,',bgFrom:'#f0e0a0',bgTo:'#f8f0c0',flashColor:'rgba(255,240,180,0.9)',backGrad:['#f0dca0','#f8f0c0'],backBorder:'rgba(192,160,64,0.8)',frontGrad:['#f8f0d0','#fffae8'],frontBorder:'rgba(192,160,64,0.9)',frontBg:'rgba(192,160,64,0.1)',revealDelay:800},
+  card_star:      {emoji:'⭐',stars:'★★★★★',starsColor:'#c0a040',pool:'gold',backCn:'星',petals:['✦','★','🌟','◆'],petalColor:'rgba(255,215,0,0.75)',rayColor:'rgba(255,215,0,0.85)',rayCount:24,partCount:50,vortexColor:'rgba(255,200,0,',bgFrom:'#f0e0a0',bgTo:'#f8f0c0',flashColor:'rgba(255,240,180,0.9)',backGrad:['#f0dca0','#f8f0c0'],backBorder:'rgba(192,160,64,0.8)',frontGrad:['#f8f0d0','#fffae8'],frontBorder:'rgba(192,160,64,0.9)',frontBg:'rgba(192,160,64,0.1)',revealDelay:800},
+  card_pyro:      {emoji:'🔥',stars:'★★★★',starsColor:'#c39ef5',pool:'purple',backCn:'焰',petals:['🌸','✦','💜','✿'],petalColor:'rgba(195,158,245,0.7)',rayColor:'rgba(195,158,245,0.8)',rayCount:16,partCount:30,vortexColor:'rgba(155,89,182,',bgFrom:'#d8c0f0',bgTo:'#e8d0f8',flashColor:'rgba(220,200,255,0.7)',backGrad:['#c8b0e8','#dcc8f5'],backBorder:'rgba(155,89,182,0.7)',frontGrad:['#ecdcf8','#f5eeff'],frontBorder:'rgba(155,89,182,0.8)',frontBg:'rgba(155,89,182,0.08)',revealDelay:1000},
+  card_fox:       {emoji:'🦊',stars:'★★★★',starsColor:'#c39ef5',pool:'purple',backCn:'狐',petals:['✦','💜','✿','◈'],petalColor:'rgba(195,158,245,0.7)',rayColor:'rgba(195,158,245,0.8)',rayCount:16,partCount:30,vortexColor:'rgba(155,89,182,',bgFrom:'#d8c0f0',bgTo:'#e8d0f8',flashColor:'rgba(220,200,255,0.7)',backGrad:['#c8b0e8','#dcc8f5'],backBorder:'rgba(155,89,182,0.7)',frontGrad:['#ecdcf8','#f5eeff'],frontBorder:'rgba(155,89,182,0.8)',frontBg:'rgba(155,89,182,0.08)',revealDelay:1000},
+  card_fairy:     {emoji:'🌸',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'桃',petals:['🌸','✦','💧','❀'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_literature:{emoji:'📜',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'文',petals:['📜','✦','❀','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_forest:    {emoji:'🌿',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'木',petals:['🌿','✦','🍃','❀'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_sea:       {emoji:'🌊',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'海',petals:['🌊','✦','💧','◈'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_moon:      {emoji:'🌙',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'月',petals:['🌙','✦','⭐','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+};
+// Призы не-карточки
+const GS_PRIZE_CONFIGS = {
+  points: {emoji:'✦',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:15,petalColor:'rgba(219,177,101,0.7)',petals:['✦','★'],revealDelay:1200},
+  immunity:{emoji:'🛡',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:12,petalColor:'rgba(74,122,204,0.6)',petals:['🛡','✦'],revealDelay:1200},
+  walk:    {emoji:'🏮',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:12,petalColor:'rgba(219,177,101,0.6)',petals:['🏮','✦'],revealDelay:1200},
 };
 
-function loadGenshinCase() {
-  // Показываем таб только девочкам
+let gsAnimating = false, gsCardFlipped = false, curGsCardId = null;
+
+function gsGetThemeBg(c) {
+  const isLight = document.body.classList.contains('theme-genshin-light') || document.body.classList.contains('theme-nw-light');
+  return `radial-gradient(ellipse at 50% 40%,${c.bgFrom} 0%,${c.bgTo} 60%,${c.bgFrom} 100%)`;
+}
+
+function gsRunVortex(c) {
+  const v = document.getElementById('gsVortex'); v.innerHTML = '';
+  [0.3,0.5,0.7].forEach((a,i) => {
+    const ring = document.createElement('div');
+    ring.style.cssText = `width:${80+i*50}px;height:${80+i*50}px;border-radius:50%;border:${2-i*0.3}px solid ${c.vortexColor}${a});animation:gsVortexSpin ${0.8+i*0.2}s ease-out ${i*0.1}s forwards;position:absolute;`;
+    v.appendChild(ring);
+  });
+}
+
+function gsRunParticles(c) {
+  const p = document.getElementById('gsParticles'); p.innerHTML = '';
+  for(let i=0;i<c.partCount;i++){
+    const el=document.createElement('div');
+    const isText=Math.random()>0.55;
+    const px=(Math.random()-0.5)*300,py=(Math.random()-0.5)*300;
+    if(isText){
+      el.textContent=c.petals[Math.floor(Math.random()*c.petals.length)];
+      el.style.cssText=`position:absolute;font-size:${10+Math.random()*10}px;color:${c.petalColor};left:${20+Math.random()*60}%;top:${20+Math.random()*60}%;--px:${px}px;--py:${py}px;animation:gsPartFloat ${1.5+Math.random()*1.5}s ease-out ${Math.random()*0.5}s forwards;opacity:0;`;
+    } else {
+      const sz=Math.random()*5+2;
+      el.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:${c.petalColor};left:${20+Math.random()*60}%;top:${20+Math.random()*60}%;--px:${px}px;--py:${py}px;animation:gsPartFloat ${1.5+Math.random()}s ease-out ${Math.random()*0.4}s forwards;opacity:0;`;
+    }
+    p.appendChild(el);
+  }
+}
+
+function gsRunRays(c) {
+  const r = document.getElementById('gsRays'); r.innerHTML = '';
+  if(!c.rayColor){r.style.opacity='0';return;}
+  r.style.opacity='1';
+  for(let i=0;i<c.rayCount;i++){
+    const ray=document.createElement('div');
+    ray.style.cssText=`position:absolute;width:3px;height:180px;border-radius:2px;background:linear-gradient(0deg,${c.rayColor},transparent);transform:rotate(${i*(360/c.rayCount)}deg) translateX(-50%);transform-origin:bottom;left:50%;top:calc(50% - 180px);margin-left:-1.5px;animation:gsRayIn 0.4s ease-out ${i*0.015}s both;opacity:0;`;
+    r.appendChild(ray);
+  }
+}
+
+function gsRunCardStars(c) {
+  const w = document.getElementById('gsCardStars'); w.innerHTML = '';
+  const positions=[[-50,-30,30,'30deg'],[50,-30,-30,'-30deg'],[-60,10,60,'15deg'],[60,10,-60,'-15deg'],[-40,-55,20,'45deg'],[40,-55,-20,'-45deg'],[-55,50,40,'20deg'],[55,50,-40,'-20deg'],[0,-65,0,'0deg'],[0,65,0,'0deg']];
+  positions.slice(0,Math.min(c.rayCount/2,10)).forEach(([tx,ty,tr],i)=>{
+    const el=document.createElement('div');
+    el.style.cssText=`position:absolute;left:50%;top:50%;font-size:${12+Math.random()*8}px;color:${c.petalColor};--tx:${tx}px;--ty:${ty}px;--tr:${tr};animation:gsStarPop 0.8s ease-out ${0.2+i*0.05}s forwards;opacity:0;font-family:serif;`;
+    el.textContent=c.petals[Math.floor(Math.random()*c.petals.length)];
+    w.appendChild(el);
+  });
+}
+
+function gsBuildCard(cardId, cardInfo) {
+  const c = GS_CARD_CONFIGS[cardId] || GS_PRIZE_CONFIGS.points;
+  const back = document.getElementById('gsCardBack');
+  back.style.background = `linear-gradient(135deg,${c.backGrad?c.backGrad[0]:'#c0d5f0'},${c.backGrad?c.backGrad[1]:'#dce8f8'})`;
+  back.style.border = `2px solid ${c.backBorder||'rgba(74,122,204,0.6)'}`;
+  back.innerHTML = `<svg width="150" height="210" viewBox="0 0 150 210" xmlns="http://www.w3.org/2000/svg">
+    <rect width="150" height="210" rx="12" fill="none"/>
+    <rect x="8" y="8" width="134" height="194" rx="8" fill="none" stroke="${c.backBorder||'rgba(74,122,204,0.6)'}" stroke-width="1.2" stroke-dasharray="6 3" opacity="0.7"/>
+    <circle cx="75" cy="105" r="40" fill="none" stroke="${c.backBorder||'rgba(74,122,204,0.6)'}" stroke-width="1" opacity="0.4"/>
+    <circle cx="75" cy="105" r="30" fill="${c.petalColor||'rgba(74,122,204,0.5)'}" opacity="0.08"/>
+    <text x="75" y="120" font-size="34" fill="${c.petalColor||'rgba(74,122,204,0.5)'}" font-family="serif" text-anchor="middle" opacity="0.75">${c.backCn||'知'}</text>
+    <text x="75" y="168" font-size="9" fill="${c.petalColor||'rgba(74,122,204,0.5)'}" font-family="serif" text-anchor="middle" letter-spacing="3" opacity="0.6">✦ 祈愿 ✦</text>
+    <text x="24" y="44" font-size="16" fill="${c.petalColor||'rgba(74,122,204,0.5)'}" font-family="serif" opacity="0.45">龙</text>
+    <text x="118" y="44" font-size="16" fill="${c.petalColor||'rgba(74,122,204,0.5)'}" font-family="serif" opacity="0.45">月</text>
+    <text x="24" y="184" font-size="16" fill="${c.petalColor||'rgba(74,122,204,0.5)'}" font-family="serif" opacity="0.45">花</text>
+    <text x="118" y="184" font-size="16" fill="${c.petalColor||'rgba(74,122,204,0.5)'}" font-family="serif" opacity="0.45">星</text>
+  </svg>`;
+  const front = document.getElementById('gsCardFront');
+  front.style.background = `linear-gradient(180deg,${c.frontGrad?c.frontGrad[0]:'#dceef8'},${c.frontGrad?c.frontGrad[1]:'#eef5fc'})`;
+  front.style.border = `2px solid ${c.frontBorder||'rgba(74,122,204,0.7)'}`;
+  front.innerHTML = `
+    <div style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="position:absolute;inset:4px;border-radius:10px;background:${c.frontBg||'rgba(74,122,204,0.08)'};border:1px solid ${(c.frontBorder||'rgba(74,122,204,0.7)').replace(/[\d.]+\)$/,'0.2)')}"></div>
+      <div style="font-size:58px;position:relative;z-index:2;filter:drop-shadow(0 4px 10px ${c.petalColor||'rgba(74,122,204,0.5)'})">${c.emoji||'✦'}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding-bottom:2px;">
+      <div style="font-size:10px;font-weight:700;color:#2a2040;font-family:serif;letter-spacing:1px;text-align:center;">${cardInfo?cardInfo.name:''}</div>
+      <div style="font-size:12px;color:${c.starsColor||'#4a9af5'};letter-spacing:3px;">${c.stars||'★★★★'}</div>
+      <div style="font-size:7px;color:rgba(42,32,64,0.6);text-align:center;line-height:1.4;padding:0 4px;font-family:serif;">${cardInfo?cardInfo.passive:''}</div>
+    </div>`;
 }
 
 async function openGenshinCase() {
+  if (gsAnimating) return;
   if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-
   const btn = document.getElementById('genshinOpenBtn');
-  btn.disabled = true;
-  btn.textContent = '✦ Молитва совершается... ✦';
-
-  // Анимация рулетки
-  const roulette = document.getElementById('genshinRoulette');
-  const allEmojis = ['🌸','✨','💙','💜','🌙','🔥','🦊','🪨','🌿','🌊','⭐','📜'];
-  let html = '';
-  for (let i = 0; i < 20; i++) {
-    const e = allEmojis[Math.floor(Math.random() * allEmojis.length)];
-    html += `<div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${e}</div>`;
-  }
-  roulette.innerHTML = html;
-  roulette.style.transition = 'none';
-  roulette.style.transform = 'translateX(0)';
-  setTimeout(() => {
-    roulette.style.transition = 'transform 1.5s cubic-bezier(0.17,0.67,0.12,0.99)';
-    roulette.style.transform = 'translateX(-900px)';
-  }, 50);
+  btn.disabled = true; btn.textContent = '✦ Молитва совершается... ✦';
+  gsAnimating = true; gsCardFlipped = false;
+  document.getElementById('gsCard3dNew').style.transform = '';
+  document.getElementById('gsCard3dNew').classList.remove('flipped');
+  document.getElementById('gsTapHint').style.display = 'none';
+  document.getElementById('gsResultInfo').style.opacity = '0';
+  document.getElementById('gsCardWrap').style.opacity = '0';
+  document.getElementById('gsRays').style.opacity = '0';
+  document.getElementById('gsParticles').innerHTML = '';
+  document.getElementById('gsVortex').innerHTML = '';
+  document.getElementById('gsCardStars').innerHTML = '';
 
   try {
     const r = await fetch(`${API_URL}/api/genshin/open`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({telegram_id: currentUserId})
     });
     const data = await r.json();
+    if (!r.ok) {
+      if (data.detail==='Only for girls') tg.showAlert('Молитвы доступны только девочкам 🌸');
+      else if (data.detail==='Not enough points') tg.showAlert('Недостаточно ✦! Нужно минимум 80');
+      else if (data.detail==='Daily limit reached') tg.showAlert('Лимит молитв на сегодня исчерпан');
+      else tg.showAlert('Ошибка: ' + (data.detail||''));
+      gsAnimating = false; btn.disabled=false; btn.textContent='✦ Совершить молитву — 50 ✦ ✦';
+      currentPoints = data.new_points || currentPoints;
+      updatePoints();
+      return;
+    }
 
+    currentPoints = data.new_points; updatePoints();
+    curGsCardId = data.card_id || null;
+    const cfg = GS_CARD_CONFIGS[data.card_id] || GS_PRIZE_CONFIGS[data.type] || GS_PRIZE_CONFIGS.points;
+
+    // Фон
+    document.getElementById('gsBgLayer').style.background = gsGetThemeBg(cfg);
+
+    // Строим карточку (перевёрнутая рубашкой)
+    gsBuildCard(data.card_id, {name: data.name||'', passive: data.passive||''});
+
+    // ШАГ 1: Вихрь
+    gsRunVortex(cfg);
+    gsRunParticles(cfg);
+
+    // ШАГ 2: Вспышка + лучи + карточка
     setTimeout(() => {
-      if (r.ok) {
-        currentPoints = data.new_points;
-        updatePoints();
+      const fl = document.getElementById('gsFlash');
+      fl.style.background = cfg.flashColor;
+      fl.style.animation = 'gsFlashIn 0.5s ease-out forwards';
+      setTimeout(() => { fl.style.animation='none'; fl.style.opacity='0'; }, 500);
+      gsRunRays(cfg);
+      const cw = document.getElementById('gsCardWrap');
+      cw.style.animation = 'none'; cw.offsetHeight;
+      cw.style.cssText += 'animation:gsCardIn 0.6s cubic-bezier(0.34,1.4,0.64,1) forwards;opacity:1;';
+      setTimeout(() => gsRunCardStars(cfg), 350);
+      setTimeout(() => {
+        document.getElementById('gsTapHint').style.display = 'block';
         tg.HapticFeedback.notificationOccurred('success');
+        gsAnimating = false;
+        btn.disabled=false; btn.textContent='✦ Совершить молитву — 50 ✦ ✦';
+      }, 700);
+    }, cfg.revealDelay);
 
-        const emoji = GENSHIN_EMOJIS[data.card_id] || '✨';
-        const rarityColor = data.rarity === 5 ? '#ffd700' : data.rarity === 4 ? '#9b59b6' : '#4b8fcf';
-        const rarityStars = '★'.repeat(data.rarity);
+    // Подготавливаем инфо
+    document.getElementById('gsResStars').textContent = cfg.stars || '★★★★';
+    document.getElementById('gsResStars').style.color = cfg.starsColor || '#4a9af5';
+    document.getElementById('gsResName').textContent = data.name || '';
+    document.getElementById('gsResPassive').textContent = data.passive || (data.amount ? `+${data.amount}★ начислено` : '');
 
-        // Показываем результат
-        const resultEl = document.getElementById('genshinResult');
-        if (data.duplicate && data.bonus) {
-          resultEl.innerHTML = `<div style="font-size:11px;color:var(--gold);font-family:serif;">${emoji} Дубль! ${data.bonus}</div>`;
-        } else {
-          resultEl.innerHTML = `
-            <div style="font-size:22px;margin-bottom:4px;">${emoji}</div>
-            <div style="font-size:11px;font-weight:700;color:#fff;font-family:serif;">${data.name}</div>
-            <div style="font-size:10px;color:${rarityColor};margin-top:2px;">${rarityStars}</div>
-            <div style="font-size:9px;color:var(--text2);font-family:serif;margin-top:3px;">${data.passive}</div>`;
-        }
-
-        if (data.rarity === 5) {
-          launchConfetti(100);
-          tg.showAlert(`✨ ЛЕГЕНДАРНАЯ КАРТОЧКА!\n${data.name}\n\n${data.passive}`);
-        }
-
-        loadImplants(currentUserId);
-      } else {
-        const err = data;
-        if (err.detail === 'Only for girls') tg.showAlert('Молитвы доступны только девочкам 🌸');
-        else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно ✦! Нужно минимум 80');
-        else if (err.detail === 'Daily limit reached') tg.showAlert('Лимит молитв на сегодня исчерпан');
-        else tg.showAlert('Ошибка: ' + err.detail);
-      }
-    }, 1800);
+    if (data.rarity === 5) { setTimeout(() => launchConfetti(80), cfg.revealDelay + 400); }
 
   } catch(e) {
     tg.showAlert('Ошибка соединения');
-  } finally {
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.textContent = '✦ Совершить молитву — 50 ✦ ✦';
-    }, 1900);
+    gsAnimating=false; btn.disabled=false; btn.textContent='✦ Совершить молитву — 50 ✦ ✦';
   }
 }
+
+// Клик по экрану молитвы — переворачивает карточку
+document.addEventListener('DOMContentLoaded', () => {
+  const screen = document.getElementById('gsPrayScreen');
+  if (screen) screen.addEventListener('click', () => {
+    if (gsAnimating || gsCardFlipped) return;
+    gsCardFlipped = true;
+    document.getElementById('gsCard3dNew').style.transform = 'rotateY(180deg)';
+    document.getElementById('gsTapHint').style.display = 'none';
+    setTimeout(() => {
+      const info = document.getElementById('gsResultInfo');
+      info.style.opacity = '1';
+      info.style.animation = 'fadeUpAnim 0.4s ease-out forwards';
+    }, 600);
+  });
+});
 
 // Переключатель табов импланты/карточки
 function switchImplantsTab(tab) {
@@ -2467,7 +2638,7 @@ function initRoulette(caseType = 'gold') {
   strip.style.transform = 'translateX(135px)';
   isSpinning = false;
   document.getElementById('openCaseBtn').disabled = false;
-  document.getElementById('playAgainBtn').style.display = 'none';
+  
   document.getElementById('prizeResult').classList.remove('show');
   document.getElementById('prizeResult').style.borderColor = '';
   const track = document.querySelector('.roulette-track');
@@ -2509,12 +2680,27 @@ async function openCase() {
     showPrizeResult(prize, caseType);
     currentPoints = data.new_points;
     updatePoints();
+    // Обновляем кнопку после открытия
+    const casBtn = document.getElementById('openCaseBtn');
+    if (data.remaining_today !== undefined && data.remaining_today <= 0) {
+      casBtn.disabled = true;
+      casBtn.style.background = 'rgba(255,255,255,0.05)';
+      casBtn.style.borderColor = 'rgba(255,255,255,0.08)';
+      casBtn.style.color = 'rgba(255,255,255,0.2)';
+      casBtn.textContent = '[ Попытки исчерпаны // Приходите завтра ]';
+    } else {
+      casBtn.disabled = false;
+      casBtn.style.background = '';
+      casBtn.style.borderColor = '';
+      casBtn.style.color = '';
+      casBtn.textContent = '🏮 [ 开箱 // ОТКРЫТЬ КЕЙС — 50 ★ ] 🏮';
+    }
     if (prize.code==='jackpot'||prize.code==='implant_red_dragon') { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(100); }
     else if (prize.code.startsWith('implant_')) { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(50); }
     else if (prize.points > 50) { tg.HapticFeedback.notificationOccurred('success'); launchConfetti(30); }
     else if (prize.code==='empty') tg.HapticFeedback.notificationOccurred('error');
     else tg.HapticFeedback.impactOccurred('medium');
-    document.getElementById('playAgainBtn').style.display = 'block';
+    
     if (prize.code.startsWith('implant_')) loadImplants(currentUserId);
   } catch(e) {
     tg.showAlert('Ошибка соединения');
@@ -2567,32 +2753,91 @@ async function spinRoulette(targetPrize, caseType = 'gold') {
 }
 
 function showPrizeResult(prize, caseType = 'gold') {
-  const iconEl = document.getElementById('prizeIcon');
-  if (prize.img) {
-    iconEl.innerHTML = `<img src="${prize.img}" style="width:80px;height:80px;object-fit:contain;border-radius:12px;">`;
-  } else {
-    iconEl.innerHTML = prize.icon;
+  const isLegendary = caseType === 'black';
+  const isPurple = caseType === 'purple';
+  const isDark = !document.body.classList.contains('theme-nw-light') &&
+                 !document.body.classList.contains('theme-genshin-light') &&
+                 !document.body.classList.contains('theme-genshin-dark');
+
+  // Создаём оверлей
+  let ov = document.getElementById('cyberResultOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'cyberResultOverlay';
+    document.getElementById('page-casino').appendChild(ov);
   }
-  document.getElementById('prizeName').textContent = prize.name;
-  document.getElementById('prizeDesc').textContent = prize.desc || '';
-  const pointsEl = document.getElementById('prizePoints');
-  const resultEl = document.getElementById('prizeResult');
-  if (prize.points > 0) { pointsEl.textContent = '+' + prize.points + ' ★'; pointsEl.className = 'prize-result-points positive'; }
-  else if (prize.code === 'empty') { pointsEl.textContent = 'Не повезло 😅'; pointsEl.className = 'prize-result-points negative'; }
-  else if (prize.code.startsWith('implant_')) {
-    const label = caseType==='black' ? '🐉 ЛЕГЕНДАРНЫЙ ИМПЛАНТ!' : '💜 Имплант получен!';
-    pointsEl.textContent = label;
-    pointsEl.className = 'prize-result-points special';
-    if (caseType==='black') resultEl.style.borderColor='rgba(180,20,20,0.6)';
-    else if (caseType==='purple') resultEl.style.borderColor='rgba(155,89,182,0.6)';
-  } else { pointsEl.textContent = '🎁 Специальный приз!'; pointsEl.className = 'prize-result-points special'; }
-  resultEl.classList.add('show');
+
+  const bgColor = isLegendary
+    ? 'radial-gradient(ellipse at 50% 35%,#2a1800 0%,#150c00 60%,#050300 100%)'
+    : isPurple
+    ? 'radial-gradient(ellipse at 50% 35%,#1e0a30 0%,#0d0518 60%,#050310 100%)'
+    : 'radial-gradient(ellipse at 50% 35%,#0d0d20 0%,#050510 100%)';
+
+  const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
+  const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
+  const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : null;
+  const tagBg = isLegendary ? 'rgba(212,175,55,0.2)' : isPurple ? 'rgba(155,89,182,0.15)' : 'rgba(100,150,200,0.15)';
+  const tagBorder = isLegendary ? 'rgba(212,175,55,0.6)' : isPurple ? 'rgba(155,89,182,0.5)' : 'rgba(100,150,200,0.3)';
+  const tagColor = isLegendary ? '#d4af37' : isPurple ? '#9b59b6' : '#6aa0d4';
+  const tagText = isLegendary ? '★ ЛЕГЕНДАРНЫЙ ★' : isPurple ? 'РЕДКИЙ // ФИОЛЕТОВЫЙ' : 'ОБЫЧНЫЙ';
+
+  let imgHtml = prize.img
+    ? `<img src="${prize.img}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
+    : `<div style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
+
+  let contentHtml = '';
+  if (prize.points > 0) {
+    contentHtml = `<div style="font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
+  } else {
+    contentHtml = `<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
+  }
+
+  // Лучи
+  let raysHtml = '';
+  if (rayColor) {
+    const count = isLegendary ? 24 : 16;
+    for (let i = 0; i < count; i++) {
+      raysHtml += `<div style="position:absolute;width:3px;height:${isLegendary?170:150}px;border-radius:2px;background:linear-gradient(0deg,${rayColor},transparent);transform:rotate(${i*(360/count)}deg) translateX(-50%);transform-origin:bottom;left:50%;top:calc(50% - ${isLegendary?170:150}px);margin-left:-1.5px;animation:cyberRayIn 0.4s ease-out ${i*0.015}s both;opacity:0;"></div>`;
+    }
+  }
+
+  // Частицы
+  let partsHtml = '';
+  const count = isLegendary ? 40 : isPurple ? 25 : 15;
+  const symbols = isLegendary ? ['龙','★','福','✦'] : isPurple ? ['✦','★','◈'] : ['★','✦'];
+  for (let i = 0; i < count; i++) {
+    const px = (Math.random()-0.5)*300, py = (Math.random()-0.5)*300;
+    const isText = Math.random() > 0.6;
+    if (isText) {
+      const sym = symbols[Math.floor(Math.random()*symbols.length)];
+      partsHtml += `<div style="position:absolute;font-size:${12+Math.random()*10}px;color:${particleColor};left:${20+Math.random()*60}%;top:${20+Math.random()*60}%;--px:${px}px;--py:${py}px;animation:cyberPartFloat ${1.5+Math.random()*1.5}s ease-out ${Math.random()*0.5}s forwards;opacity:0;">${sym}</div>`;
+    } else {
+      const sz = Math.random()*5+2;
+      partsHtml += `<div style="position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:${particleColor};left:${20+Math.random()*60}%;top:${20+Math.random()*60}%;--px:${px}px;--py:${py}px;animation:cyberPartFloat ${1.5+Math.random()}s ease-out ${Math.random()*0.4}s forwards;opacity:0;"></div>`;
+    }
+  }
+
+  ov.style.cssText = `position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:${bgColor};animation:cyberOverlayIn 0.3s ease-out forwards;`;
+  ov.onclick = () => {
+    ov.style.animation = 'cyberOverlayOut 0.3s ease-out forwards';
+    setTimeout(() => { ov.style.display='none'; resetCasino(); }, 300);
+  };
+  ov.innerHTML = `
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">${raysHtml}</div>
+    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">${partsHtml}</div>
+    <div style="position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;">
+      <div style="animation:cyberItemIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;">${imgHtml}</div>
+      <div style="font-size:8px;font-family:monospace;letter-spacing:2px;padding:3px 14px;background:${tagBg};border:1px solid ${tagBorder};color:${tagColor};border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
+      ${contentHtml}
+      <div style="font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;text-align:center;max-width:200px;line-height:1.6;animation:fadeUpAnim 0.3s ease-out 0.9s both;opacity:0;">${prize.desc||''}</div>
+    </div>
+    <div style="position:absolute;bottom:24px;font-size:9px;color:rgba(255,255,255,0.25);font-family:monospace;letter-spacing:2px;animation:cyberBlink 2s ease-in-out 1.2s infinite;">нажми чтобы продолжить ▼</div>`;
 }
 
 function resetCasino() {
   isSpinning = false;
   document.getElementById('prizeResult').classList.remove('show');
-  document.getElementById('playAgainBtn').style.display = 'none';
+  
   document.getElementById('openCaseBtn').disabled = false;
   initRoulette();
 }
@@ -2741,47 +2986,97 @@ function initLaundry() {
   loadLaundry();
 }
 
-function selectLaundryDate(date, btn) {
-  selectedLaundryDate = date;
-  document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  loadLaundry();
+function switchLaundryTab(tab) {
+  document.getElementById('laundry-tab').style.display = tab==='laundry' ? 'block' : 'none';
+  document.getElementById('water-tab').style.display = tab==='water' ? 'block' : 'none';
+  document.getElementById('ltab-laundry').classList.toggle('active', tab==='laundry');
+  document.getElementById('ltab-water').classList.toggle('active', tab==='water');
+  if (tab==='laundry') loadLaundrySchedule();
+  else loadWaterSchedule();
 }
 
-async function loadLaundry() {
+async function loadLaundrySchedule() {
+  const container = document.getElementById('laundryScheduleContent');
   try {
-    const r = await fetch(`${API_URL}/api/laundry`);
-    laundryData = await r.json();
-    renderLaundrySlots();
-  } catch(e) { document.getElementById('laundrySlots').innerHTML = '<div class="empty-state" style="grid-column:span 2">Ошибка загрузки</div>'; }
+    const r = await fetch(`${API_URL}/api/laundry/schedule`);
+    const data = r.ok ? await r.json() : [];
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:16px;">Расписание стирки ещё не составлено<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые скоро добавят слоты</span></div>`;
+      return;
+    }
+    container.innerHTML = data.map(slot => {
+      const taken = slot.taken_by;
+      const isMe = taken && taken.telegram_id === currentUserId;
+      const isFree = !taken;
+      let icon, statusText, clickable;
+      if (isMe) {
+        icon = `<i class="ti ti-circle-check" style="color:#2ecc71;font-size:18px;"></i>`;
+        statusText = `<span style="color:#2ecc71;">Ваша запись</span>`;
+        clickable = `onclick="cancelLaundrySlot(${slot.id})"`;
+      } else if (isFree) {
+        icon = `<i class="ti ti-circle-plus" style="color:var(--red);font-size:18px;"></i>`;
+        statusText = `<span style="color:var(--red);">Свободно</span>`;
+        clickable = `onclick="bookLaundrySlot(${slot.id})"`;
+      } else {
+        icon = `<i class="ti ti-circle-x" style="color:var(--text3);font-size:18px;"></i>`;
+        statusText = `<span style="color:var(--text3);">Занято</span>`;
+        clickable = '';
+      }
+      return `<div ${clickable} style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${clickable?'cursor:pointer;':''}">
+        ${icon}
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} · ${slot.time}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note||'Машинка свободна'}</div>
+        </div>
+        <div style="font-size:10px;">${statusText}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
-function renderLaundrySlots() {
-  const times = ['08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
-  const dayBookings = laundryData.filter(b => b.date === selectedLaundryDate);
-  document.getElementById('laundrySlots').innerHTML = times.map(time => {
-    const booking = dayBookings.find(b => b.time === time);
-    const isMyBooking = booking && booking.telegram_id === currentUserId;
-    const isBooked = !!booking && !isMyBooking;
-    let cls = 'laundry-slot', status = '✅ Свободно', onclick = `bookLaundry('${time}')`;
-    if (isMyBooking) { cls += ' my-booking'; status = '⭐ Моя запись'; onclick = `cancelLaundry(${booking.id})`; }
-    else if (isBooked) { cls += ' booked'; status = '❌ Занято'; onclick = ''; }
-    return `<div class="${cls}" ${onclick?`onclick="${onclick}"`:''}>
-      <div class="laundry-time">${time}</div>
-      <div class="laundry-status">${status}</div>
-    </div>`;
-  }).join('');
+async function loadWaterSchedule() {
+  const container = document.getElementById('waterScheduleContent');
+  try {
+    const r = await fetch(`${API_URL}/api/water/schedule`);
+    const data = r.ok ? await r.json() : [];
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:16px;">Расписание воды ещё не составлено<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые скоро добавят слоты</span></div>`;
+      return;
+    }
+    container.innerHTML = data.map(slot => {
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <i class="ti ti-droplet" style="color:#60b4d4;font-size:18px;"></i>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} · ${slot.time}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note||'Набор воды'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
-async function bookLaundry(time) {
+async function bookLaundrySlot(slotId) {
   if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-  const username = user ? (user.first_name + (user.last_name ? ' '+user.last_name : '')) : 'Пользователь';
   try {
-    const r = await fetch(`${API_URL}/api/laundry`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:selectedLaundryDate,time,telegram_id:currentUserId,username})});
-    if (r.ok) { tg.showAlert(`✅ Записан на ${time}!`); loadLaundry(); }
-    else { const err=await r.json(); tg.showAlert(err.detail==='Already booked for this day'?'У вас уже есть запись на этот день':'Это время уже занято'); }
-  } catch(e) { tg.showAlert('Ошибка записи'); }
+    const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    if (r.ok) { tg.HapticFeedback.notificationOccurred('success'); tg.showAlert('✅ Записаны на стирку!'); loadLaundrySchedule(); }
+    else { const e=await r.json(); tg.showAlert(e.detail==='Already booked'?'У вас уже есть запись':'Слот занят'); }
+  } catch(e) { tg.showAlert('Ошибка'); }
 }
+
+async function cancelLaundrySlot(slotId) {
+  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
+    if(b!=='ok')return;
+    fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
+      .then(()=>loadLaundrySchedule()).catch(()=>{});
+  });
+}
+
+// Старые функции — оставляем для совместимости
+async function loadLaundry() { loadLaundrySchedule(); }
+function renderLaundrySlots() {}
+async function bookLaundry(time) {}
+async function cancelLaundry(id) {}
 
 async function cancelLaundry(id) {
   try {
