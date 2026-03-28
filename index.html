@@ -1006,7 +1006,7 @@ body::before {
 
   <div class="casino-subtabs">
     <button class="subtab active" onclick="switchCasinoTab('play',this)">🎰 ИГРАТЬ</button>
-    <button class="subtab" id="genshinTabBtn" style="display:none;" onclick="switchCasinoTab('genshin',this)">✦ МОЛИТВЫ</button>
+    <button class="subtab" id="genshinTabBtn" style="display:none !important;" onclick="switchCasinoTab('genshin',this)">✦ МОЛИТВЫ</button>
     <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
     <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
     <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
@@ -1128,7 +1128,9 @@ body::before {
         <div style="font-size:11px;color:#888;line-height:1.7;">Кейсы — это игровая механика для развлечения и мотивации. Призы выдаются случайно. Это не способ заработка баллов — открытие кейса стоит 50★ и чаще всего возвращает меньше. Играй ради удовольствия, а не ради прибыли 🎲</div>
       </div>
     </div>
-  </div>  <!-- ГЕНШИН ПАНЕЛЬ -->
+  </div>  <!-- /casinoRulesContent -->
+
+  <!-- ГЕНШИН ПАНЕЛЬ -->
   <div id="casinoGenshinContent" style="display:none;flex-direction:column;">
     <div style="padding:10px 12px 0;">
       <div style="text-align:center;margin-bottom:10px;">
