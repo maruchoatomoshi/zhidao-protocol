@@ -1152,12 +1152,22 @@ body::before {
       <div id="adminLaundryList"></div>
     </div>
     <div id="admin-users" class="admin-section" style="padding:0 12px;">
+      <div class="cn-divider">⭐ НАЧИСЛИТЬ / СНЯТЬ БАЛЛЫ</div>
       <input class="admin-input" id="awardName" placeholder="Имя пользователя">
       <input class="admin-input" id="awardPoints" placeholder="Баллы (число)" type="number">
       <input class="admin-input" id="awardReason" placeholder="Причина">
-      <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
         <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="adminAward()">+ НАЧИСЛИТЬ</button>
         <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="adminPenalize()">- СНЯТЬ</button>
+      </div>
+      <div class="cn-divider">⛔ ЗАМОРОЗКА АККАУНТА</div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:8px;line-height:1.6;">
+        Замороженный игрок не может открывать кейсы и покупать в магазине. Получает уведомление от NetWatch.
+      </div>
+      <input class="admin-input" id="freezeId" placeholder="Telegram ID игрока">
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-primary" style="flex:1;padding:8px;font-size:9px;" onclick="adminFreeze(true)">⛔ ЗАМОРОЗИТЬ</button>
+        <button class="btn btn-gold" style="flex:1;padding:8px;font-size:9px;" onclick="adminFreeze(false)">✅ РАЗМОРОЗИТЬ</button>
       </div>
     </div>
     <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
@@ -2324,6 +2334,46 @@ async function loadAdminLaundry() {
 
 async function adminCancelLaundry(id) {
   try { await fetch(`${API_URL}/api/laundry/${id}`,{method:'DELETE',headers:{'x-telegram-id':currentUserId}}); loadAdminLaundry(); loadLaundry(); } catch(e) {}
+}
+
+async function adminFreeze(freeze) {
+  const telegramId = parseInt(document.getElementById('freezeId').value);
+  if (!telegramId) { tg.showAlert('Введи Telegram ID игрока'); return; }
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/freeze`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: telegramId, frozen: freeze})
+    });
+    if (r.ok) {
+      if (freeze) {
+        // Отправляем уведомление через бота
+        await fetch(`https://api.telegram.org/bot8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc/sendMessage`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            chat_id: telegramId,
+            text: '⛔ NETWATCH 网络保安\n\n系统检测到异常活动\nСистема обнаружила подозрительную активность с вашей стороны.\n\nВаш аккаунт временно заморожен.\nМагазин и кейсы недоступны.\n\n— NetWatch Protocol v1.4 —'
+          })
+        });
+        tg.showAlert('⛔ Аккаунт заморожен!\nИгрок получил уведомление от NetWatch.');
+      } else {
+        await fetch(`https://api.telegram.org/bot8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc/sendMessage`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            chat_id: telegramId,
+            text: '✅ NETWATCH 网络保安\n\n访问已恢复\nДоступ восстановлен.\n\nВаш аккаунт разморожен.\nМагазин и кейсы снова доступны.\n\n— NetWatch Protocol v1.4 —'
+          })
+        });
+        tg.showAlert('✅ Аккаунт разморожен!\nИгрок получил уведомление.');
+      }
+      document.getElementById('freezeId').value = '';
+    } else {
+      tg.showAlert('Ошибка! Проверь ID');
+    }
+  } catch(e) { tg.showAlert('Ошибка соединения'); }
 }
 
 async function adminAward() {
