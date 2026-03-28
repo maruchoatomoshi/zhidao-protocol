@@ -851,6 +851,32 @@ body::before {
     <div style="font-size:11px;color:rgba(212,175,55,0.4);font-family:monospace;">999 999 ★</div>
   </div>
 
+  <!-- Кнопка рейда -->
+  <div style="margin:4px 12px 8px;" id="raidBlock">
+    <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">⚔️</span>
+      [ 袭击 // РЕЙД НА АЛЬФАБОССА ]
+      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(212,175,55,0.5);">50 ★</span>
+    </button>
+  </div>
+
+  <!-- Панель рейда (скрыта по умолчанию) -->
+  <div id="raidPanel" style="display:none;margin:0 12px 8px;">
+    <div style="background:rgba(180,20,20,0.06);border:1px solid rgba(180,20,20,0.3);border-radius:10px;padding:14px;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:10px;top:10px;font-size:40px;color:rgba(180,20,20,0.05);font-family:serif;">战</div>
+      <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ⚔️ РЕЙД НА АЛЬФАБОССА //</div>
+      <div style="font-size:12px;color:#ccc;line-height:1.7;margin-bottom:12px;">
+        Соберите отряд из 3+ бойцов. Каждый ставит <span style="color:var(--gold);font-weight:700;">50 ★</span>.<br>
+        Шанс победы: <span style="color:#2ecc71;font-weight:700;">60%</span> — каждый получит <span style="color:var(--gold);font-weight:700;">150 ★</span><br>
+        Шанс провала: <span style="color:#cc4444;font-weight:700;">40%</span> — ставки сгорают 🔥
+      </div>
+      <div id="raidStatus" style="margin-bottom:12px;">
+        <div class="empty-state" style="padding:10px;">Загрузка...</div>
+      </div>
+      <button onclick="joinRaid()" id="joinRaidBtn" class="btn btn-primary" style="font-size:10px;">⚔️ [ ВСТУПИТЬ В РЕЙД — 50 ★ ]</button>
+    </div>
+  </div>
+
   <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
   <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
 </div>
@@ -1687,6 +1713,120 @@ async function deleteSchedule(id) {
 }
 
 // ===== РЕЙТИНГ =====
+async function showRaid() {
+  const panel = document.getElementById('raidPanel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    await loadRaidStatus();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+async function loadRaidStatus() {
+  try {
+    const r = await fetch(`${API_URL}/api/raid/status`);
+    const data = await r.json();
+    const container = document.getElementById('raidStatus');
+    const btn = document.getElementById('joinRaidBtn');
+
+    if (!data.raid) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:8px 0;">
+          <div style="font-size:11px;color:var(--text2);font-family:monospace;">Рейдов сегодня ещё не было</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px;">Будь первым — начни рейд!</div>
+        </div>`;
+      btn.style.display = 'block';
+      return;
+    }
+
+    const { raid, participants, count } = data;
+
+    if (raid.status === 'finished') {
+      const success = raid.result === 'success';
+      container.innerHTML = `
+        <div style="text-align:center;padding:8px;background:${success?'rgba(46,204,113,0.08)':'rgba(180,20,20,0.08)'};border:1px solid ${success?'rgba(46,204,113,0.3)':'rgba(180,20,20,0.3)'};border-radius:8px;">
+          <div style="font-size:20px;margin-bottom:4px;">${success ? '🏆' : '🛡'}</div>
+          <div style="font-size:13px;font-weight:700;color:${success?'#2ecc71':'#cc4444'};">${success ? 'РЕЙД УСПЕШЕН!' : 'МЮ ЗАЩИТИЛСЯ!'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px;">${success ? 'Каждый получил +150 ★' : 'Ставки сгорели 🔥'}</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:6px;">Участники: ${participants.map(p => p.name).join(', ')}</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">Следующий рейд — завтра</div>
+        </div>`;
+      btn.style.display = 'none';
+      return;
+    }
+
+    // Рейд открыт
+    const alreadyJoined = participants.some(p => p.telegram_id === currentUserId);
+    const progressPct = Math.min((count / 3) * 100, 100);
+
+    container.innerHTML = `
+      <div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:10px;color:var(--text2);font-family:monospace;">БОЙЦОВ В ОТРЯДЕ</span>
+          <span style="font-size:10px;color:var(--gold);font-family:monospace;">${count} / 3</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,#cc2200,var(--gold));border-radius:2px;transition:width 0.5s;"></div>
+        </div>
+      </div>
+      ${participants.length ? `<div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:8px;">⚔️ ${participants.map(p => p.name).join(' • ')}</div>` : ''}
+      ${alreadyJoined ? '<div style="font-size:10px;color:#2ecc71;font-family:monospace;text-align:center;">✅ Ты уже в отряде! Ждём ещё бойцов...</div>' : ''}`;
+
+    btn.style.display = alreadyJoined ? 'none' : 'block';
+  } catch(e) {
+    document.getElementById('raidStatus').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
+}
+
+async function joinRaid() {
+  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (currentPoints < 50) { tg.showAlert('Недостаточно баллов! Нужно 50 ★'); return; }
+
+  tg.showPopup({
+    title: '⚔️ Вступить в рейд?',
+    message: 'Ты ставишь 50 ★.\n\n60% — победа: получишь 150 ★\n40% — поражение: ставка сгорит\n\nРейд запустится когда наберётся 3+ бойца.',
+    buttons: [{id:'confirm', type:'default', text:'⚔️ В БОЙ!'}, {type:'cancel'}]
+  }, async (btnId) => {
+    if (btnId !== 'confirm') return;
+    try {
+      const r = await fetch(`${API_URL}/api/raid/join`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({telegram_id: currentUserId})
+      });
+      const data = await r.json();
+      if (r.ok) {
+        currentPoints -= 50;
+        updatePoints();
+        tg.HapticFeedback.notificationOccurred('success');
+        if (data.launched) {
+          if (data.result === 'success') {
+            tg.showAlert('🏆 РЕЙД УСПЕШЕН!\n\nМЮ не устоял! +150 ★ каждому бойцу!');
+            currentPoints += 150;
+            updatePoints();
+            launchConfetti(80);
+          } else {
+            tg.showAlert('🛡 МЮ ЗАЩИТИЛСЯ!\n\nРейд провалился. Ставки сгорели 🔥');
+            tg.HapticFeedback.notificationOccurred('error');
+          }
+        } else {
+          tg.showAlert(`⚔️ Ты в отряде!\n\nБойцов: ${data.count}/3\nЖди ещё участников!`);
+        }
+        await loadRaidStatus();
+        loadLeaderboard();
+      } else {
+        const err = await r.json();
+        if (err.detail === 'Already joined') tg.showAlert('Ты уже в этом рейде!');
+        else if (err.detail === 'Raid already finished today') tg.showAlert('Рейд сегодня уже завершён. Приходи завтра!');
+        else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
+        else if (err.detail === 'Admins cannot raid') tg.showAlert('Админы не могут участвовать в рейде 😄');
+        else tg.showAlert('Ошибка!');
+      }
+    } catch(e) { tg.showAlert('Ошибка соединения'); }
+  });
+}
+
 async function loadLeaderboard() {
   try {
     const r = await fetch(`${API_URL}/api/leaderboard`);
