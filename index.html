@@ -801,9 +801,19 @@ body::before {
   </div>
 </div>
 
-<!-- ===== РАСПИСАНИЕ ===== -->
+<!-- ===== РАСПИСАНИЕ + НОВОСТИ ===== -->
 <div class="page" id="page-schedule">
   <div class="page-header">
+    <div class="page-title">НОВОСТИ <span class="page-title-cn">新闻</span></div>
+    <div class="page-sub">> xīn wén // объявления от вожатых</div>
+  </div>
+  <div id="announcementsContent"><div class="empty-state">Загрузка...</div></div>
+  <div id="adminAnnounceForm" style="display:none;padding:10px 12px;">
+    <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
+    <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
+  </div>
+
+  <div class="page-header" style="margin-top:8px;">
     <div class="page-title">РАСПИСАНИЕ <span class="page-title-cn">课表</span></div>
     <div class="page-sub">> kè biǎo // учебный план</div>
   </div>
@@ -1015,11 +1025,6 @@ body::before {
       <i class="ti ti-wash more-item-icon" style="color:#60b4d4;"></i>
       <div class="more-item-name">СТИРКА</div>
       <div class="more-item-cn">洗衣 xǐ yī</div>
-    </div>
-    <div class="more-item" onclick="openMore('news')">
-      <i class="ti ti-speakerphone more-item-icon" style="color:rgba(200,80,80,0.9);"></i>
-      <div class="more-item-name">НОВОСТИ</div>
-      <div class="more-item-cn">新闻 xīn wén</div>
     </div>
     <div class="more-item" onclick="openMore('achievements')">
       <i class="ti ti-medal more-item-icon" style="color:var(--gold);"></i>
@@ -1311,8 +1316,8 @@ body::before {
     <span class="nav-cn">主页</span>
   </button>
   <button class="nav-item" onclick="showPage('schedule',this)">
-    <i class="ti ti-calendar-event"></i>
-    <span class="nav-cn">课表</span>
+    <i class="ti ti-layout-list"></i>
+    <span class="nav-cn">日程</span>
   </button>
   <button class="nav-item" onclick="showPage('rating',this)">
     <i class="ti ti-trophy"></i>
@@ -1427,6 +1432,7 @@ function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
 
+  if (name === 'schedule') { loadAnnouncements(); loadSchedule(); }
   if (name === 'implants') loadImplants(currentUserId);
   if (name === 'shop') loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
