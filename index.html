@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.5</title>
-<!-- ZHIDAO Protocol // version 2.5 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.5.2</title>
+<!-- ZHIDAO Protocol // version 2.5.2 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -1416,7 +1416,7 @@ body.theme-genshin-dark .lb-points
     <div class="admin-section-btns">
       <button class="admin-sec-btn active" onclick="showAdminSection('schedule',this)">Расписание</button>
       <button class="admin-sec-btn" onclick="showAdminSection('announce',this)">Объявления</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">Стирка</button>
+      <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">Стирка/Вода</button>
       <button class="admin-sec-btn" onclick="showAdminSection('users',this)">Пользователи</button>
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">BlackWall</button>
     </div>
@@ -1432,7 +1432,35 @@ body.theme-genshin-dark .lb-points
       <button class="btn btn-primary" onclick="addAnnouncementAdmin()">[ ОПУБЛИКОВАТЬ ]</button>
     </div>
     <div id="admin-laundry" class="admin-section" style="padding:0 12px;">
-      <div id="adminLaundryList"></div>
+
+      <!-- Табы стирка/вода -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="altab-laundry" onclick="switchAdminLaundryTab('laundry')" class="subtab active" style="flex:1;padding:7px;font-size:9px;font-family:monospace;">🧺 СТИРКА</button>
+        <button id="altab-water" onclick="switchAdminLaundryTab('water')" class="subtab" style="flex:1;padding:7px;font-size:9px;font-family:monospace;">💧 ВОДА</button>
+      </div>
+
+      <!-- СТИРКА -->
+      <div id="al-laundry-tab">
+        <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ СТИРКИ</div>
+        <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
+        <input class="admin-input" id="lTime" placeholder="Время (08:00)">
+        <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
+        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ ДОБАВИТЬ СЛОТ ]</button>
+        <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
+        <div id="adminLaundryList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+
+      <!-- ВОДА -->
+      <div id="al-water-tab" style="display:none;">
+        <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ ВОДЫ</div>
+        <input class="admin-input" id="wDay" placeholder="День (Пн 5 мая)">
+        <input class="admin-input" id="wTime" placeholder="Время (08:00)">
+        <input class="admin-input" id="wNote" placeholder="Заметка (необязательно)">
+        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddWaterSlot()">[ ДОБАВИТЬ СЛОТ ]</button>
+        <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
+        <div id="adminWaterList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+
     </div>
     <div id="admin-users" class="admin-section" style="padding:0 12px;">
       <div class="cn-divider">⭐ НАЧИСЛИТЬ / СНЯТЬ БАЛЛЫ</div>
@@ -1601,6 +1629,288 @@ body.theme-genshin-dark .lb-points
     <div id="myCardsContent" style="padding:0 12px;">
       <div class="empty-state">Загрузка...</div>
     </div>
+
+    <div class="cn-divider">📖 КАТАЛОГ КАРТОЧЕК</div>
+
+    <!-- АРХОНТ ЗЕМЛИ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner" style="background:linear-gradient(135deg,rgba(192,160,64,0.06),rgba(219,177,101,0.03));">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:2px solid rgba(192,160,64,0.6);box-shadow:0 0 28px rgba(192,160,64,0.25);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(192,160,64,0.2);border:1px solid rgba(192,160,64,0.5);color:#c0a040;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★★ ЛЕГЕНДАРНАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">岩王帝君 АРХОНТ ЗЕМЛИ</div>
+          <div style="font-size:12px;color:rgba(192,160,64,0.8);font-family:serif;font-style:italic;margin-top:3px;">Yán wáng dì jūn — Повелитель Камня</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(192,160,64,0.15);">
+          <div style="font-size:9px;color:rgba(192,160,64,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Древнейший Архонт Ли Юэ, заключавший контракты ещё до основания Тейвата. Говорят, что те, кто несёт его карточку, никогда не нарушают обещаний — ибо сам Rex Lapis смотрит на них сквозь время.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(192,160,64,0.15);">
+          <div style="font-size:9px;color:rgba(192,160,64,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-shield-star" style="font-size:24px;color:#c0a040;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Контракт Ли Юэ</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Блок штрафа + -5% в магазине одновременно, раз в день</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:rgba(192,160,64,0.08);border:1px solid rgba(192,160,64,0.25);border-radius:8px;font-size:10px;color:rgba(192,160,64,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
+          ⚠️ ШАНС ВЫПАДЕНИЯ: 1% // ЗОЛОТОЙ КЕЙС
+        </div>
+      </div>
+    </div>
+
+    <!-- ИМПЕРАТОРСКАЯ ЗВЕЗДА -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner" style="background:linear-gradient(135deg,rgba(155,89,182,0.06),rgba(192,160,64,0.03));">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:2px solid rgba(155,89,182,0.5);box-shadow:0 0 28px rgba(155,89,182,0.2);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.4);color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★★ ЛЕГЕНДАРНАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">紫微星君 ИМПЕРАТОРСКАЯ ЗВЕЗДА</div>
+          <div style="font-size:12px;color:rgba(155,89,182,0.8);font-family:serif;font-style:italic;margin-top:3px;">Zǐ wēi xīng jūn — Владыка Полярной Звезды</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(155,89,182,0.15);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Звезда судьбы, управляющая небесным судом. Носитель карточки получает право перенаправить наказание — ибо Полярная Звезда видит истинную вину каждого.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(155,89,182,0.15);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-gavel" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Звёздный суд 星判</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день передать половину своего штрафа другому игроку</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.25);border-radius:8px;font-size:10px;color:rgba(155,89,182,0.8);font-family:monospace;text-align:center;">
+          ⚠️ ШАНС ВЫПАДЕНИЯ: 1% // ЗОЛОТОЙ КЕЙС
+        </div>
+      </div>
+    </div>
+
+    <!-- ЛИСА-ОБОРОТЕНЬ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(155,89,182,0.15);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.35);color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★ РЕДКАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">九尾狐灵 ЛИСА-ОБОРОТЕНЬ</div>
+          <div style="font-size:12px;color:rgba(155,89,182,0.7);font-family:serif;font-style:italic;margin-top:3px;">Jiǔ wěi hú líng — Дух девятихвостой лисы</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хитрейший дух Тейвата, способный видеть сквозь иллюзии. Носитель получает право раз обмануть судьбу — перекрутить неудачный приз.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-refresh" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Лисий обман 狐惑</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день перекрутить неудачный приз заново</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- СТРАЖ ОГНЯ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(200,80,40,0.2);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.35);color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★ РЕДКАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">焰莲使者 СТРАЖ ОГНЯ</div>
+          <div style="font-size:12px;color:rgba(200,80,40,0.7);font-family:serif;font-style:italic;margin-top:3px;">Yàn lián shǐzhě — Посланница Огненного Лотоса</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(200,80,40,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Страж погребального огня Ли Юэ. Говорят, что её белые одежды с алыми лотосами дают силу возрождения — как феникс из пепла.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(200,80,40,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-flame" style="font-size:24px;color:#e05030;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Феникс 凤凰</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">После первого штрафа за день автоматически восстанавливает +50★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- НЕБЕСНАЯ ФЕЯ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.15);border:1px solid rgba(74,122,204,0.35);color:#4a7acc;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★ РЕДКАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">桃花仙子 НЕБЕСНАЯ ФЕЯ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Táo huā xiān zi — Фея цветущего персика</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хранительница персиковых садов небесного дворца. Её благословение распространяется на весь отряд — ибо настоящая фея дарит счастье всем вокруг.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-hearts" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Небесное благословение 天赐</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">На перекличке каждый участник отряда получает +30★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ЗВЕЗДА ЛИТЕРАТУРЫ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.15);border:1px solid rgba(74,122,204,0.35);color:#4a7acc;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★ РЕДКАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">文曲星君 ЗВЕЗДА ЛИТЕРАТУРЫ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Wén qū xīng jūn — Владыка Звезды Мудрости</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Небесный чиновник, покровительствующий учёным и поэтам. Под её взором каждое слово в отчёте обретает особую ценность.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-pencil" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Мудрость Звезды 文星</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+25★ за каждый сданный вечерний отчёт</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ДУХ ЛЕСА -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,150,74,0.15);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.15);border:1px solid rgba(74,122,204,0.35);color:#4a7acc;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★ РЕДКАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">木灵仙君 ДУХ ЛЕСА</div>
+          <div style="font-size:12px;color:rgba(74,150,74,0.8);font-family:serif;font-style:italic;margin-top:3px;">Mù líng xiān jūn — Владыка Лесного Духа</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,150,74,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Древний дух бамбуковых рощ Ли Юэ. Награждает тех, кто живёт в гармонии с природным ритмом — встаёт с рассветом каждый день без исключений.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,150,74,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-plant" style="font-size:24px;color:#4a9640;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Утренний урожай 晨收</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за каждый день подряд встаёшь вовремя. Серия обнуляется при пропуске.</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ДУХ МОРЕЙ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png" style="width:160px;height:200px;object-fit:cover;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.15);border:1px solid rgba(74,122,204,0.35);color:#4a7acc;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★ РЕДКАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">海灵仙后 ДУХ МОРЕЙ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Hǎi líng xiān hòu — Небесная Владычица Морей</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хранительница морских глубин, чья сила нарастает как прилив. Три молитвы подряд — и волна удачи накрывает носителя с головой.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-waves" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Морская волна 海浪</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждые 3 молитвы подряд в один день дают бонус +30★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- БОГИНЯ ЛУНЫ -->
+    <div class="card" style="margin:6px 12px 16px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <div style="width:160px;height:200px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);background:rgba(74,122,204,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:80px;">🌙</div>
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.15);border:1px solid rgba(74,122,204,0.35);color:#4a7acc;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">★★★★ РЕДКАЯ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">嫦娥仙子 БОГИНЯ ЛУНЫ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Cháng é xiān zi — Фея Чан Э</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Богиня Луны, живущая в нефритовом дворце. Говорят, что дублирующаяся карточка — это не неудача, а лунный жемчуг, из которого рождается удача.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-moon-stars" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Жемчужина 珍珠</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждый дубль этой карточки даёт +50★ автоматически вместо разборки</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:rgba(74,122,204,0.06);border:1px solid rgba(74,122,204,0.2);border-radius:8px;font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;text-align:center;">
+          Изображение появится после загрузки card_moon.png в репозиторий
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -1714,7 +2024,18 @@ if (user) {
 }
 
 loadSavedTheme();
-// Показываем таб молитв девочкам и админам
+// Логотип под Геншин тему
+function updateLogoForTheme() {
+  const logoImg = document.querySelector('.main-logo img');
+  if (!logoImg) return;
+  const isGenshin = document.body.classList.contains('theme-genshin-light') || document.body.classList.contains('theme-genshin-dark');
+  logoImg.src = isGenshin
+    ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo_genshintheme_nobackground.png'
+    : 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true';
+}
+const _origSetTheme = window.setTheme;
+window.setTheme = function(theme) { _origSetTheme(theme); setTimeout(updateLogoForTheme, 50); };
+updateLogoForTheme();
 if (isAdmin) { const b = document.getElementById('genshinTabBtn'); if(b) b.style.display='block'; }
 fetch(`${API_URL}/api/user/${currentUserId||0}`).then(r=>r.json()).then(u=>{ if(u.gender==='female'){ const b=document.getElementById('genshinTabBtn'); if(b) b.style.display='block'; }}).catch(()=>{});
 loadWeather();
@@ -2205,14 +2526,14 @@ const SHOP_ICONS = {
 };
 
 const GS_CARD_CONFIGS = {
-  card_zhongli:   {emoji:'🪨',stars:'★★★★★',starsColor:'#c0a040',pool:'gold',backCn:'岩',petals:['✦','★','🌟','◆','✧'],petalColor:'rgba(255,215,0,0.75)',rayColor:'rgba(255,215,0,0.85)',rayCount:24,partCount:50,vortexColor:'rgba(255,200,0,',bgFrom:'#f0e0a0',bgTo:'#f8f0c0',flashColor:'rgba(255,240,180,0.9)',backGrad:['#f0dca0','#f8f0c0'],backBorder:'rgba(192,160,64,0.8)',frontGrad:['#f8f0d0','#fffae8'],frontBorder:'rgba(192,160,64,0.9)',frontBg:'rgba(192,160,64,0.1)',revealDelay:800},
-  card_star:      {emoji:'⭐',stars:'★★★★★',starsColor:'#c0a040',pool:'gold',backCn:'星',petals:['✦','★','🌟','◆'],petalColor:'rgba(255,215,0,0.75)',rayColor:'rgba(255,215,0,0.85)',rayCount:24,partCount:50,vortexColor:'rgba(255,200,0,',bgFrom:'#f0e0a0',bgTo:'#f8f0c0',flashColor:'rgba(255,240,180,0.9)',backGrad:['#f0dca0','#f8f0c0'],backBorder:'rgba(192,160,64,0.8)',frontGrad:['#f8f0d0','#fffae8'],frontBorder:'rgba(192,160,64,0.9)',frontBg:'rgba(192,160,64,0.1)',revealDelay:800},
-  card_pyro:      {emoji:'🔥',stars:'★★★★',starsColor:'#c39ef5',pool:'purple',backCn:'焰',petals:['🌸','✦','💜','✿'],petalColor:'rgba(195,158,245,0.7)',rayColor:'rgba(195,158,245,0.8)',rayCount:16,partCount:30,vortexColor:'rgba(155,89,182,',bgFrom:'#d8c0f0',bgTo:'#e8d0f8',flashColor:'rgba(220,200,255,0.7)',backGrad:['#c8b0e8','#dcc8f5'],backBorder:'rgba(155,89,182,0.7)',frontGrad:['#ecdcf8','#f5eeff'],frontBorder:'rgba(155,89,182,0.8)',frontBg:'rgba(155,89,182,0.08)',revealDelay:1000},
-  card_fox:       {emoji:'🦊',stars:'★★★★',starsColor:'#c39ef5',pool:'purple',backCn:'狐',petals:['✦','💜','✿','◈'],petalColor:'rgba(195,158,245,0.7)',rayColor:'rgba(195,158,245,0.8)',rayCount:16,partCount:30,vortexColor:'rgba(155,89,182,',bgFrom:'#d8c0f0',bgTo:'#e8d0f8',flashColor:'rgba(220,200,255,0.7)',backGrad:['#c8b0e8','#dcc8f5'],backBorder:'rgba(155,89,182,0.7)',frontGrad:['#ecdcf8','#f5eeff'],frontBorder:'rgba(155,89,182,0.8)',frontBg:'rgba(155,89,182,0.08)',revealDelay:1000},
-  card_fairy:     {emoji:'🌸',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'桃',petals:['🌸','✦','💧','❀'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
-  card_literature:{emoji:'📜',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'文',petals:['📜','✦','❀','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
-  card_forest:    {emoji:'🌿',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'木',petals:['🌿','✦','🍃','❀'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
-  card_sea:       {emoji:'🌊',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'海',petals:['🌊','✦','💧','◈'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_zhongli:   {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png',emoji:'🪨',stars:'★★★★★',starsColor:'#c0a040',pool:'gold',backCn:'岩',petals:['✦','★','🌟','◆','✧'],petalColor:'rgba(255,215,0,0.75)',rayColor:'rgba(255,215,0,0.85)',rayCount:24,partCount:50,vortexColor:'rgba(255,200,0,',bgFrom:'#f0e0a0',bgTo:'#f8f0c0',flashColor:'rgba(255,240,180,0.9)',backGrad:['#f0dca0','#f8f0c0'],backBorder:'rgba(192,160,64,0.8)',frontGrad:['#f8f0d0','#fffae8'],frontBorder:'rgba(192,160,64,0.9)',frontBg:'rgba(192,160,64,0.1)',revealDelay:800},
+  card_star:      {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png',emoji:'⭐',stars:'★★★★★',starsColor:'#c0a040',pool:'gold',backCn:'星',petals:['✦','★','🌟','◆'],petalColor:'rgba(255,215,0,0.75)',rayColor:'rgba(255,215,0,0.85)',rayCount:24,partCount:50,vortexColor:'rgba(255,200,0,',bgFrom:'#f0e0a0',bgTo:'#f8f0c0',flashColor:'rgba(255,240,180,0.9)',backGrad:['#f0dca0','#f8f0c0'],backBorder:'rgba(192,160,64,0.8)',frontGrad:['#f8f0d0','#fffae8'],frontBorder:'rgba(192,160,64,0.9)',frontBg:'rgba(192,160,64,0.1)',revealDelay:800},
+  card_pyro:      {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png',emoji:'🔥',stars:'★★★★',starsColor:'#c39ef5',pool:'purple',backCn:'焰',petals:['🌸','✦','💜','✿'],petalColor:'rgba(195,158,245,0.7)',rayColor:'rgba(195,158,245,0.8)',rayCount:16,partCount:30,vortexColor:'rgba(155,89,182,',bgFrom:'#d8c0f0',bgTo:'#e8d0f8',flashColor:'rgba(220,200,255,0.7)',backGrad:['#c8b0e8','#dcc8f5'],backBorder:'rgba(155,89,182,0.7)',frontGrad:['#ecdcf8','#f5eeff'],frontBorder:'rgba(155,89,182,0.8)',frontBg:'rgba(155,89,182,0.08)',revealDelay:1000},
+  card_fox:       {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png',emoji:'🦊',stars:'★★★★',starsColor:'#c39ef5',pool:'purple',backCn:'狐',petals:['✦','💜','✿','◈'],petalColor:'rgba(195,158,245,0.7)',rayColor:'rgba(195,158,245,0.8)',rayCount:16,partCount:30,vortexColor:'rgba(155,89,182,',bgFrom:'#d8c0f0',bgTo:'#e8d0f8',flashColor:'rgba(220,200,255,0.7)',backGrad:['#c8b0e8','#dcc8f5'],backBorder:'rgba(155,89,182,0.7)',frontGrad:['#ecdcf8','#f5eeff'],frontBorder:'rgba(155,89,182,0.8)',frontBg:'rgba(155,89,182,0.08)',revealDelay:1000},
+  card_fairy:     {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png',emoji:'🌸',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'桃',petals:['🌸','✦','💧','❀'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_literature:{img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png',emoji:'📜',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'文',petals:['📜','✦','❀','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_forest:    {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png',emoji:'🌿',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'木',petals:['🌿','✦','🍃','❀'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_sea:       {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png',emoji:'🌊',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'海',petals:['🌊','✦','💧','◈'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
   card_moon:      {emoji:'🌙',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'月',petals:['🌙','✦','⭐','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
 };
 // Призы не-карточки
@@ -3221,7 +3542,7 @@ function showAdminSection(name, btn) {
   if(btn) btn.classList.add('active');
   const el = document.getElementById('admin-'+name);
   if(el) el.style.display = 'block';
-  if (name==='laundry') loadAdminLaundry();
+  if (name==='laundry') adminLoadLaundrySlots();
 }
 
 async function loadAdminLaundry() {
@@ -3280,6 +3601,109 @@ async function adminFreeze(freeze) {
       tg.showAlert('Ошибка! Проверь ID');
     }
   } catch(e) { tg.showAlert('Ошибка соединения'); }
+}
+
+// ===== АДМИН: СТИРКА И ВОДА =====
+function switchAdminLaundryTab(tab) {
+  document.getElementById('al-laundry-tab').style.display = tab==='laundry' ? 'block' : 'none';
+  document.getElementById('al-water-tab').style.display = tab==='water' ? 'block' : 'none';
+  document.getElementById('altab-laundry').classList.toggle('active', tab==='laundry');
+  document.getElementById('altab-water').classList.toggle('active', tab==='water');
+  if (tab==='laundry') adminLoadLaundrySlots();
+  else adminLoadWaterSlots();
+}
+
+async function adminLoadLaundrySlots() {
+  const container = document.getElementById('adminLaundryList');
+  try {
+    const r = await fetch(`${API_URL}/api/laundry/schedule`);
+    const data = r.ok ? await r.json() : [];
+    if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
+    container.innerHTML = data.map(slot => {
+      const taken = slot.taken_by ? `<span style="color:#2ecc71;font-size:9px;">✓ ${slot.taken_by.name}</span>` : `<span style="color:var(--text3);font-size:9px;">Свободно</span>`;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text);font-weight:600;">${slot.day} · ${slot.time}</div>
+          <div style="font-size:9px;color:var(--text3);">${slot.note||''}</div>
+          ${taken}
+        </div>
+        <button onclick="adminDeleteLaundrySlot(${slot.id})" style="background:none;border:1px solid rgba(200,50,50,0.3);color:rgba(200,80,80,0.7);padding:4px 10px;border-radius:4px;font-size:9px;font-family:monospace;cursor:pointer;"><i class="ti ti-trash"></i></button>
+      </div>`;
+    }).join('');
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+}
+
+async function adminAddLaundrySlot() {
+  const day = document.getElementById('lDay').value.trim();
+  const time = document.getElementById('lTime').value.trim();
+  const note = document.getElementById('lNote').value.trim();
+  if (!day || !time) { tg.showAlert('Заполни день и время'); return; }
+  try {
+    const r = await fetch(`${API_URL}/api/laundry/schedule`, {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
+      body: JSON.stringify({day, time, note})
+    });
+    if (r.ok) {
+      document.getElementById('lDay').value='';
+      document.getElementById('lTime').value='';
+      document.getElementById('lNote').value='';
+      tg.HapticFeedback.notificationOccurred('success');
+      adminLoadLaundrySlots();
+    } else tg.showAlert('Ошибка!');
+  } catch(e) { tg.showAlert('Ошибка соединения'); }
+}
+
+async function adminDeleteLaundrySlot(id) {
+  tg.showPopup({title:'Удалить слот?',message:'Запись будет удалена.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
+    if(b!=='ok')return;
+    await fetch(`${API_URL}/api/laundry/schedule/${id}`,{method:'DELETE',headers:{'x-admin-id':currentUserId}});
+    adminLoadLaundrySlots();
+  });
+}
+
+async function adminLoadWaterSlots() {
+  const container = document.getElementById('adminWaterList');
+  try {
+    const r = await fetch(`${API_URL}/api/water/schedule`);
+    const data = r.ok ? await r.json() : [];
+    if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
+    container.innerHTML = data.map(slot => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text);font-weight:600;">${slot.day} · ${slot.time}</div>
+          <div style="font-size:9px;color:var(--text3);">${slot.note||''}</div>
+        </div>
+        <button onclick="adminDeleteWaterSlot(${slot.id})" style="background:none;border:1px solid rgba(200,50,50,0.3);color:rgba(200,80,80,0.7);padding:4px 10px;border-radius:4px;font-size:9px;font-family:monospace;cursor:pointer;"><i class="ti ti-trash"></i></button>
+      </div>`).join('');
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+}
+
+async function adminAddWaterSlot() {
+  const day = document.getElementById('wDay').value.trim();
+  const time = document.getElementById('wTime').value.trim();
+  const note = document.getElementById('wNote').value.trim();
+  if (!day || !time) { tg.showAlert('Заполни день и время'); return; }
+  try {
+    const r = await fetch(`${API_URL}/api/water/schedule`, {
+      method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
+      body: JSON.stringify({day, time, note})
+    });
+    if (r.ok) {
+      document.getElementById('wDay').value='';
+      document.getElementById('wTime').value='';
+      document.getElementById('wNote').value='';
+      tg.HapticFeedback.notificationOccurred('success');
+      adminLoadWaterSlots();
+    } else tg.showAlert('Ошибка!');
+  } catch(e) { tg.showAlert('Ошибка соединения'); }
+}
+
+async function adminDeleteWaterSlot(id) {
+  tg.showPopup({title:'Удалить слот?',message:'Слот будет удалён.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
+    if(b!=='ok')return;
+    await fetch(`${API_URL}/api/water/schedule/${id}`,{method:'DELETE',headers:{'x-admin-id':currentUserId}});
+    adminLoadWaterSlots();
+  });
 }
 
 async function adminAward() {
