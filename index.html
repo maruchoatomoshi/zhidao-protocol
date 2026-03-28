@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.5.5</title>
-<!-- ZHIDAO Protocol // version 2.5.5 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.5.6</title>
+<!-- ZHIDAO Protocol // version 2.5.6 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -3320,22 +3320,18 @@ function getWeatherIcon(id) {
 
 // ===== СТИРКА =====
 function initLaundry() {
-  const dates = [], today = new Date();
-  for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate()+i); dates.push(d); }
-  const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-  document.getElementById('laundryDates').innerHTML = dates.map((d,i) => {
-    const dateStr = d.toISOString().split('T')[0];
-    return `<button class="date-btn ${i===0?'active':''}" onclick="selectLaundryDate('${dateStr}',this)">${days[d.getDay()]} ${d.getDate()}</button>`;
-  }).join('');
-  selectedLaundryDate = dates[0].toISOString().split('T')[0];
-  loadLaundry();
+  // Загрузка происходит при открытии раздела, не при старте
 }
 
 function switchLaundryTab(tab) {
-  document.getElementById('laundry-tab').style.display = tab==='laundry' ? 'block' : 'none';
-  document.getElementById('water-tab').style.display = tab==='water' ? 'block' : 'none';
-  document.getElementById('ltab-laundry').classList.toggle('active', tab==='laundry');
-  document.getElementById('ltab-water').classList.toggle('active', tab==='water');
+  const lt = document.getElementById('laundry-tab');
+  const wt = document.getElementById('water-tab');
+  if (lt) lt.style.display = tab==='laundry' ? 'block' : 'none';
+  if (wt) wt.style.display = tab==='water' ? 'block' : 'none';
+  const lb = document.getElementById('ltab-laundry');
+  const wb = document.getElementById('ltab-water');
+  if (lb) lb.classList.toggle('active', tab==='laundry');
+  if (wb) wb.classList.toggle('active', tab==='water');
   if (tab==='laundry') loadLaundrySchedule();
   else loadWaterSchedule();
 }
