@@ -1006,6 +1006,7 @@ body::before {
 
   <div class="casino-subtabs">
     <button class="subtab active" onclick="switchCasinoTab('play',this)">🎰 ИГРАТЬ</button>
+    <button class="subtab" id="genshinTabBtn" style="display:none;" onclick="switchCasinoTab('genshin',this)">✦ МОЛИТВЫ</button>
     <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
     <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
     <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
@@ -1085,8 +1086,6 @@ body::before {
   </div>
 
   <div id="casinoRulesContent" style="display:none;flex-direction:column;">
-    <div style="padding:8px 0;">
-      <div class="rules-row">
         <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png" style="width:32px;height:32px;object-fit:contain;"></div>
         <div><div class="rules-title">金色 Золотой — 78.9%</div>
         <div class="rules-desc">
@@ -1129,10 +1128,49 @@ body::before {
         <div style="font-size:11px;color:#888;line-height:1.7;">Кейсы — это игровая механика для развлечения и мотивации. Призы выдаются случайно. Это не способ заработка баллов — открытие кейса стоит 50★ и чаще всего возвращает меньше. Играй ради удовольствия, а не ради прибыли 🎲</div>
       </div>
     </div>
+  </div>  <!-- ГЕНШИН ПАНЕЛЬ -->
+  <div id="casinoGenshinContent" style="display:none;flex-direction:column;">
+    <div style="padding:10px 12px 0;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-size:18px;font-weight:900;color:var(--gold);font-family:serif;letter-spacing:2px;">祈愿 МОЛИТВЫ</div>
+        <div style="font-size:9px;color:rgba(219,177,101,0.5);font-family:serif;margin-top:2px;">qí yuàn · испытай судьбу</div>
+      </div>
+      <!-- Пулы -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+        <div style="background:var(--bg2);border:1px solid rgba(75,83,102,0.3);border-radius:10px;padding:8px 4px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:3px;">💙</div>
+          <div style="font-size:8px;color:var(--text2);font-family:serif;">Синий</div>
+          <div style="font-size:9px;color:var(--gold);font-weight:700;">79%</div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid rgba(155,89,182,0.3);border-radius:10px;padding:8px 4px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:3px;">💜</div>
+          <div style="font-size:8px;color:var(--text2);font-family:serif;">Фиолет.</div>
+          <div style="font-size:9px;color:var(--gold);font-weight:700;">20%</div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid rgba(219,177,101,0.4);border-radius:10px;padding:8px 4px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:3px;">✨</div>
+          <div style="font-size:8px;color:var(--text2);font-family:serif;">Золотой</div>
+          <div style="font-size:9px;color:var(--gold);font-weight:700;">1%</div>
+        </div>
+      </div>
+      <!-- Рулетка Геншин -->
+      <div id="genshinRouletteWrap" style="background:var(--bg2);border:1px solid var(--gold-border);border-radius:10px;height:90px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;margin-bottom:8px;">
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid rgba(219,177,101,0.6);z-index:2;"></div>
+        <div id="genshinRoulette" style="display:flex;gap:8px;transition:transform 0.8s cubic-bezier(0.17,0.67,0.12,0.99);">
+          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">🌸</div>
+          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">✨</div>
+          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">💙</div>
+          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">💜</div>
+          <div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">🌙</div>
+        </div>
+      </div>
+      <div id="genshinResult" style="min-height:40px;margin-bottom:8px;text-align:center;"></div>
+      <div style="font-size:8px;color:var(--text3);font-family:serif;text-align:center;margin-bottom:8px;">Минимум 80 ✦ · Лимит 3 молитвы в день</div>
+      <button onclick="openGenshinCase()" id="genshinOpenBtn" class="btn btn-gold" style="width:100%;padding:10px;border-radius:20px;font-family:serif;font-size:10px;letter-spacing:1px;">✦ Совершить молитву — 50 ✦ ✦</button>
+    </div>
   </div>
-</div>
 
-<!-- ===== ЕЩЁ ===== -->
+</div>
 <div class="page" id="page-more">
   <div class="page-header">
     <div class="page-title">ЕЩЁ <span class="page-title-cn">更多</span></div>
@@ -1375,6 +1413,14 @@ body::before {
     <div class="page-sub">> zhí rù wù // нейроимпланты протокола</div>
   </div>
 
+  <!-- Переключатель табов -->
+  <div style="display:flex;gap:6px;margin:0 12px 10px;">
+    <button id="tab-implants-btn" onclick="switchImplantsTab('implants')" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⚡ ИМПЛАНТЫ</button>
+    <button id="tab-cards-btn" onclick="switchImplantsTab('cards')" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">✦ КАРТОЧКИ</button>
+  </div>
+
+  <!-- ТАБ ИМПЛАНТЫ -->
+  <div id="implants-tab">
   <!-- Мои импланты -->
   <div class="cn-divider">⚡ 我的植入物 МОИ ИМПЛАНТЫ</div>
   <div class="card" style="margin:4px 12px;">
@@ -1486,6 +1532,16 @@ body::before {
       </div>
     </div>
   </div>
+  </div> <!-- /implants-tab -->
+
+  <!-- ТАБ КАРТОЧКИ -->
+  <div id="cards-tab" style="display:none;">
+    <div class="cn-divider">✦ 我的卡片 МОИ КАРТОЧКИ</div>
+    <div id="myCardsContent" style="padding:0 12px;">
+      <div class="empty-state">Загрузка...</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
@@ -1597,6 +1653,9 @@ if (user) {
 }
 
 loadSavedTheme();
+// Показываем таб молитв девочкам и админам
+if (isAdmin) { const b = document.getElementById('genshinTabBtn'); if(b) b.style.display='block'; }
+fetch(`${API_URL}/api/user/${currentUserId||0}`).then(r=>r.json()).then(u=>{ if(u.gender==='female'){ const b=document.getElementById('genshinTabBtn'); if(b) b.style.display='block'; }}).catch(()=>{});
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -2084,6 +2143,173 @@ const SHOP_ICONS = {
   'title_player': '<i class="ti ti-crown" style="color:var(--gold);font-size:22px;"></i>',
 };
 
+// ===== ГЕНШИН КЕЙС =====
+const GENSHIN_EMOJIS = {
+  'card_zhongli': '🪨', 'card_pyro': '🔥', 'card_fox': '🦊',
+  'card_fairy': '🌸', 'card_literature': '📜', 'card_forest': '🌿',
+  'card_sea': '🌊', 'card_star': '⭐', 'card_moon': '🌙'
+};
+
+function loadGenshinCase() {
+  // Показываем таб только девочкам
+}
+
+async function openGenshinCase() {
+  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+
+  const btn = document.getElementById('genshinOpenBtn');
+  btn.disabled = true;
+  btn.textContent = '✦ Молитва совершается... ✦';
+
+  // Анимация рулетки
+  const roulette = document.getElementById('genshinRoulette');
+  const allEmojis = ['🌸','✨','💙','💜','🌙','🔥','🦊','🪨','🌿','🌊','⭐','📜'];
+  let html = '';
+  for (let i = 0; i < 20; i++) {
+    const e = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+    html += `<div style="width:64px;height:72px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${e}</div>`;
+  }
+  roulette.innerHTML = html;
+  roulette.style.transition = 'none';
+  roulette.style.transform = 'translateX(0)';
+  setTimeout(() => {
+    roulette.style.transition = 'transform 1.5s cubic-bezier(0.17,0.67,0.12,0.99)';
+    roulette.style.transform = 'translateX(-900px)';
+  }, 50);
+
+  try {
+    const r = await fetch(`${API_URL}/api/genshin/open`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId})
+    });
+    const data = await r.json();
+
+    setTimeout(() => {
+      if (r.ok) {
+        currentPoints = data.new_points;
+        updatePoints();
+        tg.HapticFeedback.notificationOccurred('success');
+
+        const emoji = GENSHIN_EMOJIS[data.card_id] || '✨';
+        const rarityColor = data.rarity === 5 ? '#ffd700' : data.rarity === 4 ? '#9b59b6' : '#4b8fcf';
+        const rarityStars = '★'.repeat(data.rarity);
+
+        // Показываем результат
+        const resultEl = document.getElementById('genshinResult');
+        if (data.duplicate && data.bonus) {
+          resultEl.innerHTML = `<div style="font-size:11px;color:var(--gold);font-family:serif;">${emoji} Дубль! ${data.bonus}</div>`;
+        } else {
+          resultEl.innerHTML = `
+            <div style="font-size:22px;margin-bottom:4px;">${emoji}</div>
+            <div style="font-size:11px;font-weight:700;color:#fff;font-family:serif;">${data.name}</div>
+            <div style="font-size:10px;color:${rarityColor};margin-top:2px;">${rarityStars}</div>
+            <div style="font-size:9px;color:var(--text2);font-family:serif;margin-top:3px;">${data.passive}</div>`;
+        }
+
+        if (data.rarity === 5) {
+          launchConfetti(100);
+          tg.showAlert(`✨ ЛЕГЕНДАРНАЯ КАРТОЧКА!\n${data.name}\n\n${data.passive}`);
+        }
+
+        loadImplants(currentUserId);
+      } else {
+        const err = data;
+        if (err.detail === 'Only for girls') tg.showAlert('Молитвы доступны только девочкам 🌸');
+        else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно ✦! Нужно минимум 80');
+        else if (err.detail === 'Daily limit reached') tg.showAlert('Лимит молитв на сегодня исчерпан');
+        else tg.showAlert('Ошибка: ' + err.detail);
+      }
+    }, 1800);
+
+  } catch(e) {
+    tg.showAlert('Ошибка соединения');
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '✦ Совершить молитву — 50 ✦ ✦';
+    }, 1900);
+  }
+}
+
+// Переключатель табов импланты/карточки
+function switchImplantsTab(tab) {
+  document.getElementById('implants-tab').style.display = tab === 'implants' ? 'block' : 'none';
+  document.getElementById('cards-tab').style.display = tab === 'cards' ? 'block' : 'none';
+  document.getElementById('tab-implants-btn').classList.toggle('active', tab === 'implants');
+  document.getElementById('tab-cards-btn').classList.toggle('active', tab === 'cards');
+  if (tab === 'cards') loadCards(currentUserId);
+}
+
+async function loadCards(telegramId) {
+  if (!telegramId) return;
+  const container = document.getElementById('myCardsContent');
+  try {
+    const r = await fetch(`${API_URL}/api/cards/${telegramId}`);
+    const data = await r.json();
+    if (!data.length) {
+      container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Кейсы!</span></div>';
+      return;
+    }
+    const cardCounts = {};
+    data.forEach(c => { cardCounts[c.card_id] = (cardCounts[c.card_id] || 0) + 1; });
+    const seen = {};
+    container.innerHTML = data.map(card => {
+      seen[card.card_id] = (seen[card.card_id] || 0) + 1;
+      const isDup = cardCounts[card.card_id] > 1;
+      const isSecond = seen[card.card_id] > 1;
+      const emoji = GENSHIN_EMOJIS[card.card_id] || '✨';
+      const rarityColor = card.rarity === 5 ? '#ffd700' : card.rarity === 4 ? '#9b59b6' : '#4b8fcf';
+      const stars = '★'.repeat(card.rarity);
+      const dots = Array(3).fill(0).map((_,i) =>
+        `<div style="width:8px;height:8px;border-radius:50%;background:${i < card.durability ? rarityColor : 'rgba(255,255,255,0.1)'};"></div>`
+      ).join('');
+      const disassembleBtn = isSecond
+        ? `<button onclick="disassembleCard(${card.id})" style="margin-top:8px;width:100%;padding:6px;background:rgba(219,177,101,0.08);border:1px solid rgba(219,177,101,0.25);color:var(--gold);border-radius:16px;font-size:9px;font-family:serif;cursor:pointer;">✦ [ РАЗОБРАТЬ +50 ✦ ]</button>`
+        : '';
+      return `<div style="background:var(--bg2);border:1px solid ${isDup ? 'rgba(219,177,101,0.3)' : 'var(--border)'};border-radius:12px;padding:12px;margin-bottom:8px;position:relative;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:36px;width:50px;height:50px;background:var(--bg3);border:1px solid ${rarityColor}33;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${emoji}</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div style="font-size:12px;font-weight:700;color:var(--text);font-family:serif;">${card.name}</div>
+              ${isDup ? `<span style="font-size:7px;background:rgba(219,177,101,0.15);border:1px solid rgba(219,177,101,0.3);color:var(--gold);padding:1px 6px;border-radius:10px;font-family:monospace;">ДУБЛЬ</span>` : ''}
+            </div>
+            <div style="font-size:10px;color:${rarityColor};margin-top:2px;">${stars}</div>
+            <div style="font-size:9px;color:var(--text2);font-family:serif;margin-top:3px;">${card.passive}</div>
+          </div>
+          <div style="display:flex;gap:3px;">${dots}</div>
+        </div>
+        ${disassembleBtn}
+      </div>`;
+    }).join('');
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+async function disassembleCard(id) {
+  tg.showPopup({
+    title: '✦ Разобрать карточку?',
+    message: 'Ты получишь +50 ✦ за дубль. Карточка будет уничтожена.',
+    buttons: [{id:'confirm', type:'default', text:'✦ Разобрать +50 ✦'}, {type:'cancel'}]
+  }, async (btnId) => {
+    if (btnId !== 'confirm') return;
+    try {
+      const r = await fetch(`${API_URL}/api/cards/disassemble/${id}`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({telegram_id: currentUserId})
+      });
+      if (r.ok) {
+        const data = await r.json();
+        currentPoints = data.new_points;
+        updatePoints();
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.showAlert(`✦ Разобрано! +50 ✦\nБаланс: ${data.new_points} ✦`);
+        loadCards(currentUserId);
+      } else tg.showAlert('Ошибка разборки');
+    } catch(e) { tg.showAlert('Ошибка соединения'); }
+  });
+}
+
 async function loadShop() {
   try {
     const settingsR = await fetch(`${API_URL}/api/settings`);
@@ -2214,12 +2440,13 @@ function switchCasinoTab(mode, btn) {
   loadPoints(currentUserId);
   document.querySelectorAll('#page-casino .subtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent'];
+  const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent','casinoGenshinContent'];
   ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
   if (mode==='play') { document.getElementById('casinoPlayContent').style.display='flex'; setTimeout(initRoulette,50); }
   else if (mode==='inventory') { document.getElementById('casinoInventoryContent').style.display='flex'; loadCasinoInventory(); }
   else if (mode==='history') { document.getElementById('casinoHistoryContent').style.display='flex'; loadCasinoHistory(); }
   else if (mode==='rules') { document.getElementById('casinoRulesContent').style.display='flex'; }
+  else if (mode==='genshin') { document.getElementById('casinoGenshinContent').style.display='flex'; loadGenshinCase(); }
 }
 
 function initRoulette(caseType = 'gold') {
