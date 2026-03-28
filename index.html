@@ -1508,9 +1508,7 @@ async function loadImplants(telegramId) {
     if (!r.ok) return;
     const data = await r.json();
 
-    // Обновляем главную страницу
     const homeContainer = document.getElementById('homeImplants');
-    // Обновляем страницу имплантов
     const pageContainer = document.getElementById('myImplantsPage');
 
     if (!data.length) {
@@ -1520,6 +1518,12 @@ async function loadImplants(telegramId) {
       return;
     }
 
+    // Считаем дубли
+    const implantCounts = {};
+    data.forEach(imp => { implantCounts[imp.implant_id] = (implantCounts[imp.implant_id] || 0) + 1; });
+    const seenTypes = {};
+
+    // Главная страница — компактно
     const homeHtml = data.map(imp => {
       const img = IMPLANT_IMGS[imp.implant_id];
       const dots = Array(3).fill(0).map((_,i) => {
@@ -1539,24 +1543,44 @@ async function loadImplants(telegramId) {
     }).join('');
     if (homeContainer) homeContainer.innerHTML = homeHtml;
 
+    // Страница имплантов — с кнопкой разборки для дублей
     const pageHtml = data.map(imp => {
       const img = IMPLANT_IMGS[imp.implant_id];
       const isLeg = imp.implant_id === 'implant_red_dragon';
+      const isDuplicate = implantCounts[imp.implant_id] > 1;
+      seenTypes[imp.implant_id] = (seenTypes[imp.implant_id] || 0) + 1;
+      const isSecond = seenTypes[imp.implant_id] > 1;
+
       const dots = Array(3).fill(0).map((_,i) => {
         const cls = i < imp.durability ? (isLeg?'dur-dot on-r':'dur-dot on') : 'dur-dot off';
         return `<div class="${cls}"></div>`;
       }).join('');
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-        ${img ? `<img src="${img}" style="width:48px;height:48px;object-fit:contain;border-radius:8px;border:1px solid ${isLeg?'rgba(180,20,20,0.4)':'rgba(155,89,182,0.3)'};flex-shrink:0;">` : `<div style="font-size:28px;">${imp.icon}</div>`}
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:700;color:#fff;">${imp.name}</div>
-          <div style="font-size:10px;color:rgba(212,175,55,0.5);font-family:serif;font-style:italic;">${imp.desc}</div>
-          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
+
+      const duplicateBadge = isDuplicate
+        ? `<span style="background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.3);color:var(--gold);font-size:8px;padding:1px 6px;border-radius:3px;font-family:monospace;margin-left:6px;">ДУБЛЬ</span>`
+        : '';
+
+      const disassembleBtn = isSecond
+        ? `<button onclick="disassembleImplant(${imp.id})" style="margin-top:8px;width:100%;padding:7px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.25);color:var(--gold);border-radius:6px;font-size:9px;font-family:monospace;cursor:pointer;letter-spacing:1px;">⚙️ [ РАЗОБРАТЬ +100 ★ ]</button>`
+        : '';
+
+      return `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${img ? `<img src="${img}" style="width:52px;height:52px;object-fit:contain;border-radius:8px;border:1px solid ${isLeg?'rgba(180,20,20,0.4)':'rgba(155,89,182,0.3)'};flex-shrink:0;">` : `<div style="font-size:28px;">${imp.icon}</div>`}
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+              <div style="font-size:13px;font-weight:700;color:#fff;">${imp.name}</div>
+              ${duplicateBadge}
+            </div>
+            <div style="font-size:10px;color:rgba(212,175,55,0.6);font-family:serif;font-style:italic;margin-top:1px;">${imp.desc}</div>
+            <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <div style="font-size:8px;color:var(--text3);font-family:monospace;">ЗАРЯДЫ</div>
+            <div class="implant-dur">${dots}</div>
+          </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-          <div style="font-size:8px;color:var(--text3);font-family:monospace;">ЗАРЯДЫ</div>
-          <div class="implant-dur">${dots}</div>
-        </div>
+        ${disassembleBtn}
       </div>`;
     }).join('');
     if (pageContainer) pageContainer.innerHTML = pageHtml;
@@ -2016,6 +2040,35 @@ function launchConfetti(count) {
     container.appendChild(piece);
     setTimeout(() => piece.remove(), 4000);
   }
+}
+
+async function disassembleImplant(id) {
+  tg.showPopup({
+    title: '⚙️ Разобрать имплант?',
+    message: 'Ты получишь +100 ★ за разборку дубля. Имплант будет уничтожен.',
+    buttons: [{id:'confirm', type:'default', text:'⚙️ Разобрать +100 ★'}, {type:'cancel'}]
+  }, async (btnId) => {
+    if (btnId !== 'confirm') return;
+    try {
+      const r = await fetch(`${API_URL}/api/casino/implants/disassemble/${id}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({telegram_id: currentUserId})
+      });
+      if (r.ok) {
+        const data = await r.json();
+        currentPoints = data.new_points;
+        updatePoints();
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.showAlert(`✅ Разобрано! +100 ★\nБаланс: ${data.new_points} ★`);
+        loadImplants(currentUserId);
+      } else {
+        const err = await r.json();
+        if (err.detail === 'Not a duplicate') tg.showAlert('Это не дубль — нельзя разобрать!');
+        else tg.showAlert('Ошибка разборки');
+      }
+    } catch(e) { tg.showAlert('Ошибка соединения'); }
+  });
 }
 
 async function loadCasinoInventory() {
