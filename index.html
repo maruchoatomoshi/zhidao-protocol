@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.5.4</title>
-<!-- ZHIDAO Protocol // version 2.5.4 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.5.5</title>
+<!-- ZHIDAO Protocol // version 2.5.5 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -1954,7 +1954,7 @@ const tg = window.Telegram?.WebApp || {
   ready:()=>{}, expand:()=>{}, close:()=>{},
   setHeaderColor:()=>{}, setBackgroundColor:()=>{},
   showAlert:(msg)=>alert(msg),
-  showPopup:(opts,cb)=>{ setTimeout(()=>{ if(confirm((opts.title?opts.title+'\n':'')+opts.message)) cb(opts.buttons?.[0]?.id||'confirm'); else cb('cancel'); },0); },
+  showPopup:(opts,cb)=>{ const msg=(opts.title||'')+'\n'+(opts.message||''); setTimeout(()=>{ if(confirm(msg)) cb(opts.buttons&&opts.buttons[0]?opts.buttons[0].id:'confirm'); else cb('cancel'); },0); },
   HapticFeedback:{ notificationOccurred:()=>{}, impactOccurred:()=>{}, selectionChanged:()=>{} },
   initDataUnsafe:{user:null}, BackButton:{show:()=>{},hide:()=>{},onClick:()=>{}},
   MainButton:{show:()=>{},hide:()=>{}}, themeParams:{}
@@ -2865,7 +2865,7 @@ async function loadShop() {
 
 async function buyItem(code, name, price) {
   if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-  try { tg.showPopup({
+  tg.showPopup({
     title: `Купить ${name}?`,
     message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
     buttons: [{id:'confirm',type:'default',text:'✅ Купить'},{type:'cancel'}]
