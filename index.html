@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.5.8</title>
-<!-- ZHIDAO Protocol // version 2.5.8 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.5.9</title>
+<!-- ZHIDAO Protocol // version 2.5.9 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -2747,6 +2747,23 @@ function switchImplantsTab(tab) {
   if (tab === 'cards') loadCards(currentUserId);
 }
 
+const GENSHIN_EMOJIS = {
+  'card_zhongli':'🪨','card_pyro':'🔥','card_fox':'🦊',
+  'card_fairy':'🌸','card_literature':'📜','card_forest':'🌿',
+  'card_sea':'🌊','card_star':'⭐','card_moon':'🌙'
+};
+
+const GENSHIN_IMGS = {
+  'card_zhongli':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png',
+  'card_pyro':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png',
+  'card_fox':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png',
+  'card_fairy':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png',
+  'card_literature':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png',
+  'card_forest':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png',
+  'card_sea':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png',
+  'card_star':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png',
+};
+
 async function loadCards(telegramId) {
   if (!telegramId) {
     const container = document.getElementById('myCardsContent');
@@ -2771,6 +2788,10 @@ async function loadCards(telegramId) {
       const isDup = cardCounts[card.card_id] > 1;
       const isSecond = seen[card.card_id] > 1;
       const emoji = GENSHIN_EMOJIS[card.card_id] || '✨';
+      const imgSrc = GENSHIN_IMGS[card.card_id];
+      const cardVisual = imgSrc
+        ? `<img src="${imgSrc}" style="width:50px;height:60px;object-fit:contain;border-radius:8px;border:1px solid ${rarityColor}44;">`
+        : `<div style="font-size:28px;">${emoji}</div>`;
       const rarityColor = card.rarity === 5 ? '#ffd700' : card.rarity === 4 ? '#9b59b6' : '#4b8fcf';
       const stars = '★'.repeat(card.rarity);
       const dots = Array(3).fill(0).map((_,i) =>
@@ -2781,7 +2802,7 @@ async function loadCards(telegramId) {
         : '';
       return `<div style="background:var(--bg2);border:1px solid ${isDup ? 'rgba(219,177,101,0.3)' : 'var(--border)'};border-radius:12px;padding:12px;margin-bottom:8px;position:relative;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="font-size:36px;width:50px;height:50px;background:var(--bg3);border:1px solid ${rarityColor}33;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${emoji}</div>
+          <div style="width:50px;height:60px;background:var(--bg3);border:1px solid ${rarityColor}33;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${cardVisual}</div>
           <div style="flex:1;">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <div style="font-size:12px;font-weight:700;color:var(--text);font-family:serif;">${card.name}</div>
