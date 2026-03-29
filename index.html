@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.6.1</title>
-<!-- ZHIDAO Protocol // version 2.6.1 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.6.2</title>
+<!-- ZHIDAO Protocol // version 2.6.2 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -1964,6 +1964,7 @@ try { tg.setHeaderColor('#050510'); } catch(e) {}
 try { tg.setBackgroundColor('#050510'); } catch(e) {}
 
 const API_URL = 'https://hk.marucho.icu:8443';
+const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark'];
 const WEATHER_KEY = '03232b342b9270f8b24ed68e2c55d8f4';
 const EXCHANGE_KEY = 'a8c5f8c5d5e5b5a5';
 const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
@@ -2313,7 +2314,6 @@ async function deleteSchedule(id) {
 
 // ===== РЕЙТИНГ =====
 // ===== ТЕМЫ =====
-const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark'];
 
 function setTheme(theme) {
   // Убираем все классы тем
