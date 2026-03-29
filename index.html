@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.5.9</title>
-<!-- ZHIDAO Protocol // version 2.5.9 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.6.0</title>
+<!-- ZHIDAO Protocol // version 2.6.0 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -2324,7 +2324,10 @@ function setTheme(theme) {
   if (theme) document.body.classList.add('theme-' + theme);
 
   // Сохраняем
-  try { localStorage.setItem('zhidao_theme', theme); } catch(e) {}
+  try {
+    localStorage.setItem('zhidao_theme', theme);
+    if(window.Telegram?.WebApp?.CloudStorage) tg.CloudStorage.setItem('zhidao_theme', theme, ()=>{});
+  } catch(e) {}
 
   // Обновляем галочки
   THEMES.forEach(t => {
@@ -2346,9 +2349,14 @@ function setTheme(theme) {
 
 function loadSavedTheme() {
   try {
-    const saved = localStorage.getItem('zhidao_theme') || '';
-    setTheme(saved);
-  } catch(e) {}
+    if(window.Telegram?.WebApp?.CloudStorage) {
+      tg.CloudStorage.getItem('zhidao_theme', (err, val) => {
+        setTheme(val || localStorage.getItem('zhidao_theme') || '');
+      });
+    } else {
+      setTheme(localStorage.getItem('zhidao_theme') || '');
+    }
+  } catch(e) { setTheme(''); }
 }
 
 async function showRaid() {
@@ -2789,11 +2797,13 @@ async function loadCards(telegramId) {
       const isSecond = seen[card.card_id] > 1;
       const emoji = GENSHIN_EMOJIS[card.card_id] || '✨';
       const imgSrc = GENSHIN_IMGS[card.card_id];
+      const cardPassive = card.passive || '';
       const cardVisual = imgSrc
         ? `<img src="${imgSrc}" style="width:50px;height:60px;object-fit:contain;border-radius:8px;border:1px solid ${rarityColor}44;">`
         : `<div style="font-size:28px;">${emoji}</div>`;
-      const rarityColor = card.rarity === 5 ? '#ffd700' : card.rarity === 4 ? '#9b59b6' : '#4b8fcf';
-      const stars = '★'.repeat(card.rarity);
+      const rarity = card.rarity || 4;
+      const rarityColor = rarity === 5 ? '#ffd700' : rarity === 4 ? '#9b59b6' : '#4b8fcf';
+      const stars = '★'.repeat(rarity);
       const dots = Array(3).fill(0).map((_,i) =>
         `<div style="width:8px;height:8px;border-radius:50%;background:${i < card.durability ? rarityColor : 'rgba(255,255,255,0.1)'};"></div>`
       ).join('');
@@ -2809,7 +2819,7 @@ async function loadCards(telegramId) {
               ${isDup ? `<span style="font-size:7px;background:rgba(219,177,101,0.15);border:1px solid rgba(219,177,101,0.3);color:var(--gold);padding:1px 6px;border-radius:10px;font-family:monospace;">ДУБЛЬ</span>` : ''}
             </div>
             <div style="font-size:10px;color:${rarityColor};margin-top:2px;">${stars}</div>
-            <div style="font-size:9px;color:var(--text2);font-family:serif;margin-top:3px;">${card.passive}</div>
+            <div style="font-size:9px;color:var(--text2);font-family:serif;margin-top:3px;">${cardPassive}</div>
           </div>
           <div style="display:flex;gap:3px;">${dots}</div>
         </div>
