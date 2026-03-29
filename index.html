@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.6.0</title>
-<!-- ZHIDAO Protocol // version 2.6.0 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.6.1</title>
+<!-- ZHIDAO Protocol // version 2.6.1 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -2795,15 +2795,15 @@ async function loadCards(telegramId) {
       seen[card.card_id] = (seen[card.card_id] || 0) + 1;
       const isDup = cardCounts[card.card_id] > 1;
       const isSecond = seen[card.card_id] > 1;
+      const rarity = card.rarity || 4;
+      const rarityColor = rarity === 5 ? '#ffd700' : rarity === 4 ? '#9b59b6' : '#4b8fcf';
+      const stars = '★'.repeat(rarity);
       const emoji = GENSHIN_EMOJIS[card.card_id] || '✨';
       const imgSrc = GENSHIN_IMGS[card.card_id];
       const cardPassive = card.passive || '';
       const cardVisual = imgSrc
         ? `<img src="${imgSrc}" style="width:50px;height:60px;object-fit:contain;border-radius:8px;border:1px solid ${rarityColor}44;">`
         : `<div style="font-size:28px;">${emoji}</div>`;
-      const rarity = card.rarity || 4;
-      const rarityColor = rarity === 5 ? '#ffd700' : rarity === 4 ? '#9b59b6' : '#4b8fcf';
-      const stars = '★'.repeat(rarity);
       const dots = Array(3).fill(0).map((_,i) =>
         `<div style="width:8px;height:8px;border-radius:50%;background:${i < card.durability ? rarityColor : 'rgba(255,255,255,0.1)'};"></div>`
       ).join('');
