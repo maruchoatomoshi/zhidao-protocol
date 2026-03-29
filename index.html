@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.6.3</title>
-<!-- ZHIDAO Protocol // version 2.6.3 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.6.5</title>
+<!-- ZHIDAO Protocol // version 2.6.5 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -916,7 +916,7 @@ body.theme-genshin-dark .lb-points
     </div>
   </div>
 
-  <div class="cn-divider">🏮 网络链接 нейролинк 🏮</div>
+  <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
   <div class="card neuro-card">
     <div class="card-inner">
@@ -940,12 +940,6 @@ body.theme-genshin-dark .lb-points
     </div>
   </div>
 
-  <div class="cn-divider" id="implantsSection">🏮 植入物 импланты 🏮</div>
-  <div class="card" style="margin:4px 12px;">
-    <div class="card-inner" id="homeImplants">
-      <div class="empty-state" style="padding:15px;">Импланты не установлены</div>
-    </div>
-  </div>
 
   <div style="padding:8px 12px 4px;">
     <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
@@ -1054,13 +1048,13 @@ body.theme-genshin-dark .lb-points
 <!-- ===== КЕЙСЫ ===== -->
 <div class="page" id="page-casino">
   <div class="page-header">
-    <div class="page-title">КЕЙСЫ <span class="page-title-cn">箱子</span></div>
+    <div class="page-title" id="casino-page-title">КЕЙСЫ <span class="page-title-cn" id="casino-page-cn">箱子</span></div>
     <div class="page-sub">> kāi xiāng // 开运箱 открыть ящик удачи</div>
   </div>
 
   <div class="casino-subtabs">
     <button class="subtab active" onclick="switchCasinoTab('play',this)">🎰 ИГРАТЬ</button>
-    <button class="subtab" id="genshinTabBtn" style="display:none !important;" onclick="switchCasinoTab('genshin',this)">✦ МОЛИТВЫ</button>
+    <button class="subtab" id="genshinTabBtn" style="display:none !important;" onclick="switchCasinoTab('genshin',this)">🎴 ИГРАТЬ</button>
     <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
     <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
     <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
@@ -1500,7 +1494,7 @@ body.theme-genshin-dark .lb-points
 <!-- ===== ИМПЛАНТЫ ===== -->
 <div class="page" id="page-implants">
   <div class="page-header">
-    <div class="page-title">ИМПЛАНТЫ <span class="page-title-cn">植入物</span></div>
+    <div class="page-title" id="implants-page-title">ИМПЛАНТЫ <span class="page-title-cn" id="implants-page-cn">植入物</span></div>
     <div class="page-sub">> zhí rù wù // нейроимпланты протокола</div>
   </div>
 
@@ -1936,12 +1930,12 @@ body.theme-genshin-dark .lb-points
     <span class="nav-cn">商店</span>
   </button>
   <button class="nav-item" onclick="showPage('casino',this)">
-    <i class="ti ti-package"></i>
-    <span class="nav-cn">箱子</span>
+    <i class="ti ti-package" id="nav-casino-icon"></i>
+    <span class="nav-cn" id="nav-casino-label">箱子</span>
   </button>
   <button class="nav-item" onclick="showPage('implants',this)">
-    <i class="ti ti-cpu"></i>
-    <span class="nav-cn">植入物</span>
+    <i class="ti ti-cpu" id="nav-implants-icon"></i>
+    <span class="nav-cn" id="nav-implants-label">植入物</span>
   </button>
   <button class="nav-item" onclick="showPage('more',this)">
     <i class="ti ti-menu-2"></i>
@@ -2344,6 +2338,18 @@ function setTheme(theme) {
       ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo_genshintheme_nobackground.png'
       : 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true';
   }
+  // Переименовываем разделы под тему
+  const isG = theme === 'genshin-light' || theme === 'genshin-dark';
+  const el = (id) => document.getElementById(id);
+  if (el('nav-casino-label'))    el('nav-casino-label').textContent = isG ? '祈愿' : '箱子';
+  if (el('nav-casino-icon'))     el('nav-casino-icon').className    = isG ? 'ti ti-sparkles' : 'ti ti-package';
+  if (el('nav-implants-label'))  el('nav-implants-label').textContent = isG ? '卡片' : '植入物';
+  if (el('nav-implants-icon'))   el('nav-implants-icon').className  = isG ? 'ti ti-cards' : 'ti ti-cpu';
+  if (el('casino-page-cn'))      el('casino-page-cn').textContent   = isG ? '祈愿' : '箱子';
+  if (el('casino-page-title'))   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
+  if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';
+  if (el('implants-page-title')) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
+  if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
   try { try{tg.HapticFeedback.impactOccurred('light');}catch(e){} } catch(e) {}
 }
 
