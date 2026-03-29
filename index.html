@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHIDAO Protocol v2.6.5</title>
-<!-- ZHIDAO Protocol // version 2.6.5 // build 2026-03-28 -->
+<title>ZHIDAO Protocol v2.6.6</title>
+<!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -2540,14 +2540,14 @@ const SHOP_ICONS = {
   'laundry_vip':  '<i class="ti ti-wash" style="color:#60b4d4;font-size:22px;"></i>',
   'dj':           '<i class="ti ti-music" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
   'solo_seat':    '<i class="ti ti-brain" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
-  'amnesty':      '<i class="ti ti-handshake" style="color:#60b4d4;font-size:22px;"></i>',
+  'amnesty':      '<i class="ti ti-heart-handshake" style="color:#60b4d4;font-size:22px;"></i>',
   'kfc':          '<i class="ti ti-meat" style="color:rgba(200,80,80,0.9);font-size:22px;"></i>',
   'bubbletea':    '<i class="ti ti-cup" style="color:#60b4d4;font-size:22px;"></i>',
   'snack':        '<i class="ti ti-ice-cream" style="color:var(--gold);font-size:22px;"></i>',
   'no_report':    '<i class="ti ti-file-off" style="color:rgba(200,80,80,0.9);font-size:22px;"></i>',
   'poizon':       '<i class="ti ti-shirt" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
   'extra_case':   '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
-  'double_win':   '<i class="ti ti-multiplier-2x" style="color:var(--gold);font-size:22px;"></i>',
+  'double_win':   '<i class="ti ti-arrows-double-sw-ne" style="color:var(--gold);font-size:22px;"></i>',
   'title_player': '<i class="ti ti-crown" style="color:var(--gold);font-size:22px;"></i>',
 };
 
@@ -2659,6 +2659,12 @@ function gsBuildCard(cardId, cardInfo) {
 async function openGenshinCase() {
   if (gsAnimating) return;
   if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  // Проверяем заморозку
+  try {
+    const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
+    const fd = await fr.json();
+    if (fd.frozen && !isAdmin) { tg.showAlert('⛔ Аккаунт заморожен. Молитвы недоступны.'); return; }
+  } catch(e) {}
   const btn = document.getElementById('genshinOpenBtn');
   btn.disabled = true; btn.textContent = '✦ Молитва совершается... ✦';
   gsAnimating = true; gsCardFlipped = false;
@@ -3052,6 +3058,12 @@ async function openCase() {
   if (isSpinning) return;
   if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
   if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужно минимум 80 ★'); return; }
+  // Проверяем заморозку
+  try {
+    const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
+    const fd = await fr.json();
+    if (fd.frozen && !isAdmin) { tg.showAlert('⛔ Аккаунт заморожен. Кейсы недоступны.'); return; }
+  } catch(e) {}
   isSpinning = true;
   document.getElementById('openCaseBtn').disabled = true;
   document.getElementById('prizeResult').classList.remove('show');
