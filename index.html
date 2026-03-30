@@ -4044,13 +4044,13 @@ async function setBlackwall(enabled) {
   } catch(e) { tg.showAlert('Ошибка'); }
 }
 
-  /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v1.0 --- */
+/* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v2.0 (Быстрый старт) --- */
 
-// НАСТРОЙКИ: Список ID админов, которые могут рейдить в одиночку
-const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
-
+// НАСТРОЙКИ
 const RAID_CONFIG = {
-    maxParticipants: 15,
+    minPlayers: 3,          // Минимум игроков для старта (обычные)
+    maxPlayers: 15,         // Максимум (для красоты бара, но старт раньше)
+    adminIds: [389741116, 244487659, 1190015933, 491711713], // Твои админы
     cyberpunk: {
         img: 'images/raid/smasher_mu.png', 
         title: '// ADAM SMASHER PROTOCOL // TARGET: M.U.',
@@ -4065,6 +4065,7 @@ const RAID_CONFIG = {
 
 let raidPoller = null;
 let currentRaidCount = 0;
+let isRaidStarted = false; // Флаг, чтобы не начать дважды
 
 // 1. Функция открытия Рейда
 function showRaid() {
@@ -4075,8 +4076,10 @@ function showRaid() {
     const currentTheme = document.body.classList.contains('theme-genshin') ? 'genshin' : 'cyberpunk';
     const config = RAID_CONFIG[currentTheme];
 
+    isRaidStarted = false; // Сброс флага
     bossTitle.innerText = config.title;
     
+    // Логика картинки/заглушки
     bossImg.src = config.img;
     bossImg.style.backgroundColor = 'transparent';
     bossImg.onerror = function() {
@@ -4113,25 +4116,43 @@ function showRaid() {
         }
     };
     
+    // Сброс кнопки
     const btn = document.getElementById('raid-action-btn');
     btn.disabled = false;
     btn.innerText = "ПОДКЛЮЧИТЬСЯ К НЕЙРОЛИНКУ";
     btn.style.background = ""; 
     btn.style.animation = "";
+    btn.style.opacity = "1";
     
+    // Сброс прогресса
     currentRaidCount = 0; 
     updateRaidUI(currentRaidCount); 
 
     overlay.classList.add('active');
     
+    // АВТО-НАБОР БОТОВ (ДЛЯ ДЕМО)
+    // Если вы один, боты быстро доберут до 3 человек, чтобы рейд не висел
     if (raidPoller) clearInterval(raidPoller);
     raidPoller = setInterval(() => {
-        if (currentRaidCount < RAID_CONFIG.maxParticipants && Math.random() > 0.6) {
+        // Если рейд уже начался или мы админ (ждем клика), не набираем ботов
+        if (isRaidStarted) {
+            clearInterval(raidPoller);
+            return;
+        }
+
+        // Если нас меньше 3, боты быстро добавляют людей
+        if (currentRaidCount < RAID_CONFIG.minPlayers) {
             currentRaidCount++;
             updateRaidUI(currentRaidCount);
-            if (currentRaidCount >= RAID_CONFIG.maxParticipants) onRaidReady(false);
+            
+            // Как только набрали 3 - ждем чуть-чуть и стартуем сами (имитация)
+            if (currentRaidCount >= RAID_CONFIG.minPlayers) {
+                setTimeout(() => {
+                    if(!isRaidStarted) startBattle(false);
+                }, 1000);
+            }
         }
-    }, 2000);
+    }, 800); // Бот добавляется каждые 0.8 сек
 }
 
 // 2. Функция закрытия Рейда
@@ -4150,90 +4171,117 @@ function updateRaidUI(joinedCount) {
     const currentLabel = document.getElementById('raid-current-count');
     const maxLabel = document.getElementById('raid-max-count');
     const progressBar = document.getElementById('raid-progress-bar');
-    const max = RAID_CONFIG.maxParticipants;
-
-    const validatedCount = Math.min(joinedCount, max);
-    const percentage = (validatedCount / max) * 100;
+    
+    // Показываем прогресс относительно МИНИМУМА (3), а не максимума, для наглядности
+    // Но визуально бар заполняется до конца при 3, дальше просто цифры растут
+    const target = RAID_CONFIG.minPlayers; 
+    const validatedCount = Math.min(joinedCount, RAID_CONFIG.maxPlayers);
+    
+    // Процент считаем от минимума для быстрого визуального эффекта "Готово"
+    let percentage = (validatedCount / target) * 100;
+    if (percentage > 100) percentage = 100; // Бар полон, но цифры идут дальше
 
     currentLabel.innerText = validatedCount;
-    maxLabel.innerText = max;
+    maxLabel.innerText = RAID_CONFIG.maxPlayers; // Показываем макс для инфо
     progressBar.style.width = percentage + '%';
+    
+    // Меняем цвет бара на зеленый, когда готовы к старту
+    if (validatedCount >= RAID_CONFIG.minPlayers) {
+        progressBar.style.background = "linear-gradient(90deg, #2ecc71, #27ae60)";
+        progressBar.style.boxShadow = "0 0 10px #2ecc71";
+    } else {
+        progressBar.style.background = "linear-gradient(90deg, var(--red), #ff4400)";
+        progressBar.style.boxShadow = "0 0 10px var(--red-dim)";
+    }
 }
 
-// 4. Функция "Присоединиться" (С ПРОВЕРКОЙ АДМИНА)
+// 4. Функция "Присоединиться"
 async function joinRaid() {
+    if (isRaidStarted) return; // Защита от двойного клика
+
     const btn = document.getElementById('raid-action-btn');
-    // Получаем ID пользователя из Telegram
     const currentUserId = tg.initDataUnsafe.user?.id;
-    
-    // Проверяем, есть ли юзер в списке админов
-    const isPrivileged = ADMIN_IDS.includes(currentUserId);
+    const isPrivileged = RAID_CONFIG.adminIds.includes(currentUserId);
 
     btn.disabled = true;
     btn.innerText = "СИНХРОНИЗАЦИЯ...";
 
-    // ЕСЛИ АДМИН — МГНОВЕННЫЙ РЕЙД
+    // Имитация задержки сети
+    await new Promise(res => setTimeout(res, isPrivileged ? 400 : 800));
+
+    // Добавляем игрока
+    currentRaidCount++;
+    updateRaidUI(currentRaidCount);
+
+    // ПРОВЕРКА УСЛОВИЙ СТАРТА
     if (isPrivileged) {
-        console.log("⚡ ADMIN DETECTED: Instant Raid Start");
-        await new Promise(res => setTimeout(res, 600)); // Короткая задержка
-        
-        currentRaidCount = RAID_CONFIG.maxParticipants;
-        updateRaidUI(currentRaidCount);
-        onRaidReady(true); // true = режим бога
-        return;
-    }
-
-    // ОБЫЧНЫЙ РЕЖИМ
-    await new Promise(res => setTimeout(res, 1000)); 
-
-    if (currentRaidCount < RAID_CONFIG.maxParticipants) {
-        currentRaidCount++;
-        updateRaidUI(currentRaidCount);
-        
-        btn.innerText = "ГОТОВ К БОЮ";
-        btn.style.background = "#2ecc71";
-        
-        if (currentRaidCount >= RAID_CONFIG.maxParticipants) {
-            onRaidReady(false);
-        }
+        // АДМИН: стартует сразу один
+        console.log("⚡ ADMIN START");
+        startBattle(true);
+    } else if (currentRaidCount >= RAID_CONFIG.minPlayers) {
+        // ОБЫЧНЫЙ: старт, если >= 3
+        console.log("✅ SQUAD READY (3+)");
+        startBattle(false);
     } else {
-        btn.innerText = "ЛОББИ ПОЛНОЕ";
+        // Ждем еще игроков
+        btn.innerText = `ОЖИДАНИЕ БОЙЦОВ (${currentRaidCount}/${RAID_CONFIG.minPlayers})...`;
+        btn.style.background = "#e67e22"; // Оранжевый
+        
+        // Включаем бота-добавщика, если вдруг застряли (для теста)
+        if (raidPoller) clearInterval(raidPoller);
+        raidPoller = setInterval(() => {
+            if (currentRaidCount < RAID_CONFIG.minPlayers) {
+                currentRaidCount++;
+                updateRaidUI(currentRaidCount);
+                if (currentRaidCount >= RAID_CONFIG.minPlayers) startBattle(false);
+            } else {
+                clearInterval(raidPoller);
+            }
+        }, 1000);
     }
 }
 
-// 5. Рейд собран (С АВТО-ЗАВЕРШЕНИЕМ)
-function onRaidReady(isInstant = false) {
+// 5. ЗАПУСК БОЯ (Финал)
+function startBattle(isInstant) {
+    if (isRaidStarted) return;
+    isRaidStarted = true;
+    
     if (raidPoller) clearInterval(raidPoller);
-    
+
     const btn = document.getElementById('raid-action-btn');
+    const progressBar = document.getElementById('raid-progress-bar');
     
-    let finalMessage = "ЛОББИ ПОЛНОЕ. БОЙ НАЧИНАЕТСЯ!";
+    // Визуал "Бой идет"
+    progressBar.style.background = "linear-gradient(90deg, #ffd700, #ffaa00)";
+    progressBar.style.animation = "barGlow 0.5s infinite";
     
     if (isInstant) {
-        finalMessage = "⚡ РЕЖИМ БОГА: МГНОВЕННЫЙ БОЙ! ⚡";
-        btn.style.background = "#ffd700"; // Золотой
+        btn.innerText = "⚡ РЕЖИМ БОГА: УНИЧТОЖЕНИЕ...";
+        btn.style.background = "#ffd700";
         btn.style.color = "#000";
     } else {
-        btn.style.background = "var(--gold, #ffd700)";
-        btn.style.color = "#000";
+        btn.innerText = "⚔️ БОЙ НАЧАЛСЯ!...";
+        btn.style.background = "#e74c3c";
+        btn.style.color = "#fff";
     }
 
-    btn.innerText = finalMessage;
-    btn.style.animation = "barGlow 1s infinite";
-
-    // АВТОМАТИЧЕСКОЕ ЗАВЕРШЕНИЕ ЧЕРЕЗ 3 СЕКУНДЫ
+    // Имитация длительности боя (2 секунды)
     setTimeout(() => {
-        const rewardText = isInstant ? "+5000 ★ (ADMIN)" : "+150 ★";
-        const itemText = isInstant ? "[Чертеж: Протокол Мю]" : "[Фрагмент данных]";
-        
-        tg.showAlert(`🏆 ПОБЕДА!\n\nРейд успешно завершен.\nНаграда: ${rewardText}\nПредмет: ${itemText}`);
-        
-        closeRaid(); // Закрываем оверлей
-    }, 3000);
+        finishRaid(isInstant);
+    }, 2000);
 }
-</script>
-</body>
-</html>
+
+// 6. ПОБЕДА
+function finishRaid(isInstant) {
+    const btn = document.getElementById('raid-action-btn');
+    
+    const rewardText = isInstant ? "+5000 ★ (ADMIN)" : "+150 ★";
+    const itemText = isInstant ? "[Чертеж: Протокол Мю]" : "[Фрагмент данных]";
+    
+    tg.showAlert(`🏆 ПОБЕДА!\n\nРейд успешно завершен.\nНаграда: ${rewardText}\nПредмет: ${itemText}`);
+    
+    closeRaid();
+}
 </script>
 </body>
 </html>
