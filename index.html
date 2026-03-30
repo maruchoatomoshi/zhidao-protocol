@@ -4046,10 +4046,12 @@ async function setBlackwall(enabled) {
 
   /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v1.0 --- */
 
+// НАСТРОЙКИ: Список ID админов, которые могут рейдить в одиночку
+const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
+
 const RAID_CONFIG = {
     maxParticipants: 15,
     cyberpunk: {
-        // Если картинки нет, будет показан цветной круг с текстом (alt)
         img: 'images/raid/smasher_mu.png', 
         title: '// ADAM SMASHER PROTOCOL // TARGET: M.U.',
         placeholderColor: '#ff003c'
@@ -4062,7 +4064,7 @@ const RAID_CONFIG = {
 };
 
 let raidPoller = null;
-let currentRaidCount = 0; // Локальная переменная для симуляции
+let currentRaidCount = 0;
 
 // 1. Функция открытия Рейда
 function showRaid() {
@@ -4073,16 +4075,12 @@ function showRaid() {
     const currentTheme = document.body.classList.contains('theme-genshin') ? 'genshin' : 'cyberpunk';
     const config = RAID_CONFIG[currentTheme];
 
-    // Настройка контента
     bossTitle.innerText = config.title;
     
-    // Обработка изображения (если файла нет, ставим заглушку через onerror)
     bossImg.src = config.img;
     bossImg.style.backgroundColor = 'transparent';
     bossImg.onerror = function() {
-        // Если картинка не загрузилась, рисуем цветной круг через CSS или оставляем alt
         this.style.display = 'none'; 
-        // Создаем временный элемент-заглушку внутри рамки, если картинка битая
         const frame = document.querySelector('.boss-frame');
         if(!frame.querySelector('.boss-placeholder')) {
             const placeholder = document.createElement('div');
@@ -4099,7 +4097,7 @@ function showRaid() {
             placeholder.style.fontWeight = 'bold';
             placeholder.style.boxShadow = '0 0 20px ' + config.placeholderColor;
             placeholder.innerText = "M.Y.";
-            // Добавляем класс для анимации, если нужно
+            
             Object.assign(placeholder.style, {
                 transform: 'scale(0) rotate(-180deg)',
                 opacity: '0',
@@ -4108,7 +4106,6 @@ function showRaid() {
             });
             frame.appendChild(placeholder);
             
-            // Триггер анимации через таймаут
             setTimeout(() => {
                 placeholder.style.transform = 'scale(1) rotate(0deg)';
                 placeholder.style.opacity = '1';
@@ -4116,26 +4113,23 @@ function showRaid() {
         }
     };
     
-    // Сброс состояния при повторном открытии
     const btn = document.getElementById('raid-action-btn');
     btn.disabled = false;
     btn.innerText = "ПОДКЛЮЧИТЬСЯ К НЕЙРОЛИНКУ";
     btn.style.background = ""; 
     btn.style.animation = "";
     
-    // Сброс прогресса для демо (или загрузка реального)
     currentRaidCount = 0; 
     updateRaidUI(currentRaidCount); 
 
     overlay.classList.add('active');
     
-    // Запуск симуляции прихода игроков
     if (raidPoller) clearInterval(raidPoller);
     raidPoller = setInterval(() => {
         if (currentRaidCount < RAID_CONFIG.maxParticipants && Math.random() > 0.6) {
             currentRaidCount++;
             updateRaidUI(currentRaidCount);
-            if (currentRaidCount >= RAID_CONFIG.maxParticipants) onRaidReady();
+            if (currentRaidCount >= RAID_CONFIG.maxParticipants) onRaidReady(false);
         }
     }, 2000);
 }
@@ -4147,7 +4141,6 @@ function closeRaid() {
     
     if (raidPoller) clearInterval(raidPoller);
     
-    // Очистка заглушки, если была создана
     const placeholder = document.querySelector('.boss-placeholder');
     if(placeholder) placeholder.remove();
 }
@@ -4167,17 +4160,32 @@ function updateRaidUI(joinedCount) {
     progressBar.style.width = percentage + '%';
 }
 
-// 4. Функция "Присоединиться"
+// 4. Функция "Присоединиться" (С ПРОВЕРКОЙ АДМИНА)
 async function joinRaid() {
     const btn = document.getElementById('raid-action-btn');
+    // Получаем ID пользователя из Telegram
+    const currentUserId = tg.initDataUnsafe.user?.id;
     
+    // Проверяем, есть ли юзер в списке админов
+    const isPrivileged = ADMIN_IDS.includes(currentUserId);
+
     btn.disabled = true;
-    const originalText = btn.innerText;
     btn.innerText = "СИНХРОНИЗАЦИЯ...";
 
-    await new Promise(res => setTimeout(res, 1000)); // Имитация задержки
+    // ЕСЛИ АДМИН — МГНОВЕННЫЙ РЕЙД
+    if (isPrivileged) {
+        console.log("⚡ ADMIN DETECTED: Instant Raid Start");
+        await new Promise(res => setTimeout(res, 600)); // Короткая задержка
+        
+        currentRaidCount = RAID_CONFIG.maxParticipants;
+        updateRaidUI(currentRaidCount);
+        onRaidReady(true); // true = режим бога
+        return;
+    }
 
-    // Увеличиваем счетчик вручную при клике
+    // ОБЫЧНЫЙ РЕЖИМ
+    await new Promise(res => setTimeout(res, 1000)); 
+
     if (currentRaidCount < RAID_CONFIG.maxParticipants) {
         currentRaidCount++;
         updateRaidUI(currentRaidCount);
@@ -4186,25 +4194,46 @@ async function joinRaid() {
         btn.style.background = "#2ecc71";
         
         if (currentRaidCount >= RAID_CONFIG.maxParticipants) {
-            onRaidReady();
+            onRaidReady(false);
         }
     } else {
         btn.innerText = "ЛОББИ ПОЛНОЕ";
     }
 }
 
-// 5. Рейд собран
-function onRaidReady() {
+// 5. Рейд собран (С АВТО-ЗАВЕРШЕНИЕМ)
+function onRaidReady(isInstant = false) {
     if (raidPoller) clearInterval(raidPoller);
     
     const btn = document.getElementById('raid-action-btn');
-    btn.innerText = "ЛОББИ ПОЛНОЕ. БОЙ НАЧИНАЕТСЯ!";
-    btn.style.background = "var(--gold, #ffd700)";
-    btn.style.color = "#000";
     
-    // Пульсация (добавляем стиль динамически, если нет в CSS)
+    let finalMessage = "ЛОББИ ПОЛНОЕ. БОЙ НАЧИНАЕТСЯ!";
+    
+    if (isInstant) {
+        finalMessage = "⚡ РЕЖИМ БОГА: МГНОВЕННЫЙ БОЙ! ⚡";
+        btn.style.background = "#ffd700"; // Золотой
+        btn.style.color = "#000";
+    } else {
+        btn.style.background = "var(--gold, #ffd700)";
+        btn.style.color = "#000";
+    }
+
+    btn.innerText = finalMessage;
     btn.style.animation = "barGlow 1s infinite";
+
+    // АВТОМАТИЧЕСКОЕ ЗАВЕРШЕНИЕ ЧЕРЕЗ 3 СЕКУНДЫ
+    setTimeout(() => {
+        const rewardText = isInstant ? "+5000 ★ (ADMIN)" : "+150 ★";
+        const itemText = isInstant ? "[Чертеж: Протокол Мю]" : "[Фрагмент данных]";
+        
+        tg.showAlert(`🏆 ПОБЕДА!\n\nРейд успешно завершен.\nНаграда: ${rewardText}\nПредмет: ${itemText}`);
+        
+        closeRaid(); // Закрываем оверлей
+    }, 3000);
 }
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
