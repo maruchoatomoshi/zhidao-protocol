@@ -871,6 +871,216 @@ body.theme-genshin-dark .lb-points
   text-shadow: 0 0 20px #ff2200; letter-spacing: 4px;
   margin-bottom: 12px; animation: glitch 2s infinite; white-space: nowrap;
 }
+
+/* --- КРИТИЧЕСКИЙ CSS ДЛЯ РЕЙДА --- */
+
+/* Оверлей фона (размытие и затемнение) */
+.raid-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* Поверх всего */
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s ease-out;
+}
+
+.raid-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Контейнер контента */
+.raid-content {
+    width: 90%;
+    max-width: 400px;
+    background: var(--bg);
+    border: 2px solid var(--red);
+    box-shadow: 0 0 30px var(--red-dim);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transform: scale(0.8) translateY(20px);
+    transition: transform 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.raid-overlay.active .raid-content {
+    transform: scale(1) translateY(0);
+}
+
+/* Рамка Босса */
+.boss-frame {
+    position: relative;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 220px;
+}
+
+.boss-img {
+    width: 220px;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--red);
+    box-shadow: 0 0 15px var(--red-dim);
+    /* Начальное состояние для анимации появления */
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s; /* Задержка появления */
+}
+
+.raid-overlay.active .boss-img {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+}
+
+/* Постоянная анимация "парения" босса */
+@keyframes bossFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+.raid-overlay.active .boss-img {
+    animation: bossFloat 4s ease-in-out infinite 0.9s;
+}
+
+/* Имя и Титул */
+.boss-name-wrap {
+    margin-bottom: 20px;
+}
+
+.boss-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.boss-title {
+    font-size: 12px;
+    color: var(--red);
+    opacity: 0.8;
+}
+
+/* Блок Прогресса */
+.raid-status-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.raid-count-label {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 5px;
+    display: flex; justify-content: space-between;
+}
+
+/* Прогресс-бар */
+.raid-progress-container {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.raid-progress-bar {
+    width: 0%; 
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), #ff4400);
+    border-radius: 5px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px var(--red-dim);
+}
+
+/* Анимация "заряжания" бара */
+@keyframes barGlow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.raid-progress-bar {
+    animation: barGlow 1.5s ease-in-out infinite;
+}
+
+/* Кнопка закрытия */
+.btn-close-raid {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: none; border: none;
+    color: var(--text3);
+    font-size: 24px; cursor: pointer;
+    transition: color 0.2s;
+    z-index: 10;
+}
+.btn-close-raid:hover { color: var(--red); }
+
+/* Кнопка действия */
+#raid-action-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--red);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+#raid-action-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* --- СТИЛИЗАЦИЯ ПОД ТЕМЫ --- */
+
+/* GENSHIN (theme-genshin) */
+body.theme-genshin .raid-content {
+    border-color: #d3bc8e; /* Золото Ли Юэ */
+    box-shadow: 0 0 35px rgba(211, 188, 142, 0.3);
+    background: #f0ebe1; /* Фон свитка */
+    color: #3d4555;
+}
+
+body.theme-genshin .boss-img {
+    border-color: #4b5366; /* Глубокий синий */
+    box-shadow: 0 0 20px rgba(75, 83, 102, 0.3);
+    border-radius: 20px; /* Прямоугольная карточка */
+}
+
+body.theme-genshin .boss-name { color: #3d4555; }
+body.theme-genshin .boss-title { color: #dbb165; } /* Светлое золото */
+
+body.theme-genshin .raid-progress-container {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+}
+
+body.theme-genshin .raid-progress-bar {
+    background: linear-gradient(90deg, #dbb165, #f0ebe1);
+    box-shadow: 0 0 15px rgba(219, 177, 101, 0.4);
+}
+
+body.theme-genshin #raid-action-btn {
+    background: #dbb165;
+    color: #3d4555;
+}  
 </style>
 </head>
 <body>
@@ -996,31 +1206,15 @@ body.theme-genshin-dark .lb-points
     <div style="font-size:11px;color:rgba(212,175,55,0.4);font-family:monospace;">999 999 ★</div>
   </div>
 
-  <!-- Кнопка рейда -->
-  <div style="margin:4px 12px 8px;" id="raidBlock">
-    <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
-      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">⚔️</span>
-      [ 袭击 // РЕЙД НА АЛЬФАБОССА ]
-      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(212,175,55,0.5);">50 ★</span>
-    </button>
-  </div>
-
-  <!-- Панель рейда (скрыта по умолчанию) -->
-  <div id="raidPanel" style="display:none;margin:0 12px 8px;">
-    <div style="background:rgba(180,20,20,0.06);border:1px solid rgba(180,20,20,0.3);border-radius:10px;padding:14px;position:relative;overflow:hidden;">
-      <div style="position:absolute;right:10px;top:10px;font-size:40px;color:rgba(180,20,20,0.05);font-family:serif;">战</div>
-      <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ⚔️ РЕЙД НА АЛЬФАБОССА //</div>
-      <div style="font-size:12px;color:#ccc;line-height:1.7;margin-bottom:12px;">
-        Соберите отряд из 3+ бойцов. Каждый ставит <span style="color:var(--gold);font-weight:700;">50 ★</span>.<br>
-        Шанс победы: <span style="color:#2ecc71;font-weight:700;">60%</span> — каждый получит <span style="color:var(--gold);font-weight:700;">150 ★</span><br>
-        Шанс провала: <span style="color:#cc4444;font-weight:700;">40%</span> — ставки сгорают 🔥
-      </div>
-      <div id="raidStatus" style="margin-bottom:12px;">
-        <div class="empty-state" style="padding:10px;">Загрузка...</div>
-      </div>
-      <button onclick="joinRaid()" id="joinRaidBtn" class="btn btn-primary" style="font-size:10px;">⚔️ [ ВСТУПИТЬ В РЕЙД — 50 ★ ]</button>
-    </div>
-  </div>
+  <!-- НОВАЯ КНОПКА РЕЙДА (открывает оверлей) -->
+<div style="margin:4px 12px 8px;" id="raidBlock">
+  <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
+    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">⚔️</span>
+    [ 袭击 // РЕЙД НА АЛЬФАБОССА ]
+    <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(212,175,55,0.5);">50 ★</span>
+  </button>
+</div>
+<!-- Старый блок raidPanel мы полностью удаляем, он больше не нужен -->
 
   <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
   <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
@@ -1943,6 +2137,37 @@ body.theme-genshin-dark .lb-points
   </button>
 </nav>
 
+<!-- === RAID OVERLAY (СКРЫТЫЙ БЛОК) === -->
+<div id="raid-overlay" class="raid-overlay">
+    <div class="raid-content">
+        <button onclick="closeRaid()" class="btn-close-raid">×</button>
+        
+        <div class="boss-frame">
+            <img id="boss-img" src="" class="boss-img" alt="BOSS">
+        </div>
+        
+        <div class="boss-name-wrap">
+            <div class="boss-name">М. Ю.</div>
+            <div id="boss-title" class="boss-title">// ADAM SMASHER PROTOCOL</div>
+        </div>
+        
+        <div class="raid-status-block">
+            <div class="raid-count-label">
+                <span>СБОР ОТРЯДА:</span>
+                <span><span id="raid-current-count">0</span> / <span id="raid-max-count">15</span></span>
+            </div>
+            
+            <div class="raid-progress-container">
+                <div id="raid-progress-bar" class="raid-progress-bar"></div>
+            </div>
+        </div>
+        
+        <button id="raid-action-btn" onclick="joinRaid()">
+            <i class="ti ti-broadcast"></i> ПОДКЛЮЧИТЬСЯ К НЕЙРОЛИНКУ
+        </button>
+    </div>
+</div>
+  
 <script>
 const tg = window.Telegram?.WebApp || {
   ready:()=>{}, expand:()=>{}, close:()=>{},
@@ -3817,6 +4042,168 @@ async function setBlackwall(enabled) {
     const r = await fetch(`${API_URL}/api/admin/blackwall`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({enabled})});
     if (r.ok) tg.showAlert(enabled ? '⛔ BlackWall включён!' : '✅ BlackWall выключен!');
   } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+  /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v1.0 --- */
+
+const RAID_CONFIG = {
+    maxParticipants: 15,
+    cyberpunk: {
+        // Если картинки нет, будет показан цветной круг с текстом (alt)
+        img: 'images/raid/smasher_mu.png', 
+        title: '// ADAM SMASHER PROTOCOL // TARGET: M.U.',
+        placeholderColor: '#ff003c'
+    },
+    genshin: {
+        img: 'images/raid/pierro_mu.png',
+        title: '💎 ПЬЕРО // ПЕРВЫЙ ПРЕДВЕСТНИК ФАТУИ',
+        placeholderColor: '#dbb165'
+    }
+};
+
+let raidPoller = null;
+let currentRaidCount = 0; // Локальная переменная для симуляции
+
+// 1. Функция открытия Рейда
+function showRaid() {
+    console.log("Initializing Raid Mode...");
+    const overlay = document.getElementById('raid-overlay');
+    const bossImg = document.getElementById('boss-img');
+    const bossTitle = document.getElementById('boss-title');
+    const currentTheme = document.body.classList.contains('theme-genshin') ? 'genshin' : 'cyberpunk';
+    const config = RAID_CONFIG[currentTheme];
+
+    // Настройка контента
+    bossTitle.innerText = config.title;
+    
+    // Обработка изображения (если файла нет, ставим заглушку через onerror)
+    bossImg.src = config.img;
+    bossImg.style.backgroundColor = 'transparent';
+    bossImg.onerror = function() {
+        // Если картинка не загрузилась, рисуем цветной круг через CSS или оставляем alt
+        this.style.display = 'none'; 
+        // Создаем временный элемент-заглушку внутри рамки, если картинка битая
+        const frame = document.querySelector('.boss-frame');
+        if(!frame.querySelector('.boss-placeholder')) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'boss-placeholder';
+            placeholder.style.width = '220px';
+            placeholder.style.height = '220px';
+            placeholder.style.borderRadius = currentTheme === 'genshin' ? '20px' : '50%';
+            placeholder.style.background = config.placeholderColor;
+            placeholder.style.display = 'flex';
+            placeholder.style.alignItems = 'center';
+            placeholder.style.justifyContent = 'center';
+            placeholder.style.color = '#fff';
+            placeholder.style.fontSize = '40px';
+            placeholder.style.fontWeight = 'bold';
+            placeholder.style.boxShadow = '0 0 20px ' + config.placeholderColor;
+            placeholder.innerText = "M.Y.";
+            // Добавляем класс для анимации, если нужно
+            Object.assign(placeholder.style, {
+                transform: 'scale(0) rotate(-180deg)',
+                opacity: '0',
+                transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s',
+                animation: 'bossFloat 4s ease-in-out infinite 0.9s'
+            });
+            frame.appendChild(placeholder);
+            
+            // Триггер анимации через таймаут
+            setTimeout(() => {
+                placeholder.style.transform = 'scale(1) rotate(0deg)';
+                placeholder.style.opacity = '1';
+            }, 50);
+        }
+    };
+    
+    // Сброс состояния при повторном открытии
+    const btn = document.getElementById('raid-action-btn');
+    btn.disabled = false;
+    btn.innerText = "ПОДКЛЮЧИТЬСЯ К НЕЙРОЛИНКУ";
+    btn.style.background = ""; 
+    btn.style.animation = "";
+    
+    // Сброс прогресса для демо (или загрузка реального)
+    currentRaidCount = 0; 
+    updateRaidUI(currentRaidCount); 
+
+    overlay.classList.add('active');
+    
+    // Запуск симуляции прихода игроков
+    if (raidPoller) clearInterval(raidPoller);
+    raidPoller = setInterval(() => {
+        if (currentRaidCount < RAID_CONFIG.maxParticipants && Math.random() > 0.6) {
+            currentRaidCount++;
+            updateRaidUI(currentRaidCount);
+            if (currentRaidCount >= RAID_CONFIG.maxParticipants) onRaidReady();
+        }
+    }, 2000);
+}
+
+// 2. Функция закрытия Рейда
+function closeRaid() {
+    const overlay = document.getElementById('raid-overlay');
+    overlay.classList.remove('active');
+    
+    if (raidPoller) clearInterval(raidPoller);
+    
+    // Очистка заглушки, если была создана
+    const placeholder = document.querySelector('.boss-placeholder');
+    if(placeholder) placeholder.remove();
+}
+
+// 3. Обновление интерфейса
+function updateRaidUI(joinedCount) {
+    const currentLabel = document.getElementById('raid-current-count');
+    const maxLabel = document.getElementById('raid-max-count');
+    const progressBar = document.getElementById('raid-progress-bar');
+    const max = RAID_CONFIG.maxParticipants;
+
+    const validatedCount = Math.min(joinedCount, max);
+    const percentage = (validatedCount / max) * 100;
+
+    currentLabel.innerText = validatedCount;
+    maxLabel.innerText = max;
+    progressBar.style.width = percentage + '%';
+}
+
+// 4. Функция "Присоединиться"
+async function joinRaid() {
+    const btn = document.getElementById('raid-action-btn');
+    
+    btn.disabled = true;
+    const originalText = btn.innerText;
+    btn.innerText = "СИНХРОНИЗАЦИЯ...";
+
+    await new Promise(res => setTimeout(res, 1000)); // Имитация задержки
+
+    // Увеличиваем счетчик вручную при клике
+    if (currentRaidCount < RAID_CONFIG.maxParticipants) {
+        currentRaidCount++;
+        updateRaidUI(currentRaidCount);
+        
+        btn.innerText = "ГОТОВ К БОЮ";
+        btn.style.background = "#2ecc71";
+        
+        if (currentRaidCount >= RAID_CONFIG.maxParticipants) {
+            onRaidReady();
+        }
+    } else {
+        btn.innerText = "ЛОББИ ПОЛНОЕ";
+    }
+}
+
+// 5. Рейд собран
+function onRaidReady() {
+    if (raidPoller) clearInterval(raidPoller);
+    
+    const btn = document.getElementById('raid-action-btn');
+    btn.innerText = "ЛОББИ ПОЛНОЕ. БОЙ НАЧИНАЕТСЯ!";
+    btn.style.background = "var(--gold, #ffd700)";
+    btn.style.color = "#000";
+    
+    // Пульсация (добавляем стиль динамически, если нет в CSS)
+    btn.style.animation = "barGlow 1s infinite";
 }
 </script>
 </body>
