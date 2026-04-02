@@ -39,7 +39,7 @@ body.theme-nw-light {
   --red: #993333;
   --red-dim: rgba(180,20,20,0.08);
   --red-border: rgba(180,20,20,0.22);
-  --gold: #7a5010;
+  --gold: #5c3a0a;
   --gold-dim: rgba(150,100,20,0.1);
   --gold-border: rgba(150,100,20,0.25);
   --bg: #f4f1ed;
@@ -57,8 +57,8 @@ body.theme-genshin-light {
   --red: #4b5366;
   --red-dim: rgba(75,83,102,0.08);
   --red-border: rgba(75,83,102,0.2);
-  --gold: #8a6820;
-  --gold-dim: rgba(219,177,101,0.12);
+  --gold: #6b4f10;
+  --gold-dim: rgba(107,79,16,0.1);
   --gold-border: rgba(219,177,101,0.3);
   --bg: #ece5d8;
   --bg2: rgba(255,255,255,0.6);
@@ -73,6 +73,15 @@ body.theme-genshin-light {
   --scan-opacity: 0.005;
 }
 body.theme-genshin-light .bottom-nav {
+  body.theme-nw-light .bottom-nav {
+  background: rgba(244,241,237,0.97);
+  border-top-color: rgba(180,20,20,0.15);
+}
+body.theme-nw-light .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(180,20,20,0.3), transparent);
+}
+body.theme-nw-light .nav-item { color: #555; }
+body.theme-nw-light .nav-item.active { color: #993333; }
   background: rgba(236,229,216,0.97);
   border-top-color: rgba(219,177,101,0.25);
 }
@@ -638,12 +647,16 @@ body.theme-genshin-dark .lb-points
   border-bottom: 14px solid rgba(180,20,20,0.8); z-index: 10;
 }
 .roulette-track {
+  body.theme-nw-light .roulette-track { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
+body.theme-nw-light .roulette-item  { background: #eae7e3; border-color: rgba(0,0,0,0.08); }
   overflow: hidden; border-radius: 10px;
   border: 1px solid var(--red-border);
   background: #080818; position: relative; height: 130px;
 }
 .roulette-track::before { content:''; position:absolute;left:0;top:0;bottom:0;width:50px;background:linear-gradient(to right,#080818,transparent);z-index:5;pointer-events:none; }
 .roulette-track::after { content:''; position:absolute;right:0;top:0;bottom:0;width:50px;background:linear-gradient(to left,#080818,transparent);z-index:5;pointer-events:none; }
+  body.theme-nw-light .roulette-track::before { background: linear-gradient(to right, #f4f1ed, transparent); }
+body.theme-nw-light .roulette-track::after  { background: linear-gradient(to left,  #f4f1ed, transparent); }
 .roulette-center-line { position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(180,20,20,0.5);transform:translateX(-50%);z-index:6; }
 .roulette-strip { display:flex;padding:8px 0;transition:none;will-change:transform; }
 .roulette-item {
@@ -3228,6 +3241,11 @@ function showPage(name, btn) {
       } else {
         document.getElementById('casinoPlayContent').style.display = 'flex';
         setTimeout(initRoulette, 50);
+        if (currentThemePath === 'genshin') {
+  document.getElementById('casinoPlayContent').style.display = 'none';
+  const gsTab = document.getElementById('casinoGenshinContent');
+  if (gsTab) gsTab.style.display = 'flex';
+}
         setTimeout(() => loadPoints(currentUserId), 300);
       }
     }).catch(() => { setTimeout(initRoulette, 50); });
@@ -4027,6 +4045,11 @@ function applyThemePath(path) {
     // Если сейчас стоит Геншин-тема — сбрасываем на NW Dark
     const t = localStorage.getItem('zhidao_theme') || '';
     if (t.startsWith('genshin')) setTheme('');
+    document.getElementById('casinoPlayContent').style.display = 'flex';
+    const gsTab = document.getElementById('casinoGenshinContent');
+    if (gsTab) gsTab.style.display = 'none';
+    const genshinTabBtn = document.getElementById('genshinTabBtn');
+    if (genshinTabBtn) genshinTabBtn.style.display = 'none';
   } else if (path === 'genshin') {
     // Показываем только Геншин темы
     nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
@@ -4034,6 +4057,11 @@ function applyThemePath(path) {
     // Если сейчас стоит NW-тема — сбрасываем на Геншин Light
     const t = localStorage.getItem('zhidao_theme') || '';
     if (!t.startsWith('genshin')) setTheme('genshin-light');
+    document.getElementById('casinoPlayContent').style.display = 'none';
+    const gsTab = document.getElementById('casinoGenshinContent');
+    if (gsTab) gsTab.style.display = 'flex';
+    const genshinTabBtn = document.getElementById('genshinTabBtn');
+    if (genshinTabBtn) genshinTabBtn.style.display = 'block';
   } else {
     // path = null — первый вход, показываем экран выбора
     showPathChoiceScreen();
