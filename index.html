@@ -3316,7 +3316,7 @@ function renderDiaryStars(rating) {
 }
 
 function renderDiaryWordRows(words) {
-  const container = document.getElementById('diaryWordRows');
+  const container = document.getElementById('diaryWordsRows');
   if (!container) return;
   const list = (words && words.length) ? words : createEmptyDiaryWords();
   container.innerHTML = list.map((word, index) => `
@@ -3397,18 +3397,22 @@ function applyDiaryRoleUX(status) {
   const isSubmitted = status === 'submitted';
   const studentLock = isLocked || isSubmitted;
 
-  // Content fields: students can edit only in draft; admins always readonly (they don't write diaries)
+  // Admins can edit their OWN diary; readonly only when viewing someone else's
+  const viewingOther   = isAdmin && diaryViewedUserId && diaryViewedUserId !== currentUserId;
+  const contentReadonly = viewingOther || studentLock;
+
+  // Content fields
   const contentIds = ['diaryWeekday','diaryWeather','diaryDiscussPerson','diaryDiscussTopic','diaryStory'];
   contentIds.forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.readOnly = isAdmin || studentLock;
+    if (el) el.readOnly = contentReadonly;
   });
   document.querySelectorAll('.diary-word-input').forEach(el => {
-    el.readOnly = isAdmin || studentLock;
+    el.readOnly = contentReadonly;
   });
 
-  // Stars: disabled for admins and locked/submitted students
-  const canClickStars = !isAdmin && !studentLock;
+  // Stars: disabled when content is readonly
+  const canClickStars = !contentReadonly;
   document.querySelectorAll('.diary-star').forEach(el => {
     el.disabled = !canClickStars;
     el.style.opacity = canClickStars ? '1' : '0.5';
