@@ -1162,8 +1162,8 @@ body.theme-genshin #raid-action-btn {
     <div class="page-title">НОВОСТИ <span class="page-title-cn">新闻</span></div>
     <div class="page-sub">> xīn wén // объявления от вожатых</div>
   </div>
-  <div id="announcementsContent"><div class="empty-state">Загрузка...</div></div>
-  <div id="adminAnnounceForm" style="display:none;padding:10px 12px;">
+  <div id="announcementsContent" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
+  <div id="adminAnnounceForm" class="admin-announce-form" style="display:none;padding:10px 12px;">
     <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
     <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
   </div>
@@ -1541,9 +1541,9 @@ body.theme-genshin #raid-action-btn {
 
   <div id="more-news" style="display:none;">
     <div class="cn-divider">📢 新闻 НОВОСТИ</div>
-    <div id="announcementsContent"><div class="empty-state">Загрузка...</div></div>
-    <div id="adminAnnounceForm" style="display:none;padding:10px 12px;">
-      <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
+    <div id="announcementsContentMore" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
+    <div id="adminAnnounceFormMore" class="admin-announce-form" style="display:none;padding:10px 12px;">
+      <textarea class="admin-input" id="announceTextMore" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
       <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
     </div>
   </div>
@@ -1558,18 +1558,18 @@ body.theme-genshin #raid-action-btn {
     <div class="team-card">
       <div class="team-avatar-placeholder">👑</div>
       <div>
-        <div class="team-badge">АЛЬФА СТАИ</div>
+        <div class="team-badge">АЛЬФА СТЭК</div>
         <div class="team-name">Михаил Юрьевич</div>
-        <div class="team-role">Главный альфабосс. И всё. </div>
+        <div class="team-role">Руководитель группы</div>
         <div class="team-desc">Отвечает за всё. Главный по всем вопросам — учёба, организация, дисциплина и общее руководство поездкой.</div>
       </div>
     </div>
     <div class="team-card">
       <div class="team-avatar-placeholder">祝</div>
       <div>
-        <div class="team-badge">СИГМА СТАИ</div>
+        <div class="team-badge">СИГМА СТЭК</div>
         <div class="team-name">Юлия Витальевна</div>
-        <div class="team-role">Альфавожатая. Уважайте ЮВ и ЮВ будет уважать вас</div>
+        <div class="team-role">Вожатый</div>
         <div class="team-desc">Отвечает за здоровье и дисциплину. Вопросы по самочувствию, медицине — к ней.</div>
         <a href="https://t.me/Trufanova_Yulia" class="team-btn">✉ НАПИСАТЬ</a>
       </div>
@@ -1577,9 +1577,9 @@ body.theme-genshin #raid-action-btn {
     <div class="team-card">
       <img src="https://i.ibb.co/WWvhDNnM/1774506558344.png" class="team-avatar" onerror="this.style.display='none'">
       <div>
-        <div class="team-badge">СИГМА СТАИ</div>
+        <div class="team-badge">СИГМА СТЭК</div>
         <div class="team-name">Елизавета Сергеевна</div>
-        <div class="team-role">Сигмавожатая. Удерживает равновесие</div>
+        <div class="team-role">Вожатый</div>
         <div class="team-desc">Отвечает за духовную составляющую. Также по другим вопросам — к ней.</div>
         <a href="https://t.me/naoayako" class="team-btn">✉ НАПИСАТЬ</a>
       </div>
@@ -1587,16 +1587,16 @@ body.theme-genshin #raid-action-btn {
     <div class="team-card">
       <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/file_000000004784720a8c151f4c50a357d9.png?raw=true" class="team-avatar" onerror="this.style.display='none'">
       <div>
-        <div class="team-badge">IT-БЕТА СТАИ</div>
+        <div class="team-badge">IT-БЕТА СТЭК</div>
         <div class="team-name">Марк Альбертович</div>
-        <div class="team-role">IT и Entertainment сигма</div>
-        <div class="team-desc">Да ладно, вы и так знаете про меня. </div>
+        <div class="team-role">IT и досуг</div>
+        <div class="team-desc">Отвечает за связь, покупки и досуг. Проблемы с интернетом — к нему.</div>
         <a href="https://t.me/christianpastor" class="team-btn">✉ НАПИСАТЬ</a>
       </div>
     </div>
     <div class="cn-divider">🤫 匿名问题 АНОНИМНЫЙ ВОПРОС</div>
     <div class="card"><div class="card-inner">
-      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Спамеры и приколисты вычисляются по ID и облагаются штрафом😊</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Имя отправителя вычисляется по ID, но содержимое — только для вожатых.</div>
       <button class="btn btn-primary" onclick="askAnonymous()">[ 发问 // ЗАДАТЬ ВОПРОС ]</button>
     </div></div>
   </div>
@@ -1611,10 +1611,10 @@ body.theme-genshin #raid-action-btn {
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">BlackWall</button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
-      <input class="admin-input" id="schDay" placeholder="День (Пн, Вт...)">
-      <input class="admin-input" id="schTime" placeholder="Время (09:00)">
-      <input class="admin-input" id="schSubject" placeholder="Предмет">
-      <input class="admin-input" id="schLocation" placeholder="Место">
+      <input class="admin-input" id="adminSchDay" placeholder="День (Пн, Вт...)">
+      <input class="admin-input" id="adminSchTime" placeholder="Время (09:00)">
+      <input class="admin-input" id="adminSchSubject" placeholder="Предмет">
+      <input class="admin-input" id="adminSchLocation" placeholder="Место">
       <button class="btn btn-primary" onclick="addScheduleItem()">[ ДОБАВИТЬ ЗАНЯТИЕ ]</button>
     </div>
     <div id="admin-announce" class="admin-section" style="padding:0 12px;">
@@ -1673,7 +1673,7 @@ body.theme-genshin #raid-action-btn {
     </div>
     <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
       <div class="card"><div class="card-inner">
-        <div class="card-label">👁 BlackWall 已激活</div>
+        <div class="card-label">🌑 BlackWall 已激活</div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Глобальная блокировка магазина и кейсов для всех участников</div>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="setBlackwall(true)">[ ВКЛЮЧИТЬ ]</button>
@@ -2143,7 +2143,7 @@ body.theme-genshin #raid-action-btn {
         <button onclick="closeRaid()" class="btn-close-raid">×</button>
         
         <div class="boss-frame">
-            <img id="boss-img" src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true" class="boss-img" alt="BOSS">
+            <img id="boss-img" src="" class="boss-img" alt="BOSS">
         </div>
         
         <div class="boss-name-wrap">
@@ -2159,6 +2159,9 @@ body.theme-genshin #raid-action-btn {
             
             <div class="raid-progress-container">
                 <div id="raid-progress-bar" class="raid-progress-bar"></div>
+            </div>
+            <div id="raid-status-text" style="margin-top:10px;font-size:10px;color:var(--text2);font-family:monospace;line-height:1.6;text-align:center;">
+                // RAID STATUS //
             </div>
         </div>
         
@@ -2254,14 +2257,8 @@ if (user) {
 }
 
 loadSavedTheme();
-// Показываем таб молитв — девочкам, админам, и тем у кого gender=female
-if (isAdmin) { const b = document.getElementById('genshinTabBtn'); if(b) b.style.display='block'; }
-fetch(`${API_URL}/api/user/${currentUserId||0}`).then(r=>r.json()).then(u=>{
-  if(u.gender==='female' || isAdmin){
-    const b=document.getElementById('genshinTabBtn');
-    if(b) b.style.display='block';
-  }
-}).catch(()=>{ if(isAdmin){ const b=document.getElementById('genshinTabBtn'); if(b) b.style.display='block'; } });
+const genshinTabBtn = document.getElementById('genshinTabBtn');
+if (genshinTabBtn) genshinTabBtn.style.display = 'block';
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -2515,15 +2512,27 @@ async function loadSchedule() {
 }
 
 async function addScheduleItem() {
-  const day = document.getElementById('schDay').value, time = document.getElementById('schTime').value;
-  const subject = document.getElementById('schSubject').value, location = document.getElementById('schLocation').value;
+  const getValue = (ids) => ids.map(id => document.getElementById(id)).find(el => el && el.value.trim());
+  const dayEl = getValue(['schDay', 'adminSchDay']) || document.getElementById('schDay') || document.getElementById('adminSchDay');
+  const timeEl = getValue(['schTime', 'adminSchTime']) || document.getElementById('schTime') || document.getElementById('adminSchTime');
+  const subjectEl = getValue(['schSubject', 'adminSchSubject']) || document.getElementById('schSubject') || document.getElementById('adminSchSubject');
+  const locationEl = getValue(['schLocation', 'adminSchLocation']) || document.getElementById('schLocation') || document.getElementById('adminSchLocation');
+  const day = dayEl ? dayEl.value.trim() : '';
+  const time = timeEl ? timeEl.value.trim() : '';
+  const subject = subjectEl ? subjectEl.value.trim() : '';
+  const location = locationEl ? locationEl.value.trim() : '';
   if (!day || !time || !subject || !location) { tg.showAlert('Заполните все поля'); return; }
   try {
     const r = await fetch(`${API_URL}/api/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
       body: JSON.stringify({day,time,subject,location})
     });
-    if (r.ok) { tg.showAlert('✅ Добавлено!'); ['schDay','schTime','schSubject','schLocation'].forEach(id => document.getElementById(id).value=''); loadSchedule(); }
+    if (r.ok) {
+      tg.showAlert('✅ Добавлено!');
+      ['schDay','schTime','schSubject','schLocation','adminSchDay','adminSchTime','adminSchSubject','adminSchLocation']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      loadSchedule();
+    }
   } catch(e) { tg.showAlert('Ошибка'); }
 }
 
@@ -2557,14 +2566,14 @@ function setTheme(theme) {
 
   // Обновляем логотип под тему
   const logoImg = document.querySelector('.main-logo img');
+  const isG = theme === 'genshin-light' || theme === 'genshin-dark';
+  document.body.classList.toggle('theme-genshin', isG);
   if (logoImg) {
-    const isGenshin = theme === 'genshin-light' || theme === 'genshin-dark';
-    logoImg.src = isGenshin
+    logoImg.src = isG
       ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo_genshintheme_nobackground.png'
       : 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true';
   }
   // Переименовываем разделы под тему
-  const isG = theme === 'genshin-light' || theme === 'genshin-dark';
   const el = (id) => document.getElementById(id);
   if (el('nav-casino-label'))    el('nav-casino-label').textContent = isG ? '祈愿' : '箱子';
   if (el('nav-casino-icon'))     el('nav-casino-icon').className    = isG ? 'ti ti-sparkles' : 'ti ti-package';
@@ -2588,123 +2597,6 @@ function loadSavedTheme() {
       setTheme(localStorage.getItem('zhidao_theme') || '');
     }
   } catch(e) { setTheme(''); }
-}
-
-async function showRaid() {
-  const panel = document.getElementById('raidPanel');
-  if (panel.style.display === 'none') {
-    panel.style.display = 'block';
-    await loadRaidStatus();
-  } else {
-    panel.style.display = 'none';
-  }
-}
-
-async function loadRaidStatus() {
-  try {
-    const r = await fetch(`${API_URL}/api/raid/status`);
-    const data = await r.json();
-    const container = document.getElementById('raidStatus');
-    const btn = document.getElementById('joinRaidBtn');
-
-    if (!data.raid) {
-      container.innerHTML = `
-        <div style="text-align:center;padding:8px 0;">
-          <div style="font-size:11px;color:var(--text2);font-family:monospace;">Рейдов сегодня ещё не было</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px;">Будь первым — начни рейд!</div>
-          <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;margin-top:4px;">${isAdmin ? "// АДМИН — РЕЙДЫ БЕЗ ЛИМИТА //" : "Осталось рейдов сегодня: " + (2 - (data.finished_today || 0)) + "/2"}</div>
-        </div>`;
-      btn.style.display = (data.finished_today >= 2 && !isAdmin) ? 'none' : 'block';
-      return;
-    }
-
-    const { raid, participants, count, finished_today } = data;
-
-    if (raid.status === 'finished') {
-      const success = raid.result === 'success';
-      const canRaidAgain = finished_today < 2;
-      container.innerHTML = `
-        <div style="text-align:center;padding:8px;background:${success?'rgba(46,204,113,0.08)':'rgba(180,20,20,0.08)'};border:1px solid ${success?'rgba(46,204,113,0.3)':'rgba(180,20,20,0.3)'};border-radius:8px;margin-bottom:8px;">
-          <div style="font-size:20px;margin-bottom:4px;">${success ? '🏆' : '🛡'}</div>
-          <div style="font-size:13px;font-weight:700;color:${success?'#2ecc71':'#cc4444'};">${success ? 'РЕЙД УСПЕШЕН!' : 'АЛЬФАБОСС ЗАЩИТИЛСЯ!'}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:4px;">${success ? 'Каждый получил +150 ★' : 'Альфабосс отбил атаку 🛡 Ставки сгорели 🔥'}</div>
-          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:6px;">Участники: ${participants.map(p => p.name).join(', ')}</div>
-        </div>
-        <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;text-align:center;">
-          ${canRaidAgain ? `⚔️ Можно ещё ${2 - finished_today} рейд сегодня!` : '// Следующий рейд — завтра //'}
-        </div>`;
-      btn.style.display = canRaidAgain ? 'block' : 'none';
-      return;
-    }
-
-    // Рейд открыт
-    const alreadyJoined = participants.some(p => p.telegram_id === currentUserId);
-    const progressPct = Math.min((count / 3) * 100, 100);
-
-    container.innerHTML = `
-      <div style="margin-bottom:8px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-          <span style="font-size:10px;color:var(--text2);font-family:monospace;">БОЙЦОВ В ОТРЯДЕ</span>
-          <span style="font-size:10px;color:var(--gold);font-family:monospace;">${count} / 3</span>
-        </div>
-        <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;">
-          <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,#cc2200,var(--gold));border-radius:2px;transition:width 0.5s;"></div>
-        </div>
-      </div>
-      ${participants.length ? `<div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:8px;">⚔️ ${participants.map(p => p.name).join(' • ')}</div>` : ''}
-      ${alreadyJoined ? '<div style="font-size:10px;color:#2ecc71;font-family:monospace;text-align:center;">✅ Ты уже в отряде! Ждём ещё бойцов...</div>' : ''}
-      <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;text-align:center;margin-top:4px;">${isAdmin ? "// АДМИН — РЕЙДЫ БЕЗ ЛИМИТА //" : (canRaidAgain ? "Осталось рейдов сегодня: " + (2 - finished_today) + "/2" : "// Следующий рейд — завтра //")}</div>`;
-
-    btn.style.display = alreadyJoined ? 'none' : 'block';
-  } catch(e) {
-    document.getElementById('raidStatus').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-  }
-}
-
-async function joinRaid() {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-  if (currentPoints < 50) { tg.showAlert('Недостаточно баллов! Нужно 50 ★'); return; }
-
-  tg.showPopup({
-    title: '⚔️ Вступить в рейд?',
-    message: 'Ты ставишь 50 ★.\n\n60% — победа: получишь 150 ★\n40% — поражение: ставка сгорит\n\nРейд запустится когда наберётся 3+ бойца.',
-    buttons: [{id:'confirm', type:'default', text:'⚔️ В БОЙ!'}, {type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/raid/join`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({telegram_id: currentUserId})
-      });
-      const data = await r.json();
-      if (r.ok) {
-        currentPoints -= 50;
-        updatePoints();
-        try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        if (data.launched) {
-          if (data.result === 'success') {
-            currentPoints += 150;
-            updatePoints();
-            launchConfetti(80);
-            tg.showAlert('🏆 РЕЙД УСПЕШЕН!\n\nМЮ не устоял! +150 ★ каждому бойцу!');
-          } else {
-            try{tg.HapticFeedback.notificationOccurred('error');}catch(e){}
-            tg.showAlert('🛡 АЛЬФАБОСС ЗАЩИТИЛСЯ!\n\nРейд провалился. Ставки сгорели 🔥');
-          }
-        } else {
-          tg.showAlert(`⚔️ Ты в отряде!\n\nБойцов: ${data.count}/3\nЖди ещё участников!`);
-        }
-        await loadRaidStatus();
-        loadLeaderboard();
-      } else {
-        if (data.detail === 'Already joined') tg.showAlert('Ты уже в этом рейде!');
-        else if (data.detail === 'Daily raid limit reached') tg.showAlert('Сегодня уже было 2 рейда. Приходи завтра!');
-        else if (data.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
-        else tg.showAlert('Ошибка!');
-      }
-    } catch(e) { tg.showAlert('Ошибка соединения'); }
-  });
 }
 
 async function loadLeaderboard() {
@@ -3718,7 +3610,6 @@ async function cancelLaundrySlot(slotId) {
 async function loadLaundry() { loadLaundrySchedule(); }
 function renderLaundrySlots() {}
 async function bookLaundry(time) {}
-async function cancelLaundry(id) {}
 
 async function cancelLaundry(id) {
   try {
@@ -3729,11 +3620,15 @@ async function cancelLaundry(id) {
 
 // ===== ОБЪЯВЛЕНИЯ =====
 async function loadAnnouncements() {
+  const containers = Array.from(document.querySelectorAll('.announcements-content'));
+  const renderToAll = (html) => containers.forEach(container => { container.innerHTML = html; });
   try {
     const r = await fetch(`${API_URL}/api/announcements`);
     const data = await r.json();
-    const container = document.getElementById('announcementsContent');
-    if (!data.length) { container.innerHTML = '<div class="empty-state">Объявлений пока нет</div>'; return; }
+    if (!data.length) {
+      renderToAll('<div class="empty-state">Объявлений пока нет</div>');
+      return;
+    }
 
     const REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑'];
 
@@ -3746,7 +3641,7 @@ async function loadAnnouncements() {
       } catch { return { ...item, reactions: [] }; }
     }));
 
-    container.innerHTML = withReactions.map(item => {
+    const html = withReactions.map(item => {
       const reactionMap = {};
       item.reactions.forEach(r => { reactionMap[r.emoji] = r.count; });
 
@@ -3770,11 +3665,13 @@ async function loadAnnouncements() {
       </div>`;
     }).join('');
 
-    if (isAdmin) {
-      const f = document.getElementById('adminAnnounceForm');
-      if (f) f.style.display = 'block';
-    }
-  } catch(e) { document.getElementById('announcementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+    renderToAll(html);
+    document.querySelectorAll('.admin-announce-form').forEach(form => {
+      form.style.display = isAdmin ? 'block' : 'none';
+    });
+  } catch(e) {
+    renderToAll('<div class="empty-state">Ошибка загрузки</div>');
+  }
 }
 
 async function reactToAnnouncement(id, emoji, btn) {
@@ -3793,11 +3690,21 @@ async function reactToAnnouncement(id, emoji, btn) {
 }
 
 async function addAnnouncement() {
-  const text = document.getElementById('announceText').value;
+  const source = ['announceText', 'announceTextMore']
+    .map(id => document.getElementById(id))
+    .find(el => el && el.value.trim());
+  const text = source ? source.value.trim() : '';
   if (!text) { tg.showAlert('Введите текст'); return; }
   try {
     const r = await fetch(`${API_URL}/api/announcements`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({text})});
-    if (r.ok) { tg.showAlert('✅ Опубликовано!'); document.getElementById('announceText').value=''; loadAnnouncements(); }
+    if (r.ok) {
+      tg.showAlert('✅ Опубликовано!');
+      ['announceText', 'announceTextMore'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      loadAnnouncements();
+    }
   } catch(e) { tg.showAlert('Ошибка'); }
 }
 
@@ -4048,239 +3955,271 @@ async function setBlackwall(enabled) {
 
 // НАСТРОЙКИ
 const RAID_CONFIG = {
-    minPlayers: 3,          // Минимум игроков для старта (обычные)
-    maxPlayers: 15,         // Максимум (для красоты бара, но старт раньше)
-    adminIds: [389741116, 244487659, 1190015933, 491711713], // Твои админы
+    minPlayers: 3,
+    maxPlayers: 15,
+    adminIds: [389741116, 244487659, 1190015933, 491711713],
     cyberpunk: {
-        img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true', 
+        img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
         title: '// MICHAEL SMASHER PROTOCOL // TARGET: МЮ',
         placeholderColor: '#ff003c'
     },
     genshin: {
-        img: 'images/raid/pierro_mu.png',
+        img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme.png?raw=true',
         title: '💎 МИКЕЛАНДЖЕЛО // ПЕРВЫЙ ПРЕДВЕСТНИК ОТБОЯ',
         placeholderColor: '#dbb165'
     }
 };
 
-let raidPoller = null;
-let currentRaidCount = 0;
-let isRaidStarted = false; // Флаг, чтобы не начать дважды
+let raidRefreshTimer = null;
+let isJoiningRaid = false;
 
-// 1. Функция открытия Рейда
-function showRaid() {
-    console.log("Initializing Raid Mode...");
-    const overlay = document.getElementById('raid-overlay');
-    const bossImg = document.getElementById('boss-img');
-    const bossTitle = document.getElementById('boss-title');
-    const currentTheme = document.body.classList.contains('theme-genshin') ? 'genshin' : 'cyberpunk';
-    const config = RAID_CONFIG[currentTheme];
+function getRaidThemeKey() {
+    return document.body.classList.contains('theme-genshin') ? 'genshin' : 'cyberpunk';
+}
 
-    isRaidStarted = false; // Сброс флага
-    bossTitle.innerText = config.title;
-    
-    // Логика картинки/заглушки
-    bossImg.src = config.img;
-    bossImg.style.backgroundColor = 'transparent';
-    bossImg.onerror = function() {
-        this.style.display = 'none'; 
-        const frame = document.querySelector('.boss-frame');
-        if(!frame.querySelector('.boss-placeholder')) {
-            const placeholder = document.createElement('div');
-            placeholder.className = 'boss-placeholder';
-            placeholder.style.width = '220px';
-            placeholder.style.height = '220px';
-            placeholder.style.borderRadius = currentTheme === 'genshin' ? '20px' : '50%';
-            placeholder.style.background = config.placeholderColor;
-            placeholder.style.display = 'flex';
-            placeholder.style.alignItems = 'center';
-            placeholder.style.justifyContent = 'center';
-            placeholder.style.color = '#fff';
-            placeholder.style.fontSize = '40px';
-            placeholder.style.fontWeight = 'bold';
-            placeholder.style.boxShadow = '0 0 20px ' + config.placeholderColor;
-            placeholder.innerText = "M.Y.";
-            
-            Object.assign(placeholder.style, {
-                transform: 'scale(0) rotate(-180deg)',
-                opacity: '0',
-                transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s',
-                animation: 'bossFloat 4s ease-in-out infinite 0.9s'
-            });
-            frame.appendChild(placeholder);
-            
-            setTimeout(() => {
-                placeholder.style.transform = 'scale(1) rotate(0deg)';
-                placeholder.style.opacity = '1';
-            }, 50);
-        }
-    };
-    
-    // Сброс кнопки
+function setRaidButtonState(text, disabled, background = '', color = '') {
     const btn = document.getElementById('raid-action-btn');
-    btn.disabled = false;
-    btn.innerText = "ПОДКЛЮЧИТЬСЯ К НЕЙРОЛИНКУ";
-    btn.style.background = ""; 
-    btn.style.animation = "";
-    btn.style.opacity = "1";
-    
-    // Сброс прогресса
-    currentRaidCount = 0; 
-    updateRaidUI(currentRaidCount); 
-
-    overlay.classList.add('active');
-    
-    // АВТО-НАБОР БОТОВ (ДЛЯ ДЕМО)
-    // Если вы один, боты быстро доберут до 3 человек, чтобы рейд не висел
-    if (raidPoller) clearInterval(raidPoller);
-    raidPoller = setInterval(() => {
-        // Если рейд уже начался или мы админ (ждем клика), не набираем ботов
-        if (isRaidStarted) {
-            clearInterval(raidPoller);
-            return;
-        }
-
-        // Если нас меньше 3, боты быстро добавляют людей
-        if (currentRaidCount < RAID_CONFIG.minPlayers) {
-            currentRaidCount++;
-            updateRaidUI(currentRaidCount);
-            
-            // Как только набрали 3 - ждем чуть-чуть и стартуем сами (имитация)
-            if (currentRaidCount >= RAID_CONFIG.minPlayers) {
-                setTimeout(() => {
-                    if(!isRaidStarted) startBattle(false);
-                }, 1000);
-            }
-        }
-    }, 800); // Бот добавляется каждые 0.8 сек
+    if (!btn) return;
+    btn.disabled = !!disabled;
+    btn.innerHTML = `<i class="ti ti-broadcast"></i> ${text}`;
+    btn.style.background = background;
+    btn.style.color = color;
+    btn.style.opacity = disabled ? '0.7' : '1';
 }
 
-// 2. Функция закрытия Рейда
-function closeRaid() {
-    const overlay = document.getElementById('raid-overlay');
-    overlay.classList.remove('active');
-    
-    if (raidPoller) clearInterval(raidPoller);
-    
-    const placeholder = document.querySelector('.boss-placeholder');
-    if(placeholder) placeholder.remove();
+function setRaidStatusText(text, color = 'var(--text2)') {
+    const status = document.getElementById('raid-status-text');
+    if (!status) return;
+    status.textContent = text;
+    status.style.color = color;
 }
 
-// 3. Обновление интерфейса
-function updateRaidUI(joinedCount) {
+function updateRaidUI(joinedCount, target = RAID_CONFIG.minPlayers) {
     const currentLabel = document.getElementById('raid-current-count');
     const maxLabel = document.getElementById('raid-max-count');
     const progressBar = document.getElementById('raid-progress-bar');
-    
-    // Показываем прогресс относительно МИНИМУМА (3), а не максимума, для наглядности
-    // Но визуально бар заполняется до конца при 3, дальше просто цифры растут
-    const target = RAID_CONFIG.minPlayers; 
-    const validatedCount = Math.min(joinedCount, RAID_CONFIG.maxPlayers);
-    
-    // Процент считаем от минимума для быстрого визуального эффекта "Готово"
-    let percentage = (validatedCount / target) * 100;
-    if (percentage > 100) percentage = 100; // Бар полон, но цифры идут дальше
+    if (!currentLabel || !maxLabel || !progressBar) return;
 
-    currentLabel.innerText = validatedCount;
-    maxLabel.innerText = RAID_CONFIG.maxPlayers; // Показываем макс для инфо
+    const safeCount = Math.max(0, Math.min(joinedCount || 0, RAID_CONFIG.maxPlayers));
+    const safeTarget = Math.max(1, target || RAID_CONFIG.minPlayers);
+    const percentage = Math.min((safeCount / safeTarget) * 100, 100);
+
+    currentLabel.innerText = safeCount;
+    maxLabel.innerText = safeTarget;
     progressBar.style.width = percentage + '%';
-    
-    // Меняем цвет бара на зеленый, когда готовы к старту
-    if (validatedCount >= RAID_CONFIG.minPlayers) {
-        progressBar.style.background = "linear-gradient(90deg, #2ecc71, #27ae60)";
-        progressBar.style.boxShadow = "0 0 10px #2ecc71";
+
+    if (safeCount >= safeTarget) {
+        progressBar.style.background = 'linear-gradient(90deg, #2ecc71, #27ae60)';
+        progressBar.style.boxShadow = '0 0 10px #2ecc71';
+        progressBar.style.animation = '';
     } else {
-        progressBar.style.background = "linear-gradient(90deg, var(--red), #ff4400)";
-        progressBar.style.boxShadow = "0 0 10px var(--red-dim)";
+        progressBar.style.background = 'linear-gradient(90deg, var(--red), #ff4400)';
+        progressBar.style.boxShadow = '0 0 10px var(--red-dim)';
+        progressBar.style.animation = '';
     }
 }
 
-// 4. Функция "Присоединиться"
+function prepareRaidVisual() {
+    const currentTheme = getRaidThemeKey();
+    const config = RAID_CONFIG[currentTheme];
+    const bossImg = document.getElementById('boss-img');
+    const bossTitle = document.getElementById('boss-title');
+    const frame = document.querySelector('.boss-frame');
+    const existingPlaceholder = frame ? frame.querySelector('.boss-placeholder') : null;
+
+    if (bossTitle) bossTitle.innerText = config.title;
+    if (existingPlaceholder) existingPlaceholder.remove();
+    if (!bossImg) return;
+
+    bossImg.style.display = 'block';
+    bossImg.style.backgroundColor = 'transparent';
+    bossImg.onload = function() {
+        const placeholder = frame ? frame.querySelector('.boss-placeholder') : null;
+        if (placeholder) placeholder.remove();
+        this.style.display = 'block';
+    };
+    bossImg.onerror = function() {
+        this.style.display = 'none';
+        if (!frame || frame.querySelector('.boss-placeholder')) return;
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'boss-placeholder';
+        placeholder.style.width = '220px';
+        placeholder.style.height = '220px';
+        placeholder.style.borderRadius = currentTheme === 'genshin' ? '20px' : '50%';
+        placeholder.style.background = config.placeholderColor;
+        placeholder.style.display = 'flex';
+        placeholder.style.alignItems = 'center';
+        placeholder.style.justifyContent = 'center';
+        placeholder.style.color = '#fff';
+        placeholder.style.fontSize = '40px';
+        placeholder.style.fontWeight = 'bold';
+        placeholder.style.boxShadow = '0 0 20px ' + config.placeholderColor;
+        placeholder.innerText = 'M.Y.';
+        Object.assign(placeholder.style, {
+            transform: 'scale(0) rotate(-180deg)',
+            opacity: '0',
+            transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s',
+            animation: 'bossFloat 4s ease-in-out infinite 0.9s'
+        });
+        frame.appendChild(placeholder);
+        setTimeout(() => {
+            placeholder.style.transform = 'scale(1) rotate(0deg)';
+            placeholder.style.opacity = '1';
+        }, 50);
+    };
+    bossImg.src = config.img;
+}
+
+function closeRaid() {
+    const overlay = document.getElementById('raid-overlay');
+    if (overlay) overlay.classList.remove('active');
+    if (raidRefreshTimer) {
+        clearInterval(raidRefreshTimer);
+        raidRefreshTimer = null;
+    }
+}
+
+async function showRaid() {
+    prepareRaidVisual();
+    updateRaidUI(0);
+    setRaidStatusText('Синхронизация рейда...');
+    setRaidButtonState('Загрузка статуса...', true);
+
+    const overlay = document.getElementById('raid-overlay');
+    if (overlay) overlay.classList.add('active');
+
+    await loadRaidStatus();
+
+    if (raidRefreshTimer) clearInterval(raidRefreshTimer);
+    raidRefreshTimer = setInterval(() => {
+        const isOpen = document.getElementById('raid-overlay')?.classList.contains('active');
+        if (isOpen && !isJoiningRaid) loadRaidStatus();
+    }, 5000);
+}
+
+async function loadRaidStatus() {
+    try {
+        const r = await fetch(`${API_URL}/api/raid/status`);
+        if (!r.ok) throw new Error('status');
+
+        const data = await r.json();
+        const finishedToday = data.finished_today || 0;
+        const remainingToday = isAdmin ? 'без лимита' : `${Math.max(0, 2 - finishedToday)}/2`;
+
+        if (!data.raid) {
+            updateRaidUI(0);
+            setRaidStatusText(
+                isAdmin
+                    ? 'Рейд ещё не создан. Админ может стартовать в любой момент.'
+                    : `Рейд ещё не собран. Осталось попыток сегодня: ${remainingToday}.`
+            );
+            setRaidButtonState(
+                'Подключиться к нейролинку',
+                finishedToday >= 2 && !isAdmin
+            );
+            return;
+        }
+
+        const participants = data.participants || [];
+        const count = data.count ?? participants.length ?? 0;
+        const participantNames = participants.map(p => p.name).join(' • ');
+        const alreadyJoined = participants.some(p => p.telegram_id === currentUserId);
+
+        if (data.raid.status === 'finished') {
+            const success = data.raid.result === 'success';
+            updateRaidUI(Math.max(count, RAID_CONFIG.minPlayers));
+            setRaidStatusText(
+                success
+                    ? `Рейд завершён: +150★ каждому.${participantNames ? ' Бойцы: ' + participantNames : ''}`
+                    : `Альфабосс отбился.${participantNames ? ' В отряде были: ' + participantNames : ''}`,
+                success ? '#2ecc71' : '#cc4444'
+            );
+            setRaidButtonState(
+                isAdmin || finishedToday < 2 ? 'Начать новый рейд' : 'Рейды на сегодня закрыты',
+                !isAdmin && finishedToday >= 2
+            );
+            return;
+        }
+
+        updateRaidUI(count);
+        setRaidStatusText(
+            alreadyJoined
+                ? `Ты уже в отряде. Бойцов: ${count}/${RAID_CONFIG.minPlayers}.${participantNames ? ' ' + participantNames : ''}`
+                : `Сбор отряда: ${count}/${RAID_CONFIG.minPlayers}.${participantNames ? ' ' + participantNames : ''} ${isAdmin ? '' : 'Осталось рейдов: ' + remainingToday + '.'}`,
+            alreadyJoined ? '#2ecc71' : 'var(--text2)'
+        );
+        setRaidButtonState(
+            alreadyJoined ? 'Ты уже в отряде' : 'Подключиться к нейролинку',
+            alreadyJoined || isJoiningRaid
+        );
+    } catch(e) {
+        updateRaidUI(0);
+        setRaidStatusText('Не удалось загрузить статус рейда.', '#cc4444');
+        setRaidButtonState('Повторить подключение', false);
+    }
+}
+
+function getRaidErrorMessage(detail) {
+    if (detail === 'Already joined') return 'Ты уже в этом рейде.';
+    if (detail === 'Daily raid limit reached') return 'Сегодня лимит рейдов исчерпан. Попробуй завтра.';
+    if (detail === 'Not enough points') return 'Недостаточно баллов для рейда.';
+    return 'Не удалось присоединиться к рейду.';
+}
+
 async function joinRaid() {
-    if (isRaidStarted) return; // Защита от двойного клика
+    if (isJoiningRaid) return;
+    if (!currentUserId) { tg.showAlert('Откройте приложение через Telegram бота'); return; }
+    if (currentPoints < 50) { tg.showAlert('Недостаточно баллов. Нужно 50★'); return; }
 
-    const btn = document.getElementById('raid-action-btn');
-    const currentUserId = tg.initDataUnsafe.user?.id;
-    const isPrivileged = RAID_CONFIG.adminIds.includes(currentUserId);
+    tg.showPopup({
+        title: '⚔️ Вступить в рейд?',
+        message: 'Ты ставишь 50★. Победа даст +150★ каждому участнику, поражение сожжёт ставку. Рейд стартует при 3 бойцах.',
+        buttons: [{id:'confirm', type:'default', text:'⚔️ В БОЙ!'}, {type:'cancel'}]
+    }, async (btnId) => {
+        if (btnId !== 'confirm') return;
 
-    btn.disabled = true;
-    btn.innerText = "СИНХРОНИЗАЦИЯ...";
+        isJoiningRaid = true;
+        setRaidButtonState('Синхронизация...', true, '#e67e22', '#fff');
 
-    // Имитация задержки сети
-    await new Promise(res => setTimeout(res, isPrivileged ? 400 : 800));
+        try {
+            const r = await fetch(`${API_URL}/api/raid/join`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({telegram_id: currentUserId})
+            });
+            const data = await r.json();
 
-    // Добавляем игрока
-    currentRaidCount++;
-    updateRaidUI(currentRaidCount);
-
-    // ПРОВЕРКА УСЛОВИЙ СТАРТА
-    if (isPrivileged) {
-        // АДМИН: стартует сразу один
-        console.log("⚡ ADMIN START");
-        startBattle(true);
-    } else if (currentRaidCount >= RAID_CONFIG.minPlayers) {
-        // ОБЫЧНЫЙ: старт, если >= 3
-        console.log("✅ SQUAD READY (3+)");
-        startBattle(false);
-    } else {
-        // Ждем еще игроков
-        btn.innerText = `ОЖИДАНИЕ БОЙЦОВ (${currentRaidCount}/${RAID_CONFIG.minPlayers})...`;
-        btn.style.background = "#e67e22"; // Оранжевый
-        
-        // Включаем бота-добавщика, если вдруг застряли (для теста)
-        if (raidPoller) clearInterval(raidPoller);
-        raidPoller = setInterval(() => {
-            if (currentRaidCount < RAID_CONFIG.minPlayers) {
-                currentRaidCount++;
-                updateRaidUI(currentRaidCount);
-                if (currentRaidCount >= RAID_CONFIG.minPlayers) startBattle(false);
-            } else {
-                clearInterval(raidPoller);
+            if (!r.ok) {
+                tg.showAlert(getRaidErrorMessage(data.detail));
+                return;
             }
-        }, 1000);
-    }
-}
 
-// 5. ЗАПУСК БОЯ (Финал)
-function startBattle(isInstant) {
-    if (isRaidStarted) return;
-    isRaidStarted = true;
-    
-    if (raidPoller) clearInterval(raidPoller);
+            if (typeof data.new_points === 'number') {
+                currentPoints = data.new_points;
+                updatePoints();
+            }
 
-    const btn = document.getElementById('raid-action-btn');
-    const progressBar = document.getElementById('raid-progress-bar');
-    
-    // Визуал "Бой идет"
-    progressBar.style.background = "linear-gradient(90deg, #ffd700, #ffaa00)";
-    progressBar.style.animation = "barGlow 0.5s infinite";
-    
-    if (isInstant) {
-        btn.innerText = "⚡ РЕЖИМ БОГА: УНИЧТОЖЕНИЕ...";
-        btn.style.background = "#ffd700";
-        btn.style.color = "#000";
-    } else {
-        btn.innerText = "⚔️ БОЙ НАЧАЛСЯ!...";
-        btn.style.background = "#e74c3c";
-        btn.style.color = "#fff";
-    }
+            if (data.launched && data.result === 'success') {
+                launchConfetti(80);
+            }
 
-    // Имитация длительности боя (2 секунды)
-    setTimeout(() => {
-        finishRaid(isInstant);
-    }, 2000);
-}
+            try {
+                tg.HapticFeedback.notificationOccurred(
+                    data.launched && data.result === 'defended' ? 'error' : 'success'
+                );
+            } catch(e) {}
 
-// 6. ПОБЕДА
-function finishRaid(isInstant) {
-    const btn = document.getElementById('raid-action-btn');
-    
-    const rewardText = isInstant ? "+5000 ★ (ADMIN)" : "+150 ★";
-    const itemText = isInstant ? "[Чертеж: Протокол Мю]" : "[Фрагмент данных]";
-    
-    tg.showAlert(`🏆 ПОБЕДА!\n\nРейд успешно завершен.\nНаграда: ${rewardText}\nПредмет: ${itemText}`);
-    
-    closeRaid();
+            tg.showAlert(data.message || 'Рейд обновлён.');
+            loadLeaderboard();
+            loadPoints(currentUserId);
+        } catch(e) {
+            tg.showAlert('Ошибка соединения с рейдом.');
+        } finally {
+            isJoiningRaid = false;
+            loadRaidStatus();
+        }
+    });
 }
 </script>
 </body>
