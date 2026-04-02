@@ -1995,8 +1995,7 @@ body.theme-genshin .diary-star.active {
   </div>
 
   <div class="casino-subtabs">
-    <button class="subtab active" onclick="switchCasinoTab('play',this)">🎰 ИГРАТЬ</button>
-    <button class="subtab" id="genshinTabBtn" style="display:none !important;" onclick="switchCasinoTab('genshin',this)">🎴 ИГРАТЬ</button>
+    <button class="subtab active" id="casinoPlayBtn" onclick="switchCasinoTab(currentThemePath==='genshin'?'genshin':'play',this)">🎰 ИГРАТЬ</button>
     <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
     <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
     <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
@@ -2120,6 +2119,61 @@ body.theme-genshin .diary-star.active {
       </div>
     </div>
   </div>  <!-- /casinoRulesContent -->
+
+  <!-- Правила Геншин -->
+  <div id="genshinRulesContent" style="display:none;flex-direction:column;">
+    <div style="padding:8px 0;">
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:24px;">🔵</div>
+        <div><div class="rules-title">синий свиток — 79%</div>
+        <div class="rules-desc">
+          ⭐ +30 звёзд (35%)<br>
+          💫 +60 звёзд (20%)<br>
+          🛡 Иммунитет от штрафа (10%)<br>
+          🕐 +30 мин свободы (7%)<br>
+          🌸 Карточка 4★ (28%)
+        </div></div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:24px;">🟣</div>
+        <div><div class="rules-title">фиолетовый свиток — 20%</div>
+        <div class="rules-desc">
+          Карточки 4★ — редкие персонажи<br>
+          焰莲使者 · 九尾狐灵 · 桃花仙子 · 文曲星君 · 木灵仙君 · 海灵仙后 · 嫦娥仙子
+        </div></div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:24px;">🟡</div>
+        <div><div class="rules-title">золотой свиток — 1%</div>
+        <div class="rules-desc">
+          Карточки 5★ — легендарные персонажи<br>
+          岩王帝君 Архонт Земли · 紫微星君 Императорская Звезда
+        </div></div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:24px;">🔄</div>
+        <div><div class="rules-title">Дубликаты</div>
+        <div class="rules-desc">
+          Если выпала уже имеющаяся карточка — она добавляется как второй экземпляр.<br>
+          Исключение: 嫦娥仙子 Богиня Луны — дубль сразу даёт +50★ вместо карточки.<br>
+          Лишние карточки можно разобрать за 50★ в разделе Карточки.
+        </div></div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon">💰</div>
+        <div><div class="rules-title">Стоимость и лимиты</div>
+        <div class="rules-desc">
+          50★ за молитву • Лимит 3 молитвы в день<br>
+          Дополнительную молитву можно купить в магазине
+        </div></div>
+      </div>
+      <div style="margin:10px 12px;padding:12px;background:rgba(219,177,101,0.08);border:1px solid rgba(219,177,101,0.25);border-radius:8px;">
+        <div style="font-size:9px;color:rgba(219,177,101,0.7);font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">✦ ПРИМЕЧАНИЕ</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Молитвы — игровая механика для мотивации и удовольствия. Карточки дают пассивные бонусы на протяжении поездки. Молитва стоит 50★ и не гарантирует прибыль. Молись ради удачи, а не ради выгоды ✦</div>
+      </div>
+    </div>
+  </div>
+  <!-- /genshinRulesContent -->
 
   <!-- ГЕНШИН ПАНЕЛЬ -->
   <div id="casinoGenshinContent" style="display:none;flex-direction:column;">
@@ -4897,12 +4951,18 @@ function switchCasinoTab(mode, btn) {
   loadPoints(currentUserId);
   document.querySelectorAll('#page-casino .subtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent','casinoGenshinContent'];
+  const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent','casinoGenshinContent','genshinRulesContent'];
   ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
   if (mode==='play') { document.getElementById('casinoPlayContent').style.display='flex'; setTimeout(initRoulette,50); }
   else if (mode==='inventory') { document.getElementById('casinoInventoryContent').style.display='flex'; loadCasinoInventory(); }
   else if (mode==='history') { document.getElementById('casinoHistoryContent').style.display='flex'; loadCasinoHistory(); }
-  else if (mode==='rules') { document.getElementById('casinoRulesContent').style.display='flex'; }
+  else if (mode==='rules') {
+  if (currentThemePath === 'genshin') {
+    document.getElementById('genshinRulesContent').style.display='flex';
+  } else {
+    document.getElementById('casinoRulesContent').style.display='flex';
+  }
+}
   else if (mode==='genshin') { document.getElementById('casinoGenshinContent').style.display='flex'; }
 }
 
