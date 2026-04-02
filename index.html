@@ -1845,7 +1845,7 @@ body.theme-genshin .diary-star.active {
   <div class="main-logo-wrap">
     <div class="main-logo"><img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true" style="width:140px;height:140px;object-fit:contain;"></div>
     <div class="main-pinyin">智能电子解决方案</div>
-    <div class="proto-tag">🏮 PROTOCOL v2.8.3 // ACTIVE 🏮</div>
+    <div class="proto-tag">🏮 PROTOCOL v1.4 // ACTIVE 🏮</div>
   </div>
 
   <div class="stats-row">
@@ -3746,6 +3746,65 @@ async function saveDiaryDraft(showFeedback = false) {
   }
 }
 
+// ── DIARY VALIDATION ──────────────────────────────────────────
+
+function isChineseChar(ch) {
+  const code = ch.codePointAt(0);
+  return (code >= 0x4e00 && code <= 0x9fff)
+      || (code >= 0x3400 && code <= 0x4dbf)
+      || (code >= 0x20000 && code <= 0x2a6df);
+}
+
+function countChineseChars(str) {
+  return [...(str || '')].filter(isChineseChar).length;
+}
+
+const PINYIN_SYLLABLE = /^(zh|ch|sh|[bpmfdtnlgkhjqxrzcsyw])?([aeiouuv]+(?:ng?|n)?|[mn])[1-5]$/i;
+
+function validatePinyinToken(token) {
+  return PINYIN_SYLLABLE.test(token);
+}
+
+function validateDiary(entry) {
+  const warnings = [];
+
+  entry.words.forEach((w, i) => {
+    const row   = i + 1;
+    const hanzi = (w.hanzi || '').trim();
+    const pinyin= (w.pinyin || '').trim();
+    const trans = (w.translation || '').trim();
+    if (!hanzi && !pinyin && !trans) return;
+
+    if (hanzi) {
+      const cnCount = countChineseChars(hanzi);
+      if (cnCount === 0)
+        warnings.push('Строка ' + row + ': в поле иероглифов нет китайских символов');
+      else if ([...hanzi].some(c => /[a-zA-Z]/.test(c)))
+        warnings.push('Строка ' + row + ': в иероглифах есть латинские буквы');
+    } else {
+      warnings.push('Строка ' + row + ': поле иероглифов пустое');
+    }
+
+    if (pinyin) {
+      const tokens = pinyin.trim().toLowerCase().split(/\s+/);
+      const bad = tokens.filter(t => !validatePinyinToken(t));
+      if (bad.length)
+        warnings.push('Строка ' + row + ': пиньинь — «' + bad.join(', ') + '» не похоже на формат ni3 hao3');
+    } else if (hanzi) {
+      warnings.push('Строка ' + row + ': пиньинь не заполнен');
+    }
+
+    if (!trans && hanzi)
+      warnings.push('Строка ' + row + ': перевод не заполнен');
+  });
+
+  const cnInStory = countChineseChars(entry.story || '');
+  if ((entry.story || '').trim() && cnInStory < 10)
+    warnings.push('Текст дня: маловато иероглифов (' + cnInStory + ') — проверь, всё ли написано');
+
+  return warnings;
+}
+
 async function submitDiary() {
   if (!currentUserId) { tg.showAlert('Открой через бота.'); return; }
   const entry     = collectDiaryFormData();
@@ -3757,10 +3816,15 @@ async function submitDiary() {
     return;
   }
 
+  const warnings = validateDiary(entry);
+  const popupMsg = warnings.length
+    ? '\u26a0\ufe0f Найдены замечания:\n' + warnings.slice(0,5).map(w => '\u2022 ' + w).join('\n') + (warnings.length > 5 ? '\n...и ещё ' + (warnings.length - 5) : '') + '\n\nВсё равно сдать?'
+    : 'Слов: ' + wordCount + '/15. После сдачи редактирование будет закрыто до разблокировки.';
+
   tg.showPopup({
-    title: 'Сдать день?',
-    message: `Слов: ${wordCount}/15. После сдачи редактирование будет закрыто до разблокировки.`,
-    buttons: [{ id: 'yes', type: 'default', text: '✅ Сдать' }, { type: 'cancel' }]
+    title: warnings.length ? '\u26a0\ufe0f Проверь дневник' : 'Сдать день?',
+    message: popupMsg,
+    buttons: [{ id: 'yes', type: 'default', text: warnings.length ? 'Всё равно сдать' : '\u2705 Сдать' }, { type: 'cancel', text: warnings.length ? 'Исправить' : 'Отмена' }]
   }, async (btnId) => {
     if (btnId !== 'yes') return;
     await saveDiaryDraft(false);
