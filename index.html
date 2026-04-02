@@ -1622,6 +1622,110 @@ body.theme-genshin #raid-action-btn {
     font-size: 10px;
 }
 
+
+/* ── Diary Admin Panel ─────────────────────────────────── */
+.diary-admin-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+.diary-admin-date {
+    flex: 1;
+    min-width: 130px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text1);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: monospace;
+    font-size: 12px;
+}
+.diary-admin-refresh {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 11px;
+}
+.diary-student-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.diary-student-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.diary-student-row:hover {
+    border-color: rgba(212,175,55,0.35);
+    background: rgba(212,175,55,0.04);
+}
+.diary-student-row.active {
+    border-color: rgba(212,175,55,0.5);
+    background: rgba(212,175,55,0.08);
+}
+.diary-student-icon { font-size: 16px; flex-shrink: 0; }
+.diary-student-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text1);
+    font-family: monospace;
+}
+.diary-student-words {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: monospace;
+}
+.diary-student-badge {
+    font-size: 9px;
+    font-family: monospace;
+    padding: 3px 7px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+}
+.diary-student-badge.missing  { color: var(--text3); }
+.diary-student-badge.draft    { color: #6af; }
+.diary-student-badge.submitted{ color: #4fa; }
+.diary-student-badge.locked   { color: #fa4; }
+
+.diary-viewing-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(212,175,55,0.35);
+    background: rgba(212,175,55,0.07);
+    margin-bottom: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--gold, #d4af37);
+}
+.diary-viewing-banner button {
+    background: transparent;
+    border: 1px solid rgba(212,175,55,0.4);
+    color: var(--gold, #d4af37);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
 .diary-back-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -2754,6 +2858,37 @@ body.theme-genshin .diary-star.active {
   </div>
 
   <div class="diary-shell">
+
+    <!-- ── Admin Overview Panel (admins only) ───────────────── -->
+    <div id="diaryAdminPanel" style="display:none;">
+
+      <!-- Viewing-as banner -->
+      <div id="diaryViewingBanner" style="display:none;" class="diary-viewing-banner">
+        <span id="diaryViewingName">—</span>
+        <button onclick="diaryBackToSelf()">[ ← НАЗАД ]</button>
+      </div>
+
+      <!-- Student list card -->
+      <div class="diary-card" id="diaryStudentCard">
+        <div class="diary-section-head">
+          <div>
+            <div class="diary-section-title">Обзор дня</div>
+            <div class="diary-section-sub">// статус дневников по студентам</div>
+          </div>
+        </div>
+        <div class="diary-admin-bar">
+          <input id="diaryAdminDate" class="diary-admin-date" type="date"
+            onchange="loadDiaryOverview(this.value)">
+          <button class="diary-admin-refresh" onclick="loadDiaryOverview()">↻ Обновить</button>
+        </div>
+        <div id="diaryStudentList" class="diary-student-list">
+          <div class="diary-day-chip-empty">Загрузка...</div>
+        </div>
+      </div>
+
+    </div>
+    <!-- ── End Admin Panel ───────────────────────────────────── -->
+
     <div class="diary-hero">
       <div class="diary-hero-top">
         <div class="diary-kicker">Traveler Log Active</div>
@@ -3141,7 +3276,108 @@ const DIARY_WEATHER_OPTIONS = [
 // ============================================================
 // ZHIDAO Diary — API Integration Patch
 // Replaces: from "let diaryInitialized = false;"
-//           to end of "function initDiaryPage() { ... }"
+//           to end of "
+// ── ADMIN OVERVIEW ────────────────────────────────────────────
+
+function diaryStatusLabel(status) {
+  switch (status) {
+    case 'draft':     return { icon: '📝', text: 'черновик',  cls: 'draft' };
+    case 'submitted': return { icon: '✅', text: 'сдано',     cls: 'submitted' };
+    case 'locked':    return { icon: '🔒', text: 'закрыто',   cls: 'locked' };
+    default:          return { icon: '💾', text: 'нет записи',cls: 'missing' };
+  }
+}
+
+async function loadDiaryOverview(dateOverride) {
+  const dateInput = document.getElementById('diaryAdminDate');
+  const date = dateOverride || (dateInput && dateInput.value) || getShanghaiDateString();
+  if (dateInput) dateInput.value = date;
+
+  const list = document.getElementById('diaryStudentList');
+  if (!list) return;
+  list.innerHTML = '<div class="diary-day-chip-empty">Загрузка...</div>';
+
+  try {
+    const r = await fetch(`${API_URL}/api/diary/admin/overview?entry_date=${date}`, {
+      headers: diaryHeaders()
+    });
+    if (!r.ok) { list.innerHTML = '<div class="diary-day-chip-empty">Ошибка загрузки.</div>'; return; }
+    const data = await r.json();
+    const entries = data.entries || [];
+    if (!entries.length) {
+      list.innerHTML = '<div class="diary-day-chip-empty">Нет студентов в базе.</div>';
+      return;
+    }
+    renderDiaryStudentList(entries);
+  } catch(e) {
+    list.innerHTML = '<div class="diary-day-chip-empty">Нет соединения.</div>';
+  }
+}
+
+function renderDiaryStudentList(entries) {
+  const list = document.getElementById('diaryStudentList');
+  if (!list) return;
+
+  list.innerHTML = entries.map(entry => {
+    const { icon, text, cls } = diaryStatusLabel(entry.status);
+    const words = entry.has_entry ? `${entry.words_filled}/15` : '—';
+    const isActive = diaryViewedUserId === entry.telegram_id;
+    const scoreText = (entry.lesson_score || entry.diary_score)
+      ? ` · 📚${entry.lesson_score || '?'} 📓${entry.diary_score || '?'}` : '';
+
+    return `
+      <div class="diary-student-row ${isActive ? 'active' : ''}"
+        onclick="openStudentDiary(${entry.telegram_id}, '${escapeHtml(entry.full_name || 'Студент')}')">
+        <span class="diary-student-icon">${icon}</span>
+        <span class="diary-student-name">${escapeHtml(entry.full_name || 'Студент')}</span>
+        <span class="diary-student-words">${words}${scoreText}</span>
+        <span class="diary-student-badge ${cls}">${text}</span>
+      </div>`;
+  }).join('');
+}
+
+async function openStudentDiary(telegramId, name) {
+  diaryViewedUserId = telegramId;
+
+  // Show viewing banner
+  const banner = document.getElementById('diaryViewingBanner');
+  const bannerName = document.getElementById('diaryViewingName');
+  if (banner) banner.style.display = 'flex';
+  if (bannerName) bannerName.textContent = `👁 Просматриваешь: ${name}`;
+
+  // Refresh student list to highlight active row
+  await loadDiaryOverview();
+
+  // Load that student's diary for the current overview date
+  const dateInput = document.getElementById('diaryAdminDate');
+  const date = (dateInput && dateInput.value) || getShanghaiDateString();
+
+  // Load into the diary form below
+  diaryCurrentDate = date;
+  document.getElementById('diaryDate').value = date;
+
+  const server = await loadDiaryFromAPI(telegramId, date);
+  if (server) {
+    const merged = { ...createEmptyDiaryEntry(date), ...server };
+    fillDiaryForm(merged);
+    applyDiaryRoleUX(server.status || 'draft');
+  } else {
+    fillDiaryForm(createEmptyDiaryEntry(date));
+    applyDiaryRoleUX(null);
+  }
+}
+
+function diaryBackToSelf() {
+  diaryViewedUserId = currentUserId;
+
+  const banner = document.getElementById('diaryViewingBanner');
+  if (banner) banner.style.display = 'none';
+
+  loadDiaryPage(getShanghaiDateString());
+  loadDiaryOverview();
+}
+
+function initDiaryPage() { ... }"
 // ============================================================
 
 // ── STATE ────────────────────────────────────────────────────
@@ -3672,6 +3908,15 @@ function initDiaryPage() {
     if (event.target.id === 'diaryDate') return;
     queueDiaryAutosave();
   });
+
+  // Show admin panel for admins
+  if (isAdmin) {
+    const panel = document.getElementById('diaryAdminPanel');
+    if (panel) panel.style.display = 'block';
+    const adminDate = document.getElementById('diaryAdminDate');
+    if (adminDate) adminDate.value = getShanghaiDateString();
+    loadDiaryOverview();
+  }
 
   loadDiaryPage(getShanghaiDateString());
 }
