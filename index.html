@@ -3132,6 +3132,7 @@ const EXCHANGE_KEY = 'a8c5f8c5d5e5b5a5';
 const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
 
 let currentUserId = null;
+let currentThemePath = null; // "cyberpunk" | "genshin" | null
 let currentPoints = 0;
 let userConfig = null;
 let isAdmin = false;
@@ -3198,6 +3199,7 @@ if (user) {
 
 loadSavedTheme();
 const genshinTabBtn = document.getElementById('genshinTabBtn');
+if (genshinTabBtn) genshinTabBtn.style.display = 'block';
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -4009,6 +4011,61 @@ async function loadUserData(telegramId) {
   }
 }
 
+
+// ── THEME PATH LOGIC ──────────────────────────────────────────
+
+function applyThemePath(path) {
+  currentThemePath = path;
+
+  const nwCards    = ['theme-btn-default', 'theme-btn-nw-light'];
+  const gsCards    = ['theme-btn-genshin-light', 'theme-btn-genshin-dark'];
+
+  if (path === 'cyberpunk') {
+    // Показываем только NW темы
+    nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
+    gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    // Если сейчас стоит Геншин-тема — сбрасываем на NW Dark
+    const t = localStorage.getItem('zhidao_theme') || '';
+    if (t.startsWith('genshin')) setTheme('');
+  } else if (path === 'genshin') {
+    // Показываем только Геншин темы
+    nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
+    // Если сейчас стоит NW-тема — сбрасываем на Геншин Light
+    const t = localStorage.getItem('zhidao_theme') || '';
+    if (!t.startsWith('genshin')) setTheme('genshin-light');
+  } else {
+    // path = null — первый вход, показываем экран выбора
+    showPathChoiceScreen();
+  }
+}
+
+function showPathChoiceScreen() {
+  const overlay = document.getElementById('overlay-path-choice');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+async function chooseThemePath(path) {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/user/set_path`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: currentUserId, path })
+    });
+    if (r.ok) {
+      const overlay = document.getElementById('overlay-path-choice');
+      if (overlay) overlay.style.display = 'none';
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      applyThemePath(path);
+    } else {
+      tg.showAlert('Ошибка. Попробуй ещё раз.');
+    }
+  } catch(e) {
+    tg.showAlert('Нет соединения.');
+  }
+}
+
 async function loadPoints(telegramId) {
   if (!telegramId) return;
   try {
@@ -4021,6 +4078,8 @@ async function loadPoints(telegramId) {
         const b = document.getElementById('casinoBonusBanner');
         b.style.display = 'block'; b.textContent = '🃏 УДВОЕНИЕ АКТИВНО!';
       }
+      // Применяем путь (Киберпанк / Геншин)
+      if (!isAdmin) applyThemePath(data.theme_path || null);
     }
   } catch(e) {}
 }
@@ -4254,8 +4313,6 @@ function setTheme(theme) {
   if (el('casino-page-title'))   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
   if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';
   if (el('implants-page-title')) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
-  if (el('genshinTabBtn')) el('genshinTabBtn').style.display = isG ? 'block' : 'none';
-  if (!isG) switchCasinoTab('play', document.querySelector('.subtab'));
   if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
   try { try{tg.HapticFeedback.impactOccurred('light');}catch(e){} } catch(e) {}
 }
@@ -5993,5 +6050,48 @@ async function joinRaid() {
     });
 }
 </script>
+
+<!-- ── Экран выбора пути (показывается при первом входе) ── -->
+<div id="overlay-path-choice" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.92);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;box-sizing:border-box;
+">
+  <div style="font-size:10px;color:#cc4444;font-family:monospace;letter-spacing:2px;margin-bottom:8px;">ZHIDAO PROTOCOL</div>
+  <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:4px;">Выбери свой путь</div>
+  <div style="font-size:11px;color:#888;font-family:monospace;margin-bottom:28px;text-align:center;">选择你的道路 · Это нельзя изменить бесплатно</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:320px;margin-bottom:24px;">
+
+    <div onclick="chooseThemePath('cyberpunk')" style="
+      background:#050510;border:2px solid rgba(180,20,20,0.4);
+      border-radius:14px;padding:16px;cursor:pointer;text-align:center;
+      transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='rgba(204,68,68,0.8)'" onmouseout="this.style.borderColor='rgba(180,20,20,0.4)'">
+      <div style="font-size:28px;margin-bottom:8px;">🔴</div>
+      <div style="font-size:11px;color:#cc4444;font-family:monospace;font-weight:700;letter-spacing:1px;">NETWATCH</div>
+      <div style="font-size:9px;color:#666;font-family:monospace;margin-top:4px;">Киберпанк</div>
+      <div style="font-size:9px;color:#555;margin-top:6px;line-height:1.4;">Кейсы · Импланты<br>Тёмная и Светлая</div>
+    </div>
+
+    <div onclick="chooseThemePath('genshin')" style="
+      background:#1a1628;border:2px solid rgba(219,177,101,0.25);
+      border-radius:14px;padding:16px;cursor:pointer;text-align:center;
+      transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='rgba(219,177,101,0.7)'" onmouseout="this.style.borderColor='rgba(219,177,101,0.25)'">
+      <div style="font-size:28px;margin-bottom:8px;">✦</div>
+      <div style="font-size:11px;color:rgba(219,177,101,0.9);font-family:Georgia,serif;font-weight:700;">ГЕНШИН</div>
+      <div style="font-size:9px;color:#5a5248;font-family:Georgia,serif;margin-top:4px;">Ли Юэ</div>
+      <div style="font-size:9px;color:#5a5248;margin-top:6px;line-height:1.4;">Молитвы · Карточки<br>Дневной и Ночной</div>
+    </div>
+
+  </div>
+
+  <div style="font-size:9px;color:#444;font-family:monospace;text-align:center;max-width:260px;line-height:1.6;">
+    Сменить путь можно через «Смену пути 转换» в магазине (500★)
+  </div>
+</div>
+
 </body>
 </html>
