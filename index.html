@@ -879,12 +879,15 @@ body.theme-genshin-dark .lb-points
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background:
+        radial-gradient(circle at 50% 18%, rgba(212,175,55,0.08), transparent 28%),
+        radial-gradient(circle at 50% 120%, rgba(204,34,0,0.12), transparent 42%),
+        rgba(0, 0, 0, 0.88);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999; /* Поверх всего */
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
     opacity: 0;
     visibility: hidden;
     transition: all 0.4s ease-out;
@@ -899,11 +902,13 @@ body.theme-genshin-dark .lb-points
 .raid-content {
     width: 90%;
     max-width: 400px;
-    background: var(--bg);
-    border: 2px solid var(--red);
-    box-shadow: 0 0 30px var(--red-dim);
-    border-radius: var(--card-radius);
-    padding: 20px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), transparent 35%),
+        linear-gradient(145deg, rgba(204,34,0,0.08), rgba(5,5,16,0.96) 55%);
+    border: 1px solid rgba(204,34,0,0.5);
+    box-shadow: 0 0 35px rgba(204,34,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.03);
+    border-radius: 18px;
+    padding: 18px 18px 20px;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -915,23 +920,71 @@ body.theme-genshin-dark .lb-points
     transform: scale(1) translateY(0);
 }
 
+.raid-content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.06) 18%, transparent 36%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 6px);
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.raid-content::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: 17px;
+    border: 1px solid rgba(212,175,55,0.08);
+    pointer-events: none;
+}
+
 /* Рамка Босса */
 .boss-frame {
     position: relative;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 220px;
+    height: 252px;
+}
+
+.boss-frame::before,
+.boss-frame::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+}
+
+.boss-frame::before {
+    width: 246px;
+    height: 270px;
+    border-radius: 30px;
+    border: 1px solid rgba(204,34,0,0.22);
+    box-shadow: 0 0 28px rgba(204,34,0,0.08);
+}
+
+.boss-frame::after {
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,0.14), transparent 70%);
+    filter: blur(6px);
 }
 
 .boss-img {
-    width: 220px;
-    height: 220px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 3px solid var(--red);
-    box-shadow: 0 0 15px var(--red-dim);
+    width: 228px;
+    height: 252px;
+    object-fit: contain;
+    object-position: center center;
+    border-radius: 28px;
+    border: 1px solid rgba(204,34,0,0.55);
+    padding: 8px;
+    background:
+      radial-gradient(circle at 50% 22%, rgba(255,255,255,0.08), transparent 48%),
+      linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.14));
+    box-shadow: 0 0 22px rgba(204,34,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.04);
     /* Начальное состояние для анимации появления */
     transform: scale(0) rotate(-180deg);
     opacity: 0;
@@ -945,8 +998,8 @@ body.theme-genshin-dark .lb-points
 
 /* Постоянная анимация "парения" босса */
 @keyframes bossFloat {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-10px) rotate(2deg); }
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.015); }
 }
 
 .raid-overlay.active .boss-img {
@@ -972,40 +1025,159 @@ body.theme-genshin-dark .lb-points
     opacity: 0.8;
 }
 
+.raid-kicker {
+    margin: 0 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(212,175,55,0.22);
+    background: rgba(212,175,55,0.08);
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    font-family: monospace;
+    text-transform: uppercase;
+}
+
+.raid-kicker-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ff4b2b;
+    box-shadow: 0 0 12px rgba(255,75,43,0.8);
+    animation: raidPulseDot 1.5s ease-in-out infinite;
+}
+
+@keyframes raidPulseDot {
+    0%, 100% { transform: scale(0.9); opacity: 0.65; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+
+.raid-threat-strip {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    flex-wrap: wrap;
+}
+
+.raid-chip {
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255,255,255,0.035);
+    color: var(--text2);
+    font-size: 9px;
+    font-family: monospace;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
 /* Блок Прогресса */
 .raid-status-block {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)),
+      rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px;
+    padding: 12px;
     margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.raid-status-block::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transform: translateX(-120%);
+    animation: raidSweep 3.2s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes raidSweep {
+    to { transform: translateX(140%); }
+}
+
+.raid-meter-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.raid-meter-eyebrow {
+    font-size: 9px;
+    color: var(--text3);
+    font-family: monospace;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.raid-meter-state {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(212,175,55,0.09);
+    border: 1px solid rgba(212,175,55,0.2);
+    color: var(--gold);
+    font-size: 9px;
+    font-family: monospace;
+    letter-spacing: 0.9px;
 }
 
 .raid-count-label {
     font-size: 12px;
     color: var(--text2);
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     display: flex; justify-content: space-between;
 }
 
 /* Прогресс-бар */
 .raid-progress-container {
     width: 100%;
-    height: 10px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 5px;
+    height: 14px;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.03) 0 8%, transparent 8% 10%, rgba(255,255,255,0.03) 10% 18%, transparent 18% 20%, rgba(255,255,255,0.03) 20% 28%, transparent 28% 30%, rgba(255,255,255,0.03) 30% 38%, transparent 38% 40%, rgba(255,255,255,0.03) 40% 48%, transparent 48% 50%, rgba(255,255,255,0.03) 50% 58%, transparent 58% 60%, rgba(255,255,255,0.03) 60% 68%, transparent 68% 70%, rgba(255,255,255,0.03) 70% 78%, transparent 78% 80%, rgba(255,255,255,0.03) 80% 88%, transparent 88% 90%, rgba(255,255,255,0.03) 90% 100%),
+      rgba(255,255,255,0.04);
+    border-radius: 999px;
     overflow: hidden;
     position: relative;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.28);
+}
+
+.raid-progress-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.12), transparent 55%);
+    pointer-events: none;
 }
 
 .raid-progress-bar {
     width: 0%; 
     height: 100%;
     background: linear-gradient(90deg, var(--red), #ff4400);
-    border-radius: 5px;
+    border-radius: 999px;
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 10px var(--red-dim);
+    position: relative;
+}
+
+.raid-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    right: 3px;
+    width: 46px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.65));
+    filter: blur(0.5px);
 }
 
 /* Анимация "заряжания" бара */
@@ -1016,6 +1188,29 @@ body.theme-genshin-dark .lb-points
 
 .raid-progress-bar {
     animation: barGlow 1.5s ease-in-out infinite;
+}
+
+.raid-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 9px;
+}
+
+.raid-progress-hint {
+    color: var(--text3);
+    font-size: 9px;
+    font-family: monospace;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.raid-progress-percent {
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: monospace;
 }
 
 /* Кнопка закрытия */
@@ -1035,13 +1230,29 @@ body.theme-genshin-dark .lb-points
     width: 100%;
     padding: 12px;
     border: none;
-    border-radius: 8px;
-    background: var(--red);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(204,34,0,0.95), rgba(255,94,58,0.92));
     color: white;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s;
     text-transform: uppercase;
+    box-shadow: 0 10px 24px rgba(204,34,0,0.18);
+    position: relative;
+    overflow: hidden;
+}
+
+#raid-action-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 15%, rgba(255,255,255,0.18) 32%, transparent 49%);
+    transform: translateX(-135%);
+    transition: transform 0.45s ease;
+}
+
+#raid-action-btn:hover::before {
+    transform: translateX(135%);
 }
 #raid-action-btn:disabled {
     opacity: 0.7;
@@ -1075,6 +1286,13 @@ body.theme-genshin .raid-progress-container {
 body.theme-genshin .raid-progress-bar {
     background: linear-gradient(90deg, #dbb165, #f0ebe1);
     box-shadow: 0 0 15px rgba(219, 177, 101, 0.4);
+}
+
+body.theme-genshin .raid-kicker,
+body.theme-genshin .raid-meter-state {
+    border-color: rgba(75,83,102,0.18);
+    background: rgba(75,83,102,0.08);
+    color: #4b5366;
 }
 
 body.theme-genshin #raid-action-btn {
@@ -2141,6 +2359,10 @@ body.theme-genshin #raid-action-btn {
 <div id="raid-overlay" class="raid-overlay">
     <div class="raid-content">
         <button onclick="closeRaid()" class="btn-close-raid">×</button>
+        <div class="raid-kicker">
+            <span class="raid-kicker-dot"></span>
+            <span>ALPHABOSS NEURAL LINK</span>
+        </div>
         
         <div class="boss-frame">
             <img id="boss-img" src="" class="boss-img" alt="BOSS">
@@ -2150,8 +2372,17 @@ body.theme-genshin #raid-action-btn {
             <div class="boss-name">М. Ю.</div>
             <div id="boss-title" class="boss-title">// ADAM SMASHER PROTOCOL</div>
         </div>
+        <div class="raid-threat-strip">
+            <span class="raid-chip">BlackWall</span>
+            <span class="raid-chip">NetWatch</span>
+            <span class="raid-chip">Lethal</span>
+        </div>
         
         <div class="raid-status-block">
+            <div class="raid-meter-top">
+                <span class="raid-meter-eyebrow">Raid Sync</span>
+                <span id="raid-sync-state" class="raid-meter-state">INIT</span>
+            </div>
             <div class="raid-count-label">
                 <span>СБОР ОТРЯДА:</span>
                 <span><span id="raid-current-count">0</span> / <span id="raid-max-count">15</span></span>
@@ -2160,7 +2391,11 @@ body.theme-genshin #raid-action-btn {
             <div class="raid-progress-container">
                 <div id="raid-progress-bar" class="raid-progress-bar"></div>
             </div>
-            <div id="raid-status-text" style="margin-top:10px;font-size:10px;color:var(--text2);font-family:monospace;line-height:1.6;text-align:center;">
+            <div class="raid-progress-meta">
+                <span id="raid-progress-hint" class="raid-progress-hint">Neural handshake pending</span>
+                <span id="raid-progress-percent" class="raid-progress-percent">0%</span>
+            </div>
+            <div id="raid-status-text" style="margin-top:12px;font-size:10px;color:var(--text2);font-family:monospace;line-height:1.6;text-align:center;">
                 // RAID STATUS //
             </div>
         </div>
@@ -3976,9 +4211,14 @@ const RAID_CONFIG = {
 
 let raidRefreshTimer = null;
 let isJoiningRaid = false;
+let raidIntroToken = 0;
 
 function getRaidThemeKey() {
     return document.body.classList.contains('theme-genshin') ? 'genshin' : 'cyberpunk';
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function setRaidButtonState(text, disabled, background = '', color = '') {
@@ -3988,7 +4228,7 @@ function setRaidButtonState(text, disabled, background = '', color = '') {
     btn.innerHTML = `<i class="ti ti-broadcast"></i> ${text}`;
     btn.style.background = background;
     btn.style.color = color;
-    btn.style.opacity = disabled ? '0.7' : '1';
+    btn.style.opacity = disabled ? '0.72' : '1';
 }
 
 function setRaidStatusText(text, color = 'var(--text2)') {
@@ -3998,29 +4238,60 @@ function setRaidStatusText(text, color = 'var(--text2)') {
     status.style.color = color;
 }
 
+function setRaidProgressVisual(percent, state = 'INIT', hint = 'Neural handshake pending', tone = 'pending') {
+    const progressBar = document.getElementById('raid-progress-bar');
+    const percentLabel = document.getElementById('raid-progress-percent');
+    const hintLabel = document.getElementById('raid-progress-hint');
+    const stateLabel = document.getElementById('raid-sync-state');
+    if (!progressBar || !percentLabel || !hintLabel || !stateLabel) return;
+
+    const safePercent = Math.max(0, Math.min(Math.round(percent || 0), 100));
+    const palette = {
+        pending: {
+            background: 'linear-gradient(90deg, var(--red), #ff7a18)',
+            glow: '0 0 18px rgba(255, 80, 55, 0.42)',
+            color: 'var(--text)'
+        },
+        success: {
+            background: 'linear-gradient(90deg, #2ecc71, #6cffb8)',
+            glow: '0 0 20px rgba(46, 204, 113, 0.42)',
+            color: '#d6ffe9'
+        },
+        danger: {
+            background: 'linear-gradient(90deg, #a30d15, #ff4d5a)',
+            glow: '0 0 20px rgba(220, 65, 82, 0.45)',
+            color: '#ffd6dc'
+        }
+    };
+    const activeTone = palette[tone] || palette.pending;
+
+    progressBar.style.width = safePercent + '%';
+    progressBar.style.background = activeTone.background;
+    progressBar.style.boxShadow = activeTone.glow;
+    percentLabel.textContent = safePercent + '%';
+    hintLabel.textContent = hint;
+    stateLabel.textContent = state;
+    stateLabel.style.color = activeTone.color;
+}
+
 function updateRaidUI(joinedCount, target = RAID_CONFIG.minPlayers) {
     const currentLabel = document.getElementById('raid-current-count');
     const maxLabel = document.getElementById('raid-max-count');
-    const progressBar = document.getElementById('raid-progress-bar');
-    if (!currentLabel || !maxLabel || !progressBar) return;
+    if (!currentLabel || !maxLabel) return;
 
     const safeCount = Math.max(0, Math.min(joinedCount || 0, RAID_CONFIG.maxPlayers));
     const safeTarget = Math.max(1, target || RAID_CONFIG.minPlayers);
     const percentage = Math.min((safeCount / safeTarget) * 100, 100);
+    const ready = safeCount >= safeTarget;
 
     currentLabel.innerText = safeCount;
     maxLabel.innerText = safeTarget;
-    progressBar.style.width = percentage + '%';
-
-    if (safeCount >= safeTarget) {
-        progressBar.style.background = 'linear-gradient(90deg, #2ecc71, #27ae60)';
-        progressBar.style.boxShadow = '0 0 10px #2ecc71';
-        progressBar.style.animation = '';
-    } else {
-        progressBar.style.background = 'linear-gradient(90deg, var(--red), #ff4400)';
-        progressBar.style.boxShadow = '0 0 10px var(--red-dim)';
-        progressBar.style.animation = '';
-    }
+    setRaidProgressVisual(
+        percentage,
+        ready ? 'READY' : 'ASSEMBLING',
+        ready ? 'Отряд собран. Канал готов к запуску.' : `Идёт синхронизация отряда: ${safeCount}/${safeTarget}`,
+        ready ? 'success' : 'pending'
+    );
 }
 
 function prepareRaidVisual() {
@@ -4048,9 +4319,9 @@ function prepareRaidVisual() {
 
         const placeholder = document.createElement('div');
         placeholder.className = 'boss-placeholder';
-        placeholder.style.width = '220px';
-        placeholder.style.height = '220px';
-        placeholder.style.borderRadius = currentTheme === 'genshin' ? '20px' : '50%';
+        placeholder.style.width = '228px';
+        placeholder.style.height = '252px';
+        placeholder.style.borderRadius = currentTheme === 'genshin' ? '24px' : '28px';
         placeholder.style.background = config.placeholderColor;
         placeholder.style.display = 'flex';
         placeholder.style.alignItems = 'center';
@@ -4061,22 +4332,43 @@ function prepareRaidVisual() {
         placeholder.style.boxShadow = '0 0 20px ' + config.placeholderColor;
         placeholder.innerText = 'M.Y.';
         Object.assign(placeholder.style, {
-            transform: 'scale(0) rotate(-180deg)',
+            transform: 'scale(0.92) translateY(12px)',
             opacity: '0',
             transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s',
             animation: 'bossFloat 4s ease-in-out infinite 0.9s'
         });
         frame.appendChild(placeholder);
         setTimeout(() => {
-            placeholder.style.transform = 'scale(1) rotate(0deg)';
+            placeholder.style.transform = 'scale(1) translateY(0)';
             placeholder.style.opacity = '1';
         }, 50);
     };
     bossImg.src = config.img;
 }
 
+async function playRaidIntro(token) {
+    const steps = [
+        { percent: 8, state: 'LINK', hint: 'Нейролинк инициирован', status: 'Подготовка боевого канала...' },
+        { percent: 24, state: 'SCAN', hint: 'Сканирование сигнатуры босса', status: 'Считываем поведенческий профиль Альфабосса...' },
+        { percent: 41, state: 'WALL', hint: 'Обход BlackWall', status: 'Пробиваем внешний защитный слой...' },
+        { percent: 63, state: 'ROUTE', hint: 'Маршрутизация отряда', status: 'Собираем точки входа для ударной группы...' },
+        { percent: 82, state: 'LOCK', hint: 'Фиксация боевого канала', status: 'Канал почти стабилен. Держим сигнал...' },
+        { percent: 100, state: 'READY', hint: 'Система готова к рейду', status: 'Контур активен. Можно подключаться к атаке.' }
+    ];
+
+    for (const step of steps) {
+        if (token !== raidIntroToken) return false;
+        setRaidProgressVisual(step.percent, step.state, step.hint, step.percent >= 100 ? 'success' : 'pending');
+        setRaidStatusText(step.status, step.percent >= 100 ? '#2ecc71' : 'var(--text2)');
+        await sleep(step.percent >= 100 ? 650 : 850);
+    }
+
+    return token === raidIntroToken;
+}
+
 function closeRaid() {
     const overlay = document.getElementById('raid-overlay');
+    raidIntroToken += 1;
     if (overlay) overlay.classList.remove('active');
     if (raidRefreshTimer) {
         clearInterval(raidRefreshTimer);
@@ -4092,6 +4384,15 @@ async function showRaid() {
 
     const overlay = document.getElementById('raid-overlay');
     if (overlay) overlay.classList.add('active');
+
+    if (raidRefreshTimer) {
+        clearInterval(raidRefreshTimer);
+        raidRefreshTimer = null;
+    }
+
+    const introToken = ++raidIntroToken;
+    const introCompleted = await playRaidIntro(introToken);
+    if (!introCompleted || !document.getElementById('raid-overlay')?.classList.contains('active')) return;
 
     await loadRaidStatus();
 
@@ -4117,6 +4418,7 @@ async function loadRaidStatus() {
 
         if (!data.raid) {
             updateRaidUI(0);
+            setRaidProgressVisual(6, 'STANDBY', 'Ни один отряд ещё не собран', 'pending');
             setRaidStatusText(
                 isAdmin
                     ? 'Рейд ещё не создан. Админ может стартовать в любой момент.'
@@ -4124,7 +4426,7 @@ async function loadRaidStatus() {
             );
             setRaidButtonState(
                 'Подключиться к нейролинку',
-                finishedToday >= 2 && !isAdmin
+                finishedToday >= raidLimit && !isAdmin
             );
             return;
         }
@@ -4137,6 +4439,12 @@ async function loadRaidStatus() {
         if (data.raid.status === 'finished') {
             const success = data.raid.result === 'success';
             updateRaidUI(Math.max(count, RAID_CONFIG.minPlayers));
+            setRaidProgressVisual(
+                100,
+                success ? 'VICTORY' : 'FAIL',
+                success ? 'Альфабосс пробит. Награда начислена.' : 'Контур сорван. Ставки потеряны.',
+                success ? 'success' : 'danger'
+            );
             setRaidStatusText(
                 success
                     ? `Рейд завершён: +150★ каждому.${participantNames ? ' Бойцы: ' + participantNames : ''}`
@@ -4151,6 +4459,12 @@ async function loadRaidStatus() {
         }
 
         updateRaidUI(count);
+        setRaidProgressVisual(
+            Math.min((count / RAID_CONFIG.minPlayers) * 100, 100),
+            alreadyJoined ? 'LINKED' : 'ASSEMBLING',
+            alreadyJoined ? 'Ты уже синхронизирован с отрядом.' : 'Идёт добор бойцов для запуска.',
+            count >= RAID_CONFIG.minPlayers ? 'success' : 'pending'
+        );
         setRaidStatusText(
             alreadyJoined
                 ? `Ты уже в отряде. Бойцов: ${count}/${RAID_CONFIG.minPlayers}.${participantNames ? ' ' + participantNames : ''}`
@@ -4188,6 +4502,7 @@ async function joinRaid() {
         if (btnId !== 'confirm') return;
 
         isJoiningRaid = true;
+        setRaidProgressVisual(92, 'BREACH', 'Подключаем тебя к боевому контуру...', 'pending');
         setRaidButtonState('Синхронизация...', true, '#e67e22', '#fff');
 
         try {
@@ -4209,7 +4524,17 @@ async function joinRaid() {
             }
 
             if (data.launched && data.result === 'success') {
+                setRaidProgressVisual(100, 'VICTORY', 'Альфабосс пробит. Награда зачислена.', 'success');
                 launchConfetti(80);
+            } else if (data.launched && data.result === 'defended') {
+                setRaidProgressVisual(100, 'FAIL', 'Контур сорван. Альфабосс удержал защиту.', 'danger');
+            } else {
+                setRaidProgressVisual(
+                    Math.min(((data.count || 1) / RAID_CONFIG.minPlayers) * 100, 100),
+                    'LINKED',
+                    `Бойцов в контуре: ${data.count || 1}/${RAID_CONFIG.minPlayers}`,
+                    'pending'
+                );
             }
 
             try {
