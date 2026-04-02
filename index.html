@@ -39,7 +39,7 @@ body.theme-nw-light {
   --red: #993333;
   --red-dim: rgba(180,20,20,0.08);
   --red-border: rgba(180,20,20,0.22);
-  --gold: #5c3a0a;
+  --gold: #7a5010;
   --gold-dim: rgba(150,100,20,0.1);
   --gold-border: rgba(150,100,20,0.25);
   --bg: #f4f1ed;
@@ -57,8 +57,8 @@ body.theme-genshin-light {
   --red: #4b5366;
   --red-dim: rgba(75,83,102,0.08);
   --red-border: rgba(75,83,102,0.2);
-  --gold: #6b4f10;
-  --gold-dim: rgba(107,79,16,0.1);
+  --gold: #8a6820;
+  --gold-dim: rgba(219,177,101,0.12);
   --gold-border: rgba(219,177,101,0.3);
   --bg: #ece5d8;
   --bg2: rgba(255,255,255,0.6);
@@ -73,15 +73,6 @@ body.theme-genshin-light {
   --scan-opacity: 0.005;
 }
 body.theme-genshin-light .bottom-nav {
-  body.theme-nw-light .bottom-nav {
-  background: rgba(244,241,237,0.97);
-  border-top-color: rgba(180,20,20,0.15);
-}
-body.theme-nw-light .bottom-nav::before {
-  background: linear-gradient(90deg, transparent, rgba(180,20,20,0.3), transparent);
-}
-body.theme-nw-light .nav-item { color: #555; }
-body.theme-nw-light .nav-item.active { color: #993333; }
   background: rgba(236,229,216,0.97);
   border-top-color: rgba(219,177,101,0.25);
 }
@@ -647,16 +638,12 @@ body.theme-genshin-dark .lb-points
   border-bottom: 14px solid rgba(180,20,20,0.8); z-index: 10;
 }
 .roulette-track {
-  body.theme-nw-light .roulette-track { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); }
-body.theme-nw-light .roulette-item  { background: #eae7e3; border-color: rgba(0,0,0,0.08); }
   overflow: hidden; border-radius: 10px;
   border: 1px solid var(--red-border);
   background: #080818; position: relative; height: 130px;
 }
 .roulette-track::before { content:''; position:absolute;left:0;top:0;bottom:0;width:50px;background:linear-gradient(to right,#080818,transparent);z-index:5;pointer-events:none; }
 .roulette-track::after { content:''; position:absolute;right:0;top:0;bottom:0;width:50px;background:linear-gradient(to left,#080818,transparent);z-index:5;pointer-events:none; }
-  body.theme-nw-light .roulette-track::before { background: linear-gradient(to right, #f4f1ed, transparent); }
-body.theme-nw-light .roulette-track::after  { background: linear-gradient(to left,  #f4f1ed, transparent); }
 .roulette-center-line { position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(180,20,20,0.5);transform:translateX(-50%);z-index:6; }
 .roulette-strip { display:flex;padding:8px 0;transition:none;will-change:transform; }
 .roulette-item {
@@ -718,8 +705,6 @@ body.theme-nw-light .roulette-track::after  { background: linear-gradient(to lef
 }
 .more-item-name { font-size: 10px; font-weight: 600; color: var(--text); }
 .more-item-cn { font-size: 9px; color: rgba(212,175,55,0.6); font-family: serif; margin-top: 2px; }
-  body.theme-nw-light .more-item-cn,
-body.theme-genshin-light .more-item-cn { color: var(--text3); }
 
 /* ===== ПОГОДА ===== */
 .weather-big { font-size: 52px; font-weight: 700; color: var(--text); line-height: 1; }
@@ -1741,6 +1726,64 @@ body.theme-genshin #raid-action-btn {
     flex-shrink: 0;
 }
 
+
+/* ── Светлые темы: золотые тексты → тёмно-серый ─────────── */
+body.theme-nw-light .more-item-cn,
+body.theme-genshin-light .more-item-cn,
+body.theme-nw-light .shop-item-cn,
+body.theme-genshin-light .shop-item-cn,
+body.theme-nw-light .shop-cat .cn,
+body.theme-genshin-light .shop-cat .cn,
+body.theme-nw-light .team-role,
+body.theme-genshin-light .team-role,
+body.theme-nw-light .stat-cn,
+body.theme-genshin-light .stat-cn,
+body.theme-nw-light .implant-py,
+body.theme-genshin-light .implant-py,
+body.theme-nw-light .main-pinyin,
+body.theme-genshin-light .main-pinyin,
+body.theme-nw-light .page-sub,
+body.theme-nw-light .cn-divider,
+body.theme-nw-light .neuro-sub,
+body.theme-nw-light .schedule-location,
+body.theme-genshin-light .page-sub { color: var(--text3) !important; }
+
+body.theme-nw-light .neuro-status { color: #993333; }
+
+/* ── Навигация NW Light ──────────────────────────────────── */
+body.theme-nw-light .bottom-nav {
+  background: rgba(244,241,237,0.97);
+  border-top-color: rgba(180,20,20,0.15);
+}
+body.theme-nw-light .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(180,20,20,0.3), transparent);
+}
+body.theme-nw-light .nav-item { color: #555555; }
+body.theme-nw-light .nav-item.active { color: #993333; }
+body.theme-nw-light .nav-cn { color: #777777; }
+
+/* ── Дневник в светлых темах ─────────────────────────────── */
+body.theme-nw-light .diary-hero,
+body.theme-genshin-light .diary-hero {
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(0,0,0,0.1);
+}
+body.theme-nw-light .diary-card,
+body.theme-genshin-light .diary-card {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+body.theme-nw-light .diary-input,
+body.theme-nw-light .diary-textarea,
+body.theme-nw-light .diary-select,
+body.theme-genshin-light .diary-input,
+body.theme-genshin-light .diary-textarea,
+body.theme-genshin-light .diary-select {
+  background: rgba(255,255,255,0.8);
+  color: var(--text);
+  border-color: rgba(0,0,0,0.1);
+}
+
 .diary-back-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -1984,9 +2027,17 @@ body.theme-genshin .diary-star.active {
   <div class="shop-subtabs">
     <button class="subtab active" onclick="switchShopTab('store',this)">商店 МАГАЗИН</button>
     <button class="subtab" onclick="switchShopTab('inventory',this)">背包 ИНВЕНТАРЬ</button>
+    <button class="subtab" onclick="switchShopTab('folk',this)">🏮 НАРОДНЫЙ</button>
   </div>
   <div id="shopStoreContent"></div>
   <div id="shopInventoryContent" style="display:none;"></div>
+  <div id="shopFolkContent" style="display:none;">
+    <div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">🏮</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">民间商店 Народный магазин</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;">МЮ предлагает товар — все скидываются вместе.<br>Когда сумма набирается — товар получают все участники.<br><br><span style="color:var(--text3);">Скоро здесь появятся предложения...</span></div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== КЕЙСЫ ===== -->
@@ -2121,61 +2172,77 @@ body.theme-genshin .diary-star.active {
       </div>
     </div>
   </div>  <!-- /casinoRulesContent -->
-
-  <!-- Правила Геншин -->
+  <!-- ── Правила Молитв (Геншин) ─────────────────────────── -->
   <div id="genshinRulesContent" style="display:none;flex-direction:column;">
     <div style="padding:8px 0;">
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:24px;">🔵</div>
-        <div><div class="rules-title">синий свиток — 79%</div>
-        <div class="rules-desc">
-          ⭐ +30 звёзд (35%)<br>
-          💫 +60 звёзд (20%)<br>
-          🛡 Иммунитет от штрафа (10%)<br>
-          🕐 +30 мин свободы (7%)<br>
-          🌸 Карточка 4★ (28%)
-        </div></div>
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🔵</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">синий свиток <span style="color:var(--text2);">— 79%</span></div>
+          <div class="rules-desc">
+            ⭐ +30 звёзд (35%)<br>
+            💫 +60 звёзд (20%)<br>
+            🛡 Иммунитет от штрафа (10%)<br>
+            🕐 +30 мин свободы (7%)<br>
+            🌸 Карточка 4★ (28%)
+          </div>
+        </div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:24px;">🟣</div>
-        <div><div class="rules-title">фиолетовый свиток — 20%</div>
-        <div class="rules-desc">
-          Карточки 4★ — редкие персонажи<br>
-          焰莲使者 · 九尾狐灵 · 桃花仙子 · 文曲星君 · 木灵仙君 · 海灵仙后 · 嫦娥仙子
-        </div></div>
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟣</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">фиолетовый свиток <span style="color:var(--text2);">— 20%</span></div>
+          <div class="rules-desc">
+            焰莲使者 Страж Огня — Феникс: +50★ после штрафа<br>
+            九尾狐灵 Лиса-Оборотень — Обман: перекрутить приз<br>
+            桃花仙子 Небесная Фея — Благословение: +30★ отряду<br>
+            文曲星君 Звезда Литературы — Мудрость: +25★ за отчёт<br>
+            木灵仙君 Дух Леса — Урожай: +10★ за день вовремя<br>
+            海灵仙后 Дух Морей — Волна: каждые 3 молитвы +30★<br>
+            嫦娥仙子 Богиня Луны — Жемчужина: дубль даёт +50★
+          </div>
+        </div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:24px;">🟡</div>
-        <div><div class="rules-title">золотой свиток — 1%</div>
-        <div class="rules-desc">
-          Карточки 5★ — легендарные персонажи<br>
-          岩王帝君 Архонт Земли · 紫微星君 Императорская Звезда
-        </div></div>
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟡</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">золотой свиток <span style="color:var(--text2);">— 1%</span></div>
+          <div class="rules-desc">
+            岩王帝君 Архонт Земли — Контракт: блок штрафа + -5% магазин<br>
+            紫微星君 Императорская Звезда — Звёздный суд: передать штраф другому
+          </div>
+        </div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:24px;">🔄</div>
-        <div><div class="rules-title">Дубликаты</div>
-        <div class="rules-desc">
-          Если выпала уже имеющаяся карточка — она добавляется как второй экземпляр.<br>
-          Исключение: 嫦娥仙子 Богиня Луны — дубль сразу даёт +50★ вместо карточки.<br>
-          Лишние карточки можно разобрать за 50★ в разделе Карточки.
-        </div></div>
+        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;">🔄</div>
+        <div>
+          <div class="rules-title">Дубликаты</div>
+          <div class="rules-desc">
+            Повторная карточка добавляется как второй экземпляр.<br>
+            嫦娥仙子 Богиня Луны — дубль сразу даёт +50★ вместо карточки.<br>
+            Лишние карточки разбираются за 50★ в разделе Карточки.
+          </div>
+        </div>
       </div>
       <div class="rules-row">
         <div class="rules-icon">💰</div>
-        <div><div class="rules-title">Стоимость и лимиты</div>
-        <div class="rules-desc">
-          50★ за молитву • Лимит 3 молитвы в день<br>
-          Дополнительную молитву можно купить в магазине
-        </div></div>
+        <div>
+          <div class="rules-title">Стоимость и лимиты</div>
+          <div class="rules-desc">
+            50★ за молитву · Лимит 3 молитвы в день<br>
+            Дополнительную молитву можно купить в магазине
+          </div>
+        </div>
       </div>
       <div style="margin:10px 12px;padding:12px;background:rgba(219,177,101,0.08);border:1px solid rgba(219,177,101,0.25);border-radius:8px;">
         <div style="font-size:9px;color:rgba(219,177,101,0.7);font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">✦ ПРИМЕЧАНИЕ</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Молитвы — игровая механика для мотивации и удовольствия. Карточки дают пассивные бонусы на протяжении поездки. Молитва стоит 50★ и не гарантирует прибыль. Молись ради удачи, а не ради выгоды ✦</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Молитвы — игровая механика для мотивации. Карточки дают пассивные бонусы на протяжении поездки. Молитва стоит 50★ и не гарантирует прибыль. Молись ради удачи, а не выгоды ✦</div>
       </div>
     </div>
   </div>
   <!-- /genshinRulesContent -->
+
+
 
   <!-- ГЕНШИН ПАНЕЛЬ -->
   <div id="casinoGenshinContent" style="display:none;flex-direction:column;">
@@ -3096,6 +3163,16 @@ body.theme-genshin .diary-star.active {
         onclick="lockDiaryEntry(false)">[ 🔓 РАЗБЛОКИРОВАТЬ ]</button>
     </div>
   </div>
+
+  <!-- ── Народный магазин ──────────────────────────────────── -->
+  <div id="shopFolkContent" style="display:none;flex-direction:column;padding:8px 0;">
+    <div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">🏮</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">民间商店 Народный магазин</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;">МЮ предлагает товар — все скидываются вместе.<br>Когда сумма набирается — товар получают все участники.<br><br><span style="color:var(--text3);">Скоро здесь появятся предложения...</span></div>
+    </div>
+  </div>
+  <!-- /shopFolkContent -->
 </div>
 
 <nav class="bottom-nav">
@@ -3267,8 +3344,7 @@ if (user) {
 }
 
 loadSavedTheme();
-const genshinTabBtn = document.getElementById('genshinTabBtn');
-if (genshinTabBtn) genshinTabBtn.style.display = 'block';
+// genshinTabBtn управляется через applyThemePath
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -3297,11 +3373,6 @@ function showPage(name, btn) {
       } else {
         document.getElementById('casinoPlayContent').style.display = 'flex';
         setTimeout(initRoulette, 50);
-        if (currentThemePath === 'genshin') {
-  document.getElementById('casinoPlayContent').style.display = 'none';
-  const gsTab = document.getElementById('casinoGenshinContent');
-  if (gsTab) gsTab.style.display = 'flex';
-}
         setTimeout(() => loadPoints(currentUserId), 300);
       }
     }).catch(() => { setTimeout(initRoulette, 50); });
@@ -4095,29 +4166,30 @@ function applyThemePath(path) {
   const gsCards    = ['theme-btn-genshin-light', 'theme-btn-genshin-dark'];
 
   if (path === 'cyberpunk') {
-    // Показываем только NW темы
     nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
     gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-    // Если сейчас стоит Геншин-тема — сбрасываем на NW Dark
     const t = localStorage.getItem('zhidao_theme') || '';
     if (t.startsWith('genshin')) setTheme('');
-    document.getElementById('casinoPlayContent').style.display = 'flex';
-    const gsTab = document.getElementById('casinoGenshinContent');
-    if (gsTab) gsTab.style.display = 'none';
-    const genshinTabBtn = document.getElementById('genshinTabBtn');
-    if (genshinTabBtn) genshinTabBtn.style.display = 'none';
+    // Показываем импланты, скрываем карточки
+    const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
+    const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'none';
+    // Кейсы — показываем рулетку
+    const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'flex';
+    const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'none';
+    const genshinTabBtn = document.getElementById('genshinTabBtn'); if (genshinTabBtn) genshinTabBtn.style.display = 'none';
+    const playBtn = document.getElementById('casinoPlayBtn'); if (playBtn) playBtn.textContent = '🎰 ИГРАТЬ';
   } else if (path === 'genshin') {
-    // Показываем только Геншин темы
     nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
-    // Если сейчас стоит NW-тема — сбрасываем на Геншин Light
     const t = localStorage.getItem('zhidao_theme') || '';
     if (!t.startsWith('genshin')) setTheme('genshin-light');
-    document.getElementById('casinoPlayContent').style.display = 'none';
-    const gsTab = document.getElementById('casinoGenshinContent');
-    if (gsTab) gsTab.style.display = 'flex';
-    const genshinTabBtn = document.getElementById('genshinTabBtn');
-    if (genshinTabBtn) genshinTabBtn.style.display = 'block';
+    // Показываем карточки, скрываем импланты
+    const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
+    const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'block';
+    // Молитвы — показываем Геншин
+    const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'none';
+    const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'flex';
+    const playBtn = document.getElementById('casinoPlayBtn'); if (playBtn) playBtn.textContent = '✦ МОЛИТВЫ';
   } else {
     // path = null — первый вход, показываем экран выбора
     showPathChoiceScreen();
@@ -4454,14 +4526,17 @@ function switchShopTab(mode, btn) {
   shopMode = mode;
   document.querySelectorAll('#page-shop .subtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  ['shopStoreContent','shopInventoryContent','shopFolkContent'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   if (mode === 'store') {
     document.getElementById('shopStoreContent').style.display = 'block';
-    document.getElementById('shopInventoryContent').style.display = 'none';
     loadShop();
-  } else {
-    document.getElementById('shopStoreContent').style.display = 'none';
+  } else if (mode === 'inventory') {
     document.getElementById('shopInventoryContent').style.display = 'block';
     loadInventory();
+  } else if (mode === 'folk') {
+    document.getElementById('shopFolkContent').style.display = 'block';
   }
 }
 
@@ -4955,16 +5030,17 @@ function switchCasinoTab(mode, btn) {
   btn.classList.add('active');
   const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent','casinoGenshinContent','genshinRulesContent'];
   ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
-  if (mode==='play') { document.getElementById('casinoPlayContent').style.display='flex'; setTimeout(initRoulette,50); }
+  const isGenshin = currentThemePath === 'genshin';
+  if (mode==='play') {
+    if (isGenshin) { document.getElementById('casinoGenshinContent').style.display='flex'; }
+    else { document.getElementById('casinoPlayContent').style.display='flex'; setTimeout(initRoulette,50); }
+  }
   else if (mode==='inventory') { document.getElementById('casinoInventoryContent').style.display='flex'; loadCasinoInventory(); }
   else if (mode==='history') { document.getElementById('casinoHistoryContent').style.display='flex'; loadCasinoHistory(); }
   else if (mode==='rules') {
-  if (currentThemePath === 'genshin') {
-    document.getElementById('genshinRulesContent').style.display='flex';
-  } else {
-    document.getElementById('casinoRulesContent').style.display='flex';
+    if (isGenshin) { const el = document.getElementById('genshinRulesContent'); if(el) el.style.display='flex'; }
+    else { document.getElementById('casinoRulesContent').style.display='flex'; }
   }
-}
   else if (mode==='genshin') { document.getElementById('casinoGenshinContent').style.display='flex'; }
 }
 
