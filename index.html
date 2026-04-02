@@ -1299,6 +1299,419 @@ body.theme-genshin #raid-action-btn {
     background: #dbb165;
     color: #3d4555;
 }  
+
+/* DIARY */
+.diary-shell {
+    padding: 0 12px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.diary-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 16px;
+    border: 1px solid rgba(180, 20, 20, 0.28);
+    background:
+        radial-gradient(circle at top right, rgba(212, 175, 55, 0.12), transparent 38%),
+        linear-gradient(145deg, rgba(20, 10, 16, 0.98), rgba(11, 10, 18, 0.96));
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+}
+
+.diary-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 100%);
+    pointer-events: none;
+}
+
+.diary-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.diary-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(180, 20, 20, 0.28);
+    background: rgba(255,255,255,0.03);
+    color: var(--text2);
+    font-size: 9px;
+    font-family: monospace;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.diary-kicker::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 12px rgba(204, 68, 68, 0.55);
+}
+
+.diary-title-wrap {
+    position: relative;
+    z-index: 1;
+    margin-top: 16px;
+}
+
+.diary-title {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: var(--text);
+}
+
+.diary-title-cn {
+    margin-top: 6px;
+    color: var(--gold);
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-family: serif;
+}
+
+.diary-subtitle {
+    margin-top: 8px;
+    color: var(--text2);
+    font-size: 11px;
+    line-height: 1.7;
+    max-width: 420px;
+}
+
+.diary-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--gold);
+    white-space: nowrap;
+}
+
+.diary-note {
+    font-size: 10px;
+    color: var(--text3);
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+    margin-top: 12px;
+}
+
+.diary-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.diary-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.diary-section-title {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--text);
+}
+
+.diary-section-sub {
+    font-size: 9px;
+    color: var(--text3);
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+.diary-meta-grid,
+.diary-discuss-grid,
+.diary-grade-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.diary-meta-grid {
+    grid-template-columns: 1.2fr 0.95fr 0.95fr;
+}
+
+.diary-discuss-grid {
+    grid-template-columns: 1fr 1fr;
+}
+
+.diary-grade-grid {
+    grid-template-columns: 1fr 1fr;
+}
+
+.diary-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.diary-label {
+    font-size: 9px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: monospace;
+}
+
+.diary-input,
+.diary-select,
+.diary-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 12px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.diary-input:focus,
+.diary-select:focus,
+.diary-textarea:focus {
+    border-color: rgba(212,175,55,0.45);
+    box-shadow: 0 0 0 3px rgba(212,175,55,0.08);
+    transform: translateY(-1px);
+}
+
+.diary-input[readonly] {
+    color: var(--text2);
+    background: rgba(255,255,255,0.03);
+}
+
+.diary-textarea {
+    min-height: 220px;
+    resize: vertical;
+    line-height: 1.7;
+}
+
+.diary-words-head {
+    display: grid;
+    grid-template-columns: 42px 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 0 0 8px;
+    color: var(--text3);
+    font-size: 9px;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.diary-words-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.diary-word-row {
+    display: grid;
+    grid-template-columns: 42px 1fr 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+}
+
+.diary-word-index {
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text2);
+    background: rgba(255,255,255,0.02);
+}
+
+.diary-stars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.diary-star {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,175,55,0.22);
+    background: rgba(255,255,255,0.03);
+    color: rgba(212,175,55,0.55);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.diary-star.active {
+    background: linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.1));
+    color: var(--gold);
+    border-color: rgba(212,175,55,0.45);
+    box-shadow: 0 0 16px rgba(212,175,55,0.24);
+}
+
+.diary-star:hover {
+    transform: translateY(-2px) scale(1.05);
+}
+
+.diary-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.diary-actions .btn {
+    flex: 1;
+    min-width: 160px;
+}
+
+.diary-saved-days {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.diary-day-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--text2);
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.diary-day-chip.active {
+    border-color: rgba(212,175,55,0.35);
+    color: var(--gold);
+    box-shadow: 0 0 16px rgba(212,175,55,0.12);
+}
+
+.diary-day-chip-empty {
+    color: var(--text3);
+    font-size: 10px;
+}
+
+.diary-back-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 10px;
+}
+
+body.theme-genshin .diary-hero {
+    border-color: rgba(219,177,101,0.28);
+    background:
+        radial-gradient(circle at top right, rgba(219,177,101,0.16), transparent 42%),
+        linear-gradient(145deg, rgba(240, 235, 225, 0.96), rgba(232, 224, 210, 0.98));
+}
+
+body.theme-genshin .diary-kicker,
+body.theme-genshin .diary-status-badge,
+body.theme-genshin .diary-day-chip.active {
+    border-color: rgba(75,83,102,0.14);
+    background: rgba(75,83,102,0.08);
+    color: #4b5366;
+}
+
+body.theme-genshin .diary-kicker::before {
+    background: #dbb165;
+    box-shadow: 0 0 12px rgba(219,177,101,0.45);
+}
+
+body.theme-genshin .diary-title {
+    color: #3d4555;
+}
+
+body.theme-genshin .diary-title-cn {
+    color: #dbb165;
+}
+
+body.theme-genshin .diary-subtitle,
+body.theme-genshin .diary-note,
+body.theme-genshin .diary-section-sub,
+body.theme-genshin .diary-label,
+body.theme-genshin .diary-day-chip,
+body.theme-genshin .diary-word-index {
+    color: #6b7180;
+}
+
+body.theme-genshin .diary-card,
+body.theme-genshin .diary-input,
+body.theme-genshin .diary-select,
+body.theme-genshin .diary-textarea,
+body.theme-genshin .diary-word-index,
+body.theme-genshin .diary-day-chip,
+body.theme-genshin .diary-back-btn {
+    background: rgba(255,255,255,0.55);
+    border-color: rgba(75,83,102,0.14);
+    color: #3d4555;
+}
+
+body.theme-genshin .diary-star {
+    border-color: rgba(219,177,101,0.25);
+    color: rgba(219,177,101,0.6);
+    background: rgba(255,255,255,0.5);
+}
+
+body.theme-genshin .diary-star.active {
+    color: #8a6820;
+    background: linear-gradient(135deg, rgba(219,177,101,0.26), rgba(255,255,255,0.72));
+    border-color: rgba(219,177,101,0.4);
+}
+
+@media (max-width: 640px) {
+    .diary-meta-grid,
+    .diary-discuss-grid,
+    .diary-grade-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .diary-words-head,
+    .diary-word-row {
+        grid-template-columns: 34px 1fr 1fr 1fr;
+        gap: 6px;
+    }
+
+    .diary-hero-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
 </style>
 </head>
 <body>
@@ -1632,6 +2045,11 @@ body.theme-genshin #raid-action-btn {
     <div class="page-sub">> gèng duō // все функции</div>
   </div>
   <div class="more-grid">
+    <div class="more-item" onclick="openDiaryPage()">
+      <i class="ti ti-book-2 more-item-icon" style="color:var(--gold);"></i>
+      <div class="more-item-name">ДНЕВНИК</div>
+      <div class="more-item-cn">旅遊日记 lǚ yóu rì jì</div>
+    </div>
     <div class="more-item" onclick="openMore('themes')">
       <i class="ti ti-palette more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
       <div class="more-item-name">ТЕМЫ</div>
@@ -2324,6 +2742,158 @@ body.theme-genshin #raid-action-btn {
 </div>
 
 <!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
+<div class="page" id="page-diary">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div class="page-title">ДНЕВНИК <span class="page-title-cn">旅遊日记</span></div>
+        <div class="page-sub">> lǚ yóu rì jì // цифровой разворот путешественника</div>
+      </div>
+      <button class="diary-back-btn" onclick="showPage('more', document.getElementById('nav-more-btn'))">[ НАЗАД ]</button>
+    </div>
+  </div>
+
+  <div class="diary-shell">
+    <div class="diary-hero">
+      <div class="diary-hero-top">
+        <div class="diary-kicker">Traveler Log Active</div>
+        <div id="diaryStatusBadge" class="diary-status-badge">локальный черновик</div>
+      </div>
+      <div class="diary-title-wrap">
+        <div class="diary-title">Дневник путешественника</div>
+        <div class="diary-title-cn">北京 2026 · 每日记录</div>
+        <div class="diary-subtitle">Поля сохранены по структуре бумажного дневника, но экран адаптирован под телефон и текущую тему приложения.</div>
+      </div>
+      <div class="diary-note" id="diarySaveMeta">Пробная версия: данные пока сохраняются локально на этом устройстве для демонстрации почти-готового сценария.</div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Параметры дня</div>
+          <div class="diary-section-sub">// date · weekday · weather</div>
+        </div>
+      </div>
+      <div class="diary-meta-grid">
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDate">Дата</label>
+          <input id="diaryDate" class="diary-input" type="date">
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryWeekday">День недели</label>
+          <input id="diaryWeekday" class="diary-input" type="text" readonly>
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryWeather">Погода</label>
+          <select id="diaryWeather" class="diary-select"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Сегодняшние слова</div>
+          <div class="diary-section-sub">// 15 строк: иероглифы · пиньинь · перевод</div>
+        </div>
+      </div>
+      <div class="diary-words-head">
+        <span>#</span>
+        <span>Иероглифы</span>
+        <span>Пиньинь</span>
+        <span>Перевод</span>
+      </div>
+      <div id="diaryWordsRows" class="diary-words-rows"></div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Сегодняшнее обсуждение</div>
+          <div class="diary-section-sub">// оценка · имя носителя · тема</div>
+        </div>
+      </div>
+      <div class="diary-field" style="margin-bottom:12px;">
+        <label class="diary-label">Сегодня тебе как?</label>
+        <div id="diaryStars" class="diary-stars"></div>
+        <input id="diaryDiscussionRating" type="hidden" value="0">
+      </div>
+      <div class="diary-discuss-grid">
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDiscussPerson">Сегодня с (имя носителя)</label>
+          <input id="diaryDiscussPerson" class="diary-input" type="text" placeholder="например, 王老师">
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDiscussTopic">Обсудил(а) тему</label>
+          <input id="diaryDiscussTopic" class="diary-input" type="text" placeholder="например, 我的学校">
+        </div>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">今天跟…讨论</div>
+          <div class="diary-section-sub">// расскажи о своём дне на китайском</div>
+        </div>
+      </div>
+      <div class="diary-field">
+        <label class="diary-label" for="diaryStory">Текст дня</label>
+        <textarea id="diaryStory" class="diary-textarea" placeholder="Напиши здесь рассказ о своём дне на китайском языке..."></textarea>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Оценки дня</div>
+          <div class="diary-section-sub">// выставляются вожатыми после сдачи</div>
+        </div>
+      </div>
+      <div class="diary-grade-grid">
+        <div class="diary-field">
+          <label class="diary-label" for="diaryLessonScore">课程分数</label>
+          <input id="diaryLessonScore" class="diary-input" type="text" placeholder="например, 5/5">
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDiaryScore">记日记分数</label>
+          <input id="diaryDiaryScore" class="diary-input" type="text" placeholder="например, 4/5">
+        </div>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Сохранённые дни</div>
+          <div class="diary-section-sub">// быстрый переход между записями</div>
+        </div>
+      </div>
+      <div id="diarySavedDays" class="diary-saved-days"></div>
+    </div>
+
+    <div class="diary-actions">
+      <button id="diaryBtnSave" class="btn btn-primary"
+        onclick="saveDiaryDraft(true)">[ СОХРАНИТЬ ]</button>
+      <button id="diaryBtnSubmit" class="btn"
+        style="background:var(--accent,#4fa);border:1px solid var(--accent,#4fa);color:#111;"
+        onclick="submitDiary()">[ СДАТЬ ДЕНЬ ]</button>
+      <button id="diaryBtnReset" class="btn"
+        style="background:var(--bg2);border:1px solid var(--border);color:var(--text2);"
+        onclick="resetDiaryForCurrentDate()">[ ОЧИСТИТЬ ]</button>
+      <button id="diaryBtnScore" class="btn btn-primary"
+        style="display:none;"
+        onclick="scoreDiary()">[ ПОСТАВИТЬ ОЦЕНКУ ]</button>
+      <button id="diaryBtnLock" class="btn"
+        style="display:none;background:var(--bg2);border:1px solid #fa4;color:#fa4;"
+        onclick="lockDiaryEntry(true)">[ 🔒 ЗАКРЫТЬ ДЕНЬ ]</button>
+      <button id="diaryBtnUnlock" class="btn"
+        style="display:none;background:var(--bg2);border:1px solid var(--border);color:var(--text2);"
+        onclick="lockDiaryEntry(false)">[ 🔓 РАЗБЛОКИРОВАТЬ ]</button>
+    </div>
+  </div>
+</div>
+
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="showPage('home',this)">
     <i class="ti ti-smart-home"></i>
@@ -2349,7 +2919,7 @@ body.theme-genshin #raid-action-btn {
     <i class="ti ti-cpu" id="nav-implants-icon"></i>
     <span class="nav-cn" id="nav-implants-label">植入物</span>
   </button>
-  <button class="nav-item" onclick="showPage('more',this)">
+  <button class="nav-item" id="nav-more-btn" onclick="showPage('more',this)">
     <i class="ti ti-menu-2"></i>
     <span class="nav-cn">更多</span>
   </button>
@@ -2513,6 +3083,7 @@ function showPage(name, btn) {
   if (name === 'implants') loadImplants(currentUserId);
   if (name === 'shop') loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
+  if (name === 'diary') loadDiaryPage();
   if (name === 'casino') {
     fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
       if (settings.blackwall && !isAdmin) {
@@ -2525,6 +3096,12 @@ function showPage(name, btn) {
       }
     }).catch(() => { setTimeout(initRoulette, 50); });
   }
+}
+
+function openDiaryPage() {
+  showPage('diary');
+  const moreBtn = document.getElementById('nav-more-btn');
+  if (moreBtn) moreBtn.classList.add('active');
 }
 
 function openMore(section) {
@@ -2548,6 +3125,554 @@ function openMore(section) {
 }
 
 // ===== ДАННЫЕ =====
+const DIARY_WORD_ROWS = 15;
+const DIARY_WEATHER_OPTIONS = [
+  '',
+  '晴天 / солнечно',
+  '多云 / облачно',
+  '阴天 / пасмурно',
+  '小雨 / небольшой дождь',
+  '大雨 / ливень',
+  '有风 / ветрено',
+  '闷热 / душно',
+  '凉爽 / прохладно'
+];
+
+// ============================================================
+// ZHIDAO Diary — API Integration Patch
+// Replaces: from "let diaryInitialized = false;"
+//           to end of "function initDiaryPage() { ... }"
+// ============================================================
+
+// ── STATE ────────────────────────────────────────────────────
+let diaryInitialized  = false;
+let diaryAutosaveTimer = null;
+let diaryCurrentDate  = null;
+let diaryServerStatus = null;   // null | 'draft' | 'submitted' | 'locked'
+let diaryViewedUserId = null;   // whose diary is open (null = currentUserId)
+let diaryIsSaving     = false;
+
+// ── UTILS ─────────────────────────────────────────────────────
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;');
+}
+
+function getDiaryStorageKey() {
+  return `zhidao_diary_v1_${currentUserId || 'guest'}`;
+}
+
+function getDiaryStore() {
+  try { return JSON.parse(localStorage.getItem(getDiaryStorageKey()) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function setDiaryStore(store) {
+  localStorage.setItem(getDiaryStorageKey(), JSON.stringify(store));
+}
+
+function getShanghaiDateString() {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit'
+  });
+  const parts = formatter.formatToParts(new Date())
+    .reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function getDiaryWeekday(dateString) {
+  if (!dateString) return '';
+  const date = new Date(`${dateString}T00:00:00`);
+  return ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'][date.getDay()] || '';
+}
+
+function createEmptyDiaryWords() {
+  return Array.from({ length: 15 }, () => ({ hanzi: '', pinyin: '', translation: '' }));
+}
+
+function createEmptyDiaryEntry(dateString) {
+  const date = dateString || getShanghaiDateString();
+  return {
+    date, weekday: getDiaryWeekday(date), weather: '',
+    words: createEmptyDiaryWords(),
+    discussion_rating: 0, discussion_person: '', discussion_topic: '',
+    story: '', lesson_score: '', diary_score: '', updated_at: null
+  };
+}
+
+function getDiaryEntryFromCache(dateString) {
+  const store = getDiaryStore();
+  return store[dateString] || createEmptyDiaryEntry(dateString);
+}
+
+function countDiaryWords(entry) {
+  if (!entry || !entry.words) return 0;
+  return entry.words.filter(w => (w.hanzi || '').trim()).length;
+}
+
+// Headers for all diary API calls
+function diaryHeaders() {
+  const h = { 'Content-Type': 'application/json' };
+  if (currentUserId) {
+    h['X-Telegram-Id'] = String(currentUserId);
+    if (isAdmin) h['X-Admin-Id'] = String(currentUserId);
+  }
+  return h;
+}
+
+// ── API CALLS ─────────────────────────────────────────────────
+
+async function loadDiaryFromAPI(targetUserId, date) {
+  if (!targetUserId) return null;
+  try {
+    const r = await fetch(`${API_URL}/api/diary/${targetUserId}/${date}`, {
+      headers: diaryHeaders()
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+
+    // Normalize words: server returns [{row_number, hanzi, pinyin, translation}]
+    const wordArr = createEmptyDiaryWords();
+    if (Array.isArray(data.words)) {
+      data.words.forEach(w => {
+        const idx = (w.row_number || 1) - 1;
+        if (idx >= 0 && idx < 15)
+          wordArr[idx] = { hanzi: w.hanzi || '', pinyin: w.pinyin || '', translation: w.translation || '' };
+      });
+    }
+    data.words = wordArr;
+
+    // Flatten scores to top level
+    if (data.scores) {
+      data.lesson_score = data.scores.lesson_score || '';
+      data.diary_score  = data.scores.diary_score  || '';
+    }
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function loadDiaryListFromAPI(targetUserId) {
+  if (!targetUserId) return [];
+  try {
+    const r = await fetch(`${API_URL}/api/diary/${targetUserId}`, {
+      headers: diaryHeaders()
+    });
+    if (!r.ok) return [];
+    return await r.json(); // [{entry_date, status, word_count, submitted_at, locked_at}]
+  } catch (e) {
+    return [];
+  }
+}
+
+async function saveDiaryToAPI(entry, targetUserId) {
+  if (!currentUserId || !targetUserId) return false;
+  try {
+    const r = await fetch(`${API_URL}/api/diary/save`, {
+      method: 'POST',
+      headers: diaryHeaders(),
+      body: JSON.stringify({
+        telegram_id:       targetUserId,
+        entry_date:        entry.date,
+        weekday:           entry.weekday,
+        weather:           entry.weather,
+        words:             entry.words,
+        discussion_rating: entry.discussion_rating,
+        discussion_person: entry.discussion_person,
+        discussion_topic:  entry.discussion_topic,
+        story:             entry.story
+      })
+    });
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+
+function renderDiaryWeatherOptions() {
+  const sel = document.getElementById('diaryWeather');
+  if (!sel) return;
+  ['','☀️ Солнечно','⛅ Облачно','🌧 Дождь','🌩 Гроза','❄️ Снег','🌫 Туман'].forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o || '— Погода —';
+    sel.appendChild(opt);
+  });
+}
+
+function renderDiaryStars(rating) {
+  const container = document.getElementById('diaryStars');
+  if (!container) return;
+  container.innerHTML = [1,2,3,4,5].map(i =>
+    `<button type="button" class="diary-star ${i <= rating ? 'active' : ''}"
+      onclick="setDiaryDiscussionRating(${i})">★</button>`
+  ).join('');
+}
+
+function renderDiaryWordRows(words) {
+  const container = document.getElementById('diaryWordRows');
+  if (!container) return;
+  const list = (words && words.length) ? words : createEmptyDiaryWords();
+  container.innerHTML = list.map((word, index) => `
+    <div class="diary-word-row">
+      <div class="diary-word-index">${index + 1}</div>
+      <input class="diary-input diary-word-input" data-word-index="${index}" data-word-field="hanzi"
+        value="${escapeHtml(word.hanzi)}" placeholder="汉字">
+      <input class="diary-input diary-word-input" data-word-index="${index}" data-word-field="pinyin"
+        value="${escapeHtml(word.pinyin)}" placeholder="pīn yīn">
+      <input class="diary-input diary-word-input" data-word-index="${index}" data-word-field="translation"
+        value="${escapeHtml(word.translation)}" placeholder="перевод">
+    </div>`
+  ).join('');
+}
+
+function updateDiaryStatus(entry, status) {
+  const badge = document.getElementById('diaryStatusBadge');
+  const meta  = document.getElementById('diarySaveMeta');
+  if (!badge || !meta) return;
+
+  const wordsFilled = countDiaryWords(entry);
+  const s = status || diaryServerStatus;
+
+  if (s === 'locked') {
+    badge.textContent = '🔒 заблокировано';
+    badge.style.cssText = 'background:rgba(255,200,50,0.18)';
+    meta.textContent = 'Запись заблокирована. Оценки финальные.';
+  } else if (s === 'submitted') {
+    badge.textContent = '✅ сдано на проверку';
+    badge.style.cssText = 'background:rgba(50,200,100,0.18)';
+    meta.textContent = 'День сдан. Ожидай оценки от вожатых.';
+  } else {
+    badge.textContent = currentUserId
+      ? `📝 черновик: ${wordsFilled}/15 слов`
+      : `💾 локальный черновик: ${wordsFilled}/15`;
+    badge.style.cssText = '';
+    meta.textContent = currentUserId
+      ? 'Черновик сохраняется автоматически. Нажми «СДАТЬ ДЕНЬ» когда закончишь.'
+      : 'Открой через Telegram-бота — данные будут сохраняться на сервере.';
+  }
+}
+
+async function renderDiarySavedDays() {
+  const container = document.getElementById('diarySavedDays');
+  if (!container) return;
+
+  const tid = diaryViewedUserId || currentUserId;
+  const serverList = await loadDiaryListFromAPI(tid);
+  const localDates  = Object.keys(getDiaryStore());
+  const serverDates = new Set(serverList.map(e => e.entry_date));
+  const allDates    = [...new Set([...serverList.map(e => e.entry_date), ...localDates])]
+    .sort((a, b) => b.localeCompare(a));
+
+  if (!allDates.length) {
+    container.innerHTML = '<div class="diary-day-chip-empty">Записей пока нет. Начни с текущего дня.</div>';
+    return;
+  }
+
+  const byDate = Object.fromEntries(serverList.map(e => [e.entry_date, e]));
+  container.innerHTML = allDates.map(date => {
+    const active     = date === diaryCurrentDate ? 'active' : '';
+    const srv        = byDate[date];
+    const local      = getDiaryEntryFromCache(date);
+    const wordCount  = srv ? (srv.word_count || 0) : countDiaryWords(local);
+    const icon       = srv
+      ? (srv.status === 'locked' ? '🔒' : srv.status === 'submitted' ? '✅' : '📝')
+      : '💾';
+    return `<button type="button" class="diary-day-chip ${active}"
+      onclick="loadDiaryPage('${date}')">${icon} ${date}<span>${wordCount}/15</span></button>`;
+  }).join('');
+}
+
+// ── ROLE UX ───────────────────────────────────────────────────
+
+function applyDiaryRoleUX(status) {
+  diaryServerStatus = status || null;
+  const isLocked    = status === 'locked';
+  const isSubmitted = status === 'submitted';
+  const studentLock = isLocked || isSubmitted;
+
+  // Content fields: students can edit only in draft; admins always readonly (they don't write diaries)
+  const contentIds = ['diaryWeekday','diaryWeather','diaryDiscussPerson','diaryDiscussTopic','diaryStory'];
+  contentIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.readOnly = isAdmin || studentLock;
+  });
+  document.querySelectorAll('.diary-word-input').forEach(el => {
+    el.readOnly = isAdmin || studentLock;
+  });
+
+  // Stars: disabled for admins and locked/submitted students
+  const canClickStars = !isAdmin && !studentLock;
+  document.querySelectorAll('.diary-star').forEach(el => {
+    el.disabled = !canClickStars;
+    el.style.opacity = canClickStars ? '1' : '0.5';
+    el.style.cursor  = canClickStars ? 'pointer' : 'default';
+  });
+
+  // Score fields: editable only by admin when NOT locked yet
+  ['diaryLessonScore','diaryDiaryScore'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.readOnly = !(isAdmin && !isLocked);
+  });
+
+  // Buttons — show/hide based on role + status
+  const show = (id, visible) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = visible ? '' : 'none';
+  };
+  show('diaryBtnSave',   !isAdmin && !studentLock);
+  show('diaryBtnSubmit', !isAdmin && !studentLock);
+  show('diaryBtnScore',  isAdmin && isSubmitted && !isLocked);
+  show('diaryBtnLock',   isAdmin && isSubmitted && !isLocked);
+  show('diaryBtnUnlock', isAdmin && isLocked);
+  show('diaryBtnReset',  !isAdmin && !studentLock);
+
+  updateDiaryStatus(collectDiaryFormData(), status);
+}
+
+// ── FORM ──────────────────────────────────────────────────────
+
+function fillDiaryForm(entry) {
+  document.getElementById('diaryDate').value              = entry.date || '';
+  document.getElementById('diaryWeekday').value           = entry.weekday || getDiaryWeekday(entry.date);
+  document.getElementById('diaryWeather').value           = entry.weather || '';
+  document.getElementById('diaryDiscussionRating').value  = entry.discussion_rating || 0;
+  document.getElementById('diaryDiscussPerson').value     = entry.discussion_person || '';
+  document.getElementById('diaryDiscussTopic').value      = entry.discussion_topic || '';
+  document.getElementById('diaryStory').value             = entry.story || '';
+  document.getElementById('diaryLessonScore').value       = entry.lesson_score || '';
+  document.getElementById('diaryDiaryScore').value        = entry.diary_score || '';
+  renderDiaryStars(entry.discussion_rating || 0);
+  renderDiaryWordRows(entry.words);
+}
+
+function collectDiaryFormData() {
+  const date  = document.getElementById('diaryDate').value || getShanghaiDateString();
+  const words = createEmptyDiaryWords().map((_, i) => ({
+    hanzi:       document.querySelector(`[data-word-index="${i}"][data-word-field="hanzi"]`)?.value  || '',
+    pinyin:      document.querySelector(`[data-word-index="${i}"][data-word-field="pinyin"]`)?.value || '',
+    translation: document.querySelector(`[data-word-index="${i}"][data-word-field="translation"]`)?.value || ''
+  }));
+  return {
+    date, weekday: getDiaryWeekday(date),
+    weather:           document.getElementById('diaryWeather').value || '',
+    words,
+    discussion_rating: parseInt(document.getElementById('diaryDiscussionRating').value || '0', 10),
+    discussion_person: document.getElementById('diaryDiscussPerson').value.trim(),
+    discussion_topic:  document.getElementById('diaryDiscussTopic').value.trim(),
+    story:             document.getElementById('diaryStory').value.trim(),
+    lesson_score:      document.getElementById('diaryLessonScore').value.trim(),
+    diary_score:       document.getElementById('diaryDiaryScore').value.trim(),
+    updated_at:        new Date().toISOString()
+  };
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────
+
+async function saveDiaryDraft(showFeedback = false) {
+  if (diaryIsSaving) return;
+  diaryIsSaving = true;
+  try {
+    const entry = collectDiaryFormData();
+    const tid   = diaryViewedUserId || currentUserId;
+
+    // Always write to localStorage cache first
+    const store = getDiaryStore();
+    store[entry.date] = entry;
+    diaryCurrentDate = entry.date;
+    setDiaryStore(store);
+    document.getElementById('diaryWeekday').value = entry.weekday;
+
+    // Try API save (students only — admins don't save student content)
+    let saved = false;
+    if (!isAdmin) saved = await saveDiaryToAPI(entry, tid);
+
+    updateDiaryStatus(entry, diaryServerStatus);
+    renderDiarySavedDays();
+
+    if (showFeedback) {
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      tg.showAlert(saved
+        ? '✅ День сохранён на сервере.'
+        : '💾 Сохранено локально (сервер недоступен).');
+    }
+  } finally {
+    diaryIsSaving = false;
+  }
+}
+
+async function submitDiary() {
+  if (!currentUserId) { tg.showAlert('Открой через бота.'); return; }
+  const entry     = collectDiaryFormData();
+  const wordCount = countDiaryWords(entry);
+  const hasStory  = entry.story.trim().length > 0;
+
+  if (wordCount < 1 && !hasStory) {
+    tg.showAlert('Заполни хотя бы несколько слов или напиши текст дня перед сдачей.');
+    return;
+  }
+
+  tg.showPopup({
+    title: 'Сдать день?',
+    message: `Слов: ${wordCount}/15. После сдачи редактирование будет закрыто до разблокировки.`,
+    buttons: [{ id: 'yes', type: 'default', text: '✅ Сдать' }, { type: 'cancel' }]
+  }, async (btnId) => {
+    if (btnId !== 'yes') return;
+    await saveDiaryDraft(false);
+    try {
+      const r = await fetch(`${API_URL}/api/diary/submit`, {
+        method: 'POST',
+        headers: diaryHeaders(),
+        body: JSON.stringify({ telegram_id: currentUserId, entry_date: entry.date })
+      });
+      if (r.ok) {
+        try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+        applyDiaryRoleUX('submitted');
+        renderDiarySavedDays();
+        tg.showAlert('✅ День сдан на проверку!');
+      } else {
+        tg.showAlert('Ошибка при сдаче. Попробуй ещё раз.');
+      }
+    } catch(e) {
+      tg.showAlert('Нет соединения с сервером.');
+    }
+  });
+}
+
+async function scoreDiary() {
+  if (!isAdmin) return;
+  const date   = document.getElementById('diaryDate').value || getShanghaiDateString();
+  const lesson = document.getElementById('diaryLessonScore').value.trim();
+  const diary  = document.getElementById('diaryDiaryScore').value.trim();
+  const tid    = diaryViewedUserId || currentUserId;
+  try {
+    const r = await fetch(`${API_URL}/api/diary/score`, {
+      method: 'POST',
+      headers: diaryHeaders(),
+      body: JSON.stringify({ telegram_id: tid, entry_date: date, lesson_score: lesson, diary_score: diary })
+    });
+    if (r.ok) {
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      tg.showAlert('⭐ Оценки выставлены.');
+    } else {
+      tg.showAlert('Ошибка при сохранении оценки.');
+    }
+  } catch(e) {
+    tg.showAlert('Нет соединения.');
+  }
+}
+
+async function lockDiaryEntry(locked) {
+  if (!isAdmin) return;
+  const date = document.getElementById('diaryDate').value || getShanghaiDateString();
+  const tid  = diaryViewedUserId || currentUserId;
+  try {
+    const r = await fetch(`${API_URL}/api/diary/lock`, {
+      method: 'POST',
+      headers: diaryHeaders(),
+      body: JSON.stringify({ telegram_id: tid, entry_date: date, locked })
+    });
+    if (r.ok) {
+      applyDiaryRoleUX(locked ? 'locked' : 'submitted');
+      renderDiarySavedDays();
+      tg.showAlert(locked ? '🔒 Запись заблокирована.' : '🔓 Запись разблокирована.');
+    }
+  } catch(e) {
+    tg.showAlert('Нет соединения.');
+  }
+}
+
+function queueDiaryAutosave() {
+  if (!diaryInitialized || isAdmin) return;
+  clearTimeout(diaryAutosaveTimer);
+  diaryAutosaveTimer = setTimeout(() => saveDiaryDraft(false), 700);
+}
+
+function setDiaryDiscussionRating(value) {
+  document.getElementById('diaryDiscussionRating').value = value;
+  renderDiaryStars(value);
+  queueDiaryAutosave();
+}
+
+async function loadDiaryPage(dateOverride = '') {
+  initDiaryPage();
+  const date = dateOverride
+    || document.getElementById('diaryDate').value
+    || diaryCurrentDate
+    || getShanghaiDateString();
+
+  diaryCurrentDate  = date;
+  diaryViewedUserId = diaryViewedUserId || currentUserId;
+  document.getElementById('diaryDate').value = date;
+
+  // 1. Immediate paint from cache
+  const cached = getDiaryEntryFromCache(date);
+  fillDiaryForm(cached);
+  applyDiaryRoleUX(diaryServerStatus);
+  renderDiarySavedDays();
+
+  // 2. Async server fetch — update over the top
+  const server = await loadDiaryFromAPI(diaryViewedUserId, date);
+  if (server) {
+    const merged = { ...cached, ...server };
+    const store  = getDiaryStore();
+    store[date]  = merged;
+    setDiaryStore(store);
+    fillDiaryForm(merged);
+    applyDiaryRoleUX(server.status || 'draft');
+  } else {
+    applyDiaryRoleUX(null);
+  }
+  renderDiarySavedDays();
+}
+
+function resetDiaryForCurrentDate() {
+  const date = document.getElementById('diaryDate').value || diaryCurrentDate || getShanghaiDateString();
+  tg.showPopup({
+    title: 'Очистить черновик?',
+    message: 'Удалить локальную копию для этой даты? Данные на сервере останутся.',
+    buttons: [{ id: 'yes', type: 'destructive', text: 'Очистить' }, { type: 'cancel' }]
+  }, (btnId) => {
+    if (btnId !== 'yes') return;
+    const store = getDiaryStore();
+    delete store[date];
+    setDiaryStore(store);
+    fillDiaryForm(createEmptyDiaryEntry(date));
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  });
+}
+
+function initDiaryPage() {
+  if (diaryInitialized) return;
+  diaryInitialized = true;
+  renderDiaryWeatherOptions();
+
+  const diaryPage = document.getElementById('page-diary');
+  const dateInput = document.getElementById('diaryDate');
+  if (dateInput) {
+    dateInput.value = getShanghaiDateString();
+    dateInput.addEventListener('change', () => loadDiaryPage(dateInput.value));
+  }
+
+  diaryPage.addEventListener('input', (event) => {
+    if (event.target.id === 'diaryDate') return;
+    queueDiaryAutosave();
+  });
+  diaryPage.addEventListener('change', (event) => {
+    if (event.target.id === 'diaryDate') return;
+    queueDiaryAutosave();
+  });
+
+  loadDiaryPage(getShanghaiDateString());
+}
+
+
 async function loadUserData(telegramId) {
   try {
     const r = await fetch(`${API_URL}/api/user/${telegramId}`);
