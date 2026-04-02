@@ -3198,7 +3198,6 @@ if (user) {
 
 loadSavedTheme();
 const genshinTabBtn = document.getElementById('genshinTabBtn');
-if (genshinTabBtn) genshinTabBtn.style.display = 'block';
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -4255,6 +4254,8 @@ function setTheme(theme) {
   if (el('casino-page-title'))   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
   if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';
   if (el('implants-page-title')) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
+  if (el('genshinTabBtn')) el('genshinTabBtn').style.display = isG ? 'block' : 'none';
+  if (!isG) switchCasinoTab('play', document.querySelector('.subtab'));
   if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
   try { try{tg.HapticFeedback.impactOccurred('light');}catch(e){} } catch(e) {}
 }
