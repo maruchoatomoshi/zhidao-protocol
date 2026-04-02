@@ -1727,6 +1727,13 @@ body.theme-genshin #raid-action-btn {
 }
 
 
+
+/* ── Импланты: названия и описания в светлых темах ───────── */
+body.theme-nw-light .implant-cn,
+body.theme-genshin-light .implant-cn { color: var(--text2); }
+body.theme-nw-light .implant-sub,
+body.theme-genshin-light .implant-sub { color: var(--text3); }
+
 /* ── Светлые темы: золотые тексты → тёмно-серый ─────────── */
 body.theme-nw-light .more-item-cn,
 body.theme-genshin-light .more-item-cn,
@@ -1994,9 +2001,9 @@ body.theme-genshin .diary-star.active {
     <div style="font-size:22px;">👑</div>
     <div style="flex:1;">
       <div style="font-size:14px;font-weight:900;color:var(--gold);letter-spacing:1px;">АЛЬФАБОСС</div>
-      <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;margin-top:2px;">// ВНЕ ЗАЧЁТА // НЕДОСЯГАЕМ //</div>
+      <div style="font-size:9px;color:rgba(100,80,30,0.7);font-family:monospace;margin-top:2px;">// ВНЕ ЗАЧЁТА // НЕДОСЯГАЕМ //</div>
     </div>
-    <div style="font-size:11px;color:rgba(212,175,55,0.4);font-family:monospace;">999 999 ★</div>
+    <div style="font-size:11px;color:rgba(100,80,30,0.6);font-family:monospace;">999 999 ★</div>
   </div>
 
   <!-- НОВАЯ КНОПКА РЕЙДА (открывает оверлей) -->
@@ -2004,7 +2011,7 @@ body.theme-genshin .diary-star.active {
   <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
     <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">⚔️</span>
     [ 袭击 // РЕЙД НА АЛЬФАБОССА ]
-    <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(212,175,55,0.5);">50 ★</span>
+    <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(100,80,30,0.6);">50 ★</span>
   </button>
 </div>
 <!-- Старый блок raidPanel мы полностью удаляем, он больше не нужен -->
@@ -2585,6 +2592,7 @@ body.theme-genshin .diary-star.active {
   </div>
 
   <!-- Каталог всех имплантов -->
+  <div id="implants-catalog">
   <div class="cn-divider">📖 植入物目录 КАТАЛОГ</div>
 
   <!-- ГУАНЬСИ -->
@@ -2596,7 +2604,7 @@ body.theme-genshin .diary-star.active {
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:#fff;">关系 ГУАНЬСИ</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);">关系 ГУАНЬСИ</div>
         <div style="font-size:12px;color:rgba(212,175,55,0.7);font-family:serif;font-style:italic;margin-top:3px;">guān xi — связи, отношения</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
@@ -2667,7 +2675,7 @@ body.theme-genshin .diary-star.active {
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-trending-up" style="font-size:28px;min-width:30px;text-align:center;color:rgba(200,80,80,0.9);"></i>
-          <div><div style="font-size:13px;color:#fff;font-weight:600;">Усиленный протокол</div><div style="font-size:11px;color:#ccc;margin-top:2px;">+20% к начисляемым баллам за все действия</div></div>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Усиленный протокол</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+20% к начисляемым баллам за все действия</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-gift" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
@@ -2687,6 +2695,7 @@ body.theme-genshin .diary-star.active {
       </div>
     </div>
   </div>
+  </div> <!-- /implants-catalog -->
   </div> <!-- /implants-tab -->
 
   <!-- ТАБ КАРТОЧКИ -->
@@ -3371,8 +3380,14 @@ function showPage(name, btn) {
         document.getElementById('casinoPlayContent').innerHTML =
           '<div class="blackwall-screen"><div class="blackwall-title">BlackWall 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
       } else {
-        document.getElementById('casinoPlayContent').style.display = 'flex';
-        setTimeout(initRoulette, 50);
+        if (currentThemePath === 'genshin') {
+          document.getElementById('casinoPlayContent').style.display = 'none';
+          const gcEl = document.getElementById('casinoGenshinContent');
+          if (gcEl) gcEl.style.display = 'flex';
+        } else {
+          document.getElementById('casinoPlayContent').style.display = 'flex';
+          setTimeout(initRoulette, 50);
+        }
         setTimeout(() => loadPoints(currentUserId), 300);
       }
     }).catch(() => { setTimeout(initRoulette, 50); });
@@ -4173,6 +4188,7 @@ function applyThemePath(path) {
     // Показываем импланты, скрываем карточки
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'none';
+    const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'block';
     // Кейсы — показываем рулетку
     const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'flex';
     const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'none';
@@ -4186,6 +4202,7 @@ function applyThemePath(path) {
     // Показываем карточки, скрываем импланты
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'block';
+    const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'none';
     // Молитвы — показываем Геншин
     const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'none';
     const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'flex';
