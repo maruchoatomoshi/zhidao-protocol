@@ -2664,6 +2664,10 @@ const SHOP_ICONS = {
   'no_report':    '<i class="ti ti-file-off" style="color:rgba(200,80,80,0.9);font-size:22px;"></i>',
   'poizon':       '<i class="ti ti-shirt" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
   'extra_case':   '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
+  'extra_raid_attempt': '<i class="ti ti-sword" style="color:#cc4444;font-size:22px;"></i>',
+  'raid_insurance': '<i class="ti ti-shield-dollar" style="color:var(--gold);font-size:22px;"></i>',
+  'raid_beacon': '<i class="ti ti-link" style="color:#60b4d4;font-size:22px;"></i>',
+  'raid_overclock': '<i class="ti ti-bolt" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
   'double_win':   '<i class="ti ti-arrows-double-sw-ne" style="color:var(--gold);font-size:22px;"></i>',
   'title_player': '<i class="ti ti-crown" style="color:var(--gold);font-size:22px;"></i>',
 };
@@ -3065,7 +3069,7 @@ async function loadInventory() {
     const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
     const data = await r.json();
     const container = document.getElementById('shopInventoryContent');
-    const digital = ['extra_case','double_win','title_player','immunity'];
+    const digital = ['extra_case','extra_raid_attempt','double_win','title_player','immunity','raid_insurance','raid_beacon','raid_overclock'];
     const physical = data.filter(item => !digital.includes(item.code));
     if (!physical.length) { container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купи что-нибудь в магазине!</div>'; return; }
     container.innerHTML = physical.map(item =>
@@ -4100,12 +4104,16 @@ async function showRaid() {
 
 async function loadRaidStatus() {
     try {
-        const r = await fetch(`${API_URL}/api/raid/status`);
+        const r = await fetch(`${API_URL}/api/raid/status?telegram_id=${currentUserId || 0}`);
         if (!r.ok) throw new Error('status');
 
         const data = await r.json();
+        const raidLimit = data.limit_today || 3;
         const finishedToday = data.finished_today || 0;
-        const remainingToday = isAdmin ? 'без лимита' : `${Math.max(0, 2 - finishedToday)}/2`;
+        const numericRemaining = typeof data.remaining_today === 'number'
+            ? data.remaining_today
+            : Math.max(0, raidLimit - finishedToday);
+        const remainingToday = isAdmin ? 'без лимита' : `${numericRemaining}/${raidLimit}`;
 
         if (!data.raid) {
             updateRaidUI(0);
@@ -4136,8 +4144,8 @@ async function loadRaidStatus() {
                 success ? '#2ecc71' : '#cc4444'
             );
             setRaidButtonState(
-                isAdmin || finishedToday < 2 ? 'Начать новый рейд' : 'Рейды на сегодня закрыты',
-                !isAdmin && finishedToday >= 2
+                isAdmin || numericRemaining > 0 ? 'Начать новый рейд' : 'Рейды на сегодня закрыты',
+                !isAdmin && numericRemaining <= 0
             );
             return;
         }
