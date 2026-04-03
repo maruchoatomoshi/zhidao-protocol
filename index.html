@@ -4727,13 +4727,15 @@ async function loadLeaderboard() {
       let nameStyle = '';
       let implantBadge = '';
       if (item.implant === 'implant_red_dragon') {
-        nameStyle = 'color:#cc2200;text-shadow:0 0 8px rgba(200,0,0,0.4);font-weight:700;';
-        implantBadge = ' <span style="font-size:10px;">🐉</span>';
-      } else if (item.implant === 'implant_guanxi' || item.implant === 'implant_terracota') {
-        nameStyle = 'color:#9b59b6;text-shadow:0 0 8px rgba(155,89,182,0.3);font-weight:700;';
-        implantBadge = ' <span style="font-size:10px;">💜</span>';
-      }
-
+      nameStyle = 'color:#cc2200;text-shadow:0 0 8px rgba(200,0,0,0.4);font-weight:700;';
+      implantBadge = ' <span style="font-size:10px;">🐉</span>';
+     } else if (item.implant === 'implant_netwatch') {
+     nameStyle = 'color:#cc2200;text-shadow:0 0 8px rgba(200,0,0,0.4);font-weight:700;';
+     implantBadge = ' <span style="font-size:10px;">🔴</span>';
+     } else if (item.implant === 'implant_guanxi' || item.implant === 'implant_terracota') {
+     nameStyle = 'color:#9b59b6;text-shadow:0 0 8px rgba(155,89,182,0.3);font-weight:700;';
+     implantBadge = ' <span style="font-size:10px;">💜</span>';
+     }
       html += `<div class="lb-item ${isMe?'me':''}">
         <div class="lb-rank">${medal}</div>
         <div class="lb-name" style="${nameStyle}">${item.name}${titleBadge}${implantBadge}${isMe?' 👈':''}</div>
