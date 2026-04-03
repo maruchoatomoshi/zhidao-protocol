@@ -3794,8 +3794,11 @@ async function loadDiaryStarsList() {
   list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Загрузка...</div>';
 
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
+    if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
     const r = await fetch(`${API_URL}/api/diary/stars/overview?entry_date=${date}`, {
-      headers: diaryHeaders()
+      headers
     });
     if (!r.ok) { list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Ошибка загрузки</div>'; return; }
     const data = await r.json();
@@ -3821,14 +3824,17 @@ function renderDiaryStarsList(entries, date) {
     const bonusHtml = bonus ? ' <span style="color:#2ecc71;font-size:10px;">+✨</span>' : '';
     const pointsEarned = stars ? STAR_POINTS[stars] + (bonus ? 20 : 0) : 0;
     const canRate = isAdmin;
+    const isMe = entry.telegram_id === currentUserId;
+    // Студент видит только свою строку
+    if (!isAdmin && !isMe) return '';
 
     return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
       ${canRate ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, '${entry.full_name}', '${date}')"` : ''}>
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="flex:1;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${entry.full_name}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${entry.full_name}${isMe && !isAdmin ? ' 👈' : ''}</div>
           <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-top:2px;">
-            ${stars ? starsHtml + bonusHtml + ' · +' + pointsEarned + '★' : 'не оценено'}
+            ${stars ? starsHtml + bonusHtml + ' · +' + pointsEarned + '★' : 'ещё не оценено'}
           </div>
         </div>
         ${canRate ? `<div style="font-size:20px;color:var(--text3);">›</div>` : ''}
