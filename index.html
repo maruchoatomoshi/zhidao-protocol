@@ -3549,11 +3549,17 @@ const PRIZES = [
   { code:'jackpot', icon:'👑', name:'ДЖЕКПОТ!',          desc:'+250 баллов! Невероятно!', points:250, rarity:'jackpot' },
 ];
 const PURPLE_PRIZES = [
-  { code:'implant_guanxi',    icon:'🤝', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true', name:'Гуаньси 关系',    desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
-  { code:'implant_terracota', icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',          name:'Терракота 兵马俑', desc:'Имплант: блок 1 штрафа в день',    points:0, rarity:'rare' },
+  { code:'implant_guanxi',    icon:'🤝', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',           name:'Гуаньси 关系',       desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
+  { code:'implant_terracota', icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',                    name:'Терракота 兵马俑',   desc:'Имплант: блок 1 штрафа в день',    points:0, rarity:'rare' },
+  { code:'implant_panda',     icon:'🐼', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',      name:'Панда 🐼',           desc:'Кэшбек +10★ с покупки',            points:0, rarity:'rare' },
+  { code:'implant_shaolin',   icon:'🥋', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',    name:'Шаолинь 少林',       desc:'+20★ за перекличку вовремя',       points:0, rarity:'rare' },
+  { code:'implant_linguasoft',icon:'🎙', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true', name:'Linguasoft 口才',    desc:'+30★ за оценку 5/5 в дневнике',   points:0, rarity:'rare' },
+  { code:'implant_caishen',   icon:'💰', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',            name:'Цайшэнь 财神',       desc:'+15★ каждые 24 часа',              points:0, rarity:'rare' },
+  { code:'implant_qilin',     icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',      name:'Цилинь 麒麟',        desc:'+10★ за каждого владельца Цилиня', points:0, rarity:'rare' },
 ];
 const BLACK_PRIZES = [
-  { code:'implant_red_dragon', icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true', name:'Красный Дракон 红龙', desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
+  { code:'implant_red_dragon', icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',           name:'Красный Дракон 红龙',    desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
+  { code:'implant_netwatch',   icon:'🔴', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true', name:'Сетевой Дозор 网络守卫', desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
 ];
 const PRIZE_MAP = {};
 [...PRIZES, ...PURPLE_PRIZES, ...BLACK_PRIZES].forEach(p => PRIZE_MAP[p.code] = p);
@@ -4505,6 +4511,12 @@ async function loadImplants(telegramId) {
     'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
     'implant_terracota':  'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',
     'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
+    'implant_panda':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',
+    'implant_shaolin':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',
+    'implant_linguasoft': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true',
+    'implant_caishen':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',
+    'implant_qilin':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',
+    'implant_netwatch':   'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true',
   };
   try {
     const r = await fetch(`${API_URL}/api/casino/implants/${telegramId}`);
