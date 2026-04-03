@@ -2327,10 +2327,15 @@ body.theme-genshin .diary-star.active {
     <div class="page-sub">> gèng duō // все функции</div>
   </div>
   <div class="more-grid">
-    <div class="more-item" onclick="openDiaryPage()">
-      <i class="ti ti-book-2 more-item-icon" style="color:var(--gold);"></i>
-      <div class="more-item-name">ДНЕВНИК</div>
-      <div class="more-item-cn">旅遊日记 lǚ yóu rì jì</div>
+    <div class="more-item" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
+      <i class="ti ti-star more-item-icon" style="color:var(--gold);"></i>
+      <div class="more-item-name">ДНЕВНИК ★</div>
+      <div class="more-item-cn">日记评分 rì jì píng fēn</div>
+    </div>
+    <div class="more-item" onclick="openDiaryPage()" style="opacity:0.45;">
+      <i class="ti ti-book-2 more-item-icon" style="color:var(--text3);"></i>
+      <div class="more-item-name">АРХИВ</div>
+      <div class="more-item-cn">备用日记 bèi yòng</div>
     </div>
     <div class="more-item" onclick="openMore('themes')">
       <i class="ti ti-palette more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
@@ -3233,6 +3238,88 @@ body.theme-genshin .diary-star.active {
 </div>
 
 <!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
+
+<!-- ── Дневник ★ — Страница оценки ─────────────────────── -->
+<div class="page" id="page-diary-stars">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div class="page-title">ДНЕВНИК <span class="page-title-cn">★</span></div>
+        <div class="page-sub">> rì jì píng fēn // оценка дневников</div>
+      </div>
+      <button class="diary-back-btn" onclick="showPage('more', document.getElementById('nav-more-btn'))">[ НАЗАД ]</button>
+    </div>
+  </div>
+
+  <div style="padding:0 12px 80px;">
+
+    <!-- Выбор даты -->
+    <div class="diary-card" style="margin-bottom:12px;">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Дата проверки</div>
+          <div class="diary-section-sub">// выбери день</div>
+        </div>
+      </div>
+      <input id="diaryStarsDate" type="date" class="diary-admin-date" style="width:100%;box-sizing:border-box;"
+        onchange="loadDiaryStarsList()">
+    </div>
+
+    <!-- Список студентов -->
+    <div id="diaryStarsList"></div>
+
+    <!-- Попап оценки (только для вожатых) -->
+    <div id="diaryStarsPopup" style="display:none;position:fixed;inset:0;z-index:9000;
+      background:rgba(0,0,0,0.7);display:none;align-items:flex-end;justify-content:center;">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
+        padding:24px;width:100%;max-width:480px;box-sizing:border-box;">
+        <div id="diaryStarsPopupName" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;"></div>
+        <div id="diaryStarsPopupDate" style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:20px;"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+          <button onclick="submitDiaryStars(1)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Минимум</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+15★</div>
+          </button>
+          <button onclick="submitDiaryStars(2)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Хорошо</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+30★</div>
+          </button>
+          <button onclick="submitDiaryStars(3)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐⭐⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Идеально</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+50★</div>
+          </button>
+        </div>
+
+        <button onclick="submitDiaryStars('bonus')" style="
+          width:100%;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);
+          border-radius:12px;padding:12px;cursor:pointer;color:#2ecc71;
+          font-family:monospace;font-size:12px;margin-bottom:10px;">
+          ✨ +БОНУС ЗА КРЕАТИВ (+20★)
+        </button>
+
+        <button onclick="closeDiaryStarsPopup()" style="
+          width:100%;background:transparent;border:1px solid var(--border);
+          border-radius:12px;padding:12px;cursor:pointer;color:var(--text3);
+          font-family:monospace;font-size:11px;">
+          ОТМЕНА
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- /page-diary-stars -->
+
 <div class="page" id="page-diary">
   <div class="page-header">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
@@ -3622,6 +3709,7 @@ function showPage(name, btn) {
   if (name === 'shop') loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'diary') loadDiaryPage();
+  if (name === 'diary-stars') initDiaryStarsPage();
   if (name === 'casino') {
     fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
       if (settings.blackwall && !isAdmin) {
@@ -3686,6 +3774,116 @@ const DIARY_WEATHER_OPTIONS = [
 // ZHIDAO Diary — API Integration Patch
 // Replaces: from "let diaryInitialized = false;"
 //           to end of "
+
+// ── ДНЕВНИК ★ — Оценка дневников ─────────────────────────────
+
+let diaryStarsCurrentStudent = null;
+
+function initDiaryStarsPage() {
+  const dateInput = document.getElementById('diaryStarsDate');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = getShanghaiDateString();
+  }
+  loadDiaryStarsList();
+}
+
+async function loadDiaryStarsList() {
+  const date = document.getElementById('diaryStarsDate').value || getShanghaiDateString();
+  const list = document.getElementById('diaryStarsList');
+  if (!list) return;
+  list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Загрузка...</div>';
+
+  try {
+    const r = await fetch(`${API_URL}/api/diary/stars/overview?entry_date=${date}`, {
+      headers: diaryHeaders()
+    });
+    if (!r.ok) { list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Ошибка загрузки</div>'; return; }
+    const data = await r.json();
+    renderDiaryStarsList(data.entries || [], date);
+  } catch(e) {
+    list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет соединения</div>';
+  }
+}
+
+function renderDiaryStarsList(entries, date) {
+  const list = document.getElementById('diaryStarsList');
+  if (!entries.length) {
+    list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет студентов в базе</div>';
+    return;
+  }
+
+  const STAR_POINTS = { 1: 15, 2: 30, 3: 50 };
+
+  list.innerHTML = entries.map(entry => {
+    const stars = entry.stars || 0;
+    const bonus = entry.bonus || false;
+    const starsHtml = stars ? '⭐'.repeat(stars) : '—';
+    const bonusHtml = bonus ? ' <span style="color:#2ecc71;font-size:10px;">+✨</span>' : '';
+    const pointsEarned = stars ? STAR_POINTS[stars] + (bonus ? 20 : 0) : 0;
+    const canRate = isAdmin;
+
+    return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
+      ${canRate ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, '${entry.full_name}', '${date}')"` : ''}>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${entry.full_name}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-top:2px;">
+            ${stars ? starsHtml + bonusHtml + ' · +' + pointsEarned + '★' : 'не оценено'}
+          </div>
+        </div>
+        ${canRate ? `<div style="font-size:20px;color:var(--text3);">›</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDiaryStarsPopup(telegramId, name, date) {
+  if (!isAdmin) return;
+  diaryStarsCurrentStudent = { telegramId, name, date };
+  document.getElementById('diaryStarsPopupName').textContent = name;
+  document.getElementById('diaryStarsPopupDate').textContent = date;
+  const popup = document.getElementById('diaryStarsPopup');
+  popup.style.display = 'flex';
+}
+
+function closeDiaryStarsPopup() {
+  const popup = document.getElementById('diaryStarsPopup');
+  popup.style.display = 'none';
+  diaryStarsCurrentStudent = null;
+}
+
+async function submitDiaryStars(value) {
+  if (!diaryStarsCurrentStudent || !isAdmin) return;
+  const { telegramId, date } = diaryStarsCurrentStudent;
+
+  const isBonus = value === 'bonus';
+  const payload = {
+    telegram_id: telegramId,
+    entry_date: date,
+    stars: isBonus ? null : value,
+    bonus: isBonus
+  };
+
+  try {
+    const r = await fetch(`${API_URL}/api/diary/stars/rate`, {
+      method: 'POST',
+      headers: diaryHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      const data = await r.json();
+      closeDiaryStarsPopup();
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      tg.showAlert(`✅ ${diaryStarsCurrentStudent.name}: +${data.points_awarded}★ начислено!`);
+      loadDiaryStarsList();
+    } else {
+      tg.showAlert('Ошибка при начислении.');
+    }
+  } catch(e) {
+    tg.showAlert('Нет соединения.');
+  }
+}
+
 // ── ADMIN OVERVIEW ────────────────────────────────────────────
 
 function diaryStatusLabel(status) {
