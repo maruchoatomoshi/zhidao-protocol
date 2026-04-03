@@ -509,11 +509,46 @@ body.theme-genshin-dark .lb-points
 .lb-item {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.2s;
+  animation: lb-fadein 0.4s ease both;
 }
-.lb-item.me { background: rgba(212,175,55,0.03); }
+.lb-item.me {
+  background: rgba(212,175,55,0.06);
+  border-left: 2px solid rgba(212,175,55,0.4);
+}
+.lb-item.top1 { background: linear-gradient(90deg, rgba(212,175,55,0.08), transparent); }
+.lb-item.top2 { background: linear-gradient(90deg, rgba(180,180,180,0.06), transparent); }
+.lb-item.top3 { background: linear-gradient(90deg, rgba(184,115,51,0.06), transparent); }
 .lb-rank { font-size: 16px; min-width: 28px; text-align: center; }
 .lb-name { font-size: 13px; color: var(--text); flex: 1; }
 .lb-points { font-size: 13px; font-weight: 700; color: var(--gold); font-family: monospace; }
+.lb-implant-glyph {
+  font-size: 16px; font-family: serif;
+  margin-left: 4px; vertical-align: middle;
+}
+.lb-progress {
+  height: 2px; border-radius: 1px;
+  margin-top: 3px; opacity: 0.5;
+}
+.lb-name-wrap { flex: 1; display: flex; flex-direction: column; }
+.lb-sub { font-size: 9px; color: var(--text3); font-family: monospace; margin-top: 1px; }
+
+@keyframes lb-fadein {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+/* Свечение топ-3 */
+.lb-item.top1 .lb-rank { text-shadow: 0 0 12px rgba(212,175,55,0.8); }
+.lb-item.top2 .lb-rank { text-shadow: 0 0 10px rgba(200,200,200,0.6); }
+.lb-item.top3 .lb-rank { text-shadow: 0 0 10px rgba(184,115,51,0.6); }
+/* Разделитель топ-3 */
+.lb-divider {
+  text-align: center; font-size: 8px; color: var(--text3);
+  font-family: monospace; letter-spacing: 2px;
+  padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  margin: 2px 0;
+}
 
 /* ===== МАГАЗИН ===== */
 .shop-header-bar {
@@ -4710,6 +4745,23 @@ function loadSavedTheme() {
 }
 
 async function loadLeaderboard() {
+  const IMPLANT_GLYPHS = {
+    'implant_red_dragon':   ['龍', '#cc2200'],
+    'implant_netwatch':     ['衛', '#cc2200'],
+    'implant_guanxi':       ['義', '#9b59b6'],
+    'implant_terracota':    ['兵', '#9b59b6'],
+    'implant_panda':        ['熊', '#9b59b6'],
+    'implant_shaolin':      ['武', '#9b59b6'],
+    'implant_linguasoft':   ['言', '#9b59b6'],
+    'implant_caishen':      ['財', '#9b59b6'],
+    'implant_qilin':        ['麟', '#9b59b6'],
+  };
+  const TOP_COLORS = [
+    'linear-gradient(90deg,#d4af37,#f5e070)',
+    'linear-gradient(90deg,#b0b0b0,#e8e8e8)',
+    'linear-gradient(90deg,#b87333,#e8a050)',
+    '#e8c84a','#e8c84a','#c8a830','#c8a830','#a88820','#a88820','#887010'
+  ];
   try {
     const r = await fetch(`${API_URL}/api/leaderboard`);
     const data = await r.json();
@@ -4717,26 +4769,61 @@ async function loadLeaderboard() {
     if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
     let myRank = '—', html = '';
+
     data.forEach((item, i) => {
       const medal = medals[i] || (i+1)+'.';
       const isMe = currentUserId && item.telegram_id === currentUserId;
       if (isMe) myRank = i+1;
-      const titleBadge = item.has_title ? ' 👑' : '';
+      const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const animDelay = `animation-delay:${i*0.06}s`;
 
-      // Цвет ника по импланту
-      let nameStyle = '';
-      let implantBadge = '';
-      if (item.implant === 'implant_red_dragon') {
-        nameStyle = 'color:#cc2200;text-shadow:0 0 8px rgba(200,0,0,0.4);font-weight:700;';
-        implantBadge = ' <span style="font-size:10px;">🐉</span>';
-      } else if (item.implant === 'implant_guanxi' || item.implant === 'implant_terracota') {
-        nameStyle = 'color:#9b59b6;text-shadow:0 0 8px rgba(155,89,182,0.3);font-weight:700;';
-        implantBadge = ' <span style="font-size:10px;">💜</span>';
+      // Цвет ника — топ-10 градиент
+      const nameColor = i < 10 ? TOP_COLORS[i] : '';
+      const isGradient = nameColor && nameColor.startsWith('linear');
+      let nameStyle = isGradient
+        ? `background:${nameColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;`
+        : nameColor ? `color:${nameColor};font-weight:700;` : '';
+
+      // Свечение топ-3
+      if (i === 0) nameStyle += 'filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));';
+      else if (i === 1) nameStyle += 'filter:drop-shadow(0 0 6px rgba(200,200,200,0.4));';
+      else if (i === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
+
+      // Легендарные импланты — красный ник поверх всего
+      const isLegendary = item.implant === 'implant_red_dragon' || item.implant === 'implant_netwatch';
+      if (isLegendary) {
+        nameStyle = 'color:#cc2200;text-shadow:0 0 10px rgba(200,0,0,0.5);font-weight:700;';
       }
 
-      html += `<div class="lb-item ${isMe?'me':''}">
+      // Иероглиф импланта
+      let glyphHtml = '';
+      if (item.implant && IMPLANT_GLYPHS[item.implant]) {
+        const [glyph, color] = IMPLANT_GLYPHS[item.implant];
+        glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
+      }
+
+      // Титул
+      const titleHtml = item.has_title ? '<span style="font-size:12px;margin-left:3px;">👑</span>' : '';
+
+      // Прогресс до следующего места
+      let progressHtml = '';
+      if (i > 0 && data[i-1]) {
+        const prev = data[i-1].points;
+        const curr = item.points;
+        const pct = prev > 0 ? Math.round((curr / prev) * 100) : 100;
+        const barColor = isLegendary ? 'rgba(200,34,0,0.5)' : i < 3 ? 'rgba(212,175,55,0.4)' : 'rgba(150,150,150,0.2)';
+        progressHtml = `<div class="lb-progress" style="width:${pct}%;background:${barColor};max-width:100%;"></div>`;
+      }
+
+      // Разделитель после топ-3
+      const divider = i === 3 ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
+
+      html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''}" style="${animDelay}">
         <div class="lb-rank">${medal}</div>
-        <div class="lb-name" style="${nameStyle}">${item.name}${titleBadge}${implantBadge}${isMe?' 👈':''}</div>
+        <div class="lb-name-wrap">
+          <div class="lb-name" style="${nameStyle}">${item.name}${titleHtml}${glyphHtml}${isMe?' 👈':''}</div>
+          ${progressHtml}
+        </div>
         <div class="lb-points">${item.points} ★</div>
       </div>`;
     });
