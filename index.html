@@ -2052,8 +2052,24 @@ body.theme-genshin .diary-star.active {
 </div>
 <!-- Старый блок raidPanel мы полностью удаляем, он больше не нужен -->
 
-  <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
-  <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
+ <div style="display:flex;gap:6px;margin:0 12px 8px;">
+    <button id="tab-rating-main-btn" onclick="switchRatingTab('main',this)" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">🏆 РЕЙТИНГ</button>
+    <button id="tab-rating-diary-btn" onclick="switchRatingTab('diary',this)" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⭐ ДНЕВНИК</button>
+  </div>
+
+  <div id="rating-main-tab">
+    <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
+    <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
+  </div>
+
+  <div id="rating-diary-tab" style="display:none;">
+    <div class="cn-divider">⭐ 日记排名 топ дневников ⭐</div>
+    <div class="card" style="margin:4px 12px;">
+      <div class="card-inner" id="diaryStarsLeaderboardRating">
+        <div class="empty-state">Загрузка...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== МАГАЗИН ===== -->
@@ -5039,6 +5055,42 @@ async function loadDiaryStarsLeaderboard() {
         <div style="text-align:right;">
           <div style="font-size:13px;font-weight:700;color:var(--gold);">${row.total_stars} ⭐</div>
         </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
+}
+
+function switchRatingTab(tab, btn) {
+  document.querySelectorAll('#page-rating .subtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('rating-main-tab').style.display = tab === 'main' ? 'block' : 'none';
+  document.getElementById('rating-diary-tab').style.display = tab === 'diary' ? 'block' : 'none';
+  if (tab === 'diary') loadDiaryStarsLeaderboardRating();
+}
+
+async function loadDiaryStarsLeaderboardRating() {
+  const container = document.getElementById('diaryStarsLeaderboardRating');
+  container.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  try {
+    const headers = {'Content-Type': 'application/json'};
+    if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
+    if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
+    const r = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
+    const data = await r.json();
+    if (!data.length) { container.innerHTML = '<div class="empty-state">Пока нет данных</div>'; return; }
+    const medals = ['🥇','🥈','🥉'];
+    container.innerHTML = data.map((row, i) => {
+      const medal = medals[i] || `${i+1}.`;
+      const isMe = row.telegram_id === currentUserId;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div style="font-size:16px;min-width:28px;text-align:center;">${medal}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${row.name}${isMe?' 👈':''}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:monospace;">Дней оценено: ${row.days_rated}</div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold);">${row.total_stars} ⭐</div>
       </div>`;
     }).join('');
   } catch(e) {
