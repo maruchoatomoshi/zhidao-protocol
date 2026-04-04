@@ -2575,6 +2575,7 @@ body.theme-genshin .diary-star.active {
         <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
         <input class="admin-input" id="lTime" placeholder="Время (08:00)">
         <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
+        <input class="admin-input" id="lCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
         <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ ДОБАВИТЬ СЛОТ ]</button>
         <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
         <div id="adminLaundryList"><div class="empty-state">Загрузка...</div></div>
@@ -2586,6 +2587,7 @@ body.theme-genshin .diary-star.active {
         <input class="admin-input" id="wDay" placeholder="День (Пн 5 мая)">
         <input class="admin-input" id="wTime" placeholder="Время (08:00)">
         <input class="admin-input" id="wNote" placeholder="Заметка (необязательно)">
+        <input class="admin-input" id="wCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
         <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddWaterSlot()">[ ДОБАВИТЬ СЛОТ ]</button>
         <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
         <div id="adminWaterList"><div class="empty-state">Загрузка...</div></div>
@@ -6121,18 +6123,20 @@ async function loadLaundrySchedule() {
       return;
     }
     container.innerHTML = data.map(slot => {
-      const taken = slot.taken_by;
-      const isMe = taken && taken.telegram_id === currentUserId;
-      const isFree = !taken;
+      const capacity = slot.capacity || 1;
+      const booked = slot.booked || 0;
+      const bookings = slot.bookings || [];
+      const isMe = bookings.some(b => b.telegram_id === currentUserId);
+      const isFull = booked >= capacity;
       let icon, statusText, clickable;
       if (isMe) {
         icon = `<i class="ti ti-circle-check" style="color:#2ecc71;font-size:18px;"></i>`;
         statusText = `<span style="color:#2ecc71;">Ваша запись</span>`;
-        clickable = `onclick="cancelLaundrySlot(${slot.id})"`;
-      } else if (isFree) {
-        icon = `<i class="ti ti-circle-plus" style="color:var(--red);font-size:18px;"></i>`;
-        statusText = `<span style="color:var(--red);">Свободно</span>`;
-        clickable = `onclick="bookLaundrySlot(${slot.id})"`;
+        clickable = `onclick="cancelWaterSlot(${slot.id})"`;
+      } else if (!isFull) {
+        icon = `<i class="ti ti-droplet" style="color:#60b4d4;font-size:18px;"></i>`;
+        statusText = `<span style="color:#60b4d4;">Свободно</span>`;
+        clickable = `onclick="bookWaterSlot(${slot.id})"`;
       } else {
         icon = `<i class="ti ti-circle-x" style="color:var(--text3);font-size:18px;"></i>`;
         statusText = `<span style="color:var(--text3);">Занято</span>`;
@@ -6142,9 +6146,12 @@ async function loadLaundrySchedule() {
         ${icon}
         <div style="flex:1;">
           <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} · ${slot.time}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note||'Машинка свободна'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note||'Набор воды'}</div>
         </div>
-        <div style="font-size:10px;">${statusText}</div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;">${statusText}</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">${booked}/${capacity} мест</div>
+        </div>
       </div>`;
     }).join('');
   } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
@@ -6185,6 +6192,23 @@ async function cancelLaundrySlot(slotId) {
     if(b!=='ok')return;
     fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
       .then(()=>loadLaundrySchedule()).catch(()=>{});
+  });
+}
+
+  async function bookWaterSlot(slotId) {
+  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  try {
+    const r = await fetch(`${API_URL}/api/water/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на набор воды!'); loadWaterSchedule(); }
+    else { const e=await r.json(); tg.showAlert(e.detail==='Slot full'?'Мест нет':'Вы уже записаны'); }
+  } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+async function cancelWaterSlot(slotId) {
+  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
+    if(b!=='ok')return;
+    fetch(`${API_URL}/api/water/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
+      .then(()=>loadWaterSchedule()).catch(()=>{});
   });
 }
 
@@ -6451,7 +6475,7 @@ async function adminAddLaundrySlot() {
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({day, time, note})
+      body: JSON.stringify({day, time, note, capacity: parseInt(document.getElementById('lCapacity').value)||1})
     });
     if (r.ok) {
       document.getElementById('lDay').value='';
@@ -6496,7 +6520,7 @@ async function adminAddWaterSlot() {
   try {
     const r = await fetch(`${API_URL}/api/water/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({day, time, note})
+      body: JSON.stringify({day, time, note, capacity: parseInt(document.getElementById('wCapacity').value)||1})
     });
     if (r.ok) {
       document.getElementById('wDay').value='';
