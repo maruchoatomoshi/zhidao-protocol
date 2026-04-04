@@ -4780,7 +4780,11 @@ async function loadImplants(telegramId) {
       const duplicateBadge = isDuplicate
         ? `<span style="background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.3);color:var(--gold);font-size:8px;padding:1px 6px;border-radius:3px;font-family:monospace;margin-left:6px;">ДУБЛЬ</span>`
         : '';
-
+      
+      const isNetwatch = imp.implant_id === 'implant_netwatch';
+      const robBtn = isLeg && !isSecond
+  ? `<button onclick="dragonRob()" style="margin-top:8px;width:100%;padding:7px;background:rgba(180,20,20,0.08);border:1px solid rgba(180,20,20,0.25);color:#cc3333;border-radius:6px;font-size:9px;font-family:monospace;cursor:pointer;letter-spacing:1px;">🐉 [ ПЕРЕХВАТ 50★ ]</button>`
+  : '';
       const disassembleBtn = isSecond
         ? `<button onclick="disassembleImplant(${imp.id})" style="margin-top:8px;width:100%;padding:7px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.25);color:var(--gold);border-radius:6px;font-size:9px;font-family:monospace;cursor:pointer;letter-spacing:1px;">⚙️ [ РАЗОБРАТЬ +100 ★ ]</button>`
         : '';
@@ -4802,6 +4806,7 @@ async function loadImplants(telegramId) {
           </div>
         </div>
         ${disassembleBtn}
+        ${robBtn}
       </div>`;
     }).join('');
     if (pageContainer) pageContainer.innerHTML = pageHtml;
@@ -4962,6 +4967,28 @@ function loadSavedTheme() {
   } catch(e) { setTheme(''); }
 }
 
+async function dragonRob() {
+  try {
+    const r = await fetch(`${API_URL}/api/dragon/rob`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId})
+    });
+    const data = await r.json();
+    if (r.ok) {
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      tg.showAlert(`🐉 +50★ // протокол перехвата активен\nБаланс: ${data.new_points}★`);
+      loadPoints(currentUserId);
+    } else if (r.status === 429) {
+      tg.showAlert(`⏳ Перезарядка: ${data.detail}`);
+    } else {
+      tg.showAlert('❌ Нет подходящих целей или имплант не активен');
+    }
+  } catch(e) {
+    tg.showAlert('Нет соединения');
+  }
+}
+  
 async function loadLeaderboard() {
   const IMPLANT_GLYPHS = {
     'implant_red_dragon':   ['龍', '#cc2200'],
