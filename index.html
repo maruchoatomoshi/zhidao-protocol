@@ -3719,7 +3719,6 @@ loadAnnouncements();
 loadLeaderboard();
 loadAchievements();
 initLaundry();
-startMatrix();
 
 // ===== НАВИГАЦИЯ =====
 function showPage(name, btn) {
@@ -6919,6 +6918,7 @@ function startMatrix() {
 }
 
 window.addEventListener('resize', initMatrix);
+window.addEventListener('load', startMatrix);
   
 </script>
 
