@@ -3636,11 +3636,12 @@ const EXCHANGE_KEY = 'a8c5f8c5d5e5b5a5';
 const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
 
 let currentUserId = null;
-let currentThemePath = null; // "cyberpunk" | "genshin" | null
+let currentThemePath = null;
 let currentPoints = 0;
 let userConfig = null;
 let isAdmin = false;
 let isSpinning = false;
+let casinoRemaining = 999;
 let selectedLaundryDate = null;
 let laundryData = [];
 let shopMode = 'store';
@@ -5305,6 +5306,7 @@ async function openGenshinCase() {
     }
 
     currentPoints = data.new_points; updatePoints();
+    casinoRemaining = data.remaining_today ?? 999;
     curGsCardId = data.card_id || null;
     const cfg = GS_CARD_CONFIGS[data.card_id] || GS_PRIZE_CONFIGS[data.type] || GS_PRIZE_CONFIGS.points;
 
@@ -5707,6 +5709,7 @@ async function openCase() {
     await spinRoulette(prize, caseType);
     showPrizeResult(prize, caseType);
     currentPoints = data.new_points;
+    casinoRemaining = data.remaining_today ?? 999;
     updatePoints();
     // Обновляем кнопку после открытия
     const casBtn = document.getElementById('openCaseBtn');
@@ -5862,12 +5865,31 @@ function showPrizeResult(prize, caseType = 'gold') {
     <div style="position:absolute;bottom:24px;font-size:9px;color:rgba(255,255,255,0.25);font-family:monospace;letter-spacing:2px;animation:cyberBlink 2s ease-in-out 1.2s infinite;">нажми чтобы продолжить ▼</div>`;
 }
 
-function resetCasino() {
+async function resetCasino() {
   isSpinning = false;
   document.getElementById('prizeResult').classList.remove('show');
-  
-  document.getElementById('openCaseBtn').disabled = false;
   initRoulette();
+  // Проверяем оставшиеся попытки
+  try {
+    const r = await fetch(`${API_URL}/api/casino/status?telegram_id=${currentUserId}`);
+    const data = await r.json();
+    const casBtn = document.getElementById('openCaseBtn');
+    if (data.remaining_today <= 0) {
+      casBtn.disabled = true;
+      casBtn.style.background = 'rgba(255,255,255,0.05)';
+      casBtn.style.borderColor = 'rgba(255,255,255,0.08)';
+      casBtn.style.color = 'rgba(255,255,255,0.2)';
+      casBtn.textContent = '[ Попытки исчерпаны // Приходите завтра ]';
+    } else {
+      casBtn.disabled = false;
+      casBtn.style.background = '';
+      casBtn.style.borderColor = '';
+      casBtn.style.color = '';
+      casBtn.textContent = '🏮 [ 开箱 // ОТКРЫТЬ КЕЙС — 50 ★ ] 🏮';
+    }
+  } catch(e) {
+    document.getElementById('openCaseBtn').disabled = false;
+  }
 }
 
 function launchConfetti(count) {
