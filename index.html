@@ -6863,22 +6863,23 @@ async function joinRaid() {
     });
 }
 // ===== ДОЖДЬ ИЗ ИЕРОГЛИФОВ =====
-var matrixCanvas = document.getElementById('matrixCanvas');
-var matrixCtx = matrixCanvas.getContext('2d');
+var matrixCanvas, matrixCtx;
 var MATRIX_CHARS = '道龙福星月山水火金木天地人心力美智勇义礼知信';
 var matrixColumns = [];
 var matrixAnimId = null;
+
 function initMatrix() {
+  matrixCanvas = document.getElementById('matrixCanvas');
+  matrixCtx = matrixCanvas.getContext('2d');
   matrixCanvas.width = window.innerWidth;
   matrixCanvas.height = window.innerHeight;
   const isGenshin = currentThemePath === 'genshin';
-  const fontSize = isGenshin ? 18 : 14;
   const cols = Math.floor(matrixCanvas.width / (isGenshin ? 40 : 20));
   matrixColumns = Array(cols).fill(0).map(() => ({
     y: Math.random() * -matrixCanvas.height,
     speed: isGenshin ? 0.3 + Math.random() * 0.5 : 1 + Math.random() * 2,
     char: MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)],
-    opacity: 0.03 + Math.random() * 0.04,
+    opacity: 0.3 + Math.random() * 0.3,
     wobble: Math.random() * Math.PI * 2,
   }));
 }
@@ -6886,8 +6887,8 @@ function initMatrix() {
 function drawMatrix() {
   const isGenshin = currentThemePath === 'genshin';
   matrixCtx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
-  const fontSize = isGenshin ? 18 : 14;
   const colWidth = isGenshin ? 40 : 20;
+  const fontSize = isGenshin ? 18 : 14;
   matrixColumns.forEach((col, i) => {
     const color = isGenshin
       ? `rgba(212,175,55,${col.opacity})`
@@ -6905,7 +6906,7 @@ function drawMatrix() {
     }
     if (col.y > matrixCanvas.height) {
       col.y = -fontSize;
-      col.opacity = 0.03 + Math.random() * 0.04;
+      col.opacity = 0.3 + Math.random() * 0.3;
     }
   });
   matrixAnimId = requestAnimationFrame(drawMatrix);
