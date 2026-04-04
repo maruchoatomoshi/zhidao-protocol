@@ -3721,8 +3721,7 @@ loadAnnouncements();
 loadLeaderboard();
 loadAchievements();
 initLaundry();
-document.getElementById('page-home').classList.add('active');
-document.querySelector('.nav-item').classList.add('active');
+showPage('home', document.querySelector('.nav-item'));
 
 // ===== НАВИГАЦИЯ =====
 function showPage(name, btn) {
