@@ -5050,22 +5050,21 @@ async function loadLeaderboard() {
       const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
       const animDelay = `animation-delay:${i*0.06}s`;
 
-      // Цвет ника — топ-10 градиент
-      const nameColor = i < 10 ? TOP_COLORS[i] : '';
-      const isGradient = nameColor && nameColor.startsWith('linear');
-      let nameStyle = isGradient
-        ? `background:${nameColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;`
-        : nameColor ? `color:${nameColor};font-weight:700;` : '';
-
-      // Свечение топ-3
-      if (i === 0) nameStyle += 'filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));';
-      else if (i === 1) nameStyle += 'filter:drop-shadow(0 0 6px rgba(200,200,200,0.4));';
-      else if (i === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
-
-      // Легендарные импланты — красный ник поверх всего
+      // Цвет ника
       const isLegendary = item.implant === 'implant_red_dragon' || item.implant === 'implant_netwatch';
-      if (isLegendary) {
-        nameStyle = 'color:#cc2200;text-shadow:0 0 10px rgba(200,0,0,0.5);font-weight:700;';
+      const hasImplantOrCard = item.implant || item.card;
+      let nameStyle = 'font-weight:700;';
+
+      if (i === 0) {
+        nameStyle += 'background:linear-gradient(90deg,#d4af37,#f5e070);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 10px rgba(212,175,55,0.7));';
+      } else if (i === 1) {
+        nameStyle += 'background:linear-gradient(90deg,#b0b0b0,#e8e8e8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 8px rgba(200,200,200,0.5));';
+      } else if (i === 2) {
+        nameStyle += 'background:linear-gradient(90deg,#b87333,#e8a050);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 8px rgba(184,115,51,0.5));';
+      } else if (isLegendary) {
+        nameStyle += 'color:#cc2200;text-shadow:0 0 10px rgba(200,0,0,0.5);';
+      } else if (hasImplantOrCard) {
+        nameStyle += 'color:#9b59b6;text-shadow:0 0 8px rgba(155,89,182,0.5);';
       }
 
       // Иероглиф импланта
