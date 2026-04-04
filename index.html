@@ -1997,11 +1997,11 @@ body.theme-genshin .diary-star.active {
     <div class="page-title">НОВОСТИ <span class="page-title-cn">新闻</span></div>
     <div class="page-sub">> xīn wén // объявления от вожатых</div>
   </div>
-  <div id="announcementsContent" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
   <div id="adminAnnounceForm" class="admin-announce-form" style="display:none;padding:10px 12px;">
     <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
     <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
   </div>
+  <div id="announcementsContent" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
 
   <div class="page-header" style="margin-top:8px;">
     <div class="page-title">РАСПИСАНИЕ <span class="page-title-cn">课表</span></div>
@@ -3879,9 +3879,10 @@ async function submitDiaryStars(value) {
     });
     if (r.ok) {
       const data = await r.json();
+      const studentName = diaryStarsCurrentStudent.name;
       closeDiaryStarsPopup();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      tg.showAlert(`✅ ${diaryStarsCurrentStudent.name}: +${data.points_awarded}★ начислено!`);
+      tg.showAlert(`✅ ${studentName}: +${data.points_awarded}★ начислено!`);
       loadDiaryStarsList();
     } else {
       tg.showAlert('Ошибка при начислении.');
