@@ -6863,12 +6863,11 @@ async function joinRaid() {
     });
 }
 // ===== ДОЖДЬ ИЗ ИЕРОГЛИФОВ =====
-const matrixCanvas = document.getElementById('matrixCanvas');
-const matrixCtx = matrixCanvas.getContext('2d');
-const MATRIX_CHARS = '道龙福星月山水火金木天地人心力美智勇义礼知信';
+var matrixCanvas = document.getElementById('matrixCanvas');
+var matrixCtx = matrixCanvas.getContext('2d');
+var MATRIX_CHARS = '道龙福星月山水火金木天地人心力美智勇义礼知信';
 var matrixColumns = [];
 var matrixAnimId = null;
-
 function initMatrix() {
   matrixCanvas.width = window.innerWidth;
   matrixCanvas.height = window.innerHeight;
