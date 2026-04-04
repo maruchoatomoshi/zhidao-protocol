@@ -3271,8 +3271,9 @@ body.theme-genshin .diary-star.active {
     <!-- Попап оценки (только для вожатых) -->
     <div id="diaryStarsPopup" style="display:none;position:fixed;inset:0;z-index:9000;
       background:rgba(0,0,0,0.7);display:none;align-items:flex-end;justify-content:center;">
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
-        padding:24px;width:100%;max-width:480px;box-sizing:border-box;">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
+        padding:24px;width:100%;max-width:480px;box-sizing:border-box;position:relative;">
+        <button onclick="closeDiaryStarsPopup()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">✕</button>
         <div id="diaryStarsPopupName" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;"></div>
         <div id="diaryStarsPopupDate" style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:20px;"></div>
 
