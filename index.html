@@ -523,9 +523,8 @@ body.theme-genshin-dark .lb-points
 .lb-name { font-size: 13px; color: var(--text); flex: 1; }
 .lb-points { font-size: 13px; font-weight: 700; color: var(--gold); font-family: monospace; }
 .lb-implant-glyph {
-  font-size: 14px; font-family: serif;
-  margin-left: 8px; vertical-align: middle;
-  display: inline-block;
+  font-size: 16px; font-family: serif;
+  margin-left: 4px; vertical-align: middle;
 }
 .lb-progress {
   height: 2px; border-radius: 1px;
@@ -1999,11 +1998,11 @@ body.theme-genshin .diary-star.active {
     <div class="page-title">НОВОСТИ <span class="page-title-cn">新闻</span></div>
     <div class="page-sub">> xīn wén // объявления от вожатых</div>
   </div>
+  <div id="announcementsContent" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
   <div id="adminAnnounceForm" class="admin-announce-form" style="display:none;padding:10px 12px;">
     <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
     <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
   </div>
-  <div id="announcementsContent" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
 
   <div class="page-header" style="margin-top:8px;">
     <div class="page-title">РАСПИСАНИЕ <span class="page-title-cn">课表</span></div>
@@ -2053,7 +2052,7 @@ body.theme-genshin .diary-star.active {
 </div>
 <!-- Старый блок raidPanel мы полностью удаляем, он больше не нужен -->
 
- <div style="display:flex;gap:6px;margin:0 12px 8px;">
+  <div style="display:flex;gap:6px;margin:0 12px 8px;">
     <button id="tab-rating-main-btn" onclick="switchRatingTab('main',this)" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">🏆 РЕЙТИНГ</button>
     <button id="tab-rating-diary-btn" onclick="switchRatingTab('diary',this)" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⭐ ДНЕВНИК</button>
   </div>
@@ -3271,11 +3270,6 @@ body.theme-genshin .diary-star.active {
     </div>
   </div>
 
-  <div style="display:flex;gap:6px;margin:0 12px 10px;">
-    <button id="tab-diary-rate-btn" onclick="switchDiaryStarsTab('rate',this)" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">📋 ОЦЕНКА</button>     
-  </div>    
-  
-  <div id="diary-rate-tab">   
   <div style="padding:0 12px 80px;">
 
     <!-- Выбор даты -->
@@ -3296,9 +3290,8 @@ body.theme-genshin .diary-star.active {
     <!-- Попап оценки (только для вожатых) -->
     <div id="diaryStarsPopup" style="display:none;position:fixed;inset:0;z-index:9000;
       background:rgba(0,0,0,0.7);display:none;align-items:flex-end;justify-content:center;">
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
-        padding:24px;width:100%;max-width:480px;box-sizing:border-box;position:relative;">
-        <button onclick="closeDiaryStarsPopup()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
+        padding:24px;width:100%;max-width:480px;box-sizing:border-box;">
         <div id="diaryStarsPopupName" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;"></div>
         <div id="diaryStarsPopupDate" style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:20px;"></div>
 
@@ -3341,7 +3334,8 @@ body.theme-genshin .diary-star.active {
         </button>
       </div>
     </div>
-  </div> <!-- /diary-rate-tab -->
+
+  </div>
 </div>
 <!-- /page-diary-stars -->
 
@@ -3721,7 +3715,6 @@ loadAnnouncements();
 loadLeaderboard();
 loadAchievements();
 initLaundry();
-showPage('home', document.querySelector('.nav-item'));
 
 // ===== НАВИГАЦИЯ =====
 function showPage(name, btn) {
@@ -3904,10 +3897,9 @@ async function submitDiaryStars(value) {
     });
     if (r.ok) {
       const data = await r.json();
-      const studentName = diaryStarsCurrentStudent.name;
       closeDiaryStarsPopup();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      tg.showAlert(`✅ ${studentName}: +${data.points_awarded}★ начислено!`);
+      tg.showAlert(`✅ ${diaryStarsCurrentStudent.name}: +${data.points_awarded}★ начислено!`);
       loadDiaryStarsList();
     } else {
       tg.showAlert('Ошибка при начислении.');
@@ -4805,11 +4797,7 @@ async function loadImplants(telegramId) {
       const duplicateBadge = isDuplicate
         ? `<span style="background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.3);color:var(--gold);font-size:8px;padding:1px 6px;border-radius:3px;font-family:monospace;margin-left:6px;">ДУБЛЬ</span>`
         : '';
-      
-      const isNetwatch = imp.implant_id === 'implant_netwatch';
-      const robBtn = isLeg && !isSecond
-  ? `<button onclick="dragonRob()" style="margin-top:8px;width:100%;padding:7px;background:rgba(180,20,20,0.08);border:1px solid rgba(180,20,20,0.25);color:#cc3333;border-radius:6px;font-size:9px;font-family:monospace;cursor:pointer;letter-spacing:1px;">🐉 [ ПЕРЕХВАТ 50★ ]</button>`
-  : '';
+
       const disassembleBtn = isSecond
         ? `<button onclick="disassembleImplant(${imp.id})" style="margin-top:8px;width:100%;padding:7px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.25);color:var(--gold);border-radius:6px;font-size:9px;font-family:monospace;cursor:pointer;letter-spacing:1px;">⚙️ [ РАЗОБРАТЬ +100 ★ ]</button>`
         : '';
@@ -4831,7 +4819,6 @@ async function loadImplants(telegramId) {
           </div>
         </div>
         ${disassembleBtn}
-        ${robBtn}
       </div>`;
     }).join('');
     if (pageContainer) pageContainer.innerHTML = pageHtml;
@@ -4992,103 +4979,6 @@ function loadSavedTheme() {
   } catch(e) { setTheme(''); }
 }
 
-async function dragonRob() {
-  try {
-    const r = await fetch(`${API_URL}/api/dragon/rob`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({telegram_id: currentUserId})
-    });
-    const data = await r.json();
-    if (r.ok) {
-      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      tg.showAlert(`🐉 +50★ // протокол перехвата активен\nБаланс: ${data.new_points}★`);
-      loadPoints(currentUserId);
-    } else if (r.status === 429) {
-      tg.showAlert(`⏳ Перезарядка: ${data.detail}`);
-    } else {
-      tg.showAlert('❌ Нет подходящих целей или имплант не активен');
-    }
-  } catch(e) {
-    tg.showAlert('Нет соединения');
-  }
-}
-
-function switchDiaryStarsTab(tab, btn) {
-  document.querySelectorAll('#page-diary-stars .subtab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('diary-rate-tab').style.display = tab === 'rate' ? 'block' : 'none';
-  document.getElementById('diary-top-tab').style.display = tab === 'top' ? 'block' : 'none';
-  if (tab === 'top') loadDiaryStarsLeaderboard();
-}
-
-async function loadDiaryStarsLeaderboard() {
-  const container = document.getElementById('diaryStarsLeaderboard');
-  container.innerHTML = '<div class="empty-state">Загрузка...</div>';
-  try {
-    const headers = {'Content-Type': 'application/json'};
-    if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
-    if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
-    const r = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
-    const data = await r.json();
-    if (!data.length) { container.innerHTML = '<div class="empty-state">Пока нет данных</div>'; return; }
-    const medals = ['🥇','🥈','🥉'];
-    container.innerHTML = data.map((row, i) => {
-      const medal = medals[i] || `${i+1}.`;
-      const stars = '⭐'.repeat(Math.min(row.total_stars, 5)) || '—';
-      const isMe = row.telegram_id === currentUserId;
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-        <div style="font-size:16px;min-width:28px;text-align:center;">${medal}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${row.name}${isMe?' 👈':''}</div>
-          <div style="font-size:10px;color:var(--text3);font-family:monospace;">Дней оценено: ${row.days_rated}</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:13px;font-weight:700;color:var(--gold);">${row.total_stars} ⭐</div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-  }
-}
-
-function switchRatingTab(tab, btn) {
-  document.querySelectorAll('#page-rating .subtab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('rating-main-tab').style.display = tab === 'main' ? 'block' : 'none';
-  document.getElementById('rating-diary-tab').style.display = tab === 'diary' ? 'block' : 'none';
-  if (tab === 'diary') loadDiaryStarsLeaderboardRating();
-}
-
-async function loadDiaryStarsLeaderboardRating() {
-  const container = document.getElementById('diaryStarsLeaderboardRating');
-  container.innerHTML = '<div class="empty-state">Загрузка...</div>';
-  try {
-    const headers = {'Content-Type': 'application/json'};
-    if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
-    if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
-    const r = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
-    const data = await r.json();
-    if (!data.length) { container.innerHTML = '<div class="empty-state">Пока нет данных</div>'; return; }
-    const medals = ['🥇','🥈','🥉'];
-    container.innerHTML = data.map((row, i) => {
-      const medal = medals[i] || `${i+1}.`;
-      const isMe = row.telegram_id === currentUserId;
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-        <div style="font-size:16px;min-width:28px;text-align:center;">${medal}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${row.name}${isMe?' 👈':''}</div>
-          <div style="font-size:10px;color:var(--text3);font-family:monospace;">Дней оценено: ${row.days_rated}</div>
-        </div>
-        <div style="font-size:13px;font-weight:700;color:var(--gold);">${row.total_stars} ⭐</div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-  }
-}
-  
 async function loadLeaderboard() {
   const IMPLANT_GLYPHS = {
     'implant_red_dragon':   ['龍', '#cc2200'],
@@ -5162,7 +5052,7 @@ async function loadLeaderboard() {
           glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
         }
       }
-      
+
       // Титул
       const titleHtml = item.has_title ? '<span style="font-size:12px;margin-left:3px;">👑</span>' : '';
 
@@ -6102,6 +5992,23 @@ function switchLaundryTab(tab) {
   else loadWaterSchedule();
 }
 
+async function bookWaterSlot(slotId) {
+  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  try {
+    const r = await fetch(`${API_URL}/api/water/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на набор воды!'); loadWaterSchedule(); }
+    else { const e=await r.json(); tg.showAlert(e.detail==='Slot full'?'Мест нет':'Вы уже записаны'); }
+  } catch(e) { tg.showAlert('Ошибка'); }
+}
+
+async function cancelWaterSlot(slotId) {
+  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
+    if(b!=='ok')return;
+    fetch(`${API_URL}/api/water/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
+      .then(()=>loadWaterSchedule()).catch(()=>{});
+  });
+}
+
 async function loadLaundrySchedule() {
   const container = document.getElementById('laundryScheduleContent');
   try {
@@ -6181,23 +6088,6 @@ async function cancelLaundrySlot(slotId) {
     if(b!=='ok')return;
     fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
       .then(()=>loadLaundrySchedule()).catch(()=>{});
-  });
-}
-
-  async function bookWaterSlot(slotId) {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-  try {
-    const r = await fetch(`${API_URL}/api/water/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
-    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на набор воды!'); loadWaterSchedule(); }
-    else { const e=await r.json(); tg.showAlert(e.detail==='Slot full'?'Мест нет':'Вы уже записаны'); }
-  } catch(e) { tg.showAlert('Ошибка'); }
-}
-
-async function cancelWaterSlot(slotId) {
-  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
-    if(b!=='ok')return;
-    fetch(`${API_URL}/api/water/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
-      .then(()=>loadWaterSchedule()).catch(()=>{});
   });
 }
 
