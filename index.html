@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZHIDAO Protocol v2.6.6</title>
-<!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
+<!-- ZHIDAO Protocol // version 2.8.8 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
@@ -6866,8 +6866,8 @@ async function joinRaid() {
 const matrixCanvas = document.getElementById('matrixCanvas');
 const matrixCtx = matrixCanvas.getContext('2d');
 const MATRIX_CHARS = '道龙福星月山水火金木天地人心力美智勇义礼知信';
-let matrixColumns = [];
-let matrixAnimId = null;
+var matrixColumns = [];
+var matrixAnimId = null;
 
 function initMatrix() {
   matrixCanvas.width = window.innerWidth;
