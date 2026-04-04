@@ -1929,6 +1929,8 @@ body.theme-genshin .diary-star.active {
 <!-- Конфетти -->
 <div id="confettiContainer" style="position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;"></div>
 
+<canvas id="matrixCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.5;"></canvas>
+
 <!-- Модалка вопроса -->
 <div class="question-modal" id="questionModal">
   <div class="question-box">
@@ -3717,6 +3719,7 @@ loadAnnouncements();
 loadLeaderboard();
 loadAchievements();
 initLaundry();
+startMatrix();
 
 // ===== НАВИГАЦИЯ =====
 function showPage(name, btn) {
@@ -6859,6 +6862,64 @@ async function joinRaid() {
         }
     });
 }
+// ===== ДОЖДЬ ИЗ ИЕРОГЛИФОВ =====
+const matrixCanvas = document.getElementById('matrixCanvas');
+const matrixCtx = matrixCanvas.getContext('2d');
+const MATRIX_CHARS = '道龙福星月山水火金木天地人心力美智勇义礼知信';
+let matrixColumns = [];
+let matrixAnimId = null;
+
+function initMatrix() {
+  matrixCanvas.width = window.innerWidth;
+  matrixCanvas.height = window.innerHeight;
+  const isGenshin = currentThemePath === 'genshin';
+  const fontSize = isGenshin ? 18 : 14;
+  const cols = Math.floor(matrixCanvas.width / (isGenshin ? 40 : 20));
+  matrixColumns = Array(cols).fill(0).map(() => ({
+    y: Math.random() * -matrixCanvas.height,
+    speed: isGenshin ? 0.3 + Math.random() * 0.5 : 1 + Math.random() * 2,
+    char: MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)],
+    opacity: 0.03 + Math.random() * 0.04,
+    wobble: Math.random() * Math.PI * 2,
+  }));
+}
+
+function drawMatrix() {
+  const isGenshin = currentThemePath === 'genshin';
+  matrixCtx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+  const fontSize = isGenshin ? 18 : 14;
+  const colWidth = isGenshin ? 40 : 20;
+  matrixColumns.forEach((col, i) => {
+    const color = isGenshin
+      ? `rgba(212,175,55,${col.opacity})`
+      : `rgba(180,20,20,${col.opacity})`;
+    matrixCtx.fillStyle = color;
+    matrixCtx.font = `${fontSize}px serif`;
+    const x = isGenshin
+      ? i * colWidth + Math.sin(col.wobble) * 5
+      : i * colWidth;
+    matrixCtx.fillText(col.char, x, col.y);
+    col.y += col.speed;
+    col.wobble += 0.02;
+    if (Math.random() < 0.02) {
+      col.char = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+    }
+    if (col.y > matrixCanvas.height) {
+      col.y = -fontSize;
+      col.opacity = 0.03 + Math.random() * 0.04;
+    }
+  });
+  matrixAnimId = requestAnimationFrame(drawMatrix);
+}
+
+function startMatrix() {
+  if (matrixAnimId) cancelAnimationFrame(matrixAnimId);
+  initMatrix();
+  drawMatrix();
+}
+
+window.addEventListener('resize', initMatrix);
+  
 </script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
