@@ -52,6 +52,28 @@ body.theme-nw-light {
   --scan-opacity: 0.01;
 }
 
+body.theme-nw-light .roulette-track {
+  background: rgba(255,255,255,0.72);
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+}
+
+body.theme-nw-light .roulette-track::before {
+  background: linear-gradient(to right, #f4f1ed, transparent);
+}
+
+body.theme-nw-light .roulette-track::after {
+  background: linear-gradient(to left, #f4f1ed, transparent);
+}
+
+body.theme-nw-light .roulette-item {
+  background: rgba(255,255,255,0.78);
+  border-color: rgba(0,0,0,0.08);
+}
+
+body.theme-nw-light .roulette-item-name {
+  color: #4a4a4a;
+}
 /* ===== GENSHIN LIGHT ===== */
 body.theme-genshin-light {
   --red: #4b5366;
