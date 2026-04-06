@@ -2735,18 +2735,23 @@ body.theme-genshin .diary-star.active {
         <button class="btn btn-gold" style="flex:1;padding:8px;font-size:9px;" onclick="adminFreeze(false)">✅ РАЗМОРОЗИТЬ</button>
       </div>
     </div>
-    <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
-      <div class="card"><div class="card-inner">
-        <div class="card-label">🌑 BlackWall 已激活</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Глобальная блокировка магазина и кейсов для всех участников</div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="setBlackwall(true)">[ ВКЛЮЧИТЬ ]</button>
-          <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="setBlackwall(false)">[ ВЫКЛЮЧИТЬ ]</button>
-        </div>
-      </div></div>
-      <button class="btn btn-gold mt8" style="width:100%;padding:9px;" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
+   <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
+  <div class="card"><div class="card-inner">
+    <div class="card-label">🌑 BlackWall 已激活</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Глобальная блокировка магазина и кейсов для всех участников</div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="setBlackwall(true)">[ ВКЛЮЧИТЬ ]</button>
+      <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="setBlackwall(false)">[ ВЫКЛЮЧИТЬ ]</button>
     </div>
-  </div>
+  </div></div>
+
+  <button
+    class="btn mt8"
+    style="width:100%;padding:9px;background:rgba(180,20,20,0.14);border:1px solid rgba(200,40,40,0.35);color:#cc4444;"
+    onclick="triggerHaptic('admin'); triggerSystemVoice('admin_arrival', 'all')"
+  >[ 🔴 INIT MASTER PROTOCOL ]</button>
+
+  <button class="btn btn-gold mt8" style="width:100%;padding:9px;" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
 </div>
 
 <!-- ===== ИМПЛАНТЫ ===== -->
@@ -7181,6 +7186,52 @@ document.addEventListener('click', function(e) {
   btn.appendChild(ripple);
   setTimeout(() => ripple.remove(), 500);
 });
+
+function triggerHaptic(type) {
+  try {
+    const haptic = window.Telegram?.WebApp?.HapticFeedback;
+    if (!haptic) return;
+
+    if (type === 'legendary') {
+      haptic.notificationOccurred('success');
+      setTimeout(() => {
+        try { haptic.impactOccurred('heavy'); } catch (e) {}
+      }, 200);
+    } else if (type === 'admin') {
+      haptic.impactOccurred('rigid');
+      setTimeout(() => {
+        try { haptic.impactOccurred('rigid'); } catch (e) {}
+      }, 300);
+    } else if (type === 'attack') {
+      haptic.impactOccurred('heavy');
+    }
+  } catch (e) {}
+}
+
+async function triggerSystemVoice(eventType, targetId = 'all') {
+  if (!currentUserId) return;
+
+  try {
+    const r = await fetch(`${API_URL}/api/system-voice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegram_id: currentUserId,
+        event_type: eventType,
+        target_id: targetId
+      })
+    });
+
+    if (!r.ok) {
+      tg.showAlert('Не удалось запустить протокол');
+      return;
+    }
+
+    return await r.json();
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
   
 </script>
 
