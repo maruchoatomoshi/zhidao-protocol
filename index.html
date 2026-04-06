@@ -6421,7 +6421,7 @@ async function loadAnnouncements() {
       }).join('');
 
       return `<div class="announcement-item">
-        <div class="announcement-text">${item.text}</div>
+        <div class="announcement-text" style="white-space:pre-wrap;">${item.text}</div>
         <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${reactionBtns}</div>
         ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#cc4444;cursor:pointer;font-size:11px;margin-top:6px;font-family:monospace;">[ УДАЛИТЬ ]</button>` : ''}
