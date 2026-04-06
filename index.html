@@ -7332,9 +7332,11 @@ function unlockArchitectAudio() {
   
 function playArchitectVoiceLocal() {
   try {
-    if (!isProtocolSoundEnabled()) return;
     const audio = document.getElementById('architectVoiceLocal');
-    if (!audio) return;
+    if (!audio || !protocolSoundEnabled) return;
+
+    audio.muted = false;
+    audio.pause();
     audio.currentTime = 0;
     audio.play().catch(() => {});
   } catch (e) {}
@@ -7456,8 +7458,10 @@ async function activateMasterProtocol(targetId = 'all') {
   );
 }
 
+let protocolSoundEnabled = localStorage.getItem('protocol_sound_enabled') !== '0';
+
 function isProtocolSoundEnabled() {
-  return localStorage.getItem('protocol_sound_enabled') !== '0';
+  return protocolSoundEnabled;
 }
 
 function updateProtocolSoundStatus() {
@@ -7465,9 +7469,7 @@ function updateProtocolSoundStatus() {
   const offBtn = document.getElementById('protocolSoundOffBtn');
   if (!onBtn || !offBtn) return;
 
-  const enabled = isProtocolSoundEnabled();
-
-  if (enabled) {
+  if (protocolSoundEnabled) {
     onBtn.style.background = 'rgba(212,175,55,0.10)';
     onBtn.style.border = '1px solid rgba(212,175,55,0.28)';
     onBtn.style.color = 'var(--gold)';
@@ -7487,12 +7489,14 @@ function updateProtocolSoundStatus() {
 }
 
 function setProtocolSoundEnabled(enabled) {
-  localStorage.setItem('protocol_sound_enabled', enabled ? '1' : '0');
+  protocolSoundEnabled = !!enabled;
+  localStorage.setItem('protocol_sound_enabled', protocolSoundEnabled ? '1' : '0');
 
   const audio = document.getElementById('architectVoiceLocal');
-  if (!enabled && audio) {
+  if (audio) {
     audio.pause();
     audio.currentTime = 0;
+    audio.muted = !protocolSoundEnabled;
   }
 
   updateProtocolSoundStatus();
