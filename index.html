@@ -2756,6 +2756,10 @@ body.theme-genshin .diary-star.active {
     <button class="btn" style="flex:1;padding:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);color:var(--text2);" onclick="setProtocolSoundEnabled(false); tg.showAlert('Звук протокола выключен')">[ 🔇 ЗВУК ВЫКЛ ]</button>
   </div>
 
+  <div id="protocolSoundStatus" style="margin-top:6px;font-size:10px;color:var(--text3);font-family:monospace;text-align:center;">
+  Звук протокола: ...
+</div>
+
   <button class="btn btn-gold mt8" style="width:100%;padding:9px;" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
 </div>
     </div>
@@ -7181,6 +7185,7 @@ function startMatrix() {
 window.addEventListener('resize', initMatrix);
 window.addEventListener('load', startMatrix);
 window.addEventListener('load', startGlobalAlertPolling);
+window.addEventListener('load', updateProtocolSoundStatus);
 // ===== RIPPLE ЭФФЕКТ =====
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('.btn, .btn-primary, .shop-item-buy, .subtab, .nav-item');
@@ -7453,10 +7458,25 @@ function isProtocolSoundEnabled() {
   return localStorage.getItem('protocol_sound_enabled') !== '0';
 }
 
+function updateProtocolSoundStatus() {
+  const el = document.getElementById('protocolSoundStatus');
+  if (!el) return;
+  el.textContent = `Звук протокола: ${isProtocolSoundEnabled() ? 'ВКЛ' : 'ВЫКЛ'}`;
+}
+
 function setProtocolSoundEnabled(enabled) {
   localStorage.setItem('protocol_sound_enabled', enabled ? '1' : '0');
+
+  const audio = document.getElementById('architectVoiceLocal');
+  if (!enabled && audio) {
+    audio.pause();
+    audio.currentTime = 0;
+  }
+
+  updateProtocolSoundStatus();
+  tg.showAlert(enabled ? 'Звук протокола включён' : 'Звук протокола выключен');
 }
-  
+
 </script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
