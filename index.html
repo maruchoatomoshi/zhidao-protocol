@@ -6165,46 +6165,68 @@ async function cancelWaterSlot(slotId) {
 
 async function loadLaundrySchedule() {
   const container = document.getElementById('laundryScheduleContent');
+  if (!container) return;
+
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`);
     const data = r.ok ? await r.json() : [];
+
     if (!data.length) {
       container.innerHTML = `<div class="empty-state" style="padding:16px;">Расписание стирки ещё не составлено<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые скоро добавят слоты</span></div>`;
       return;
     }
+
     container.innerHTML = data.map(slot => {
-      const capacity = slot.capacity || 1;
-      const booked = slot.booked || 0;
-      const bookings = slot.bookings || [];
-      const isMe = bookings.some(b => b.telegram_id === currentUserId);
-      const isFull = booked >= capacity;
+      const bookings = Array.isArray(slot.bookings) ? slot.bookings : [];
+      const capacity = Math.max(1, Math.min(2, parseInt(slot.capacity || 1, 10) || 1));
+      const myIndex = bookings.findIndex(b => b.telegram_id === currentUserId);
+      const isMine = myIndex !== -1;
+      const isFull = bookings.length >= capacity;
+
       let icon, statusText, clickable;
-      if (isMe) {
+
+      if (isMine) {
         icon = `<i class="ti ti-circle-check" style="color:#2ecc71;font-size:18px;"></i>`;
-        statusText = `<span style="color:#2ecc71;">Ваша запись</span>`;
-        clickable = `onclick="cancelWaterSlot(${slot.id})"`;
+        statusText = `<span style="color:#2ecc71;">Машинка ${myIndex + 1}</span>`;
+        clickable = `onclick="cancelLaundrySlot(${slot.id})"`;
       } else if (!isFull) {
-        icon = `<i class="ti ti-droplet" style="color:#60b4d4;font-size:18px;"></i>`;
-        statusText = `<span style="color:#60b4d4;">Свободно</span>`;
-        clickable = `onclick="bookWaterSlot(${slot.id})"`;
+        icon = `<i class="ti ti-wash-machine" style="color:var(--red);font-size:18px;"></i>`;
+        statusText = `<span style="color:var(--red);">Свободна ${bookings.length + 1}</span>`;
+        clickable = `onclick="bookLaundrySlot(${slot.id})"`;
       } else {
         icon = `<i class="ti ti-circle-x" style="color:var(--text3);font-size:18px;"></i>`;
-        statusText = `<span style="color:var(--text3);">Занято</span>`;
+        statusText = `<span style="color:var(--text3);">Все занято</span>`;
         clickable = '';
       }
-      return `<div ${clickable} style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${clickable?'cursor:pointer;':''}">
+
+      const machineBadges = Array.from({ length: capacity }, (_, index) => {
+        const booking = bookings[index];
+        if (booking) {
+          const isMeHere = booking.telegram_id === currentUserId;
+          const color = isMeHere ? '#2ecc71' : 'var(--text2)';
+          const bg = isMeHere ? 'rgba(46,204,113,0.12)' : 'rgba(255,255,255,0.04)';
+          const text = isMeHere ? `Машинка ${index + 1}: вы` : `Машинка ${index + 1}: занята`;
+          return `<span style="font-size:9px;color:${color};border:1px solid ${color};background:${bg};padding:3px 6px;border-radius:999px;">${text}</span>`;
+        }
+        return `<span style="font-size:9px;color:var(--red);border:1px solid rgba(220,80,80,0.35);background:rgba(220,80,80,0.08);padding:3px 6px;border-radius:999px;">Машинка ${index + 1}: свободна</span>`;
+      }).join('');
+
+      return `<div ${clickable} style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${clickable ? 'cursor:pointer;' : ''}">
         ${icon}
         <div style="flex:1;">
           <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} · ${slot.time}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note||'Набор воды'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note || 'Слот стирки'} · занято: ${bookings.length}/${capacity}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${machineBadges}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:10px;">${statusText}</div>
-          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">${booked}/${capacity} мест</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">${bookings.length}/${capacity} мест</div>
         </div>
       </div>`;
     }).join('');
-  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
 }
 
 async function loadWaterSchedule() {
@@ -6229,19 +6251,56 @@ async function loadWaterSchedule() {
 }
 
 async function bookLaundrySlot(slotId) {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (!currentUserId) {
+    tg.showAlert('Откройте через Telegram бота');
+    return;
+  }
+
   try {
-    const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
-    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на стирку!'); loadLaundrySchedule(); }
-    else { const e=await r.json(); tg.showAlert(e.detail==='Already booked'?'У вас уже есть запись':'Слот занят'); }
-  } catch(e) { tg.showAlert('Ошибка'); }
+    const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    });
+
+    if (r.ok) {
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+      tg.showAlert('✅ Запись сохранена. Машинка назначена автоматически по порядку.');
+      loadLaundrySchedule();
+    } else {
+      const e = await r.json();
+      tg.showAlert(
+        e.detail === 'Already booked'
+          ? 'У вас уже есть запись'
+          : e.detail === 'Slot full'
+            ? 'Все машинки на этот слот уже заняты'
+            : 'Слот занят'
+      );
+    }
+  } catch (e) {
+    tg.showAlert('Ошибка');
+  }
 }
 
+
 async function cancelLaundrySlot(slotId) {
-  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
-    if(b!=='ok')return;
-    fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
-      .then(()=>loadLaundrySchedule()).catch(()=>{});
+  tg.showPopup({
+    title: 'Отменить запись?',
+    message: 'Ваше место освободится, и слот снова станет доступным.',
+    buttons: [
+      { id: 'ok', type: 'default', text: 'Отменить запись' },
+      { type: 'cancel' }
+    ]
+  }, (b) => {
+    if (b !== 'ok') return;
+
+    fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    })
+      .then(() => loadLaundrySchedule())
+      .catch(() => {});
   });
 }
 
@@ -6482,43 +6541,82 @@ function switchAdminLaundryTab(tab) {
 
 async function adminLoadLaundrySlots() {
   const container = document.getElementById('adminLaundryList');
+  if (!container) return;
+
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`);
     const data = r.ok ? await r.json() : [];
-    if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
+
+    if (!data.length) {
+      container.innerHTML = '<div class="empty-state">Слотов нет</div>';
+      return;
+    }
+
     container.innerHTML = data.map(slot => {
-      const taken = slot.taken_by ? `<span style="color:#2ecc71;font-size:9px;">✓ ${slot.taken_by.name}</span>` : `<span style="color:var(--text3);font-size:9px;">Свободно</span>`;
+      const bookings = Array.isArray(slot.bookings) ? slot.bookings : [];
+      const capacity = Math.max(1, Math.min(2, parseInt(slot.capacity || 1, 10) || 1));
+
+      const taken = bookings.length
+        ? bookings.map((booking, index) =>
+            `<span style="color:#2ecc71;font-size:9px;display:block;">Машинка ${index + 1}: ${booking.name || 'Участник'}</span>`
+          ).join('')
+        : `<span style="color:var(--text3);font-size:9px;">Свободно</span>`;
+
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
         <div style="flex:1;">
           <div style="font-size:11px;color:var(--text);font-weight:600;">${slot.day} · ${slot.time}</div>
-          <div style="font-size:9px;color:var(--text3);">${slot.note||''}</div>
+          <div style="font-size:9px;color:var(--text3);">${slot.note || ''}</div>
+          <div style="font-size:9px;color:var(--text3);">Мест: ${capacity} · занято: ${bookings.length}/${capacity}</div>
           ${taken}
         </div>
         <button onclick="adminDeleteLaundrySlot(${slot.id})" style="background:none;border:1px solid rgba(200,50,50,0.3);color:rgba(200,80,80,0.7);padding:4px 10px;border-radius:4px;font-size:9px;font-family:monospace;cursor:pointer;"><i class="ti ti-trash"></i></button>
       </div>`;
     }).join('');
-  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state">Ошибка</div>';
+  }
 }
+
 
 async function adminAddLaundrySlot() {
   const day = document.getElementById('lDay').value.trim();
   const time = document.getElementById('lTime').value.trim();
   const note = document.getElementById('lNote').value.trim();
-  if (!day || !time) { tg.showAlert('Заполни день и время'); return; }
+  const capacity = Math.max(1, Math.min(2, parseInt(document.getElementById('lCapacity').value) || 1));
+
+  if (!day || !time) {
+    tg.showAlert('Заполни день и время');
+    return;
+  }
+
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`, {
-      method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({day, time, note, capacity: parseInt(document.getElementById('lCapacity').value)||1})
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-id': currentUserId
+      },
+      body: JSON.stringify({ day, time, note, capacity })
     });
+
     if (r.ok) {
-      document.getElementById('lDay').value='';
-      document.getElementById('lTime').value='';
-      document.getElementById('lNote').value='';
-      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+      document.getElementById('lDay').value = '';
+      document.getElementById('lTime').value = '';
+      document.getElementById('lNote').value = '';
+      document.getElementById('lCapacity').value = '';
+
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+
       adminLoadLaundrySlots();
-    } else tg.showAlert('Ошибка!');
-  } catch(e) { tg.showAlert('Ошибка соединения'); }
+      loadLaundrySchedule();
+    } else {
+      tg.showAlert('Ошибка!');
+    }
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
 }
+
 
 async function adminDeleteLaundrySlot(id) {
   tg.showPopup({title:'Удалить слот?',message:'Запись будет удалена.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
