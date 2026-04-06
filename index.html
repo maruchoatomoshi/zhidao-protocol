@@ -7281,6 +7281,7 @@ async function checkGlobalAlert() {
     if (alert.alert_type === 'architect') {
       triggerHaptic('admin');
       showArchitectOverlay();
+      playArchitectVoiceLocal();
     } else {
       tg.showPopup({
         title: alert.title || 'Системное сообщение',
