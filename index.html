@@ -7175,6 +7175,7 @@ function startMatrix() {
 
 window.addEventListener('resize', initMatrix);
 window.addEventListener('load', startMatrix);
+window.addEventListener('load', startGlobalAlertPolling);
 // ===== RIPPLE ЭФФЕКТ =====
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('.btn, .btn-primary, .shop-item-buy, .subtab, .nav-item');
@@ -7236,6 +7237,65 @@ async function triggerSystemVoice(eventType, targetId = 'all') {
   }
 }
 
+async function triggerGlobalAlert(alertType, title, message) {
+  if (!currentUserId) return;
+
+  try {
+    const r = await fetch(`${API_URL}/api/global-alert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegram_id: currentUserId,
+        alert_type: alertType,
+        title,
+        message
+      })
+    });
+
+    if (!r.ok) {
+      tg.showAlert('Не удалось запустить глобальный alert');
+      return null;
+    }
+
+    return await r.json();
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+    return null;
+  }
+}
+
+async function checkGlobalAlert() {
+  try {
+    const r = await fetch(`${API_URL}/api/global-alert/current`);
+    if (!r.ok) return;
+
+    const data = await r.json();
+    const alert = data.alert;
+    if (!alert || !alert.is_active) return;
+
+    const lastSeenId = localStorage.getItem('last_global_alert_id');
+    if (String(alert.id) === String(lastSeenId)) return;
+
+    localStorage.setItem('last_global_alert_id', String(alert.id));
+
+    if (alert.alert_type === 'architect') {
+      triggerHaptic('admin');
+      showArchitectOverlay();
+    } else {
+      tg.showPopup({
+        title: alert.title || 'Системное сообщение',
+        message: alert.message || '',
+        buttons: [{ type: 'close' }]
+      }, () => {});
+    }
+  } catch (e) {}
+}
+
+function startGlobalAlertPolling() {
+  checkGlobalAlert();
+  setInterval(checkGlobalAlert, 4000);
+}  
+  
 function playArchitectVoiceLocal() {
   try {
     const audio = document.getElementById('architectVoiceLocal');
@@ -7287,7 +7347,12 @@ async function activateMasterProtocol(targetId = 'all') {
   triggerHaptic('admin');
   showArchitectOverlay();
   playArchitectVoiceLocal();
-  await triggerSystemVoice('admin_arrival', targetId);
+
+  await triggerGlobalAlert(
+    'architect',
+    'АРХИТЕКТОР В СЕТИ',
+    '你正在被主协议注视。\nГлавный протокол наблюдает за тобой.'
+  );
 }
   
 </script>
