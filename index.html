@@ -2748,8 +2748,13 @@ body.theme-genshin .diary-star.active {
   <button
     class="btn mt8"
     style="width:100%;padding:9px;background:rgba(180,20,20,0.14);border:1px solid rgba(200,40,40,0.35);color:#cc4444;"
-    onclick="activateMasterProtocol(389741116)"
+    onclick="activateMasterProtocol('all')"
   >[ 🔴 INIT MASTER PROTOCOL ]</button>
+
+  <div style="display:flex;gap:6px;margin-top:8px;">
+    <button class="btn" style="flex:1;padding:8px;background:rgba(212,175,55,0.10);border:1px solid rgba(212,175,55,0.28);color:var(--gold);" onclick="setProtocolSoundEnabled(true); tg.showAlert('Звук протокола включён')">[ 🔊 ЗВУК ВКЛ ]</button>
+    <button class="btn" style="flex:1;padding:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);color:var(--text2);" onclick="setProtocolSoundEnabled(false); tg.showAlert('Звук протокола выключен')">[ 🔇 ЗВУК ВЫКЛ ]</button>
+  </div>
 
   <button class="btn btn-gold mt8" style="width:100%;padding:9px;" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
 </div>
@@ -7320,6 +7325,7 @@ function unlockArchitectAudio() {
   
 function playArchitectVoiceLocal() {
   try {
+    if (!isProtocolSoundEnabled()) return;
     const audio = document.getElementById('architectVoiceLocal');
     if (!audio) return;
     audio.currentTime = 0;
@@ -7375,6 +7381,14 @@ async function activateMasterProtocol(targetId = 'all') {
     'АРХИТЕКТОР В СЕТИ',
     '你正在被主协议注视。\nГлавный протокол наблюдает за тобой.'
   );
+}
+
+function isProtocolSoundEnabled() {
+  return localStorage.getItem('protocol_sound_enabled') !== '0';
+}
+
+function setProtocolSoundEnabled(enabled) {
+  localStorage.setItem('protocol_sound_enabled', enabled ? '1' : '0');
 }
   
 </script>
