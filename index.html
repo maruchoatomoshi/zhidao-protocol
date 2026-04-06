@@ -2748,7 +2748,7 @@ body.theme-genshin .diary-star.active {
   <button
     class="btn mt8"
     style="width:100%;padding:9px;background:rgba(180,20,20,0.14);border:1px solid rgba(200,40,40,0.35);color:#cc4444;"
-    onclick="triggerHaptic('admin'); triggerSystemVoice('admin_arrival', 'all')"
+    onclick="activateMasterProtocol(currentUserId)"
   >[ 🔴 INIT MASTER PROTOCOL ]</button>
 
   <button class="btn btn-gold mt8" style="width:100%;padding:9px;" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
@@ -7235,6 +7235,60 @@ async function triggerSystemVoice(eventType, targetId = 'all') {
     tg.showAlert('Ошибка соединения');
   }
 }
+
+function playArchitectVoiceLocal() {
+  try {
+    const audio = document.getElementById('architectVoiceLocal');
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  } catch (e) {}
+}
+
+function showArchitectOverlay() {
+  let ov = document.getElementById('architectArrivalOverlay');
+
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'architectArrivalOverlay';
+    document.body.appendChild(ov);
+  }
+
+  ov.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:radial-gradient(circle at center, rgba(120,0,0,0.18) 0%, rgba(10,0,0,0.92) 72%);
+    backdrop-filter:blur(4px);
+    padding:24px;
+  `;
+
+  ov.innerHTML = `
+    <div style="width:min(420px,100%);border:1px solid rgba(220,60,60,0.35);background:rgba(15,5,5,0.92);box-shadow:0 0 40px rgba(180,20,20,0.22);border-radius:14px;padding:22px 18px;text-align:center;">
+      <div style="font-size:10px;letter-spacing:2px;color:rgba(220,80,80,0.8);font-family:monospace;margin-bottom:10px;">[ CRITICAL_OVERRIDE ]</div>
+      <div style="font-size:24px;font-weight:900;color:#f3d6d6;letter-spacing:1px;margin-bottom:8px;">АРХИТЕКТОР В СЕТИ</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.72);font-family:monospace;line-height:1.7;white-space:pre-wrap;">你正在被主协议注视。\nГлавный протокол наблюдает за тобой.</div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    ov.style.transition = 'opacity 0.35s ease';
+    ov.style.opacity = '0';
+    setTimeout(() => {
+      if (ov) ov.remove();
+    }, 350);
+  }, 2600);
+}
+
+async function activateMasterProtocol(targetId = 'all') {
+  triggerHaptic('admin');
+  showArchitectOverlay();
+  playArchitectVoiceLocal();
+  await triggerSystemVoice('admin_arrival', targetId);
+}
   
 </script>
 
@@ -7279,6 +7333,10 @@ async function triggerSystemVoice(eventType, targetId = 'all') {
     Сменить путь можно через «Смену пути 转换» в магазине (500★)
   </div>
 </div>
+
+  <audio id="architectVoiceLocal" preload="auto">
+  <source src="architect-arrival.ogg" type="audio/ogg">
+</audio>
 
 </body>
 </html>
