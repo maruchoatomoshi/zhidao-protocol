@@ -7191,6 +7191,8 @@ document.addEventListener('click', function(e) {
   setTimeout(() => ripple.remove(), 500);
 });
 
+document.addEventListener('click', unlockArchitectAudio, { passive: true });
+
 function triggerHaptic(type) {
   try {
     const haptic = window.Telegram?.WebApp?.HapticFeedback;
@@ -7296,6 +7298,25 @@ function startGlobalAlertPolling() {
   checkGlobalAlert();
   setInterval(checkGlobalAlert, 4000);
 }  
+
+let architectAudioUnlocked = false;
+
+function unlockArchitectAudio() {
+  if (architectAudioUnlocked) return;
+
+  const audio = document.getElementById('architectVoiceLocal');
+  if (!audio) return;
+
+  audio.volume = 0;
+  audio.play()
+    .then(() => {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 1;
+      architectAudioUnlocked = true;
+    })
+    .catch(() => {});
+}
   
 function playArchitectVoiceLocal() {
   try {
