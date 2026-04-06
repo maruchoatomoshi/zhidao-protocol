@@ -5912,18 +5912,18 @@ function showPrizeResult(prize, caseType = 'gold') {
                  !document.body.classList.contains('theme-genshin-light') &&
                  !document.body.classList.contains('theme-genshin-dark');
 
-  // Создаём оверлей
-  let ov = document.getElementById('cyberResultOverlay');
-  if (!ov) {
-    ov = document.createElement('div');
-    ov.id = 'cyberResultOverlay';
-    document.getElementById('page-casino').appendChild(ov);
-  }
+ // Создаём оверлей
+let ov = document.getElementById('cyberResultOverlay');
+if (!ov) {
+  ov = document.createElement('div');
+  ov.id = 'cyberResultOverlay';
+  document.body.appendChild(ov);
+}
 
- const isNetwatchLight = document.body.classList.contains('theme-nw-light');
- const isGenshinLight = document.body.classList.contains('theme-genshin-light');
+const isNetwatchLight = document.body.classList.contains('theme-nw-light');
+const isGenshinLight = document.body.classList.contains('theme-genshin-light');
 
- const bgColor = isNetwatchLight
+const bgColor = isNetwatchLight
   ? (
       isLegendary
         ? 'radial-gradient(ellipse at 50% 35%, #f3e7cf 0%, #e7dbc4 60%, #ddd0b9 100%)'
@@ -5945,26 +5945,35 @@ function showPrizeResult(prize, caseType = 'gold') {
         ? 'radial-gradient(ellipse at 50% 35%,#1e0a30 0%,#0d0518 60%,#050310 100%)'
         : 'radial-gradient(ellipse at 50% 35%,#0d0d20 0%,#050510 100%)';
 
+const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
+const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
+const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : null;
+const tagBg = isLegendary ? 'rgba(212,175,55,0.2)' : isPurple ? 'rgba(155,89,182,0.15)' : 'rgba(100,150,200,0.15)';
+const tagBorder = isLegendary ? 'rgba(212,175,55,0.6)' : isPurple ? 'rgba(155,89,182,0.5)' : 'rgba(100,150,200,0.3)';
+const tagColor = (isNetwatchLight || isGenshinLight)
+  ? (isLegendary ? '#5c430f' : isPurple ? '#6e4c8f' : '#4e647f')
+  : (isLegendary ? '#d4af37' : isPurple ? '#9b59b6' : '#6aa0d4');
+const tagText = isLegendary ? '★ ЛЕГЕНДАРНЫЙ ★' : isPurple ? 'РЕДКИЙ // ФИОЛЕТОВЫЙ' : 'ОБЫЧНЫЙ';
 
-  const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
-  const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
-  const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : null;
-  const tagBg = isLegendary ? 'rgba(212,175,55,0.2)' : isPurple ? 'rgba(155,89,182,0.15)' : 'rgba(100,150,200,0.15)';
-  const tagBorder = isLegendary ? 'rgba(212,175,55,0.6)' : isPurple ? 'rgba(155,89,182,0.5)' : 'rgba(100,150,200,0.3)';
-  const tagColor = isLegendary ? '#d4af37' : isPurple ? '#9b59b6' : '#6aa0d4';
-  const tagText = isLegendary ? '★ ЛЕГЕНДАРНЫЙ ★' : isPurple ? 'РЕДКИЙ // ФИОЛЕТОВЫЙ' : 'ОБЫЧНЫЙ';
+let imgHtml = prize.img
+  ? `<img src="${prize.img}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
+  : `<div style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
 
-  let imgHtml = prize.img
-    ? `<img src="${prize.img}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
-    : `<div style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
+const pointsColor = (isNetwatchLight || isGenshinLight)
+  ? (isLegendary ? '#7a5a12' : isPurple ? '#6e4c8f' : '#7a5a12')
+  : particleColor;
 
-  let contentHtml = '';
-  if (prize.points > 0) {
-    contentHtml = `<div style="font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
-  } else {
-    contentHtml = `<div style="font-size:14px;font-weight:700;color:${isNetwatchLight || isGenshinLight ? '#3d352c' : '#fff'};font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
+const pointsShadow = (isNetwatchLight || isGenshinLight)
+  ? 'rgba(0,0,0,0.08)'
+  : particleColor;
 
-  }
+let contentHtml = '';
+if (prize.points > 0) {
+  contentHtml = `<div style="font-size:36px;font-weight:900;font-family:monospace;color:${pointsColor};text-shadow:0 0 20px ${pointsShadow};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
+} else {
+  contentHtml = `<div style="font-size:14px;font-weight:700;color:${isNetwatchLight || isGenshinLight ? '#3d352c' : '#fff'};font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
+}
+
 
   // Лучи
   let raysHtml = '';
@@ -5972,7 +5981,7 @@ function showPrizeResult(prize, caseType = 'gold') {
     const count = isLegendary ? 24 : 16;
     for (let i = 0; i < count; i++) {
       raysHtml += `<div style="position:absolute;width:3px;height:${isLegendary?170:150}px;border-radius:2px;background:linear-gradient(0deg,${rayColor},transparent);transform:rotate(${i*(360/count)}deg) translateX(-50%);transform-origin:bottom;left:50%;top:calc(50% - ${isLegendary?170:150}px);margin-left:-1.5px;animation:cyberRayIn 0.4s ease-out ${i*0.015}s both;opacity:0;"></div>`;
-    }
+      }
   }
 
   // Частицы
