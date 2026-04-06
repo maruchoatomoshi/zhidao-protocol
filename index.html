@@ -2751,9 +2751,11 @@ body.theme-genshin .diary-star.active {
     onclick="activateMasterProtocol('all')"
   >[ 🔴 INIT MASTER PROTOCOL ]</button>
 
-  <div style="display:flex;gap:6px;margin-top:8px;">
-    <button class="btn" style="flex:1;padding:8px;background:rgba(212,175,55,0.10);border:1px solid rgba(212,175,55,0.28);color:var(--gold);" onclick="setProtocolSoundEnabled(true); tg.showAlert('Звук протокола включён')">[ 🔊 ЗВУК ВКЛ ]</button>
-    <button class="btn" style="flex:1;padding:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);color:var(--text2);" onclick="setProtocolSoundEnabled(false); tg.showAlert('Звук протокола выключен')">[ 🔇 ЗВУК ВЫКЛ ]</button>
+ <div style="display:flex;gap:6px;margin-top:8px;">
+  <button id="protocolSoundOnBtn" class="btn" style="flex:1;padding:8px;" onclick="setProtocolSoundEnabled(true)">[ 🔊 ЗВУК ВКЛ ]</button>
+  <button id="protocolSoundOffBtn" class="btn" style="flex:1;padding:8px;" onclick="setProtocolSoundEnabled(false)">[ 🔇 ЗВУК ВЫКЛ ]</button>
+</div>
+
   </div>
 
   <div id="protocolSoundStatus" style="margin-top:6px;font-size:10px;color:var(--text3);font-family:monospace;text-align:center;">
@@ -7459,9 +7461,29 @@ function isProtocolSoundEnabled() {
 }
 
 function updateProtocolSoundStatus() {
-  const el = document.getElementById('protocolSoundStatus');
-  if (!el) return;
-  el.textContent = `Звук протокола: ${isProtocolSoundEnabled() ? 'ВКЛ' : 'ВЫКЛ'}`;
+  const onBtn = document.getElementById('protocolSoundOnBtn');
+  const offBtn = document.getElementById('protocolSoundOffBtn');
+  if (!onBtn || !offBtn) return;
+
+  const enabled = isProtocolSoundEnabled();
+
+  if (enabled) {
+    onBtn.style.background = 'rgba(212,175,55,0.10)';
+    onBtn.style.border = '1px solid rgba(212,175,55,0.28)';
+    onBtn.style.color = 'var(--gold)';
+
+    offBtn.style.background = 'rgba(255,255,255,0.04)';
+    offBtn.style.border = '1px solid rgba(255,255,255,0.10)';
+    offBtn.style.color = 'var(--text2)';
+  } else {
+    offBtn.style.background = 'rgba(212,175,55,0.10)';
+    offBtn.style.border = '1px solid rgba(212,175,55,0.28)';
+    offBtn.style.color = 'var(--gold)';
+
+    onBtn.style.background = 'rgba(255,255,255,0.04)';
+    onBtn.style.border = '1px solid rgba(255,255,255,0.10)';
+    onBtn.style.color = 'var(--text2)';
+  }
 }
 
 function setProtocolSoundEnabled(enabled) {
@@ -7474,7 +7496,6 @@ function setProtocolSoundEnabled(enabled) {
   }
 
   updateProtocolSoundStatus();
-  tg.showAlert(enabled ? 'Звук протокола включён' : 'Звук протокола выключен');
 }
 
 </script>
