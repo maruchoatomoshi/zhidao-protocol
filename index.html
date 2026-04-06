@@ -2670,7 +2670,10 @@ body.theme-genshin .diary-star.active {
         <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
         <input class="admin-input" id="lTime" placeholder="Время (08:00)">
         <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
-        <input class="admin-input" id="lCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
+        <select class="admin-input" id="lCapacity">
+          <option value="1">1 машинка</option>
+          <option value="2">2 машинки</option>
+        </select>
         <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ ДОБАВИТЬ СЛОТ ]</button>
         <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
         <div id="adminLaundryList"><div class="empty-state">Загрузка...</div></div>
