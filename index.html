@@ -5920,11 +5920,31 @@ function showPrizeResult(prize, caseType = 'gold') {
     document.getElementById('page-casino').appendChild(ov);
   }
 
-  const bgColor = isLegendary
-    ? 'radial-gradient(ellipse at 50% 35%,#2a1800 0%,#150c00 60%,#050300 100%)'
-    : isPurple
-    ? 'radial-gradient(ellipse at 50% 35%,#1e0a30 0%,#0d0518 60%,#050310 100%)'
-    : 'radial-gradient(ellipse at 50% 35%,#0d0d20 0%,#050510 100%)';
+ const isNetwatchLight = document.body.classList.contains('theme-nw-light');
+ const isGenshinLight = document.body.classList.contains('theme-genshin-light');
+
+ const bgColor = isNetwatchLight
+  ? (
+      isLegendary
+        ? 'radial-gradient(ellipse at 50% 35%, #f3e7cf 0%, #e7dbc4 60%, #ddd0b9 100%)'
+        : isPurple
+          ? 'radial-gradient(ellipse at 50% 35%, #efe6f6 0%, #e7deef 60%, #ddd4e8 100%)'
+          : 'radial-gradient(ellipse at 50% 35%, #fbf7f1 0%, #f4f1ed 60%, #eae3d8 100%)'
+    )
+  : isGenshinLight
+    ? (
+        isLegendary
+          ? 'radial-gradient(ellipse at 50% 35%, #f1ead8 0%, #e7dfcc 60%, #d8cfbc 100%)'
+          : isPurple
+            ? 'radial-gradient(ellipse at 50% 35%, #ece6df 0%, #e2dcd3 60%, #d6cfc5 100%)'
+            : 'radial-gradient(ellipse at 50% 35%, #f8f3ea 0%, #ece5d8 60%, #ddd4c5 100%)'
+      )
+    : isLegendary
+      ? 'radial-gradient(ellipse at 50% 35%,#2a1800 0%,#150c00 60%,#050300 100%)'
+      : isPurple
+        ? 'radial-gradient(ellipse at 50% 35%,#1e0a30 0%,#0d0518 60%,#050310 100%)'
+        : 'radial-gradient(ellipse at 50% 35%,#0d0d20 0%,#050510 100%)';
+
 
   const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
   const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
@@ -5942,7 +5962,8 @@ function showPrizeResult(prize, caseType = 'gold') {
   if (prize.points > 0) {
     contentHtml = `<div style="font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
   } else {
-    contentHtml = `<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
+    contentHtml = `<div style="font-size:14px;font-weight:700;color:${isNetwatchLight || isGenshinLight ? '#3d352c' : '#fff'};font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
+
   }
 
   // Лучи
