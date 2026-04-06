@@ -2751,11 +2751,6 @@ body.theme-genshin .diary-star.active {
     onclick="activateMasterProtocol('all')"
   >[ 🔴 INIT MASTER PROTOCOL ]</button>
 
- <div style="display:flex;gap:6px;margin-top:8px;">
-  <button id="protocolSoundOnBtn" class="btn" style="flex:1;padding:8px;" onclick="setProtocolSoundEnabled(true)">[ 🔊 ЗВУК ВКЛ ]</button>
-  <button id="protocolSoundOffBtn" class="btn" style="flex:1;padding:8px;" onclick="setProtocolSoundEnabled(false)">[ 🔇 ЗВУК ВЫКЛ ]</button>
-</div>
-
   </div>
 
   <div id="protocolSoundStatus" style="margin-top:6px;font-size:10px;color:var(--text3);font-family:monospace;text-align:center;">
@@ -5938,7 +5933,7 @@ if (!ov) {
   ov.id = 'cyberResultOverlay';
   document.body.appendChild(ov);
 }
-
+  
 const isNetwatchLight = document.body.classList.contains('theme-nw-light');
 const isGenshinLight = document.body.classList.contains('theme-genshin-light');
 
@@ -7312,6 +7307,7 @@ function startGlobalAlertPolling() {
 }  
 
 let architectAudioUnlocked = false;
+let protocolSoundEnabled = localStorage.getItem('protocol_sound_enabled') !== '0';
 
 function unlockArchitectAudio() {
   if (architectAudioUnlocked) return;
@@ -7329,136 +7325,6 @@ function unlockArchitectAudio() {
     })
     .catch(() => {});
 }
-  
-function playArchitectVoiceLocal() {
-  try {
-    const audio = document.getElementById('architectVoiceLocal');
-    if (!audio || !protocolSoundEnabled) return;
-
-    audio.muted = false;
-    audio.pause();
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
-  } catch (e) {}
-}
-
-function showArchitectOverlay() {
-  let ov = document.getElementById('architectArrivalOverlay');
-
-  if (!ov) {
-    ov = document.createElement('div');
-    ov.id = 'architectArrivalOverlay';
-    document.body.appendChild(ov);
-  }
-
-  ov.style.cssText = `
-    position:fixed;
-    inset:0;
-    z-index:10000;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-      radial-gradient(circle at center, rgba(180,20,20,0.18) 0%, rgba(15,0,0,0.92) 62%, rgba(0,0,0,0.97) 100%);
-    backdrop-filter:blur(6px);
-    overflow:hidden;
-    padding:24px;
-    animation:architectOverlayIn 0.28s ease-out;
-  `;
-
-  ov.innerHTML = `
-    <div style="position:absolute;inset:0;pointer-events:none;opacity:0.16;background:
-      repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.06) 0px,
-        rgba(255,255,255,0.06) 1px,
-        transparent 2px,
-        transparent 4px
-      );"></div>
-
-    <div style="position:absolute;top:0;left:-20%;width:140%;height:2px;background:rgba(220,60,60,0.45);box-shadow:0 0 14px rgba(220,60,60,0.5);animation:architectScan 2.2s linear infinite;"></div>
-
-    <div style="position:absolute;inset:0;pointer-events:none;">
-      <div style="position:absolute;top:12%;left:8%;font-size:10px;color:rgba(220,80,80,0.18);font-family:monospace;letter-spacing:2px;">BLACKWALL//OVERRIDE</div>
-      <div style="position:absolute;top:20%;right:10%;font-size:10px;color:rgba(220,80,80,0.14);font-family:monospace;letter-spacing:2px;">NODE:ZHIDAO-PRIME</div>
-      <div style="position:absolute;bottom:16%;left:12%;font-size:10px;color:rgba(220,80,80,0.14);font-family:monospace;letter-spacing:2px;">PRIORITY:ABSOLUTE</div>
-      <div style="position:absolute;bottom:11%;right:10%;font-size:10px;color:rgba(220,80,80,0.18);font-family:monospace;letter-spacing:2px;">WATCHING...</div>
-    </div>
-
-    <div style="position:relative;width:min(460px,100%);border:1px solid rgba(220,60,60,0.34);background:linear-gradient(180deg, rgba(22,6,6,0.94), rgba(8,2,2,0.96));box-shadow:0 0 50px rgba(180,20,20,0.24), inset 0 0 24px rgba(220,80,80,0.08);border-radius:16px;padding:24px 20px 20px;text-align:center;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg, transparent, rgba(255,120,120,0.7), transparent);"></div>
-      <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at center, rgba(220,60,60,0.08), transparent 60%);"></div>
-
-      <div style="font-size:10px;letter-spacing:3px;color:rgba(220,80,80,0.82);font-family:monospace;margin-bottom:10px;animation:architectBlink 1.3s ease-in-out infinite;">[ CRITICAL_OVERRIDE ]</div>
-
-      <div style="font-size:28px;font-weight:900;color:#f5d8d8;letter-spacing:1px;margin-bottom:8px;text-shadow:0 0 18px rgba(220,80,80,0.22);animation:architectGlitch 1.8s steps(1) infinite;">
-        АРХИТЕКТОР В СЕТИ
-      </div>
-
-      <div style="font-size:12px;color:rgba(220,80,80,0.92);font-family:monospace;letter-spacing:2px;margin-bottom:14px;">
-        SYSTEM PRIORITY ELEVATED
-      </div>
-
-      <div style="font-size:13px;color:rgba(255,255,255,0.84);font-family:monospace;line-height:1.8;white-space:pre-wrap;max-width:320px;margin:0 auto;">
-你正在被主协议注视。
-Главный протокол наблюдает за тобой.
-      </div>
-    </div>
-  `;
-
-  if (!document.getElementById('architectOverlayStyles')) {
-    const style = document.createElement('style');
-    style.id = 'architectOverlayStyles';
-    style.textContent = `
-      @keyframes architectOverlayIn {
-        from { opacity: 0; transform: scale(1.02); }
-        to { opacity: 1; transform: scale(1); }
-      }
-      @keyframes architectScan {
-        0% { transform: translateY(-40px); opacity: 0; }
-        15% { opacity: 1; }
-        100% { transform: translateY(100vh); opacity: 0; }
-      }
-      @keyframes architectBlink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.45; }
-      }
-      @keyframes architectGlitch {
-        0%, 100% { transform: translateX(0); }
-        10% { transform: translateX(-1px); }
-        11% { transform: translateX(2px); }
-        12% { transform: translateX(0); }
-        48% { transform: translateX(0); }
-        49% { transform: translateX(1px); }
-        50% { transform: translateX(-2px); }
-        51% { transform: translateX(0); }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  setTimeout(() => {
-    ov.style.transition = 'opacity 0.45s ease';
-    ov.style.opacity = '0';
-    setTimeout(() => {
-      if (ov) ov.remove();
-    }, 450);
-  }, 3200);
-}
-
-async function activateMasterProtocol(targetId = 'all') {
-  triggerHaptic('admin');
-  showArchitectOverlay();
-  playArchitectVoiceLocal();
-
-  await triggerGlobalAlert(
-    'architect',
-    'АРХИТЕКТОР В СЕТИ',
-    '你正在被主协议注视。\nГлавный протокол наблюдает за тобой.'
-  );
-}
-
-let protocolSoundEnabled = localStorage.getItem('protocol_sound_enabled') !== '0';
 
 function isProtocolSoundEnabled() {
   return protocolSoundEnabled;
@@ -7500,6 +7366,150 @@ function setProtocolSoundEnabled(enabled) {
   }
 
   updateProtocolSoundStatus();
+}
+
+function playArchitectVoiceLocal() {
+  try {
+    const audio = document.getElementById('architectVoiceLocal');
+    if (!audio || !protocolSoundEnabled) return;
+
+    audio.muted = false;
+    audio.pause();
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  } catch (e) {}
+}
+  
+  function showArchitectOverlay() {
+  let ov = document.getElementById('architectArrivalOverlay');
+
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'architectArrivalOverlay';
+    document.body.appendChild(ov);
+  }
+
+  ov.style.cssText = `
+  document.body.style.animation = 'architectBodyGlitch 0.18s steps(1) infinite';
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at center, rgba(180,20,20,0.18) 0%, rgba(15,0,0,0.92) 62%, rgba(0,0,0,0.97) 100%);
+    backdrop-filter:blur(6px);
+    overflow:hidden;
+    padding:24px;
+    animation:architectOverlayIn 0.28s ease-out;
+  `;
+
+  ov.innerHTML = `
+    <div style="position:absolute;inset:0;pointer-events:none;opacity:0.16;background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.06) 0px,
+        rgba(255,255,255,0.06) 1px,
+        transparent 2px,
+        transparent 4px
+      );"></div>
+
+    <div style="position:absolute;top:0;left:-20%;width:140%;height:2px;background:rgba(220,60,60,0.45);box-shadow:0 0 14px rgba(220,60,60,0.5);animation:architectScan 2.2s linear infinite;"></div>
+
+    <div style="position:absolute;inset:0;pointer-events:none;">
+      <div style="position:absolute;top:12%;left:8%;font-size:10px;color:rgba(220,80,80,0.18);font-family:monospace;letter-spacing:2px;">BLACKWALL//OVERRIDE</div>
+      <div style="position:absolute;top:20%;right:10%;font-size:10px;color:rgba(220,80,80,0.14);font-family:monospace;letter-spacing:2px;">NODE:ZHIDAO-PRIME</div>
+      <div style="position:absolute;bottom:16%;left:12%;font-size:10px;color:rgba(220,80,80,0.14);font-family:monospace;letter-spacing:2px;">PRIORITY:ABSOLUTE</div>
+      <div style="position:absolute;bottom:11%;right:10%;font-size:10px;color:rgba(220,80,80,0.18);font-family:monospace;letter-spacing:2px;">WATCHING...</div>
+    </div>
+
+    <div style="position:relative;width:min(460px,100%);border:1px solid rgba(220,60,60,0.34);background:linear-gradient(180deg, rgba(22,6,6,0.94), rgba(8,2,2,0.96));box-shadow:0 0 50px rgba(180,20,20,0.24), inset 0 0 24px rgba(220,80,80,0.08);border-radius:16px;padding:24px 20px 20px;text-align:center;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg, transparent, rgba(255,120,120,0.7), transparent);"></div>
+      <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at center, rgba(220,60,60,0.08), transparent 60%);"></div>
+
+      <div style="font-size:10px;letter-spacing:3px;color:rgba(220,80,80,0.82);font-family:monospace;margin-bottom:10px;animation:architectBlink 1.3s ease-in-out infinite;">[ CRITICAL_OVERRIDE ]</div>
+
+      <div style="font-size:28px;font-weight:900;color:#f5d8d8;letter-spacing:1px;margin-bottom:8px;text-shadow:0 0 18px rgba(220,80,80,0.22);animation:architectGlitch 1.8s steps(1) infinite, architectRgbShift 0.9s steps(1) infinite;">
+        АРХИТЕКТОР В СЕТИ
+      </div>
+
+      <div style="font-size:12px;color:rgba(220,80,80,0.92);font-family:monospace;letter-spacing:2px;margin-bottom:14px;">
+        SYSTEM PRIORITY ELEVATED
+      </div>
+
+      <div style="font-size:13px;color:rgba(255,255,255,0.84);font-family:monospace;line-height:1.8;white-space:pre-wrap;max-width:320px;margin:0 auto;">
+你正在被主协议注视。
+Главный протокол наблюдает за тобой.
+      </div>
+    </div>
+  `;
+
+  if (!document.getElementById('architectOverlayStyles')) {
+    const style = document.createElement('style');
+    style.id = 'architectOverlayStyles';
+    style.textContent = `
+      @keyframes architectOverlayIn {
+        from { opacity: 0; transform: scale(1.02); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes architectScan {
+        0% { transform: translateY(-40px); opacity: 0; }
+        15% { opacity: 1; }
+        100% { transform: translateY(100vh); opacity: 0; }
+      }
+      @keyframes architectBlink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.45; }
+      }
+      @keyframes architectGlitch {
+        0%, 100% { transform: translateX(0); }
+        10% { transform: translateX(-1px); }
+        11% { transform: translateX(2px); }
+        12% { transform: translateX(0); }
+        48% { transform: translateX(0); }
+        49% { transform: translateX(1px); }
+        50% { transform: translateX(-2px); }
+        51% { transform: translateX(0); }
+      }
+      @keyframes architectBodyGlitch {
+        0%, 100% { transform: translate(0, 0); filter: none; }
+        20% { transform: translate(-1px, 0); filter: saturate(1.1); }
+        40% { transform: translate(2px, -1px); filter: contrast(1.08); }
+        60% { transform: translate(-2px, 1px); filter: saturate(0.95); }
+        80% { transform: translate(1px, 0); filter: contrast(1.04); }
+      }
+      @keyframes architectRgbShift {
+        0%, 100% { text-shadow: 0 0 18px rgba(220,80,80,0.22); }
+        25% { text-shadow: -2px 0 rgba(255,0,80,0.35), 2px 0 rgba(80,200,255,0.25), 0 0 18px rgba(220,80,80,0.22); }
+        50% { text-shadow: 2px 0 rgba(255,0,80,0.28), -2px 0 rgba(80,200,255,0.22), 0 0 18px rgba(220,80,80,0.22); }
+        75% { text-shadow: -1px 0 rgba(255,0,80,0.3), 1px 0 rgba(80,200,255,0.2), 0 0 18px rgba(220,80,80,0.22); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  setTimeout(() => {
+  ov.style.transition = 'opacity 0.45s ease';
+  ov.style.opacity = '0';
+  setTimeout(() => {
+    document.body.style.animation = '';
+    document.body.style.filter = '';
+    if (ov) ov.remove();
+  }, 450);
+ }, 3200);
+}
+
+async function activateMasterProtocol(targetId = 'all') {
+  triggerHaptic('admin');
+  showArchitectOverlay();
+  playArchitectVoiceLocal();
+
+  await triggerGlobalAlert(
+    'architect',
+    'АРХИТЕКТОР В СЕТИ',
+    '你正在被主协议注视。\nГлавный протокол наблюдает за тобой.'
+  );
 }
 
 </script>
