@@ -2074,6 +2074,257 @@ body.theme-genshin .diary-star.active {
   line-height: 1.6;
   word-break: break-word;
 }  
+
+.event-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+}
+
+.event-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(180,20,20,0.16), rgba(0,0,0,0.88)),
+    rgba(0,0,0,0.92);
+  backdrop-filter: blur(8px);
+}
+
+.event-shell {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 12px 18px;
+  overflow: hidden;
+}
+
+.event-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.event-kicker {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(212,175,55,0.9);
+  font-family: monospace;
+}
+
+.event-phase {
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.event-close-btn {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.event-hero {
+  position: relative;
+  flex: 0 0 40vh;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(180,20,20,0.3);
+  background: linear-gradient(180deg, rgba(120,0,0,0.18), rgba(255,255,255,0.02));
+}
+
+.event-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,0,0,0.12), transparent 60%);
+  pointer-events: none;
+}
+
+.event-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.event-status-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #ddd;
+}
+
+.event-status-badge.hot {
+  background: rgba(180,20,20,0.18);
+  border-color: rgba(255,80,80,0.35);
+  color: #ffb3b3;
+}
+
+.event-status-badge.gold {
+  background: rgba(212,175,55,0.16);
+  border-color: rgba(212,175,55,0.35);
+  color: #f5d77a;
+}
+
+.event-status-badge.green {
+  background: rgba(40,120,70,0.18);
+  border-color: rgba(60,180,110,0.35);
+  color: #9be6b8;
+}
+  
+.event-hud {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(10,10,20,0.72);
+  border: 1px solid rgba(180,20,20,0.24);
+}
+
+.event-boss-name {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.event-hp-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+
+.event-hp-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}  
+  
+.event-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a40000, #ff3b1f);
+  transition: width 0.35s ease;
+}
+
+.event-log {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(8,8,16,0.76);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 12px;
+}
+
+.event-log-empty {
+  color: #888;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.event-log-item {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.event-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.event-action {
+  min-height: 48px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.event-action.attack { background:#8f1616; color:#fff; }
+.event-action.protocol { background:#d4af37; color:#1a1a1a; }
+.event-action.sync { background:#2a2a44; color:#fff; }
+.event-action.stabilize { background:#1f5a3a; color:#fff; }
+
+.event-question-modal {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(15,15,28,0.9);
+  border: 1px solid rgba(212,175,55,0.24);
+}
+
+.event-question-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.event-options {
+  display: grid;
+  gap: 8px;
+}
+
+.event-option-btn {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-explanation {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(212,175,55,0.08);
+  border: 1px solid rgba(212,175,55,0.18);
+  color: #e7d39a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.event-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.event-action[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.15);
+}
   
 </style>
 </head>
@@ -2146,10 +2397,32 @@ body.theme-genshin .diary-star.active {
     </div>
   </div>
 
+<div style="padding:8px 12px 4px;">
+  <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
+</div>
 
-  <div style="padding:8px 12px 4px;">
-    <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
+<div onclick="openEventOverlay()" style="
+  margin:8px 12px 12px;
+  padding:14px 16px;
+  border-radius:16px;
+  border:1px solid rgba(180,20,20,0.28);
+  background:
+    linear-gradient(135deg, rgba(120,0,0,0.22), rgba(255,255,255,0.02)),
+    rgba(255,255,255,0.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+  cursor:pointer;
+">
+  <div style="font-size:10px;letter-spacing:1.8px;color:rgba(212,175,55,0.86);font-family:monospace;">
+    LIVE EVENT
   </div>
+  <div style="margin-top:4px;font-size:20px;font-weight:800;color:#fff;">
+    АРХИТЕКТОР
+  </div>
+  <div style="margin-top:4px;font-size:12px;color:#bbb;line-height:1.5;">
+    Полноэкранный бой против босса. Открывается поверх приложения.
+  </div>
+</div>
+
 </div>
 
 <!-- ===== РАСПИСАНИЕ + НОВОСТИ ===== -->
@@ -7061,6 +7334,345 @@ function buildMatrixRain() {
 
 window.addEventListener('load', buildMatrixRain);
 window.addEventListener('resize', buildMatrixRain);
+
+function openEventOverlay() {
+  const overlay = document.getElementById('eventOverlay');
+  if (!overlay) return;
+
+  overlay.style.display = 'block';
+
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.style.display = 'none';
+
+  document.body.style.overflow = 'hidden';
+
+  const log = document.getElementById('eventLog');
+  if (log) {
+    log.innerHTML = `<div class="event-log-empty">Загрузка состояния ивента...</div>`;
+  }
+
+  setEventExplanation('');
+  loadCurrentEvent();
+}
+
+function closeEventOverlay() {
+  const overlay = document.getElementById('eventOverlay');
+  if (!overlay) return;
+
+  overlay.style.display = 'none';
+
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.style.display = '';
+
+  document.body.style.overflow = '';
+}
+
+async function loadCurrentEvent() {
+  try {
+    setEventLoading(true);
+
+    const r = await fetch(`${API_URL}/api/events/current`);
+    const data = await r.json();
+
+    if (!r.ok || !data.event) {
+      const log = document.getElementById('eventLog');
+      if (log) {
+        log.innerHTML = `<div class="event-log-empty">Не удалось загрузить ивент</div>`;
+      }
+      return;
+    }
+
+    renderEventOverlay(data.event);
+  } catch (e) {
+    console.error('Не удалось загрузить ивент', e);
+
+    const log = document.getElementById('eventLog');
+    if (log) {
+      log.innerHTML = `<div class="event-log-empty">Ошибка соединения с ивентом</div>`;
+    }
+  } finally {
+    setEventLoading(false);
+  }
+}
+
+function renderEventOverlay(event) {
+  const hpFill = document.getElementById('eventHpFill');
+  const hpText = document.getElementById('eventHpText');
+  const phaseText = document.getElementById('eventPhaseText');
+  const phaseLabel = document.getElementById('eventPhaseLabel');
+  const bossImage = document.getElementById('eventBossImage');
+  const log = document.getElementById('eventLog');
+
+  const stateBadge = document.getElementById('eventStateBadge');
+  const vulnerabilityBadge = document.getElementById('eventVulnerabilityBadge');
+  const overloadBadge = document.getElementById('eventOverloadBadge');
+
+  if (typeof event.id === 'number') {
+    currentEventId = event.id;
+  }
+
+  if (typeof event.max_hp === 'number') {
+    currentEventMaxHp = event.max_hp;
+  }
+
+  if (hpFill && typeof event.current_hp === 'number' && typeof currentEventMaxHp === 'number') {
+    hpFill.style.width = `${Math.max(0, Math.min(100, (event.current_hp / currentEventMaxHp) * 100))}%`;
+  }
+
+  if (hpText) {
+    hpText.textContent = `${event.current_hp ?? '—'} / ${currentEventMaxHp ?? '—'}`;
+  }
+
+  if (phaseText) {
+    phaseText.textContent = `Фаза ${event.phase ?? '—'}`;
+  }
+
+  if (phaseLabel) {
+    const roman = {1: 'I', 2: 'II', 3: 'III'};
+    phaseLabel.textContent = `ФАЗА ${roman[event.phase] || event.phase || 'I'}`;
+  }
+
+  if (stateBadge) {
+    stateBadge.textContent = event.state || 'ACTIVE';
+    stateBadge.className = 'event-status-badge';
+    if ((event.state || '').toUpperCase() === 'ACTIVE') stateBadge.classList.add('green');
+    if ((event.state || '').toUpperCase() === 'ENDED') stateBadge.classList.add('hot');
+  }
+
+  if (vulnerabilityBadge) {
+    const vulnerable = !!event.vulnerability_active;
+    vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
+    vulnerabilityBadge.className = 'event-status-badge';
+    vulnerabilityBadge.classList.add(vulnerable ? 'gold' : 'hot');
+  }
+
+  if (overloadBadge) {
+    overloadBadge.textContent = `OVERLOAD: ${event.overload_pressure ?? 0}`;
+    overloadBadge.className = 'event-status-badge';
+    if ((event.overload_pressure ?? 0) >= 5) {
+      overloadBadge.classList.add('hot');
+    }
+  }
+
+  if (bossImage) {
+    if (event.phase === 1) {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png';
+    } else if (event.phase === 2) {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase2.png';
+    } else {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png';
+    }
+  }
+
+  if (log) {
+    if (Array.isArray(event.logs) && event.logs.length) {
+      log.innerHTML = event.logs.map(item => `
+        <div class="event-log-item">${item.message}</div>
+      `).join('');
+      log.scrollTop = log.scrollHeight;
+    } else {
+      log.innerHTML = `<div class="event-log-empty">Лог ивента пока пуст</div>`;
+      setEventExplanation('');
+    }
+  }
+}
+  
+let currentEventId = 1;
+let currentEventAction = null;
+let currentEventQuestion = null;
+let currentEventMaxHp = 1000;
+
+async function eventAction(actionType) {
+  currentEventAction = actionType;
+
+  if (!currentUserId) {
+    tg.showAlert('Откройте приложение через Telegram бота');
+    return;
+  }
+
+  if (actionType === 'sync') {
+    await submitEventAction({ action_type: 'sync' });
+    return;
+  }
+
+  await loadEventQuestion(actionType);
+}
+
+async function loadEventQuestion(actionType) {
+  try {
+    const r = await fetch(`${API_URL}/api/events/${currentEventId}/question?telegram_id=${currentUserId}&action_type=${actionType}`);
+    const data = await r.json();
+
+    if (!r.ok || !data.question) {
+      tg.showAlert('Не удалось получить вопрос для действия');
+      return;
+    }
+
+    currentEventQuestion = data.question;
+    renderEventQuestion(data.question);
+  } catch (e) {
+    console.error('Ошибка загрузки вопроса ивента', e);
+    tg.showAlert('Ошибка загрузки вопроса');
+  }
+}
+
+function renderEventQuestion(question) {
+  const box = document.getElementById('eventQuestionBox');
+  const prompt = document.getElementById('eventQuestionPrompt');
+  const options = document.getElementById('eventOptions');
+
+  if (!box || !prompt || !options) return;
+
+  prompt.textContent = question.prompt || 'Вопрос';
+
+  const entries = Object.entries(question.options || {});
+  options.innerHTML = entries.map(([key, value]) => `
+    <button class="event-option-btn" onclick="submitEventAnswer('${key}')">
+      <strong>${key.toUpperCase()}.</strong> ${value}
+    </button>
+  `).join('');
+
+  box.style.display = 'block';
+}
+
+async function submitEventAnswer(answerOption) {
+  if (!currentEventQuestion || !currentEventAction) return;
+
+  await submitEventAction({
+    action_type: currentEventAction,
+    question_id: currentEventQuestion.id,
+    answer_option: answerOption
+  });
+
+  const box = document.getElementById('eventQuestionBox');
+  if (box) box.style.display = 'none';
+
+  currentEventQuestion = null;
+  currentEventAction = null;
+}
+
+async function submitEventAction({ action_type, question_id = null, answer_option = null }) {
+  try {
+    setEventLoading(true);
+
+    const payload = {
+      event_id: currentEventId,
+      telegram_id: currentUserId,
+      action_type,
+      use_active_modifier: false
+    };
+
+    if (question_id !== null) payload.question_id = question_id;
+    if (answer_option !== null) payload.answer_option = answer_option;
+
+    const r = await fetch(`${API_URL}/api/events/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      tg.showAlert(data.detail || 'Не удалось выполнить действие');
+      return;
+    }
+
+    renderEventActionResult(data);
+  } catch (e) {
+    console.error('Ошибка действия ивента', e);
+    tg.showAlert('Ошибка соединения с ивентом');
+  } finally {
+    setEventLoading(false);
+  }
+}
+
+function renderEventActionResult(data) {
+  const hpFill = document.getElementById('eventHpFill');
+  const hpText = document.getElementById('eventHpText');
+  const phaseText = document.getElementById('eventPhaseText');
+  const phaseLabel = document.getElementById('eventPhaseLabel');
+  const bossImage = document.getElementById('eventBossImage');
+  const log = document.getElementById('eventLog');
+
+  const vulnerabilityBadge = document.getElementById('eventVulnerabilityBadge');
+  const overloadBadge = document.getElementById('eventOverloadBadge');
+
+  if (hpFill && typeof data.current_hp === 'number') {
+    hpFill.style.width = `${Math.max(0, Math.min(100, (data.current_hp / currentEventMaxHp) * 100))}%`;
+  }
+
+  if (hpText && typeof data.current_hp === 'number') {
+    hpText.textContent = `${data.current_hp} / ${currentEventMaxHp}`;
+  }
+
+  if (phaseText && data.phase) {
+    phaseText.textContent = `Фаза ${data.phase}`;
+  }
+
+  if (phaseLabel && data.phase) {
+    const roman = {1: 'I', 2: 'II', 3: 'III'};
+    phaseLabel.textContent = `ФАЗА ${roman[data.phase] || data.phase}`;
+  }
+
+  if (vulnerabilityBadge) {
+    const vulnerable = !!data.vulnerability_active;
+    vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
+    vulnerabilityBadge.className = 'event-status-badge';
+    vulnerabilityBadge.classList.add(vulnerable ? 'gold' : 'hot');
+  }
+
+  if (overloadBadge) {
+    overloadBadge.textContent = `OVERLOAD: ${data.overload_pressure ?? 0}`;
+    overloadBadge.className = 'event-status-badge';
+    if ((data.overload_pressure ?? 0) >= 5) {
+      overloadBadge.classList.add('hot');
+    }
+  }
+
+  if (bossImage && data.phase) {
+    if (data.phase === 1) {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png';
+    } else if (data.phase === 2) {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase2.png';
+    } else {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png';
+    }
+  }
+
+  if (log && Array.isArray(data.logs)) {
+    log.innerHTML = data.logs.map(item => `
+      <div class="event-log-item">${item.message}</div>
+    `).join('');
+    log.scrollTop = 0;
+  }
+}
+
+function setEventLoading(isLoading) {
+  const shell = document.querySelector('#eventOverlay .event-shell');
+  const buttons = document.querySelectorAll('#eventOverlay .event-action, #eventOverlay .event-option-btn');
+
+  if (shell) {
+    shell.classList.toggle('event-loading', !!isLoading);
+  }
+
+  buttons.forEach(btn => {
+    btn.disabled = !!isLoading;
+  });
+}
+
+function setEventExplanation(text) {
+  const box = document.getElementById('eventExplanation');
+  if (!box) return;
+
+  if (text && String(text).trim()) {
+    box.style.display = 'block';
+    box.textContent = text;
+  } else {
+    box.style.display = 'none';
+    box.textContent = '';
+  }
+}
   
 </script>
 
@@ -7103,6 +7715,67 @@ window.addEventListener('resize', buildMatrixRain);
 
   <div style="font-size:9px;color:#444;font-family:monospace;text-align:center;max-width:260px;line-height:1.6;">
     Сменить путь можно через «Смену пути 转换» в магазине (500★)
+  </div>
+</div>
+
+<div id="eventOverlay" class="event-overlay" style="display:none;">
+  <div class="event-backdrop"></div>
+
+  <div class="event-shell">
+    <div class="event-topbar">
+      <div class="event-topbar-left">
+        <div class="event-kicker">ARCHITECT PROTOCOL</div>
+        <div class="event-phase" id="eventPhaseLabel">ФАЗА I</div>
+      </div>
+      <button class="event-close-btn" onclick="closeEventOverlay()">✕</button>
+    </div>
+
+    <div class="event-hero" id="eventHero">
+      <img
+        id="eventBossImage"
+        src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png"
+        alt="Архитектор"
+      >
+      <div class="event-hero-glow"></div>
+    </div>
+
+    <div class="event-hud">
+     <div class="event-boss-name">Архитектор</div>
+
+<div class="event-meta-row">
+  <div class="event-status-badge" id="eventStateBadge">ACTIVE</div>
+  <div class="event-status-badge" id="eventVulnerabilityBadge">SHIELDED</div>
+  <div class="event-status-badge" id="eventOverloadBadge">OVERLOAD: 0</div>
+</div>
+
+<div class="event-hp-row">
+  <div class="event-hp-text" id="eventHpText">1000 / 1000</div>
+  <div class="event-phase-text" id="eventPhaseText">Фаза 1</div>
+</div>
+
+      <div class="event-hp-bar">
+        <div id="eventHpFill" class="event-hp-fill" style="width:100%;"></div>
+      </div>
+    </div>
+
+      <div class="event-explanation" id="eventExplanation" style="display:none;"></div>
+
+    
+    <div class="event-log" id="eventLog">
+      <div class="event-log-empty">Лог ивента появится здесь</div>
+    </div>
+
+    <div class="event-actions">
+  <button class="event-action attack" onclick="eventAction('attack')">Атака</button>
+  <button class="event-action protocol" onclick="eventAction('protocol')">Protocol</button>
+  <button class="event-action sync" onclick="eventAction('sync')">Синхронизация</button>
+  <button class="event-action stabilize" onclick="eventAction('stabilize')">Стабилизация</button>
+</div>
+
+    <div class="event-question-modal" id="eventQuestionBox" style="display:none;">
+      <div class="event-question-title" id="eventQuestionPrompt">Вопрос появится здесь</div>
+      <div class="event-options" id="eventOptions"></div>
+    </div>
   </div>
 </div>
 
