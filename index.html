@@ -154,69 +154,6 @@ body::before {
   z-index: 0;
   line-height: 1;
   user-select: none;
-  transform-origin: center;
-  will-change: transform, opacity;
-  animation: kanjiDrift var(--kanji-duration, 18s) ease-in-out infinite;
-}
-
-.matrix-rain {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.matrix-col {
-  position: absolute;
-  top: -35%;
-  left: var(--left, 10%);
-  color: rgba(220, 40, 40, 0.16);
-  font-size: clamp(14px, 2.4vw, 22px);
-  font-family: "Times New Roman", serif;
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  letter-spacing: 4px;
-  white-space: nowrap;
-  opacity: 0;
-  filter: blur(var(--blur, 0px));
-  text-shadow: 0 0 14px rgba(180, 20, 20, 0.15);
-  will-change: transform, opacity;
-  animation: matrixFall var(--dur, 18s) linear infinite;
-  animation-delay: var(--delay, 0s);
-}
-
-@keyframes kanjiDrift {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.42;
-  }
-  25% {
-    transform: translate3d(-8px, 16px, 0) scale(1.025);
-    opacity: 0.6;
-  }
-  50% {
-    transform: translate3d(10px, 34px, 0) scale(0.985);
-    opacity: 0.34;
-  }
-  75% {
-    transform: translate3d(-6px, 18px, 0) scale(1.015);
-    opacity: 0.54;
-  }
-}
-
-@keyframes matrixFall {
-  0% {
-    transform: translate3d(0, -24vh, 0);
-    opacity: 0;
-  }
-  12% {
-    opacity: 0.72;
-  }
-  100% {
-    transform: translate3d(var(--drift, 8px), 130vh, 0);
-    opacity: 0;
-  }
 }
 
 /* ===== НИЖНЯЯ НАВИГАЦИЯ ===== */
@@ -472,100 +409,6 @@ body.theme-genshin-dark .lb-points
   font-size: 8px; padding: 3px 10px; border-radius: 3px;
   letter-spacing: 1px; margin-top: 6px; font-family: monospace;
 }
-
-.home-reveal {
-  opacity: 0;
-  transform: translateY(18px) scale(0.985);
-  animation: homeReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.home-reveal-1 { animation-delay: 0.03s; }
-.home-reveal-2 { animation-delay: 0.1s; }
-.home-reveal-3 { animation-delay: 0.17s; }
-.home-reveal-4 { animation-delay: 0.24s; }
-.home-reveal-5 { animation-delay: 0.31s; }
-
-@keyframes homeReveal {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.home-news-shell {
-  margin: 4px 12px 12px;
-  padding: 12px;
-  border: 1px solid rgba(180,20,20,0.22);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(180,20,20,0.11), rgba(255,255,255,0.02)),
-    rgba(255,255,255,0.015);
-  box-shadow:
-    0 18px 40px rgba(0,0,0,0.22),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-  position: relative;
-  overflow: hidden;
-}
-
-.home-news-shell::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, transparent 0%, rgba(212,175,55,0.05) 35%, transparent 70%);
-  transform: translateX(-100%);
-  animation: homeNewsSweep 6.8s ease-in-out infinite;
-}
-
-@keyframes homeNewsSweep {
-  0%, 15% { transform: translateX(-115%); }
-  45%, 100% { transform: translateX(130%); }
-}
-
-.home-news-head {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.home-news-kicker {
-  font-size: 10px;
-  font-family: monospace;
-  letter-spacing: 1.8px;
-  color: rgba(212,175,55,0.82);
-}
-
-.home-news-link {
-  border: 1px solid rgba(212,175,55,0.22);
-  background: rgba(212,175,55,0.08);
-  color: var(--gold);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 9px;
-  font-family: monospace;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-
-.home-news-stream {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 8px;
-}
-
-.home-news-empty {
-  color: var(--text3);
-  font-size: 12px;
-  line-height: 1.6;
-}
 .stats-row {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 8px; margin: 0 12px 4px;
@@ -666,11 +509,46 @@ body.theme-genshin-dark .lb-points
 .lb-item {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.2s;
+  animation: lb-fadein 0.4s ease both;
 }
-.lb-item.me { background: rgba(212,175,55,0.03); }
+.lb-item.me {
+  background: rgba(212,175,55,0.06);
+  border-left: 2px solid rgba(212,175,55,0.4);
+}
+.lb-item.top1 { background: linear-gradient(90deg, rgba(212,175,55,0.08), transparent); }
+.lb-item.top2 { background: linear-gradient(90deg, rgba(180,180,180,0.06), transparent); }
+.lb-item.top3 { background: linear-gradient(90deg, rgba(184,115,51,0.06), transparent); }
 .lb-rank { font-size: 16px; min-width: 28px; text-align: center; }
 .lb-name { font-size: 13px; color: var(--text); flex: 1; }
 .lb-points { font-size: 13px; font-weight: 700; color: var(--gold); font-family: monospace; }
+.lb-implant-glyph {
+  font-size: 16px; font-family: serif;
+  margin-left: 4px; vertical-align: middle;
+}
+.lb-progress {
+  height: 2px; border-radius: 1px;
+  margin-top: 3px; opacity: 0.5;
+}
+.lb-name-wrap { flex: 1; display: flex; flex-direction: column; }
+.lb-sub { font-size: 9px; color: var(--text3); font-family: monospace; margin-top: 1px; }
+
+@keyframes lb-fadein {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+/* Свечение топ-3 */
+.lb-item.top1 .lb-rank { text-shadow: 0 0 12px rgba(212,175,55,0.8); }
+.lb-item.top2 .lb-rank { text-shadow: 0 0 10px rgba(200,200,200,0.6); }
+.lb-item.top3 .lb-rank { text-shadow: 0 0 10px rgba(184,115,51,0.6); }
+/* Разделитель топ-3 */
+.lb-divider {
+  text-align: center; font-size: 8px; color: var(--text3);
+  font-family: monospace; letter-spacing: 2px;
+  padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  margin: 2px 0;
+}
 
 /* ===== МАГАЗИН ===== */
 .shop-header-bar {
@@ -863,282 +741,6 @@ body.theme-genshin-dark .lb-points
 .more-item-name { font-size: 10px; font-weight: 600; color: var(--text); }
 .more-item-cn { font-size: 9px; color: rgba(212,175,55,0.6); font-family: serif; margin-top: 2px; }
 
-.architect-event-card {
-  border: 1px solid rgba(255, 112, 67, 0.2);
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at top, rgba(255,112,67,0.14), transparent 42%),
-    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
-  padding: 14px;
-}
-.architect-event-top {
-  display: block;
-}
-.architect-event-boss {
-  display: block;
-  width: 100%;
-  height: min(88vw, 420px);
-  min-height: 260px;
-  border-radius: 16px;
-  object-fit: cover;
-  object-position: center top;
-  border: 1px solid rgba(255,112,67,0.35);
-  background: rgba(0,0,0,0.3);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.28);
-  margin-bottom: 14px;
-}
-.architect-event-head {
-  flex: 1;
-  min-width: 0;
-}
-.architect-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 9px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: #ff9f7a;
-  border: 1px solid rgba(255,112,67,0.2);
-  background: rgba(255,112,67,0.08);
-}
-.architect-title {
-  margin-top: 8px;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-}
-.architect-subtitle {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--text2);
-  line-height: 1.5;
-}
-.architect-phase-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-.architect-badge {
-  padding: 5px 9px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
-  font-size: 10px;
-  color: var(--text2);
-}
-.architect-badge-hot {
-  color: #ffb089;
-  border-color: rgba(255,112,67,0.26);
-  background: rgba(255,112,67,0.1);
-}
-.architect-hp {
-  margin-top: 14px;
-}
-.architect-hp-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 10px;
-  color: var(--text2);
-  margin-bottom: 6px;
-  font-family: monospace;
-}
-.architect-hp-track {
-  height: 12px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.architect-hp-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ff5a36 0%, #ff9b54 100%);
-  box-shadow: 0 0 18px rgba(255,112,67,0.32);
-}
-.architect-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-.architect-stat {
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 10px;
-  background: rgba(255,255,255,0.03);
-}
-.architect-stat span {
-  display: block;
-  font-size: 9px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.architect-stat strong {
-  display: block;
-  margin-top: 5px;
-  font-size: 14px;
-  color: var(--text);
-}
-.architect-explainer {
-  margin-top: 12px;
-  border-left: 3px solid rgba(255,112,67,0.5);
-  padding: 10px 12px;
-  background: rgba(255,112,67,0.07);
-  border-radius: 10px;
-  font-size: 11px;
-  color: var(--text2);
-  line-height: 1.6;
-}
-.architect-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 14px;
-}
-.architect-action-btn {
-  width: 100%;
-  padding: 11px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
-  color: var(--text);
-  font-family: monospace;
-  font-size: 10px;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.architect-action-btn:active {
-  transform: translateY(1px);
-}
-.architect-action-btn[disabled] {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.architect-action-attack {
-  border-color: rgba(255,87,87,0.24);
-  background: rgba(255,87,87,0.08);
-  color: #ff8a8a;
-}
-.architect-action-protocol {
-  border-color: rgba(212,175,55,0.26);
-  background: rgba(212,175,55,0.08);
-  color: #f0ca63;
-}
-.architect-action-sync {
-  border-color: rgba(82,179,255,0.24);
-  background: rgba(82,179,255,0.08);
-  color: #7bc4ff;
-}
-.architect-action-stabilize {
-  border-color: rgba(111,212,146,0.24);
-  background: rgba(111,212,146,0.08);
-  color: #91e3ac;
-}
-.architect-toolbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: center;
-  margin-top: 14px;
-}
-.architect-toolbar-note {
-  font-size: 10px;
-  color: var(--text3);
-  line-height: 1.5;
-}
-.architect-refresh-btn {
-  flex: 0 0 auto;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
-  color: var(--text2);
-  font-family: monospace;
-  font-size: 10px;
-  cursor: pointer;
-}
-.architect-log-wrap {
-  margin-top: 14px;
-}
-.architect-log {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 320px;
-  overflow: auto;
-  padding-right: 4px;
-}
-.architect-log-item {
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.03);
-  padding: 10px 11px;
-  font-size: 11px;
-  color: var(--text2);
-  line-height: 1.55;
-}
-.architect-log-system {
-  border-color: rgba(82,179,255,0.22);
-  background: rgba(82,179,255,0.06);
-}
-.architect-log-boss {
-  border-color: rgba(255,112,67,0.24);
-  background: rgba(255,112,67,0.07);
-}
-.architect-log-action {
-  border-color: rgba(212,175,55,0.15);
-}
-.architect-log-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 4px;
-  font-size: 9px;
-  letter-spacing: 1px;
-  color: var(--text3);
-  text-transform: uppercase;
-}
-.architect-empty {
-  padding: 18px 8px;
-  text-align: center;
-  font-size: 11px;
-  color: var(--text2);
-  line-height: 1.7;
-}
-.architect-option-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-.architect-option-btn {
-  width: 100%;
-  text-align: left;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
-  color: var(--text);
-  padding: 10px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.architect-option-btn span {
-  display: inline-block;
-  min-width: 20px;
-  margin-right: 8px;
-  color: #ff9f7a;
-  font-family: monospace;
-  font-weight: 700;
-}
-
 /* ===== ПОГОДА ===== */
 .weather-big { font-size: 52px; font-weight: 700; color: var(--text); line-height: 1; }
 .weather-big span { font-size: 24px; color: var(--gold); }
@@ -1175,16 +777,7 @@ body.theme-genshin-dark .lb-points
   padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .announcement-text { font-size: 13px; color: var(--text); line-height: 1.6; }
-.announcement-text p { margin: 0 0 0.72em; }
-.announcement-text p:last-child { margin-bottom: 0; }
 .announcement-date { font-size: 9px; color: var(--text3); font-family: monospace; margin-top: 6px; }
-.announcement-item.announcement-item-compact {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.06);
-}
 
 /* ===== АЧИВКИ ===== */
 .achievement-count { font-size: 10px; color: var(--text2); padding: 10px 14px; font-family: monospace; }
@@ -1285,6 +878,7 @@ body.theme-genshin-dark .lb-points
 @keyframes gsStarPop{0%{transform:translate(0,0) scale(0) rotate(0deg);opacity:0}40%{opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(1) rotate(var(--tr));opacity:0}}
 @keyframes gsPartFloat{0%{opacity:0;transform:translate(0,0) scale(0)}15%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0.3)}}
 @keyframes gsFlashIn{0%{opacity:0}15%{opacity:0.85}50%{opacity:0}100%{opacity:0}}
+@keyframes glitch {
   0%,100%{text-shadow:2px 0 #ff0033,-2px 0 rgba(0,255,255,0.5)}
   25%{text-shadow:-2px 0 #ff0033,2px 0 rgba(0,255,255,0.5)}
   50%{text-shadow:2px 2px #ff0033,-2px -2px rgba(0,255,255,0.5)}
@@ -2168,6 +1762,71 @@ body.theme-genshin #raid-action-btn {
     flex-shrink: 0;
 }
 
+
+
+/* ── Импланты: названия и описания в светлых темах ───────── */
+body.theme-nw-light .implant-cn,
+body.theme-genshin-light .implant-cn { color: var(--text2); }
+body.theme-nw-light .implant-sub,
+body.theme-genshin-light .implant-sub { color: var(--text3); }
+
+/* ── Светлые темы: золотые тексты → тёмно-серый ─────────── */
+body.theme-nw-light .more-item-cn,
+body.theme-genshin-light .more-item-cn,
+body.theme-nw-light .shop-item-cn,
+body.theme-genshin-light .shop-item-cn,
+body.theme-nw-light .shop-cat .cn,
+body.theme-genshin-light .shop-cat .cn,
+body.theme-nw-light .team-role,
+body.theme-genshin-light .team-role,
+body.theme-nw-light .stat-cn,
+body.theme-genshin-light .stat-cn,
+body.theme-nw-light .implant-py,
+body.theme-genshin-light .implant-py,
+body.theme-nw-light .main-pinyin,
+body.theme-genshin-light .main-pinyin,
+body.theme-nw-light .page-sub,
+body.theme-nw-light .cn-divider,
+body.theme-nw-light .neuro-sub,
+body.theme-nw-light .schedule-location,
+body.theme-genshin-light .page-sub { color: var(--text3) !important; }
+
+body.theme-nw-light .neuro-status { color: #993333; }
+
+/* ── Навигация NW Light ──────────────────────────────────── */
+body.theme-nw-light .bottom-nav {
+  background: rgba(244,241,237,0.97);
+  border-top-color: rgba(180,20,20,0.15);
+}
+body.theme-nw-light .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(180,20,20,0.3), transparent);
+}
+body.theme-nw-light .nav-item { color: #555555; }
+body.theme-nw-light .nav-item.active { color: #993333; }
+body.theme-nw-light .nav-cn { color: #777777; }
+
+/* ── Дневник в светлых темах ─────────────────────────────── */
+body.theme-nw-light .diary-hero,
+body.theme-genshin-light .diary-hero {
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(0,0,0,0.1);
+}
+body.theme-nw-light .diary-card,
+body.theme-genshin-light .diary-card {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+body.theme-nw-light .diary-input,
+body.theme-nw-light .diary-textarea,
+body.theme-nw-light .diary-select,
+body.theme-genshin-light .diary-input,
+body.theme-genshin-light .diary-textarea,
+body.theme-genshin-light .diary-select {
+  background: rgba(255,255,255,0.8);
+  color: var(--text);
+  border-color: rgba(0,0,0,0.1);
+}
+
 .diary-back-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -2263,17 +1922,9 @@ body.theme-genshin .diary-star.active {
 <body>
 
 <!-- Фоновые иероглифы -->
-<div class="bg-kanji" style="font-size:160px;top:-20px;right:-20px;color:rgba(180,20,20,0.03);font-family:serif;--kanji-duration:18s;animation-delay:-3s;">道</div>
-<div class="bg-kanji" style="font-size:100px;bottom:80px;left:-15px;color:rgba(180,20,20,0.025);font-family:serif;--kanji-duration:22s;animation-delay:-9s;">龙</div>
-<div class="bg-kanji" style="font-size:70px;top:40%;right:10px;color:rgba(212,175,55,0.02);font-family:serif;--kanji-duration:16s;animation-delay:-5s;">福</div>
-<div class="matrix-rain" aria-hidden="true">
-  <span class="matrix-col" style="--left:5%;--dur:19s;--delay:-12s;--drift:6px;">智道协议龙</span>
-  <span class="matrix-col" style="--left:18%;--dur:16s;--delay:-3s;--drift:-8px;--blur:0.2px;">福信義勇</span>
-  <span class="matrix-col" style="--left:34%;--dur:21s;--delay:-15s;--drift:10px;">网络数据流</span>
-  <span class="matrix-col" style="--left:53%;--dur:17s;--delay:-6s;--drift:-6px;--blur:0.3px;">协议重写中</span>
-  <span class="matrix-col" style="--left:71%;--dur:23s;--delay:-18s;--drift:9px;">天命链接</span>
-  <span class="matrix-col" style="--left:86%;--dur:18s;--delay:-9s;--drift:-7px;">红龙黑墙</span>
-</div>
+<div class="bg-kanji" style="font-size:160px;top:-20px;right:-20px;color:rgba(180,20,20,0.03);font-family:serif;">道</div>
+<div class="bg-kanji" style="font-size:100px;bottom:80px;left:-15px;color:rgba(180,20,20,0.025);font-family:serif;">龙</div>
+<div class="bg-kanji" style="font-size:70px;top:40%;right:10px;color:rgba(212,175,55,0.02);font-family:serif;">福</div>
 
 <!-- Конфетти -->
 <div id="confettiContainer" style="position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;"></div>
@@ -2292,23 +1943,13 @@ body.theme-genshin .diary-star.active {
 
 <!-- ===== ГЛАВНАЯ ===== -->
 <div class="page active" id="page-home">
-  <div class="main-logo-wrap home-reveal home-reveal-1">
+  <div class="main-logo-wrap">
     <div class="main-logo"><img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true" style="width:140px;height:140px;object-fit:contain;"></div>
     <div class="main-pinyin">智能电子解决方案</div>
     <div class="proto-tag">🏮 PROTOCOL v1.4 // ACTIVE 🏮</div>
   </div>
 
-  <div class="home-news-shell home-reveal home-reveal-2">
-    <div class="home-news-head">
-      <div class="home-news-kicker">LIVE NEWSFEED // 新闻速递</div>
-      <button class="home-news-link" onclick="showPage('schedule', document.getElementById('nav-schedule-btn'))">ВСЕ НОВОСТИ</button>
-    </div>
-    <div id="homeNewsContent" class="home-news-stream">
-      <div class="home-news-empty">Загрузка новостей...</div>
-    </div>
-  </div>
-
-  <div class="stats-row home-reveal home-reveal-3">
+  <div class="stats-row">
     <div class="stat-box">
       <div class="stat-cn">信用</div>
       <div class="stat-num" id="myPointsBig">—</div>
@@ -2323,7 +1964,7 @@ body.theme-genshin .diary-star.active {
 
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
-  <div class="card neuro-card home-reveal home-reveal-4">
+  <div class="card neuro-card">
     <div class="card-inner">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
         <div style="flex:1;">
@@ -2346,7 +1987,7 @@ body.theme-genshin .diary-star.active {
   </div>
 
 
-  <div class="home-reveal home-reveal-5" style="padding:8px 12px 4px;">
+  <div style="padding:8px 12px 4px;">
     <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
   </div>
 </div>
@@ -2396,9 +2037,9 @@ body.theme-genshin .diary-star.active {
     <div style="font-size:22px;">👑</div>
     <div style="flex:1;">
       <div style="font-size:14px;font-weight:900;color:var(--gold);letter-spacing:1px;">АЛЬФАБОСС</div>
-      <div style="font-size:9px;color:rgba(212,175,55,0.5);font-family:monospace;margin-top:2px;">// ВНЕ ЗАЧЁТА // НЕДОСЯГАЕМ //</div>
+      <div style="font-size:9px;color:rgba(100,80,30,0.7);font-family:monospace;margin-top:2px;">// ВНЕ ЗАЧЁТА // НЕДОСЯГАЕМ //</div>
     </div>
-    <div style="font-size:11px;color:rgba(212,175,55,0.4);font-family:monospace;">999 999 ★</div>
+    <div style="font-size:11px;color:rgba(100,80,30,0.6);font-family:monospace;">999 999 ★</div>
   </div>
 
   <!-- НОВАЯ КНОПКА РЕЙДА (открывает оверлей) -->
@@ -2406,13 +2047,29 @@ body.theme-genshin .diary-star.active {
   <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
     <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">⚔️</span>
     [ 袭击 // РЕЙД НА АЛЬФАБОССА ]
-    <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(212,175,55,0.5);">50 ★</span>
+    <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(100,80,30,0.6);">50 ★</span>
   </button>
 </div>
 <!-- Старый блок raidPanel мы полностью удаляем, он больше не нужен -->
 
-  <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
-  <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
+  <div style="display:flex;gap:6px;margin:0 12px 8px;">
+    <button id="tab-rating-main-btn" onclick="switchRatingTab('main',this)" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">🏆 РЕЙТИНГ</button>
+    <button id="tab-rating-diary-btn" onclick="switchRatingTab('diary',this)" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⭐ ДНЕВНИК</button>
+  </div>
+
+  <div id="rating-main-tab">
+    <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
+    <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
+  </div>
+
+  <div id="rating-diary-tab" style="display:none;">
+    <div class="cn-divider">⭐ 日记排名 топ дневников ⭐</div>
+    <div class="card" style="margin:4px 12px;">
+      <div class="card-inner" id="diaryStarsLeaderboardRating">
+        <div class="empty-state">Загрузка...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== МАГАЗИН ===== -->
@@ -2429,9 +2086,17 @@ body.theme-genshin .diary-star.active {
   <div class="shop-subtabs">
     <button class="subtab active" onclick="switchShopTab('store',this)">商店 МАГАЗИН</button>
     <button class="subtab" onclick="switchShopTab('inventory',this)">背包 ИНВЕНТАРЬ</button>
+    <button class="subtab" onclick="switchShopTab('folk',this)">🏮 НАРОДНЫЙ</button>
   </div>
   <div id="shopStoreContent"></div>
   <div id="shopInventoryContent" style="display:none;"></div>
+  <div id="shopFolkContent" style="display:none;">
+    <div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">🏮</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">民间商店 Народный магазин</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;">МЮ предлагает товар — все скидываются вместе.<br>Когда сумма набирается — товар получают все участники.<br><br><span style="color:var(--text3);">Скоро здесь появятся предложения...</span></div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== КЕЙСЫ ===== -->
@@ -2442,8 +2107,7 @@ body.theme-genshin .diary-star.active {
   </div>
 
   <div class="casino-subtabs">
-    <button class="subtab active" onclick="switchCasinoTab('play',this)">🎰 ИГРАТЬ</button>
-    <button class="subtab" id="genshinTabBtn" style="display:none !important;" onclick="switchCasinoTab('genshin',this)">🎴 ИГРАТЬ</button>
+    <button class="subtab active" id="casinoPlayBtn" onclick="switchCasinoTab(currentThemePath==='genshin'?'genshin':'play',this)">🎰 ИГРАТЬ</button>
     <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
     <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
     <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
@@ -2567,6 +2231,77 @@ body.theme-genshin .diary-star.active {
       </div>
     </div>
   </div>  <!-- /casinoRulesContent -->
+  <!-- ── Правила Молитв (Геншин) ─────────────────────────── -->
+  <div id="genshinRulesContent" style="display:none;flex-direction:column;">
+    <div style="padding:8px 0;">
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🔵</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">синий свиток <span style="color:var(--text2);">— 79%</span></div>
+          <div class="rules-desc">
+            ⭐ +30 звёзд (35%)<br>
+            💫 +60 звёзд (20%)<br>
+            🛡 Иммунитет от штрафа (10%)<br>
+            🕐 +30 мин свободы (7%)<br>
+            🌸 Карточка 4★ (28%)
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟣</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">фиолетовый свиток <span style="color:var(--text2);">— 20%</span></div>
+          <div class="rules-desc">
+            焰莲使者 Страж Огня — Феникс: +50★ после штрафа<br>
+            九尾狐灵 Лиса-Оборотень — Обман: перекрутить приз<br>
+            桃花仙子 Небесная Фея — Благословение: +30★ отряду<br>
+            文曲星君 Звезда Литературы — Мудрость: +25★ за отчёт<br>
+            木灵仙君 Дух Леса — Урожай: +10★ за день вовремя<br>
+            海灵仙后 Дух Морей — Волна: каждые 3 молитвы +30★<br>
+            嫦娥仙子 Богиня Луны — Жемчужина: дубль даёт +50★
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟡</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">золотой свиток <span style="color:var(--text2);">— 1%</span></div>
+          <div class="rules-desc">
+            岩王帝君 Архонт Земли — Контракт: блок штрафа + -5% магазин<br>
+            紫微星君 Императорская Звезда — Звёздный суд: передать штраф другому
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;">🔄</div>
+        <div>
+          <div class="rules-title">Дубликаты</div>
+          <div class="rules-desc">
+            Повторная карточка добавляется как второй экземпляр.<br>
+            嫦娥仙子 Богиня Луны — дубль сразу даёт +50★ вместо карточки.<br>
+            Лишние карточки разбираются за 50★ в разделе Карточки.
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon">💰</div>
+        <div>
+          <div class="rules-title">Стоимость и лимиты</div>
+          <div class="rules-desc">
+            50★ за молитву · Лимит 3 молитвы в день<br>
+            Дополнительную молитву можно купить в магазине
+          </div>
+        </div>
+      </div>
+      <div style="margin:10px 12px;padding:12px;background:rgba(219,177,101,0.08);border:1px solid rgba(219,177,101,0.25);border-radius:8px;">
+        <div style="font-size:9px;color:rgba(219,177,101,0.7);font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">✦ ПРИМЕЧАНИЕ</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Молитвы — игровая механика для мотивации. Карточки дают пассивные бонусы на протяжении поездки. Молитва стоит 50★ и не гарантирует прибыль. Молись ради удачи, а не выгоды ✦</div>
+      </div>
+    </div>
+  </div>
+  <!-- /genshinRulesContent -->
+
+
 
   <!-- ГЕНШИН ПАНЕЛЬ -->
   <div id="casinoGenshinContent" style="display:none;flex-direction:column;">
@@ -2609,10 +2344,15 @@ body.theme-genshin .diary-star.active {
     <div class="page-sub">> gèng duō // все функции</div>
   </div>
   <div class="more-grid">
-    <div class="more-item" onclick="openDiaryPage()">
-      <i class="ti ti-book-2 more-item-icon" style="color:var(--gold);"></i>
-      <div class="more-item-name">ДНЕВНИК</div>
-      <div class="more-item-cn">旅遊日记 lǚ yóu rì jì</div>
+    <div class="more-item" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
+      <i class="ti ti-star more-item-icon" style="color:var(--gold);"></i>
+      <div class="more-item-name">ДНЕВНИК ★</div>
+      <div class="more-item-cn">日记评分 rì jì píng fēn</div>
+    </div>
+    <div class="more-item" onclick="openDiaryPage()" style="opacity:0.45;">
+      <i class="ti ti-book-2 more-item-icon" style="color:var(--text3);"></i>
+      <div class="more-item-name">АРХИВ</div>
+      <div class="more-item-cn">备用日记 bèi yòng</div>
     </div>
     <div class="more-item" onclick="openMore('themes')">
       <i class="ti ti-palette more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
@@ -2638,11 +2378,6 @@ body.theme-genshin .diary-star.active {
       <i class="ti ti-users more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
       <div class="more-item-name">КОМАНДА</div>
       <div class="more-item-cn">团队 tuán duì</div>
-    </div>
-    <div class="more-item" onclick="openMore('event')">
-      <i class="ti ti-bolt more-item-icon" style="color:#ff8a5c;"></i>
-      <div class="more-item-name">ARCHITECT</div>
-      <div class="more-item-cn">protocol event</div>
     </div>
     <div class="more-item" id="adminMoreBtn" style="display:none;" onclick="openMore('admin')">
       <i class="ti ti-shield-lock more-item-icon" style="color:rgba(200,80,80,0.9);"></i>
@@ -2806,29 +2541,6 @@ body.theme-genshin .diary-star.active {
     </div></div>
   </div>
 
-  <div id="more-event" style="display:none;">
-    <div class="cn-divider">ARCHITECT PROTOCOL // live event</div>
-    <div class="card" style="margin:8px 12px;">
-      <div class="card-inner">
-        <div id="architectEventRoot" class="architect-empty">Loading Architect event...</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="question-modal" id="architectQuestionModal">
-    <div class="question-box">
-      <div class="card-label">ARCHITECT QUERY</div>
-      <div id="architectQuestionPrompt" style="margin-top:10px;font-size:14px;line-height:1.6;color:var(--text);"></div>
-      <div id="architectQuestionHint" style="margin-top:8px;font-size:10px;color:var(--text3);line-height:1.6;">
-        Choose the correct answer to execute the action.
-      </div>
-      <div id="architectQuestionOptions" class="architect-option-list"></div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn" style="width:100%;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:monospace;font-size:10px;cursor:pointer;border-radius:8px;" onclick="closeArchitectQuestionModal()">CLOSE</button>
-      </div>
-    </div>
-  </div>
-
   <div id="more-admin" style="display:none;">
     <div class="cn-divider">👑 ПАНЕЛЬ АДМИНИСТРАТОРА</div>
     <div class="admin-section-btns">
@@ -2862,13 +2574,10 @@ body.theme-genshin .diary-star.active {
         <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ СТИРКИ</div>
         <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
         <input class="admin-input" id="lTime" placeholder="Время (08:00)">
-        <select class="admin-input" id="lCapacity">
-          <option value="1">1 машина</option>
-          <option value="2">2 машины</option>
-        </select>
         <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
-        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ СОЗДАТЬ СЛОТ ]</button>
-        <div class="cn-divider">📋 СПИСОК СЛОТОВ</div>
+        <input class="admin-input" id="lCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
+        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ ДОБАВИТЬ СЛОТ ]</button>
+        <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
         <div id="adminLaundryList"><div class="empty-state">Загрузка...</div></div>
       </div>
 
@@ -2878,6 +2587,7 @@ body.theme-genshin .diary-star.active {
         <input class="admin-input" id="wDay" placeholder="День (Пн 5 мая)">
         <input class="admin-input" id="wTime" placeholder="Время (08:00)">
         <input class="admin-input" id="wNote" placeholder="Заметка (необязательно)">
+        <input class="admin-input" id="wCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
         <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddWaterSlot()">[ ДОБАВИТЬ СЛОТ ]</button>
         <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
         <div id="adminWaterList"><div class="empty-state">Загрузка...</div></div>
@@ -2941,6 +2651,7 @@ body.theme-genshin .diary-star.active {
   </div>
 
   <!-- Каталог всех имплантов -->
+  <div id="implants-catalog">
   <div class="cn-divider">📖 植入物目录 КАТАЛОГ</div>
 
   <!-- ГУАНЬСИ -->
@@ -2952,7 +2663,7 @@ body.theme-genshin .diary-star.active {
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:#fff;">关系 ГУАНЬСИ</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);">关系 ГУАНЬСИ</div>
         <div style="font-size:12px;color:rgba(212,175,55,0.7);font-family:serif;font-style:italic;margin-top:3px;">guān xi — связи, отношения</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
@@ -3003,39 +2714,194 @@ body.theme-genshin .diary-star.active {
     </div>
   </div>
 
+  <!-- ПАНДА -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">🐼 ПАНДА</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">xióng māo — медведь-кошка</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан биотех-лабораторией Zhidao в сотрудничестве с Пекинским институтом адаптивных систем. Чип имитирует нейронную архитектуру панды — существа, которое тысячелетиями умело получать максимум при минимуме усилий. Каждая транзакция в протоколе автоматически проходит через алгоритм возврата микроплатежей. Панда ничего не делает зря.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-cash" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Кэшбек-протокол</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ возврат с каждой покупки в магазине</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ШАОЛИНЬ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">少林 ШАОЛИНЬ</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">shào lín — молодой лес</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Нейрочип военного класса, разработанный по заказу монастыря Шаолинь для бойцов нового поколения. Встроенный модуль синхронизации отслеживает биоритмы носителя и автоматически фиксирует моменты максимальной собранности. Протокол активируется в момент переклички — чип посылает импульс точности в двигательную кору, обеспечивая идеальное время реакции. Дисциплина — это не привычка. Это прошивка.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-run" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Путь воина</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+20★ за каждую перекличку вовремя</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- LINGUASOFT -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">口才 LINGUASOFT</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">kǒu cái — красноречие, дар слова</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан лингвистическим отделом Zhidao совместно с Пекинским университетом иностранных языков. Чип анализирует речевые паттерны носителя в реальном времени, отслеживая точность тонов, плотность лексики и структуру предложений. При достижении эталонного уровня произношения система автоматически генерирует сигнал подтверждения в протоколе. Язык — это не инструмент. Это оружие.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-message-language" style="font-size:28px;min-width:30px;text-align:center;color:#9b59b6;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Лингво-резонанс</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+30★ когда вожатый ставит оценку 5/5 за дневник</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ЦАЙШЭНЬ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">财神 ЦАЙШЭНЬ</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">cái shén — бог богатства</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Пассивный экономический модуль, созданный финансовым подразделением Zhidao на основе древних алгоритмов даосской математики. Чип непрерывно сканирует цифровое пространство протокола в поисках незамеченных транзакций и микропотоков данных, конвертируя их в звёзды на счёт носителя. Работает пока ты спишь. Работает пока ты ешь. Бог богатства не берёт выходных.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-coin" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Пассивный доход</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+15★ каждые 24 часа автоматически</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ЦИЛИНЬ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">麒麟 ЦИЛИНЬ</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">qí lín — единорог, символ процветания</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Кооперативный модуль связи, разработанный командой Zhidao на основе легенды о Цилине — существе, появляющемся только в эпоху процветания. Чип постоянно сканирует протокол на наличие других носителей Цилиня и при обнаружении устанавливает невидимый канал синхронизации. Чем больше владельцев в группе — тем сильнее сигнал. Единорог силён не рогом. А стадом.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-users" style="font-size:28px;min-width:30px;text-align:center;color:#2ecc71;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Синхронизация стаи</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за каждого владельца Цилиня в группе пассивно</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- КРАСНЫЙ ДРАКОН -->
   <div class="card" style="margin:6px 12px 16px;">
     <div class="card-inner" style="background:linear-gradient(135deg,rgba(180,20,20,0.05),rgba(212,175,55,0.03));">
       <div style="text-align:center;margin-bottom:14px;position:relative;">
         <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true" style="width:180px;height:180px;object-fit:contain;border-radius:16px;border:1px solid rgba(180,20,20,0.6);box-shadow:0 0 32px rgba(180,0,0,0.3),0 0 60px rgba(180,0,0,0.1);">
-        <div style="position:absolute;top:8px;left:8px;background:rgba(180,20,20,0.25);border:1px solid rgba(180,20,20,0.6);color:#cc3333;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</div>
+        <div style="position:absolute;top:8px;left:8px;background:rgba(180,20,20,0.25);border:1px solid #cc3333;color:#cc3333;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</div>
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:#fff;text-shadow:0 0 12px rgba(200,0,0,0.5);">红龙 КРАСНЫЙ ДРАКОН</div>
-        <div style="font-size:12px;color:rgba(212,175,55,0.7);font-family:serif;font-style:italic;margin-top:3px;">hóng lóng — красный дракон</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);">红龙 КРАСНЫЙ ДРАКОН</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">hóng lóng — красный дракон</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:#ccc;line-height:1.8;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Стену. Носители получают статус <span style="color:rgba(212,175,55,0.8);font-weight:600;">红龙节点</span> — «Узел Красного Дракона». Один из ста тысяч.</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Стену. Носители получают статус <span style="color:rgba(212,175,55,0.8);font-weight:600;">红龙节点</span> — «Узел Красного Дракона». Один из ста тысяч.</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-trending-up" style="font-size:28px;min-width:30px;text-align:center;color:rgba(200,80,80,0.9);"></i>
-          <div><div style="font-size:13px;color:#fff;font-weight:600;">Усиленный протокол</div><div style="font-size:11px;color:#ccc;margin-top:2px;">+20% к начисляемым баллам за все действия</div></div>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Доминирование</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+20% ко всем начислениям баллов</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-          <i class="ti ti-gift" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
-          <div><div style="font-size:13px;color:#fff;font-weight:600;">Бесплатный взлом</div><div style="font-size:11px;color:#ccc;margin-top:2px;">+1 бесплатный кейс каждый день</div></div>
+          <i class="ti ti-arrows-exchange" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Передача урона</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день перенаправить штраф на другого игрока</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-          <i class="ti ti-circle-filled" style="font-size:28px;min-width:30px;text-align:center;color:rgba(200,50,50,0.9);"></i>
-          <div><div style="font-size:13px;color:#fff;font-weight:600;">Красный ник</div><div style="font-size:11px;color:#ccc;margin-top:2px;">Красное имя в таблице лидеров</div></div>
+          <i class="ti ti-coin-off" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Перехват</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в 2 дня украсть 50★ у случайного игрока незаметно</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-star" style="font-size:28px;min-width:30px;text-align:center;color:#f1c40f;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Удвоение</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">x2 к воскресной зарплате</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
-          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
-          <div><div style="font-size:13px;color:#fff;font-weight:600;">Прочность</div><div style="font-size:11px;color:#ccc;margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Легендарный — не разрушается</div></div>
         </div>
       </div>
       <div style="margin-top:12px;padding:10px;background:rgba(180,20,20,0.1);border:1px solid rgba(180,20,20,0.3);border-radius:8px;font-size:10px;color:rgba(200,60,60,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
@@ -3043,6 +2909,59 @@ body.theme-genshin .diary-star.active {
       </div>
     </div>
   </div>
+
+  <!-- СЕТЕВОЙ ДОЗОР -->
+  <div class="card" style="margin:6px 12px 16px;">
+    <div class="card-inner" style="background:linear-gradient(135deg,rgba(180,20,20,0.05),rgba(212,175,55,0.03));">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true" style="width:180px;height:180px;object-fit:contain;border-radius:16px;border:1px solid rgba(180,20,20,0.6);box-shadow:0 0 32px rgba(180,0,0,0.3),0 0 60px rgba(180,0,0,0.1);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(180,20,20,0.25);border:1px solid #cc3333;color:#cc3333;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">网络守卫 СЕТЕВОЙ ДОЗОР</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">wǎng luò shǒu wèi — страж сети</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Боевой имплант пятого поколения, разработанный секретным отделом NetWatch при финансировании Zhidao. Чип интегрируется в нейронную сеть носителя и предоставляет прямой доступ к управляющим протоколам группы. Способен инициировать штрафные транзакции, блокировать доступ к магазину и распространять системные помехи на нескольких игроков одновременно. Классифицирован как потенциально опасный. Выдаётся без инструкции.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-sword" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Боевые скрипты</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в 3 дня наложить штраф любому игроку от имени системы</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-broadcast" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Радиус поражения</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Штраф задевает ещё 2 случайных игрока рядом (-15★)</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-bolt" style="font-size:28px;min-width:30px;text-align:center;color:#f39c12;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Усиление урона</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Твои штрафы +30%</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-coin" style="font-size:28px;min-width:30px;text-align:center;color:#2ecc71;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Восполнение памяти</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+25★ каждое утро пассивно</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-lock" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Blackwall</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в неделю заблокировать магазин одному игроку на 24ч</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Легендарный — не разрушается</div></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:rgba(180,20,20,0.1);border:1px solid rgba(180,20,20,0.3);border-radius:8px;font-size:10px;color:rgba(200,60,60,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
+        ⚠️ ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
+      </div>
+    </div>
+  </div>
+
+
+  </div> <!-- /implants-catalog -->
   </div> <!-- /implants-tab -->
 
   <!-- ТАБ КАРТОЧКИ -->
@@ -3328,7 +3247,7 @@ body.theme-genshin .diary-star.active {
           </div>
         </div>
         <div style="margin-top:10px;padding:8px 10px;background:rgba(74,122,204,0.06);border:1px solid rgba(74,122,204,0.2);border-radius:8px;font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;text-align:center;">
-          Изображение появится после загрузки card_moon.png в репозиторий
+          <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/moon_card.png?raw=true" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(180,180,255,0.4);box-shadow:0 0 20px rgba(150,150,255,0.15);background:rgba(180,180,255,0.04);">
         </div>
       </div>
     </div>
@@ -3338,6 +3257,89 @@ body.theme-genshin .diary-star.active {
 </div>
 
 <!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
+
+<!-- ── Дневник ★ — Страница оценки ─────────────────────── -->
+<div class="page" id="page-diary-stars">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div class="page-title">ДНЕВНИК <span class="page-title-cn">★</span></div>
+        <div class="page-sub">> rì jì píng fēn // оценка дневников</div>
+      </div>
+      <button class="diary-back-btn" onclick="showPage('more', document.getElementById('nav-more-btn'))">[ НАЗАД ]</button>
+    </div>
+  </div>
+
+  <div style="padding:0 12px 80px;">
+
+    <!-- Выбор даты -->
+    <div class="diary-card" style="margin-bottom:12px;">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Дата проверки</div>
+          <div class="diary-section-sub">// выбери день</div>
+        </div>
+      </div>
+      <input id="diaryStarsDate" type="date" class="diary-admin-date" style="width:100%;box-sizing:border-box;"
+        onchange="loadDiaryStarsList()">
+    </div>
+
+    <!-- Список студентов -->
+    <div id="diaryStarsList"></div>
+
+    <!-- Попап оценки (только для вожатых) -->
+    <div id="diaryStarsPopup" style="display:none;position:fixed;inset:0;z-index:9000;
+      background:rgba(0,0,0,0.7);display:none;align-items:flex-end;justify-content:center;">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
+        padding:24px;width:100%;max-width:480px;box-sizing:border-box;">
+        <button onclick="closeDiaryStarsPopup()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+        <div id="diaryStarsPopupName" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;"></div>
+        <div id="diaryStarsPopupDate" style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:20px;"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+          <button onclick="submitDiaryStars(1)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Минимум</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+15★</div>
+          </button>
+          <button onclick="submitDiaryStars(2)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Хорошо</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+30★</div>
+          </button>
+          <button onclick="submitDiaryStars(3)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐⭐⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Идеально</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+50★</div>
+          </button>
+        </div>
+
+        <button onclick="submitDiaryStars('bonus')" style="
+          width:100%;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);
+          border-radius:12px;padding:12px;cursor:pointer;color:#2ecc71;
+          font-family:monospace;font-size:12px;margin-bottom:10px;">
+          ✨ +БОНУС ЗА КРЕАТИВ (+20★)
+        </button>
+
+        <button onclick="closeDiaryStarsPopup()" style="
+          width:100%;background:transparent;border:1px solid var(--border);
+          border-radius:12px;padding:12px;cursor:pointer;color:var(--text3);
+          font-family:monospace;font-size:11px;">
+          ОТМЕНА
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- /page-diary-stars -->
+
 <div class="page" id="page-diary">
   <div class="page-header">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
@@ -3519,6 +3521,16 @@ body.theme-genshin .diary-star.active {
         onclick="lockDiaryEntry(false)">[ 🔓 РАЗБЛОКИРОВАТЬ ]</button>
     </div>
   </div>
+
+  <!-- ── Народный магазин ──────────────────────────────────── -->
+  <div id="shopFolkContent" style="display:none;flex-direction:column;padding:8px 0;">
+    <div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">🏮</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">民间商店 Народный магазин</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;">МЮ предлагает товар — все скидываются вместе.<br>Когда сумма набирается — товар получают все участники.<br><br><span style="color:var(--text3);">Скоро здесь появятся предложения...</span></div>
+    </div>
+  </div>
+  <!-- /shopFolkContent -->
 </div>
 
 <nav class="bottom-nav">
@@ -3526,7 +3538,7 @@ body.theme-genshin .diary-star.active {
     <i class="ti ti-smart-home"></i>
     <span class="nav-cn">主页</span>
   </button>
-  <button class="nav-item" id="nav-schedule-btn" onclick="showPage('schedule',this)">
+  <button class="nav-item" onclick="showPage('schedule',this)">
     <i class="ti ti-layout-list"></i>
     <span class="nav-cn">日程</span>
   </button>
@@ -3624,6 +3636,7 @@ const EXCHANGE_KEY = 'a8c5f8c5d5e5b5a5';
 const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713];
 
 let currentUserId = null;
+let currentThemePath = null; // "cyberpunk" | "genshin" | null
 let currentPoints = 0;
 let userConfig = null;
 let isAdmin = false;
@@ -3632,10 +3645,6 @@ let selectedLaundryDate = null;
 let laundryData = [];
 let shopMode = 'store';
 let currentMoreSection = null;
-let architectEventPollTimer = null;
-let architectEventSnapshot = null;
-let architectPendingAction = null;
-let architectLastExplanation = null;
 
 const PRIZES = [
   { code:'empty',   icon:'🍚', name:'Пустая миска риса', desc:'Ничего не выпало...', points:0,   rarity:'common' },
@@ -3647,11 +3656,17 @@ const PRIZES = [
   { code:'jackpot', icon:'👑', name:'ДЖЕКПОТ!',          desc:'+250 баллов! Невероятно!', points:250, rarity:'jackpot' },
 ];
 const PURPLE_PRIZES = [
-  { code:'implant_guanxi',    icon:'🤝', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true', name:'Гуаньси 关系',    desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
-  { code:'implant_terracota', icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',          name:'Терракота 兵马俑', desc:'Имплант: блок 1 штрафа в день',    points:0, rarity:'rare' },
+  { code:'implant_guanxi',    icon:'🤝', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',           name:'Гуаньси 关系',       desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
+  { code:'implant_terracota', icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',                    name:'Терракота 兵马俑',   desc:'Имплант: блок 1 штрафа в день',    points:0, rarity:'rare' },
+  { code:'implant_panda',     icon:'🐼', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',      name:'Панда 🐼',           desc:'Кэшбек +10★ с покупки',            points:0, rarity:'rare' },
+  { code:'implant_shaolin',   icon:'🥋', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',    name:'Шаолинь 少林',       desc:'+20★ за перекличку вовремя',       points:0, rarity:'rare' },
+  { code:'implant_linguasoft',icon:'🎙', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true', name:'Linguasoft 口才',    desc:'+30★ за оценку 5/5 в дневнике',   points:0, rarity:'rare' },
+  { code:'implant_caishen',   icon:'💰', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',            name:'Цайшэнь 财神',       desc:'+15★ каждые 24 часа',              points:0, rarity:'rare' },
+  { code:'implant_qilin',     icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',      name:'Цилинь 麒麟',        desc:'+10★ за каждого владельца Цилиня', points:0, rarity:'rare' },
 ];
 const BLACK_PRIZES = [
-  { code:'implant_red_dragon', icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true', name:'Красный Дракон 红龙', desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
+  { code:'implant_red_dragon', icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',           name:'Красный Дракон 红龙',    desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
+  { code:'implant_netwatch',   icon:'🔴', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true', name:'Сетевой Дозор 网络守卫', desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
 ];
 const PRIZE_MAP = {};
 [...PRIZES, ...PURPLE_PRIZES, ...BLACK_PRIZES].forEach(p => PRIZE_MAP[p.code] = p);
@@ -3693,8 +3708,7 @@ if (user) {
 }
 
 loadSavedTheme();
-const genshinTabBtn = document.getElementById('genshinTabBtn');
-if (genshinTabBtn) genshinTabBtn.style.display = 'block';
+// genshinTabBtn управляется через applyThemePath
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -3705,7 +3719,6 @@ initLaundry();
 
 // ===== НАВИГАЦИЯ =====
 function showPage(name, btn) {
-  if (name !== 'more') stopArchitectEventPolling();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
@@ -3716,14 +3729,21 @@ function showPage(name, btn) {
   if (name === 'shop') loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'diary') loadDiaryPage();
+  if (name === 'diary-stars') initDiaryStarsPage();
   if (name === 'casino') {
     fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
       if (settings.blackwall && !isAdmin) {
         document.getElementById('casinoPlayContent').innerHTML =
           '<div class="blackwall-screen"><div class="blackwall-title">BlackWall 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
       } else {
-        document.getElementById('casinoPlayContent').style.display = 'flex';
-        setTimeout(initRoulette, 50);
+        if (currentThemePath === 'genshin') {
+          document.getElementById('casinoPlayContent').style.display = 'none';
+          const gcEl = document.getElementById('casinoGenshinContent');
+          if (gcEl) gcEl.style.display = 'flex';
+        } else {
+          document.getElementById('casinoPlayContent').style.display = 'flex';
+          setTimeout(initRoulette, 50);
+        }
         setTimeout(() => loadPoints(currentUserId), 300);
       }
     }).catch(() => { setTimeout(initRoulette, 50); });
@@ -3737,9 +3757,8 @@ function openDiaryPage() {
 }
 
 function openMore(section) {
-  if (currentMoreSection === 'event' && section !== 'event') stopArchitectEventPolling();
   // Скрываем все субстраницы
-  ['themes','weather','laundry','news','achievements','team','event','admin'].forEach(s => {
+  ['themes','weather','laundry','news','achievements','team','admin'].forEach(s => {
     const el = document.getElementById('more-' + s);
     if (el) el.style.display = 'none';
   });
@@ -3748,325 +3767,12 @@ function openMore(section) {
   if (currentMoreSection === section) {
     el.style.display = 'none';
     currentMoreSection = null;
-    if (section === 'event') stopArchitectEventPolling();
   } else {
     el.style.display = 'block';
     currentMoreSection = section;
     if (section === 'achievements') loadAchievements();
     if (section === 'news') loadAnnouncements();
     if (section === 'laundry') { initLaundry(); }
-    if (section === 'event') {
-      loadArchitectEvent(true);
-      startArchitectEventPolling();
-    }
-  }
-}
-
-function stopArchitectEventPolling() {
-  if (architectEventPollTimer) {
-    clearInterval(architectEventPollTimer);
-    architectEventPollTimer = null;
-  }
-}
-
-function startArchitectEventPolling() {
-  stopArchitectEventPolling();
-  architectEventPollTimer = setInterval(() => {
-    const morePageOpen = document.getElementById('page-more')?.classList.contains('active');
-    if (currentMoreSection !== 'event' || !morePageOpen) {
-      stopArchitectEventPolling();
-      return;
-    }
-    loadArchitectEvent(false);
-  }, 4000);
-}
-
-function architectPhaseLabel(phase) {
-  if (phase === 1) return 'Phase 1: Observation';
-  if (phase === 2) return 'Phase 2: Rewrite';
-  if (phase === 3) return 'Phase 3: Overload';
-  return `Phase ${phase || '-'}`;
-}
-
-function architectPhaseImage(phase, fallback = '') {
-  if (phase === 1) return 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/Architect_phase1.png?raw=true';
-  if (phase === 2) return 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/Architect_phase2.png?raw=true';
-  if (phase === 3) return 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/Architect_phase3.png?raw=true';
-  return fallback || '';
-}
-
-function architectPhaseFlavor(phase) {
-  if (phase === 1) return 'Calm observation. The protocol is reading the field.';
-  if (phase === 2) return 'Rewrite engaged. The Architect shifts into direct combat.';
-  if (phase === 3) return 'System overload. Final window is live and pressure matters.';
-  return 'Neural pressure is building.';
-}
-
-function architectLogTypeLabel(type) {
-  if (type === 'boss') return 'Boss';
-  if (type === 'system') return 'System';
-  return 'Action';
-}
-
-function architectFormatTimeLeft(deadline) {
-  if (!deadline) return 'No timer';
-  const diff = new Date(deadline).getTime() - Date.now();
-  if (diff <= 0) return 'Expired';
-  const totalSeconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-function architectRenderLogItem(log) {
-  const typeClass = log.log_type === 'boss'
-    ? 'architect-log-boss'
-    : (log.log_type === 'system' ? 'architect-log-system' : 'architect-log-action');
-  const timestamp = log.created_at
-    ? new Date(log.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    : '--:--:--';
-
-  return `<div class="architect-log-item ${typeClass}">
-    <div class="architect-log-meta">
-      <span>${escapeHtml(architectLogTypeLabel(log.log_type))}</span>
-      <span>${escapeHtml(timestamp)}</span>
-    </div>
-    <div>${escapeHtml(log.message || '')}</div>
-  </div>`;
-}
-
-function renderArchitectEvent(snapshot) {
-  const root = document.getElementById('architectEventRoot');
-  if (!root) return;
-
-  const eventData = snapshot?.event;
-  if (!eventData || eventData.code !== 'architect') {
-    root.innerHTML = `<div class="architect-empty">
-      No active Architect event right now.<br>
-      As soon as the backend opens one, this screen will show it here.
-    </div>`;
-    return;
-  }
-
-  const hpPercent = eventData.max_hp
-    ? Math.max(0, Math.min(100, Math.round((eventData.current_hp / eventData.max_hp) * 100)))
-    : 0;
-  const phaseImage = architectPhaseImage(eventData.phase, eventData.boss_image || '');
-  const canAct = Boolean(currentUserId) && eventData.state === 'ACTIVE';
-  const logs = (eventData.logs || []).slice(-10).reverse().map(architectRenderLogItem).join('');
-  const finalTimer = eventData.phase === 3 && eventData.final_phase_deadline
-    ? `<div class="architect-badge architect-badge-hot">Final window: ${escapeHtml(architectFormatTimeLeft(eventData.final_phase_deadline))}</div>`
-    : '';
-  const vulnBadge = eventData.vulnerability_active
-    ? `<div class="architect-badge architect-badge-hot">SYNC WINDOW OPEN</div>`
-    : '';
-  const explanation = architectLastExplanation
-    ? `<div class="architect-explainer">${escapeHtml(architectLastExplanation)}</div>`
-    : '';
-  const helperNote = canAct
-    ? 'Actions are live. Attack, Protocol and Stabilize will request a question first.'
-    : 'View is active, but actions unlock only after Telegram user context is ready.';
-
-  root.innerHTML = `
-    <div class="architect-event-card">
-      <div class="architect-event-top">
-        <img class="architect-event-boss" src="${escapeHtml(phaseImage)}" alt="Architect">
-        <div class="architect-event-head">
-          <div class="architect-kicker">Live boss event</div>
-          <div class="architect-title">${escapeHtml(eventData.title || 'ARCHITECT PROTOCOL')}</div>
-          <div class="architect-subtitle">${escapeHtml(eventData.boss_name || 'Architect')} - ${escapeHtml(eventData.state || 'UNKNOWN')} - ${escapeHtml(architectPhaseFlavor(eventData.phase))}</div>
-          <div class="architect-phase-row">
-            <div class="architect-badge">${escapeHtml(architectPhaseLabel(eventData.phase))}</div>
-            ${vulnBadge}
-            ${finalTimer}
-          </div>
-        </div>
-      </div>
-
-      <div class="architect-hp">
-        <div class="architect-hp-meta">
-          <span>HP ${escapeHtml(String(eventData.current_hp))} / ${escapeHtml(String(eventData.max_hp))}</span>
-          <span>${escapeHtml(String(hpPercent))}%</span>
-        </div>
-        <div class="architect-hp-track">
-          <div class="architect-hp-fill" style="width:${hpPercent}%;"></div>
-        </div>
-      </div>
-
-      <div class="architect-stats">
-        <div class="architect-stat">
-          <span>Pressure</span>
-          <strong>${escapeHtml(String(eventData.overload_pressure ?? 0))}</strong>
-        </div>
-        <div class="architect-stat">
-          <span>Total actions</span>
-          <strong>${escapeHtml(String(eventData.total_actions ?? 0))}</strong>
-        </div>
-        <div class="architect-stat">
-          <span>Total damage</span>
-          <strong>${escapeHtml(String(eventData.total_damage ?? 0))}</strong>
-        </div>
-        <div class="architect-stat">
-          <span>Phase started</span>
-          <strong>${escapeHtml(eventData.phase_started_at ? new Date(eventData.phase_started_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '--:--')}</strong>
-        </div>
-      </div>
-
-      ${explanation}
-
-      <div class="architect-actions">
-        <button class="architect-action-btn architect-action-attack" ${canAct ? '' : 'disabled'} onclick="beginArchitectAction('attack')">ATTACK</button>
-        <button class="architect-action-btn architect-action-protocol" ${canAct ? '' : 'disabled'} onclick="beginArchitectAction('protocol')">PROTOCOL</button>
-        <button class="architect-action-btn architect-action-sync" ${canAct ? '' : 'disabled'} onclick="beginArchitectAction('sync')">SYNC</button>
-        <button class="architect-action-btn architect-action-stabilize" ${canAct ? '' : 'disabled'} onclick="beginArchitectAction('stabilize')">STABILIZE</button>
-      </div>
-
-      <div class="architect-toolbar">
-        <div class="architect-toolbar-note">${escapeHtml(helperNote)}</div>
-        <button class="architect-refresh-btn" onclick="loadArchitectEvent(true)">REFRESH</button>
-      </div>
-
-      <div class="architect-log-wrap">
-        <div class="card-label">Recent log</div>
-        <div class="architect-log">
-          ${logs || '<div class="architect-empty">No event logs yet.</div>'}
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-async function loadArchitectEvent(showLoading = false) {
-  const root = document.getElementById('architectEventRoot');
-  if (!root) return;
-
-  if (showLoading) {
-    root.innerHTML = '<div class="architect-empty">Loading Architect event...</div>';
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/api/events/current`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.detail || `HTTP ${response.status}`);
-    }
-    architectEventSnapshot = data;
-    renderArchitectEvent(data);
-  } catch (error) {
-    root.innerHTML = `<div class="architect-empty">
-      Failed to load event data.<br>
-      ${escapeHtml(error?.message || 'Unknown error')}
-    </div>`;
-  }
-}
-
-async function architectSubmitAction(payload) {
-  const response = await fetch(`${API_URL}/api/events/action`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data?.detail || data?.message || `HTTP ${response.status}`);
-  }
-  architectLastExplanation = data?.question_explanation || null;
-  await loadArchitectEvent(false);
-  return data;
-}
-
-async function beginArchitectAction(actionType) {
-  if (!currentUserId) {
-    tg.showAlert('Telegram user context is not ready yet.');
-    return;
-  }
-
-  if (!architectEventSnapshot?.event || architectEventSnapshot.event.code !== 'architect') {
-    await loadArchitectEvent(true);
-  }
-
-  const eventData = architectEventSnapshot?.event;
-  if (!eventData || eventData.code !== 'architect') {
-    tg.showAlert('Architect event is not active right now.');
-    return;
-  }
-
-  if (eventData.state !== 'ACTIVE') {
-    tg.showAlert('This event is not accepting actions right now.');
-    return;
-  }
-
-  try {
-    if (actionType === 'sync') {
-      await architectSubmitAction({
-        event_id: eventData.id,
-        telegram_id: currentUserId,
-        action_type: 'sync',
-        use_active_modifier: false
-      });
-      return;
-    }
-
-    const questionUrl = `${API_URL}/api/events/${eventData.id}/question?telegram_id=${encodeURIComponent(currentUserId)}&action_type=${encodeURIComponent(actionType)}`;
-    const response = await fetch(questionUrl);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.detail || `HTTP ${response.status}`);
-    }
-
-    const question = data?.question;
-    if (!question?.id || !question?.options) {
-      throw new Error('Question payload is incomplete.');
-    }
-
-    architectPendingAction = {
-      eventId: eventData.id,
-      actionType,
-      questionId: question.id
-    };
-    openArchitectQuestionModal(question);
-  } catch (error) {
-    tg.showAlert(error?.message || 'Failed to prepare Architect action.');
-  }
-}
-
-function openArchitectQuestionModal(question) {
-  const modal = document.getElementById('architectQuestionModal');
-  const prompt = document.getElementById('architectQuestionPrompt');
-  const options = document.getElementById('architectQuestionOptions');
-  if (!modal || !prompt || !options) return;
-
-  prompt.textContent = question.prompt || 'No prompt';
-  options.innerHTML = Object.entries(question.options || {}).map(([key, value]) => `
-    <button class="architect-option-btn" onclick="submitArchitectAnswer('${key}')">
-      <span>${escapeHtml(String(key).toUpperCase())}</span>${escapeHtml(value)}
-    </button>
-  `).join('');
-
-  modal.classList.add('show');
-}
-
-function closeArchitectQuestionModal() {
-  const modal = document.getElementById('architectQuestionModal');
-  if (modal) modal.classList.remove('show');
-  architectPendingAction = null;
-}
-
-async function submitArchitectAnswer(option) {
-  if (!architectPendingAction) return;
-
-  try {
-    await architectSubmitAction({
-      event_id: architectPendingAction.eventId,
-      telegram_id: currentUserId,
-      action_type: architectPendingAction.actionType,
-      question_id: architectPendingAction.questionId,
-      answer_option: option,
-      use_active_modifier: false
-    });
-    closeArchitectQuestionModal();
-  } catch (error) {
-    tg.showAlert(error?.message || 'Failed to submit Architect answer.');
   }
 }
 
@@ -4088,6 +3794,122 @@ const DIARY_WEATHER_OPTIONS = [
 // ZHIDAO Diary — API Integration Patch
 // Replaces: from "let diaryInitialized = false;"
 //           to end of "
+
+// ── ДНЕВНИК ★ — Оценка дневников ─────────────────────────────
+
+let diaryStarsCurrentStudent = null;
+
+function initDiaryStarsPage() {
+  const dateInput = document.getElementById('diaryStarsDate');
+  if (dateInput && !dateInput.value) {
+    dateInput.value = getShanghaiDateString();
+  }
+  loadDiaryStarsList();
+}
+
+async function loadDiaryStarsList() {
+  const date = document.getElementById('diaryStarsDate').value || getShanghaiDateString();
+  const list = document.getElementById('diaryStarsList');
+  if (!list) return;
+  list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Загрузка...</div>';
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
+    if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
+    const r = await fetch(`${API_URL}/api/diary/stars/overview?entry_date=${date}`, {
+      headers
+    });
+    if (!r.ok) { list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Ошибка загрузки</div>'; return; }
+    const data = await r.json();
+    renderDiaryStarsList(data.entries || [], date);
+  } catch(e) {
+    list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет соединения</div>';
+  }
+}
+
+function renderDiaryStarsList(entries, date) {
+  const list = document.getElementById('diaryStarsList');
+  if (!entries.length) {
+    list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет студентов в базе</div>';
+    return;
+  }
+
+  const STAR_POINTS = { 1: 15, 2: 30, 3: 50 };
+
+  list.innerHTML = entries.map(entry => {
+    const stars = entry.stars || 0;
+    const bonus = entry.bonus || false;
+    const starsHtml = stars ? '⭐'.repeat(stars) : '—';
+    const bonusHtml = bonus ? ' <span style="color:#2ecc71;font-size:10px;">+✨</span>' : '';
+    const pointsEarned = stars ? STAR_POINTS[stars] + (bonus ? 20 : 0) : 0;
+    const canRate = isAdmin;
+    const isMe = entry.telegram_id === currentUserId;
+    // Студент видит только свою строку
+    if (!isAdmin && !isMe) return '';
+
+    return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
+      ${canRate ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, '${entry.full_name}', '${date}')"` : ''}>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${entry.full_name}${isMe && !isAdmin ? ' 👈' : ''}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-top:2px;">
+            ${stars ? starsHtml + bonusHtml + ' · +' + pointsEarned + '★' : 'ещё не оценено'}
+          </div>
+        </div>
+        ${canRate ? `<div style="font-size:20px;color:var(--text3);">›</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDiaryStarsPopup(telegramId, name, date) {
+  if (!isAdmin) return;
+  diaryStarsCurrentStudent = { telegramId, name, date };
+  document.getElementById('diaryStarsPopupName').textContent = name;
+  document.getElementById('diaryStarsPopupDate').textContent = date;
+  const popup = document.getElementById('diaryStarsPopup');
+  popup.style.display = 'flex';
+}
+
+function closeDiaryStarsPopup() {
+  const popup = document.getElementById('diaryStarsPopup');
+  popup.style.display = 'none';
+  diaryStarsCurrentStudent = null;
+}
+
+async function submitDiaryStars(value) {
+  if (!diaryStarsCurrentStudent || !isAdmin) return;
+  const { telegramId, date } = diaryStarsCurrentStudent;
+
+  const isBonus = value === 'bonus';
+  const payload = {
+    telegram_id: telegramId,
+    entry_date: date,
+    stars: isBonus ? null : value,
+    bonus: isBonus
+  };
+
+  try {
+    const r = await fetch(`${API_URL}/api/diary/stars/rate`, {
+      method: 'POST',
+      headers: diaryHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      const data = await r.json();
+      closeDiaryStarsPopup();
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      tg.showAlert(`✅ ${diaryStarsCurrentStudent.name}: +${data.points_awarded}★ начислено!`);
+      loadDiaryStarsList();
+    } else {
+      tg.showAlert('Ошибка при начислении.');
+    }
+  } catch(e) {
+    tg.showAlert('Нет соединения.');
+  }
+}
+
 // ── ADMIN OVERVIEW ────────────────────────────────────────────
 
 function diaryStatusLabel(status) {
@@ -4557,6 +4379,65 @@ async function saveDiaryDraft(showFeedback = false) {
   }
 }
 
+// ── DIARY VALIDATION ──────────────────────────────────────────
+
+function isChineseChar(ch) {
+  const code = ch.codePointAt(0);
+  return (code >= 0x4e00 && code <= 0x9fff)
+      || (code >= 0x3400 && code <= 0x4dbf)
+      || (code >= 0x20000 && code <= 0x2a6df);
+}
+
+function countChineseChars(str) {
+  return [...(str || '')].filter(isChineseChar).length;
+}
+
+const PINYIN_SYLLABLE = /^(zh|ch|sh|[bpmfdtnlgkhjqxrzcsyw])?([aeiouuv]+(?:ng?|n)?|[mn])[1-5]$/i;
+
+function validatePinyinToken(token) {
+  return PINYIN_SYLLABLE.test(token);
+}
+
+function validateDiary(entry) {
+  const warnings = [];
+
+  entry.words.forEach((w, i) => {
+    const row   = i + 1;
+    const hanzi = (w.hanzi || '').trim();
+    const pinyin= (w.pinyin || '').trim();
+    const trans = (w.translation || '').trim();
+    if (!hanzi && !pinyin && !trans) return;
+
+    if (hanzi) {
+      const cnCount = countChineseChars(hanzi);
+      if (cnCount === 0)
+        warnings.push('Строка ' + row + ': в поле иероглифов нет китайских символов');
+      else if ([...hanzi].some(c => /[a-zA-Z]/.test(c)))
+        warnings.push('Строка ' + row + ': в иероглифах есть латинские буквы');
+    } else {
+      warnings.push('Строка ' + row + ': поле иероглифов пустое');
+    }
+
+    if (pinyin) {
+      const tokens = pinyin.trim().toLowerCase().split(/\s+/);
+      const bad = tokens.filter(t => !validatePinyinToken(t));
+      if (bad.length)
+        warnings.push('Строка ' + row + ': пиньинь — «' + bad.join(', ') + '» не похоже на формат ni3 hao3');
+    } else if (hanzi) {
+      warnings.push('Строка ' + row + ': пиньинь не заполнен');
+    }
+
+    if (!trans && hanzi)
+      warnings.push('Строка ' + row + ': перевод не заполнен');
+  });
+
+  const cnInStory = countChineseChars(entry.story || '');
+  if ((entry.story || '').trim() && cnInStory < 10)
+    warnings.push('Текст дня: маловато иероглифов (' + cnInStory + ') — проверь, всё ли написано');
+
+  return warnings;
+}
+
 async function submitDiary() {
   if (!currentUserId) { tg.showAlert('Открой через бота.'); return; }
   const entry     = collectDiaryFormData();
@@ -4568,10 +4449,15 @@ async function submitDiary() {
     return;
   }
 
+  const warnings = validateDiary(entry);
+  const popupMsg = warnings.length
+    ? '\u26a0\ufe0f Найдены замечания:\n' + warnings.slice(0,5).map(w => '\u2022 ' + w).join('\n') + (warnings.length > 5 ? '\n...и ещё ' + (warnings.length - 5) : '') + '\n\nВсё равно сдать?'
+    : 'Слов: ' + wordCount + '/15. После сдачи редактирование будет закрыто до разблокировки.';
+
   tg.showPopup({
-    title: 'Сдать день?',
-    message: `Слов: ${wordCount}/15. После сдачи редактирование будет закрыто до разблокировки.`,
-    buttons: [{ id: 'yes', type: 'default', text: '✅ Сдать' }, { type: 'cancel' }]
+    title: warnings.length ? '\u26a0\ufe0f Проверь дневник' : 'Сдать день?',
+    message: popupMsg,
+    buttons: [{ id: 'yes', type: 'default', text: warnings.length ? 'Всё равно сдать' : '\u2705 Сдать' }, { type: 'cancel', text: warnings.length ? 'Исправить' : 'Отмена' }]
   }, async (btnId) => {
     if (btnId !== 'yes') return;
     await saveDiaryDraft(false);
@@ -4757,6 +4643,74 @@ async function loadUserData(telegramId) {
   }
 }
 
+
+// ── THEME PATH LOGIC ──────────────────────────────────────────
+
+function applyThemePath(path) {
+  currentThemePath = path;
+
+  const nwCards    = ['theme-btn-default', 'theme-btn-nw-light'];
+  const gsCards    = ['theme-btn-genshin-light', 'theme-btn-genshin-dark'];
+
+  if (path === 'cyberpunk') {
+    nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
+    gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    const t = localStorage.getItem('zhidao_theme') || '';
+    if (t.startsWith('genshin')) setTheme('');
+    // Показываем импланты, скрываем карточки
+    const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
+    const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'none';
+    const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'block';
+    // Кейсы — показываем рулетку
+    const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'flex';
+    const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'none';
+    const genshinTabBtn = document.getElementById('genshinTabBtn'); if (genshinTabBtn) genshinTabBtn.style.display = 'none';
+    const playBtn = document.getElementById('casinoPlayBtn'); if (playBtn) playBtn.textContent = '🎰 ИГРАТЬ';
+  } else if (path === 'genshin') {
+    nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
+    const t = localStorage.getItem('zhidao_theme') || '';
+    if (!t.startsWith('genshin')) setTheme('genshin-light');
+    // Показываем карточки, скрываем импланты
+    const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
+    const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'block';
+    const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'none';
+    // Молитвы — показываем Геншин
+    const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'none';
+    const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'flex';
+    const playBtn = document.getElementById('casinoPlayBtn'); if (playBtn) playBtn.textContent = '✦ МОЛИТВЫ';
+  } else {
+    // path = null — первый вход, показываем экран выбора
+    showPathChoiceScreen();
+  }
+}
+
+function showPathChoiceScreen() {
+  const overlay = document.getElementById('overlay-path-choice');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+async function chooseThemePath(path) {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/user/set_path`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: currentUserId, path })
+    });
+    if (r.ok) {
+      const overlay = document.getElementById('overlay-path-choice');
+      if (overlay) overlay.style.display = 'none';
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      applyThemePath(path);
+    } else {
+      tg.showAlert('Ошибка. Попробуй ещё раз.');
+    }
+  } catch(e) {
+    tg.showAlert('Нет соединения.');
+  }
+}
+
 async function loadPoints(telegramId) {
   if (!telegramId) return;
   try {
@@ -4769,6 +4723,8 @@ async function loadPoints(telegramId) {
         const b = document.getElementById('casinoBonusBanner');
         b.style.display = 'block'; b.textContent = '🃏 УДВОЕНИЕ АКТИВНО!';
       }
+      // Применяем путь (Киберпанк / Геншин)
+      if (!isAdmin) applyThemePath(data.theme_path || null);
     }
   } catch(e) {}
 }
@@ -4779,6 +4735,12 @@ async function loadImplants(telegramId) {
     'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
     'implant_terracota':  'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',
     'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
+    'implant_panda':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',
+    'implant_shaolin':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',
+    'implant_linguasoft': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true',
+    'implant_caishen':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',
+    'implant_qilin':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',
+    'implant_netwatch':   'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true',
   };
   try {
     const r = await fetch(`${API_URL}/api/casino/implants/${telegramId}`);
@@ -5018,7 +4980,61 @@ function loadSavedTheme() {
   } catch(e) { setTheme(''); }
 }
 
+
+function switchRatingTab(tab, btn) {
+  document.querySelectorAll('#page-rating .subtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('rating-main-tab').style.display = tab === 'main' ? 'block' : 'none';
+  document.getElementById('rating-diary-tab').style.display = tab === 'diary' ? 'block' : 'none';
+  if (tab === 'diary') loadDiaryStarsLeaderboardRating();
+}
+
+async function loadDiaryStarsLeaderboardRating() {
+  const container = document.getElementById('diaryStarsLeaderboardRating');
+  container.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  try {
+    const headers = {'Content-Type': 'application/json'};
+    if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
+    if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
+    const r = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
+    const data = await r.json();
+    if (!data.length) { container.innerHTML = '<div class="empty-state">Пока нет данных</div>'; return; }
+    const medals = ['🥇','🥈','🥉'];
+    container.innerHTML = data.map((row, i) => {
+      const medal = medals[i] || `${i+1}.`;
+      const isMe = row.telegram_id === currentUserId;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div style="font-size:16px;min-width:28px;text-align:center;">${medal}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${row.name}${isMe?' 👈':''}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:monospace;">Дней оценено: ${row.days_rated}</div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold);">${row.total_stars} ⭐</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
+}
+
 async function loadLeaderboard() {
+  const IMPLANT_GLYPHS = {
+    'implant_red_dragon':   ['龍', '#cc2200'],
+    'implant_netwatch':     ['衛', '#cc2200'],
+    'implant_guanxi':       ['義', '#9b59b6'],
+    'implant_terracota':    ['兵', '#9b59b6'],
+    'implant_panda':        ['熊', '#9b59b6'],
+    'implant_shaolin':      ['武', '#9b59b6'],
+    'implant_linguasoft':   ['言', '#9b59b6'],
+    'implant_caishen':      ['財', '#9b59b6'],
+    'implant_qilin':        ['麟', '#9b59b6'],
+  };
+  const TOP_COLORS = [
+    'linear-gradient(90deg,#d4af37,#f5e070)',
+    'linear-gradient(90deg,#b0b0b0,#e8e8e8)',
+    'linear-gradient(90deg,#b87333,#e8a050)',
+    '#e8c84a','#e8c84a','#c8a830','#c8a830','#a88820','#a88820','#887010'
+  ];
   try {
     const r = await fetch(`${API_URL}/api/leaderboard`);
     const data = await r.json();
@@ -5026,26 +5042,77 @@ async function loadLeaderboard() {
     if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
     let myRank = '—', html = '';
+
     data.forEach((item, i) => {
       const medal = medals[i] || (i+1)+'.';
       const isMe = currentUserId && item.telegram_id === currentUserId;
       if (isMe) myRank = i+1;
-      const titleBadge = item.has_title ? ' 👑' : '';
+      const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const animDelay = `animation-delay:${i*0.06}s`;
 
-      // Цвет ника по импланту
-      let nameStyle = '';
-      let implantBadge = '';
-      if (item.implant === 'implant_red_dragon') {
-        nameStyle = 'color:#cc2200;text-shadow:0 0 8px rgba(200,0,0,0.4);font-weight:700;';
-        implantBadge = ' <span style="font-size:10px;">🐉</span>';
-      } else if (item.implant === 'implant_guanxi' || item.implant === 'implant_terracota') {
-        nameStyle = 'color:#9b59b6;text-shadow:0 0 8px rgba(155,89,182,0.3);font-weight:700;';
-        implantBadge = ' <span style="font-size:10px;">💜</span>';
+      // Цвет ника — топ-10 градиент
+      const nameColor = i < 10 ? TOP_COLORS[i] : '';
+      const isGradient = nameColor && nameColor.startsWith('linear');
+      let nameStyle = isGradient
+        ? `background:${nameColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;`
+        : nameColor ? `color:${nameColor};font-weight:700;` : '';
+
+      // Свечение топ-3
+      if (i === 0) nameStyle += 'filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));';
+      else if (i === 1) nameStyle += 'filter:drop-shadow(0 0 6px rgba(200,200,200,0.4));';
+      else if (i === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
+
+      // Легендарные импланты — красный ник поверх всего
+      const isLegendary = item.implant === 'implant_red_dragon' || item.implant === 'implant_netwatch';
+      if (isLegendary) {
+        nameStyle = 'color:#cc2200;text-shadow:0 0 10px rgba(200,0,0,0.5);font-weight:700;';
       }
 
-      html += `<div class="lb-item ${isMe?'me':''}">
+      // Иероглиф импланта
+      let glyphHtml = '';
+      if (item.implant && IMPLANT_GLYPHS[item.implant]) {
+        const [glyph, color] = IMPLANT_GLYPHS[item.implant];
+        glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
+      } else if (item.card) {
+        const CARD_GLYPHS = {
+          'card_zhongli':    ['岩', '#d4af37'],
+          'card_star':       ['紫', '#9b59b6'],
+          'card_pyro':       ['焰', '#e74c3c'],
+          'card_fox':        ['狐', '#e67e22'],
+          'card_fairy':      ['桃', '#e91e8c'],
+          'card_literature': ['文', '#3498db'],
+          'card_forest':     ['木', '#2ecc71'],
+          'card_sea':        ['海', '#1abc9c'],
+          'card_moon':       ['月', '#b0c4de'],
+        };
+        if (CARD_GLYPHS[item.card]) {
+          const [glyph, color] = CARD_GLYPHS[item.card];
+          glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
+        }
+      }
+
+      // Титул
+      const titleHtml = item.has_title ? '<span style="font-size:12px;margin-left:3px;">👑</span>' : '';
+
+      // Прогресс до следующего места
+      let progressHtml = '';
+      if (i > 0 && data[i-1]) {
+        const prev = data[i-1].points;
+        const curr = item.points;
+        const pct = prev > 0 ? Math.round((curr / prev) * 100) : 100;
+        const barColor = isLegendary ? 'rgba(200,34,0,0.5)' : i < 3 ? 'rgba(212,175,55,0.4)' : 'rgba(150,150,150,0.2)';
+        progressHtml = `<div class="lb-progress" style="width:${pct}%;background:${barColor};max-width:100%;"></div>`;
+      }
+
+      // Разделитель после топ-3
+      const divider = i === 3 ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
+
+      html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''}" style="${animDelay}">
         <div class="lb-rank">${medal}</div>
-        <div class="lb-name" style="${nameStyle}">${item.name}${titleBadge}${implantBadge}${isMe?' 👈':''}</div>
+        <div class="lb-name-wrap">
+          <div class="lb-name" style="${nameStyle}">${item.name}${titleHtml}${glyphHtml}${isMe?' 👈':''}</div>
+          ${progressHtml}
+        </div>
         <div class="lb-points">${item.points} ★</div>
       </div>`;
     });
@@ -5059,14 +5126,17 @@ function switchShopTab(mode, btn) {
   shopMode = mode;
   document.querySelectorAll('#page-shop .subtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  ['shopStoreContent','shopInventoryContent','shopFolkContent'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   if (mode === 'store') {
     document.getElementById('shopStoreContent').style.display = 'block';
-    document.getElementById('shopInventoryContent').style.display = 'none';
     loadShop();
-  } else {
-    document.getElementById('shopStoreContent').style.display = 'none';
+  } else if (mode === 'inventory') {
     document.getElementById('shopInventoryContent').style.display = 'block';
     loadInventory();
+  } else if (mode === 'folk') {
+    document.getElementById('shopFolkContent').style.display = 'block';
   }
 }
 
@@ -5100,7 +5170,7 @@ const GS_CARD_CONFIGS = {
   card_literature:{img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png',emoji:'📜',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'文',petals:['📜','✦','❀','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
   card_forest:    {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png',emoji:'🌿',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'木',petals:['🌿','✦','🍃','❀'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
   card_sea:       {img:'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png',emoji:'🌊',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'海',petals:['🌊','✦','💧','◈'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
-  card_moon:      {emoji:'🌙',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'月',petals:['🌙','✦','⭐','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
+  card_moon:      {img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/moon_card.png?raw=true',emoji:'🌙',stars:'★★★★',starsColor:'#4a9af5',pool:'blue',backCn:'月',petals:['🌙','✦','⭐','✿'],petalColor:'rgba(74,122,204,0.65)',rayColor:'rgba(74,122,204,0.75)',rayCount:12,partCount:20,vortexColor:'rgba(74,122,204,',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.6)',backGrad:['#c0d5f0','#dce8f8'],backBorder:'rgba(74,122,204,0.6)',frontGrad:['#dceef8','#eef5fc'],frontBorder:'rgba(74,122,204,0.7)',frontBg:'rgba(74,122,204,0.08)',revealDelay:1200},
 };
 // Призы не-карточки
 const GS_PRIZE_CONFIGS = {
@@ -5321,6 +5391,7 @@ const GENSHIN_IMGS = {
   'card_literature':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png',
   'card_forest':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png',
   'card_sea':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png',
+  'card_moon':'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/moon_card.png?raw=true',
   'card_star':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png',
 };
 
@@ -5558,12 +5629,19 @@ function switchCasinoTab(mode, btn) {
   loadPoints(currentUserId);
   document.querySelectorAll('#page-casino .subtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent','casinoGenshinContent'];
+  const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent','casinoGenshinContent','genshinRulesContent'];
   ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
-  if (mode==='play') { document.getElementById('casinoPlayContent').style.display='flex'; setTimeout(initRoulette,50); }
+  const isGenshin = currentThemePath === 'genshin';
+  if (mode==='play') {
+    if (isGenshin) { document.getElementById('casinoGenshinContent').style.display='flex'; }
+    else { document.getElementById('casinoPlayContent').style.display='flex'; setTimeout(initRoulette,50); }
+  }
   else if (mode==='inventory') { document.getElementById('casinoInventoryContent').style.display='flex'; loadCasinoInventory(); }
   else if (mode==='history') { document.getElementById('casinoHistoryContent').style.display='flex'; loadCasinoHistory(); }
-  else if (mode==='rules') { document.getElementById('casinoRulesContent').style.display='flex'; }
+  else if (mode==='rules') {
+    if (isGenshin) { const el = document.getElementById('genshinRulesContent'); if(el) el.style.display='flex'; }
+    else { document.getElementById('casinoRulesContent').style.display='flex'; }
+  }
   else if (mode==='genshin') { document.getElementById('casinoGenshinContent').style.display='flex'; }
 }
 
@@ -5951,213 +6029,131 @@ function switchLaundryTab(tab) {
   if (tab==='laundry') loadLaundrySchedule();
   else loadWaterSchedule();
 }
-function getLaundryMachineLabels(slot) {
-  const capacity = Math.max(1, Math.min(2, parseInt(slot.capacity || 1, 10) || 1));
-  const bookings = Array.isArray(slot.bookings) ? slot.bookings : [];
-  const labels = [];
-  for (let i = 0; i < capacity; i++) {
-    const booking = bookings[i];
-    labels.push({
-      machine: i + 1,
-      telegram_id: booking ? booking.telegram_id : null,
-      name: booking ? (booking.name || 'Без имени') : '',
-      isMe: booking ? booking.telegram_id === currentUserId : false
-    });
-  }
-  return labels;
+
+async function bookWaterSlot(slotId) {
+  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  try {
+    const r = await fetch(`${API_URL}/api/water/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на набор воды!'); loadWaterSchedule(); }
+    else { const e=await r.json(); tg.showAlert(e.detail==='Slot full'?'Мест нет':'Вы уже записаны'); }
+  } catch(e) { tg.showAlert('Ошибка'); }
 }
 
-function renderLaundryMachineBadges(slot) {
-  const labels = getLaundryMachineLabels(slot);
-  return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${labels.map(item => {
-    if (item.telegram_id) {
-      const color = item.isMe ? '#2ecc71' : 'var(--text2)';
-      const bg = item.isMe ? 'rgba(46,204,113,0.12)' : 'rgba(255,255,255,0.04)';
-      const text = item.isMe ? `Машина ${item.machine}: ты` : `Машина ${item.machine}: занято`;
-      return `<span style="font-size:9px;color:${color};border:1px solid ${color};background:${bg};padding:3px 6px;border-radius:999px;">${text}</span>`;
-    }
-    return `<span style="font-size:9px;color:var(--red);border:1px solid rgba(220,80,80,0.35);background:rgba(220,80,80,0.08);padding:3px 6px;border-radius:999px;">Машина ${item.machine}: свободно</span>`;
-  }).join('')}</div>`;
+async function cancelWaterSlot(slotId) {
+  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
+    if(b!=='ok')return;
+    fetch(`${API_URL}/api/water/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
+      .then(()=>loadWaterSchedule()).catch(()=>{});
+  });
 }
 
 async function loadLaundrySchedule() {
   const container = document.getElementById('laundryScheduleContent');
-  if (!container) return;
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`);
     const data = r.ok ? await r.json() : [];
     if (!data.length) {
-      container.innerHTML = `<div class="empty-state" style="padding:16px;">Свободных слотов пока нет<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые ещё не открыли запись</span></div>`;
+      container.innerHTML = `<div class="empty-state" style="padding:16px;">Расписание стирки ещё не составлено<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые скоро добавят слоты</span></div>`;
       return;
     }
     container.innerHTML = data.map(slot => {
-      const bookings = Array.isArray(slot.bookings) ? slot.bookings : [];
-      const capacity = Math.max(1, Math.min(2, parseInt(slot.capacity || 1, 10) || 1));
-      const myIndex = bookings.findIndex(b => b.telegram_id === currentUserId);
-      const isMine = myIndex !== -1;
-      const isFree = bookings.length < capacity;
-
-      let icon = `<i class="ti ti-circle-x" style="color:var(--text3);font-size:18px;"></i>`;
-      let statusText = `<span style="color:var(--text3);">Не занято</span>`;
-      let action = '';
-
-      if (isMine) {
+      const capacity = slot.capacity || 1;
+      const booked = slot.booked || 0;
+      const bookings = slot.bookings || [];
+      const isMe = bookings.some(b => b.telegram_id === currentUserId);
+      const isFull = booked >= capacity;
+      let icon, statusText, clickable;
+      if (isMe) {
         icon = `<i class="ti ti-circle-check" style="color:#2ecc71;font-size:18px;"></i>`;
-        statusText = `<span style="color:#2ecc71;">Машина ${myIndex + 1}</span>`;
-        action = `onclick="cancelLaundrySlot(${slot.id})"`;
-      } else if (isFree) {
-        icon = `<i class="ti ti-circle-plus" style="color:var(--red);font-size:18px;"></i>`;
-        statusText = `<span style="color:var(--red);">Запись ${bookings.length + 1}</span>`;
-        action = `onclick="bookLaundrySlot(${slot.id})"`;
+        statusText = `<span style="color:#2ecc71;">Ваша запись</span>`;
+        clickable = `onclick="cancelWaterSlot(${slot.id})"`;
+      } else if (!isFull) {
+        icon = `<i class="ti ti-droplet" style="color:#60b4d4;font-size:18px;"></i>`;
+        statusText = `<span style="color:#60b4d4;">Свободно</span>`;
+        clickable = `onclick="bookWaterSlot(${slot.id})"`;
+      } else {
+        icon = `<i class="ti ti-circle-x" style="color:var(--text3);font-size:18px;"></i>`;
+        statusText = `<span style="color:var(--text3);">Занято</span>`;
+        clickable = '';
       }
-
-      return `<div ${action} style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${action ? 'cursor:pointer;' : ''}">
+      return `<div ${clickable} style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${clickable?'cursor:pointer;':''}">
         ${icon}
         <div style="flex:1;">
-          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} - ${slot.time}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note || 'Без заметки'} - машин: ${capacity} - мест: ${bookings.length}/${capacity}</div>
-          ${renderLaundryMachineBadges(slot)}
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} · ${slot.time}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note||'Набор воды'}</div>
         </div>
-        <div style="font-size:10px;">${statusText}</div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;">${statusText}</div>
+          <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">${booked}/${capacity} мест</div>
+        </div>
       </div>`;
     }).join('');
-  } catch (e) {
-    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-  }
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
 async function loadWaterSchedule() {
   const container = document.getElementById('waterScheduleContent');
-  if (!container) return;
   try {
     const r = await fetch(`${API_URL}/api/water/schedule`);
     const data = r.ok ? await r.json() : [];
     if (!data.length) {
-      container.innerHTML = `<div class="empty-state" style="padding:16px;">Свободных слотов воды пока нет<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые ещё не открыли запись</span></div>`;
+      container.innerHTML = `<div class="empty-state" style="padding:16px;">Расписание воды ещё не составлено<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые скоро добавят слоты</span></div>`;
       return;
     }
     container.innerHTML = data.map(slot => {
-      const bookings = Array.isArray(slot.bookings) ? slot.bookings : [];
-      const capacity = parseInt(slot.capacity || 1, 10) || 1;
       return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
         <i class="ti ti-droplet" style="color:#60b4d4;font-size:18px;"></i>
         <div style="flex:1;">
-          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} - ${slot.time}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note || 'Раздача воды'} - занято: ${bookings.length}/${capacity}</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} · ${slot.time}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note||'Набор воды'}</div>
         </div>
       </div>`;
     }).join('');
-  } catch (e) {
-    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
-  }
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
 async function bookLaundrySlot(slotId) {
-  if (!currentUserId) {
-    tg.showAlert('Откройте расписание через Telegram-бота');
-    return;
-  }
+  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
   try {
-    const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ telegram_id: currentUserId })
-    });
-    if (r.ok) {
-      try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-      tg.showAlert('Запись на слот подтверждена. Приходи вовремя и отметься у вожатых.');
-      loadLaundrySchedule();
-    } else {
-      const e = await r.json();
-      tg.showAlert(
-        e.detail === 'Already booked'
-          ? 'У тебя уже есть запись'
-          : e.detail === 'Slot full'
-            ? 'Все места на этом слоте уже заняты'
-            : 'Ошибка записи'
-      );
-    }
-  } catch (e) {
-    tg.showAlert('Ошибка');
-  }
+    const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на стирку!'); loadLaundrySchedule(); }
+    else { const e=await r.json(); tg.showAlert(e.detail==='Already booked'?'У вас уже есть запись':'Слот занят'); }
+  } catch(e) { tg.showAlert('Ошибка'); }
 }
 
 async function cancelLaundrySlot(slotId) {
-  tg.showPopup({
-    title: 'Отменить запись?',
-    message: 'Слот снова станет свободным, и его сможет занять кто-то другой.',
-    buttons: [
-      { id: 'ok', type: 'default', text: 'Отменить запись' },
-      { type: 'cancel' }
-    ]
-  }, async (buttonId) => {
-    if (buttonId !== 'ok') return;
-    try {
-      await fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ telegram_id: currentUserId })
-      });
-      loadLaundrySchedule();
-    } catch (e) {}
+  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
+    if(b!=='ok')return;
+    fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
+      .then(()=>loadLaundrySchedule()).catch(()=>{});
   });
 }
 
-async function loadLaundry() { return loadLaundrySchedule(); }
+// Старые функции — оставляем для совместимости
+async function loadLaundry() { loadLaundrySchedule(); }
 function renderLaundrySlots() {}
-async function bookLaundry(slotId) { return bookLaundrySlot(slotId); }
-async function cancelLaundry(slotId) { return cancelLaundrySlot(slotId); }
+async function bookLaundry(time) {}
 
-// ===== Объявления =====
-function formatAnnouncementText(text = '') {
-  const normalized = String(text || '').replace(/\r\n/g, '\n').trim();
-  if (!normalized) return '<p>Без текста</p>';
-  return normalized
-    .split(/\n{2,}/)
-    .map(paragraph => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
-    .join('');
+async function cancelLaundry(id) {
+  try {
+    const r = await fetch(`${API_URL}/api/laundry/${id}`,{method:'DELETE',headers:{'x-telegram-id':currentUserId}});
+    if (r.ok) { tg.showAlert('Запись отменена'); loadLaundry(); }
+  } catch(e) { tg.showAlert('Ошибка'); }
 }
 
-function renderAnnouncementCard(item, { compact = false } = {}) {
-  const REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑'];
-  const reactionMap = {};
-  (item.reactions || []).forEach(reaction => { reactionMap[reaction.emoji] = reaction.count; });
-
-  const reactionBtns = compact ? '' : REACTIONS.map(emoji => {
-    const count = reactionMap[emoji] || 0;
-    const active = count > 0 ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.4);' : '';
-    return `<button onclick="reactToAnnouncement(${item.id}, '${emoji}', this)" 
-      style="display:inline-flex;align-items:center;gap:3px;padding:4px 8px;
-      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-      border-radius:20px;cursor:pointer;font-size:13px;color:var(--text2);
-      font-family:monospace;${active}transition:all 0.2s;">
-      ${emoji}${count > 0 ? `<span style="font-size:10px;color:var(--gold);">${count}</span>` : ''}
-    </button>`;
-  }).join('');
-
-  return `<div class="announcement-item${compact ? ' announcement-item-compact' : ''}">
-    <div class="announcement-text">${formatAnnouncementText(item.text)}</div>
-    <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
-    ${compact ? '' : `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${reactionBtns}</div>`}
-    ${(!compact && isAdmin) ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#cc4444;cursor:pointer;font-size:11px;margin-top:6px;font-family:monospace;">[ УДАЛИТЬ ]</button>` : ''}
-  </div>`;
-}
-
+// ===== ОБЪЯВЛЕНИЯ =====
 async function loadAnnouncements() {
   const containers = Array.from(document.querySelectorAll('.announcements-content'));
   const renderToAll = (html) => containers.forEach(container => { container.innerHTML = html; });
-  const renderHome = (html) => {
-    const homeContainer = document.getElementById('homeNewsContent');
-    if (homeContainer) homeContainer.innerHTML = html;
-  };
   try {
     const r = await fetch(`${API_URL}/api/announcements`);
     const data = await r.json();
     if (!data.length) {
       renderToAll('<div class="empty-state">Объявлений пока нет</div>');
-      renderHome('<div class="home-news-empty">Пока тихо. Как только появятся объявления, они сразу будут здесь.</div>');
       return;
     }
+
+    const REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑'];
 
     // Загружаем реакции для каждого объявления
     const withReactions = await Promise.all(data.map(async item => {
@@ -6168,17 +6164,36 @@ async function loadAnnouncements() {
       } catch { return { ...item, reactions: [] }; }
     }));
 
-    const html = withReactions.map(item => renderAnnouncementCard(item)).join('');
-    const homeHtml = withReactions.slice(0, 2).map(item => renderAnnouncementCard(item, { compact: true })).join('');
+    const html = withReactions.map(item => {
+      const reactionMap = {};
+      item.reactions.forEach(r => { reactionMap[r.emoji] = r.count; });
+
+      const reactionBtns = REACTIONS.map(emoji => {
+        const count = reactionMap[emoji] || 0;
+        const active = count > 0 ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.4);' : '';
+        return `<button onclick="reactToAnnouncement(${item.id}, '${emoji}', this)" 
+          style="display:inline-flex;align-items:center;gap:3px;padding:4px 8px;
+          background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+          border-radius:20px;cursor:pointer;font-size:13px;color:var(--text2);
+          font-family:monospace;${active}transition:all 0.2s;">
+          ${emoji}${count > 0 ? `<span style="font-size:10px;color:var(--gold);">${count}</span>` : ''}
+        </button>`;
+      }).join('');
+
+      return `<div class="announcement-item">
+        <div class="announcement-text">${item.text}</div>
+        <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${reactionBtns}</div>
+        ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#cc4444;cursor:pointer;font-size:11px;margin-top:6px;font-family:monospace;">[ УДАЛИТЬ ]</button>` : ''}
+      </div>`;
+    }).join('');
 
     renderToAll(html);
-    renderHome(homeHtml);
     document.querySelectorAll('.admin-announce-form').forEach(form => {
       form.style.display = isAdmin ? 'block' : 'none';
     });
   } catch(e) {
     renderToAll('<div class="empty-state">Ошибка загрузки</div>');
-    renderHome('<div class="home-news-empty">Не удалось загрузить новости. Попробуй открыть страницу ещё раз.</div>');
   }
 }
 
@@ -6356,46 +6371,37 @@ async function adminLoadLaundrySlots() {
     const data = r.ok ? await r.json() : [];
     if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
     container.innerHTML = data.map(slot => {
-      const bookings = Array.isArray(slot.bookings) ? slot.bookings : [];
-      const capacity = Math.max(1, Math.min(2, parseInt(slot.capacity || 1, 10) || 1));
-      const taken = bookings.length
-        ? bookings.map((booking, index) => `<span style="color:#2ecc71;font-size:9px;display:block;">✓ Машинка ${index + 1}: ${booking.name || 'Участник'}</span>`).join('')
-        : `<span style="color:var(--text3);font-size:9px;">Свободно</span>`;
+      const taken = slot.taken_by ? `<span style="color:#2ecc71;font-size:9px;">✓ ${slot.taken_by.name}</span>` : `<span style="color:var(--text3);font-size:9px;">Свободно</span>`;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
         <div style="flex:1;">
           <div style="font-size:11px;color:var(--text);font-weight:600;">${slot.day} · ${slot.time}</div>
-          <div style="font-size:9px;color:var(--text3);">${slot.note || ''}</div>
-          <div style="font-size:9px;color:var(--text3);">Машинок: ${capacity} · занято: ${bookings.length}/${capacity}</div>
+          <div style="font-size:9px;color:var(--text3);">${slot.note||''}</div>
           ${taken}
         </div>
         <button onclick="adminDeleteLaundrySlot(${slot.id})" style="background:none;border:1px solid rgba(200,50,50,0.3);color:rgba(200,80,80,0.7);padding:4px 10px;border-radius:4px;font-size:9px;font-family:monospace;cursor:pointer;"><i class="ti ti-trash"></i></button>
       </div>`;
     }).join('');
-  } catch (e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
 }
 
 async function adminAddLaundrySlot() {
   const day = document.getElementById('lDay').value.trim();
   const time = document.getElementById('lTime').value.trim();
   const note = document.getElementById('lNote').value.trim();
-  const capacity = Math.max(1, Math.min(2, parseInt(document.getElementById('lCapacity')?.value || '1', 10) || 1));
   if (!day || !time) { tg.showAlert('Заполни день и время'); return; }
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({ day, time, note, capacity })
+      body: JSON.stringify({day, time, note, capacity: parseInt(document.getElementById('lCapacity').value)||1})
     });
     if (r.ok) {
-      document.getElementById('lDay').value = '';
-      document.getElementById('lTime').value = '';
-      document.getElementById('lNote').value = '';
-      const capacityInput = document.getElementById('lCapacity');
-      if (capacityInput) capacityInput.value = '1';
-      try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+      document.getElementById('lDay').value='';
+      document.getElementById('lTime').value='';
+      document.getElementById('lNote').value='';
+      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
       adminLoadLaundrySlots();
-      loadLaundrySchedule();
     } else tg.showAlert('Ошибка!');
-  } catch (e) { tg.showAlert('Ошибка соединения'); }
+  } catch(e) { tg.showAlert('Ошибка соединения'); }
 }
 
 async function adminDeleteLaundrySlot(id) {
@@ -6412,19 +6418,15 @@ async function adminLoadWaterSlots() {
     const r = await fetch(`${API_URL}/api/water/schedule`);
     const data = r.ok ? await r.json() : [];
     if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
-    container.innerHTML = data.map(slot => {
-      const bookings = Array.isArray(slot.bookings) ? slot.bookings : [];
-      const capacity = parseInt(slot.capacity || 1, 10) || 1;
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+    container.innerHTML = data.map(slot => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
         <div style="flex:1;">
           <div style="font-size:11px;color:var(--text);font-weight:600;">${slot.day} · ${slot.time}</div>
-          <div style="font-size:9px;color:var(--text3);">${slot.note || ''}</div>
-          <div style="font-size:9px;color:var(--text3);">Мест: ${capacity} · занято: ${bookings.length}/${capacity}</div>
+          <div style="font-size:9px;color:var(--text3);">${slot.note||''}</div>
         </div>
         <button onclick="adminDeleteWaterSlot(${slot.id})" style="background:none;border:1px solid rgba(200,50,50,0.3);color:rgba(200,80,80,0.7);padding:4px 10px;border-radius:4px;font-size:9px;font-family:monospace;cursor:pointer;"><i class="ti ti-trash"></i></button>
-      </div>`;
-    }).join('');
-  } catch (e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
+      </div>`).join('');
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
 }
 
 async function adminAddWaterSlot() {
@@ -6435,7 +6437,7 @@ async function adminAddWaterSlot() {
   try {
     const r = await fetch(`${API_URL}/api/water/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({day, time, note})
+      body: JSON.stringify({day, time, note, capacity: parseInt(document.getElementById('wCapacity').value)||1})
     });
     if (r.ok) {
       document.getElementById('wDay').value='';
@@ -6837,5 +6839,48 @@ async function joinRaid() {
     });
 }
 </script>
+
+<!-- ── Экран выбора пути (показывается при первом входе) ── -->
+<div id="overlay-path-choice" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.92);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;box-sizing:border-box;
+">
+  <div style="font-size:10px;color:#cc4444;font-family:monospace;letter-spacing:2px;margin-bottom:8px;">ZHIDAO PROTOCOL</div>
+  <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:4px;">Выбери свой путь</div>
+  <div style="font-size:11px;color:#888;font-family:monospace;margin-bottom:28px;text-align:center;">选择你的道路 · Это нельзя изменить бесплатно</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:320px;margin-bottom:24px;">
+
+    <div onclick="chooseThemePath('cyberpunk')" style="
+      background:#050510;border:2px solid rgba(180,20,20,0.4);
+      border-radius:14px;padding:16px;cursor:pointer;text-align:center;
+      transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='rgba(204,68,68,0.8)'" onmouseout="this.style.borderColor='rgba(180,20,20,0.4)'">
+      <div style="font-size:28px;margin-bottom:8px;">🔴</div>
+      <div style="font-size:11px;color:#cc4444;font-family:monospace;font-weight:700;letter-spacing:1px;">NETWATCH</div>
+      <div style="font-size:9px;color:#666;font-family:monospace;margin-top:4px;">Киберпанк</div>
+      <div style="font-size:9px;color:#555;margin-top:6px;line-height:1.4;">Кейсы · Импланты<br>Тёмная и Светлая</div>
+    </div>
+
+    <div onclick="chooseThemePath('genshin')" style="
+      background:#1a1628;border:2px solid rgba(219,177,101,0.25);
+      border-radius:14px;padding:16px;cursor:pointer;text-align:center;
+      transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='rgba(219,177,101,0.7)'" onmouseout="this.style.borderColor='rgba(219,177,101,0.25)'">
+      <div style="font-size:28px;margin-bottom:8px;">✦</div>
+      <div style="font-size:11px;color:rgba(219,177,101,0.9);font-family:Georgia,serif;font-weight:700;">ГЕНШИН</div>
+      <div style="font-size:9px;color:#5a5248;font-family:Georgia,serif;margin-top:4px;">Ли Юэ</div>
+      <div style="font-size:9px;color:#5a5248;margin-top:6px;line-height:1.4;">Молитвы · Карточки<br>Дневной и Ночной</div>
+    </div>
+
+  </div>
+
+  <div style="font-size:9px;color:#444;font-family:monospace;text-align:center;max-width:260px;line-height:1.6;">
+    Сменить путь можно через «Смену пути 转换» в магазине (500★)
+  </div>
+</div>
+
 </body>
 </html>
