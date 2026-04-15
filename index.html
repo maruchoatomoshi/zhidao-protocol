@@ -154,6 +154,69 @@ body::before {
   z-index: 0;
   line-height: 1;
   user-select: none;
+  transform-origin: center;
+  will-change: transform, opacity;
+  animation: kanjiDrift var(--kanji-duration, 18s) ease-in-out infinite;
+}
+
+.matrix-rain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.matrix-col {
+  position: absolute;
+  top: -35%;
+  left: var(--left, 10%);
+  color: rgba(220, 40, 40, 0.16);
+  font-size: clamp(14px, 2.4vw, 22px);
+  font-family: "Times New Roman", serif;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  filter: blur(var(--blur, 0px));
+  text-shadow: 0 0 14px rgba(180, 20, 20, 0.15);
+  will-change: transform, opacity;
+  animation: matrixFall var(--dur, 18s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes kanjiDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.42;
+  }
+  25% {
+    transform: translate3d(-8px, 16px, 0) scale(1.025);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate3d(10px, 34px, 0) scale(0.985);
+    opacity: 0.34;
+  }
+  75% {
+    transform: translate3d(-6px, 18px, 0) scale(1.015);
+    opacity: 0.54;
+  }
+}
+
+@keyframes matrixFall {
+  0% {
+    transform: translate3d(0, -24vh, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.72;
+  }
+  100% {
+    transform: translate3d(var(--drift, 8px), 130vh, 0);
+    opacity: 0;
+  }
 }
 
 /* ===== НИЖНЯЯ НАВИГАЦИЯ ===== */
