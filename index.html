@@ -2069,6 +2069,12 @@ body.theme-genshin .diary-star.active {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.announcement-text {
+  white-space: normal;
+  line-height: 1.6;
+  word-break: break-word;
+}  
+  
 </style>
 </head>
 <body>
@@ -2152,11 +2158,11 @@ body.theme-genshin .diary-star.active {
     <div class="page-title">НОВОСТИ <span class="page-title-cn">新闻</span></div>
     <div class="page-sub">> xīn wén // объявления от вожатых</div>
   </div>
-  <div id="announcementsContent" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
   <div id="adminAnnounceForm" class="admin-announce-form" style="display:none;padding:10px 12px;">
-    <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
-    <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
-  </div>
+  <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
+  <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
+</div>
+<div id="announcementsContent" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
 
   <div class="page-header" style="margin-top:8px;">
     <div class="page-title">РАСПИСАНИЕ <span class="page-title-cn">课表</span></div>
@@ -6334,8 +6340,17 @@ async function loadAnnouncements() {
         </button>`;
       }).join('');
 
+     function formatAnnouncementText(text = '') {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\r\n/g, '\n')
+        .replace(/\n/g, '<br>');
+    }
+      
       return `<div class="announcement-item">
-        <div class="announcement-text">${item.text}</div>
+        <div class="announcement-text">${formatAnnouncementText(item.text || '')}</div>
         <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${reactionBtns}</div>
         ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#cc4444;cursor:pointer;font-size:11px;margin-top:6px;font-family:monospace;">[ УДАЛИТЬ ]</button>` : ''}
