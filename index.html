@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -154,6 +154,69 @@ body::before {
   z-index: 0;
   line-height: 1;
   user-select: none;
+  transform-origin: center;
+  will-change: transform, opacity;
+  animation: kanjiDrift var(--kanji-duration, 18s) ease-in-out infinite;
+}
+
+.matrix-rain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.matrix-col {
+  position: absolute;
+  top: -35%;
+  left: var(--left, 10%);
+  color: rgba(220, 40, 40, 0.16);
+  font-size: clamp(14px, 2.4vw, 22px);
+  font-family: "Times New Roman", serif;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  filter: blur(var(--blur, 0px));
+  text-shadow: 0 0 14px rgba(180, 20, 20, 0.15);
+  will-change: transform, opacity;
+  animation: matrixFall var(--dur, 18s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes kanjiDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.42;
+  }
+  25% {
+    transform: translate3d(-8px, 16px, 0) scale(1.025);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate3d(10px, 34px, 0) scale(0.985);
+    opacity: 0.34;
+  }
+  75% {
+    transform: translate3d(-6px, 18px, 0) scale(1.015);
+    opacity: 0.54;
+  }
+}
+
+@keyframes matrixFall {
+  0% {
+    transform: translate3d(0, -24vh, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.72;
+  }
+  100% {
+    transform: translate3d(var(--drift, 8px), 130vh, 0);
+    opacity: 0;
+  }
 }
 
 /* ===== НИЖНЯЯ НАВИГАЦИЯ ===== */
@@ -408,6 +471,100 @@ body.theme-genshin-dark .lb-points
   color: rgba(200,80,80,0.9);
   font-size: 8px; padding: 3px 10px; border-radius: 3px;
   letter-spacing: 1px; margin-top: 6px; font-family: monospace;
+}
+
+.home-reveal {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  animation: homeReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.home-reveal-1 { animation-delay: 0.03s; }
+.home-reveal-2 { animation-delay: 0.1s; }
+.home-reveal-3 { animation-delay: 0.17s; }
+.home-reveal-4 { animation-delay: 0.24s; }
+.home-reveal-5 { animation-delay: 0.31s; }
+
+@keyframes homeReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.home-news-shell {
+  margin: 4px 12px 12px;
+  padding: 12px;
+  border: 1px solid rgba(180,20,20,0.22);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(180,20,20,0.11), rgba(255,255,255,0.02)),
+    rgba(255,255,255,0.015);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-news-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(212,175,55,0.05) 35%, transparent 70%);
+  transform: translateX(-100%);
+  animation: homeNewsSweep 6.8s ease-in-out infinite;
+}
+
+@keyframes homeNewsSweep {
+  0%, 15% { transform: translateX(-115%); }
+  45%, 100% { transform: translateX(130%); }
+}
+
+.home-news-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.home-news-kicker {
+  font-size: 10px;
+  font-family: monospace;
+  letter-spacing: 1.8px;
+  color: rgba(212,175,55,0.82);
+}
+
+.home-news-link {
+  border: 1px solid rgba(212,175,55,0.22);
+  background: rgba(212,175,55,0.08);
+  color: var(--gold);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 9px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.home-news-stream {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.home-news-empty {
+  color: var(--text3);
+  font-size: 12px;
+  line-height: 1.6;
 }
 .stats-row {
   display: grid; grid-template-columns: 1fr 1fr;
@@ -1018,7 +1175,16 @@ body.theme-genshin-dark .lb-points
   padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .announcement-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+.announcement-text p { margin: 0 0 0.72em; }
+.announcement-text p:last-child { margin-bottom: 0; }
 .announcement-date { font-size: 9px; color: var(--text3); font-family: monospace; margin-top: 6px; }
+.announcement-item.announcement-item-compact {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+}
 
 /* ===== АЧИВКИ ===== */
 .achievement-count { font-size: 10px; color: var(--text2); padding: 10px 14px; font-family: monospace; }
@@ -2097,9 +2263,17 @@ body.theme-genshin .diary-star.active {
 <body>
 
 <!-- Фоновые иероглифы -->
-<div class="bg-kanji" style="font-size:160px;top:-20px;right:-20px;color:rgba(180,20,20,0.03);font-family:serif;">道</div>
-<div class="bg-kanji" style="font-size:100px;bottom:80px;left:-15px;color:rgba(180,20,20,0.025);font-family:serif;">龙</div>
-<div class="bg-kanji" style="font-size:70px;top:40%;right:10px;color:rgba(212,175,55,0.02);font-family:serif;">福</div>
+<div class="bg-kanji" style="font-size:160px;top:-20px;right:-20px;color:rgba(180,20,20,0.03);font-family:serif;--kanji-duration:18s;animation-delay:-3s;">道</div>
+<div class="bg-kanji" style="font-size:100px;bottom:80px;left:-15px;color:rgba(180,20,20,0.025);font-family:serif;--kanji-duration:22s;animation-delay:-9s;">龙</div>
+<div class="bg-kanji" style="font-size:70px;top:40%;right:10px;color:rgba(212,175,55,0.02);font-family:serif;--kanji-duration:16s;animation-delay:-5s;">福</div>
+<div class="matrix-rain" aria-hidden="true">
+  <span class="matrix-col" style="--left:5%;--dur:19s;--delay:-12s;--drift:6px;">智道协议龙</span>
+  <span class="matrix-col" style="--left:18%;--dur:16s;--delay:-3s;--drift:-8px;--blur:0.2px;">福信義勇</span>
+  <span class="matrix-col" style="--left:34%;--dur:21s;--delay:-15s;--drift:10px;">网络数据流</span>
+  <span class="matrix-col" style="--left:53%;--dur:17s;--delay:-6s;--drift:-6px;--blur:0.3px;">协议重写中</span>
+  <span class="matrix-col" style="--left:71%;--dur:23s;--delay:-18s;--drift:9px;">天命链接</span>
+  <span class="matrix-col" style="--left:86%;--dur:18s;--delay:-9s;--drift:-7px;">红龙黑墙</span>
+</div>
 
 <!-- Конфетти -->
 <div id="confettiContainer" style="position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;"></div>
@@ -2118,13 +2292,23 @@ body.theme-genshin .diary-star.active {
 
 <!-- ===== ГЛАВНАЯ ===== -->
 <div class="page active" id="page-home">
-  <div class="main-logo-wrap">
+  <div class="main-logo-wrap home-reveal home-reveal-1">
     <div class="main-logo"><img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true" style="width:140px;height:140px;object-fit:contain;"></div>
     <div class="main-pinyin">智能电子解决方案</div>
     <div class="proto-tag">🏮 PROTOCOL v1.4 // ACTIVE 🏮</div>
   </div>
 
-  <div class="stats-row">
+  <div class="home-news-shell home-reveal home-reveal-2">
+    <div class="home-news-head">
+      <div class="home-news-kicker">LIVE NEWSFEED // 新闻速递</div>
+      <button class="home-news-link" onclick="showPage('schedule', document.getElementById('nav-schedule-btn'))">ВСЕ НОВОСТИ</button>
+    </div>
+    <div id="homeNewsContent" class="home-news-stream">
+      <div class="home-news-empty">Загрузка новостей...</div>
+    </div>
+  </div>
+
+  <div class="stats-row home-reveal home-reveal-3">
     <div class="stat-box">
       <div class="stat-cn">信用</div>
       <div class="stat-num" id="myPointsBig">—</div>
@@ -2139,7 +2323,7 @@ body.theme-genshin .diary-star.active {
 
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
-  <div class="card neuro-card">
+  <div class="card neuro-card home-reveal home-reveal-4">
     <div class="card-inner">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
         <div style="flex:1;">
@@ -2162,7 +2346,7 @@ body.theme-genshin .diary-star.active {
   </div>
 
 
-  <div style="padding:8px 12px 4px;">
+  <div class="home-reveal home-reveal-5" style="padding:8px 12px 4px;">
     <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
   </div>
 </div>
@@ -2676,16 +2860,16 @@ body.theme-genshin .diary-star.active {
       <!-- СТИРКА -->
       <div id="al-laundry-tab">
         <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ СТИРКИ</div>
-        <input class="admin-input" id="lDay" placeholder="???? (?? 5 ???)">
-        <input class="admin-input" id="lTime" placeholder="????? (08:00)">
+        <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
+        <input class="admin-input" id="lTime" placeholder="Время (08:00)">
         <select class="admin-input" id="lCapacity">
-          <option value="1">1 ???????</option>
-          <option value="2">2 ???????</option>
+          <option value="1">1 машина</option>
+          <option value="2">2 машины</option>
         </select>
-        <input class="admin-input" id="lNote" placeholder="??????? (?????????????)">
-        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ ???????? ???? ]</button>
-        <div class="cn-divider">?? ??????? ??????????</div>
-        <div id="adminLaundryList"><div class="empty-state">????????...</div></div>
+        <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
+        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ СОЗДАТЬ СЛОТ ]</button>
+        <div class="cn-divider">📋 СПИСОК СЛОТОВ</div>
+        <div id="adminLaundryList"><div class="empty-state">Загрузка...</div></div>
       </div>
 
       <!-- ВОДА -->
@@ -3342,7 +3526,7 @@ body.theme-genshin .diary-star.active {
     <i class="ti ti-smart-home"></i>
     <span class="nav-cn">主页</span>
   </button>
-  <button class="nav-item" onclick="showPage('schedule',this)">
+  <button class="nav-item" id="nav-schedule-btn" onclick="showPage('schedule',this)">
     <i class="ti ti-layout-list"></i>
     <span class="nav-cn">日程</span>
   </button>
@@ -5776,7 +5960,7 @@ function getLaundryMachineLabels(slot) {
     labels.push({
       machine: i + 1,
       telegram_id: booking ? booking.telegram_id : null,
-      name: booking ? (booking.name || '????????') : '',
+      name: booking ? (booking.name || 'Без имени') : '',
       isMe: booking ? booking.telegram_id === currentUserId : false
     });
   }
@@ -5789,10 +5973,10 @@ function renderLaundryMachineBadges(slot) {
     if (item.telegram_id) {
       const color = item.isMe ? '#2ecc71' : 'var(--text2)';
       const bg = item.isMe ? 'rgba(46,204,113,0.12)' : 'rgba(255,255,255,0.04)';
-      const text = item.isMe ? `??????? ${item.machine}: ??` : `??????? ${item.machine}: ??????`;
+      const text = item.isMe ? `Машина ${item.machine}: ты` : `Машина ${item.machine}: занято`;
       return `<span style="font-size:9px;color:${color};border:1px solid ${color};background:${bg};padding:3px 6px;border-radius:999px;">${text}</span>`;
     }
-    return `<span style="font-size:9px;color:var(--red);border:1px solid rgba(220,80,80,0.35);background:rgba(220,80,80,0.08);padding:3px 6px;border-radius:999px;">??????? ${item.machine}: ????????</span>`;
+    return `<span style="font-size:9px;color:var(--red);border:1px solid rgba(220,80,80,0.35);background:rgba(220,80,80,0.08);padding:3px 6px;border-radius:999px;">Машина ${item.machine}: свободно</span>`;
   }).join('')}</div>`;
 }
 
@@ -5803,7 +5987,7 @@ async function loadLaundrySchedule() {
     const r = await fetch(`${API_URL}/api/laundry/schedule`);
     const data = r.ok ? await r.json() : [];
     if (!data.length) {
-      container.innerHTML = `<div class="empty-state" style="padding:16px;">?????????? ?????? ??? ?? ??????????<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">??????? ????? ??????? ?????</span></div>`;
+      container.innerHTML = `<div class="empty-state" style="padding:16px;">Свободных слотов пока нет<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые ещё не открыли запись</span></div>`;
       return;
     }
     container.innerHTML = data.map(slot => {
@@ -5814,31 +5998,31 @@ async function loadLaundrySchedule() {
       const isFree = bookings.length < capacity;
 
       let icon = `<i class="ti ti-circle-x" style="color:var(--text3);font-size:18px;"></i>`;
-      let statusText = `<span style="color:var(--text3);">??? ??????</span>`;
+      let statusText = `<span style="color:var(--text3);">Не занято</span>`;
       let action = '';
 
       if (isMine) {
         icon = `<i class="ti ti-circle-check" style="color:#2ecc71;font-size:18px;"></i>`;
-        statusText = `<span style="color:#2ecc71;">??????? ${myIndex + 1}</span>`;
+        statusText = `<span style="color:#2ecc71;">Машина ${myIndex + 1}</span>`;
         action = `onclick="cancelLaundrySlot(${slot.id})"`;
       } else if (isFree) {
         icon = `<i class="ti ti-circle-plus" style="color:var(--red);font-size:18px;"></i>`;
-        statusText = `<span style="color:var(--red);">???????? ${bookings.length + 1}</span>`;
+        statusText = `<span style="color:var(--red);">Запись ${bookings.length + 1}</span>`;
         action = `onclick="bookLaundrySlot(${slot.id})"`;
       }
 
       return `<div ${action} style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${action ? 'cursor:pointer;' : ''}">
         ${icon}
         <div style="flex:1;">
-          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} ? ${slot.time}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note || '???? ??????'} ? ???????: ${capacity} ? ??????: ${bookings.length}/${capacity}</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} - ${slot.time}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note || 'Без заметки'} - машин: ${capacity} - мест: ${bookings.length}/${capacity}</div>
           ${renderLaundryMachineBadges(slot)}
         </div>
         <div style="font-size:10px;">${statusText}</div>
       </div>`;
     }).join('');
   } catch (e) {
-    container.innerHTML = '<div class="empty-state">?????? ????????</div>';
+    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
   }
 }
 
@@ -5849,7 +6033,7 @@ async function loadWaterSchedule() {
     const r = await fetch(`${API_URL}/api/water/schedule`);
     const data = r.ok ? await r.json() : [];
     if (!data.length) {
-      container.innerHTML = `<div class="empty-state" style="padding:16px;">?????????? ???? ??? ?? ??????????<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">??????? ????? ??????? ?????</span></div>`;
+      container.innerHTML = `<div class="empty-state" style="padding:16px;">Свободных слотов воды пока нет<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Вожатые ещё не открыли запись</span></div>`;
       return;
     }
     container.innerHTML = data.map(slot => {
@@ -5858,19 +6042,19 @@ async function loadWaterSchedule() {
       return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
         <i class="ti ti-droplet" style="color:#60b4d4;font-size:18px;"></i>
         <div style="flex:1;">
-          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} ? ${slot.time}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note || '????? ????'} ? ??????: ${bookings.length}/${capacity}</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${slot.day} - ${slot.time}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;">${slot.note || 'Раздача воды'} - занято: ${bookings.length}/${capacity}</div>
         </div>
       </div>`;
     }).join('');
   } catch (e) {
-    container.innerHTML = '<div class="empty-state">?????? ????????</div>';
+    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
   }
 }
 
 async function bookLaundrySlot(slotId) {
   if (!currentUserId) {
-    tg.showAlert('???????? ?????????? ????? Telegram-????');
+    tg.showAlert('Откройте расписание через Telegram-бота');
     return;
   }
   try {
@@ -5881,29 +6065,29 @@ async function bookLaundrySlot(slotId) {
     });
     if (r.ok) {
       try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-      tg.showAlert('?????? ?? ?????? ?????????. ??????? ????????? ????????????? ?? ???????.');
+      tg.showAlert('Запись на слот подтверждена. Приходи вовремя и отметься у вожатых.');
       loadLaundrySchedule();
     } else {
       const e = await r.json();
       tg.showAlert(
         e.detail === 'Already booked'
-          ? '? ??? ??? ???? ??????'
+          ? 'У тебя уже есть запись'
           : e.detail === 'Slot full'
-            ? '??? ??????? ?? ???? ???? ??? ??????'
-            : '???? ?????'
+            ? 'Все места на этом слоте уже заняты'
+            : 'Ошибка записи'
       );
     }
   } catch (e) {
-    tg.showAlert('??????');
+    tg.showAlert('Ошибка');
   }
 }
 
 async function cancelLaundrySlot(slotId) {
   tg.showPopup({
-    title: '???????? ???????',
-    message: '???? ????? ???????????, ? ?? ???? ?????? ?????????? ???-?? ??????.',
+    title: 'Отменить запись?',
+    message: 'Слот снова станет свободным, и его сможет занять кто-то другой.',
     buttons: [
-      { id: 'ok', type: 'default', text: '???????? ??????' },
+      { id: 'ok', type: 'default', text: 'Отменить запись' },
       { type: 'cancel' }
     ]
   }, async (buttonId) => {
@@ -5924,19 +6108,56 @@ function renderLaundrySlots() {}
 async function bookLaundry(slotId) { return bookLaundrySlot(slotId); }
 async function cancelLaundry(slotId) { return cancelLaundrySlot(slotId); }
 
-// ===== ?????????? =====
+// ===== Объявления =====
+function formatAnnouncementText(text = '') {
+  const normalized = String(text || '').replace(/\r\n/g, '\n').trim();
+  if (!normalized) return '<p>Без текста</p>';
+  return normalized
+    .split(/\n{2,}/)
+    .map(paragraph => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+
+function renderAnnouncementCard(item, { compact = false } = {}) {
+  const REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑'];
+  const reactionMap = {};
+  (item.reactions || []).forEach(reaction => { reactionMap[reaction.emoji] = reaction.count; });
+
+  const reactionBtns = compact ? '' : REACTIONS.map(emoji => {
+    const count = reactionMap[emoji] || 0;
+    const active = count > 0 ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.4);' : '';
+    return `<button onclick="reactToAnnouncement(${item.id}, '${emoji}', this)" 
+      style="display:inline-flex;align-items:center;gap:3px;padding:4px 8px;
+      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+      border-radius:20px;cursor:pointer;font-size:13px;color:var(--text2);
+      font-family:monospace;${active}transition:all 0.2s;">
+      ${emoji}${count > 0 ? `<span style="font-size:10px;color:var(--gold);">${count}</span>` : ''}
+    </button>`;
+  }).join('');
+
+  return `<div class="announcement-item${compact ? ' announcement-item-compact' : ''}">
+    <div class="announcement-text">${formatAnnouncementText(item.text)}</div>
+    <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
+    ${compact ? '' : `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${reactionBtns}</div>`}
+    ${(!compact && isAdmin) ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#cc4444;cursor:pointer;font-size:11px;margin-top:6px;font-family:monospace;">[ УДАЛИТЬ ]</button>` : ''}
+  </div>`;
+}
+
 async function loadAnnouncements() {
   const containers = Array.from(document.querySelectorAll('.announcements-content'));
   const renderToAll = (html) => containers.forEach(container => { container.innerHTML = html; });
+  const renderHome = (html) => {
+    const homeContainer = document.getElementById('homeNewsContent');
+    if (homeContainer) homeContainer.innerHTML = html;
+  };
   try {
     const r = await fetch(`${API_URL}/api/announcements`);
     const data = await r.json();
     if (!data.length) {
       renderToAll('<div class="empty-state">Объявлений пока нет</div>');
+      renderHome('<div class="home-news-empty">Пока тихо. Как только появятся объявления, они сразу будут здесь.</div>');
       return;
     }
-
-    const REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑'];
 
     // Загружаем реакции для каждого объявления
     const withReactions = await Promise.all(data.map(async item => {
@@ -5947,36 +6168,17 @@ async function loadAnnouncements() {
       } catch { return { ...item, reactions: [] }; }
     }));
 
-    const html = withReactions.map(item => {
-      const reactionMap = {};
-      item.reactions.forEach(r => { reactionMap[r.emoji] = r.count; });
-
-      const reactionBtns = REACTIONS.map(emoji => {
-        const count = reactionMap[emoji] || 0;
-        const active = count > 0 ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.4);' : '';
-        return `<button onclick="reactToAnnouncement(${item.id}, '${emoji}', this)" 
-          style="display:inline-flex;align-items:center;gap:3px;padding:4px 8px;
-          background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-          border-radius:20px;cursor:pointer;font-size:13px;color:var(--text2);
-          font-family:monospace;${active}transition:all 0.2s;">
-          ${emoji}${count > 0 ? `<span style="font-size:10px;color:var(--gold);">${count}</span>` : ''}
-        </button>`;
-      }).join('');
-
-      return `<div class="announcement-item">
-        <div class="announcement-text">${item.text}</div>
-        <div class="announcement-date">${new Date(item.created_at).toLocaleDateString('ru-RU')}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${reactionBtns}</div>
-        ${isAdmin ? `<button onclick="deleteAnnouncement(${item.id})" style="background:none;border:none;color:#cc4444;cursor:pointer;font-size:11px;margin-top:6px;font-family:monospace;">[ УДАЛИТЬ ]</button>` : ''}
-      </div>`;
-    }).join('');
+    const html = withReactions.map(item => renderAnnouncementCard(item)).join('');
+    const homeHtml = withReactions.slice(0, 2).map(item => renderAnnouncementCard(item, { compact: true })).join('');
 
     renderToAll(html);
+    renderHome(homeHtml);
     document.querySelectorAll('.admin-announce-form').forEach(form => {
       form.style.display = isAdmin ? 'block' : 'none';
     });
   } catch(e) {
     renderToAll('<div class="empty-state">Ошибка загрузки</div>');
+    renderHome('<div class="home-news-empty">Не удалось загрузить новости. Попробуй открыть страницу ещё раз.</div>');
   }
 }
 
