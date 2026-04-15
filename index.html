@@ -169,19 +169,21 @@ body::before {
 
 .matrix-col {
   position: absolute;
-  top: -35%;
-  left: var(--left, 10%);
-  color: rgba(255, 60, 60, 0.28);
-  font-size: clamp(14px, 2.4vw, 22px);
+  top: -30vh;
+  left: 0;
+  color: rgba(255, 70, 70, 0.42);
+  font-size: clamp(12px, 1.8vw, 18px);
   font-family: "Noto Serif SC", "Microsoft YaHei", "PingFang SC", "SimSun", serif;
-  line-height: 1.05;
+  line-height: 1.02;
   text-align: center;
-  white-space: normal;
+  white-space: nowrap;
   opacity: 0;
   filter: blur(var(--blur, 0px));
-  text-shadow: 0 0 10px rgba(255, 40, 40, 0.22);
+  text-shadow:
+    0 0 6px rgba(255, 40, 40, 0.25),
+    0 0 14px rgba(255, 40, 40, 0.18);
   will-change: transform, opacity;
-  animation: matrixFall var(--dur, 18s) linear infinite;
+  animation: matrixFall var(--dur, 14s) linear infinite;
   animation-delay: var(--delay, 0s);
 }
 
@@ -206,14 +208,17 @@ body::before {
 
 @keyframes matrixFall {
   0% {
-    transform: translate3d(0, -24vh, 0);
+    transform: translate3d(0, -25vh, 0);
     opacity: 0;
   }
-  12% {
-    opacity: 0.72;
+  8% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.5;
   }
   100% {
-    transform: translate3d(var(--drift, 8px), 130vh, 0);
+    transform: translate3d(var(--drift, 0px), 135vh, 0);
     opacity: 0;
   }
 }
@@ -2073,14 +2078,7 @@ body.theme-genshin .diary-star.active {
 <div class="bg-kanji" style="font-size:100px;bottom:80px;left:-15px;color:rgba(180,20,20,0.025);font-family:serif;--kanji-duration:22s;animation-delay:-9s;">龙</div>
 <div class="bg-kanji" style="font-size:70px;top:40%;right:10px;color:rgba(212,175,55,0.02);font-family:serif;--kanji-duration:16s;animation-delay:-5s;">福</div>
 
-<div class="matrix-rain" aria-hidden="true">
-  <div class="matrix-col" style="--left:5%;--dur:19s;--delay:-12s;--drift:6px;">智<br>道<br>协<br>议<br>龙</div>
-  <div class="matrix-col" style="--left:18%;--dur:16s;--delay:-3s;--drift:-8px;--blur:0.2px;">福<br>信<br>義<br>勇</div>
-  <div class="matrix-col" style="--left:34%;--dur:21s;--delay:-15s;--drift:10px;">网<br>络<br>数<br>据<br>流</div>
-  <div class="matrix-col" style="--left:53%;--dur:17s;--delay:-6s;--drift:-6px;--blur:0.3px;">协<br>议<br>重<br>写<br>中</div>
-  <div class="matrix-col" style="--left:71%;--dur:23s;--delay:-18s;--drift:9px;">天<br>命<br>链<br>接</div>
-  <div class="matrix-col" style="--left:86%;--dur:18s;--delay:-9s;--drift:-7px;">红<br>龙<br>黑<br>墙</div>
-</div>
+<div class="matrix-rain" id="matrixRain" aria-hidden="true"></div>
 
 <!-- Конфетти -->
 <div id="confettiContainer" style="position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;"></div>
@@ -7009,7 +7007,43 @@ document.addEventListener('click', function(e) {
   btn.appendChild(ripple);
   setTimeout(() => ripple.remove(), 500);
 });
-      
+
+function buildMatrixRain() {
+  const root = document.getElementById('matrixRain');
+  if (!root) return;
+
+  root.innerHTML = '';
+
+  const glyphs = ['智','道','龙','福','网','络','协','议','数','据','流','天','命','链','接','红','黑','墙','信','義','勇','中'];
+  const columns = Math.max(10, Math.floor(window.innerWidth / 38));
+
+  for (let i = 0; i < columns; i++) {
+    const col = document.createElement('div');
+    col.className = 'matrix-col';
+
+    const length = 5 + Math.floor(Math.random() * 8);
+    const chars = [];
+
+    for (let j = 0; j < length; j++) {
+      chars.push(glyphs[Math.floor(Math.random() * glyphs.length)]);
+    }
+
+    col.innerHTML = chars.join('<br>');
+    col.style.left = `${Math.random() * 100}%`;
+    col.style.setProperty('--dur', `${10 + Math.random() * 10}s`);
+    col.style.setProperty('--delay', `${-Math.random() * 18}s`);
+    col.style.setProperty('--drift', `${-12 + Math.random() * 24}px`);
+    col.style.setProperty('--blur', `${Math.random() * 0.6}px`);
+    col.style.fontSize = `${12 + Math.random() * 10}px`;
+    col.style.opacity = `${0.35 + Math.random() * 0.35}`;
+
+    root.appendChild(col);
+  }
+}
+
+window.addEventListener('load', buildMatrixRain);
+window.addEventListener('resize', buildMatrixRain);
+  
 </script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
