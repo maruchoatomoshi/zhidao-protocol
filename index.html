@@ -7563,65 +7563,6 @@ function renderEventOverlay(event) {
   }
 }
 
-if (phaseLabel) {
-  const roman = {1: 'I', 2: 'II', 3: 'III'};
-  if (event.state === 'REGISTRATION') {
-    phaseLabel.textContent = 'LOBBY';
-  } else if (event.state === 'FAILED' || event.state === 'FINISHED') {
-    phaseLabel.textContent = 'END';
-  } else {
-    phaseLabel.textContent = `ФАЗА ${roman[event.phase] || event.phase || 'I'}`;
-  }
-}
-
- if (stateBadge) {
-  const state = (event.state || '').toUpperCase();
-  stateBadge.textContent = state || 'UNKNOWN';
-  stateBadge.className = 'event-status-badge';
-
-  if (state === 'ACTIVE') stateBadge.classList.add('green');
-  if (state === 'REGISTRATION') stateBadge.classList.add('gold');
-  if (state === 'FAILED' || state === 'FINISHED') stateBadge.classList.add('hot');
-}
-
-  if (vulnerabilityBadge) {
-    const vulnerable = !!event.vulnerability_active;
-    vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
-    vulnerabilityBadge.className = 'event-status-badge';
-    vulnerabilityBadge.classList.add(vulnerable ? 'gold' : 'hot');
-  }
-
-  if (overloadBadge) {
-    overloadBadge.textContent = `OVERLOAD: ${event.overload_pressure ?? 0}`;
-    overloadBadge.className = 'event-status-badge';
-    if ((event.overload_pressure ?? 0) >= 5) {
-      overloadBadge.classList.add('hot');
-    }
-  }
-
- if (bossImage) {
-  if (event.phase === 1) {
-    bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png';
-  } else if (event.phase === 2) {
-    bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase2.png';
-  } else {
-    bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png';
-  }
-}
-
-  if (log) {
-    if (Array.isArray(event.logs) && event.logs.length) {
-      log.innerHTML = event.logs.map(item => `
-        <div class="event-log-item">${item.message}</div>
-      `).join('');
-      log.scrollTop = log.scrollHeight;
-    } else {
-      log.innerHTML = `<div class="event-log-empty">Лог ивента пока пуст</div>`;
-      setEventExplanation('');
-    }
-  }
-}
-  
 let currentEventId = 1;
 let currentEventAction = null;
 let currentEventQuestion = null;
@@ -7795,15 +7736,10 @@ function renderEventActionResult(data) {
 
 function setEventLoading(isLoading) {
   const shell = document.querySelector('#eventOverlay .event-shell');
-  const buttons = document.querySelectorAll('#eventOverlay .event-action, #eventOverlay .event-option-btn');
 
   if (shell) {
     shell.classList.toggle('event-loading', !!isLoading);
   }
-
-  buttons.forEach(btn => {
-    btn.disabled = !!isLoading;
-  });
 }
 
 function setEventExplanation(text) {
