@@ -2088,6 +2088,7 @@ body.theme-genshin .diary-star.active {
     radial-gradient(circle at center, rgba(180,20,20,0.16), rgba(0,0,0,0.88)),
     rgba(0,0,0,0.92);
   backdrop-filter: blur(8px);
+  animation: eventBackdropPulse 6s ease-in-out infinite;
 }
 
 .event-shell {
@@ -2149,8 +2150,8 @@ body.theme-genshin .diary-star.active {
 
 .event-hero {
   position: relative;
-  flex: 0 0 62vh;
-  min-height: 430px;
+  flex: 0 0 74vh;
+  min-height: 520px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2170,8 +2171,18 @@ body.theme-genshin .diary-star.active {
   object-fit: cover;
   object-position: center center;
   display: block;
-  transform: scale(1.04);
-  filter: saturate(1.08) contrast(1.06);
+  transform: scale(1.08);
+  filter: saturate(1.1) contrast(1.08);
+}
+
+.event-hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  transform: scale(1.08);
+  filter: saturate(1.1) contrast(1.08);
 }
 
 .event-hero::before {
@@ -2283,6 +2294,11 @@ body.theme-genshin .diary-star.active {
   22% { opacity: 0.76; }
   24% { opacity: 1; }
   60% { opacity: 0.95; transform: translateY(-1px); }
+}
+
+@keyframes eventBackdropPulse {
+  0%, 100% { opacity: 0.92; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.025); }
 }
 
 .event-hp-row {
@@ -7560,6 +7576,12 @@ const ARCHITECT_PHASE_IMAGES = {
   3: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png'
 };
 
+const ARCHITECT_PHASE_VIDEOS = {
+  1: '',
+  2: '',
+  3: ''
+};
+
 function getArchitectPhaseImage(eventData) {
   if (!eventData) return ARCHITECT_PHASE_IMAGES[1];
   const phase = Number(eventData.phase || 1);
@@ -7568,21 +7590,56 @@ function getArchitectPhaseImage(eventData) {
   return ARCHITECT_PHASE_IMAGES[1];
 }
 
-function playEventBgm() {
-  const audio = document.getElementById('eventBgm');
-  if (!audio) return;
-  audio.volume = 0.38;
-  const maybePromise = audio.play();
-  if (maybePromise && typeof maybePromise.catch === 'function') {
-    maybePromise.catch(() => {});
-  }
+function getArchitectPhaseVideo(eventData) {
+  if (!eventData) return '';
+  const phase = Number(eventData.phase || 1);
+  if (phase === 2) return ARCHITECT_PHASE_VIDEOS[2] || '';
+  if (phase >= 3) return ARCHITECT_PHASE_VIDEOS[3] || '';
+  return ARCHITECT_PHASE_VIDEOS[1] || '';
 }
 
-function stopEventBgm() {
-  const audio = document.getElementById('eventBgm');
-  if (!audio) return;
-  audio.pause();
-  audio.currentTime = 0;
+function setArchitectAmbientVisibility(isVisible) {
+  const matrix = document.getElementById('matrixRain');
+  if (matrix) {
+    matrix.style.display = isVisible ? '' : 'none';
+  }
+
+  document.querySelectorAll('.bg-kanji').forEach((node) => {
+    node.style.display = isVisible ? '' : 'none';
+  });
+}
+
+function applyArchitectMedia(eventData) {
+  const bossImage = document.getElementById('eventBossImage');
+  const bossVideo = document.getElementById('eventBossVideo');
+  const videoSrc = getArchitectPhaseVideo(eventData);
+  const imageSrc = getArchitectPhaseImage(eventData);
+
+  if (bossVideo) {
+    if (videoSrc) {
+      if (bossVideo.dataset.currentSrc !== videoSrc) {
+        bossVideo.src = videoSrc;
+        bossVideo.dataset.currentSrc = videoSrc;
+        bossVideo.load();
+      }
+      bossVideo.style.display = 'block';
+      const maybePromise = bossVideo.play();
+      if (maybePromise && typeof maybePromise.catch === 'function') {
+        maybePromise.catch(() => {});
+      }
+    } else {
+      bossVideo.pause();
+      bossVideo.removeAttribute('src');
+      bossVideo.dataset.currentSrc = '';
+      bossVideo.style.display = 'none';
+      bossVideo.load();
+    }
+  }
+
+  if (bossImage) {
+    bossImage.src = imageSrc;
+    bossImage.style.display = videoSrc ? 'none' : 'block';
+  }
 }
 
 function openEventOverlay() {
@@ -7595,7 +7652,7 @@ function openEventOverlay() {
   if (nav) nav.style.display = 'none';
 
   document.body.style.overflow = 'hidden';
-  playEventBgm();
+  setArchitectAmbientVisibility(false);
 
   const log = document.getElementById('eventLog');
   if (log) {
@@ -7616,7 +7673,12 @@ function closeEventOverlay() {
   if (nav) nav.style.display = '';
 
   document.body.style.overflow = '';
-  stopEventBgm();
+  setArchitectAmbientVisibility(true);
+
+  const bossVideo = document.getElementById('eventBossVideo');
+  if (bossVideo) {
+    bossVideo.pause();
+  }
 }
 
 async function loadCurrentEvent() {
@@ -7648,8 +7710,6 @@ async function loadCurrentEvent() {
 }
 
 function renderEventOverlay(event) {
-  const bossImage = document.getElementById('eventBossImage');
-
   if (!event) return;
 
   if (typeof event.id === 'number') {
@@ -7660,9 +7720,7 @@ function renderEventOverlay(event) {
     currentEventMaxHp = event.max_hp;
   }
 
-  if (bossImage) {
-    bossImage.src = getArchitectPhaseImage(event);
-  }
+  applyArchitectMedia(event);
 }
 
 let currentEventId = 1;
@@ -8003,9 +8061,7 @@ function updateArchitectBattleVisibility(eventData) {
   const currentHp = Math.max(0, eventData.current_hp || 0);
   const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
 
-  if (bossImage) {
-    bossImage.src = getArchitectPhaseImage(eventData);
-  }
+  applyArchitectMedia(eventData);
 
   hpText.textContent = `${currentHp} / ${maxHp}`;
   hpFill.style.width = `${hpPercent}%`;
@@ -8351,6 +8407,15 @@ async function submitArchitectAnswer(answerOption) {
     </div>
 
     <div class="event-hero" id="eventHero">
+      <video
+        id="eventBossVideo"
+        class="event-hero-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        style="display:none;"
+      ></video>
       <img
         id="eventBossImage"
         src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png"
@@ -8436,10 +8501,6 @@ async function submitArchitectAnswer(answerOption) {
     </div>
   </div>
 </div>
-
-<audio id="eventBgm" loop preload="auto">
-  <source src="architect-arrival.ogg" type="audio/ogg">
-</audio>
 
 </body>
 </html>
