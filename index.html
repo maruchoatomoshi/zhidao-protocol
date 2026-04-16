@@ -7817,7 +7817,8 @@ function renderArchitectLobby(eventData, errorText = '') {
   const teamMembers = Array.isArray(eventData.team_members) ? eventData.team_members : [];
   const teamCount = typeof eventData.team_count === 'number' ? eventData.team_count : teamMembers.length;
   const hasReward = !!(eventData.reward_text && String(eventData.reward_text).trim());
-  const showLobbyCard = eventData.state === 'REGISTRATION' || teamCount > 0 || hasReward;
+  const isTerminal = eventData.state === 'FAILED' || eventData.state === 'FINISHED';
+  const showLobbyCard = eventData.state === 'REGISTRATION' || teamCount > 0 || hasReward || (isAdmin && isTerminal);
 
   lobbyCard.style.display = showLobbyCard ? 'block' : 'none';
 
@@ -7843,7 +7844,7 @@ function renderArchitectLobby(eventData, errorText = '') {
                    typeof isAdmin !== 'undefined' && isAdmin &&
                    teamCount >= minPlayers;
 
-  createBtn.style.display = 'none';
+  createBtn.style.display = (isAdmin && isTerminal) ? 'inline-flex' : 'none';
   joinBtn.style.display = canJoin ? 'inline-flex' : 'none';
   leaveBtn.style.display = canLeave ? 'inline-flex' : 'none';
   startBtn.style.display = canStart ? 'inline-flex' : 'none';
