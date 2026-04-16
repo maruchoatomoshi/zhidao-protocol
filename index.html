@@ -7567,20 +7567,35 @@ function renderEventOverlay(event) {
   }
 
   if (phaseText) {
+  if (event.state === 'REGISTRATION') {
+    phaseText.textContent = 'Ожидание старта';
+  } else if (event.state === 'FAILED' || event.state === 'FINISHED') {
+    phaseText.textContent = 'Событие завершено';
+  } else {
     phaseText.textContent = `Фаза ${event.phase ?? '—'}`;
   }
+}
 
-  if (phaseLabel) {
-    const roman = {1: 'I', 2: 'II', 3: 'III'};
+if (phaseLabel) {
+  const roman = {1: 'I', 2: 'II', 3: 'III'};
+  if (event.state === 'REGISTRATION') {
+    phaseLabel.textContent = 'LOBBY';
+  } else if (event.state === 'FAILED' || event.state === 'FINISHED') {
+    phaseLabel.textContent = 'END';
+  } else {
     phaseLabel.textContent = `ФАЗА ${roman[event.phase] || event.phase || 'I'}`;
   }
+}
 
-  if (stateBadge) {
-    stateBadge.textContent = event.state || 'ACTIVE';
-    stateBadge.className = 'event-status-badge';
-    if ((event.state || '').toUpperCase() === 'ACTIVE') stateBadge.classList.add('green');
-    if ((event.state || '').toUpperCase() === 'ENDED') stateBadge.classList.add('hot');
-  }
+ if (stateBadge) {
+  const state = (event.state || '').toUpperCase();
+  stateBadge.textContent = state || 'UNKNOWN';
+  stateBadge.className = 'event-status-badge';
+
+  if (state === 'ACTIVE') stateBadge.classList.add('green');
+  if (state === 'REGISTRATION') stateBadge.classList.add('gold');
+  if (state === 'FAILED' || state === 'FINISHED') stateBadge.classList.add('hot');
+}
 
   if (vulnerabilityBadge) {
     const vulnerable = !!event.vulnerability_active;
@@ -7597,15 +7612,15 @@ function renderEventOverlay(event) {
     }
   }
 
-  if (bossImage) {
-    if (event.phase === 1) {
-      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png';
-    } else if (event.phase === 2) {
-      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase2.png';
-    } else {
-      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png';
-    }
+ if (bossImage) {
+  if (event.phase === 1) {
+    bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png';
+  } else if (event.phase === 2) {
+    bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase2.png';
+  } else {
+    bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png';
   }
+}
 
   if (log) {
     if (Array.isArray(event.logs) && event.logs.length) {
