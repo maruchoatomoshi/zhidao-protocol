@@ -2150,7 +2150,9 @@ body.theme-genshin .diary-star.active {
 .event-hero img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center center;
+  display: block;
 }
 
 .event-hero-glow {
@@ -2317,7 +2319,6 @@ body.theme-genshin .diary-star.active {
 
 .event-loading {
   opacity: 0.6;
-  pointer-events: none;
 }
 
 .event-action[disabled] {
@@ -8083,28 +8084,6 @@ async function startArchitectEvent() {
 let pendingEventActionType = null;
 let pendingEventQuestionId = null;
 
-function bindArchitectActionButtons() {
-  const buttons = document.querySelectorAll('.event-action');
-  if (!buttons.length) return;
-
-  buttons.forEach(btn => {
-    if (btn.dataset.architectBound === '1') return;
-    btn.dataset.architectBound = '1';
-
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('attack')) {
-        requestArchitectQuestion('attack');
-      } else if (btn.classList.contains('protocol')) {
-        requestArchitectQuestion('protocol');
-      } else if (btn.classList.contains('sync')) {
-        requestArchitectQuestion('sync');
-      } else if (btn.classList.contains('stabilize')) {
-        requestArchitectQuestion('stabilize');
-      }
-    });
-  });
-}
-
 async function requestArchitectQuestion(actionType) {
   if (!currentArchitectEventId || !currentUserId) return;
 
@@ -8221,9 +8200,6 @@ async function submitArchitectAnswer(answerOption) {
   }
 }
 
-window.addEventListener('load', function() {
-  bindArchitectActionButtons();
-});
 </script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
@@ -8350,11 +8326,11 @@ window.addEventListener('load', function() {
       <div class="event-log-empty">Лог ивента появится здесь</div>
     </div>
 
-   <div class="event-actions">
-  <button class="event-action attack">Атака</button>
-  <button class="event-action protocol">Protocol</button>
-  <button class="event-action sync">Синхронизация</button>
-  <button class="event-action stabilize">Стабилизация</button>
+  <div class="event-actions">
+  <button class="event-action attack" onclick="requestArchitectQuestion('attack')">Атака</button>
+  <button class="event-action protocol" onclick="requestArchitectQuestion('protocol')">Protocol</button>
+  <button class="event-action sync" onclick="requestArchitectQuestion('sync')">Синхронизация</button>
+  <button class="event-action stabilize" onclick="requestArchitectQuestion('stabilize')">Стабилизация</button>
 </div>
 
     <div class="event-question-modal" id="eventQuestionBox" style="display:none;">
