@@ -7778,24 +7778,27 @@ function renderArchitectLobby(eventData, errorText = '') {
   const rewardEl = document.getElementById('eventRewardText');
   const teamCountEl = document.getElementById('eventTeamCount');
   const teamListEl = document.getElementById('eventTeamList');
+  const createBtn = document.getElementById('eventCreateBtn');
   const joinBtn = document.getElementById('eventJoinBtn');
   const leaveBtn = document.getElementById('eventLeaveBtn');
   const startBtn = document.getElementById('eventStartBtn');
 
-  if (!lobbyCard || !statusEl || !rewardEl || !teamCountEl || !teamListEl || !joinBtn || !leaveBtn || !startBtn) {
+  if (!lobbyCard || !statusEl || !rewardEl || !teamCountEl || !teamListEl || !createBtn || !joinBtn || !leaveBtn || !startBtn) {
     return;
   }
 
   if (!eventData) {
-    lobbyCard.style.display = 'none';
+    lobbyCard.style.display = 'block';
     statusEl.textContent = errorText || 'Ивент не создан';
     rewardEl.textContent = '—';
     teamCountEl.textContent = '0 / 0';
     teamListEl.innerHTML = '<div class="event-team-empty">Нет активного ивента</div>';
 
+    createBtn.style.display = isAdmin ? 'inline-flex' : 'none';
     joinBtn.style.display = 'none';
     leaveBtn.style.display = 'none';
     startBtn.style.display = 'none';
+    updateArchitectBattleVisibility(null);
     return;
   }
 
@@ -7840,6 +7843,7 @@ function renderArchitectLobby(eventData, errorText = '') {
                    typeof isAdmin !== 'undefined' && isAdmin &&
                    teamCount >= minPlayers;
 
+  createBtn.style.display = 'none';
   joinBtn.style.display = canJoin ? 'inline-flex' : 'none';
   leaveBtn.style.display = canLeave ? 'inline-flex' : 'none';
   startBtn.style.display = canStart ? 'inline-flex' : 'none';
@@ -7991,6 +7995,46 @@ async function leaveArchitectTeam() {
     renderArchitectLobby(data);
 
     try { tg.HapticFeedback.notificationOccurred('warning'); } catch (e) {}
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
+async function createArchitectEvent() {
+  if (!currentUserId || !isAdmin) return;
+
+  const rewardInput = window.prompt('Приз для команды', 'Поход в ТЦ');
+  if (rewardInput === null) return;
+
+  const rewardText = rewardInput.trim() || 'Приз не указан';
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/architect/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Id': String(currentUserId || 0)
+      },
+      body: JSON.stringify({
+        telegram_id: currentUserId,
+        reward_text: rewardText,
+        min_players: 3,
+        max_players: 5
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      tg.showAlert(data.detail || 'Не удалось создать ивент');
+      return;
+    }
+
+    currentArchitectEvent = data;
+    currentArchitectEventId = data.id;
+    renderArchitectLobby(data);
+
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
   } catch (e) {
     tg.showAlert('Ошибка соединения');
   }
@@ -8251,6 +8295,9 @@ async function submitArchitectAnswer(answerOption) {
   </div>
 
   <div class="event-lobby-actions" id="eventLobbyActions">
+    <button class="event-lobby-btn start" id="eventCreateBtn" onclick="createArchitectEvent()" style="display:none;">
+      Создать
+    </button>
     <button class="event-lobby-btn join" id="eventJoinBtn" onclick="joinArchitectTeam()">
       Вступить
     </button>
