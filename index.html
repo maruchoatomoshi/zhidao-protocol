@@ -5202,6 +5202,7 @@ async function loadUserData(telegramId) {
     const r = await fetch(`${API_URL}/api/user/${telegramId}`);
     if (r.ok) {
       const data = await r.json();
+      isAdmin = !!data.is_admin;
       userConfig = data.link;
       document.getElementById('status').textContent = '● АКТИВЕН';
       document.getElementById('status').style.color = '#cc4444';
@@ -5221,7 +5222,6 @@ async function loadUserData(telegramId) {
     document.getElementById('username').textContent = 'Ошибка связи';
   }
 }
-
 
 // ── THEME PATH LOGIC ──────────────────────────────────────────
 
