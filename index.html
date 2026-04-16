@@ -2325,6 +2325,146 @@ body.theme-genshin .diary-star.active {
   cursor: not-allowed;
   filter: grayscale(0.15);
 }
+
+.event-lobby-card {
+  margin: 14px 16px 0;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(212,175,55,0.16);
+  background: rgba(10, 10, 18, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.event-lobby-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.event-lobby-kicker {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: rgba(212,175,55,0.8);
+  font-family: monospace;
+}
+
+.event-lobby-status {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.event-lobby-count {
+  font-size: 13px;
+  color: rgba(212,175,55,0.92);
+  font-family: monospace;
+}
+
+.event-lobby-reward,
+.event-lobby-members {
+  margin-top: 14px;
+}
+
+.event-lobby-label {
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: #777;
+  font-family: monospace;
+}
+
+.event-lobby-value {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #f3e7c2;
+  font-weight: 600;
+}
+
+.event-team-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-team-member {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  font-size: 14px;
+  color: #e8e8e8;
+}
+
+.event-team-empty {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed rgba(255,255,255,0.08);
+  font-size: 13px;
+  color: #888;
+}
+
+.event-lobby-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.event-lobby-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.event-lobby-btn:active {
+  transform: scale(0.98);
+}
+
+.event-lobby-btn.join {
+  background: linear-gradient(135deg, #8b1010, #c62828);
+  color: #fff;
+}
+
+.event-lobby-btn.leave {
+  background: rgba(255,255,255,0.08);
+  color: #ddd;
+}
+
+.event-lobby-btn.start {
+  background: linear-gradient(135deg, #8a6820, #d4af37);
+  color: #161616;
+}  
+.event-option-btn {
+  width: 100%;
+  border: 1px solid rgba(212,175,55,0.18);
+  background: rgba(255,255,255,0.04);
+  color: #f0f0f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.event-option-btn:hover {
+  background: rgba(212,175,55,0.08);
+  border-color: rgba(212,175,55,0.32);
+}
+
+.event-option-btn:active {
+  transform: scale(0.99);
+}
+
   
 </style>
 </head>
@@ -4081,6 +4221,9 @@ let selectedLaundryDate = null;
 let laundryData = [];
 let shopMode = 'store';
 let currentMoreSection = null;
+let currentArchitectEvent = null;
+let currentArchitectEventId = null;
+
 
 const PRIZES = [
   { code:'empty',   icon:'🍚', name:'Пустая миска риса', desc:'Ничего не выпало...', points:0,   rarity:'common' },
@@ -7352,7 +7495,7 @@ function openEventOverlay() {
   }
 
   setEventExplanation('');
-  loadCurrentEvent();
+  loadCurrentArchitectEvent();
 }
 
 function closeEventOverlay() {
@@ -7673,7 +7816,370 @@ function setEventExplanation(text) {
     box.textContent = '';
   }
 }
-  
+
+async function loadCurrentArchitectEvent() {
+  try {
+    const res = await fetch(`${API_URL}/api/events/current`);
+    const data = await res.json();
+
+    currentArchitectEvent = data.event || null;
+    currentArchitectEventId = currentArchitectEvent ? currentArchitectEvent.id : null;
+
+    renderArchitectLobby(currentArchitectEvent);
+  } catch (e) {
+    renderArchitectLobby(null, 'Не удалось загрузить событие.');
+  }
+}
+
+function renderArchitectLobby(eventData, errorText = '') {
+  const statusEl = document.getElementById('eventStatusText');
+  const rewardEl = document.getElementById('eventRewardText');
+  const teamCountEl = document.getElementById('eventTeamCount');
+  const teamListEl = document.getElementById('eventTeamList');
+  const joinBtn = document.getElementById('eventJoinBtn');
+  const leaveBtn = document.getElementById('eventLeaveBtn');
+  const startBtn = document.getElementById('eventStartBtn');
+
+  if (!statusEl || !rewardEl || !teamCountEl || !teamListEl || !joinBtn || !leaveBtn || !startBtn) {
+    return;
+  }
+
+  if (!eventData) {
+    statusEl.textContent = errorText || 'Ивент не создан';
+    rewardEl.textContent = '—';
+    teamCountEl.textContent = '0 / 0';
+    teamListEl.innerHTML = '<div class="event-team-empty">Нет активного ивента</div>';
+
+    joinBtn.style.display = 'none';
+    leaveBtn.style.display = 'none';
+    startBtn.style.display = 'none';
+    return;
+  }
+
+  const stateMap = {
+    REGISTRATION: 'Набор команды',
+    ACTIVE: 'Идёт бой',
+    FINISHED: 'Победа',
+    FAILED: 'Поражение'
+  };
+
+  statusEl.textContent = stateMap[eventData.state] || eventData.state || '—';
+  rewardEl.textContent = eventData.reward_text || 'Приз не указан';
+
+  const minPlayers = eventData.min_players || 0;
+  const maxPlayers = eventData.max_players || 0;
+  const teamMembers = Array.isArray(eventData.team_members) ? eventData.team_members : [];
+  const teamCount = typeof eventData.team_count === 'number' ? eventData.team_count : teamMembers.length;
+
+  if (eventData.state === 'REGISTRATION') {
+    teamCountEl.textContent = `${teamCount} / ${maxPlayers}`;
+  } else {
+    teamCountEl.textContent = `${teamCount} чел.`;
+  }
+
+  if (!teamMembers.length) {
+    teamListEl.innerHTML = '<div class="event-team-empty">Пока никто не вступил</div>';
+  } else {
+    teamListEl.innerHTML = teamMembers.map(member => {
+      const name = escapeHtml(member.full_name || 'Аноним');
+      return `<div class="event-team-member">${name}</div>`;
+    }).join('');
+  }
+
+  const isMember = teamMembers.some(member => Number(member.telegram_id) === Number(currentUserId));
+  const canJoin = eventData.state === 'REGISTRATION' && !isMember && teamCount < maxPlayers;
+  const canLeave = eventData.state === 'REGISTRATION' && isMember;
+  const canStart = eventData.state === 'REGISTRATION' &&
+                   typeof isAdmin !== 'undefined' && isAdmin &&
+                   teamCount >= minPlayers;
+
+  joinBtn.style.display = canJoin ? 'inline-flex' : 'none';
+  leaveBtn.style.display = canLeave ? 'inline-flex' : 'none';
+  startBtn.style.display = canStart ? 'inline-flex' : 'none';
+
+  updateArchitectBattleVisibility(eventData);
+}
+
+function updateArchitectBattleVisibility(eventData) {
+  const actions = document.querySelector('.event-actions');
+  const log = document.getElementById('eventLog');
+  const hpText = document.getElementById('eventHpText');
+  const hpFill = document.getElementById('eventHpFill');
+  const phaseText = document.getElementById('eventPhaseText');
+  const phaseLabel = document.getElementById('eventPhaseLabel');
+
+  if (!actions || !log || !hpText || !hpFill || !phaseText || !phaseLabel) {
+    return;
+  }
+
+  const isActive = !!eventData && eventData.state === 'ACTIVE';
+
+  actions.style.display = isActive ? 'grid' : 'none';
+  if (!isActive) {
+  closeArchitectQuestion();
+}
+
+  if (!eventData) {
+    hpText.textContent = '—';
+    hpFill.style.width = '0%';
+    phaseText.textContent = 'Нет события';
+    phaseLabel.textContent = '—';
+    log.innerHTML = '<div class="event-log-empty">Лог ивента появится здесь</div>';
+    return;
+  }
+
+  const maxHp = eventData.max_hp || 1;
+  const currentHp = Math.max(0, eventData.current_hp || 0);
+  const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+
+  hpText.textContent = `${currentHp} / ${maxHp}`;
+  hpFill.style.width = `${hpPercent}%`;
+  phaseText.textContent = eventData.state === 'ACTIVE'
+    ? `Фаза ${eventData.phase || 1}`
+    : (eventData.state === 'REGISTRATION' ? 'Ожидание старта' : 'Событие завершено');
+  phaseLabel.textContent = eventData.state === 'ACTIVE'
+    ? `ФАЗА ${eventData.phase || 1}`
+    : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+
+  const logs = Array.isArray(eventData.logs) ? eventData.logs : [];
+  if (!logs.length) {
+    log.innerHTML = '<div class="event-log-empty">Лог ивента появится здесь</div>';
+  } else {
+    log.innerHTML = logs.map(item => {
+      return `<div class="event-log-line">${escapeHtml(item.message || '')}</div>`;
+    }).join('');
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+async function joinArchitectTeam() {
+  if (!currentArchitectEventId || !currentUserId) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/${currentArchitectEventId}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      tg.showAlert(data.detail || 'Не удалось вступить в команду');
+      return;
+    }
+
+    currentArchitectEvent = data;
+    currentArchitectEventId = data.id;
+    renderArchitectLobby(data);
+
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
+async function leaveArchitectTeam() {
+  if (!currentArchitectEventId || !currentUserId) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/${currentArchitectEventId}/leave`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      tg.showAlert(data.detail || 'Не удалось покинуть команду');
+      return;
+    }
+
+    currentArchitectEvent = data;
+    currentArchitectEventId = data.id;
+    renderArchitectLobby(data);
+
+    try { tg.HapticFeedback.notificationOccurred('warning'); } catch (e) {}
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
+async function startArchitectEvent() {
+  if (!currentArchitectEventId) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/${currentArchitectEventId}/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Id': String(currentUserId || 0)
+      },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      tg.showAlert(data.detail || 'Не удалось запустить ивент');
+      return;
+    }
+
+    currentArchitectEvent = data;
+    currentArchitectEventId = data.id;
+    renderArchitectLobby(data);
+
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
+let pendingEventActionType = null;
+let pendingEventQuestionId = null;
+
+function bindArchitectActionButtons() {
+  const buttons = document.querySelectorAll('.event-action');
+  if (!buttons.length) return;
+
+  buttons.forEach(btn => {
+    if (btn.dataset.architectBound === '1') return;
+    btn.dataset.architectBound = '1';
+
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('attack')) {
+        requestArchitectQuestion('attack');
+      } else if (btn.classList.contains('protocol')) {
+        requestArchitectQuestion('protocol');
+      } else if (btn.classList.contains('sync')) {
+        requestArchitectQuestion('sync');
+      } else if (btn.classList.contains('stabilize')) {
+        requestArchitectQuestion('stabilize');
+      }
+    });
+  });
+}
+
+async function requestArchitectQuestion(actionType) {
+  if (!currentArchitectEventId || !currentUserId) return;
+
+  try {
+    const res = await fetch(
+      `${API_URL}/api/events/${currentArchitectEventId}/question?telegram_id=${encodeURIComponent(currentUserId)}&action_type=${encodeURIComponent(actionType)}`
+    );
+    const data = await res.json();
+
+    if (!res.ok) {
+      tg.showAlert(data.detail || 'Не удалось получить вопрос');
+      return;
+    }
+
+    pendingEventActionType = actionType;
+
+    if (actionType === 'sync') {
+      pendingEventQuestionId = null;
+      await submitArchitectAnswer(null);
+      return;
+    }
+
+    const question = data.question;
+    if (!question) {
+      tg.showAlert('Вопрос не найден');
+      return;
+    }
+
+    pendingEventQuestionId = question.id;
+    showArchitectQuestion(question);
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
+function showArchitectQuestion(question) {
+  const box = document.getElementById('eventQuestionBox');
+  const prompt = document.getElementById('eventQuestionPrompt');
+  const options = document.getElementById('eventOptions');
+
+  if (!box || !prompt || !options) return;
+
+  prompt.textContent = question.prompt || 'Вопрос не загружен';
+
+  const opts = question.options || {};
+  options.innerHTML = `
+    <button class="event-option-btn" onclick="submitArchitectAnswer('a')">${escapeHtml(opts.a || '')}</button>
+    <button class="event-option-btn" onclick="submitArchitectAnswer('b')">${escapeHtml(opts.b || '')}</button>
+    <button class="event-option-btn" onclick="submitArchitectAnswer('c')">${escapeHtml(opts.c || '')}</button>
+  `;
+
+  box.style.display = 'block';
+}
+
+function closeArchitectQuestion() {
+  const box = document.getElementById('eventQuestionBox');
+  const options = document.getElementById('eventOptions');
+  const prompt = document.getElementById('eventQuestionPrompt');
+
+  if (box) box.style.display = 'none';
+  if (options) options.innerHTML = '';
+  if (prompt) prompt.textContent = 'Вопрос появится здесь';
+
+  pendingEventQuestionId = null;
+}
+
+async function submitArchitectAnswer(answerOption) {
+  if (!currentArchitectEventId || !currentUserId || !pendingEventActionType) return;
+
+  try {
+    const payload = {
+      event_id: currentArchitectEventId,
+      telegram_id: currentUserId,
+      action_type: pendingEventActionType,
+      use_active_modifier: false
+    };
+
+    if (pendingEventActionType !== 'sync') {
+      payload.question_id = pendingEventQuestionId;
+      payload.answer_option = answerOption;
+    }
+
+    const res = await fetch(`${API_URL}/api/events/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      tg.showAlert(data.detail || 'Не удалось отправить действие');
+      return;
+    }
+
+    closeArchitectQuestion();
+    pendingEventActionType = null;
+
+    if (data.is_correct === false && data.question_explanation) {
+      setEventExplanation(`Неверно. ${data.question_explanation}`);
+    } else if (data.question_explanation) {
+      setEventExplanation(data.question_explanation);
+    } else {
+      setEventExplanation('');
+    }
+
+    await loadCurrentArchitectEvent();
+
+    try {
+      tg.HapticFeedback.notificationOccurred(data.is_correct === false ? 'error' : 'success');
+    } catch (e) {}
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
+window.addEventListener('load', function() {
+  bindArchitectActionButtons();
+});
 </script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
@@ -7758,6 +8264,41 @@ function setEventExplanation(text) {
       </div>
     </div>
 
+<div class="event-lobby-card" id="eventLobbyCard">
+  <div class="event-lobby-head">
+    <div>
+      <div class="event-lobby-kicker">КОМАНДА</div>
+      <div class="event-lobby-status" id="eventStatusText">Ожидание данных...</div>
+    </div>
+    <div class="event-lobby-count" id="eventTeamCount">0 / 0</div>
+  </div>
+
+  <div class="event-lobby-reward">
+    <div class="event-lobby-label">ПРИЗ</div>
+    <div class="event-lobby-value" id="eventRewardText">—</div>
+  </div>
+
+  <div class="event-lobby-members">
+    <div class="event-lobby-label">СОСТАВ КОМАНДЫ</div>
+    <div class="event-team-list" id="eventTeamList">
+      <div class="event-team-empty">Пока никто не вступил</div>
+    </div>
+  </div>
+
+  <div class="event-lobby-actions" id="eventLobbyActions">
+    <button class="event-lobby-btn join" id="eventJoinBtn" onclick="joinArchitectTeam()">
+      Вступить
+    </button>
+    <button class="event-lobby-btn leave" id="eventLeaveBtn" onclick="leaveArchitectTeam()" style="display:none;">
+      Покинуть
+    </button>
+    <button class="event-lobby-btn start" id="eventStartBtn" onclick="startArchitectEvent()" style="display:none;">
+      Начать
+    </button>
+  </div>
+</div>
+
+    
       <div class="event-explanation" id="eventExplanation" style="display:none;"></div>
 
     
