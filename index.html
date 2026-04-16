@@ -7539,16 +7539,9 @@ async function loadCurrentEvent() {
 }
 
 function renderEventOverlay(event) {
-  const hpFill = document.getElementById('eventHpFill');
-  const hpText = document.getElementById('eventHpText');
-  const phaseText = document.getElementById('eventPhaseText');
-  const phaseLabel = document.getElementById('eventPhaseLabel');
   const bossImage = document.getElementById('eventBossImage');
-  const log = document.getElementById('eventLog');
 
-  const stateBadge = document.getElementById('eventStateBadge');
-  const vulnerabilityBadge = document.getElementById('eventVulnerabilityBadge');
-  const overloadBadge = document.getElementById('eventOverloadBadge');
+  if (!event) return;
 
   if (typeof event.id === 'number') {
     currentEventId = event.id;
@@ -7558,21 +7551,14 @@ function renderEventOverlay(event) {
     currentEventMaxHp = event.max_hp;
   }
 
-  if (hpFill && typeof event.current_hp === 'number' && typeof currentEventMaxHp === 'number') {
-    hpFill.style.width = `${Math.max(0, Math.min(100, (event.current_hp / currentEventMaxHp) * 100))}%`;
-  }
-
-  if (hpText) {
-    hpText.textContent = `${event.current_hp ?? '—'} / ${currentEventMaxHp ?? '—'}`;
-  }
-
-  if (phaseText) {
-  if (event.state === 'REGISTRATION') {
-    phaseText.textContent = 'Ожидание старта';
-  } else if (event.state === 'FAILED' || event.state === 'FINISHED') {
-    phaseText.textContent = 'Событие завершено';
-  } else {
-    phaseText.textContent = `Фаза ${event.phase ?? '—'}`;
+  if (bossImage) {
+    if (event.phase === 1) {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png';
+    } else if (event.phase === 2) {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase2.png';
+    } else {
+      bossImage.src = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png';
+    }
   }
 }
 
@@ -7922,6 +7908,10 @@ function updateArchitectBattleVisibility(eventData) {
   const hpFill = document.getElementById('eventHpFill');
   const phaseText = document.getElementById('eventPhaseText');
   const phaseLabel = document.getElementById('eventPhaseLabel');
+  const stateBadge = document.getElementById('eventStateBadge');
+  const vulnerabilityBadge = document.getElementById('eventVulnerabilityBadge');
+  const overloadBadge = document.getElementById('eventOverloadBadge');
+
 
   if (!actions || !log || !hpText || !hpFill || !phaseText || !phaseLabel) {
     return;
@@ -7940,6 +7930,21 @@ function updateArchitectBattleVisibility(eventData) {
     phaseText.textContent = 'Нет события';
     phaseLabel.textContent = '—';
     log.innerHTML = '<div class="event-log-empty">Лог ивента появится здесь</div>';
+
+      if (stateBadge) {
+      stateBadge.textContent = '—';
+      stateBadge.className = 'event-status-badge';
+    }
+
+    if (vulnerabilityBadge) {
+      vulnerabilityBadge.textContent = '—';
+      vulnerabilityBadge.className = 'event-status-badge';
+    }
+
+    if (overloadBadge) {
+      overloadBadge.textContent = 'OVERLOAD: 0';
+      overloadBadge.className = 'event-status-badge';
+    }
     return;
   }
 
@@ -7955,6 +7960,30 @@ function updateArchitectBattleVisibility(eventData) {
   phaseLabel.textContent = eventData.state === 'ACTIVE'
     ? `ФАЗА ${eventData.phase || 1}`
     : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+
+     if (stateBadge) {
+    const state = String(eventData.state || '').toUpperCase();
+    stateBadge.textContent = state || 'UNKNOWN';
+    stateBadge.className = 'event-status-badge';
+
+    if (state === 'ACTIVE') stateBadge.classList.add('green');
+    if (state === 'REGISTRATION') stateBadge.classList.add('gold');
+    if (state === 'FAILED' || state === 'FINISHED') stateBadge.classList.add('hot');
+  }
+
+  if (vulnerabilityBadge) {
+    const vulnerable = !!eventData.vulnerability_active && eventData.state === 'ACTIVE';
+    vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
+    vulnerabilityBadge.className = 'event-status-badge';
+    vulnerabilityBadge.classList.add(vulnerable ? 'gold' : 'hot');
+  }
+
+  if (overloadBadge) {
+    const overload = Number(eventData.overload_pressure || 0);
+    overloadBadge.textContent = `OVERLOAD: ${overload}`;
+    overloadBadge.className = 'event-status-badge';
+    if (overload >= 5) overloadBadge.classList.add('hot');
+  }
 
   const logs = Array.isArray(eventData.logs) ? eventData.logs : [];
   if (!logs.length) {
@@ -8321,11 +8350,11 @@ window.addEventListener('load', function() {
       <div class="event-log-empty">Лог ивента появится здесь</div>
     </div>
 
-    <div class="event-actions">
-  <button class="event-action attack" onclick="eventAction('attack')">Атака</button>
-  <button class="event-action protocol" onclick="eventAction('protocol')">Protocol</button>
-  <button class="event-action sync" onclick="eventAction('sync')">Синхронизация</button>
-  <button class="event-action stabilize" onclick="eventAction('stabilize')">Стабилизация</button>
+   <div class="event-actions">
+  <button class="event-action attack">Атака</button>
+  <button class="event-action protocol">Protocol</button>
+  <button class="event-action sync">Синхронизация</button>
+  <button class="event-action stabilize">Стабилизация</button>
 </div>
 
     <div class="event-question-modal" id="eventQuestionBox" style="display:none;">
