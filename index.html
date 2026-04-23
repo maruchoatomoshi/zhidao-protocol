@@ -983,8 +983,12 @@ body.theme-genshin-dark .lb-points
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0,0,0,0.82);
-  backdrop-filter: blur(10px);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,80,40,0.13), transparent 22%),
+    radial-gradient(circle at 50% 50%, rgba(170,20,20,0.28), transparent 40%),
+    linear-gradient(180deg, rgba(22,0,0,0.44), rgba(0,0,0,0.58)),
+    rgba(0,0,0,0.92);
+  backdrop-filter: blur(14px);
 }
 
 .architect-banner-overlay.show {
@@ -992,59 +996,336 @@ body.theme-genshin-dark .lb-points
 }
 
 .architect-banner-card {
+  position: relative;
   width: 100%;
-  max-width: 360px;
-  border-radius: 18px;
-  border: 1px solid rgba(180,20,20,0.42);
+  max-width: 410px;
+  border-radius: 24px;
+  border: 1px solid rgba(210,26,26,0.42);
   background:
-    linear-gradient(180deg, rgba(28,8,12,0.96), rgba(10,10,18,0.94));
+    linear-gradient(180deg, rgba(18,0,2,0.98), rgba(10,4,10,0.98) 42%, rgba(8,8,16,0.97));
   box-shadow:
-    0 24px 80px rgba(0,0,0,0.42),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+    0 32px 120px rgba(0,0,0,0.65),
+    0 0 50px rgba(180,18,18,0.18),
+    0 0 0 1px rgba(255,80,40,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 0 60px rgba(120,0,0,0.12);
   overflow: hidden;
 }
 
+.architect-banner-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,0.022) 0,
+      rgba(255,255,255,0.022) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.architect-banner-card::after {
+  content: '';
+  position: absolute;
+  inset: -30% -10% auto -10%;
+  height: 180px;
+  background: radial-gradient(circle, rgba(255,20,20,0.34), transparent 70%);
+  filter: blur(24px);
+  pointer-events: none;
+  animation: architectPulseGlow 2.6s ease-in-out infinite;
+}
+
+.architect-banner-card .architect-banner-noise {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,0.035), transparent),
+    linear-gradient(180deg, transparent 0%, rgba(255,0,0,0.05) 48%, transparent 100%);
+  mix-blend-mode: screen;
+  opacity: 0.38;
+  pointer-events: none;
+  animation: architectNoiseShift 0.22s steps(2) infinite;
+}
+
 .architect-banner-head {
-  padding: 14px 16px 0;
+  position: relative;
+  z-index: 1;
+  padding: 16px 18px 0;
   color: rgba(212,175,55,0.9);
   font-size: 10px;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   font-family: monospace;
+}
+
+.architect-banner-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.architect-banner-topline::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(212,175,55,0.55), rgba(212,175,55,0));
+}
+
+.architect-banner-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.82);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 24px rgba(255,0,0,0.10);
+}
+
+.architect-banner-visual {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 18px 10px;
+  min-height: 150px;
+}
+
+.architect-banner-grid {
+  position: absolute;
+  inset: 10px 18px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.architect-banner-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,0,0,0.08) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(180deg, rgba(255,0,0,0.08) 0 1px, transparent 1px 18px);
+}
+
+.architect-banner-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(255,0,0,0.10), transparent);
+  animation: architectScanSweep 2.2s linear infinite;
+}
+
+.architect-banner-sigil {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  color: rgba(255,110,90,0.78);
+  font-size: 10px;
+  letter-spacing: 3px;
+  font-family: monospace;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0.85;
+  text-shadow: 0 0 14px rgba(255,40,40,0.35);
+}
+
+.architect-banner-core {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,70,50,0.25);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,120,80,0.22), rgba(180,0,0,0.14) 42%, transparent 72%),
+    rgba(255,255,255,0.02);
+  box-shadow:
+    0 0 50px rgba(180,20,20,0.26),
+    inset 0 0 35px rgba(255,255,255,0.03);
+  animation: architectPulseCore 1.9s ease-in-out infinite;
+}
+
+.architect-banner-core::before,
+.architect-banner-core::after {
+  content: '';
+  position: absolute;
+  inset: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+.architect-banner-core::before {
+  width: 76px;
+  height: 76px;
+  border: 1px solid rgba(255,70,50,0.55);
+  box-shadow: 0 0 18px rgba(255,70,50,0.28);
+}
+
+.architect-banner-core::after {
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, rgba(255,180,140,0.95), rgba(255,20,20,0.52));
+  box-shadow: 0 0 24px rgba(255,40,40,0.52);
 }
 
 .architect-banner-title {
-  padding: 8px 16px 0;
+  position: relative;
+  z-index: 1;
+  padding: 2px 18px 0;
   color: #fff;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 900;
-  line-height: 1.05;
-  text-shadow: 0 0 24px rgba(255, 60, 40, 0.26);
+  line-height: 1;
+  letter-spacing: 1px;
+  text-shadow:
+    0 0 32px rgba(255, 60, 40, 0.30),
+    -1px 0 rgba(255,0,0,0.30),
+    1px 0 rgba(255,255,255,0.08);
+  animation: architectTextGlitch 2.3s steps(2) infinite;
 }
 
 .architect-banner-copy {
-  padding: 10px 16px 0;
-  color: #b8b8c4;
+  position: relative;
+  z-index: 1;
+  margin: 12px 18px 0;
+  padding: 12px 14px 0;
+  border-left: 2px solid rgba(190,20,20,0.42);
+  color: #c8c8d2;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.65;
+}
+
+.architect-banner-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 18px 0;
+}
+
+.architect-banner-chip {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,50,50,0.14);
+  background: rgba(120,10,10,0.18);
+  color: #ffb37a;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  font-family: monospace;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .architect-banner-status {
-  margin: 14px 16px 0;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(212,175,55,0.18);
-  background: rgba(255,255,255,0.03);
-  color: #f2d778;
+  position: relative;
+  z-index: 1;
+  margin: 16px 18px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,80,40,0.18);
+  background:
+    linear-gradient(90deg, rgba(130,20,20,0.22), rgba(255,255,255,0.02));
+  color: #ffcf8a;
   font-size: 11px;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   font-family: monospace;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.architect-banner-status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: #ff3b20;
+  box-shadow: 0 0 12px rgba(255,59,32,0.75);
+  animation: architectAlertBlink 0.9s ease-in-out infinite;
 }
 
 .architect-banner-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 16px;
+  position: relative;
+  z-index: 1;
+  padding: 18px;
+}
+
+.architect-banner-dismiss {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(210,26,26,0.44);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(160,10,10,0.44), rgba(38,4,10,0.96));
+  color: #fff;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 0 24px rgba(180,0,0,0.16);
+}
+
+.architect-banner-dismiss:hover {
+  border-color: rgba(255,70,40,0.56);
+  background:
+    linear-gradient(180deg, rgba(185,16,16,0.56), rgba(38,4,10,0.98));
+}
+
+@keyframes architectPulseGlow {
+  0%, 100% { opacity: 0.70; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(8px); }
+}
+
+@keyframes architectPulseCore {
+  0%, 100% { transform: scale(1); filter: saturate(1); }
+  50% { transform: scale(1.05); filter: saturate(1.2); }
+}
+
+@keyframes architectNoiseShift {
+  0% { transform: translate(0, 0); opacity: 0.28; }
+  50% { transform: translate(1px, -1px); opacity: 0.42; }
+  100% { transform: translate(-1px, 1px); opacity: 0.30; }
+}
+
+@keyframes architectScanSweep {
+  0% { transform: translateY(-120%); opacity: 0; }
+  10% { opacity: 0.10; }
+  50% { opacity: 0.28; }
+  100% { transform: translateY(130%); opacity: 0; }
+}
+
+@keyframes architectTextGlitch {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-1px); }
+  21% { transform: translateX(1px); }
+  22% { transform: translateX(0); }
+  58% { transform: translateX(0); }
+  59% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  61% { transform: translateX(0); }
+}
+
+@keyframes architectAlertBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 
 /* --- КРИТИЧЕСКИЙ CSS ДЛЯ РЕЙДА --- */
@@ -5727,11 +6008,6 @@ function closeArchitectArrivalBanner() {
   }
 }
 
-function openArchitectProtocolFromBanner() {
-  closeArchitectArrivalBanner();
-  openEventOverlay();
-}
-
 // ===== РАСПИСАНИЕ =====
 async function loadSchedule() {
   try {
@@ -8759,16 +9035,29 @@ async function submitArchitectAnswer(answerOption) {
 
 <div id="architectArrivalBanner" class="architect-banner-overlay" onclick="closeArchitectArrivalBanner()">
   <div class="architect-banner-card" onclick="event.stopPropagation()">
-    <div class="architect-banner-head">CRITICAL OVERRIDE</div>
+    <div class="architect-banner-noise"></div>
+    <button class="architect-banner-close" onclick="closeArchitectArrivalBanner()">×</button>
+    <div class="architect-banner-head">
+      <div class="architect-banner-topline">CRITICAL OVERRIDE</div>
+    </div>
+    <div class="architect-banner-visual">
+      <div class="architect-banner-grid"></div>
+      <div class="architect-banner-core"></div>
+      <div class="architect-banner-sigil">SYSTEM BREACH // PRIORITY OMEGA</div>
+    </div>
     <div class="architect-banner-title">АРХИТЕКТОР В СЕТИ</div>
     <div class="architect-banner-copy">
-      Внешний протокол активен. Обнаружен вход управляющей сущности.
-      Канал связи готов к открытию.
+      Обнаружен вход управляющей сущности. Внешний контур активирован,
+      управляющий канал захвачен, системный фон переведён в режим наблюдения.
+    </div>
+    <div class="architect-banner-meta">
+      <div class="architect-banner-chip">SIGNAL // LIVE</div>
+      <div class="architect-banner-chip">CHANNEL // LOCKED</div>
+      <div class="architect-banner-chip">LEVEL // CRITICAL</div>
     </div>
     <div class="architect-banner-status">STATUS // ARCHITECT ONLINE</div>
     <div class="architect-banner-actions">
-      <button class="btn btn-gold" onclick="openArchitectProtocolFromBanner()">ОТКРЫТЬ</button>
-      <button class="btn" onclick="closeArchitectArrivalBanner()">ЗАКРЫТЬ</button>
+      <button class="architect-banner-dismiss" onclick="closeArchitectArrivalBanner()">ПРИНЯТО</button>
     </div>
   </div>
 </div>
