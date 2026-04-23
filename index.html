@@ -8274,6 +8274,19 @@ const ARCHITECT_PHASE_VIDEOS = {
   3: 'architect_phase3.mp4'
 };
 
+const ARCHITECT_PHASE_MUSIC = {
+  1: 'architect_phase1_music.mp3',
+  2: 'architect_phase2_music.mp3',
+  3: 'architect_phase3_music.mp3'
+};
+
+const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
+const ARCHITECT_MUSIC_FADE_MS = 1400;
+let architectMusicUnlocked = false;
+let architectMusicCurrentTrack = '';
+let architectMusicActiveDeck = 'a';
+let architectMusicFadeFrame = null;
+
 function getArchitectPhaseImage(eventData) {
   if (!eventData) return ARCHITECT_PHASE_IMAGES[1];
   const phase = Number(eventData.phase || 1);
@@ -8288,6 +8301,154 @@ function getArchitectPhaseVideo(eventData) {
   if (phase === 2) return ARCHITECT_PHASE_VIDEOS[2] || '';
   if (phase >= 3) return ARCHITECT_PHASE_VIDEOS[3] || '';
   return ARCHITECT_PHASE_VIDEOS[1] || '';
+}
+
+function getArchitectPhaseMusic(eventData) {
+  if (!eventData) return '';
+  if (String(eventData.state || '').toUpperCase() !== 'ACTIVE') return '';
+  const phase = Number(eventData.phase || 1);
+  if (phase === 2) return ARCHITECT_PHASE_MUSIC[2] || '';
+  if (phase >= 3) return ARCHITECT_PHASE_MUSIC[3] || '';
+  return ARCHITECT_PHASE_MUSIC[1] || '';
+}
+
+function getArchitectMusicPlayers() {
+  return {
+    a: document.getElementById('architectMusicA'),
+    b: document.getElementById('architectMusicB')
+  };
+}
+
+function stopArchitectMusicFade() {
+  if (architectMusicFadeFrame) {
+    cancelAnimationFrame(architectMusicFadeFrame);
+    architectMusicFadeFrame = null;
+  }
+}
+
+function fadeArchitectMusic(fromAudio, toAudio, targetVolume = ARCHITECT_MUSIC_TARGET_VOLUME, duration = ARCHITECT_MUSIC_FADE_MS) {
+  stopArchitectMusicFade();
+
+  const fromStart = fromAudio ? Number(fromAudio.volume || 0) : 0;
+  const toStart = toAudio ? Number(toAudio.volume || 0) : 0;
+  const startedAt = performance.now();
+
+  function tick(now) {
+    const progress = Math.min(1, (now - startedAt) / duration);
+
+    if (fromAudio) {
+      fromAudio.volume = Math.max(0, fromStart * (1 - progress));
+    }
+
+    if (toAudio) {
+      toAudio.volume = Math.min(targetVolume, toStart + (targetVolume - toStart) * progress);
+    }
+
+    if (progress < 1) {
+      architectMusicFadeFrame = requestAnimationFrame(tick);
+      return;
+    }
+
+    if (fromAudio) {
+      fromAudio.volume = 0;
+      try {
+        fromAudio.pause();
+        fromAudio.currentTime = 0;
+      } catch (e) {}
+    }
+
+    if (toAudio) {
+      toAudio.volume = targetVolume;
+    }
+
+    architectMusicFadeFrame = null;
+  }
+
+  architectMusicFadeFrame = requestAnimationFrame(tick);
+}
+
+function stopArchitectMusic(immediate = false) {
+  const players = getArchitectMusicPlayers();
+  const allPlayers = [players.a, players.b].filter(Boolean);
+
+  stopArchitectMusicFade();
+
+  if (immediate) {
+    allPlayers.forEach((audio) => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 0;
+      } catch (e) {}
+    });
+    architectMusicCurrentTrack = '';
+    return;
+  }
+
+  const activePlayer = players[architectMusicActiveDeck];
+  if (!activePlayer) {
+    architectMusicCurrentTrack = '';
+    return;
+  }
+
+  fadeArchitectMusic(activePlayer, null, 0, 700);
+  architectMusicCurrentTrack = '';
+}
+
+function switchArchitectMusic(trackUrl) {
+  const players = getArchitectMusicPlayers();
+  const activePlayer = players[architectMusicActiveDeck];
+  const nextDeck = architectMusicActiveDeck === 'a' ? 'b' : 'a';
+  const nextPlayer = players[nextDeck];
+
+  if (!architectMusicUnlocked || !activePlayer || !nextPlayer) {
+    return;
+  }
+
+  if (!trackUrl) {
+    stopArchitectMusic();
+    return;
+  }
+
+  if (architectMusicCurrentTrack === trackUrl && activePlayer.dataset.currentTrack === trackUrl) {
+    if (activePlayer.paused) {
+      const resumePromise = activePlayer.play();
+      if (resumePromise && typeof resumePromise.catch === 'function') {
+        resumePromise.catch(() => {});
+      }
+    }
+    activePlayer.volume = ARCHITECT_MUSIC_TARGET_VOLUME;
+    return;
+  }
+
+  stopArchitectMusicFade();
+
+  nextPlayer.loop = true;
+  nextPlayer.preload = 'auto';
+  nextPlayer.volume = 0;
+
+  if (nextPlayer.dataset.currentTrack !== trackUrl) {
+    nextPlayer.src = trackUrl;
+    nextPlayer.dataset.currentTrack = trackUrl;
+    nextPlayer.load();
+  } else {
+    try {
+      nextPlayer.currentTime = 0;
+    } catch (e) {}
+  }
+
+  const playPromise = nextPlayer.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {});
+  }
+
+  fadeArchitectMusic(activePlayer, nextPlayer);
+  architectMusicActiveDeck = nextDeck;
+  architectMusicCurrentTrack = trackUrl;
+}
+
+function syncArchitectMusic(eventData) {
+  switchArchitectMusic(getArchitectPhaseMusic(eventData));
 }
 
 function setArchitectAmbientVisibility(isVisible) {
@@ -8335,6 +8496,8 @@ function applyArchitectMedia(eventData) {
     bossImage.src = imageSrc;
     bossImage.style.display = videoSrc ? 'none' : 'block';
   }
+
+  syncArchitectMusic(eventData);
 }
 
 function openEventOverlay() {
@@ -8348,6 +8511,7 @@ function openEventOverlay() {
 
   document.body.style.overflow = 'hidden';
   setArchitectAmbientVisibility(false);
+  architectMusicUnlocked = true;
 
   const log = document.getElementById('eventLog');
   if (log) {
@@ -8374,6 +8538,8 @@ function closeEventOverlay() {
   if (bossVideo) {
     bossVideo.pause();
   }
+
+  stopArchitectMusic();
 }
 
 async function loadCurrentEvent() {
@@ -9233,6 +9399,9 @@ async function submitArchitectAnswer(answerOption) {
 <audio id="architectArrivalAudio" preload="auto">
   <source src="architect-arrival.ogg" type="audio/ogg">
 </audio>
+
+<audio id="architectMusicA" preload="auto" loop style="display:none;"></audio>
+<audio id="architectMusicB" preload="auto" loop style="display:none;"></audio>
 
 </body>
 </html>
