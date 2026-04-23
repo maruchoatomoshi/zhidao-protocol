@@ -975,6 +975,78 @@ body.theme-genshin-dark .lb-points
   margin-bottom: 12px; animation: glitch 2s infinite; white-space: nowrap;
 }
 
+.architect-banner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(10px);
+}
+
+.architect-banner-overlay.show {
+  display: flex;
+}
+
+.architect-banner-card {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 18px;
+  border: 1px solid rgba(180,20,20,0.42);
+  background:
+    linear-gradient(180deg, rgba(28,8,12,0.96), rgba(10,10,18,0.94));
+  box-shadow:
+    0 24px 80px rgba(0,0,0,0.42),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+
+.architect-banner-head {
+  padding: 14px 16px 0;
+  color: rgba(212,175,55,0.9);
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-family: monospace;
+}
+
+.architect-banner-title {
+  padding: 8px 16px 0;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-shadow: 0 0 24px rgba(255, 60, 40, 0.26);
+}
+
+.architect-banner-copy {
+  padding: 10px 16px 0;
+  color: #b8b8c4;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.architect-banner-status {
+  margin: 14px 16px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(212,175,55,0.18);
+  background: rgba(255,255,255,0.03);
+  color: #f2d778;
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-family: monospace;
+}
+
+.architect-banner-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 16px;
+}
+
 /* --- КРИТИЧЕСКИЙ CSS ДЛЯ РЕЙДА --- */
 
 /* Оверлей фона (размытие и затемнение) */
@@ -3219,6 +3291,7 @@ body.theme-genshin .diary-star.active {
       <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">Стирка/Вода</button>
       <button class="admin-sec-btn" onclick="showAdminSection('users',this)">Пользователи</button>
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">BlackWall</button>
+      <button class="admin-sec-btn" onclick="openArchitectArrivalBanner()">Architect</button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
       <input class="admin-input" id="adminSchDay" placeholder="День (Пн, Вт...)">
@@ -5618,6 +5691,46 @@ function showHelp() {
 }
 
 function contactAdmin() { tg.openTelegramLink('https://t.me/christianpastor'); }
+
+function openArchitectArrivalBanner() {
+  const overlay = document.getElementById('architectArrivalBanner');
+  const audio = document.getElementById('architectArrivalAudio');
+  if (!overlay) return;
+
+  overlay.classList.add('show');
+
+  if (audio) {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      const maybePromise = audio.play();
+      if (maybePromise && typeof maybePromise.catch === 'function') {
+        maybePromise.catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  try { tg.HapticFeedback.notificationOccurred('warning'); } catch (e) {}
+}
+
+function closeArchitectArrivalBanner() {
+  const overlay = document.getElementById('architectArrivalBanner');
+  const audio = document.getElementById('architectArrivalAudio');
+  if (overlay) {
+    overlay.classList.remove('show');
+  }
+  if (audio) {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch (e) {}
+  }
+}
+
+function openArchitectProtocolFromBanner() {
+  closeArchitectArrivalBanner();
+  openEventOverlay();
+}
 
 // ===== РАСПИСАНИЕ =====
 async function loadSchedule() {
@@ -8643,6 +8756,26 @@ async function submitArchitectAnswer(answerOption) {
     </div>
   </div>
 </div>
+
+<div id="architectArrivalBanner" class="architect-banner-overlay" onclick="closeArchitectArrivalBanner()">
+  <div class="architect-banner-card" onclick="event.stopPropagation()">
+    <div class="architect-banner-head">CRITICAL OVERRIDE</div>
+    <div class="architect-banner-title">АРХИТЕКТОР В СЕТИ</div>
+    <div class="architect-banner-copy">
+      Внешний протокол активен. Обнаружен вход управляющей сущности.
+      Канал связи готов к открытию.
+    </div>
+    <div class="architect-banner-status">STATUS // ARCHITECT ONLINE</div>
+    <div class="architect-banner-actions">
+      <button class="btn btn-gold" onclick="openArchitectProtocolFromBanner()">ОТКРЫТЬ</button>
+      <button class="btn" onclick="closeArchitectArrivalBanner()">ЗАКРЫТЬ</button>
+    </div>
+  </div>
+</div>
+
+<audio id="architectArrivalAudio" preload="auto">
+  <source src="architect-arrival.ogg" type="audio/ogg">
+</audio>
 
 </body>
 </html>
