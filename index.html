@@ -3572,7 +3572,7 @@ body.theme-genshin .diary-star.active {
       <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">Стирка/Вода</button>
       <button class="admin-sec-btn" onclick="showAdminSection('users',this)">Пользователи</button>
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">BlackWall</button>
-      <button class="admin-sec-btn" onclick="openArchitectArrivalBanner()">Architect</button>
+      <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()">Architect</button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
       <input class="admin-input" id="adminSchDay" placeholder="День (Пн, Вт...)">
@@ -4671,6 +4671,7 @@ let shopMode = 'store';
 let currentMoreSection = null;
 let currentArchitectEvent = null;
 let currentArchitectEventId = null;
+let globalAlertPollingHandle = null;
 let casinoPlayOriginalMarkup = '';
 let shopStoreOriginalMarkup = '';
 
@@ -4730,6 +4731,7 @@ if (user) {
   loadUserData(user.id);
   loadPoints(user.id);
   loadImplants(user.id);
+  startGlobalAlertPolling();
   if (isAdmin) {
     document.getElementById('adminMoreBtn').style.display = 'block';
     document.getElementById('shopResetBtn').style.display = 'block';
@@ -5972,6 +5974,80 @@ function showHelp() {
 }
 
 function contactAdmin() { tg.openTelegramLink('https://t.me/christianpastor'); }
+
+function getLastSeenGlobalAlertId() {
+  return Number(localStorage.getItem('last_global_alert_id') || '0');
+}
+
+function setLastSeenGlobalAlertId(alertId) {
+  localStorage.setItem('last_global_alert_id', String(alertId || 0));
+}
+
+async function triggerGlobalArchitectAlert() {
+  if (!currentUserId) {
+    openArchitectArrivalBanner();
+    return;
+  }
+
+  try {
+    const r = await fetch(`${API_URL}/api/global-alert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegram_id: currentUserId,
+        alert_type: 'architect',
+        title: 'ARCHITECT ONLINE',
+        message: 'Critical override detected.',
+      }),
+    });
+    const data = await r.json();
+
+    if (!r.ok) {
+      tg.showAlert(data.detail || 'Signal error');
+      return;
+    }
+
+    if (data.alert_id) {
+      setLastSeenGlobalAlertId(data.alert_id);
+    }
+
+    openArchitectArrivalBanner();
+  } catch (e) {
+    tg.showAlert('Connection error');
+  }
+}
+
+async function checkGlobalAlert() {
+  if (!currentUserId) return;
+
+  try {
+    const r = await fetch(`${API_URL}/api/global-alert/current`);
+    if (!r.ok) return;
+
+    const data = await r.json();
+    const alert = data.alert;
+    if (!alert || !alert.is_active) return;
+
+    const alertId = Number(alert.id || 0);
+    if (!alertId) return;
+
+    if (getLastSeenGlobalAlertId() === alertId) {
+      return;
+    }
+
+    setLastSeenGlobalAlertId(alertId);
+
+    if (String(alert.alert_type || '').toLowerCase() === 'architect') {
+      openArchitectArrivalBanner();
+    }
+  } catch (e) {}
+}
+
+function startGlobalAlertPolling() {
+  if (globalAlertPollingHandle) return;
+  checkGlobalAlert();
+  globalAlertPollingHandle = setInterval(checkGlobalAlert, 4000);
+}
 
 function openArchitectArrivalBanner() {
   const overlay = document.getElementById('architectArrivalBanner');
