@@ -4317,6 +4317,7 @@ let shopMode = 'store';
 let currentMoreSection = null;
 let currentArchitectEvent = null;
 let currentArchitectEventId = null;
+let casinoPlayOriginalMarkup = '';
 
 
 const PRIZES = [
@@ -4406,9 +4407,9 @@ function showPage(name, btn) {
   if (name === 'casino') {
     fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
       if (settings.blackwall && !isAdmin) {
-        document.getElementById('casinoPlayContent').innerHTML =
-          '<div class="blackwall-screen"><div class="blackwall-title">BlackWall 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
+        setCasinoBlackwallState(true);
       } else {
+        setCasinoBlackwallState(false);
         if (currentThemePath === 'genshin') {
           document.getElementById('casinoPlayContent').style.display = 'none';
           const gcEl = document.getElementById('casinoGenshinContent');
@@ -4421,6 +4422,27 @@ function showPage(name, btn) {
       }
     }).catch(() => { setTimeout(initRoulette, 50); });
   }
+}
+
+function setCasinoBlackwallState(enabled) {
+  const content = document.getElementById('casinoPlayContent');
+  if (!content) return;
+
+  if (enabled) {
+    if (!casinoPlayOriginalMarkup) {
+      casinoPlayOriginalMarkup = content.innerHTML;
+    }
+    if (content.dataset.blackwallActive === '1') return;
+    content.innerHTML =
+      '<div class="blackwall-screen"><div class="blackwall-title">BlackWall 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
+    content.dataset.blackwallActive = '1';
+    return;
+  }
+
+  if (content.dataset.blackwallActive === '1' && casinoPlayOriginalMarkup) {
+    content.innerHTML = casinoPlayOriginalMarkup;
+  }
+  delete content.dataset.blackwallActive;
 }
 
 function openDiaryPage() {
@@ -4752,7 +4774,11 @@ function getDiaryEntryFromCache(dateString) {
 
 function countDiaryWords(entry) {
   if (!entry || !entry.words) return 0;
-  return entry.words.filter(w => (w.hanzi || '').trim()).length;
+  return entry.words.filter(w =>
+    (w.hanzi || '').trim() ||
+    (w.pinyin || '').trim() ||
+    (w.translation || '').trim()
+  ).length;
 }
 
 // Headers for all diary API calls
@@ -4776,11 +4802,11 @@ async function loadDiaryFromAPI(targetUserId, date) {
     if (!r.ok) return null;
     const data = await r.json();
 
-    // Normalize words: server returns [{row_number, hanzi, pinyin, translation}]
+    // Support both indexed rows and a plain ordered array from the API.
     const wordArr = createEmptyDiaryWords();
     if (Array.isArray(data.words)) {
-      data.words.forEach(w => {
-        const idx = (w.row_number || 1) - 1;
+      data.words.forEach((w, index) => {
+        const idx = Number.isInteger(w?.row_number) ? w.row_number - 1 : index;
         if (idx >= 0 && idx < 15)
           wordArr[idx] = { hanzi: w.hanzi || '', pinyin: w.pinyin || '', translation: w.translation || '' };
       });
@@ -4805,7 +4831,10 @@ async function loadDiaryListFromAPI(targetUserId) {
       headers: diaryHeaders()
     });
     if (!r.ok) return [];
-    return await r.json(); // [{entry_date, status, word_count, submitted_at, locked_at}]
+    const data = await r.json();
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.entries)) return data.entries;
+    return [];
   } catch (e) {
     return [];
   }
@@ -4921,7 +4950,7 @@ async function renderDiarySavedDays() {
     const active     = date === diaryCurrentDate ? 'active' : '';
     const srv        = byDate[date];
     const local      = getDiaryEntryFromCache(date);
-    const wordCount  = srv ? (srv.word_count || 0) : countDiaryWords(local);
+    const wordCount  = srv ? (srv.words_filled ?? srv.word_count ?? 0) : countDiaryWords(local);
     const icon       = srv
       ? (srv.status === 'locked' ? '🔒' : srv.status === 'submitted' ? '✅' : '📝')
       : '💾';
