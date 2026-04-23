@@ -5421,11 +5421,16 @@ async function loadPoints(telegramId) {
       const data = await r.json();
       currentPoints = data.points || 0;
       updatePoints();
+      const b = document.getElementById('casinoBonusBanner');
       if (data.double_win) {
-        const b = document.getElementById('casinoBonusBanner');
+        if (b) {
         b.style.display = 'block'; b.textContent = '🃏 УДВОЕНИЕ АКТИВНО!';
       }
       // Применяем путь (Киберпанк / Геншин)
+      } else if (b) {
+        b.style.display = 'none';
+        b.textContent = '';
+      }
       if (!isAdmin) applyThemePath(data.theme_path || null);
     }
   } catch(e) {}
@@ -5685,7 +5690,7 @@ function loadSavedTheme() {
 
 function switchRatingTab(tab, btn) {
   document.querySelectorAll('#page-rating .subtab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   document.getElementById('rating-main-tab').style.display = tab === 'main' ? 'block' : 'none';
   document.getElementById('rating-diary-tab').style.display = tab === 'diary' ? 'block' : 'none';
   if (tab === 'diary') loadDiaryStarsLeaderboardRating();
@@ -5827,7 +5832,7 @@ async function loadLeaderboard() {
 function switchShopTab(mode, btn) {
   shopMode = mode;
   document.querySelectorAll('#page-shop .subtab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   ['shopStoreContent','shopInventoryContent','shopFolkContent'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
@@ -6192,7 +6197,7 @@ async function loadShop() {
     if (!r.ok) throw new Error('shop');
     const data = await r.json();
     document.getElementById('shopPoints').textContent = currentPoints + ' ★';
-    if (data.frozen) document.getElementById('shopFrozenBanner').style.display = 'block';
+    document.getElementById('shopFrozenBanner').style.display = data.frozen ? 'block' : 'none';
     const catInfo = {
       'privilege': { name:'特权 ПРИВИЛЕГИИ', cn:'🏮' },
       'points':    { name:'积分 БАЛЛЫ', cn:'⭐' },
@@ -6330,7 +6335,7 @@ async function resetShop() {
 function switchCasinoTab(mode, btn) {
   loadPoints(currentUserId);
   document.querySelectorAll('#page-casino .subtab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   const ids = ['casinoPlayContent','casinoInventoryContent','casinoHistoryContent','casinoRulesContent','casinoGenshinContent','genshinRulesContent'];
   ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
   const isGenshin = currentThemePath === 'genshin';
