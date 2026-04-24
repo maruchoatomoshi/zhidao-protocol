@@ -2530,7 +2530,7 @@ body.theme-genshin .diary-star.active {
   display: flex;
   flex-direction: column;
   padding: 14px 12px 160px;
-  overflow-y: hidden;
+  overflow-y: auto;
   overflow-x: hidden;
 }
 
@@ -2583,12 +2583,13 @@ body.theme-genshin .diary-star.active {
 }
 
 .event-hero {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
-  display: block;
+  position: relative;
+  flex: none;
+  min-height: clamp(360px, 52vh, 620px);
+  height: clamp(360px, 52vh, 620px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
   overflow: hidden;
   border-radius: 0;
@@ -2658,19 +2659,24 @@ body.theme-genshin .diary-star.active {
 
 .event-hud {
   position: absolute;
-  top: 72px;
+  top: 12px;
   left: 12px;
-  width: min(300px, calc(100% - 24px));
-  max-width: 300px;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  backdrop-filter: none;
   z-index: 5;
-  display: block;
+  margin: 0;
+  width: min(360px, calc(100% - 24px));
+  max-width: 360px;
+  min-height: 48px;
+  padding: 6px 8px 6px 7px;
+  background: rgba(3, 8, 14, 0.72);
+  border: 1px solid rgba(0, 230, 255, 0.74);
+  box-shadow:
+    0 0 16px rgba(0, 230, 255, 0.16),
+    inset 0 0 0 1px rgba(0, 230, 255, 0.08);
+  backdrop-filter: blur(6px);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
   pointer-events: none;
 }
 
@@ -2683,7 +2689,14 @@ body.theme-genshin .diary-star.active {
 }
 
 .boss-hud__stack {
-  display: none;
+  position: relative;
+  z-index: 1;
+  width: 38px;
+  flex: 0 0 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: stretch;
 }
 
 .boss-hud__avatar {
@@ -2727,24 +2740,21 @@ body.theme-genshin .diary-star.active {
 .boss-hud__main {
   position: relative;
   z-index: 1;
+  min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-height: 0;
-  padding: 5px 7px;
-  background:
-    linear-gradient(90deg, rgba(0, 234, 255, 0.08), transparent 34%),
-    rgba(3, 8, 14, 0.58);
-  border: 1px solid rgba(0, 230, 255, 0.74);
-  box-shadow:
-    0 0 13px rgba(0, 230, 255, 0.14),
-    inset 0 0 0 1px rgba(0, 230, 255, 0.08);
-  backdrop-filter: blur(6px);
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
 }
 
 .boss-hud__caption {
-  display: none;
+  font-family: monospace;
+  font-size: 5px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 107, 96, 0.9);
 }
 
 .boss-hud__topline {
@@ -2756,9 +2766,9 @@ body.theme-genshin .diary-star.active {
 }
 
 .event-boss-name {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   margin: 0;
   color: #c9fbff;
@@ -2772,9 +2782,10 @@ body.theme-genshin .diary-star.active {
 }
 
 .event-meta-row {
+  flex: 0 0 auto;
   display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 3px;
   margin: 0;
@@ -2784,10 +2795,10 @@ body.theme-genshin .diary-star.active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 11px;
-  padding: 0 3px;
+  min-height: 13px;
+  padding: 0 4px;
   border-radius: 2px;
-  font-size: 5px;
+  font-size: 6px;
   font-family: monospace;
   font-weight: 700;
   line-height: 1;
@@ -2852,7 +2863,7 @@ body.theme-genshin .diary-star.active {
 
 .event-hp-text,
 .event-overload-readout {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: #bafaff;
@@ -2867,7 +2878,7 @@ body.theme-genshin .diary-star.active {
 
 .event-hp-bar {
   position: relative;
-  height: 4px;
+  height: 5px;
   background: rgba(7, 16, 24, 0.92);
   border: 1px solid rgba(84, 245, 255, 0.52);
   overflow: hidden;
@@ -2898,33 +2909,41 @@ body.theme-genshin .diary-star.active {
 
 @media (max-width: 379px) {
   .event-hud {
-    top: 68px;
-    width: min(270px, calc(100% - 24px));
-    max-width: 270px;
-    min-height: 0;
+    width: min(300px, calc(100% - 24px));
+    max-width: 300px;
+    min-height: 48px;
   }
 
   .event-status-badge {
-    font-size: 5px;
+    font-size: 6px;
     padding: 0 3px;
   }
 
   .event-boss-name {
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .event-hp-text,
   .event-overload-readout {
-    font-size: 7px;
+    font-size: 8px;
   }
 
   .boss-hud__stack {
-    display: none;
+    width: 34px;
+    flex-basis: 34px;
+  }
+
+  .boss-hud__avatar {
+    height: 25px;
+  }
+
+  .boss-hud__level {
+    min-height: 16px;
+    font-size: 8px;
   }
 
   .boss-hud__main {
     min-height: 0;
-    padding: 4px 6px;
   }
 }
 
