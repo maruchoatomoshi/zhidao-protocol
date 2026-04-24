@@ -4,6 +4,11 @@ const ARCHITECT_PHASE_IMAGES = {
   3: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase3.png'
 };
 
+const ARCHITECT_TERMINAL_IMAGES = {
+  FINISHED: 'architect_ivent_win.png',
+  FAILED: 'architect_ivent_lose.png'
+};
+
 const ARCHITECT_PHASE_VIDEOS = {
   1: 'architect_phase1.mp4',
   2: 'architect_phase2.mp4',
@@ -25,6 +30,8 @@ let architectMusicFadeFrame = null;
 
 function getArchitectPhaseImage(eventData) {
   if (!eventData) return ARCHITECT_PHASE_IMAGES[1];
+  const state = String(eventData.state || '').toUpperCase();
+  if (ARCHITECT_TERMINAL_IMAGES[state]) return ARCHITECT_TERMINAL_IMAGES[state];
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_IMAGES[2];
   if (phase >= 3) return ARCHITECT_PHASE_IMAGES[3];
@@ -33,6 +40,8 @@ function getArchitectPhaseImage(eventData) {
 
 function getArchitectPhaseVideo(eventData) {
   if (!eventData) return '';
+  const state = String(eventData.state || '').toUpperCase();
+  if (state === 'FINISHED' || state === 'FAILED') return '';
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_VIDEOS[2] || '';
   if (phase >= 3) return ARCHITECT_PHASE_VIDEOS[3] || '';
