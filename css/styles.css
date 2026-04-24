@@ -2675,12 +2675,12 @@ body.theme-genshin .diary-star.active {
   max-width: 330px;
   min-height: 42px;
   padding: 5px 7px 5px 6px;
-  background: rgba(3, 8, 14, 0.72);
-  border: 1px solid rgba(0, 230, 255, 0.74);
+  background: rgba(3, 8, 14, 0.46);
+  border: 1px solid rgba(0, 230, 255, 0.46);
   box-shadow:
-    0 0 16px rgba(0, 230, 255, 0.16),
-    inset 0 0 0 1px rgba(0, 230, 255, 0.08);
-  backdrop-filter: blur(6px);
+    0 0 12px rgba(0, 230, 255, 0.10),
+    inset 0 0 0 1px rgba(0, 230, 255, 0.04);
+  backdrop-filter: blur(4px);
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   display: flex;
   align-items: stretch;
