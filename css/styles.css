@@ -2656,57 +2656,43 @@ body.theme-genshin .diary-star.active {
 .event-hud {
   position: relative;
   align-self: flex-start;
-  width: min(100%, 280px);
-  max-width: 280px;
-  min-height: 48px;
-  margin: 8px 0 10px;
-  padding: 6px 8px 6px 7px;
-  background: rgba(3, 8, 14, 0.72);
-  border: 1px solid rgba(0, 230, 255, 0.74);
-  box-shadow:
-    0 0 16px rgba(0, 230, 255, 0.16),
-    inset 0 0 0 1px rgba(0, 230, 255, 0.08);
-  backdrop-filter: blur(6px);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  width: min(74vw, 318px);
+  max-width: 318px;
+  min-height: 52px;
+  margin: 8px 0 12px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
   z-index: 3;
   display: flex;
-  align-items: stretch;
-  gap: 7px;
+  align-items: center;
+  gap: 6px;
   pointer-events: none;
 }
 
 .event-hud::before {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  border: 1px solid rgba(0, 230, 255, 0.2);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  pointer-events: none;
+  display: none;
 }
 
 .event-hud::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(0, 234, 255, 0.08), transparent 28%),
-    linear-gradient(180deg, rgba(255, 56, 56, 0.06), transparent 42%);
-  pointer-events: none;
+  display: none;
 }
 
 .boss-hud__stack {
   position: relative;
   z-index: 1;
-  width: 36px;
-  flex: 0 0 36px;
+  width: 38px;
+  flex: 0 0 38px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   align-items: stretch;
 }
 
 .boss-hud__avatar {
-  height: 24px;
+  height: 28px;
   border: 1px solid rgba(255, 74, 74, 0.72);
   background:
     linear-gradient(180deg, rgba(255, 66, 66, 0.1), rgba(255, 66, 66, 0.02)),
@@ -2732,12 +2718,12 @@ body.theme-genshin .diary-star.active {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 20px;
+  min-height: 17px;
   border: 1px solid rgba(0, 234, 255, 0.78);
   background: rgba(4, 10, 14, 0.92);
   color: #87f8ff;
   font-family: monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-shadow: 0 0 8px rgba(0, 234, 255, 0.22);
@@ -2750,14 +2736,25 @@ body.theme-genshin .diary-star.active {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  min-height: 48px;
+  padding: 5px 7px 6px;
+  background:
+    linear-gradient(90deg, rgba(0, 234, 255, 0.08), transparent 34%),
+    rgba(3, 8, 14, 0.76);
+  border: 1px solid rgba(0, 230, 255, 0.74);
+  box-shadow:
+    0 0 13px rgba(0, 230, 255, 0.14),
+    inset 0 0 0 1px rgba(0, 230, 255, 0.08);
+  backdrop-filter: blur(6px);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
 }
 
 .boss-hud__caption {
   font-family: monospace;
-  font-size: 6px;
+  font-size: 5px;
   line-height: 1;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(255, 107, 96, 0.9);
 }
@@ -2773,7 +2770,7 @@ body.theme-genshin .diary-star.active {
 .event-boss-name {
   flex: 0 1 auto;
   min-width: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   margin: 0;
   color: #c9fbff;
@@ -2800,10 +2797,10 @@ body.theme-genshin .diary-star.active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 15px;
+  min-height: 13px;
   padding: 0 4px;
   border-radius: 2px;
-  font-size: 7px;
+  font-size: 6px;
   font-family: monospace;
   font-weight: 700;
   line-height: 1;
@@ -2860,7 +2857,7 @@ body.theme-genshin .diary-star.active {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 5px;
   margin: 0;
   font-family: monospace;
   line-height: 1;
@@ -2868,7 +2865,7 @@ body.theme-genshin .diary-star.active {
 
 .event-hp-text,
 .event-overload-readout {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: #bafaff;
@@ -2913,9 +2910,9 @@ body.theme-genshin .diary-star.active {
 
 @media (max-width: 379px) {
   .event-hud {
-    width: min(100%, 260px);
-    max-width: 300px;
-    min-height: 46px;
+    width: min(82vw, 286px);
+    max-width: 286px;
+    min-height: 48px;
   }
 
   .event-status-badge {
@@ -2924,21 +2921,31 @@ body.theme-genshin .diary-star.active {
   }
 
   .event-boss-name {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .event-hp-text,
   .event-overload-readout {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .boss-hud__stack {
-    width: 32px;
-    flex-basis: 32px;
+    width: 34px;
+    flex-basis: 34px;
   }
 
   .boss-hud__avatar {
-    height: 22px;
+    height: 25px;
+  }
+
+  .boss-hud__level {
+    min-height: 16px;
+    font-size: 8px;
+  }
+
+  .boss-hud__main {
+    min-height: 46px;
+    padding: 5px 6px;
   }
 }
 
