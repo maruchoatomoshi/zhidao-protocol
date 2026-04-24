@@ -2574,8 +2574,8 @@ body.theme-genshin .diary-star.active {
 }
 
 .event-phase {
-  margin-top: 4px;
-  font-size: 24px;
+  margin-top: 2px;
+  font-size: 18px;
   font-weight: 800;
   color: #fff;
   text-shadow: 0 0 22px rgba(255, 60, 40, 0.5);
