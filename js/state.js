@@ -1,0 +1,15 @@
+let currentUserId = null;
+let currentThemePath = null; // "cyberpunk" | "genshin" | null
+let currentPoints = 0;
+let userConfig = null;
+let isAdmin = false;
+let isSpinning = false;
+let selectedLaundryDate = null;
+let laundryData = [];
+let shopMode = 'store';
+let currentMoreSection = null;
+let currentArchitectEvent = null;
+let currentArchitectEventId = null;
+let globalAlertPollingHandle = null;
+let casinoPlayOriginalMarkup = '';
+let shopStoreOriginalMarkup = '';

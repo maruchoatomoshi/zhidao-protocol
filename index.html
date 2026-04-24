@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZHIDAO Protocol v2.6.6</title>
+<!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+<!-- Фоновые иероглифы -->
+<div class="bg-kanji" style="font-size:160px;top:-20px;right:-20px;color:rgba(180,20,20,0.03);font-family:serif;--kanji-duration:18s;animation-delay:-3s;">道</div>
+<div class="bg-kanji" style="font-size:100px;bottom:80px;left:-15px;color:rgba(180,20,20,0.025);font-family:serif;--kanji-duration:22s;animation-delay:-9s;">龙</div>
+<div class="bg-kanji" style="font-size:70px;top:40%;right:10px;color:rgba(212,175,55,0.02);font-family:serif;--kanji-duration:16s;animation-delay:-5s;">福</div>
+
+<div class="matrix-rain" id="matrixRain" aria-hidden="true"></div>
+
+<!-- Конфетти -->
+<div id="confettiContainer" style="position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;"></div>
+
+<!-- Модалка вопроса -->
+<div class="question-modal" id="questionModal">
+  <div class="question-box">
+    <div class="card-label">🤫 匿名问题 // анонимный вопрос</div>
+    <textarea id="questionText" placeholder="Введи свой вопрос..."></textarea>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="submitQuestion()">[ 发送 // ОТПРАВИТЬ ]</button>
+      <button class="btn" style="padding:10px 14px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:monospace;font-size:10px;cursor:pointer;border-radius:8px;" onclick="closeQuestion()">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ГЛАВНАЯ ===== -->
+<div class="page active" id="page-home">
+  <div class="main-logo-wrap">
+    <div class="main-logo"><img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true" style="width:140px;height:140px;object-fit:contain;"></div>
+    <div class="main-pinyin">智能电子解决方案</div>
+    <div class="proto-tag">🏮 PROTOCOL v1.4 // ACTIVE 🏮</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-cn">信用</div>
+      <div class="stat-num" id="myPointsBig">—</div>
+      <div class="stat-lbl">// кредиты ★</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-cn">状态</div>
+      <div id="status" style="font-size:11px;color:#cc4444;font-weight:700;margin:4px 0;">● Загрузка</div>
+      <div class="stat-lbl" id="myPoints">— ★</div>
+    </div>
+  </div>
+
+  <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
+
+  <div class="card neuro-card">
+    <div class="card-inner">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+        <div style="flex:1;">
+          <div class="neuro-name" id="username">Загрузка...</div>
+          <div class="neuro-sub" id="serverTag">HK NODE // —</div>
+          <div class="traffic-bar mt8"><div class="traffic-fill" id="progressFill"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:8px;color:var(--text3);font-family:monospace;">ТРАФИК</span>
+            <span style="font-size:8px;color:var(--gold);font-family:monospace;" id="trafficValue">— GB</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button class="btn btn-primary btn-sm" onclick="getConfig()">获取<br>КОНФИГ</button>
+          <button class="btn btn-gold btn-sm" onclick="showHelp()">?</button>
+        </div>
+      </div>
+      <div id="configBox" class="config-box"></div>
+      <button id="copyBtn" onclick="copyConfig()" class="btn btn-gold mt8" style="width:100%;padding:7px;font-size:9px;display:none;">📋 СКОПИРОВАТЬ</button>
+    </div>
+  </div>
+
+<div style="padding:8px 12px 4px;">
+  <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
+</div>
+
+<div onclick="openEventOverlay()" style="
+  margin:8px 12px 12px;
+  padding:14px 16px;
+  border-radius:16px;
+  border:1px solid rgba(180,20,20,0.28);
+  background:
+    linear-gradient(135deg, rgba(120,0,0,0.22), rgba(255,255,255,0.02)),
+    rgba(255,255,255,0.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+  cursor:pointer;
+">
+  <div style="font-size:10px;letter-spacing:1.8px;color:rgba(212,175,55,0.86);font-family:monospace;">
+    LIVE EVENT
+  </div>
+  <div style="margin-top:4px;font-size:20px;font-weight:800;color:#fff;">
+    АРХИТЕКТОР
+  </div>
+  <div style="margin-top:4px;font-size:12px;color:#bbb;line-height:1.5;">
+    Полноэкранный бой против босса. Открывается поверх приложения.
+  </div>
+</div>
+
+</div>
+
+<!-- ===== РАСПИСАНИЕ + НОВОСТИ ===== -->
+<div class="page" id="page-schedule">
+  <div class="page-header">
+    <div class="page-title">НОВОСТИ <span class="page-title-cn">新闻</span></div>
+    <div class="page-sub">> xīn wén // объявления от вожатых</div>
+  </div>
+ <div id="adminAnnounceForm" class="admin-announce-form" style="display:none;padding:10px 12px;">
+  <textarea class="admin-input" id="announceText" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
+  <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
+</div>
+
+<div id="announcementsContent" class="announcements-content">
+  <div class="empty-state">Загрузка...</div>
+</div>
+
+  <div class="page-header" style="margin-top:8px;">
+    <div class="page-title">РАСПИСАНИЕ <span class="page-title-cn">课表</span></div>
+    <div class="page-sub">> kè biǎo // учебный план</div>
+  </div>
+  <div id="scheduleContent"><div class="empty-state">Загрузка...</div></div>
+  <div id="adminScheduleForm" style="display:none;padding:10px 12px;">
+    <div class="cn-divider">👑 ДОБАВИТЬ ЗАНЯТИЕ</div>
+    <input class="admin-input" id="schDay" placeholder="День (Пн, Вт...)">
+    <input class="admin-input" id="schTime" placeholder="Время (09:00)">
+    <input class="admin-input" id="schSubject" placeholder="Предмет">
+    <input class="admin-input" id="schLocation" placeholder="Место">
+    <button class="btn btn-primary" onclick="addScheduleItem()">[ ДОБАВИТЬ ]</button>
+  </div>
+</div>
+
+<!-- ===== РЕЙТИНГ ===== -->
+<div class="page" id="page-rating">
+  <div class="page-header">
+    <div class="page-title">РЕЙТИНГ <span class="page-title-cn">排名</span></div>
+    <div class="page-sub">> pái míng // таблица лидеров</div>
+  </div>
+  <div class="my-rank-card">
+    <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:4px;">// МОИ КРЕДИТЫ //</div>
+    <div class="my-points-big" id="myPointsRating">—</div>
+    <div class="my-rank-sub" id="myRankSub">Участвуй чтобы попасть в рейтинг!</div>
+  </div>
+
+  <!-- Альфабосс — вне зачёта -->
+  <div style="margin:0 12px 4px;background:linear-gradient(135deg,rgba(212,175,55,0.08),rgba(180,20,20,0.05));border:1px solid rgba(212,175,55,0.3);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;">
+    <div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:48px;color:rgba(212,175,55,0.04);font-family:serif;pointer-events:none;">王</div>
+    <div style="font-size:22px;">👑</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:900;color:var(--gold);letter-spacing:1px;">АЛЬФАБОСС</div>
+      <div style="font-size:9px;color:rgba(100,80,30,0.7);font-family:monospace;margin-top:2px;">// ВНЕ ЗАЧЁТА // НЕДОСЯГАЕМ //</div>
+    </div>
+    <div style="font-size:11px;color:rgba(100,80,30,0.6);font-family:monospace;">999 999 ★</div>
+  </div>
+
+  <!-- НОВАЯ КНОПКА РЕЙДА (открывает оверлей) -->
+<div style="margin:4px 12px 8px;" id="raidBlock">
+  <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
+    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">⚔️</span>
+    [ 袭击 // РЕЙД НА АЛЬФАБОССА ]
+    <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(100,80,30,0.6);">50 ★</span>
+  </button>
+</div>
+<!-- Старый блок raidPanel мы полностью удаляем, он больше не нужен -->
+
+  <div style="display:flex;gap:6px;margin:0 12px 8px;">
+    <button id="tab-rating-main-btn" onclick="switchRatingTab('main',this)" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">🏆 РЕЙТИНГ</button>
+    <button id="tab-rating-diary-btn" onclick="switchRatingTab('diary',this)" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⭐ ДНЕВНИК</button>
+  </div>
+
+  <div id="rating-main-tab">
+    <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
+    <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
+  </div>
+
+  <div id="rating-diary-tab" style="display:none;">
+    <div class="cn-divider">⭐ 日记排名 топ дневников ⭐</div>
+    <div class="card" style="margin:4px 12px;">
+      <div class="card-inner" id="diaryStarsLeaderboardRating">
+        <div class="empty-state">Загрузка...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== МАГАЗИН ===== -->
+<div class="page" id="page-shop">
+  <div class="page-header">
+    <div class="page-title">МАГАЗИН <span class="page-title-cn">商店</span></div>
+    <div class="page-sub">> shāng diàn // 免税区 беспошлинная зона</div>
+  </div>
+  <div class="shop-header-bar">
+    <div class="shop-balance">信用: <span id="shopPoints">—</span></div>
+    <button class="btn btn-sm" style="background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:monospace;font-size:8px;cursor:pointer;" onclick="resetShop()" id="shopResetBtn" style="display:none;">СБРОС</button>
+  </div>
+  <div class="frozen-banner" id="shopFrozenBanner">⛔ NetWatch 网络保安 — аккаунт заморожен</div>
+  <div class="shop-subtabs">
+    <button class="subtab active" onclick="switchShopTab('store',this)">商店 МАГАЗИН</button>
+    <button class="subtab" onclick="switchShopTab('inventory',this)">背包 ИНВЕНТАРЬ</button>
+    <button class="subtab" onclick="switchShopTab('folk',this)">🏮 НАРОДНЫЙ</button>
+  </div>
+  <div id="shopStoreContent"></div>
+  <div id="shopInventoryContent" style="display:none;"></div>
+  <div id="shopFolkContent" style="display:none;">
+    <div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">🏮</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">民间商店 Народный магазин</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;">МЮ предлагает товар — все скидываются вместе.<br>Когда сумма набирается — товар получают все участники.<br><br><span style="color:var(--text3);">Скоро здесь появятся предложения...</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== КЕЙСЫ ===== -->
+<div class="page" id="page-casino">
+  <div class="page-header">
+    <div class="page-title" id="casino-page-title">КЕЙСЫ <span class="page-title-cn" id="casino-page-cn">箱子</span></div>
+    <div class="page-sub">> kāi xiāng // 开运箱 открыть ящик удачи</div>
+  </div>
+
+  <div class="casino-subtabs">
+    <button class="subtab active" id="casinoPlayBtn" onclick="switchCasinoTab(currentThemePath==='genshin'?'genshin':'play',this)">🎰 ИГРАТЬ</button>
+    <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
+    <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
+    <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
+  </div>
+
+  <div id="casinoPlayContent" style="display:flex;flex-direction:column;">
+    <div class="casino-balance">
+      <div>
+        <div style="font-size:8px;color:var(--text3);font-family:monospace;">信用 // КРЕДИТЫ</div>
+        <div style="font-size:20px;font-weight:800;color:var(--gold);" id="casinoPoints">— ★</div>
+        <div id="casinoBonusBanner" class="bonus-banner" style="display:none;"></div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:8px;color:var(--text3);font-family:monospace;">费用 // СТОИМОСТЬ</div>
+        <div style="font-size:18px;font-weight:800;color:#cc3333;font-family:monospace;">50 ★</div>
+      </div>
+    </div>
+
+    <div class="cases-grid">
+      <div class="case-card gold">
+        <div class="case-cn g">金色</div>
+        <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png" style="width:80px;height:80px;object-fit:contain;margin:6px auto;display:block;">
+        <div class="case-pct g">78.9%</div>
+      </div>
+      <div class="case-card purple">
+        <div class="case-cn p">紫色</div>
+        <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png" style="width:80px;height:80px;object-fit:contain;margin:6px auto;display:block;">
+        <div class="case-pct p">21%</div>
+      </div>
+      <div class="case-card black">
+        <div class="case-cn b">传奇</div>
+        <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png" style="width:80px;height:80px;object-fit:contain;margin:6px auto;display:block;">
+        <div class="case-pct b">0.1%</div>
+      </div>
+    </div>
+
+    <div style="font-size:8px;color:var(--text3);font-family:monospace;text-align:center;margin:0 12px 6px;">⚠️ Минимум 80 ★ • Лимит 3 кейса в день</div>
+
+    <div class="roulette-wrapper">
+      <div class="roulette-pointer"></div>
+      <div class="roulette-pointer-bottom"></div>
+      <div class="roulette-track">
+        <div class="roulette-center-line"></div>
+        <div class="roulette-strip" id="rouletteStrip"></div>
+      </div>
+    </div>
+
+    <div class="prize-result" id="prizeResult">
+      <div class="prize-result-icon" id="prizeIcon">🎁</div>
+      <div class="prize-result-name" id="prizeName">—</div>
+      <div class="prize-result-desc" id="prizeDesc">—</div>
+      <div class="prize-result-points" id="prizePoints">—</div>
+    </div>
+
+    <div style="padding:0 12px 6px;display:flex;flex-direction:column;gap:6px;">
+      <button class="btn btn-primary" id="openCaseBtn" onclick="openCase()">🏮 [ 开箱 // ОТКРЫТЬ КЕЙС — 50 ★ ] 🏮</button>
+    </div>
+  </div>
+
+  <div id="casinoInventoryContent" style="display:none;flex-direction:column;">
+    <div class="card" style="margin:8px 12px;">
+      <div class="card-inner">
+        <div class="card-label">🎒 ПРИЗЫ ИЗ КЕЙСОВ</div>
+        <div id="casinoInventoryList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="casinoHistoryContent" style="display:none;flex-direction:column;">
+    <div class="card" style="margin:8px 12px;">
+      <div class="card-inner">
+        <div class="card-label">📊 ИСТОРИЯ ПРОКРУТОК</div>
+        <div id="casinoHistoryList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="casinoRulesContent" style="display:none;flex-direction:column;">
+    <div style="padding:8px 0;">
+      <div class="rules-row">
+        <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png" style="width:32px;height:32px;object-fit:contain;"></div>
+        <div><div class="rules-title">金色 Золотой — 78.9%</div>
+        <div class="rules-desc">
+          🍚 Пустая миска — не повезло (20%)<br>
+          ⭐ +30 баллов (35%)<br>
+          💫 +60 баллов (25%)<br>
+          🕐 +30 мин свободы (10%)<br>
+          🧺 Вне очереди на стирку (6%)<br>
+          🛡 Иммунитет от штрафа (3%)<br>
+          👑 ДЖЕКПОТ +250 баллов (1%)
+        </div></div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png" style="width:32px;height:32px;object-fit:contain;"></div>
+        <div><div class="rules-title">紫色 Фиолетовый — 21%</div>
+        <div class="rules-desc">
+          🤝 Имплант Гуаньси 关系 — -10% в магазине (50%)<br>
+          🗿 Имплант Терракота 兵马俑 — блок штрафа (50%)
+        </div></div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png" style="width:32px;height:32px;object-fit:contain;"></div>
+        <div><div class="rules-title">传奇 Легендарный — 0.1%</div>
+        <div class="rules-desc">
+          🐉 Красный Дракон 红龙 — легендарный протокол<br>
+          +20% баллов + бесплатный кейс + красный ник
+        </div></div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon">💰</div>
+        <div><div class="rules-title">Стоимость и лимиты</div>
+        <div class="rules-desc">
+          50★ за кейс • Минимум 80★ на балансе<br>
+          Лимит 3 кейса в день<br>
+          Дополнительный кейс можно купить в магазине
+        </div></div>
+      </div>
+      <div style="margin:10px 12px;padding:12px;background:rgba(180,20,20,0.06);border:1px solid rgba(180,20,20,0.2);border-radius:8px;">
+        <div style="font-size:9px;color:rgba(200,50,50,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">⚠️ ДИСКЛЕЙМЕР</div>
+        <div style="font-size:11px;color:#888;line-height:1.7;">Кейсы — это игровая механика для развлечения и мотивации. Призы выдаются случайно. Это не способ заработка баллов — открытие кейса стоит 50★ и чаще всего возвращает меньше. Играй ради удовольствия, а не ради прибыли 🎲</div>
+      </div>
+    </div>
+  </div>  <!-- /casinoRulesContent -->
+  <!-- ── Правила Молитв (Геншин) ─────────────────────────── -->
+  <div id="genshinRulesContent" style="display:none;flex-direction:column;">
+    <div style="padding:8px 0;">
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🔵</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">синий свиток <span style="color:var(--text2);">— 79%</span></div>
+          <div class="rules-desc">
+            ⭐ +30 звёзд (35%)<br>
+            💫 +60 звёзд (20%)<br>
+            🛡 Иммунитет от штрафа (10%)<br>
+            🕐 +30 мин свободы (7%)<br>
+            🌸 Карточка 4★ (28%)
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟣</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">фиолетовый свиток <span style="color:var(--text2);">— 20%</span></div>
+          <div class="rules-desc">
+            焰莲使者 Страж Огня — Феникс: +50★ после штрафа<br>
+            九尾狐灵 Лиса-Оборотень — Обман: перекрутить приз<br>
+            桃花仙子 Небесная Фея — Благословение: +30★ отряду<br>
+            文曲星君 Звезда Литературы — Мудрость: +25★ за отчёт<br>
+            木灵仙君 Дух Леса — Урожай: +10★ за день вовремя<br>
+            海灵仙后 Дух Морей — Волна: каждые 3 молитвы +30★<br>
+            嫦娥仙子 Богиня Луны — Жемчужина: дубль даёт +50★
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟡</div>
+        <div>
+          <div class="rules-title" style="font-size:13px;">золотой свиток <span style="color:var(--text2);">— 1%</span></div>
+          <div class="rules-desc">
+            岩王帝君 Архонт Земли — Контракт: блок штрафа + -5% магазин<br>
+            紫微星君 Императорская Звезда — Звёздный суд: передать штраф другому
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;">🔄</div>
+        <div>
+          <div class="rules-title">Дубликаты</div>
+          <div class="rules-desc">
+            Повторная карточка добавляется как второй экземпляр.<br>
+            嫦娥仙子 Богиня Луны — дубль сразу даёт +50★ вместо карточки.<br>
+            Лишние карточки разбираются за 50★ в разделе Карточки.
+          </div>
+        </div>
+      </div>
+      <div class="rules-row">
+        <div class="rules-icon">💰</div>
+        <div>
+          <div class="rules-title">Стоимость и лимиты</div>
+          <div class="rules-desc">
+            50★ за молитву · Лимит 3 молитвы в день<br>
+            Дополнительную молитву можно купить в магазине
+          </div>
+        </div>
+      </div>
+      <div style="margin:10px 12px;padding:12px;background:rgba(219,177,101,0.08);border:1px solid rgba(219,177,101,0.25);border-radius:8px;">
+        <div style="font-size:9px;color:rgba(219,177,101,0.7);font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">✦ ПРИМЕЧАНИЕ</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Молитвы — игровая механика для мотивации. Карточки дают пассивные бонусы на протяжении поездки. Молитва стоит 50★ и не гарантирует прибыль. Молись ради удачи, а не выгоды ✦</div>
+      </div>
+    </div>
+  </div>
+  <!-- /genshinRulesContent -->
+
+
+
+  <!-- ГЕНШИН ПАНЕЛЬ -->
+  <div id="casinoGenshinContent" style="display:none;flex-direction:column;">
+    <div style="padding:10px 12px 0;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-size:18px;font-weight:900;color:var(--gold);font-family:serif;letter-spacing:2px;">祈愿 МОЛИТВЫ</div>
+        <div style="font-size:9px;color:rgba(219,177,101,0.5);font-family:serif;margin-top:2px;">qí yuàn · испытай судьбу</div>
+      </div>
+      <!-- Экран молитвы -->
+      <div id="gsPrayScreen" style="width:100%;height:320px;border-radius:16px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:8px;background:radial-gradient(ellipse at 50% 40%,#e0d0f0 0%,#d8c8e8 60%,#c8b8d8 100%);">
+        <div id="gsBgLayer" style="position:absolute;inset:0;transition:background 0.5s;"></div>
+        <div id="gsVortex" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;"></div>
+        <div id="gsParticles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+        <div id="gsRays" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;"></div>
+        <div id="gsFlash" style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:30;border-radius:16px;"></div>
+        <div id="gsCardWrap" style="position:relative;z-index:20;opacity:0;">
+          <div id="gsCardStars" style="position:absolute;inset:-30px;z-index:21;pointer-events:none;"></div>
+          <div style="width:150px;height:210px;perspective:700px;">
+            <div class="gs-card-3d-new" id="gsCard3dNew" style="width:100%;height:100%;transform-style:preserve-3d;transition:transform 1s cubic-bezier(0.4,0,0.2,1);position:relative;">
+              <div id="gsCardBack" style="position:absolute;inset:0;border-radius:14px;overflow:hidden;backface-visibility:hidden;"></div>
+              <div id="gsCardFront" style="position:absolute;inset:0;border-radius:14px;overflow:hidden;backface-visibility:hidden;transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 8px 8px;"></div>
+            </div>
+          </div>
+        </div>
+        <div id="gsTapHint" style="position:absolute;bottom:12px;font-size:9px;font-family:serif;color:rgba(75,83,102,0.5);letter-spacing:1px;animation:gsBlinkHint 2s ease-in-out infinite;display:none;">✦ нажми чтобы открыть ✦</div>
+      </div>
+      <div id="gsResultInfo" style="text-align:center;opacity:0;transition:opacity 0.4s;margin-bottom:8px;">
+        <div id="gsResStars" style="font-size:14px;letter-spacing:4px;"></div>
+        <div id="gsResName" style="font-size:13px;font-weight:700;color:var(--text);font-family:serif;margin-top:3px;"></div>
+        <div id="gsResPassive" style="font-size:9px;color:var(--text2);font-family:serif;margin-top:2px;line-height:1.5;"></div>
+      </div>
+      <button onclick="openGenshinCase()" id="genshinOpenBtn" class="btn btn-gold" style="width:100%;padding:10px;border-radius:20px;font-family:serif;font-size:10px;letter-spacing:1px;">✦ Совершить молитву — 50 ✦ ✦</button>
+    </div>
+  </div>
+
+</div>
+<div class="page" id="page-more">
+  <div class="page-header">
+    <div class="page-title">ЕЩЁ <span class="page-title-cn">更多</span></div>
+    <div class="page-sub">> gèng duō // все функции</div>
+  </div>
+  <div class="more-grid">
+    <div class="more-item" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
+      <i class="ti ti-star more-item-icon" style="color:var(--gold);"></i>
+      <div class="more-item-name">ДНЕВНИК ★</div>
+      <div class="more-item-cn">日记评分 rì jì píng fēn</div>
+    </div>
+    <div class="more-item" onclick="openDiaryPage()" style="opacity:0.45;">
+      <i class="ti ti-book-2 more-item-icon" style="color:var(--text3);"></i>
+      <div class="more-item-name">АРХИВ</div>
+      <div class="more-item-cn">备用日记 bèi yòng</div>
+    </div>
+    <div class="more-item" onclick="openMore('themes')">
+      <i class="ti ti-palette more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
+      <div class="more-item-name">ТЕМЫ</div>
+      <div class="more-item-cn">主题 zhǔ tí</div>
+    </div>
+    <div class="more-item" onclick="openMore('weather')">
+      <i class="ti ti-cloud-storm more-item-icon" style="color:#60b4d4;"></i>
+      <div class="more-item-name">ПОГОДА</div>
+      <div class="more-item-cn">天气 tiān qì</div>
+    </div>
+    <div class="more-item" onclick="openMore('laundry')">
+      <i class="ti ti-wash more-item-icon" style="color:#60b4d4;"></i>
+      <div class="more-item-name">СТИРКА</div>
+      <div class="more-item-cn">洗衣 xǐ yī</div>
+    </div>
+    <div class="more-item" onclick="openMore('achievements')">
+      <i class="ti ti-medal more-item-icon" style="color:var(--gold);"></i>
+      <div class="more-item-name">АЧИВКИ</div>
+      <div class="more-item-cn">成就 chéng jiù</div>
+    </div>
+    <div class="more-item" onclick="openMore('team')">
+      <i class="ti ti-users more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
+      <div class="more-item-name">КОМАНДА</div>
+      <div class="more-item-cn">团队 tuán duì</div>
+    </div>
+    <div class="more-item" id="adminMoreBtn" style="display:none;" onclick="openMore('admin')">
+      <i class="ti ti-shield-lock more-item-icon" style="color:rgba(200,80,80,0.9);"></i>
+      <div class="more-item-name">АДМИН</div>
+      <div class="more-item-cn">管理员</div>
+    </div>
+  </div>
+
+  <!-- Субстраницы More -->
+  <div id="more-themes" style="display:none;">
+    <div class="cn-divider">🎨 主题 ТЕМЫ ИНТЕРФЕЙСА</div>
+    <div style="padding:0 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+
+      <div onclick="setTheme('')" id="theme-btn-default" class="theme-card active-theme" style="background:#050510;border:2px solid rgba(180,20,20,0.5);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:#cc4444;font-family:monospace;letter-spacing:1px;margin-bottom:6px;">NETWATCH DARK</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#cc2200;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#050510;border:1px solid rgba(255,255,255,0.1);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#d4af37;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#666;font-family:monospace;">Красно-чёрный</div>
+        <div id="check-default" style="position:absolute;top:8px;right:8px;color:#cc4444;font-size:14px;">✓</div>
+      </div>
+
+      <div onclick="setTheme('nw-light')" id="theme-btn-nw-light" class="theme-card" style="background:#f4f1ed;border:2px solid rgba(180,20,20,0.15);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:#993333;font-family:monospace;letter-spacing:1px;margin-bottom:6px;">NETWATCH LIGHT</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#993333;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#f4f1ed;border:1px solid rgba(0,0,0,0.1);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#7a5010;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#999;font-family:monospace;">Светлый</div>
+        <div id="check-nw-light" style="position:absolute;top:8px;right:8px;color:#993333;font-size:14px;display:none;">✓</div>
+      </div>
+
+      <div onclick="setTheme('genshin-light')" id="theme-btn-genshin-light" class="theme-card" style="background:#ece5d8;border:2px solid rgba(219,177,101,0.25);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:#8a6820;font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">GENSHIN · ЛИ ЮЭ</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#4b5366;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#ece5d8;border:1px solid rgba(219,177,101,0.3);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#dbb165;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#9a9faa;font-family:Georgia,serif;">Дневной свиток ☀️</div>
+        <div id="check-genshin-light" style="position:absolute;top:8px;right:8px;color:#8a6820;font-size:14px;display:none;">✓</div>
+      </div>
+
+      <div onclick="setTheme('genshin-dark')" id="theme-btn-genshin-dark" class="theme-card" style="background:#1a1628;border:2px solid rgba(219,177,101,0.15);border-radius:12px;padding:12px;cursor:pointer;position:relative;">
+        <div style="font-size:9px;color:rgba(219,177,101,0.8);font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">GENSHIN · НОЧЬ</div>
+        <div style="display:flex;gap:4px;margin-bottom:6px;">
+          <div style="width:18px;height:18px;background:#1a1628;border:1px solid rgba(219,177,101,0.2);border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#2a2040;border-radius:3px;"></div>
+          <div style="width:18px;height:18px;background:#dbb165;border-radius:3px;"></div>
+        </div>
+        <div style="font-size:8px;color:#5a5248;font-family:Georgia,serif;">Ночной Ли Юэ 🌙</div>
+        <div id="check-genshin-dark" style="position:absolute;top:8px;right:8px;color:rgba(219,177,101,0.8);font-size:14px;display:none;">✓</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="more-weather" style="display:none;">
+    <div class="cn-divider">🌤 天气 ПОГОДА 北京</div>
+    <div class="card"><div class="card-inner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div><div class="weather-big" id="weatherTemp">—<span>°C</span></div><div id="weatherDesc" style="color:var(--text2);font-size:13px;margin-top:4px;">Загрузка...</div></div>
+        <div class="weather-icon-big" id="weatherIcon">☁️</div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border);">
+        <div class="weather-detail">Ощущается: <span id="weatherFeels">—</span>°C</div>
+        <div class="weather-detail">Влажность: <span id="weatherHumidity">—</span>%</div>
+        <div class="weather-detail">Ветер: <span id="weatherWind">—</span> м/с</div>
+      </div>
+    </div></div>
+    <div class="cn-divider">💴 汇率 КУРС ЮАНЯ</div>
+    <div class="card"><div class="card-inner">
+      <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-bottom:6px;">1 CNY = </div>
+      <div class="yuan-big" id="yuanRate">—<span> ₽</span></div>
+      <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:6px;">Обновлено: <span id="rateUpdated">—</span></div>
+    </div></div>
+  </div>
+
+  <div id="more-laundry" style="display:none;">
+    <div class="cn-divider">🧺 洗衣饮水 СТИРКА И ВОДА</div>
+
+    <!-- Табы -->
+    <div style="display:flex;gap:6px;padding:0 12px 8px;">
+      <button id="ltab-laundry" onclick="switchLaundryTab('laundry')" class="subtab active" style="flex:1;padding:7px;font-size:9px;font-family:monospace;letter-spacing:1px;"><i class="ti ti-wash"></i> СТИРКА</button>
+      <button id="ltab-water" onclick="switchLaundryTab('water')" class="subtab" style="flex:1;padding:7px;font-size:9px;font-family:monospace;letter-spacing:1px;"><i class="ti ti-droplet"></i> ВОДА</button>
+    </div>
+
+    <!-- СТИРКА -->
+    <div id="laundry-tab">
+      <div id="laundryScheduleContent" style="padding:0 12px;"></div>
+    </div>
+
+    <!-- ВОДА -->
+    <div id="water-tab" style="display:none;">
+      <div id="waterScheduleContent" style="padding:0 12px;"></div>
+    </div>
+  </div>
+
+  <div id="more-news" style="display:none;">
+    <div class="cn-divider">📢 新闻 НОВОСТИ</div>
+    <div id="announcementsContentMore" class="announcements-content"><div class="empty-state">Загрузка...</div></div>
+    <div id="adminAnnounceFormMore" class="admin-announce-form" style="display:none;padding:10px 12px;">
+      <textarea class="admin-input" id="announceTextMore" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
+      <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
+    </div>
+  </div>
+
+  <div id="more-achievements" style="display:none;">
+    <div class="cn-divider">🏅 成就 АЧИВКИ</div>
+    <div id="achievementsContent"><div class="empty-state">Загрузка...</div></div>
+  </div>
+
+  <div id="more-team" style="display:none;">
+    <div class="cn-divider">👥 团队 КОМАНДА</div>
+    <div class="team-card">
+      <div class="team-avatar-placeholder">👑</div>
+      <div>
+        <div class="team-badge">АЛЬФА СТЭК</div>
+        <div class="team-name">Михаил Юрьевич</div>
+        <div class="team-role">Руководитель группы</div>
+        <div class="team-desc">Отвечает за всё. Главный по всем вопросам — учёба, организация, дисциплина и общее руководство поездкой.</div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar-placeholder">祝</div>
+      <div>
+        <div class="team-badge">СИГМА СТЭК</div>
+        <div class="team-name">Юлия Витальевна</div>
+        <div class="team-role">Вожатый</div>
+        <div class="team-desc">Отвечает за здоровье и дисциплину. Вопросы по самочувствию, медицине — к ней.</div>
+        <a href="https://t.me/Trufanova_Yulia" class="team-btn">✉ НАПИСАТЬ</a>
+      </div>
+    </div>
+    <div class="team-card">
+      <img src="https://i.ibb.co/WWvhDNnM/1774506558344.png" class="team-avatar" onerror="this.style.display='none'">
+      <div>
+        <div class="team-badge">СИГМА СТЭК</div>
+        <div class="team-name">Елизавета Сергеевна</div>
+        <div class="team-role">Вожатый</div>
+        <div class="team-desc">Отвечает за духовную составляющую. Также по другим вопросам — к ней.</div>
+        <a href="https://t.me/naoayako" class="team-btn">✉ НАПИСАТЬ</a>
+      </div>
+    </div>
+    <div class="team-card">
+      <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/file_000000004784720a8c151f4c50a357d9.png?raw=true" class="team-avatar" onerror="this.style.display='none'">
+      <div>
+        <div class="team-badge">IT-БЕТА СТЭК</div>
+        <div class="team-name">Марк Альбертович</div>
+        <div class="team-role">IT и досуг</div>
+        <div class="team-desc">Отвечает за связь, покупки и досуг. Проблемы с интернетом — к нему.</div>
+        <a href="https://t.me/christianpastor" class="team-btn">✉ НАПИСАТЬ</a>
+      </div>
+    </div>
+    <div class="cn-divider">🤫 匿名问题 АНОНИМНЫЙ ВОПРОС</div>
+    <div class="card"><div class="card-inner">
+      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Имя отправителя вычисляется по ID, но содержимое — только для вожатых.</div>
+      <button class="btn btn-primary" onclick="askAnonymous()">[ 发问 // ЗАДАТЬ ВОПРОС ]</button>
+    </div></div>
+  </div>
+
+  <div id="more-admin" style="display:none;">
+    <div class="cn-divider">👑 ПАНЕЛЬ АДМИНИСТРАТОРА</div>
+    <div class="admin-section-btns">
+      <button class="admin-sec-btn active" onclick="showAdminSection('schedule',this)">Расписание</button>
+      <button class="admin-sec-btn" onclick="showAdminSection('announce',this)">Объявления</button>
+      <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">Стирка/Вода</button>
+      <button class="admin-sec-btn" onclick="showAdminSection('users',this)">Пользователи</button>
+      <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">BlackWall</button>
+      <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()">Architect</button>
+    </div>
+    <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
+      <input class="admin-input" id="adminSchDay" placeholder="День (Пн, Вт...)">
+      <input class="admin-input" id="adminSchTime" placeholder="Время (09:00)">
+      <input class="admin-input" id="adminSchSubject" placeholder="Предмет">
+      <input class="admin-input" id="adminSchLocation" placeholder="Место">
+      <button class="btn btn-primary" onclick="addScheduleItem()">[ ДОБАВИТЬ ЗАНЯТИЕ ]</button>
+    </div>
+    <div id="admin-announce" class="admin-section" style="padding:0 12px;">
+      <textarea class="admin-input" id="announceTextAdmin" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
+      <button class="btn btn-primary" onclick="addAnnouncementAdmin()">[ ОПУБЛИКОВАТЬ ]</button>
+    </div>
+    <div id="admin-laundry" class="admin-section" style="padding:0 12px;">
+
+      <!-- Табы стирка/вода -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <button id="altab-laundry" onclick="switchAdminLaundryTab('laundry')" class="subtab active" style="flex:1;padding:7px;font-size:9px;font-family:monospace;">🧺 СТИРКА</button>
+        <button id="altab-water" onclick="switchAdminLaundryTab('water')" class="subtab" style="flex:1;padding:7px;font-size:9px;font-family:monospace;">💧 ВОДА</button>
+      </div>
+
+      <!-- СТИРКА -->
+      <div id="al-laundry-tab">
+        <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ СТИРКИ</div>
+        <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
+        <input class="admin-input" id="lTime" placeholder="Время (08:00)">
+        <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
+        <input class="admin-input" id="lCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
+        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ ДОБАВИТЬ СЛОТ ]</button>
+        <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
+        <div id="adminLaundryList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+
+      <!-- ВОДА -->
+      <div id="al-water-tab" style="display:none;">
+        <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ ВОДЫ</div>
+        <input class="admin-input" id="wDay" placeholder="День (Пн 5 мая)">
+        <input class="admin-input" id="wTime" placeholder="Время (08:00)">
+        <input class="admin-input" id="wNote" placeholder="Заметка (необязательно)">
+        <input class="admin-input" id="wCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
+        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddWaterSlot()">[ ДОБАВИТЬ СЛОТ ]</button>
+        <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
+        <div id="adminWaterList"><div class="empty-state">Загрузка...</div></div>
+      </div>
+
+    </div>
+    <div id="admin-users" class="admin-section" style="padding:0 12px;">
+      <div class="cn-divider">⭐ НАЧИСЛИТЬ / СНЯТЬ БАЛЛЫ</div>
+      <input class="admin-input" id="awardName" placeholder="Имя пользователя">
+      <input class="admin-input" id="awardPoints" placeholder="Баллы (число)" type="number">
+      <input class="admin-input" id="awardReason" placeholder="Причина">
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="adminAward()">+ НАЧИСЛИТЬ</button>
+        <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="adminPenalize()">- СНЯТЬ</button>
+      </div>
+      <div class="cn-divider">⛔ ЗАМОРОЗКА АККАУНТА</div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:8px;line-height:1.6;">
+        Замороженный игрок не может открывать кейсы и покупать в магазине. Получает уведомление от NetWatch.
+      </div>
+      <input class="admin-input" id="freezeId" placeholder="Telegram ID игрока">
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-primary" style="flex:1;padding:8px;font-size:9px;" onclick="adminFreeze(true)">⛔ ЗАМОРОЗИТЬ</button>
+        <button class="btn btn-gold" style="flex:1;padding:8px;font-size:9px;" onclick="adminFreeze(false)">✅ РАЗМОРОЗИТЬ</button>
+      </div>
+    </div>
+    <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
+      <div class="card"><div class="card-inner">
+        <div class="card-label">🌑 BlackWall 已激活</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Глобальная блокировка магазина и кейсов для всех участников</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="setBlackwall(true)">[ ВКЛЮЧИТЬ ]</button>
+          <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="setBlackwall(false)">[ ВЫКЛЮЧИТЬ ]</button>
+        </div>
+      </div></div>
+      <button class="btn btn-gold mt8" style="width:100%;padding:9px;" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ИМПЛАНТЫ ===== -->
+<div class="page" id="page-implants">
+  <div class="page-header">
+    <div class="page-title" id="implants-page-title">ИМПЛАНТЫ <span class="page-title-cn" id="implants-page-cn">植入物</span></div>
+    <div class="page-sub">> zhí rù wù // нейроимпланты протокола</div>
+  </div>
+
+  <!-- Переключатель табов -->
+  <div style="display:flex;gap:6px;margin:0 12px 10px;">
+    <button id="tab-implants-btn" onclick="switchImplantsTab('implants')" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⚡ ИМПЛАНТЫ</button>
+    <button id="tab-cards-btn" onclick="switchImplantsTab('cards')" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">✦ КАРТОЧКИ</button>
+  </div>
+
+  <!-- ТАБ ИМПЛАНТЫ -->
+  <div id="implants-tab">
+  <!-- Мои импланты -->
+  <div class="cn-divider">⚡ 我的植入物 МОИ ИМПЛАНТЫ</div>
+  <div class="card" style="margin:4px 12px;">
+    <div class="card-inner" id="myImplantsPage">
+      <div class="empty-state" style="padding:12px;">Импланты не установлены<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Открывай фиолетовые и чёрные кейсы!</span></div>
+    </div>
+  </div>
+
+  <!-- Каталог всех имплантов -->
+  <div id="implants-catalog">
+  <div class="cn-divider">📖 植入物目录 КАТАЛОГ</div>
+
+  <!-- ГУАНЬСИ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.4);color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">关系 ГУАНЬСИ</div>
+        <div style="font-size:12px;color:rgba(212,175,55,0.7);font-family:serif;font-style:italic;margin-top:3px;">guān xi — связи, отношения</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:#ccc;line-height:1.8;">Имплант разработан корпорацией <span style="color:rgba(212,175,55,0.8);font-weight:600;">Kang Tao 康陶</span> для агентов-переговорщиков. Встроенный нейрочип анализирует поведение продавца и автоматически находит оптимальную точку давления на цену. В народе называют «Гуаньси» — потому что с ним у тебя есть связи везде.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-coin" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
+          <div><div style="font-size:13px;color:#fff;font-weight:600;">Торговый протокол</div><div style="font-size:11px;color:#ccc;margin-top:2px;">-10% к цене всех товаров в магазине</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:#fff;font-weight:600;">Прочность</div><div style="font-size:11px;color:#ccc;margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ТЕРРАКОТА -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.4);color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:#fff;">兵马俑 ТЕРРАКОТА</div>
+        <div style="font-size:12px;color:rgba(212,175,55,0.7);font-family:serif;font-style:italic;margin-top:3px;">bīng mǎ yǒng — терракотовая армия</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:#ccc;line-height:1.8;">Субдермальная бронеплита, вдохновлённая терракотовыми воинами династии Цинь. Имплант создаёт нейроэкран, который перехватывает один штрафной импульс в день и рассеивает его. NetWatch называет таких носителей «фарфоровыми» — снаружи хрупкие, внутри несокрушимые.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-shield-check" style="font-size:28px;min-width:30px;text-align:center;color:rgba(155,89,182,0.9);"></i>
+          <div><div style="font-size:13px;color:#fff;font-weight:600;">Нейроблок</div><div style="font-size:11px;color:#ccc;margin-top:2px;">Блокирует 1 штраф в день автоматически</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:#fff;font-weight:600;">Прочность</div><div style="font-size:11px;color:#ccc;margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ПАНДА -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">🐼 ПАНДА</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">xióng māo — медведь-кошка</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан биотех-лабораторией Zhidao в сотрудничестве с Пекинским институтом адаптивных систем. Чип имитирует нейронную архитектуру панды — существа, которое тысячелетиями умело получать максимум при минимуме усилий. Каждая транзакция в протоколе автоматически проходит через алгоритм возврата микроплатежей. Панда ничего не делает зря.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-cash" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Кэшбек-протокол</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ возврат с каждой покупки в магазине</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ШАОЛИНЬ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">少林 ШАОЛИНЬ</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">shào lín — молодой лес</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Нейрочип военного класса, разработанный по заказу монастыря Шаолинь для бойцов нового поколения. Встроенный модуль синхронизации отслеживает биоритмы носителя и автоматически фиксирует моменты максимальной собранности. Протокол активируется в момент переклички — чип посылает импульс точности в двигательную кору, обеспечивая идеальное время реакции. Дисциплина — это не привычка. Это прошивка.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-run" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Путь воина</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+20★ за каждую перекличку вовремя</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- LINGUASOFT -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">口才 LINGUASOFT</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">kǒu cái — красноречие, дар слова</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан лингвистическим отделом Zhidao совместно с Пекинским университетом иностранных языков. Чип анализирует речевые паттерны носителя в реальном времени, отслеживая точность тонов, плотность лексики и структуру предложений. При достижении эталонного уровня произношения система автоматически генерирует сигнал подтверждения в протоколе. Язык — это не инструмент. Это оружие.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-message-language" style="font-size:28px;min-width:30px;text-align:center;color:#9b59b6;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Лингво-резонанс</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+30★ когда вожатый ставит оценку 5/5 за дневник</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ЦАЙШЭНЬ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">财神 ЦАЙШЭНЬ</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">cái shén — бог богатства</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Пассивный экономический модуль, созданный финансовым подразделением Zhidao на основе древних алгоритмов даосской математики. Чип непрерывно сканирует цифровое пространство протокола в поисках незамеченных транзакций и микропотоков данных, конвертируя их в звёзды на счёт носителя. Работает пока ты спишь. Работает пока ты ешь. Бог богатства не берёт выходных.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-coin" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Пассивный доход</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+15★ каждые 24 часа автоматически</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ЦИЛИНЬ -->
+  <div class="card" style="margin:6px 12px;">
+    <div class="card-inner" style="">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true" style="width:160px;height:160px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.5);box-shadow:0 0 24px rgba(155,89,182,0.2);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.2);border:1px solid #9b59b6;color:#9b59b6;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">РЕДКИЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">麒麟 ЦИЛИНЬ</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">qí lín — единорог, символ процветания</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Кооперативный модуль связи, разработанный командой Zhidao на основе легенды о Цилине — существе, появляющемся только в эпоху процветания. Чип постоянно сканирует протокол на наличие других носителей Цилиня и при обнаружении устанавливает невидимый канал синхронизации. Чем больше владельцев в группе — тем сильнее сигнал. Единорог силён не рогом. А стадом.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-users" style="font-size:28px;min-width:30px;text-align:center;color:#2ecc71;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Синхронизация стаи</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за каждого владельца Цилиня в группе пассивно</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- КРАСНЫЙ ДРАКОН -->
+  <div class="card" style="margin:6px 12px 16px;">
+    <div class="card-inner" style="background:linear-gradient(135deg,rgba(180,20,20,0.05),rgba(212,175,55,0.03));">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true" style="width:180px;height:180px;object-fit:contain;border-radius:16px;border:1px solid rgba(180,20,20,0.6);box-shadow:0 0 32px rgba(180,0,0,0.3),0 0 60px rgba(180,0,0,0.1);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(180,20,20,0.25);border:1px solid #cc3333;color:#cc3333;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">红龙 КРАСНЫЙ ДРАКОН</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">hóng lóng — красный дракон</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Стену. Носители получают статус <span style="color:rgba(212,175,55,0.8);font-weight:600;">红龙节点</span> — «Узел Красного Дракона». Один из ста тысяч.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-trending-up" style="font-size:28px;min-width:30px;text-align:center;color:rgba(200,80,80,0.9);"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Доминирование</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+20% ко всем начислениям баллов</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-arrows-exchange" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Передача урона</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день перенаправить штраф на другого игрока</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-coin-off" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Перехват</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в 2 дня украсть 50★ у случайного игрока незаметно</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-star" style="font-size:28px;min-width:30px;text-align:center;color:#f1c40f;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Удвоение</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">x2 к воскресной зарплате</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Легендарный — не разрушается</div></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:rgba(180,20,20,0.1);border:1px solid rgba(180,20,20,0.3);border-radius:8px;font-size:10px;color:rgba(200,60,60,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
+        ⚠️ ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
+      </div>
+    </div>
+  </div>
+
+  <!-- СЕТЕВОЙ ДОЗОР -->
+  <div class="card" style="margin:6px 12px 16px;">
+    <div class="card-inner" style="background:linear-gradient(135deg,rgba(180,20,20,0.05),rgba(212,175,55,0.03));">
+      <div style="text-align:center;margin-bottom:14px;position:relative;">
+        <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true" style="width:180px;height:180px;object-fit:contain;border-radius:16px;border:1px solid rgba(180,20,20,0.6);box-shadow:0 0 32px rgba(180,0,0,0.3),0 0 60px rgba(180,0,0,0.1);">
+        <div style="position:absolute;top:8px;left:8px;background:rgba(180,20,20,0.25);border:1px solid #cc3333;color:#cc3333;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
+      </div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:900;color:var(--text);">网络守卫 СЕТЕВОЙ ДОЗОР</div>
+        <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">wǎng luò shǒu wèi — страж сети</div>
+      </div>
+      <div style="padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Боевой имплант пятого поколения, разработанный секретным отделом NetWatch при финансировании Zhidao. Чип интегрируется в нейронную сеть носителя и предоставляет прямой доступ к управляющим протоколам группы. Способен инициировать штрафные транзакции, блокировать доступ к магазину и распространять системные помехи на нескольких игроков одновременно. Классифицирован как потенциально опасный. Выдаётся без инструкции.</div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
+        <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+        
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-sword" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Боевые скрипты</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в 3 дня наложить штраф любому игроку от имени системы</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-broadcast" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Радиус поражения</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Штраф задевает ещё 2 случайных игрока рядом (-15★)</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-bolt" style="font-size:28px;min-width:30px;text-align:center;color:#f39c12;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Усиление урона</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Твои штрафы +30%</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-coin" style="font-size:28px;min-width:30px;text-align:center;color:#2ecc71;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Восполнение памяти</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+25★ каждое утро пассивно</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <i class="ti ti-lock" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Blackwall</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в неделю заблокировать магазин одному игроку на 24ч</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+          <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Легендарный — не разрушается</div></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:rgba(180,20,20,0.1);border:1px solid rgba(180,20,20,0.3);border-radius:8px;font-size:10px;color:rgba(200,60,60,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
+        ⚠️ ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
+      </div>
+    </div>
+  </div>
+
+
+  </div> <!-- /implants-catalog -->
+  </div> <!-- /implants-tab -->
+
+  <!-- ТАБ КАРТОЧКИ -->
+  <div id="cards-tab" style="display:none;">
+    <div class="cn-divider">✦ 我的卡片 МОИ КАРТОЧКИ</div>
+    <div id="myCardsContent" style="padding:0 12px;">
+      <div class="empty-state">Загрузка...</div>
+    </div>
+
+    <div class="cn-divider">📖 КАТАЛОГ КАРТОЧЕК</div>
+
+    <!-- АРХОНТ ЗЕМЛИ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner" style="background:linear-gradient(135deg,rgba(192,160,64,0.06),rgba(219,177,101,0.03));">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:2px solid rgba(192,160,64,0.6);box-shadow:0 0 28px rgba(192,160,64,0.25);background:rgba(192,160,64,0.05);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(192,160,64,0.85);border:1px solid rgba(192,160,64,0.9);color:#2a1800;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★★ ЛЕГЕНД.</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">岩王帝君 АРХОНТ ЗЕМЛИ</div>
+          <div style="font-size:12px;color:rgba(192,160,64,0.8);font-family:serif;font-style:italic;margin-top:3px;">Yán wáng dì jūn — Повелитель Камня</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(192,160,64,0.15);">
+          <div style="font-size:9px;color:rgba(192,160,64,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Древнейший Архонт Ли Юэ, заключавший контракты ещё до основания Тейвата. Говорят, что те, кто несёт его карточку, никогда не нарушают обещаний — ибо сам Rex Lapis смотрит на них сквозь время.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(192,160,64,0.15);">
+          <div style="font-size:9px;color:rgba(192,160,64,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-shield-star" style="font-size:24px;color:#c0a040;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Контракт Ли Юэ</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Блок штрафа + -5% в магазине одновременно, раз в день</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда — разрушается после 3 штрафов подряд</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:rgba(192,160,64,0.08);border:1px solid rgba(192,160,64,0.25);border-radius:8px;font-size:10px;color:rgba(192,160,64,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
+          ⚠️ ШАНС ВЫПАДЕНИЯ: 1% // ЗОЛОТОЙ КЕЙС
+        </div>
+      </div>
+    </div>
+
+    <!-- ИМПЕРАТОРСКАЯ ЗВЕЗДА -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner" style="background:linear-gradient(135deg,rgba(155,89,182,0.06),rgba(192,160,64,0.03));">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:2px solid rgba(155,89,182,0.5);box-shadow:0 0 28px rgba(155,89,182,0.2);background:rgba(155,89,182,0.05);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★★ ЛЕГЕНД.</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">紫微星君 ИМПЕРАТОРСКАЯ ЗВЕЗДА</div>
+          <div style="font-size:12px;color:rgba(155,89,182,0.8);font-family:serif;font-style:italic;margin-top:3px;">Zǐ wēi xīng jūn — Владыка Полярной Звезды</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(155,89,182,0.15);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Звезда судьбы, управляющая небесным судом. Носитель карточки получает право перенаправить наказание — ибо Полярная Звезда видит истинную вину каждого.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(155,89,182,0.15);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-gavel" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Звёздный суд 星判</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день передать половину своего штрафа другому игроку</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.25);border-radius:8px;font-size:10px;color:rgba(155,89,182,0.8);font-family:monospace;text-align:center;">
+          ⚠️ ШАНС ВЫПАДЕНИЯ: 1% // ЗОЛОТОЙ КЕЙС
+        </div>
+      </div>
+    </div>
+
+    <!-- ЛИСА-ОБОРОТЕНЬ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(155,89,182,0.15);background:rgba(155,89,182,0.04);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">九尾狐灵 ЛИСА-ОБОРОТЕНЬ</div>
+          <div style="font-size:12px;color:rgba(155,89,182,0.7);font-family:serif;font-style:italic;margin-top:3px;">Jiǔ wěi hú líng — Дух девятихвостой лисы</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хитрейший дух Тейвата, способный видеть сквозь иллюзии. Носитель получает право раз обмануть судьбу — перекрутить неудачный приз.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(155,89,182,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-refresh" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Лисий обман 狐惑</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день перекрутить неудачный приз заново</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- СТРАЖ ОГНЯ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(200,80,40,0.2);background:rgba(155,89,182,0.04);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">焰莲使者 СТРАЖ ОГНЯ</div>
+          <div style="font-size:12px;color:rgba(200,80,40,0.7);font-family:serif;font-style:italic;margin-top:3px;">Yàn lián shǐzhě — Посланница Огненного Лотоса</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(200,80,40,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Страж погребального огня Ли Юэ. Говорят, что её белые одежды с алыми лотосами дают силу возрождения — как феникс из пепла.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(200,80,40,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-flame" style="font-size:24px;color:#e05030;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Феникс 凤凰</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">После первого штрафа за день автоматически восстанавливает +50★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- НЕБЕСНАЯ ФЕЯ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background:rgba(74,122,204,0.04);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">桃花仙子 НЕБЕСНАЯ ФЕЯ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Táo huā xiān zi — Фея цветущего персика</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хранительница персиковых садов небесного дворца. Её благословение распространяется на весь отряд — ибо настоящая фея дарит счастье всем вокруг.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-hearts" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Небесное благословение 天赐</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">На перекличке каждый участник отряда получает +30★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ЗВЕЗДА ЛИТЕРАТУРЫ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background:rgba(74,122,204,0.04);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">文曲星君 ЗВЕЗДА ЛИТЕРАТУРЫ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Wén qū xīng jūn — Владыка Звезды Мудрости</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Небесный чиновник, покровительствующий учёным и поэтам. Под её взором каждое слово в отчёте обретает особую ценность.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-pencil" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Мудрость Звезды 文星</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+25★ за каждый сданный вечерний отчёт</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ДУХ ЛЕСА -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,150,74,0.15);background:rgba(74,122,204,0.04);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">木灵仙君 ДУХ ЛЕСА</div>
+          <div style="font-size:12px;color:rgba(74,150,74,0.8);font-family:serif;font-style:italic;margin-top:3px;">Mù líng xiān jūn — Владыка Лесного Духа</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,150,74,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Древний дух бамбуковых рощ Ли Юэ. Награждает тех, кто живёт в гармонии с природным ритмом — встаёт с рассветом каждый день без исключений.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,150,74,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-plant" style="font-size:24px;color:#4a9640;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Утренний урожай 晨收</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за каждый день подряд встаёшь вовремя. Серия обнуляется при пропуске.</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ДУХ МОРЕЙ -->
+    <div class="card" style="margin:6px 12px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background:rgba(74,122,204,0.04);">
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">海灵仙后 ДУХ МОРЕЙ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Hǎi líng xiān hòu — Небесная Владычица Морей</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хранительница морских глубин, чья сила нарастает как прилив. Три молитвы подряд — и волна удачи накрывает носителя с головой.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-waves" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Морская волна 海浪</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждые 3 молитвы подряд в один день дают бонус +30★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- БОГИНЯ ЛУНЫ -->
+    <div class="card" style="margin:6px 12px 16px;">
+      <div class="card-inner">
+        <div style="text-align:center;margin-bottom:14px;position:relative;">
+          <div style="width:160px;height:200px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);background:rgba(74,122,204,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:80px;">🌙</div>
+          <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+        </div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:20px;font-weight:900;color:var(--text);">嫦娥仙子 БОГИНЯ ЛУНЫ</div>
+          <div style="font-size:12px;color:rgba(74,122,204,0.7);font-family:serif;font-style:italic;margin-top:3px;">Cháng é xiān zi — Фея Чан Э</div>
+        </div>
+        <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Богиня Луны, живущая в нефритовом дворце. Говорят, что дублирующаяся карточка — это не неудача, а лунный жемчуг, из которого рождается удача.</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-moon-stars" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Жемчужина 珍珠</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждый дубль этой карточки даёт +50★ автоматически вместо разборки</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:8px 10px;background:rgba(74,122,204,0.06);border:1px solid rgba(74,122,204,0.2);border-radius:8px;font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;text-align:center;">
+          <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/moon_card.png?raw=true" style="width:160px;height:220px;object-fit:contain;border-radius:16px;border:1px solid rgba(180,180,255,0.4);box-shadow:0 0 20px rgba(150,150,255,0.15);background:rgba(180,180,255,0.04);">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ===== НИЖНЯЯ НАВИГАЦИЯ ===== -->
+
+<!-- ── Дневник ★ — Страница оценки ─────────────────────── -->
+<div class="page" id="page-diary-stars">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div class="page-title">ДНЕВНИК <span class="page-title-cn">★</span></div>
+        <div class="page-sub">> rì jì píng fēn // оценка дневников</div>
+      </div>
+      <button class="diary-back-btn" onclick="showPage('more', document.getElementById('nav-more-btn'))">[ НАЗАД ]</button>
+    </div>
+  </div>
+
+  <div style="padding:0 12px 80px;">
+
+    <!-- Выбор даты -->
+    <div class="diary-card" style="margin-bottom:12px;">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Дата проверки</div>
+          <div class="diary-section-sub">// выбери день</div>
+        </div>
+      </div>
+      <input id="diaryStarsDate" type="date" class="diary-admin-date" style="width:100%;box-sizing:border-box;"
+        onchange="loadDiaryStarsList()">
+    </div>
+
+    <!-- Список студентов -->
+    <div id="diaryStarsList"></div>
+
+    <!-- Попап оценки (только для вожатых) -->
+    <div id="diaryStarsPopup" style="display:none;position:fixed;inset:0;z-index:9000;
+      background:rgba(0,0,0,0.7);display:none;align-items:flex-end;justify-content:center;">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
+        padding:24px;width:100%;max-width:480px;box-sizing:border-box;">
+        <button onclick="closeDiaryStarsPopup()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+        <div id="diaryStarsPopupName" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;"></div>
+        <div id="diaryStarsPopupDate" style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:20px;"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+          <button onclick="submitDiaryStars(1)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Минимум</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+15★</div>
+          </button>
+          <button onclick="submitDiaryStars(2)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Хорошо</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+30★</div>
+          </button>
+          <button onclick="submitDiaryStars(3)" style="
+            background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+            border-radius:12px;padding:16px 8px;cursor:pointer;text-align:center;">
+            <div style="font-size:24px;">⭐⭐⭐</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:6px;">Идеально</div>
+            <div style="font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;">+50★</div>
+          </button>
+        </div>
+
+        <button onclick="submitDiaryStars('bonus')" style="
+          width:100%;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);
+          border-radius:12px;padding:12px;cursor:pointer;color:#2ecc71;
+          font-family:monospace;font-size:12px;margin-bottom:10px;">
+          ✨ +БОНУС ЗА КРЕАТИВ (+20★)
+        </button>
+
+        <button onclick="closeDiaryStarsPopup()" style="
+          width:100%;background:transparent;border:1px solid var(--border);
+          border-radius:12px;padding:12px;cursor:pointer;color:var(--text3);
+          font-family:monospace;font-size:11px;">
+          ОТМЕНА
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- /page-diary-stars -->
+
+<div class="page" id="page-diary">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div class="page-title">ДНЕВНИК <span class="page-title-cn">旅遊日记</span></div>
+        <div class="page-sub">> lǚ yóu rì jì // цифровой разворот путешественника</div>
+      </div>
+      <button class="diary-back-btn" onclick="showPage('more', document.getElementById('nav-more-btn'))">[ НАЗАД ]</button>
+    </div>
+  </div>
+
+  <div class="diary-shell">
+
+    <!-- ── Admin Overview Panel (admins only) ───────────────── -->
+    <div id="diaryAdminPanel" style="display:none;">
+
+      <!-- Viewing-as banner -->
+      <div id="diaryViewingBanner" style="display:none;" class="diary-viewing-banner">
+        <span id="diaryViewingName">—</span>
+        <button onclick="diaryBackToSelf()">[ ← НАЗАД ]</button>
+      </div>
+
+      <!-- Student list card -->
+      <div class="diary-card" id="diaryStudentCard">
+        <div class="diary-section-head">
+          <div>
+            <div class="diary-section-title">Обзор дня</div>
+            <div class="diary-section-sub">// статус дневников по студентам</div>
+          </div>
+        </div>
+        <div class="diary-admin-bar">
+          <input id="diaryAdminDate" class="diary-admin-date" type="date"
+            onchange="loadDiaryOverview(this.value)">
+          <button class="diary-admin-refresh" onclick="loadDiaryOverview()">↻ Обновить</button>
+        </div>
+        <div id="diaryStudentList" class="diary-student-list">
+          <div class="diary-day-chip-empty">Загрузка...</div>
+        </div>
+      </div>
+
+    </div>
+    <!-- ── End Admin Panel ───────────────────────────────────── -->
+
+    <div class="diary-hero">
+      <div class="diary-hero-top">
+        <div class="diary-kicker">Traveler Log Active</div>
+        <div id="diaryStatusBadge" class="diary-status-badge">локальный черновик</div>
+      </div>
+      <div class="diary-title-wrap">
+        <div class="diary-title">Дневник путешественника</div>
+        <div class="diary-title-cn">北京 2026 · 每日记录</div>
+        <div class="diary-subtitle">Поля сохранены по структуре бумажного дневника, но экран адаптирован под телефон и текущую тему приложения.</div>
+      </div>
+      <div class="diary-note" id="diarySaveMeta">Пробная версия: данные пока сохраняются локально на этом устройстве для демонстрации почти-готового сценария.</div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Параметры дня</div>
+          <div class="diary-section-sub">// date · weekday · weather</div>
+        </div>
+      </div>
+      <div class="diary-meta-grid">
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDate">Дата</label>
+          <input id="diaryDate" class="diary-input" type="date">
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryWeekday">День недели</label>
+          <input id="diaryWeekday" class="diary-input" type="text" readonly>
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryWeather">Погода</label>
+          <select id="diaryWeather" class="diary-select"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Сегодняшние слова</div>
+          <div class="diary-section-sub">// 15 строк: иероглифы · пиньинь · перевод</div>
+        </div>
+      </div>
+      <div class="diary-words-head">
+        <span>#</span>
+        <span>Иероглифы</span>
+        <span>Пиньинь</span>
+        <span>Перевод</span>
+      </div>
+      <div id="diaryWordsRows" class="diary-words-rows"></div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Сегодняшнее обсуждение</div>
+          <div class="diary-section-sub">// оценка · имя носителя · тема</div>
+        </div>
+      </div>
+      <div class="diary-field" style="margin-bottom:12px;">
+        <label class="diary-label">Сегодня тебе как?</label>
+        <div id="diaryStars" class="diary-stars"></div>
+        <input id="diaryDiscussionRating" type="hidden" value="0">
+      </div>
+      <div class="diary-discuss-grid">
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDiscussPerson">Сегодня с (имя носителя)</label>
+          <input id="diaryDiscussPerson" class="diary-input" type="text" placeholder="например, 王老师">
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDiscussTopic">Обсудил(а) тему</label>
+          <input id="diaryDiscussTopic" class="diary-input" type="text" placeholder="например, 我的学校">
+        </div>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">今天跟…讨论</div>
+          <div class="diary-section-sub">// расскажи о своём дне на китайском</div>
+        </div>
+      </div>
+      <div class="diary-field">
+        <label class="diary-label" for="diaryStory">Текст дня</label>
+        <textarea id="diaryStory" class="diary-textarea" placeholder="Напиши здесь рассказ о своём дне на китайском языке..."></textarea>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Оценки дня</div>
+          <div class="diary-section-sub">// выставляются вожатыми после сдачи</div>
+        </div>
+      </div>
+      <div class="diary-grade-grid">
+        <div class="diary-field">
+          <label class="diary-label" for="diaryLessonScore">课程分数</label>
+          <input id="diaryLessonScore" class="diary-input" type="text" placeholder="например, 5/5">
+        </div>
+        <div class="diary-field">
+          <label class="diary-label" for="diaryDiaryScore">记日记分数</label>
+          <input id="diaryDiaryScore" class="diary-input" type="text" placeholder="например, 4/5">
+        </div>
+      </div>
+    </div>
+
+    <div class="diary-card">
+      <div class="diary-section-head">
+        <div>
+          <div class="diary-section-title">Сохранённые дни</div>
+          <div class="diary-section-sub">// быстрый переход между записями</div>
+        </div>
+      </div>
+      <div id="diarySavedDays" class="diary-saved-days"></div>
+    </div>
+
+    <div class="diary-actions">
+      <button id="diaryBtnSave" class="btn btn-primary"
+        onclick="saveDiaryDraft(true)">[ СОХРАНИТЬ ]</button>
+      <button id="diaryBtnSubmit" class="btn"
+        style="background:var(--accent,#4fa);border:1px solid var(--accent,#4fa);color:#111;"
+        onclick="submitDiary()">[ СДАТЬ ДЕНЬ ]</button>
+      <button id="diaryBtnReset" class="btn"
+        style="background:var(--bg2);border:1px solid var(--border);color:var(--text2);"
+        onclick="resetDiaryForCurrentDate()">[ ОЧИСТИТЬ ]</button>
+      <button id="diaryBtnScore" class="btn btn-primary"
+        style="display:none;"
+        onclick="scoreDiary()">[ ПОСТАВИТЬ ОЦЕНКУ ]</button>
+      <button id="diaryBtnLock" class="btn"
+        style="display:none;background:var(--bg2);border:1px solid #fa4;color:#fa4;"
+        onclick="lockDiaryEntry(true)">[ 🔒 ЗАКРЫТЬ ДЕНЬ ]</button>
+      <button id="diaryBtnUnlock" class="btn"
+        style="display:none;background:var(--bg2);border:1px solid var(--border);color:var(--text2);"
+        onclick="lockDiaryEntry(false)">[ 🔓 РАЗБЛОКИРОВАТЬ ]</button>
+    </div>
+  </div>
+
+  <!-- ── Народный магазин ──────────────────────────────────── -->
+  <div id="shopFolkContent" style="display:none;flex-direction:column;padding:8px 0;">
+    <div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">🏮</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">民间商店 Народный магазин</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.7;">МЮ предлагает товар — все скидываются вместе.<br>Когда сумма набирается — товар получают все участники.<br><br><span style="color:var(--text3);">Скоро здесь появятся предложения...</span></div>
+    </div>
+  </div>
+  <!-- /shopFolkContent -->
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showPage('home',this)">
+    <i class="ti ti-smart-home"></i>
+    <span class="nav-cn">主页</span>
+  </button>
+  <button class="nav-item" onclick="showPage('schedule',this)">
+    <i class="ti ti-layout-list"></i>
+    <span class="nav-cn">日程</span>
+  </button>
+  <button class="nav-item" onclick="showPage('rating',this)">
+    <i class="ti ti-trophy"></i>
+    <span class="nav-cn">排名</span>
+  </button>
+  <button class="nav-item" onclick="showPage('shop',this)">
+    <i class="ti ti-building-store"></i>
+    <span class="nav-cn">商店</span>
+  </button>
+  <button class="nav-item" onclick="showPage('casino',this)">
+    <i class="ti ti-package" id="nav-casino-icon"></i>
+    <span class="nav-cn" id="nav-casino-label">箱子</span>
+  </button>
+  <button class="nav-item" onclick="showPage('implants',this)">
+    <i class="ti ti-cpu" id="nav-implants-icon"></i>
+    <span class="nav-cn" id="nav-implants-label">植入物</span>
+  </button>
+  <button class="nav-item" id="nav-more-btn" onclick="showPage('more',this)">
+    <i class="ti ti-menu-2"></i>
+    <span class="nav-cn">更多</span>
+  </button>
+</nav>
+
+<!-- === RAID OVERLAY (СКРЫТЫЙ БЛОК) === -->
+<div id="raid-overlay" class="raid-overlay">
+    <div class="raid-content">
+        <button onclick="closeRaid()" class="btn-close-raid">×</button>
+        <div class="raid-kicker">
+            <span class="raid-kicker-dot"></span>
+            <span>ALPHABOSS NEURAL LINK</span>
+        </div>
+        
+        <div class="boss-frame">
+            <img id="boss-img" src="" class="boss-img" alt="BOSS">
+        </div>
+        
+        <div class="boss-name-wrap">
+            <div class="boss-name">М. Ю.</div>
+            <div id="boss-title" class="boss-title">// ADAM SMASHER PROTOCOL</div>
+        </div>
+        <div class="raid-threat-strip">
+            <span class="raid-chip">BlackWall</span>
+            <span class="raid-chip">NetWatch</span>
+            <span class="raid-chip">Lethal</span>
+        </div>
+        
+        <div class="raid-status-block">
+            <div class="raid-meter-top">
+                <span class="raid-meter-eyebrow">Raid Sync</span>
+                <span id="raid-sync-state" class="raid-meter-state">INIT</span>
+            </div>
+            <div class="raid-count-label">
+                <span>СБОР ОТРЯДА:</span>
+                <span><span id="raid-current-count">0</span> / <span id="raid-max-count">15</span></span>
+            </div>
+            
+            <div class="raid-progress-container">
+                <div id="raid-progress-bar" class="raid-progress-bar"></div>
+            </div>
+            <div class="raid-progress-meta">
+                <span id="raid-progress-hint" class="raid-progress-hint">Neural handshake pending</span>
+                <span id="raid-progress-percent" class="raid-progress-percent">0%</span>
+            </div>
+            <div id="raid-status-text" style="margin-top:12px;font-size:10px;color:var(--text2);font-family:monospace;line-height:1.6;text-align:center;">
+                // RAID STATUS //
+            </div>
+        </div>
+        
+        <button id="raid-action-btn" onclick="joinRaid()">
+            <i class="ti ti-broadcast"></i> ПОДКЛЮЧИТЬСЯ К НЕЙРОЛИНКУ
+        </button>
+    </div>
+</div>
+  
+<script src="./js/config.js"></script>
+<script src="./js/state.js"></script>
+<script src="./js/api.js"></script>
+<script src="./js/ui.js"></script>
+<script src="./js/themes.js"></script>
+<script src="./js/blackwall.js"></script>
+<script src="./js/schedule.js"></script>
+<script src="./js/announcements.js"></script>
+<script src="./js/laundry.js"></script>
+<script src="./js/achievements.js"></script>
+<script src="./js/leaderboard.js"></script>
+<script src="./js/shop.js"></script>
+<script src="./js/casino.js"></script>
+<script src="./js/diary.js"></script>
+<script src="./js/team.js"></script>
+<script src="./js/admin.js"></script>
+<script src="./js/raid.js"></script>
+<script src="./js/events.js"></script>
+<script src="./js/architect-event.js"></script>
+<script src="./js/main.js"></script>
+
+<!-- ── Экран выбора пути (показывается при первом входе) ── -->
+<div id="overlay-path-choice" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.92);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;box-sizing:border-box;
+">
+  <div style="font-size:10px;color:#cc4444;font-family:monospace;letter-spacing:2px;margin-bottom:8px;">ZHIDAO PROTOCOL</div>
+  <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:4px;">Выбери свой путь</div>
+  <div style="font-size:11px;color:#888;font-family:monospace;margin-bottom:28px;text-align:center;">选择你的道路 · Это нельзя изменить бесплатно</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:320px;margin-bottom:24px;">
+
+    <div onclick="chooseThemePath('cyberpunk')" style="
+      background:#050510;border:2px solid rgba(180,20,20,0.4);
+      border-radius:14px;padding:16px;cursor:pointer;text-align:center;
+      transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='rgba(204,68,68,0.8)'" onmouseout="this.style.borderColor='rgba(180,20,20,0.4)'">
+      <div style="font-size:28px;margin-bottom:8px;">🔴</div>
+      <div style="font-size:11px;color:#cc4444;font-family:monospace;font-weight:700;letter-spacing:1px;">NETWATCH</div>
+      <div style="font-size:9px;color:#666;font-family:monospace;margin-top:4px;">Киберпанк</div>
+      <div style="font-size:9px;color:#555;margin-top:6px;line-height:1.4;">Кейсы · Импланты<br>Тёмная и Светлая</div>
+    </div>
+
+    <div onclick="chooseThemePath('genshin')" style="
+      background:#1a1628;border:2px solid rgba(219,177,101,0.25);
+      border-radius:14px;padding:16px;cursor:pointer;text-align:center;
+      transition:border-color 0.2s;
+    " onmouseover="this.style.borderColor='rgba(219,177,101,0.7)'" onmouseout="this.style.borderColor='rgba(219,177,101,0.25)'">
+      <div style="font-size:28px;margin-bottom:8px;">✦</div>
+      <div style="font-size:11px;color:rgba(219,177,101,0.9);font-family:Georgia,serif;font-weight:700;">ГЕНШИН</div>
+      <div style="font-size:9px;color:#5a5248;font-family:Georgia,serif;margin-top:4px;">Ли Юэ</div>
+      <div style="font-size:9px;color:#5a5248;margin-top:6px;line-height:1.4;">Молитвы · Карточки<br>Дневной и Ночной</div>
+    </div>
+
+  </div>
+
+  <div style="font-size:9px;color:#444;font-family:monospace;text-align:center;max-width:260px;line-height:1.6;">
+    Сменить путь можно через «Смену пути 转换» в магазине (500★)
+  </div>
+</div>
+
+<div id="eventOverlay" class="event-overlay" style="display:none;">
+  <div class="event-backdrop"></div>
+
+  <div class="event-shell">
+    <div class="event-topbar">
+      <div class="event-topbar-left">
+        <div class="event-kicker">ARCHITECT PROTOCOL</div>
+        <div class="event-phase" id="eventPhaseLabel">ФАЗА I</div>
+      </div>
+      <button class="event-close-btn" onclick="closeEventOverlay()">✕</button>
+    </div>
+
+    <div class="event-hud boss-hud">
+      <div class="boss-hud__stack">
+        <div class="boss-hud__avatar" id="eventHudAvatar"></div>
+        <div class="boss-hud__level" id="eventBossLevel">41</div>
+      </div>
+
+      <div class="boss-hud__main">
+        <div class="boss-hud__caption">HEALTH INDICATOR</div>
+
+        <div class="boss-hud__topline">
+          <div class="event-boss-name">АРХИТЕКТОР</div>
+
+          <div class="event-meta-row">
+            <div class="event-status-badge" id="eventStateBadge">ACTIVE</div>
+            <div class="event-status-badge" id="eventVulnerabilityBadge">SHIELDED</div>
+            <div class="event-status-badge" id="eventPhaseText">PHASE 1</div>
+          </div>
+        </div>
+
+        <div class="event-hp-row">
+          <div class="event-hp-text" id="eventHpText">1000 / 1000</div>
+          <div class="event-overload-readout" id="eventOverloadBadge">OVR 0</div>
+        </div>
+
+        <div class="event-hp-bar">
+          <div id="eventHpFill" class="event-hp-fill" style="width:100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="event-hero" id="eventHero">
+      <video
+        id="eventBossVideo"
+        class="event-hero-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        style="display:none;"
+      ></video>
+      <img
+        id="eventBossImage"
+        src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png"
+        alt="Архитектор"
+      >
+      <div class="event-hero-glow"></div>
+    </div>
+
+<div class="event-lobby-card" id="eventLobbyCard">
+  <div class="event-lobby-head">
+    <div>
+      <div class="event-lobby-kicker">КОМАНДА</div>
+      <div class="event-lobby-status" id="eventStatusText">Ожидание данных...</div>
+    </div>
+    <div class="event-lobby-count" id="eventTeamCount">0 / 0</div>
+  </div>
+
+  <div class="event-lobby-reward">
+    <div class="event-lobby-label">ПРИЗ</div>
+    <div class="event-lobby-value" id="eventRewardText">—</div>
+  </div>
+
+  <div class="event-lobby-members">
+    <div class="event-lobby-label">СОСТАВ КОМАНДЫ</div>
+    <div class="event-team-list" id="eventTeamList">
+      <div class="event-team-empty">Пока никто не вступил</div>
+    </div>
+  </div>
+
+  <div class="event-lobby-actions" id="eventLobbyActions">
+    <button class="event-lobby-btn start" id="eventCreateBtn" onclick="createArchitectEvent()" style="display:none;">
+      Создать
+    </button>
+    <button class="event-lobby-btn join" id="eventJoinBtn" onclick="joinArchitectTeam()">
+      Вступить
+    </button>
+    <button class="event-lobby-btn leave" id="eventLeaveBtn" onclick="leaveArchitectTeam()" style="display:none;">
+      Покинуть
+    </button>
+    <button class="event-lobby-btn start" id="eventStartBtn" onclick="startArchitectEvent()" style="display:none;">
+      Начать
+    </button>
+  </div>
+</div>
+
+    
+      <div class="event-explanation" id="eventExplanation" style="display:none;"></div>
+
+    
+    <div class="event-log" id="eventLog">
+      <div class="event-log-empty">Лог ивента появится здесь</div>
+    </div>
+
+  <div class="event-actions">
+  <button class="event-action attack" onclick="requestArchitectQuestion('attack')">Атака</button>
+  <button class="event-action protocol" onclick="requestArchitectQuestion('protocol')">Protocol</button>
+  <button class="event-action sync" onclick="requestArchitectQuestion('sync')">Синхронизация</button>
+  <button class="event-action stabilize" onclick="requestArchitectQuestion('stabilize')">Стабилизация</button>
+</div>
+
+    <div class="event-question-modal" id="eventQuestionBox" style="display:none;">
+      <div class="event-question-title" id="eventQuestionPrompt">Вопрос появится здесь</div>
+      <div class="event-options" id="eventOptions"></div>
+    </div>
+  </div>
+</div>
+
+<div id="architectArrivalBanner" class="architect-banner-overlay" onclick="closeArchitectArrivalBanner()">
+  <div class="architect-banner-card" onclick="event.stopPropagation()">
+    <div class="architect-banner-frame"></div>
+    <div class="architect-banner-noise"></div>
+    <button class="architect-banner-close" onclick="closeArchitectArrivalBanner()">×</button>
+    <div class="architect-banner-head">
+      <div class="architect-banner-topline">CRITICAL OVERRIDE</div>
+    </div>
+    <div class="architect-banner-authority"></div>
+    <div class="architect-banner-visual">
+      <div class="architect-banner-grid">
+        <div class="architect-banner-grid-pulse"></div>
+      </div>
+      <div class="architect-banner-core"></div>
+      <div class="architect-banner-sigil">SYSTEM BREACH // PRIORITY OMEGA</div>
+    </div>
+    <div class="architect-banner-title">АРХИТЕКТОР В СЕТИ</div>
+    <div class="architect-banner-copy">
+      Обнаружен вход управляющей сущности. Внешний контур активирован,
+      управляющий канал захвачен, системный фон переведён в режим наблюдения.
+    </div>
+    <div class="architect-banner-meta">
+      <div class="architect-banner-chip">SIGNAL // LIVE</div>
+      <div class="architect-banner-chip">CHANNEL // LOCKED</div>
+      <div class="architect-banner-chip">LEVEL // CRITICAL</div>
+    </div>
+    <div class="architect-banner-status">STATUS // ARCHITECT ONLINE</div>
+    <div class="architect-banner-actions">
+      <button class="architect-banner-dismiss" onclick="closeArchitectArrivalBanner()">ПРИНЯТО</button>
+    </div>
+  </div>
+</div>
+
+<audio id="architectArrivalAudio" preload="auto">
+  <source src="architect-arrival.ogg" type="audio/ogg">
+</audio>
+
+<audio id="architectMusicA" preload="auto" loop style="display:none;"></audio>
+<audio id="architectMusicB" preload="auto" loop style="display:none;"></audio>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+const ACHIEVEMENT_ICONS = {
+  early_bird:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g1)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="22" r="7" fill="url(#g1)"/><path d="M14 32 Q26 18 38 32" stroke="url(#g1)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M20 36 L26 28 L32 36" fill="url(#g1)"/><circle cx="26" cy="10" r="3" fill="url(#g1)"/></svg>`,
+  iron_mode:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g2)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="14" stroke="url(#g2)" stroke-width="2" fill="none"/><path d="M26 12 L26 16 M26 36 L26 40 M12 26 L16 26 M36 26 L40 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/><circle cx="26" cy="26" r="5" fill="url(#g2)"/></svg>`,
+  legend:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g3)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 8 L30 20 L43 20 L33 28 L37 41 L26 33 L15 41 L19 28 L9 20 L22 20 Z" fill="url(#g3)"/></svg>`,
+  curious:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g4)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="23" cy="23" r="10" stroke="url(#g4)" stroke-width="2.5" fill="none"/><line x1="30" y1="30" x2="40" y2="40" stroke="url(#g4)" stroke-width="3" stroke-linecap="round"/></svg>`,
+  polyglot:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g5)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 18 Q26 12 42 18 L42 32 Q26 38 10 32 Z" fill="url(#g5)" opacity="0.3" stroke="url(#g5)" stroke-width="1.5"/><text x="26" y="29" text-anchor="middle" font-size="14" font-weight="bold" fill="url(#g5)">你好</text></svg>`,
+  explorer:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g6)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M14 38 L20 14 L26 32 L32 18 L38 38" stroke="url(#g6)" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="26" cy="18" r="4" fill="url(#g6)"/></svg>`,
+  brave:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g7)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M18 36 L18 22 Q18 16 24 16 L28 16 Q30 16 30 20 L30 24 L34 24 Q38 24 38 28 L38 36" stroke="url(#g7)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="36" r="2" fill="url(#g7)"/><circle cx="34" cy="36" r="2" fill="url(#g7)"/></svg>`,
+  exemplary:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g8)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="26" cy="26" r="12" stroke="url(#g8)" stroke-width="2" fill="none"/><path d="M19 26 L23 30 L33 20" stroke="url(#g8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
+  helper:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g9" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g9)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M16 26 Q16 20 22 20 L24 20 Q26 20 26 22 Q26 20 28 20 L30 20 Q36 20 36 26 Q36 32 26 38 Q16 32 16 26 Z" fill="url(#g9)"/></svg>`,
+  dragon:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g10" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g10)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M10 36 Q14 28 18 24 Q20 18 26 16 Q32 14 36 18 Q40 22 38 28 Q36 34 30 36 Q26 38 22 36 Q18 40 10 36 Z" fill="url(#g10)" opacity="0.6" stroke="url(#g10)" stroke-width="1.5"/><circle cx="32" cy="22" r="2" fill="#050510"/></svg>`,
+  night_watch:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g11" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g11)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><circle cx="22" cy="22" r="4" fill="url(#g11)"/><circle cx="30" cy="22" r="4" fill="url(#g11)"/><circle cx="22" cy="22" r="2" fill="#050510"/><circle cx="30" cy="22" r="2" fill="#050510"/><path d="M18 30 Q26 36 34 30" stroke="url(#g11)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  master:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g12" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g12)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="18" y="14" width="16" height="8" rx="2" fill="url(#g12)" opacity="0.6"/><rect x="14" y="26" width="8" height="12" rx="2" fill="url(#g12)" opacity="0.4"/><rect x="26" y="26" width="12" height="12" rx="2" fill="url(#g12)" opacity="0.8"/></svg>`,
+  gambler:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g13" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g13)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><rect x="12" y="16" width="28" height="22" rx="4" stroke="url(#g13)" stroke-width="2" fill="rgba(212,175,55,0.1)"/><text x="19" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text><text x="26" y="31" font-size="8" fill="#f5d05a" font-weight="bold">♦</text><text x="33" y="31" font-size="8" fill="#f5d05a" font-weight="bold">7</text></svg>`,
+  lucky:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/><path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/><circle cx="26" cy="26" r="2" fill="url(#g14)"/></svg>`
+};
+
+// Инициализация пользователя
+
+async function loadAchievements() {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/achievements/${currentUserId}`);
+    const data = await r.json();
+    const container = document.getElementById('achievementsContent');
+    const earned = data.filter(a => a.earned).length;
+    let html = `<div class="achievement-count">// Получено: <b style="color:var(--gold)">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
+    data.forEach(a => {
+      const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
+      html += `<div class="achievement-card ${a.earned?'':'locked'}" onclick="showAchievementInfo('${a.name}','${a.description}',${a.earned})">
+        ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
+        <div class="achievement-svg">${svgIcon}</div>
+        <div class="achievement-name">${a.name}</div>
+      </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  } catch(e) { document.getElementById('achievementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+function showAchievementInfo(name, description, earned) {
+  tg.showPopup({title:earned?'✅ '+name:'🔒 '+name,message:description+(earned?'\n\n✨ Получено!':'\n\n❌ Ещё не получено'),buttons:[{type:'ok'}]});
+}
+
+// ===== АНОНИМНЫЙ ВОПРОС =====
