@@ -1808,36 +1808,6 @@
       <button class="event-close-btn" onclick="closeEventOverlay()">✕</button>
     </div>
 
-    <div class="event-hud boss-hud">
-      <div class="boss-hud__stack">
-        <div class="boss-hud__avatar" id="eventHudAvatar"></div>
-        <div class="boss-hud__level" id="eventBossLevel">41</div>
-      </div>
-
-      <div class="boss-hud__main">
-        <div class="boss-hud__caption">HEALTH INDICATOR</div>
-
-        <div class="boss-hud__topline">
-          <div class="event-boss-name">АРХИТЕКТОР</div>
-
-          <div class="event-meta-row">
-            <div class="event-status-badge" id="eventStateBadge">ACTIVE</div>
-            <div class="event-status-badge" id="eventVulnerabilityBadge">SHIELDED</div>
-            <div class="event-status-badge" id="eventPhaseText">PHASE 1</div>
-          </div>
-        </div>
-
-        <div class="event-hp-row">
-          <div class="event-hp-text" id="eventHpText">1000 / 1000</div>
-          <div class="event-overload-readout" id="eventOverloadBadge">OVR 0</div>
-        </div>
-
-        <div class="event-hp-bar">
-          <div id="eventHpFill" class="event-hp-fill" style="width:100%;"></div>
-        </div>
-      </div>
-    </div>
-
     <div class="event-hero" id="eventHero">
       <video
         id="eventBossVideo"
@@ -1853,6 +1823,37 @@
         src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png"
         alt="Архитектор"
       >
+
+      <div class="event-hud boss-hud">
+        <div class="boss-hud__stack">
+          <div class="boss-hud__avatar" id="eventHudAvatar"></div>
+          <div class="boss-hud__level" id="eventBossLevel">41</div>
+        </div>
+
+        <div class="boss-hud__main">
+          <div class="boss-hud__caption">HEALTH INDICATOR</div>
+
+          <div class="boss-hud__topline">
+            <div class="event-boss-name">АРХИТЕКТОР</div>
+
+            <div class="event-meta-row">
+              <div class="event-status-badge" id="eventStateBadge">ACTIVE</div>
+              <div class="event-status-badge" id="eventVulnerabilityBadge">SHIELDED</div>
+              <div class="event-status-badge" id="eventPhaseText">PHASE 1</div>
+            </div>
+          </div>
+
+          <div class="event-hp-row">
+            <div class="event-hp-text" id="eventHpText">1000 / 1000</div>
+            <div class="event-overload-readout" id="eventOverloadBadge">OVR 0</div>
+          </div>
+
+          <div class="event-hp-bar">
+            <div id="eventHpFill" class="event-hp-fill" style="width:100%;"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="event-hero-glow"></div>
     </div>
 
