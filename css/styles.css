@@ -2696,6 +2696,122 @@ body.theme-genshin .diary-star.active {
   overflow: hidden;
 }
 
+.event-overlay::before,
+.event-overlay::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.event-overlay::before {
+  z-index: 6;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 40, 40, 0.06) 0,
+      rgba(255, 40, 40, 0.06) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+}
+
+.event-overlay::after {
+  z-index: 8;
+  opacity: 0;
+  background: transparent;
+}
+
+.event-overlay.event-state-active.event-phase-1::before {
+  opacity: 0.12;
+  animation: architectPhaseScanSlow 7.8s linear infinite;
+}
+
+.event-overlay.event-state-active.event-phase-2::before {
+  opacity: 0.24;
+  background:
+    linear-gradient(90deg, rgba(0, 230, 255, 0.16), transparent 18%, rgba(255, 30, 45, 0.13) 82%, transparent),
+    repeating-linear-gradient(180deg, rgba(0, 230, 255, 0.08) 0 1px, transparent 1px 7px);
+  animation: architectPhaseSplit 2.2s steps(2) infinite;
+}
+
+.event-overlay.event-state-active.event-phase-3::before {
+  opacity: 0.34;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.25), transparent 42%),
+    repeating-linear-gradient(180deg, rgba(255, 30, 30, 0.10) 0 1px, transparent 1px 5px);
+  animation: architectOverloadPulse 1.2s ease-in-out infinite;
+}
+
+.event-overlay.event-phase-shift::after {
+  opacity: 1;
+  background:
+    linear-gradient(90deg, rgba(0, 230, 255, 0.18), transparent 38%, rgba(255, 20, 40, 0.22)),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.10) 0 1px, transparent 1px 6px);
+  animation: architectPhaseJerkFlash 0.9s steps(2) both;
+}
+
+.event-overlay.event-phase-shift .event-hud {
+  animation: architectHudCorrupt 0.85s steps(2) both;
+}
+
+.event-overlay.event-phase-shift .event-hero-video,
+.event-overlay.event-phase-shift #eventBossImage {
+  animation: architectMediaJolt 0.85s steps(2) both;
+}
+
+.event-overlay.event-action-fx-attack::after {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 35, 20, 0.34), transparent 35%),
+    linear-gradient(90deg, rgba(255,0,0,0.24), transparent 32%, rgba(255,0,0,0.20));
+  animation: architectAttackFlash 0.56s ease-out both;
+}
+
+.event-overlay.event-action-fx-attack .event-hero {
+  animation: architectHitShake 0.38s ease-out both;
+}
+
+.event-overlay.event-action-fx-protocol::after {
+  opacity: 1;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 16px, rgba(0, 230, 255, 0.22) 16px 18px),
+    linear-gradient(180deg, transparent, rgba(0, 230, 255, 0.16), transparent);
+  animation: architectProtocolTrace 0.68s ease-out both;
+}
+
+.event-overlay.event-action-fx-sync::after {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 18%, rgba(115, 125, 255, 0.24) 19%, transparent 31%),
+    radial-gradient(circle at 50% 50%, rgba(115, 125, 255, 0.16), transparent 46%);
+  animation: architectSyncRipple 0.72s ease-out both;
+}
+
+.event-overlay.event-action-fx-stabilize::after {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 56%, rgba(70, 255, 140, 0.20), transparent 36%),
+    linear-gradient(180deg, transparent, rgba(70, 255, 140, 0.12));
+  animation: architectStabilizeShield 0.76s ease-out both;
+}
+
+.event-overlay.event-action-fx-miss::after {
+  filter: grayscale(0.45) contrast(1.35);
+}
+
+.event-overlay.event-overload-high .event-hero-video,
+.event-overlay.event-overload-high #eventBossImage {
+  animation: architectOverloadShake 0.42s steps(2) infinite;
+}
+
+.event-overlay.event-overload-critical .event-hud,
+.event-overlay.event-overload-critical .event-final-timer {
+  animation: architectCriticalBlink 0.72s steps(2) infinite;
+}
+
 .event-backdrop {
   position: absolute;
   inset: 0;
@@ -2845,6 +2961,69 @@ body.theme-genshin .diary-star.active {
   pointer-events: none;
   animation: eventHeroPulse 4s ease-in-out infinite;
   z-index: 1;
+}
+
+.event-overlay.event-phase-1 .event-hero-glow {
+  opacity: 0.55;
+  animation-duration: 5.2s;
+}
+
+.event-overlay.event-phase-2 .event-hero-glow {
+  opacity: 0.72;
+  background:
+    radial-gradient(circle at 42% 48%, rgba(0, 230, 255, 0.12), transparent 42%),
+    radial-gradient(circle at 58% 44%, rgba(255, 30, 40, 0.16), transparent 48%);
+  animation-duration: 2.9s;
+}
+
+.event-overlay.event-phase-3 .event-hero-glow {
+  opacity: 0.92;
+  background:
+    radial-gradient(circle at center, rgba(255,0,0,0.30), transparent 54%),
+    radial-gradient(circle at 50% 22%, rgba(255,140,120,0.16), transparent 30%);
+  animation-duration: 1.55s;
+}
+
+.event-final-timer {
+  position: fixed;
+  top: 96px;
+  right: 12px;
+  z-index: 12;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 45, 45, 0.46);
+  border-radius: 8px;
+  background: rgba(20, 2, 4, 0.58);
+  color: #ffdad2;
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 18px rgba(255, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(255,255,255,0.03);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.event-phase-warning {
+  position: fixed;
+  left: 50%;
+  top: 132px;
+  z-index: 12;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 34, 34, 0.55);
+  border-radius: 999px;
+  background: rgba(55, 0, 0, 0.55);
+  color: #ffb7aa;
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  box-shadow: 0 0 22px rgba(255, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+  animation: architectWarningBlink 0.9s steps(2) infinite;
+  pointer-events: none;
 }
 
 .event-hud {
@@ -3039,6 +3218,102 @@ body.theme-genshin .diary-star.active {
 @keyframes eventBackdropPulse {
   0%, 100% { opacity: 0.92; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.025); }
+}
+
+@keyframes architectPhaseScanSlow {
+  from { transform: translateY(-10%); }
+  to { transform: translateY(10%); }
+}
+
+@keyframes architectPhaseSplit {
+  0%, 100% { transform: translateX(0); filter: hue-rotate(0deg); }
+  18% { transform: translateX(-2px); filter: hue-rotate(12deg); }
+  20% { transform: translateX(2px); }
+  22% { transform: translateX(0); }
+  62% { transform: translateX(1px); }
+  64% { transform: translateX(-1px); }
+}
+
+@keyframes architectOverloadPulse {
+  0%, 100% { opacity: 0.22; transform: scale(1); }
+  50% { opacity: 0.46; transform: scale(1.02); }
+}
+
+@keyframes architectPhaseJerkFlash {
+  0% { opacity: 0; transform: translateX(-8px); }
+  12% { opacity: 1; transform: translateX(10px); }
+  24% { opacity: 0.62; transform: translateX(-6px); }
+  46% { opacity: 0.34; transform: translateX(3px); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes architectHudCorrupt {
+  0%, 100% { transform: translateX(0); filter: none; }
+  12% { transform: translateX(-3px); filter: hue-rotate(60deg) saturate(1.6); }
+  22% { transform: translateX(4px); filter: hue-rotate(-30deg) saturate(1.8); }
+  34% { transform: translateX(-1px); }
+}
+
+@keyframes architectMediaJolt {
+  0%, 100% { transform: translateX(0) scale(1); filter: saturate(1.08) contrast(1.05); }
+  14% { transform: translateX(-8px) scale(1.012); filter: saturate(1.4) contrast(1.2); }
+  28% { transform: translateX(7px) scale(1.006); filter: saturate(0.9) contrast(1.35); }
+  42% { transform: translateX(-2px) scale(1); }
+}
+
+@keyframes architectAttackFlash {
+  0% { opacity: 0; transform: scale(1); }
+  18% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+
+@keyframes architectHitShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-7px, 2px); }
+  40% { transform: translate(6px, -1px); }
+  60% { transform: translate(-3px, 1px); }
+  80% { transform: translate(2px, 0); }
+}
+
+@keyframes architectProtocolTrace {
+  0% { opacity: 0; transform: translateX(-18px); }
+  22% { opacity: 0.82; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(28px); }
+}
+
+@keyframes architectSyncRipple {
+  0% { opacity: 0; transform: scale(0.75); }
+  28% { opacity: 0.78; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+
+@keyframes architectStabilizeShield {
+  0% { opacity: 0; transform: scaleY(0.92); }
+  26% { opacity: 0.70; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.08); }
+}
+
+@keyframes architectOverloadShake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(1px, -1px); }
+  50% { transform: translate(-1px, 1px); }
+  75% { transform: translate(2px, 0); }
+}
+
+@keyframes architectCriticalBlink {
+  0%, 100% { filter: saturate(1); opacity: 1; }
+  50% { filter: saturate(1.8) brightness(1.18); opacity: 0.72; }
+}
+
+@keyframes architectWarningBlink {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.52; transform: translateX(-50%) scale(1.02); }
+}
+
+@keyframes architectButtonFire {
+  0% { transform: translateY(0); box-shadow: none; }
+  35% { transform: translateY(-2px); box-shadow: 0 0 22px rgba(255, 70, 40, 0.24); }
+  100% { transform: translateY(0); box-shadow: none; }
 }
 
 .event-hp-row {
@@ -3251,6 +3526,10 @@ body.theme-genshin .diary-star.active {
 .event-action:active {
   transform: translateY(-1px);
   border-color: rgba(255,255,255,0.14);
+}
+
+.event-action.is-firing {
+  animation: architectButtonFire 0.48s ease-out both;
 }
 
 .event-action.attack::before { background: linear-gradient(90deg, rgba(255,72,48,0.95), rgba(255,72,48,0.12)); }
