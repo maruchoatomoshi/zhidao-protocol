@@ -1916,6 +1916,25 @@
   </div>
 </div>
 
+<div id="architectEventEntryBanner" class="architect-event-entry-overlay" onclick="closeArchitectEventEntryBanner()">
+  <div class="architect-event-entry-card" onclick="event.stopPropagation()">
+    <div class="architect-event-entry-scan"></div>
+    <button class="architect-event-entry-close" onclick="closeArchitectEventEntryBanner()">×</button>
+    <div class="architect-event-entry-kicker">BLACKWALL SECURITY // INTRUSION ALERT</div>
+    <div class="architect-event-entry-title">ВНИМАНИЕ!</div>
+    <div class="architect-event-entry-copy">
+      Несанкционированный вход в сеть.<br>
+      Черный Заслон под угрозой вторжения.
+    </div>
+    <div class="architect-event-entry-grid">
+      <span>TRACE // ACTIVE</span>
+      <span>FIREWALL // BREACHED</span>
+      <span>THREAT // ARCHITECT</span>
+    </div>
+    <button class="architect-event-entry-accept" onclick="closeArchitectEventEntryBanner()">ПРИНЯТО</button>
+  </div>
+</div>
+
 <div id="architectArrivalBanner" class="architect-banner-overlay" onclick="closeArchitectArrivalBanner()">
   <div class="architect-banner-card" onclick="event.stopPropagation()">
     <div class="architect-banner-frame"></div>
@@ -1951,6 +1970,10 @@
 
 <audio id="architectArrivalAudio" preload="auto">
   <source src="architect-arrival.ogg" type="audio/ogg">
+</audio>
+
+<audio id="architectEventEntryAudio" preload="auto">
+  <source src="entered_architect_event.mp3" type="audio/mpeg">
 </audio>
 
 <audio id="architectMusicA" preload="auto" loop style="display:none;"></audio>

@@ -10,6 +10,7 @@ function openEventOverlay() {
   document.body.style.overflow = 'hidden';
   setArchitectAmbientVisibility(false);
   architectMusicUnlocked = true;
+  openArchitectEventEntryBanner();
 
   const log = document.getElementById('eventLog');
   if (log) {
@@ -31,6 +32,7 @@ function closeEventOverlay() {
 
   document.body.style.overflow = '';
   setArchitectAmbientVisibility(true);
+  closeArchitectEventEntryBanner();
 
   const bossVideo = document.getElementById('eventBossVideo');
   if (bossVideo) {
@@ -38,6 +40,59 @@ function closeEventOverlay() {
   }
 
   stopArchitectMusic();
+}
+
+let architectEventEntryBannerTimer = null;
+
+function openArchitectEventEntryBanner() {
+  const overlay = document.getElementById('architectEventEntryBanner');
+  const audio = document.getElementById('architectEventEntryAudio');
+  if (!overlay) return;
+
+  overlay.classList.add('show');
+
+  if (architectEventEntryBannerTimer) {
+    clearTimeout(architectEventEntryBannerTimer);
+  }
+
+  if (audio) {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 0.95;
+      const maybePromise = audio.play();
+      if (maybePromise && typeof maybePromise.catch === 'function') {
+        maybePromise.catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  try { tg.HapticFeedback.notificationOccurred('warning'); } catch (e) {}
+
+  architectEventEntryBannerTimer = setTimeout(() => {
+    closeArchitectEventEntryBanner();
+  }, 5200);
+}
+
+function closeArchitectEventEntryBanner() {
+  const overlay = document.getElementById('architectEventEntryBanner');
+  const audio = document.getElementById('architectEventEntryAudio');
+
+  if (architectEventEntryBannerTimer) {
+    clearTimeout(architectEventEntryBannerTimer);
+    architectEventEntryBannerTimer = null;
+  }
+
+  if (overlay) {
+    overlay.classList.remove('show');
+  }
+
+  if (audio) {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch (e) {}
+  }
 }
 
 async function loadCurrentEvent() {
