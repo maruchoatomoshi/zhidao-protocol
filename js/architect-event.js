@@ -301,7 +301,7 @@ function renderArchitectLobby(eventData, errorText = '') {
   const teamCount = typeof eventData.team_count === 'number' ? eventData.team_count : teamMembers.length;
   const hasReward = !!(eventData.reward_text && String(eventData.reward_text).trim());
   const isTerminal = eventData.state === 'FAILED' || eventData.state === 'FINISHED';
-  const showLobbyCard = eventData.state === 'REGISTRATION' || teamCount > 0 || hasReward || (isAdmin && isTerminal);
+  const showLobbyCard = eventData.state === 'REGISTRATION' || (isTerminal && (teamCount > 0 || hasReward || isAdmin));
 
   lobbyCard.style.display = showLobbyCard ? 'block' : 'none';
 
