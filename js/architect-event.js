@@ -257,6 +257,7 @@ async function loadCurrentArchitectEvent() {
 
 function renderArchitectLobby(eventData, errorText = '') {
   const lobbyCard = document.getElementById('eventLobbyCard');
+  const overlay = document.getElementById('eventOverlay');
   const statusEl = document.getElementById('eventStatusText');
   const rewardEl = document.getElementById('eventRewardText');
   const teamCountEl = document.getElementById('eventTeamCount');
@@ -271,6 +272,10 @@ function renderArchitectLobby(eventData, errorText = '') {
   }
 
   if (!eventData) {
+    if (overlay) {
+      overlay.classList.remove('event-terminal');
+    }
+
     lobbyCard.style.display = 'block';
     statusEl.textContent = errorText || 'Ивент не создан';
     rewardEl.textContent = '—';
@@ -302,6 +307,10 @@ function renderArchitectLobby(eventData, errorText = '') {
   const hasReward = !!(eventData.reward_text && String(eventData.reward_text).trim());
   const isTerminal = eventData.state === 'FAILED' || eventData.state === 'FINISHED';
   const showLobbyCard = eventData.state === 'REGISTRATION' || (isTerminal && (teamCount > 0 || hasReward || isAdmin));
+
+  if (overlay) {
+    overlay.classList.toggle('event-terminal', isTerminal);
+  }
 
   lobbyCard.style.display = showLobbyCard ? 'block' : 'none';
 
@@ -339,6 +348,7 @@ function updateArchitectBattleVisibility(eventData) {
   const actions = document.querySelector('.event-actions');
   const bossImage = document.getElementById('eventBossImage');
   const log = document.getElementById('eventLog');
+  const hud = document.querySelector('.event-hud');
   const hpText = document.getElementById('eventHpText');
   const hpFill = document.getElementById('eventHpFill');
   const phaseText = document.getElementById('eventPhaseText');
@@ -353,8 +363,12 @@ function updateArchitectBattleVisibility(eventData) {
   }
 
   const isActive = !!eventData && eventData.state === 'ACTIVE';
+  const isTerminal = !!eventData && (eventData.state === 'FAILED' || eventData.state === 'FINISHED');
 
   actions.style.display = isActive ? 'grid' : 'none';
+  if (hud) {
+    hud.style.display = isTerminal ? 'none' : 'flex';
+  }
   if (!isActive) {
   closeArchitectQuestion();
 }

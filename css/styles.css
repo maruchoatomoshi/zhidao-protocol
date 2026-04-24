@@ -3161,6 +3161,10 @@ body.theme-genshin .diary-star.active {
   z-index: 4;
 }
 
+.event-overlay.event-terminal .event-lobby-card {
+  margin-top: min(45vh, 360px);
+}
+
 .event-lobby-head {
   display: flex;
   justify-content: space-between;
