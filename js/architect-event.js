@@ -27,6 +27,10 @@ let architectMusicUnlocked = false;
 let architectMusicCurrentTrack = '';
 let architectMusicActiveDeck = 'a';
 let architectMusicFadeFrame = null;
+let architectLastRenderedPhase = null;
+let architectActionFxTimer = null;
+let architectPhaseFxTimer = null;
+let architectFinalTimerHandle = null;
 
 function getArchitectPhaseImage(eventData) {
   if (!eventData) return ARCHITECT_PHASE_IMAGES[1];
@@ -194,6 +198,195 @@ function switchArchitectMusic(trackUrl) {
 
 function syncArchitectMusic(eventData) {
   switchArchitectMusic(getArchitectPhaseMusic(eventData));
+}
+
+function clearArchitectFxTimer(timer) {
+  if (timer) {
+    clearTimeout(timer);
+  }
+}
+
+function triggerArchitectPhaseShift(phase) {
+  const overlay = document.getElementById('eventOverlay');
+  if (!overlay) return;
+
+  clearArchitectFxTimer(architectPhaseFxTimer);
+  overlay.classList.remove('event-phase-shift', 'event-phase-shift-2', 'event-phase-shift-3');
+  void overlay.offsetWidth;
+  overlay.classList.add('event-phase-shift');
+
+  if (phase === 2) {
+    overlay.classList.add('event-phase-shift-2');
+  } else if (phase >= 3) {
+    overlay.classList.add('event-phase-shift-3');
+  }
+
+  architectPhaseFxTimer = setTimeout(() => {
+    overlay.classList.remove('event-phase-shift', 'event-phase-shift-2', 'event-phase-shift-3');
+    architectPhaseFxTimer = null;
+  }, 1100);
+}
+
+function triggerArchitectActionFx(actionType, isCorrect = true) {
+  const overlay = document.getElementById('eventOverlay');
+  if (!overlay || !actionType) return;
+
+  clearArchitectFxTimer(architectActionFxTimer);
+  overlay.classList.remove(
+    'event-action-fx',
+    'event-action-fx-attack',
+    'event-action-fx-protocol',
+    'event-action-fx-sync',
+    'event-action-fx-stabilize',
+    'event-action-fx-miss'
+  );
+
+  document.querySelectorAll('.event-action.is-firing').forEach((node) => {
+    node.classList.remove('is-firing');
+  });
+
+  void overlay.offsetWidth;
+  overlay.classList.add('event-action-fx', `event-action-fx-${actionType}`);
+
+  if (!isCorrect) {
+    overlay.classList.add('event-action-fx-miss');
+  }
+
+  const button = document.querySelector(`.event-action.${actionType}`);
+  if (button) {
+    button.classList.add('is-firing');
+  }
+
+  architectActionFxTimer = setTimeout(() => {
+    overlay.classList.remove(
+      'event-action-fx',
+      'event-action-fx-attack',
+      'event-action-fx-protocol',
+      'event-action-fx-sync',
+      'event-action-fx-stabilize',
+      'event-action-fx-miss'
+    );
+    if (button) {
+      button.classList.remove('is-firing');
+    }
+    architectActionFxTimer = null;
+  }, 760);
+}
+
+function normalizeArchitectDeadline(value) {
+  if (!value) return null;
+  const raw = String(value);
+  const normalized = /(?:Z|[+-]\d\d:\d\d)$/.test(raw) ? raw : `${raw}Z`;
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatArchitectCountdown(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
+function stopArchitectFinalTimer() {
+  if (architectFinalTimerHandle) {
+    clearInterval(architectFinalTimerHandle);
+    architectFinalTimerHandle = null;
+  }
+}
+
+function updateArchitectFinalTimer(eventData) {
+  const timer = document.getElementById('eventFinalTimer');
+  if (!timer) return;
+
+  stopArchitectFinalTimer();
+
+  const isFinalPhase = !!eventData &&
+    eventData.state === 'ACTIVE' &&
+    Number(eventData.phase || 1) >= 3 &&
+    !!eventData.final_phase_deadline;
+
+  if (!isFinalPhase) {
+    timer.style.display = 'none';
+    timer.textContent = 'FINAL T-00:00';
+    return;
+  }
+
+  const deadline = normalizeArchitectDeadline(eventData.final_phase_deadline);
+  if (!deadline) {
+    timer.style.display = 'none';
+    return;
+  }
+
+  function renderTimer() {
+    const remaining = deadline.getTime() - Date.now();
+    timer.textContent = `FINAL WINDOW T-${formatArchitectCountdown(remaining)}`;
+    timer.style.display = remaining > 0 ? 'block' : 'none';
+    if (remaining <= 0) {
+      stopArchitectFinalTimer();
+    }
+  }
+
+  renderTimer();
+  architectFinalTimerHandle = setInterval(renderTimer, 500);
+}
+
+function updateArchitectPhaseFxState(eventData) {
+  const overlay = document.getElementById('eventOverlay');
+  const warning = document.getElementById('eventPhaseWarning');
+  if (!overlay) return;
+
+  overlay.classList.remove(
+    'event-state-active',
+    'event-state-registration',
+    'event-state-terminal',
+    'event-phase-1',
+    'event-phase-2',
+    'event-phase-3',
+    'event-overload-high',
+    'event-overload-critical'
+  );
+
+  if (!eventData) {
+    architectLastRenderedPhase = null;
+    updateArchitectFinalTimer(null);
+    if (warning) warning.style.display = 'none';
+    return;
+  }
+
+  const state = String(eventData.state || '').toUpperCase();
+  const isActive = state === 'ACTIVE';
+  const isTerminal = state === 'FAILED' || state === 'FINISHED';
+  const phase = Math.max(1, Math.min(3, Number(eventData.phase || 1)));
+  const overload = Number(eventData.overload_pressure || 0);
+
+  overlay.classList.toggle('event-state-active', isActive);
+  overlay.classList.toggle('event-state-registration', state === 'REGISTRATION');
+  overlay.classList.toggle('event-state-terminal', isTerminal);
+
+  if (isActive) {
+    overlay.classList.add(`event-phase-${phase}`);
+
+    if (architectLastRenderedPhase !== null && architectLastRenderedPhase !== phase) {
+      triggerArchitectPhaseShift(phase);
+    }
+
+    architectLastRenderedPhase = phase;
+  } else {
+    architectLastRenderedPhase = null;
+  }
+
+  const overloadHigh = isActive && phase >= 3 && overload >= 12;
+  const overloadCritical = isActive && phase >= 3 && overload >= 20;
+  overlay.classList.toggle('event-overload-high', overloadHigh);
+  overlay.classList.toggle('event-overload-critical', overloadCritical);
+
+  if (warning) {
+    warning.textContent = overloadCritical ? 'OVERLOAD CRITICAL' : 'OVERLOAD WARNING';
+    warning.style.display = overloadHigh ? 'block' : 'none';
+  }
+
+  updateArchitectFinalTimer(eventData);
 }
 
 function setArchitectAmbientVisibility(isVisible) {
@@ -370,6 +563,8 @@ function updateArchitectBattleVisibility(eventData) {
   if (!actions || !log || !hpText || !hpFill || !phaseText || !phaseLabel) {
     return;
   }
+
+  updateArchitectPhaseFxState(eventData);
 
   const isActive = !!eventData && eventData.state === 'ACTIVE';
   const isTerminal = !!eventData && (eventData.state === 'FAILED' || eventData.state === 'FINISHED');
@@ -650,14 +845,15 @@ async function submitArchitectAnswer(answerOption) {
   if (!currentArchitectEventId || !currentUserId || !pendingEventActionType) return;
 
   try {
+    const actionType = pendingEventActionType;
     const payload = {
       event_id: currentArchitectEventId,
       telegram_id: currentUserId,
-      action_type: pendingEventActionType,
+      action_type: actionType,
       use_active_modifier: false
     };
 
-    if (pendingEventActionType !== 'sync') {
+    if (actionType !== 'sync') {
       payload.question_id = pendingEventQuestionId;
       payload.answer_option = answerOption;
     }
@@ -676,6 +872,7 @@ async function submitArchitectAnswer(answerOption) {
     }
 
     closeArchitectQuestion();
+    triggerArchitectActionFx(actionType, data.is_correct !== false);
     pendingEventActionType = null;
 
     if (data.is_correct === false && data.question_explanation) {

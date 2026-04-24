@@ -33,6 +33,9 @@ function closeEventOverlay() {
   document.body.style.overflow = '';
   setArchitectAmbientVisibility(true);
   closeArchitectEventEntryBanner();
+  if (typeof updateArchitectPhaseFxState === 'function') {
+    updateArchitectPhaseFxState(null);
+  }
 
   const bossVideo = document.getElementById('eventBossVideo');
   if (bossVideo) {
