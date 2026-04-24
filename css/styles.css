@@ -2667,7 +2667,7 @@ body.theme-genshin .diary-star.active {
 
 .event-hud {
   position: fixed;
-  top: 86px;
+  top: 66px;
   left: 12px;
   z-index: 11;
   margin: 0;
