@@ -19,6 +19,12 @@
   --purple-dim: rgba(155,89,182,0.15);
   --purple-border: rgba(155,89,182,0.3);
   --nav-h: 68px;
+  --app-height: 100dvh;
+  --tg-viewport-height: 100dvh;
+  --tg-safe-top: env(safe-area-inset-top, 0px);
+  --tg-safe-right: env(safe-area-inset-right, 0px);
+  --tg-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tg-safe-left: env(safe-area-inset-left, 0px);
   --font-ui: -apple-system, sans-serif;
   --btn-radius: 8px;
   --card-radius: 10px;
@@ -122,9 +128,23 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, sans-serif;
-  min-height: 100vh;
+  min-height: var(--app-height, 100dvh);
   padding-bottom: var(--nav-h);
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+html {
+  min-height: var(--app-height, 100dvh);
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+body.tg-ios {
+  min-height: var(--app-height, 100dvh);
+  overflow-x: hidden;
+  padding-bottom: calc(var(--nav-h) + var(--tg-safe-bottom));
 }
 
 /* Сканлайны на фоне */
@@ -3754,6 +3774,161 @@ body.theme-genshin .diary-star.active {
 
 .event-option-btn:active {
   transform: scale(0.99);
+}
+
+/* ===== Telegram iOS compatibility layer ===== */
+body.tg-ios .bottom-nav {
+  height: calc(var(--nav-h) + var(--tg-safe-bottom));
+  padding-bottom: var(--tg-safe-bottom);
+}
+
+body.tg-ios .event-overlay,
+body.tg-ios .raid-overlay,
+body.tg-ios .question-modal {
+  height: var(--app-height, 100dvh);
+  min-height: var(--app-height, 100dvh);
+  overflow: hidden;
+}
+
+body.tg-ios .event-shell {
+  height: var(--app-height, 100dvh);
+  min-height: var(--app-height, 100dvh);
+  overflow: hidden;
+}
+
+.event-hero {
+  z-index: 1;
+}
+
+.event-topbar {
+  z-index: 10;
+}
+
+.event-hud {
+  z-index: 11;
+}
+
+.event-log {
+  z-index: 19;
+}
+
+.event-actions {
+  z-index: 20;
+}
+
+.event-question-modal {
+  z-index: 30;
+  color: rgba(255, 255, 255, 0.94) !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.94);
+}
+
+body.tg-ios .event-actions {
+  bottom: calc(8px + var(--tg-safe-bottom));
+}
+
+body.tg-ios .event-log {
+  bottom: calc(116px + var(--tg-safe-bottom));
+}
+
+body.tg-ios .event-question-modal {
+  bottom: calc(132px + var(--tg-safe-bottom));
+  max-height: min(52dvh, 420px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-height: 760px) {
+  body.tg-ios .event-question-modal {
+    bottom: calc(118px + var(--tg-safe-bottom));
+    max-height: min(48dvh, 360px);
+  }
+}
+
+@media (max-height: 680px) {
+  body.tg-ios .event-question-modal {
+    bottom: calc(108px + var(--tg-safe-bottom));
+    max-height: 46dvh;
+  }
+}
+
+.event-question-title {
+  color: rgba(255, 255, 255, 0.96) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.96);
+  opacity: 1 !important;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 80, 60, 0.22);
+  mix-blend-mode: normal !important;
+  filter: none !important;
+}
+
+.event-question-title *,
+.event-question-modal strong,
+.event-question-modal span {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit;
+  opacity: 1 !important;
+}
+
+.event-option-btn {
+  color: rgba(255, 255, 255, 0.92) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.92);
+}
+
+.event-option-btn:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.event-option-btn.is-selected {
+  opacity: 1;
+  border-color: rgba(212,175,55,0.55);
+  background: rgba(212,175,55,0.12);
+}
+
+.event-option-btn.is-correct {
+  border-color: rgba(70, 220, 130, 0.62);
+  background: rgba(70, 220, 130, 0.12);
+}
+
+.event-option-btn.is-wrong {
+  border-color: rgba(255, 70, 70, 0.68);
+  background: rgba(255, 70, 70, 0.13);
+}
+
+.event-explanation,
+.event-answer-feedback {
+  color: #f0dca8 !important;
+  -webkit-text-fill-color: #f0dca8;
+  opacity: 1 !important;
+}
+
+.event-answer-feedback,
+.event-question-modal .event-explanation {
+  position: static !important;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(212,175,55,0.10);
+  border: 1px solid rgba(212,175,55,0.24);
+  color: #f0dca8 !important;
+  -webkit-text-fill-color: #f0dca8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.event-question-continue {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(212,175,55,0.28);
+  background: rgba(212,175,55,0.12);
+  color: #f4d98a;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 1px;
 }
 
   

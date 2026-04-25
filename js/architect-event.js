@@ -821,12 +821,47 @@ function showArchitectQuestion(question) {
 
   const opts = question.options || {};
   options.innerHTML = `
-    <button class="event-option-btn" onclick="submitArchitectAnswer('a')">${escapeHtml(opts.a || '')}</button>
-    <button class="event-option-btn" onclick="submitArchitectAnswer('b')">${escapeHtml(opts.b || '')}</button>
-    <button class="event-option-btn" onclick="submitArchitectAnswer('c')">${escapeHtml(opts.c || '')}</button>
+    <button class="event-option-btn" data-option="a" onclick="submitArchitectAnswer('a')">${escapeHtml(opts.a || '')}</button>
+    <button class="event-option-btn" data-option="b" onclick="submitArchitectAnswer('b')">${escapeHtml(opts.b || '')}</button>
+    <button class="event-option-btn" data-option="c" onclick="submitArchitectAnswer('c')">${escapeHtml(opts.c || '')}</button>
   `;
 
+  box.querySelectorAll('.event-answer-feedback, .event-question-continue').forEach((node) => {
+    node.remove();
+  });
   box.style.display = 'block';
+}
+
+function renderArchitectAnswerFeedback(answerOption, isCorrect, explanation) {
+  const box = document.getElementById('eventQuestionBox');
+  const options = document.getElementById('eventOptions');
+  if (!box || !options) return;
+
+  options.querySelectorAll('.event-option-btn').forEach((button) => {
+    const selected = button.dataset.option === answerOption;
+    button.disabled = true;
+    button.classList.toggle('is-selected', selected);
+    button.classList.toggle('is-correct', selected && isCorrect);
+    button.classList.toggle('is-wrong', selected && !isCorrect);
+  });
+
+  box.querySelectorAll('.event-answer-feedback, .event-question-continue').forEach((node) => {
+    node.remove();
+  });
+
+  if (explanation && String(explanation).trim()) {
+    const feedback = document.createElement('div');
+    feedback.className = 'event-answer-feedback';
+    feedback.textContent = explanation;
+    box.appendChild(feedback);
+  }
+
+  const continueButton = document.createElement('button');
+  continueButton.className = 'event-question-continue';
+  continueButton.type = 'button';
+  continueButton.textContent = 'Продолжить';
+  continueButton.onclick = closeArchitectQuestion;
+  box.appendChild(continueButton);
 }
 
 function closeArchitectQuestion() {
@@ -835,6 +870,11 @@ function closeArchitectQuestion() {
   const prompt = document.getElementById('eventQuestionPrompt');
 
   if (box) box.style.display = 'none';
+  if (box) {
+    box.querySelectorAll('.event-answer-feedback, .event-question-continue').forEach((node) => {
+      node.remove();
+    });
+  }
   if (options) options.innerHTML = '';
   if (prompt) prompt.textContent = 'Вопрос появится здесь';
 
@@ -871,7 +911,6 @@ async function submitArchitectAnswer(answerOption) {
       return;
     }
 
-    closeArchitectQuestion();
     triggerArchitectActionFx(actionType, data.is_correct !== false);
     pendingEventActionType = null;
 
@@ -881,6 +920,16 @@ async function submitArchitectAnswer(answerOption) {
       setEventExplanation(data.question_explanation);
     } else {
       setEventExplanation('');
+    }
+
+    if (actionType === 'sync') {
+      closeArchitectQuestion();
+    } else {
+      const explanation = data.question_explanation
+        ? `${data.is_correct === false ? 'Неверно. ' : ''}${data.question_explanation}`
+        : '';
+      setEventExplanation('');
+      renderArchitectAnswerFeedback(answerOption, data.is_correct !== false, explanation);
     }
 
     await loadCurrentArchitectEvent();
