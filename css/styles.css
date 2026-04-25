@@ -2506,6 +2506,83 @@ body.theme-nw-light .nav-item { color: #555555; }
 body.theme-nw-light .nav-item.active { color: #993333; }
 body.theme-nw-light .nav-cn { color: #777777; }
 
+/* NetWatch light: keep casino and event cards readable on a pale surface. */
+body.theme-nw-light .casino-balance,
+body.theme-nw-light .prize-result {
+  background: rgba(255,255,255,0.76);
+  border-color: rgba(120,40,40,0.16);
+  box-shadow: 0 8px 24px rgba(80,40,30,0.06);
+}
+
+body.theme-nw-light .case-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.78), rgba(238,232,226,0.72));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 8px 18px rgba(80,40,30,0.045);
+}
+
+body.theme-nw-light .case-card.gold {
+  border-color: rgba(138,104,32,0.28);
+}
+
+body.theme-nw-light .case-card.purple {
+  border-color: rgba(120,76,140,0.24);
+}
+
+body.theme-nw-light .case-card.black {
+  border-color: rgba(153,51,51,0.24);
+}
+
+body.theme-nw-light .case-cn.g { color: rgba(122,80,16,0.72); }
+body.theme-nw-light .case-cn.p { color: rgba(110,70,132,0.72); }
+body.theme-nw-light .case-cn.b { color: rgba(153,51,51,0.72); }
+
+body.theme-nw-light .roulette-track {
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(235,229,222,0.82));
+  border-color: rgba(153,51,51,0.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.55), 0 10px 28px rgba(80,40,30,0.08);
+}
+
+body.theme-nw-light .roulette-track::before {
+  background: linear-gradient(to right, rgba(244,241,237,0.98), rgba(244,241,237,0));
+}
+
+body.theme-nw-light .roulette-track::after {
+  background: linear-gradient(to left, rgba(244,241,237,0.98), rgba(244,241,237,0));
+}
+
+body.theme-nw-light .roulette-item {
+  background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(232,225,218,0.92));
+  border-color: rgba(153,51,51,0.16);
+  color: #1f1f1f;
+}
+
+body.theme-nw-light .roulette-item-name {
+  color: #444444;
+}
+
+body.theme-nw-light .roulette-item.opened {
+  background: linear-gradient(145deg, rgba(255,250,232,0.96), rgba(236,221,175,0.92));
+}
+
+body.theme-nw-light .home-event-card {
+  border-color: rgba(153,51,51,0.24) !important;
+  background:
+    linear-gradient(135deg, rgba(153,51,51,0.10), rgba(255,255,255,0.76)),
+    rgba(255,255,255,0.74) !important;
+  box-shadow: 0 10px 26px rgba(80,40,30,0.08) !important;
+}
+
+body.theme-nw-light .home-event-card-kicker {
+  color: #7a5010 !important;
+}
+
+body.theme-nw-light .home-event-card-title {
+  color: #1f1f1f !important;
+}
+
+body.theme-nw-light .home-event-card-copy {
+  color: #4a4a4a !important;
+}
+
 /* ── Дневник в светлых темах ─────────────────────────────── */
 body.theme-nw-light .diary-hero,
 body.theme-genshin-light .diary-hero {
