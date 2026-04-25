@@ -342,6 +342,8 @@ function updateArchitectPhaseFxState(eventData) {
     'event-state-active',
     'event-state-registration',
     'event-state-terminal',
+    'event-state-finished',
+    'event-state-failed',
     'event-phase-1',
     'event-phase-2',
     'event-phase-3',
@@ -365,6 +367,8 @@ function updateArchitectPhaseFxState(eventData) {
   overlay.classList.toggle('event-state-active', isActive);
   overlay.classList.toggle('event-state-registration', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-terminal', isTerminal);
+  overlay.classList.toggle('event-state-finished', state === 'FINISHED');
+  overlay.classList.toggle('event-state-failed', state === 'FAILED');
 
   if (isActive) {
     overlay.classList.add(`event-phase-${phase}`);

@@ -4079,4 +4079,82 @@ body.tg-ios .event-question-modal {
   line-height: 1.5;
 }
 
+/* Architect polish pass: terminal result art and cleaner battle HUD. */
+.event-overlay.event-state-terminal .event-hero::before {
+  opacity: 0.72;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.16), rgba(0,0,0,0.03) 32%, rgba(0,0,0,0.72)),
+    repeating-linear-gradient(180deg, rgba(255, 70, 40, 0.045) 0 1px, transparent 1px 5px);
+}
+
+.event-overlay.event-state-terminal #eventBossImage {
+  filter: saturate(1.12) contrast(1.08) brightness(0.96);
+  animation: architectTerminalBreath 4.8s ease-in-out infinite;
+}
+
+.event-overlay.event-state-finished .event-hero-glow {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(0, 230, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 50% 62%, rgba(212, 175, 55, 0.16), transparent 42%);
+  opacity: 0.95;
+}
+
+.event-overlay.event-state-failed .event-hero-glow {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 0, 0, 0.28), transparent 36%),
+    linear-gradient(180deg, transparent, rgba(80, 0, 0, 0.44));
+  opacity: 1;
+  animation: architectFailedPulse 1.7s ease-in-out infinite;
+}
+
+.event-overlay.event-state-failed::before {
+  opacity: 0.24;
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 20, 20, 0.10) 0 1px, transparent 1px 6px),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.12), transparent 38%, rgba(255, 0, 0, 0.14));
+  animation: architectPhaseSplit 1.8s steps(2) infinite;
+}
+
+.event-overlay.event-state-finished::before {
+  opacity: 0.16;
+  background:
+    repeating-linear-gradient(180deg, rgba(0, 230, 255, 0.08) 0 1px, transparent 1px 7px),
+    linear-gradient(90deg, rgba(0, 230, 255, 0.10), transparent 42%, rgba(212, 175, 55, 0.10));
+  animation: architectPhaseScanSlow 7s linear infinite;
+}
+
+.event-hud {
+  background: rgba(3, 8, 14, 0.38);
+  border-color: rgba(0, 230, 255, 0.38);
+  box-shadow:
+    0 0 10px rgba(0, 230, 255, 0.08),
+    inset 0 0 0 1px rgba(0, 230, 255, 0.04);
+}
+
+.event-hp-bar {
+  background: rgba(5, 14, 22, 0.62);
+  border-color: rgba(84, 245, 255, 0.36);
+}
+
+.event-hp-fill {
+  opacity: 0.82;
+  box-shadow: 0 0 8px rgba(255, 45, 60, 0.32);
+}
+
+.event-final-timer {
+  top: 96px;
+  background: rgba(18, 3, 5, 0.58);
+  border-color: rgba(255, 34, 34, 0.38);
+}
+
+@keyframes architectTerminalBreath {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); }
+}
+
+@keyframes architectFailedPulse {
+  0%, 100% { opacity: 0.82; filter: saturate(1); }
+  50% { opacity: 1; filter: saturate(1.55); }
+}
+
   
