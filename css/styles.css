@@ -2471,6 +2471,41 @@ body.theme-genshin-light .implant-cn { color: var(--text2); }
 body.theme-nw-light .implant-sub,
 body.theme-genshin-light .implant-sub { color: var(--text3); }
 
+body.theme-nw-light .implant-row {
+  border-bottom-color: rgba(70,45,45,0.08);
+}
+
+body.theme-nw-light .implant-py {
+  color: #6f6258 !important;
+  font-style: normal;
+}
+
+body.theme-nw-light .implant-row [style*="var(--text3)"] {
+  color: #8a7f76 !important;
+}
+
+body.theme-nw-light .implant-icon {
+  background: rgba(120,76,140,0.08);
+  border-color: rgba(120,76,140,0.18);
+}
+
+body.theme-nw-light .implant-icon.legendary {
+  background: rgba(153,51,51,0.08);
+  border-color: rgba(153,51,51,0.18);
+}
+
+body.theme-nw-light .dur-dot.on {
+  background: rgba(120,76,140,0.46);
+}
+
+body.theme-nw-light .dur-dot.on-r {
+  background: rgba(153,51,51,0.52);
+}
+
+body.theme-nw-light .dur-dot.off {
+  background: rgba(60,45,45,0.12);
+}
+
 /* ── Светлые темы: золотые тексты → тёмно-серый ─────────── */
 body.theme-nw-light .more-item-cn,
 body.theme-genshin-light .more-item-cn,
