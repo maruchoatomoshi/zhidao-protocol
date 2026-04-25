@@ -32,7 +32,7 @@ async function loadImplants(telegramId) {
   if (!telegramId) return;
   const IMPLANT_IMGS = {
     'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
-    'implant_terracota':  'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',
+    'implant_terracota':  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/armor.png',
     'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
     'implant_panda':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',
     'implant_shaolin':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',

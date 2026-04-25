@@ -2506,6 +2506,27 @@ body.theme-nw-light .dur-dot.off {
   background: rgba(60,45,45,0.12);
 }
 
+body.theme-nw-light #myImplantsPage [style*="color:#fff"],
+body.theme-nw-light #implants-catalog [style*="color:#fff"] {
+  color: var(--text) !important;
+}
+
+body.theme-nw-light #myImplantsPage [style*="color:#ccc"],
+body.theme-nw-light #implants-catalog [style*="color:#ccc"] {
+  color: var(--text2) !important;
+}
+
+body.theme-nw-light #myImplantsPage [style*="rgba(212,175,55"],
+body.theme-nw-light #implants-catalog [style*="rgba(212,175,55"] {
+  color: var(--text3) !important;
+}
+
+body.theme-nw-light #implants-catalog [style*="border-top:1px solid rgba(255,255,255"],
+body.theme-nw-light #implants-catalog [style*="border-bottom:1px solid rgba(255,255,255"],
+body.theme-nw-light #myImplantsPage [style*="border-bottom:1px solid rgba(255,255,255"] {
+  border-color: rgba(70,45,45,0.10) !important;
+}
+
 /* ── Светлые темы: золотые тексты → тёмно-серый ─────────── */
 body.theme-nw-light .more-item-cn,
 body.theme-genshin-light .more-item-cn,
