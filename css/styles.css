@@ -2639,6 +2639,34 @@ body.theme-nw-light .home-event-card-copy {
   color: #4a4a4a !important;
 }
 
+body.theme-genshin .home-event-card {
+  border-color: rgba(219,177,101,0.18) !important;
+  background:
+    linear-gradient(135deg, rgba(219,177,101,0.10), rgba(255,255,255,0.03)),
+    rgba(255,255,255,0.035) !important;
+  box-shadow: 0 10px 24px rgba(90,60,20,0.08) !important;
+}
+
+body.theme-genshin .home-event-card-kicker {
+  color: rgba(138,104,32,0.72) !important;
+}
+
+body.theme-genshin-light .home-event-card-title {
+  color: #3d4555 !important;
+}
+
+body.theme-genshin-light .home-event-card-copy {
+  color: #6b5f4d !important;
+}
+
+body.theme-genshin-dark .home-event-card-title {
+  color: #f0dfb8 !important;
+}
+
+body.theme-genshin-dark .home-event-card-copy {
+  color: rgba(234,220,190,0.72) !important;
+}
+
 /* ── Дневник в светлых темах ─────────────────────────────── */
 body.theme-nw-light .diary-hero,
 body.theme-genshin-light .diary-hero {

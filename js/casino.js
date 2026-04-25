@@ -340,6 +340,37 @@ const GENSHIN_IMGS = {
   'card_star':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png',
 };
 
+const GENSHIN_HISTORY_MAP = {
+  'genshin_card_zhongli': { icon: '🪨', name: '岩王帝君 Архонт Земли' },
+  'genshin_card_pyro': { icon: '🔥', name: '焰莲使者 Страж Огня' },
+  'genshin_card_fox': { icon: '🦊', name: '九尾狐灵 Лиса-Оборотень' },
+  'genshin_card_fairy': { icon: '🌸', name: '桃花仙子 Небесная Фея' },
+  'genshin_card_literature': { icon: '📜', name: '文曲星君 Звезда Литературы' },
+  'genshin_card_forest': { icon: '🌿', name: '木灵仙君 Дух Леса' },
+  'genshin_card_sea': { icon: '🌊', name: '海灵仙后 Дух Морей' },
+  'genshin_card_star': { icon: '⭐', name: '紫微星君 Императорская Звезда' },
+  'genshin_card_moon': { icon: '🌙', name: '嫦娥仙子 Богиня Луны' },
+  'genshin_duplicate_card_moon': { icon: '🌙', name: '嫦娥仙子 Богиня Луны · дубль +50★' },
+  'genshin_points_30': { icon: '⭐', name: '+30★' },
+  'genshin_points_60': { icon: '💫', name: '+60★' },
+  'genshin_immunity': { icon: '🛡', name: 'Иммунитет' },
+  'genshin_walk': { icon: '🕐', name: '+30 мин свободы' },
+};
+
+function formatCasinoHistoryItem(item) {
+  const code = item.code || item.name || '';
+  if (GENSHIN_HISTORY_MAP[code]) return GENSHIN_HISTORY_MAP[code];
+
+  const cardCode = code.replace(/^genshin_duplicate_/, 'genshin_').replace(/^genshin_/, '');
+  const genshinCardKey = `genshin_${cardCode}`;
+  if (GENSHIN_HISTORY_MAP[genshinCardKey]) return GENSHIN_HISTORY_MAP[genshinCardKey];
+
+  return {
+    icon: item.icon || '🎁',
+    name: item.name || code || 'Приз',
+  };
+}
+
 async function loadCards(telegramId) {
   if (!telegramId) {
     const container = document.getElementById('myCardsContent');
@@ -760,9 +791,10 @@ async function loadCasinoHistory() {
     container.innerHTML = data.map(item => {
       const date = new Date(item.created_at).toLocaleDateString('ru-RU');
       const time = item.created_at.slice(11,16);
+      const historyItem = formatCasinoHistoryItem(item);
       return `<div class="schedule-item">
-        <div style="font-size:24px;min-width:35px;text-align:center;">${item.icon}</div>
-        <div class="schedule-info"><div class="schedule-subject">${item.name}</div><div class="schedule-location">${date} в ${time}</div></div>
+        <div style="font-size:24px;min-width:35px;text-align:center;">${historyItem.icon}</div>
+        <div class="schedule-info"><div class="schedule-subject">${historyItem.name}</div><div class="schedule-location">${date} в ${time}</div></div>
       </div>`;
     }).join('');
   } catch(e) { document.getElementById('casinoHistoryList').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
