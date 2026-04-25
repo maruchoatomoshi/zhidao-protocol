@@ -31,6 +31,8 @@ let architectLastRenderedPhase = null;
 let architectActionFxTimer = null;
 let architectPhaseFxTimer = null;
 let architectFinalTimerHandle = null;
+let architectQuestionAutoCloseTimer = null;
+const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
 
 function getArchitectPhaseImage(eventData) {
   if (!eventData) return ARCHITECT_PHASE_IMAGES[1];
@@ -816,6 +818,7 @@ function showArchitectQuestion(question) {
   const options = document.getElementById('eventOptions');
 
   if (!box || !prompt || !options) return;
+  clearArchitectQuestionAutoClose();
 
   prompt.textContent = question.prompt || 'Вопрос не загружен';
 
@@ -826,10 +829,25 @@ function showArchitectQuestion(question) {
     <button class="event-option-btn" data-option="c" onclick="submitArchitectAnswer('c')">${escapeHtml(opts.c || '')}</button>
   `;
 
-  box.querySelectorAll('.event-answer-feedback, .event-question-continue').forEach((node) => {
+  box.querySelectorAll('.event-answer-feedback').forEach((node) => {
     node.remove();
   });
   box.style.display = 'block';
+}
+
+function clearArchitectQuestionAutoClose() {
+  if (architectQuestionAutoCloseTimer) {
+    clearTimeout(architectQuestionAutoCloseTimer);
+    architectQuestionAutoCloseTimer = null;
+  }
+}
+
+function scheduleArchitectQuestionAutoClose() {
+  clearArchitectQuestionAutoClose();
+  architectQuestionAutoCloseTimer = setTimeout(() => {
+    architectQuestionAutoCloseTimer = null;
+    closeArchitectQuestion();
+  }, ARCHITECT_ANSWER_FEEDBACK_MS);
 }
 
 function renderArchitectAnswerFeedback(answerOption, isCorrect, explanation) {
@@ -845,7 +863,7 @@ function renderArchitectAnswerFeedback(answerOption, isCorrect, explanation) {
     button.classList.toggle('is-wrong', selected && !isCorrect);
   });
 
-  box.querySelectorAll('.event-answer-feedback, .event-question-continue').forEach((node) => {
+  box.querySelectorAll('.event-answer-feedback').forEach((node) => {
     node.remove();
   });
 
@@ -856,12 +874,7 @@ function renderArchitectAnswerFeedback(answerOption, isCorrect, explanation) {
     box.appendChild(feedback);
   }
 
-  const continueButton = document.createElement('button');
-  continueButton.className = 'event-question-continue';
-  continueButton.type = 'button';
-  continueButton.textContent = 'Продолжить';
-  continueButton.onclick = closeArchitectQuestion;
-  box.appendChild(continueButton);
+  scheduleArchitectQuestionAutoClose();
 }
 
 function closeArchitectQuestion() {
@@ -869,9 +882,10 @@ function closeArchitectQuestion() {
   const options = document.getElementById('eventOptions');
   const prompt = document.getElementById('eventQuestionPrompt');
 
+  clearArchitectQuestionAutoClose();
   if (box) box.style.display = 'none';
   if (box) {
-    box.querySelectorAll('.event-answer-feedback, .event-question-continue').forEach((node) => {
+    box.querySelectorAll('.event-answer-feedback').forEach((node) => {
       node.remove();
     });
   }

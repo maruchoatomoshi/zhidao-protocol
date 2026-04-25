@@ -3918,17 +3918,4 @@ body.tg-ios .event-question-modal {
   line-height: 1.5;
 }
 
-.event-question-continue {
-  margin-top: 10px;
-  width: 100%;
-  min-height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(212,175,55,0.28);
-  background: rgba(212,175,55,0.12);
-  color: #f4d98a;
-  font-weight: 700;
-  font-family: monospace;
-  letter-spacing: 1px;
-}
-
   
