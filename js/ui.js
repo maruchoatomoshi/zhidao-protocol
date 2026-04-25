@@ -58,6 +58,9 @@ async function loadUserData(telegramId) {
     if (r.ok) {
       const data = await r.json();
       isAdmin = !!data.is_admin;
+      if (isAdmin && typeof syncAdminThemeMode === 'function') {
+        syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
+      }
       userConfig = data.link;
       document.getElementById('status').textContent = '● АКТИВЕН';
       document.getElementById('status').style.color = '#cc4444';

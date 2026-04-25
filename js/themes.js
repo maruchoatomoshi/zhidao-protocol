@@ -63,6 +63,32 @@ async function chooseThemePath(path) {
   }
 }
 
+function syncAdminThemeMode(theme) {
+  if (!isAdmin) return;
+
+  const isGenshinTheme = theme === 'genshin-light' || theme === 'genshin-dark';
+  currentThemePath = isGenshinTheme ? 'genshin' : 'cyberpunk';
+
+  const casinoCases = document.getElementById('casinoPlayContent');
+  const casinoPrayers = document.getElementById('casinoGenshinContent');
+  const playBtn = document.getElementById('casinoPlayBtn');
+
+  if (casinoCases) casinoCases.style.display = isGenshinTheme ? 'none' : 'flex';
+  if (casinoPrayers) casinoPrayers.style.display = isGenshinTheme ? 'flex' : 'none';
+  if (playBtn) playBtn.textContent = isGenshinTheme ? '✦ МОЛИТВЫ' : '🎰 ИГРАТЬ';
+
+  const implTab = document.getElementById('implants-tab');
+  const cardTab = document.getElementById('cards-tab');
+  const implCat = document.getElementById('implants-catalog');
+  if (implTab) implTab.style.display = isGenshinTheme ? 'none' : 'block';
+  if (cardTab) cardTab.style.display = isGenshinTheme ? 'block' : 'none';
+  if (implCat) implCat.style.display = isGenshinTheme ? 'none' : 'block';
+
+  if (!isGenshinTheme && casinoCases && casinoCases.style.display !== 'none') {
+    setTimeout(initRoulette, 50);
+  }
+}
+
 function setTheme(theme) {
   // Убираем все классы тем
   THEMES.forEach(t => {
@@ -104,6 +130,7 @@ function setTheme(theme) {
   if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';
   if (el('implants-page-title')) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
   if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
+  syncAdminThemeMode(theme);
   try { try{tg.HapticFeedback.impactOccurred('light');}catch(e){} } catch(e) {}
 }
 
