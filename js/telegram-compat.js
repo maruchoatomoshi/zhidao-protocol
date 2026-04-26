@@ -4,7 +4,7 @@
   function isIOS() {
     const platform = tg && tg.platform ? String(tg.platform).toLowerCase() : "";
     const ua = navigator.userAgent || "";
-    return platform.includes("ios") || /iPad|iPhone|iPod/.test(ua);
+    return platform.includes("ios") || /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   }
 
   function px(value) {
@@ -36,6 +36,14 @@
       document.documentElement.style.setProperty("--tg-viewport-height", `${height}px`);
     }
 
+    const width = window.visualViewport && Number(window.visualViewport.width) > 0
+      ? Number(window.visualViewport.width)
+      : window.innerWidth || document.documentElement.clientWidth || 0;
+
+    if (width > 0) {
+      document.documentElement.style.setProperty("--app-width", `${width}px`);
+    }
+
     const safe = tg && tg.safeAreaInset ? tg.safeAreaInset : {};
     const contentSafe = tg && tg.contentSafeAreaInset ? tg.contentSafeAreaInset : {};
 
@@ -51,8 +59,11 @@
   }
 
   function initTelegramCompat() {
+    const ios = isIOS();
+    document.documentElement.classList.toggle("tg-webapp", Boolean(tg));
+    document.documentElement.classList.toggle("tg-ios", ios);
     document.body.classList.toggle("tg-webapp", Boolean(tg));
-    document.body.classList.toggle("tg-ios", isIOS());
+    document.body.classList.toggle("tg-ios", ios);
 
     if (tg) {
       try { tg.ready(); } catch (e) {}

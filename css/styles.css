@@ -20,6 +20,7 @@
   --purple-border: rgba(155,89,182,0.3);
   --nav-h: 68px;
   --app-height: 100dvh;
+  --app-width: 100vw;
   --tg-viewport-height: 100dvh;
   --tg-safe-top: env(safe-area-inset-top, 0px);
   --tg-safe-right: env(safe-area-inset-right, 0px);
@@ -4184,9 +4185,28 @@ body.theme-genshin .diary-star.active {
 }
 
 /* ===== Telegram iOS compatibility layer ===== */
+html.tg-ios,
+body.tg-ios {
+  width: 100%;
+  min-height: var(--app-height, 100dvh);
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+body.tg-ios {
+  position: relative;
+  touch-action: manipulation;
+}
+
+body.tg-ios .page {
+  padding-bottom: calc(10px + var(--tg-safe-bottom));
+}
+
 body.tg-ios .bottom-nav {
   height: calc(var(--nav-h) + var(--tg-safe-bottom));
   padding-bottom: var(--tg-safe-bottom);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 body.tg-ios .event-overlay,
@@ -4195,12 +4215,66 @@ body.tg-ios .question-modal {
   height: var(--app-height, 100dvh);
   min-height: var(--app-height, 100dvh);
   overflow: hidden;
+  transform: translateZ(0);
+}
+
+body.tg-ios .question-modal {
+  padding:
+    calc(20px + var(--tg-safe-top))
+    calc(20px + var(--tg-safe-right))
+    calc(20px + var(--tg-safe-bottom))
+    calc(20px + var(--tg-safe-left));
+}
+
+body.tg-ios .raid-content {
+  max-height: calc(var(--app-height, 100dvh) - 32px - var(--tg-safe-top) - var(--tg-safe-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.tg-ios .event-shell {
   height: var(--app-height, 100dvh);
   min-height: var(--app-height, 100dvh);
   overflow: hidden;
+  padding-top: calc(14px + var(--tg-safe-top));
+  transform: translateZ(0);
+}
+
+body.tg-ios .event-topbar {
+  top: calc(14px + var(--tg-safe-top));
+  left: calc(12px + var(--tg-safe-left));
+  right: calc(12px + var(--tg-safe-right));
+}
+
+body.tg-ios .event-hero {
+  width: var(--app-width, 100vw);
+  height: var(--app-height, 100dvh);
+  min-height: var(--app-height, 100dvh);
+  transform: translateZ(0);
+}
+
+body.tg-ios .event-hero img,
+body.tg-ios .event-hero-video {
+  width: var(--app-width, 100vw);
+  height: var(--app-height, 100dvh);
+  max-width: none;
+  max-height: none;
+}
+
+body.tg-ios .event-hud {
+  top: calc(48px + var(--tg-safe-top));
+  left: calc(12px + var(--tg-safe-left));
+  width: min(330px, calc(100vw - 24px - var(--tg-safe-left) - var(--tg-safe-right)));
+}
+
+body.tg-ios .event-final-timer {
+  top: calc(96px + var(--tg-safe-top));
+  right: calc(12px + var(--tg-safe-right));
+}
+
+body.tg-ios .event-phase-warning {
+  top: calc(132px + var(--tg-safe-top));
+  max-width: calc(100vw - 24px - var(--tg-safe-left) - var(--tg-safe-right));
 }
 
 .event-hero {
@@ -4229,21 +4303,30 @@ body.tg-ios .event-shell {
   opacity: 1 !important;
   mix-blend-mode: normal !important;
   -webkit-text-fill-color: rgba(255, 255, 255, 0.94);
+  overscroll-behavior: contain;
 }
 
 body.tg-ios .event-actions {
+  left: calc(12px + var(--tg-safe-left));
+  right: calc(12px + var(--tg-safe-right));
   bottom: calc(8px + var(--tg-safe-bottom));
 }
 
 body.tg-ios .event-log {
+  left: calc(12px + var(--tg-safe-left));
+  right: calc(12px + var(--tg-safe-right));
   bottom: calc(116px + var(--tg-safe-bottom));
 }
 
 body.tg-ios .event-question-modal {
+  left: calc(12px + var(--tg-safe-left));
+  right: calc(12px + var(--tg-safe-right));
   bottom: calc(132px + var(--tg-safe-bottom));
   max-height: min(52dvh, 420px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  transform: translateZ(0);
 }
 
 @media (max-height: 760px) {
@@ -4323,6 +4406,32 @@ body.tg-ios .event-question-modal {
   -webkit-text-fill-color: #f0dca8;
   font-size: 12px;
   line-height: 1.5;
+  max-height: 120px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-height: 720px) {
+  body.tg-ios .event-actions {
+    gap: 6px;
+    padding: 7px;
+  }
+
+  body.tg-ios .event-actions::before {
+    font-size: 7px;
+    letter-spacing: 1.6px;
+  }
+
+  body.tg-ios .event-action {
+    min-height: 40px;
+    padding: 9px 11px;
+    font-size: 11px;
+  }
+
+  body.tg-ios .event-log {
+    bottom: calc(108px + var(--tg-safe-bottom));
+    max-height: 42px;
+  }
 }
 
 /* Theme polish layer: readable cards, history, catalog and light surfaces. */
