@@ -159,7 +159,14 @@ async function loadInventory() {
       `<div class="inventory-item">
         <div class="inventory-header">
           <div class="inventory-icon">${item.icon}</div>
-          <div><div class="inventory-name">${item.name}</div><div class="inventory-date">${new Date(item.purchased_at).toLocaleDateString('ru-RU')} · ID: ${item.id}</div></div>
+          <div class="inventory-info">
+            <div class="inventory-kicker">STORE ITEM</div>
+            <div class="inventory-name">${item.name}</div>
+            <div class="inventory-date">Получен: ${new Date(item.purchased_at).toLocaleDateString('ru-RU')} · ID: ${item.id}</div>
+          </div>
+          <div class="inventory-side">
+            <div class="inventory-pill">${item.category || 'ITEM'}</div>
+          </div>
         </div>
         <div class="inventory-actions">
           <button class="inv-btn inv-btn-use" onclick="useItem(${item.id},'${item.name}')">✅ Использовать</button>

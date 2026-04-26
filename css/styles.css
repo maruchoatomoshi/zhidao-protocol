@@ -686,17 +686,104 @@ body.theme-genshin-dark .lb-points
 }
 .shop-item-buy:disabled { opacity: 0.3; cursor: not-allowed; }
 .inventory-item {
-  padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  position: relative;
+  margin: 8px 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bg2) 88%, transparent), color-mix(in srgb, var(--bg3) 64%, transparent)),
+    var(--bg2);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.16);
+  overflow: hidden;
 }
-.inventory-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.inventory-icon { font-size: 24px; }
-.inventory-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.inventory-date { font-size: 9px; color: var(--text3); font-family: monospace; margin-top: 2px; }
-.inventory-actions { display: flex; gap: 6px; }
-.inv-btn { flex:1; padding: 6px 4px; border-radius: 5px; font-size: 9px; font-weight: 600; cursor: pointer; border: none; font-family: monospace; }
+.inventory-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--red) 22%, transparent), transparent 38%),
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 34%);
+  opacity: 0.42;
+}
+.inventory-item > * { position: relative; z-index: 1; }
+.inventory-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.inventory-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg3) 74%, transparent);
+  color: var(--gold);
+  font-size: 24px;
+  box-shadow: inset 0 0 18px rgba(255,255,255,0.03);
+}
+.inventory-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+.inventory-info { min-width: 0; flex: 1; }
+.inventory-kicker {
+  margin-bottom: 3px;
+  font-size: 8px;
+  color: var(--gold);
+  font-family: monospace;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+.inventory-name { font-size: 12px; font-weight: 800; color: var(--text); line-height: 1.25; }
+.inventory-date { font-size: 9px; color: var(--text3); font-family: monospace; margin-top: 3px; line-height: 1.35; }
+.inventory-desc { font-size: 10px; color: var(--text2); margin-top: 4px; line-height: 1.35; }
+.inventory-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+.inventory-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid color-mix(in srgb, var(--gold) 36%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold-dim) 72%, transparent);
+  color: var(--gold);
+  font-size: 8px;
+  font-family: monospace;
+  letter-spacing: 0.8px;
+  padding: 3px 7px;
+  text-transform: uppercase;
+}
+.inventory-actions { display: flex; gap: 6px; margin-top: 8px; }
+.inv-btn { flex:1; padding: 7px 6px; border-radius: 10px; font-size: 9px; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: monospace; }
 .inv-btn-use { background: rgba(46,204,113,0.15); color: #2ecc71; }
 .inv-btn-gift { background: rgba(212,175,55,0.1); color: var(--gold); }
 .inv-btn-sell { background: rgba(180,20,20,0.12); color: #cc4444; }
+.inventory-dur { display: flex; gap: 3px; justify-content: flex-end; }
+.inventory-dur .dur-dot,
+.inventory-dur-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+}
+.inventory-dur .dur-dot.on,
+.inventory-dur-dot.on { background: var(--gold); box-shadow: 0 0 8px color-mix(in srgb, var(--gold) 58%, transparent); }
+.inventory-dur .dur-dot.on-r,
+.inventory-dur-dot.on-r { background: var(--red); box-shadow: 0 0 8px color-mix(in srgb, var(--red) 58%, transparent); }
+.inventory-dur .dur-dot.off,
+.inventory-dur-dot.off { background: rgba(255,255,255,0.12); }
+.inventory-item-legendary { border-color: rgba(180,20,20,0.38); }
+.inventory-item-card { border-color: color-mix(in srgb, var(--gold) 22%, var(--border)); }
 
 /* ===== КЕЙСЫ ===== */
 .casino-balance {

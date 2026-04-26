@@ -99,26 +99,26 @@ async function loadImplants(telegramId) {
         : '';
 
       const disassembleBtn = isSecond
-        ? `<button onclick="disassembleImplant(${imp.id})" style="margin-top:8px;width:100%;padding:7px;background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.25);color:var(--gold);border-radius:6px;font-size:9px;font-family:monospace;cursor:pointer;letter-spacing:1px;">⚙️ [ РАЗОБРАТЬ +100 ★ ]</button>`
+        ? `<button class="inv-btn inv-btn-gift" onclick="disassembleImplant(${imp.id})">⚙️ [ РАЗОБРАТЬ +100 ★ ]</button>`
         : '';
 
-      return `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-        <div style="display:flex;align-items:center;gap:10px;">
-          ${img ? `<img src="${img}" style="width:52px;height:52px;object-fit:contain;border-radius:8px;border:1px solid ${isLeg?'rgba(180,20,20,0.4)':'rgba(155,89,182,0.3)'};flex-shrink:0;">` : `<div style="font-size:28px;">${imp.icon}</div>`}
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
-              <div style="font-size:13px;font-weight:700;color:#fff;">${imp.name}</div>
-              ${duplicateBadge}
-            </div>
-            <div style="font-size:10px;color:rgba(212,175,55,0.6);font-family:serif;font-style:italic;margin-top:1px;">${imp.desc}</div>
-            <div style="font-size:9px;color:var(--text3);font-family:monospace;margin-top:2px;">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
+      return `<div class="inventory-item inventory-item-asset ${isLeg ? 'inventory-item-legendary' : ''}">
+        <div class="inventory-header">
+          <div class="inventory-icon ${isLeg ? 'legendary' : ''}">
+            ${img ? `<img src="${img}" alt="${imp.name}">` : imp.icon}
           </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-            <div style="font-size:8px;color:var(--text3);font-family:monospace;">ЗАРЯДЫ</div>
-            <div class="implant-dur">${dots}</div>
+          <div class="inventory-info">
+            <div class="inventory-kicker">IMPLANT ${duplicateBadge}</div>
+            <div class="inventory-name">${imp.name}</div>
+            <div class="inventory-desc">${imp.desc}</div>
+            <div class="inventory-date">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
+          </div>
+          <div class="inventory-side">
+            <div class="inventory-pill">ЗАРЯДЫ</div>
+            <div class="inventory-dur">${dots}</div>
           </div>
         </div>
-        ${disassembleBtn}
+        ${disassembleBtn ? `<div class="inventory-actions">${disassembleBtn}</div>` : ''}
       </div>`;
     }).join('');
     if (pageContainer) pageContainer.innerHTML = pageHtml;
@@ -402,28 +402,29 @@ async function loadCards(telegramId) {
       const imgSrc = GENSHIN_IMGS[card.card_id];
       const cardPassive = card.passive || '';
       const cardVisual = imgSrc
-        ? `<img src="${imgSrc}" style="width:50px;height:60px;object-fit:contain;border-radius:8px;border:1px solid ${rarityColor}44;">`
-        : `<div style="font-size:28px;">${emoji}</div>`;
+        ? `<img src="${imgSrc}" alt="${card.name}">`
+        : emoji;
       const dots = Array(3).fill(0).map((_,i) =>
-        `<div style="width:8px;height:8px;border-radius:50%;background:${i < card.durability ? rarityColor : 'rgba(255,255,255,0.1)'};"></div>`
+        `<div class="inventory-dur-dot ${i < card.durability ? 'on' : 'off'}" style="${i < card.durability ? `background:${rarityColor};box-shadow:0 0 8px ${rarityColor}88;` : ''}"></div>`
       ).join('');
       const disassembleBtn = isSecond
-        ? `<button onclick="disassembleCard(${card.id})" style="margin-top:8px;width:100%;padding:6px;background:rgba(219,177,101,0.08);border:1px solid rgba(219,177,101,0.25);color:var(--gold);border-radius:16px;font-size:9px;font-family:serif;cursor:pointer;">✦ [ РАЗОБРАТЬ +50 ✦ ]</button>`
+        ? `<button class="inv-btn inv-btn-gift" onclick="disassembleCard(${card.id})">✦ [ РАЗОБРАТЬ +50 ✦ ]</button>`
         : '';
-      return `<div style="background:var(--bg2);border:1px solid ${isDup ? 'rgba(219,177,101,0.3)' : 'var(--border)'};border-radius:12px;padding:12px;margin-bottom:8px;position:relative;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:50px;height:60px;background:var(--bg3);border:1px solid ${rarityColor}33;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${cardVisual}</div>
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <div style="font-size:12px;font-weight:700;color:var(--text);font-family:serif;">${card.name}</div>
-              ${isDup ? `<span style="font-size:7px;background:rgba(219,177,101,0.15);border:1px solid rgba(219,177,101,0.3);color:var(--gold);padding:1px 6px;border-radius:10px;font-family:monospace;">ДУБЛЬ</span>` : ''}
-            </div>
-            <div style="font-size:10px;color:${rarityColor};margin-top:2px;">${stars}</div>
-            <div style="font-size:9px;color:var(--text2);font-family:serif;margin-top:3px;">${cardPassive}</div>
+      return `<div class="inventory-item inventory-item-card" style="border-color:${isDup ? 'rgba(219,177,101,0.3)' : `${rarityColor}44`};">
+        <div class="inventory-header">
+          <div class="inventory-icon" style="border-color:${rarityColor}55;">${cardVisual}</div>
+          <div class="inventory-info">
+            <div class="inventory-kicker">GENSHIN CARD ${isDup ? '<span class="inventory-pill">ДУБЛЬ</span>' : ''}</div>
+            <div class="inventory-name">${card.name}</div>
+            <div class="inventory-date" style="color:${rarityColor};">${stars}</div>
+            <div class="inventory-desc">${cardPassive}</div>
           </div>
-          <div style="display:flex;gap:3px;">${dots}</div>
+          <div class="inventory-side">
+            <div class="inventory-pill">${rarity}★</div>
+            <div class="inventory-dur">${dots}</div>
+          </div>
         </div>
-        ${disassembleBtn}
+        ${disassembleBtn ? `<div class="inventory-actions">${disassembleBtn}</div>` : ''}
       </div>`;
     }).join('');
   } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
@@ -758,7 +759,15 @@ async function loadCasinoInventory() {
       return `<div class="inventory-item">
         <div class="inventory-header">
           <div class="inventory-icon">${item.icon}</div>
-          <div><div class="inventory-name">${item.name}</div><div class="inventory-date">${item.desc}</div>${expires}</div>
+          <div class="inventory-info">
+            <div class="inventory-kicker">CASE PRIZE</div>
+            <div class="inventory-name">${item.name}</div>
+            <div class="inventory-desc">${item.desc}</div>
+            ${expires}
+          </div>
+          <div class="inventory-side">
+            <div class="inventory-pill">ACTIVE</div>
+          </div>
         </div>
         <div class="inventory-actions">
           <button class="inv-btn inv-btn-use" onclick="useCasinoPrize(${item.id},'${item.name}')">✅ Использовать</button>
