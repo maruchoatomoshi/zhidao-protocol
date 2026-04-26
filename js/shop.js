@@ -29,6 +29,9 @@ const SHOP_ICONS = {
   'no_report':    '<i class="ti ti-file-off" style="color:rgba(200,80,80,0.9);font-size:22px;"></i>',
   'poizon':       '<i class="ti ti-shirt" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
   'extra_case':   '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
+  'extra_cases':  '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
+  'additional_case': '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
+  'case_extra':   '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
   'extra_raid_attempt': '<i class="ti ti-sword" style="color:#cc4444;font-size:22px;"></i>',
   'raid_insurance': '<i class="ti ti-shield-dollar" style="color:var(--gold);font-size:22px;"></i>',
   'raid_beacon': '<i class="ti ti-link" style="color:#60b4d4;font-size:22px;"></i>',
@@ -148,7 +151,7 @@ async function loadInventory() {
     const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
     const data = await r.json();
     const container = document.getElementById('shopInventoryContent');
-    const digital = ['extra_case','extra_raid_attempt','double_win','title_player','immunity','raid_insurance','raid_beacon','raid_overclock'];
+    const digital = ['extra_case','extra_cases','additional_case','case_extra','extra_raid_attempt','double_win','title_player','immunity','raid_insurance','raid_beacon','raid_overclock'];
     const physical = data.filter(item => !digital.includes(item.code));
     if (!physical.length) { container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купи что-нибудь в магазине!</div>'; return; }
     container.innerHTML = physical.map(item =>
