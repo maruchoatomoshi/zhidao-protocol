@@ -2794,6 +2794,9 @@ async def open_genshin_case(data: dict):
     if today_count >= 3 and extra <= 0 and telegram_id not in ADMIN_IDS:
         conn.close()
         raise HTTPException(status_code=400, detail="Daily limit reached")
+    if today_count >= 3 and extra > 0 and telegram_id not in ADMIN_IDS:
+        c.execute("""INSERT INTO user_status (telegram_id, extra_cases) VALUES (?,0)
+                     ON CONFLICT(telegram_id) DO UPDATE SET extra_cases=extra_cases-1""", (telegram_id,))
 
     pool_name = random.choices(['blue', 'purple', 'gold'], weights=[790, 200, 10])[0]
     pool = GENSHIN_POOL[pool_name]
