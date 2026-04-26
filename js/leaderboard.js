@@ -6,29 +6,6 @@ async function loadPoints(telegramId) {
       const data = await r.json();
       currentPoints = data.points || 0;
       updatePoints();
-      const b = document.getElementById('casinoBonusBanner');
-      if (data.double_win) {
-        if (b) {
-        b.style.display = 'block'; b.textContent = '🃏 УДВОЕНИЕ АКТИВНО!';
-      }
-      // Применяем путь (Киберпанк / Геншин)
-      } else if (b) {
-        b.style.display = 'none';
-        b.textContent = '';
-      }
-      if (!isAdmin) applyThemePath(data.theme_path || null);
-    }
-  } catch(e) {}
-}
-
-async function loadPoints(telegramId) {
-  if (!telegramId) return;
-  try {
-    const r = await fetch(`${API_URL}/api/points/${telegramId}`);
-    if (r.ok) {
-      const data = await r.json();
-      currentPoints = data.points || 0;
-      updatePoints();
 
       const b = document.getElementById('casinoBonusBanner');
       if (b) {

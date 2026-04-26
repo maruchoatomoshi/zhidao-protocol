@@ -63,53 +63,6 @@ async function loadShop() {
     if (!settingsR.ok) throw new Error('settings');
     const settings = await settingsR.json();
     if (settings.blackwall && !isAdmin) {
-      document.getElementById('shopStoreContent').innerHTML =
-        '<div class="blackwall-screen"><div class="blackwall-title">BlackWall 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
-      return;
-    }
-    const r = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId||0}`);
-    if (!r.ok) throw new Error('shop');
-    const data = await r.json();
-    document.getElementById('shopPoints').textContent = currentPoints + ' ★';
-    document.getElementById('shopFrozenBanner').style.display = data.frozen ? 'block' : 'none';
-    const catInfo = {
-      'privilege': { name:'特权 ПРИВИЛЕГИИ', cn:'🏮' },
-      'points':    { name:'积分 БАЛЛЫ', cn:'⭐' },
-      'social':    { name:'社交 СОЦИАЛЬНОЕ', cn:'🤝' },
-      'food':      { name:'食物 ЕДА', cn:'🍜' },
-      'vip':       { name:'VIP 贵宾', cn:'👑' },
-    };
-    const categories = {};
-    Object.keys(catInfo).forEach(k => { categories[k] = { ...catInfo[k], items:[] }; });
-    data.items.forEach(item => { if (categories[item.category]) categories[item.category].items.push(item); });
-    let html = '';
-    for (const cat of Object.values(categories)) {
-      if (!cat.items.length) continue;
-      html += `<div class="shop-cat"><span class="cn">${cat.cn}</span> ${cat.name}</div>`;
-      cat.items.forEach(item => {
-        const canBuy = item.available && currentPoints >= item.price;
-        const limitText = item.daily_limit > 0 ? `Осталось: ${item.daily_limit - item.sold_today} из ${item.daily_limit}` : 'Без ограничений';
-        html += `<div class="shop-item ${!item.available?'unavailable':''}">
-          <div class="shop-item-icon">${SHOP_ICONS[item.code] || item.icon}</div>
-          <div style="flex:1;">
-            <div class="shop-item-name">${item.name}</div>
-            <div class="shop-item-cn">${item.description}</div>
-            <div class="shop-item-limit">${limitText}</div>
-          </div>
-          <button class="shop-item-buy" onclick="buyItem('${item.code}','${item.name}',${item.price})" ${!canBuy?'disabled':''}>${item.price} ★</button>
-        </div>`;
-      });
-    }
-    document.getElementById('shopStoreContent').innerHTML = html || '<div class="empty-state">Магазин пуст</div>';
-  } catch(e) { document.getElementById('shopStoreContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
-}
-
-async function loadShop() {
-  try {
-    const settingsR = await fetch(`${API_URL}/api/settings`);
-    if (!settingsR.ok) throw new Error('settings');
-    const settings = await settingsR.json();
-    if (settings.blackwall && !isAdmin) {
       setShopBlackwallState(true);
       return;
     }
