@@ -4079,6 +4079,238 @@ body.tg-ios .event-question-modal {
   line-height: 1.5;
 }
 
+/* Theme polish layer: readable cards, history, catalog and light surfaces. */
+body.theme-nw-light .card-inner,
+body.theme-nw-light .my-rank-card,
+body.theme-nw-light .shop-item,
+body.theme-nw-light .inventory-item,
+body.theme-nw-light .schedule-item,
+body.theme-nw-light .rules-row,
+body.theme-nw-light #myImplantsPage,
+body.theme-nw-light #implants-catalog,
+body.theme-genshin-light .card-inner,
+body.theme-genshin-light .my-rank-card,
+body.theme-genshin-light .shop-item,
+body.theme-genshin-light .inventory-item,
+body.theme-genshin-light .schedule-item,
+body.theme-genshin-light .rules-row,
+body.theme-genshin-light #myCardsContent,
+body.theme-genshin-light #cards-tab {
+  border-color: rgba(55, 45, 35, 0.10) !important;
+}
+
+body.theme-nw-light .schedule-item,
+body.theme-nw-light .shop-item,
+body.theme-nw-light .inventory-item,
+body.theme-nw-light .rules-row {
+  background: rgba(255, 255, 255, 0.38);
+  border-bottom-color: rgba(70,45,45,0.09);
+}
+
+body.theme-genshin-light .schedule-item,
+body.theme-genshin-light .shop-item,
+body.theme-genshin-light .inventory-item,
+body.theme-genshin-light .rules-row {
+  background: rgba(255, 250, 238, 0.54);
+  border-bottom-color: rgba(138,104,32,0.12);
+}
+
+body.theme-nw-light .schedule-subject,
+body.theme-nw-light .rules-title,
+body.theme-nw-light .inventory-name,
+body.theme-nw-light .prize-result-name,
+body.theme-genshin-light .schedule-subject,
+body.theme-genshin-light .rules-title,
+body.theme-genshin-light .inventory-name,
+body.theme-genshin-light .prize-result-name {
+  color: var(--text) !important;
+}
+
+body.theme-nw-light .schedule-location,
+body.theme-nw-light .rules-desc,
+body.theme-nw-light .inventory-date,
+body.theme-nw-light .prize-result-desc,
+body.theme-genshin-light .schedule-location,
+body.theme-genshin-light .rules-desc,
+body.theme-genshin-light .inventory-date,
+body.theme-genshin-light .prize-result-desc {
+  color: var(--text2) !important;
+}
+
+body.theme-nw-light .subtab {
+  color: #5b524c;
+  background: rgba(255,255,255,0.52);
+  border-color: rgba(90,60,50,0.12);
+}
+
+body.theme-nw-light .subtab.active {
+  color: #7f2b2b;
+  background: rgba(153,51,51,0.10);
+  border-color: rgba(153,51,51,0.24);
+}
+
+body.theme-genshin-light .subtab {
+  color: #665b46;
+  background: rgba(255,250,238,0.62);
+  border-color: rgba(138,104,32,0.14);
+}
+
+body.theme-genshin-light .subtab.active {
+  color: #6f4e12;
+  background: rgba(219,177,101,0.16);
+  border-color: rgba(138,104,32,0.28);
+}
+
+body.theme-genshin-light .casino-balance,
+body.theme-genshin-light .prize-result {
+  background:
+    linear-gradient(145deg, rgba(255,250,238,0.84), rgba(241,232,214,0.74));
+  border-color: rgba(138,104,32,0.18);
+  box-shadow: 0 10px 24px rgba(90,60,20,0.06);
+}
+
+body.theme-genshin-light .case-card {
+  background: linear-gradient(145deg, rgba(255,250,238,0.78), rgba(238,228,207,0.72));
+  border-color: rgba(138,104,32,0.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72), 0 8px 18px rgba(90,60,20,0.045);
+}
+
+body.theme-genshin-light .case-card.gold {
+  border-color: rgba(138,104,32,0.30);
+}
+
+body.theme-genshin-light .case-card.purple {
+  border-color: rgba(98,86,135,0.22);
+}
+
+body.theme-genshin-light .case-card.black {
+  border-color: rgba(112,72,56,0.22);
+}
+
+body.theme-genshin-light .case-cn.g,
+body.theme-genshin-light .case-pct.g {
+  color: #7a5010;
+}
+
+body.theme-genshin-light .case-cn.p,
+body.theme-genshin-light .case-pct.p {
+  color: #5d5882;
+}
+
+body.theme-genshin-light .case-cn.b,
+body.theme-genshin-light .case-pct.b {
+  color: #75433a;
+}
+
+body.theme-genshin-light .roulette-track {
+  background: linear-gradient(180deg, rgba(255,250,238,0.88), rgba(236,226,207,0.84));
+  border-color: rgba(138,104,32,0.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.58), 0 10px 28px rgba(90,60,20,0.08);
+}
+
+body.theme-genshin-light .roulette-track::before {
+  background: linear-gradient(to right, rgba(236,229,216,0.98), rgba(236,229,216,0));
+}
+
+body.theme-genshin-light .roulette-track::after {
+  background: linear-gradient(to left, rgba(236,229,216,0.98), rgba(236,229,216,0));
+}
+
+body.theme-genshin-light .roulette-item {
+  background: linear-gradient(145deg, rgba(255,252,242,0.94), rgba(236,226,207,0.92));
+  border-color: rgba(138,104,32,0.16);
+  color: #3d4555;
+}
+
+body.theme-genshin-light .roulette-item-name {
+  color: #5f6674;
+}
+
+body.theme-genshin-light .roulette-item.opened {
+  background: linear-gradient(145deg, rgba(255,247,218,0.98), rgba(232,211,161,0.92));
+}
+
+body.theme-genshin-light .bonus-banner,
+body.theme-genshin-light .shop-balance span,
+body.theme-genshin-light .shop-item-buy,
+body.theme-genshin-light .inv-btn-gift {
+  color: #7a5010;
+}
+
+body.theme-nw-light .empty-state,
+body.theme-genshin-light .empty-state {
+  color: var(--text3);
+}
+
+body.theme-nw-light #casinoHistoryList .schedule-item,
+body.theme-genshin-light #casinoHistoryList .schedule-item,
+body.theme-nw-light #casinoInventoryList .inventory-item,
+body.theme-genshin-light #casinoInventoryList .inventory-item {
+  border-radius: 10px;
+  margin: 0 12px 8px;
+  border: 1px solid rgba(70,45,45,0.09);
+  box-shadow: 0 8px 18px rgba(70,45,35,0.04);
+}
+
+body.theme-genshin-light #casinoHistoryList .schedule-item,
+body.theme-genshin-light #casinoInventoryList .inventory-item {
+  border-color: rgba(138,104,32,0.13);
+  box-shadow: 0 8px 18px rgba(90,60,20,0.045);
+}
+
+body.theme-nw-light #myImplantsPage [style*="color:var(--text)"],
+body.theme-nw-light #implants-catalog [style*="color:var(--text)"],
+body.theme-nw-light #myImplantsPage [style*="color: var(--text)"],
+body.theme-nw-light #implants-catalog [style*="color: var(--text)"],
+body.theme-genshin-light #myCardsContent [style*="color:var(--text)"],
+body.theme-genshin-light #myCardsContent [style*="color: var(--text)"] {
+  color: var(--text) !important;
+}
+
+body.theme-nw-light #myImplantsPage [style*="color:var(--text2)"],
+body.theme-nw-light #implants-catalog [style*="color:var(--text2)"],
+body.theme-nw-light #myImplantsPage [style*="color: var(--text2)"],
+body.theme-nw-light #implants-catalog [style*="color: var(--text2)"],
+body.theme-genshin-light #myCardsContent [style*="color:var(--text2)"],
+body.theme-genshin-light #myCardsContent [style*="color: var(--text2)"] {
+  color: var(--text2) !important;
+}
+
+body.theme-genshin .home-event-card {
+  background:
+    linear-gradient(135deg, rgba(219,177,101,0.08), rgba(255,255,255,0.025)),
+    rgba(255,255,255,0.026) !important;
+}
+
+body.theme-genshin-light .home-event-card {
+  background:
+    linear-gradient(135deg, rgba(219,177,101,0.12), rgba(255,250,238,0.78)),
+    rgba(255,250,238,0.72) !important;
+  border-color: rgba(138,104,32,0.20) !important;
+}
+
+body.theme-genshin-light .home-event-card-kicker {
+  color: #7a5010 !important;
+}
+
+body.theme-genshin-dark .home-event-card {
+  background:
+    linear-gradient(135deg, rgba(219,177,101,0.08), rgba(26,22,40,0.70)),
+    rgba(20,16,32,0.68) !important;
+  border-color: rgba(219,177,101,0.14) !important;
+}
+
+body.theme-genshin-dark .home-event-card-kicker {
+  color: rgba(219,177,101,0.68) !important;
+}
+
+body.theme-genshin-dark .schedule-item,
+body.theme-genshin-dark .shop-item,
+body.theme-genshin-dark .inventory-item,
+body.theme-genshin-dark .rules-row {
+  border-bottom-color: rgba(219,177,101,0.07);
+}
+
 /* Architect polish pass: terminal result art and cleaner battle HUD. */
 .event-overlay.event-state-terminal .event-hero::before {
   opacity: 0.72;
