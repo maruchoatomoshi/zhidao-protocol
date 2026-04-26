@@ -887,7 +887,16 @@ async function requestArchitectQuestion(actionType) {
 
   const box = document.getElementById('eventQuestionBox');
   if (
+    box &&
+    box.style.display !== 'none' &&
+    box.querySelector('.event-answer-feedback')
+  ) {
+    return;
+  }
+
+  if (
     pendingEventQuestion &&
+    pendingEventActionType &&
     box &&
     box.style.display !== 'none'
   ) {
@@ -1014,6 +1023,7 @@ function closeArchitectQuestion() {
   if (options) options.innerHTML = '';
   if (prompt) prompt.textContent = 'Вопрос появится здесь';
 
+  pendingEventActionType = null;
   pendingEventQuestionId = null;
   pendingEventQuestion = null;
 }
@@ -1067,6 +1077,8 @@ async function submitArchitectAnswer(answerOption) {
         : '';
       setEventExplanation('');
       renderArchitectAnswerFeedback(answerOption, data.is_correct !== false, explanation);
+      pendingEventQuestionId = null;
+      pendingEventQuestion = null;
     }
 
     await loadCurrentArchitectEvent();
