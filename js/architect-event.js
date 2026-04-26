@@ -474,6 +474,8 @@ function renderArchitectLobby(eventData, errorText = '') {
   const joinBtn = document.getElementById('eventJoinBtn');
   const leaveBtn = document.getElementById('eventLeaveBtn');
   const startBtn = document.getElementById('eventStartBtn');
+  const kickerEl = lobbyCard ? lobbyCard.querySelector('.event-lobby-kicker') : null;
+  const labelEls = lobbyCard ? lobbyCard.querySelectorAll('.event-lobby-label') : [];
 
   if (!lobbyCard || !statusEl || !rewardEl || !teamCountEl || !teamListEl || !createBtn || !joinBtn || !leaveBtn || !startBtn) {
     return;
@@ -483,8 +485,12 @@ function renderArchitectLobby(eventData, errorText = '') {
     if (overlay) {
       overlay.classList.remove('event-terminal');
     }
+    lobbyCard.classList.remove('event-result-card', 'event-result-win', 'event-result-lose');
 
     lobbyCard.style.display = 'block';
+    if (kickerEl) kickerEl.textContent = 'КОМАНДА';
+    if (labelEls[0]) labelEls[0].textContent = 'ПРИЗ';
+    if (labelEls[1]) labelEls[1].textContent = 'СОСТАВ КОМАНДЫ';
     statusEl.textContent = errorText || 'Ивент не создан';
     rewardEl.textContent = '—';
     teamCountEl.textContent = '0 / 0';
@@ -520,15 +526,31 @@ function renderArchitectLobby(eventData, errorText = '') {
     overlay.classList.toggle('event-terminal', isTerminal);
   }
 
+  lobbyCard.classList.toggle('event-result-card', isTerminal);
+  lobbyCard.classList.toggle('event-result-win', eventData.state === 'FINISHED');
+  lobbyCard.classList.toggle('event-result-lose', eventData.state === 'FAILED');
   lobbyCard.style.display = showLobbyCard ? 'block' : 'none';
+
+  if (kickerEl) {
+    kickerEl.textContent = isTerminal
+      ? (eventData.state === 'FINISHED' ? 'RESULT // WIN' : 'RESULT // FAIL')
+      : 'КОМАНДА';
+  }
+  if (labelEls[0]) labelEls[0].textContent = isTerminal ? 'НАГРАДА' : 'ПРИЗ';
+  if (labelEls[1]) labelEls[1].textContent = isTerminal ? 'MVP / УРОН' : 'СОСТАВ КОМАНДЫ';
 
   if (eventData.state === 'REGISTRATION') {
     teamCountEl.textContent = `${teamCount} / ${maxPlayers}`;
+  } else if (isTerminal) {
+    teamCountEl.textContent = `${teamCount} бойц.`;
   } else {
     teamCountEl.textContent = `${teamCount} чел.`;
   }
 
-  if (!teamMembers.length) {
+  if (isTerminal) {
+    renderArchitectResultPanel(eventData);
+    loadArchitectResultStats(eventData);
+  } else if (!teamMembers.length) {
     teamListEl.innerHTML = '<div class="event-team-empty">Пока никто не вступил</div>';
   } else {
     teamListEl.innerHTML = teamMembers.map(member => {
@@ -550,6 +572,83 @@ function renderArchitectLobby(eventData, errorText = '') {
   startBtn.style.display = canStart ? 'inline-flex' : 'none';
 
   updateArchitectBattleVisibility(eventData);
+}
+
+function getArchitectTeamNameMap(eventData) {
+  const result = new Map();
+  const members = Array.isArray(eventData && eventData.team_members) ? eventData.team_members : [];
+
+  members.forEach((member) => {
+    result.set(Number(member.telegram_id), member.full_name || 'Аноним');
+  });
+
+  return result;
+}
+
+function renderArchitectResultPanel(eventData, leaderboard = null) {
+  const rewardEl = document.getElementById('eventRewardText');
+  const teamListEl = document.getElementById('eventTeamList');
+  if (!rewardEl || !teamListEl || !eventData) return;
+
+  const rewardText = eventData.reward_text || 'Приз не указан';
+  const totalDamage = Number(eventData.total_damage || 0);
+  const totalActions = Number(eventData.total_actions || 0);
+  const state = String(eventData.state || '').toUpperCase();
+  const resultLabel = state === 'FINISHED' ? 'Награда разблокирована' : 'Протокол не пробит';
+
+  rewardEl.innerHTML = `
+    <span class="event-result-reward-main">${escapeHtml(rewardText)}</span>
+    <span class="event-result-reward-sub">${resultLabel} · урон команды ${totalDamage} · действий ${totalActions}</span>
+  `;
+
+  const names = getArchitectTeamNameMap(eventData);
+  const rows = Array.isArray(leaderboard) ? leaderboard.slice() : [];
+  rows.sort((a, b) => {
+    const damageDiff = Number(b.total_damage || 0) - Number(a.total_damage || 0);
+    if (damageDiff) return damageDiff;
+    return Number(b.total_support || 0) - Number(a.total_support || 0);
+  });
+
+  if (!rows.length) {
+    const members = Array.isArray(eventData.team_members) ? eventData.team_members : [];
+    teamListEl.innerHTML = members.length
+      ? members.map((member, index) => {
+          const name = escapeHtml(member.full_name || 'Аноним');
+          const tag = index === 0 ? '<span class="event-result-mvp">MVP?</span>' : '';
+          return `<div class="event-result-row"><span>${tag}${name}</span><strong>—</strong></div>`;
+        }).join('')
+      : '<div class="event-team-empty">Команда не найдена</div>';
+    return;
+  }
+
+  const mvpId = Number(rows[0].telegram_id);
+  teamListEl.innerHTML = rows.map((row) => {
+    const telegramId = Number(row.telegram_id);
+    const name = escapeHtml(names.get(telegramId) || `ID ${telegramId}`);
+    const damage = Number(row.total_damage || 0);
+    const support = Number(row.total_support || 0);
+    const mvp = telegramId === mvpId ? '<span class="event-result-mvp">MVP</span>' : '';
+    return `
+      <div class="event-result-row">
+        <span>${mvp}${name}</span>
+        <strong>${damage} dmg / ${support} sup</strong>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadArchitectResultStats(eventData) {
+  if (!eventData || !eventData.id || (eventData.state !== 'FAILED' && eventData.state !== 'FINISHED')) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/${eventData.id}/leaderboard`);
+    if (!res.ok) return;
+
+    const data = await res.json();
+    if (!currentArchitectEvent || Number(currentArchitectEvent.id) !== Number(eventData.id)) return;
+
+    renderArchitectResultPanel(eventData, data.leaderboard || []);
+  } catch (e) {}
 }
 
 function updateArchitectBattleVisibility(eventData) {
@@ -780,11 +879,27 @@ async function startArchitectEvent() {
 
 let pendingEventActionType = null;
 let pendingEventQuestionId = null;
+let pendingEventQuestion = null;
+let isArchitectQuestionLoading = false;
 
 async function requestArchitectQuestion(actionType) {
   if (!currentArchitectEventId || !currentUserId) return;
 
+  const box = document.getElementById('eventQuestionBox');
+  if (
+    pendingEventQuestion &&
+    box &&
+    box.style.display !== 'none'
+  ) {
+    showArchitectQuestion(pendingEventQuestion);
+    return;
+  }
+
+  if (isArchitectQuestionLoading) return;
+
   try {
+    isArchitectQuestionLoading = true;
+
     const res = await fetch(
       `${API_URL}/api/events/${currentArchitectEventId}/question?telegram_id=${encodeURIComponent(currentUserId)}&action_type=${encodeURIComponent(actionType)}`
     );
@@ -810,9 +925,12 @@ async function requestArchitectQuestion(actionType) {
     }
 
     pendingEventQuestionId = question.id;
+    pendingEventQuestion = question;
     showArchitectQuestion(question);
   } catch (e) {
     tg.showAlert('Ошибка соединения');
+  } finally {
+    isArchitectQuestionLoading = false;
   }
 }
 
@@ -897,6 +1015,7 @@ function closeArchitectQuestion() {
   if (prompt) prompt.textContent = 'Вопрос появится здесь';
 
   pendingEventQuestionId = null;
+  pendingEventQuestion = null;
 }
 
 async function submitArchitectAnswer(answerOption) {

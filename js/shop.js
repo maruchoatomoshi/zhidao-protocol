@@ -17,6 +17,7 @@ function switchShopTab(mode, btn) {
 }
 
 // Маппинг иконок магазина — Tabler вместо эмодзи
+const SHOP_ICON_EXTRA_CASE = '<span style="position:relative;display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;color:var(--gold);font-size:22px;"><i class="ti ti-package"></i><i class="ti ti-plus" style="position:absolute;right:-3px;bottom:-2px;font-size:12px;color:#60b4d4;background:var(--bg2);border-radius:50%;"></i></span>';
 const SHOP_ICONS = {
   'immunity':     '<i class="ti ti-shield-half" style="color:rgba(200,80,80,0.9);font-size:22px;"></i>',
   'laundry_vip':  '<i class="ti ti-wash" style="color:#60b4d4;font-size:22px;"></i>',
@@ -28,10 +29,10 @@ const SHOP_ICONS = {
   'snack':        '<i class="ti ti-ice-cream" style="color:var(--gold);font-size:22px;"></i>',
   'no_report':    '<i class="ti ti-file-off" style="color:rgba(200,80,80,0.9);font-size:22px;"></i>',
   'poizon':       '<i class="ti ti-shirt" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
-  'extra_case':   '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
-  'extra_cases':  '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
-  'additional_case': '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
-  'case_extra':   '<i class="ti ti-package-plus" style="color:var(--gold);font-size:22px;"></i>',
+  'extra_case':   SHOP_ICON_EXTRA_CASE,
+  'extra_cases':  SHOP_ICON_EXTRA_CASE,
+  'additional_case': SHOP_ICON_EXTRA_CASE,
+  'case_extra':   SHOP_ICON_EXTRA_CASE,
   'extra_raid_attempt': '<i class="ti ti-sword" style="color:#cc4444;font-size:22px;"></i>',
   'raid_insurance': '<i class="ti ti-shield-dollar" style="color:var(--gold);font-size:22px;"></i>',
   'raid_beacon': '<i class="ti ti-link" style="color:#60b4d4;font-size:22px;"></i>',
