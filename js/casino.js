@@ -22,11 +22,29 @@ const BLACK_PRIZES = [
 ];
 const PRIZE_MAP = {};
 [...PRIZES, ...PURPLE_PRIZES, ...BLACK_PRIZES].forEach(p => PRIZE_MAP[p.code] = p);
+const IMPLANT_DISPLAY_INFO = {
+  implant_guanxi: { name: '\u0413\u0443\u0430\u043d\u044c\u0441\u0438 \u5173\u7cfb', desc: '\u0421\u043a\u0438\u0434\u043a\u0430 10% \u0432 \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0435', icon: '\ud83e\udd1d' },
+  implant_terracota: { name: '\u0422\u0435\u0440\u0440\u0430\u043a\u043e\u0442\u0430 \u5175\u9a6c\u4fd1', desc: '\u0411\u043b\u043e\u043a 1 \u0448\u0442\u0440\u0430\u0444\u0430 \u0432 \u0434\u0435\u043d\u044c', icon: '\ud83d\uddff' },
+  implant_panda: { name: '\u041f\u0430\u043d\u0434\u0430 \ud83d\udc3c', desc: '\u041a\u044d\u0448\u0431\u0435\u043a +10\u2605 \u0441 \u043f\u043e\u043a\u0443\u043f\u043a\u0438', icon: '\ud83d\udc3c' },
+  implant_shaolin: { name: '\u0428\u0430\u043e\u043b\u0438\u043d\u044c \u5c11\u6797', desc: '+20\u2605 \u0437\u0430 \u043f\u0435\u0440\u0435\u043a\u043b\u0438\u0447\u043a\u0443 \u0432\u043e\u0432\u0440\u0435\u043c\u044f', icon: '\ud83e\udd4b' },
+  implant_linguasoft: { name: 'Linguasoft \u53e3\u624d', desc: '+30\u2605 \u0437\u0430 \u043e\u0446\u0435\u043d\u043a\u0443 5/5 \u0432 \u0434\u043d\u0435\u0432\u043d\u0438\u043a\u0435', icon: '\ud83c\udf99' },
+  implant_caishen: { name: '\u0426\u0430\u0439\u0448\u044d\u043d\u044c \u8d22\u795e', desc: '+15\u2605 \u043a\u0430\u0436\u0434\u044b\u0435 24 \u0447\u0430\u0441\u0430', icon: '\ud83d\udcb0' },
+  implant_qilin: { name: '\u0426\u0438\u043b\u0438\u043d\u044c \u9e92\u9e9f', desc: '+10\u2605 \u0437\u0430 \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 \u0426\u0438\u043b\u0438\u043d\u044f', icon: '\ud83d\udc09' },
+  implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u0431\u0430\u043b\u043b\u043e\u0432 \u00b7 \u0433\u0440\u0430\u0431\u0451\u0436 \u00b7 \u043f\u0435\u0440\u0435\u0434\u0430\u0442\u044c \u0448\u0442\u0440\u0430\u0444', icon: '\ud83d\udc09' },
+  implant_netwatch: { name: '\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0414\u043e\u0437\u043e\u0440 \u7f51\u7edc\u5b88\u536b', desc: 'NetWatch: \u0443\u0434\u0430\u0440, Blackwall \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0441\u0435\u0442\u0438', icon: '\ud83d\udd34' },
+};
 const CASE_IMAGES = {
   gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
   purple: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png',
   black:  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png',
 };
+const CASE_ROULETTE_TYPES = ['gold', 'purple', 'gold', 'gold', 'purple', 'gold', 'gold', 'black'];
+const CASE_ROULETTE_LABELS = {
+  gold: 'COMMON // 78.9%',
+  purple: 'PURPLE // 21%',
+  black: 'BLACK // 0.1%',
+};
+let currentRouletteTargetIdx = null;
 
 async function loadImplants(telegramId) {
   if (!telegramId) return;
@@ -63,6 +81,10 @@ async function loadImplants(telegramId) {
 
     // Главная страница — компактно
     const homeHtml = data.map(imp => {
+      const display = IMPLANT_DISPLAY_INFO[imp.implant_id] || {};
+      const displayName = display.name || imp.name || imp.implant_id;
+      const displayDesc = display.desc || imp.desc || '';
+      const displayIcon = display.icon || imp.icon || '';
       const img = IMPLANT_IMGS[imp.implant_id];
       const dots = Array(3).fill(0).map((_,i) => {
         const cls = i < imp.durability ? (imp.implant_id==='implant_red_dragon'?'dur-dot on-r':'dur-dot on') : 'dur-dot off';
@@ -70,11 +92,11 @@ async function loadImplants(telegramId) {
       }).join('');
       return `<div class="implant-row">
         <div class="implant-icon ${imp.implant_id==='implant_red_dragon'?'legendary':''}">
-          ${img ? `<img src="${img}" style="width:24px;height:24px;object-fit:contain;border-radius:4px;">` : imp.icon}
+          ${img ? `<img src="${img}" style="width:24px;height:24px;object-fit:contain;border-radius:4px;">` : displayIcon}
         </div>
         <div>
-          <div class="implant-cn">${imp.name}</div>
-          <div class="implant-py">${imp.desc}</div>
+          <div class="implant-cn">${displayName}</div>
+          <div class="implant-py">${displayDesc}</div>
         </div>
         <div class="implant-dur">${dots}</div>
       </div>`;
@@ -83,6 +105,10 @@ async function loadImplants(telegramId) {
 
     // Страница имплантов — с кнопкой разборки для дублей
     const pageHtml = data.map(imp => {
+      const display = IMPLANT_DISPLAY_INFO[imp.implant_id] || {};
+      const displayName = display.name || imp.name || imp.implant_id;
+      const displayDesc = display.desc || imp.desc || '';
+      const displayIcon = display.icon || imp.icon || '';
       const img = IMPLANT_IMGS[imp.implant_id];
       const isLeg = imp.implant_id === 'implant_red_dragon';
       const isDuplicate = implantCounts[imp.implant_id] > 1;
@@ -105,12 +131,12 @@ async function loadImplants(telegramId) {
       return `<div class="inventory-item inventory-item-asset ${isLeg ? 'inventory-item-legendary' : ''}">
         <div class="inventory-header">
           <div class="inventory-icon ${isLeg ? 'legendary' : ''}">
-            ${img ? `<img src="${img}" alt="${imp.name}">` : imp.icon}
+            ${img ? `<img src="${img}" alt="${displayName}">` : displayIcon}
           </div>
           <div class="inventory-info">
             <div class="inventory-kicker">IMPLANT ${duplicateBadge}</div>
-            <div class="inventory-name">${imp.name}</div>
-            <div class="inventory-desc">${imp.desc}</div>
+            <div class="inventory-name">${displayName}</div>
+            <div class="inventory-desc">${displayDesc}</div>
             <div class="inventory-date">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
           </div>
           <div class="inventory-side">
@@ -474,30 +500,45 @@ function switchCasinoTab(mode, btn) {
   else if (mode==='genshin') { document.getElementById('casinoGenshinContent').style.display='flex'; }
 }
 
-function initRoulette(caseType = 'gold') {
+function buildRouletteItem(caseType, index, isTarget = false) {
+  const imgUrl = CASE_IMAGES[caseType] || CASE_IMAGES.gold;
+  const el = document.createElement('div');
+  el.className = `roulette-item roulette-item-${caseType}`;
+  el.dataset.caseType = caseType;
+  el.dataset.index = String(index);
+  if (isTarget) el.dataset.target = '1';
+  el.innerHTML = `
+    <img src="${imgUrl}" class="roulette-case-img" alt="${CASE_ROULETTE_LABELS[caseType] || caseType}">
+    <div class="roulette-case-label">${CASE_ROULETTE_LABELS[caseType] || caseType}</div>
+  `;
+  return el;
+}
+
+function getRouletteTypeForIndex(index, targetCaseType = null, targetIdx = null) {
+  if (targetCaseType && targetIdx !== null && index === targetIdx) return targetCaseType;
+  return CASE_ROULETTE_TYPES[index % CASE_ROULETTE_TYPES.length];
+}
+
+function initRoulette(caseType = null, targetIdx = null) {
   const strip = document.getElementById('rouletteStrip');
   if (!strip) return;
   strip.innerHTML = '';
-  const imgUrl = CASE_IMAGES[caseType] || CASE_IMAGES.gold;
-  const borderColor = caseType==='black' ? 'rgba(180,20,20,0.4)' : caseType==='purple' ? 'rgba(155,89,182,0.4)' : 'rgba(212,175,55,0.2)';
   for (let i = 0; i < 50; i++) {
-    const el = document.createElement('div');
-    el.className = 'roulette-item';
-    el.style.borderColor = borderColor;
-    el.innerHTML = `<img src="${imgUrl}" style="width:110px;height:110px;object-fit:contain;">`;
-    strip.appendChild(el);
+    const itemCaseType = getRouletteTypeForIndex(i, caseType, targetIdx);
+    strip.appendChild(buildRouletteItem(itemCaseType, i, targetIdx !== null && i === targetIdx));
   }
   strip.style.transform = 'translateX(135px)';
+  currentRouletteTargetIdx = targetIdx;
   isSpinning = false;
-  document.getElementById('openCaseBtn').disabled = false;
+  const openBtn = document.getElementById('openCaseBtn');
+  if (openBtn) openBtn.disabled = false;
   
   document.getElementById('prizeResult').classList.remove('show');
   document.getElementById('prizeResult').style.borderColor = '';
   const track = document.querySelector('.roulette-track');
   if (track) {
-    if (caseType==='black') track.style.borderColor='rgba(180,20,20,0.6)';
-    else if (caseType==='purple') track.style.borderColor='rgba(155,89,182,0.6)';
-    else track.style.borderColor='rgba(180,20,20,0.35)';
+    track.classList.remove('roulette-track-gold', 'roulette-track-purple', 'roulette-track-black', 'roulette-track-reveal');
+    track.style.borderColor = '';
   }
 }
 
@@ -530,11 +571,12 @@ async function openCase() {
     }
     const data = await r.json();
     const caseType = data.prize.case_type || 'gold';
-    initRoulette(caseType);
+    const targetIdx = 38 + Math.floor(Math.random() * 4);
+    initRoulette(caseType, targetIdx);
     isSpinning = true;
     document.getElementById('openCaseBtn').disabled = true;
     const prize = PRIZE_MAP[data.prize.code] || { code:data.prize.code, icon:data.prize.icon||'🎁', name:data.prize.name, desc:'Редкий приз!', points:data.prize.points||0 };
-    await spinRoulette(prize, caseType);
+    await spinRoulette(prize, caseType, targetIdx);
     showPrizeResult(prize, caseType);
     currentPoints = data.new_points;
     updatePoints();
@@ -567,17 +609,22 @@ async function openCase() {
   }
 }
 
-async function spinRoulette(targetPrize, caseType = 'gold') {
+async function spinRoulette(targetPrize, caseType = 'gold', targetIdx = null) {
   return new Promise(resolve => {
     const strip = document.getElementById('rouletteStrip');
     const items = strip.querySelectorAll('.roulette-item');
+    const track = document.querySelector('.roulette-track');
     const itemWidth = 130;
     const centerOffset = 135;
-    const targetIdx = 38 + Math.floor(Math.random() * 4);
-    const finalX = centerOffset - targetIdx * itemWidth;
+    const resolvedTargetIdx = targetIdx !== null ? targetIdx : (currentRouletteTargetIdx !== null ? currentRouletteTargetIdx : 38);
+    const finalX = centerOffset - resolvedTargetIdx * itemWidth;
     const startX = centerOffset;
-    const duration = 4500;
+    const duration = caseType === 'black' ? 5600 : caseType === 'purple' ? 5000 : 4300;
     let startTime = null;
+    if (track) {
+      track.classList.remove('roulette-track-gold', 'roulette-track-purple', 'roulette-track-black', 'roulette-track-reveal');
+      track.classList.add(`roulette-track-${caseType}`);
+    }
     function easeOut(t) { return 1 - Math.pow(1-t, 4); }
     function animate(timestamp) {
       if (!startTime) startTime = timestamp;
@@ -592,16 +639,17 @@ async function spinRoulette(targetPrize, caseType = 'gold') {
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
-        const winner = items[targetIdx];
-        winner.classList.add('winner', 'opening');
+        const winner = items[resolvedTargetIdx];
+        if (track) track.classList.add('roulette-track-reveal');
+        winner.classList.add('winner', 'opening', `winner-${caseType}`);
         setTimeout(() => {
           winner.classList.remove('opening');
-          winner.classList.add('opened');
+          winner.classList.add('opened', `opened-${caseType}`);
           const prizeContent = targetPrize.img
             ? `<img src="${targetPrize.img}" class="roulette-prize-reveal" style="width:80px;height:80px;object-fit:contain;border-radius:10px;"><div class="roulette-item-name">${targetPrize.name}</div>`
             : `<div class="roulette-item-icon roulette-prize-reveal">${targetPrize.icon}</div><div class="roulette-item-name">${targetPrize.name}</div>`;
           winner.innerHTML = prizeContent;
-          if (targetPrize.code==='jackpot') winner.style.animation='shimmer 0.5s infinite';
+          if (targetPrize.code==='jackpot' || caseType === 'black') winner.style.animation='shimmer 0.5s infinite';
           resolve();
         }, 600);
       }

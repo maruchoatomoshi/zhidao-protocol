@@ -855,9 +855,78 @@ body.theme-genshin-dark .lb-points
   background: linear-gradient(145deg, #0a0a1a, #0f0f22);
   flex-shrink: 0; position: relative; overflow: hidden;
 }
+.roulette-case-img {
+  width: 96px;
+  height: 86px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.28));
+  transition: transform 0.22s ease, filter 0.22s ease;
+}
+.roulette-case-label {
+  margin-top: 3px;
+  font-size: 7px;
+  letter-spacing: 0.8px;
+  font-family: monospace;
+  color: rgba(255,255,255,0.36);
+  text-transform: uppercase;
+}
+.roulette-item-gold {
+  border-color: rgba(212,175,55,0.22);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(212,175,55,0.10), transparent 48%),
+    linear-gradient(145deg, #0a0a1a, #0f0f22);
+}
+.roulette-item-purple {
+  border-color: rgba(155,89,182,0.34);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(155,89,182,0.18), transparent 50%),
+    linear-gradient(145deg, #11091d, #0d0b18);
+}
+.roulette-item-black {
+  border-color: rgba(180,20,20,0.42);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(180,20,20,0.22), transparent 52%),
+    linear-gradient(145deg, #160507, #08040a);
+}
+.roulette-item-purple .roulette-case-label { color: rgba(199,146,255,0.72); }
+.roulette-item-black .roulette-case-label { color: rgba(255,92,92,0.76); }
+.roulette-track-gold {
+  border-color: rgba(212,175,55,0.42);
+  box-shadow: 0 0 18px rgba(212,175,55,0.08), inset 0 0 18px rgba(212,175,55,0.04);
+}
+.roulette-track-purple {
+  border-color: rgba(155,89,182,0.70);
+  animation: roulettePurplePulse 0.85s ease-in-out infinite;
+}
+.roulette-track-black {
+  border-color: rgba(255,35,35,0.82);
+  animation: rouletteBlackBreach 0.52s steps(2) infinite;
+}
+.roulette-track-black::before,
+.roulette-track-black::after {
+  width: 72px;
+}
+.roulette-track-reveal .roulette-item:not(.winner) {
+  opacity: 0.42;
+  filter: grayscale(0.35);
+}
 .roulette-item.winner { border-color: rgba(212,175,55,0.6) !important; box-shadow: 0 0 20px rgba(212,175,55,0.3) !important; }
 .roulette-item.opening { animation: shakeBox 0.5s ease; }
 .roulette-item.opened { border-color: var(--gold); box-shadow: 0 0 25px rgba(212,175,55,0.4); background: linear-gradient(145deg, #1a1a00, #2a2200); }
+.roulette-item.winner-purple {
+  border-color: rgba(190,100,255,0.88) !important;
+  box-shadow: 0 0 26px rgba(155,89,182,0.46) !important;
+}
+.roulette-item.winner-black {
+  border-color: rgba(255,45,45,0.94) !important;
+  box-shadow: 0 0 36px rgba(255,0,0,0.58), inset 0 0 20px rgba(255,0,0,0.16) !important;
+}
+.roulette-item.opened-purple {
+  background: linear-gradient(145deg, #21102e, #120817);
+}
+.roulette-item.opened-black {
+  background: linear-gradient(145deg, #2a0507, #080204);
+}
 .roulette-item-icon { font-size: 38px; transition: all 0.3s; }
 .roulette-item-name { font-size: 8px; color: #888; text-align: center; line-height: 1.2; padding: 0 4px; margin-top: 4px; }
 .roulette-prize-reveal { animation: revealPrize 0.4s ease forwards; }
@@ -1150,6 +1219,26 @@ body.theme-genshin-dark .lb-points
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes shakeBox { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-3deg)} 75%{transform:rotate(3deg)} }
 @keyframes revealPrize { from{transform:scale(0.5) rotate(-20deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+@keyframes roulettePurplePulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(155,89,182,0.16), inset 0 0 18px rgba(155,89,182,0.06);
+    filter: saturate(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(155,89,182,0.34), inset 0 0 26px rgba(155,89,182,0.12);
+    filter: saturate(1.22);
+  }
+}
+@keyframes rouletteBlackBreach {
+  0%, 100% {
+    box-shadow: 0 0 28px rgba(255,0,0,0.28), inset 0 0 28px rgba(255,0,0,0.12);
+    filter: contrast(1.08) brightness(0.92);
+  }
+  50% {
+    box-shadow: 0 0 46px rgba(255,0,0,0.48), inset 0 0 36px rgba(255,0,0,0.20);
+    filter: contrast(1.34) brightness(0.76);
+  }
+}
 @keyframes cyberOverlayIn{0%{opacity:0}100%{opacity:1}}
 @keyframes cyberOverlayOut{0%{opacity:1}100%{opacity:0}}
 @keyframes cyberItemIn{0%{transform:scale(0.2) translateY(40px);opacity:0}60%{transform:scale(1.15) translateY(-5px)}100%{transform:scale(1) translateY(0);opacity:1}}
@@ -2858,8 +2947,33 @@ body.theme-nw-light .roulette-item {
   color: #1f1f1f;
 }
 
+body.theme-nw-light .roulette-item-gold {
+  border-color: rgba(138,104,32,0.24);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(212,175,55,0.16), transparent 48%),
+    linear-gradient(145deg, rgba(255,255,255,0.94), rgba(232,225,218,0.92));
+}
+
+body.theme-nw-light .roulette-item-purple {
+  border-color: rgba(120,76,140,0.28);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(155,89,182,0.16), transparent 50%),
+    linear-gradient(145deg, rgba(250,246,255,0.94), rgba(228,219,235,0.92));
+}
+
+body.theme-nw-light .roulette-item-black {
+  border-color: rgba(153,51,51,0.32);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(180,20,20,0.14), transparent 52%),
+    linear-gradient(145deg, rgba(255,244,244,0.92), rgba(230,218,218,0.90));
+}
+
 body.theme-nw-light .roulette-item-name {
   color: #444444;
+}
+
+body.theme-nw-light .roulette-case-label {
+  color: rgba(40,40,40,0.52);
 }
 
 body.theme-nw-light .roulette-item.opened {
@@ -4577,8 +4691,33 @@ body.theme-genshin-light .roulette-item {
   color: #3d4555;
 }
 
+body.theme-genshin-light .roulette-item-gold {
+  border-color: rgba(138,104,32,0.28);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(219,177,101,0.18), transparent 48%),
+    linear-gradient(145deg, rgba(255,252,242,0.95), rgba(236,226,207,0.92));
+}
+
+body.theme-genshin-light .roulette-item-purple {
+  border-color: rgba(98,86,135,0.26);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(98,86,135,0.14), transparent 50%),
+    linear-gradient(145deg, rgba(248,246,255,0.95), rgba(226,222,238,0.92));
+}
+
+body.theme-genshin-light .roulette-item-black {
+  border-color: rgba(112,72,56,0.28);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(140,52,42,0.14), transparent 52%),
+    linear-gradient(145deg, rgba(255,246,239,0.94), rgba(231,218,210,0.92));
+}
+
 body.theme-genshin-light .roulette-item-name {
   color: #5f6674;
+}
+
+body.theme-genshin-light .roulette-case-label {
+  color: rgba(70,64,52,0.54);
 }
 
 body.theme-genshin-light .roulette-item.opened {
