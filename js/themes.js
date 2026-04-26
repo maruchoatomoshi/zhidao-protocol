@@ -1,5 +1,6 @@
 function applyThemePath(path) {
   currentThemePath = path;
+  if (typeof updateProfilePathBadge === 'function') updateProfilePathBadge(path);
 
   const nwCards    = ['theme-btn-default', 'theme-btn-nw-light'];
   const gsCards    = ['theme-btn-genshin-light', 'theme-btn-genshin-dark'];
@@ -68,6 +69,7 @@ function syncAdminThemeMode(theme) {
 
   const isGenshinTheme = theme === 'genshin-light' || theme === 'genshin-dark';
   currentThemePath = isGenshinTheme ? 'genshin' : 'cyberpunk';
+  if (typeof updateProfilePathBadge === 'function') updateProfilePathBadge(currentThemePath);
 
   const casinoCases = document.getElementById('casinoPlayContent');
   const casinoPrayers = document.getElementById('casinoGenshinContent');
