@@ -23,7 +23,7 @@ app.add_middleware(
 MARZBAN_URL = "http://127.0.0.1:8000"
 MARZBAN_USER = "marucho"
 MARZBAN_PASS = "sqU5QN0jgus!"
-ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292]
+ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
 RAID_ENTRY_COST = 50
@@ -126,6 +126,14 @@ def init_db():
                   telegram_id INTEGER,
                   emoji TEXT,
                   UNIQUE(announcement_id, telegram_id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS admin_action_logs
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  admin_id INTEGER NOT NULL,
+                  target_id INTEGER DEFAULT NULL,
+                  action_type TEXT NOT NULL,
+                  points_delta INTEGER DEFAULT 0,
+                  reason TEXT DEFAULT '',
+                  created_at TEXT NOT NULL)''')
     c.execute('''CREATE TABLE IF NOT EXISTS laundry
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   date TEXT, time TEXT, telegram_id INTEGER, username TEXT,
@@ -1518,6 +1526,154 @@ async def get_points(telegram_id: int):
     }
 
 
+@app.get("/api/admin/users")
+async def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = str(q or "").strip()
+    conn = get_conn()
+    c = conn.cursor()
+    if query:
+        like = f"%{query}%"
+        if query.isdigit():
+            c.execute(
+                '''SELECT telegram_id, full_name, marzban_username, points
+                   FROM users
+                   WHERE telegram_id IS NOT NULL
+                     AND (CAST(telegram_id AS TEXT) LIKE ? OR full_name LIKE ? OR marzban_username LIKE ?)
+                   ORDER BY points DESC
+                   LIMIT 20''',
+                (like, like, like),
+            )
+        else:
+            c.execute(
+                '''SELECT telegram_id, full_name, marzban_username, points
+                   FROM users
+                   WHERE telegram_id IS NOT NULL
+                     AND (full_name LIKE ? OR marzban_username LIKE ?)
+                   ORDER BY points DESC
+                   LIMIT 20''',
+                (like, like),
+            )
+    else:
+        c.execute(
+            '''SELECT telegram_id, full_name, marzban_username, points
+               FROM users
+               WHERE telegram_id IS NOT NULL
+               ORDER BY points DESC
+               LIMIT 20''',
+        )
+    rows = c.fetchall()
+    conn.close()
+    return {
+        "users": [
+            {
+                "telegram_id": row[0],
+                "full_name": row[1] or "Аноним",
+                "username": row[2] or "",
+                "points": row[3] or 0,
+                "is_admin": row[0] in ADMIN_IDS,
+            }
+            for row in rows
+        ]
+    }
+
+
+@app.post("/api/admin/points")
+async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    target_id = data.get("telegram_id")
+    reason = str(data.get("reason") or "").strip()
+    try:
+        target_id = int(target_id)
+        delta = int(data.get("delta"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    if delta == 0:
+        raise HTTPException(status_code=400, detail="Delta must not be zero")
+    if abs(delta) > 5000:
+        raise HTTPException(status_code=400, detail="Delta too large")
+    if len(reason) < 3:
+        raise HTTPException(status_code=400, detail="Reason required")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT full_name, points FROM users WHERE telegram_id=?", (target_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    previous_points = row[1] or 0
+    c.execute(
+        "UPDATE users SET points = MAX(0, COALESCE(points, 0) + ?) WHERE telegram_id=?",
+        (delta, target_id),
+    )
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+    new_points = c.fetchone()[0] or 0
+    actual_delta = new_points - previous_points
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, ?, 'points_adjust', ?, ?, ?)''',
+        (x_admin_id, target_id, actual_delta, reason, now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "telegram_id": target_id,
+        "full_name": row[0] or str(target_id),
+        "previous_points": previous_points,
+        "new_points": new_points,
+        "delta": actual_delta,
+        "requested_delta": delta,
+    }
+
+
+@app.get("/api/admin/actions")
+async def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    safe_limit = max(1, min(int(limit or 30), 100))
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT l.id, l.admin_id, au.full_name, l.target_id, tu.full_name,
+                  l.action_type, l.points_delta, l.reason, l.created_at
+           FROM admin_action_logs l
+           LEFT JOIN users au ON au.telegram_id = l.admin_id
+           LEFT JOIN users tu ON tu.telegram_id = l.target_id
+           ORDER BY l.id DESC
+           LIMIT ?''',
+        (safe_limit,),
+    )
+    rows = c.fetchall()
+    conn.close()
+    return {
+        "logs": [
+            {
+                "id": row[0],
+                "admin_id": row[1],
+                "admin_name": row[2] or str(row[1]),
+                "target_id": row[3],
+                "target_name": row[4] or (str(row[3]) if row[3] else ""),
+                "action_type": row[5],
+                "points_delta": row[6] or 0,
+                "reason": row[7] or "",
+                "created_at": row[8],
+            }
+            for row in rows
+        ]
+    }
+
+
 @app.get("/api/diary/admin/overview")
 async def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
     if not is_diary_staff(x_admin_id):
@@ -2329,6 +2485,18 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
     c = conn.cursor()
     c.execute("""INSERT INTO user_status (telegram_id, frozen) VALUES (?,?)
                  ON CONFLICT(telegram_id) DO UPDATE SET frozen=?""", (telegram_id, int(frozen), int(frozen)))
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, ?, ?, 0, ?, ?)''',
+        (
+            x_admin_id,
+            telegram_id,
+            'freeze' if frozen else 'unfreeze',
+            'NetWatch freeze' if frozen else 'NetWatch unfreeze',
+            now_iso(),
+        ),
+    )
     conn.commit()
     conn.close()
     return {"success": True}
@@ -2342,6 +2510,12 @@ async def reset_shop(x_admin_id: Optional[int] = Header(None)):
     conn = get_conn()
     c = conn.cursor()
     c.execute("DELETE FROM shop_daily_counts WHERE date=?", (today,))
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, NULL, 'reset_shop', 0, ?, ?)''',
+        (x_admin_id, f"Reset shop daily counts for {today}", now_iso()),
+    )
     conn.commit()
     conn.close()
     return {"success": True, "message": "Магазин сброшен!"}
@@ -2388,6 +2562,12 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
     conn = get_conn()
     c = conn.cursor()
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', ?)", ('1' if enabled else '0',))
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, NULL, 'blackwall', 0, ?, ?)''',
+        (x_admin_id, 'BlackWall enabled' if enabled else 'BlackWall disabled', now_iso()),
+    )
     conn.commit()
     conn.close()
     return {"success": True, "blackwall": enabled}

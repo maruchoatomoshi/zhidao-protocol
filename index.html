@@ -713,14 +713,36 @@
 
     </div>
     <div id="admin-users" class="admin-section" style="padding:0 12px;">
-      <div class="cn-divider">⭐ НАЧИСЛИТЬ / СНЯТЬ БАЛЛЫ</div>
-      <input class="admin-input" id="awardName" placeholder="Имя пользователя">
-      <input class="admin-input" id="awardPoints" placeholder="Баллы (число)" type="number">
-      <input class="admin-input" id="awardReason" placeholder="Причина">
-      <div style="display:flex;gap:6px;margin-bottom:12px;">
-        <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="adminAward()">+ НАЧИСЛИТЬ</button>
-        <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="adminPenalize()">- СНЯТЬ</button>
+      <div class="admin-console-card">
+        <div class="admin-console-head">
+          <div>
+            <div class="admin-console-kicker">OPERATOR CONSOLE</div>
+            <div class="admin-console-title">Баланс пользователей</div>
+          </div>
+          <button class="admin-console-refresh" onclick="adminLoadActionLog()">ЖУРНАЛ</button>
+        </div>
+        <div class="admin-search-row">
+          <input class="admin-input" id="adminUserSearch" placeholder="Имя, username или Telegram ID" oninput="adminSearchUsersDebounced()">
+          <button class="btn btn-primary" onclick="adminSearchUsers()">НАЙТИ</button>
+        </div>
+        <div id="adminUserResults" class="admin-user-results">
+          <div class="empty-state">Начни поиск пользователя</div>
+        </div>
+        <div id="adminSelectedUser" class="admin-selected-user" style="display:none;"></div>
       </div>
+
+      <div class="admin-console-card">
+        <div class="cn-divider">⭐ НАЧИСЛИТЬ / СНЯТЬ БАЛЛЫ</div>
+        <input class="admin-input" id="awardName" placeholder="Telegram ID или имя из поиска">
+        <input class="admin-input" id="awardPoints" placeholder="Баллы (число)" type="number">
+        <input class="admin-input" id="awardReason" placeholder="Причина, например: дневник / штраф / компенсация">
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="adminAward()">+ НАЧИСЛИТЬ</button>
+          <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="adminPenalize()">- СНЯТЬ</button>
+        </div>
+        <div class="admin-console-note">Операции от 100★ требуют подтверждения. Все действия пишутся в журнал.</div>
+      </div>
+
       <div class="cn-divider">⛔ ЗАМОРОЗКА АККАУНТА</div>
       <div style="font-size:10px;color:var(--text2);margin-bottom:8px;line-height:1.6;">
         Замороженный игрок не может открывать кейсы и покупать в магазине. Получает уведомление от NetWatch.
@@ -729,6 +751,10 @@
       <div style="display:flex;gap:6px;">
         <button class="btn btn-primary" style="flex:1;padding:8px;font-size:9px;" onclick="adminFreeze(true)">⛔ ЗАМОРОЗИТЬ</button>
         <button class="btn btn-gold" style="flex:1;padding:8px;font-size:9px;" onclick="adminFreeze(false)">✅ РАЗМОРОЗИТЬ</button>
+      </div>
+      <div class="cn-divider">📜 ЖУРНАЛ ОПЕРАЦИЙ</div>
+      <div id="adminActionLog" class="admin-action-log">
+        <div class="empty-state">Журнал загрузится при открытии раздела</div>
       </div>
     </div>
     <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">

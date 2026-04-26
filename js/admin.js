@@ -6,6 +6,9 @@ function setLastSeenGlobalAlertId(alertId) {
   localStorage.setItem('last_global_alert_id', String(alertId || 0));
 }
 
+let adminSelectedUser = null;
+let adminSearchTimer = null;
+
 async function triggerGlobalArchitectAlert() {
   if (!currentUserId) {
     openArchitectArrivalBanner();
@@ -118,6 +121,10 @@ function showAdminSection(name, btn) {
   const el = document.getElementById('admin-'+name);
   if(el) el.style.display = 'block';
   if (name==='laundry') adminLoadLaundrySlots();
+  if (name==='users') {
+    adminSearchUsers();
+    adminLoadActionLog();
+  }
 }
 
 async function loadAdminLaundry() {
@@ -282,13 +289,187 @@ async function adminDeleteWaterSlot(id) {
 }
 
 async function adminAward() {
-  const name=document.getElementById('awardName').value, points=parseInt(document.getElementById('awardPoints').value), reason=document.getElementById('awardReason').value;
-  if (!name||!points||!reason) { tg.showAlert('Заполни все поля'); return; }
-  tg.showAlert('Для начисления баллов используй /award в боте');
+  await adminAdjustPointsFromForm(1);
 }
 
 async function adminPenalize() {
-  tg.showAlert('Для снятия баллов используй /penalize в боте');
+  await adminAdjustPointsFromForm(-1);
+}
+
+function adminSearchUsersDebounced() {
+  clearTimeout(adminSearchTimer);
+  adminSearchTimer = setTimeout(adminSearchUsers, 280);
+}
+
+function adminResolveTargetId() {
+  const raw = String(document.getElementById('awardName')?.value || '').trim();
+  if (adminSelectedUser && (!raw || raw === String(adminSelectedUser.telegram_id) || raw === adminSelectedUser.full_name)) {
+    return adminSelectedUser.telegram_id;
+  }
+  if (/^\d+$/.test(raw)) return Number(raw);
+  return null;
+}
+
+function adminUserInitial(name) {
+  const text = String(name || '?').trim();
+  return (text[0] || '?').toUpperCase();
+}
+
+function adminRenderUserCard(user) {
+  const active = adminSelectedUser && adminSelectedUser.telegram_id === user.telegram_id;
+  const safeName = JSON.stringify(String(user.full_name || 'Аноним'));
+  return `<div class="admin-user-card ${active ? 'active' : ''}" onclick='adminSelectUser(${user.telegram_id}, ${safeName}, ${user.points || 0})'>
+    <div class="admin-user-avatar">${escapeHtml(adminUserInitial(user.full_name))}</div>
+    <div class="admin-user-main">
+      <div class="admin-user-name">${escapeHtml(user.full_name)} ${user.is_admin ? '<span class="inventory-pill">ADMIN</span>' : ''}</div>
+      <div class="admin-user-meta">ID ${user.telegram_id}${user.username ? ` · ${escapeHtml(user.username)}` : ''}</div>
+    </div>
+    <div class="admin-user-points">${user.points || 0}★</div>
+  </div>`;
+}
+
+async function adminSearchUsers() {
+  if (!isAdmin || !currentUserId) return;
+  const container = document.getElementById('adminUserResults');
+  if (!container) return;
+  const q = String(document.getElementById('adminUserSearch')?.value || '').trim();
+  container.innerHTML = '<div class="empty-state">Поиск...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/users?q=${encodeURIComponent(q)}`, {
+      headers: {'x-admin-id': currentUserId},
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      container.innerHTML = '<div class="empty-state">Нет доступа</div>';
+      return;
+    }
+    const users = Array.isArray(data.users) ? data.users : [];
+    container.innerHTML = users.length
+      ? users.map(adminRenderUserCard).join('')
+      : '<div class="empty-state">Никого не найдено</div>';
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state">Ошибка поиска</div>';
+  }
+}
+
+function adminSelectUser(telegramId, fullName, points) {
+  adminSelectedUser = { telegram_id: telegramId, full_name: fullName, points };
+  const awardName = document.getElementById('awardName');
+  const freezeId = document.getElementById('freezeId');
+  if (awardName) awardName.value = telegramId;
+  if (freezeId) freezeId.value = telegramId;
+  const selected = document.getElementById('adminSelectedUser');
+  if (selected) {
+    selected.style.display = 'block';
+    selected.innerHTML = `
+      <div class="admin-console-kicker">SELECTED TARGET</div>
+      <div class="admin-log-top">
+        <div>
+          <div class="admin-user-name">${escapeHtml(fullName)}</div>
+          <div class="admin-user-meta">Telegram ID ${telegramId}</div>
+        </div>
+        <div class="admin-user-points">${points || 0}★</div>
+      </div>`;
+  }
+  adminSearchUsers();
+}
+
+async function adminAdjustPointsFromForm(direction) {
+  const targetId = adminResolveTargetId();
+  const points = Math.abs(parseInt(document.getElementById('awardPoints')?.value, 10));
+  const reason = String(document.getElementById('awardReason')?.value || '').trim();
+  if (!targetId || !points || !reason) {
+    tg.showAlert('Выбери пользователя, укажи баллы и причину');
+    return;
+  }
+  const delta = points * direction;
+  const title = delta > 0 ? 'Начислить баллы?' : 'Снять баллы?';
+  const dangerText = Math.abs(delta) >= 100 ? '\n\n⚠️ Крупная операция. Проверь сумму и цель.' : '';
+  const targetName = adminSelectedUser?.telegram_id === targetId ? adminSelectedUser.full_name : String(targetId);
+  tg.showPopup({
+    title,
+    message: `${targetName}\n${delta > 0 ? '+' : ''}${delta}★\nПричина: ${reason}${dangerText}`,
+    buttons: [
+      {id: 'confirm', type: delta < 0 ? 'destructive' : 'default', text: delta > 0 ? 'Начислить' : 'Снять'},
+      {type: 'cancel'}
+    ]
+  }, async (buttonId) => {
+    if (buttonId !== 'confirm') return;
+    await adminSubmitPointAdjustment(targetId, delta, reason);
+  });
+}
+
+async function adminSubmitPointAdjustment(targetId, delta, reason) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/points`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: targetId, delta, reason}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      tg.showAlert(data.detail || 'Ошибка операции');
+      return;
+    }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    const actualDelta = Number(data.delta || delta);
+    tg.showAlert(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta}★\nБаланс: ${data.new_points}★`);
+    document.getElementById('awardPoints').value = '';
+    document.getElementById('awardReason').value = '';
+    if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
+      adminSelectedUser.points = data.new_points;
+      adminSelectUser(targetId, data.full_name, data.new_points);
+    }
+    adminSearchUsers();
+    adminLoadActionLog();
+    if (targetId === currentUserId) {
+      currentPoints = data.new_points;
+      updatePoints();
+    }
+  } catch (e) {
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
+async function adminLoadActionLog() {
+  if (!isAdmin || !currentUserId) return;
+  const container = document.getElementById('adminActionLog');
+  if (!container) return;
+  container.innerHTML = '<div class="empty-state">Загрузка журнала...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/actions?limit=30`, {
+      headers: {'x-admin-id': currentUserId},
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      container.innerHTML = '<div class="empty-state">Нет доступа к журналу</div>';
+      return;
+    }
+    const logs = Array.isArray(data.logs) ? data.logs : [];
+    if (!logs.length) {
+      container.innerHTML = '<div class="empty-state">Операций пока нет</div>';
+      return;
+    }
+    container.innerHTML = logs.map(log => {
+      const delta = Number(log.points_delta || 0);
+      const sign = delta > 0 ? '+' : '';
+      const cls = delta >= 0 ? 'plus' : 'minus';
+      const action = String(log.action_type || '').replace(/_/g, ' ').toUpperCase();
+      const date = log.created_at ? new Date(log.created_at).toLocaleString('ru-RU') : '';
+      const deltaHtml = delta
+        ? `<div class="admin-log-delta ${cls}">${sign}${delta}★</div>`
+        : `<div class="inventory-pill">${escapeHtml(action)}</div>`;
+      return `<div class="admin-log-card">
+        <div class="admin-log-top">
+          <div class="admin-log-text">${escapeHtml(log.target_name || log.target_id)} · ${escapeHtml(log.reason || '')}</div>
+          ${deltaHtml}
+        </div>
+        <div class="admin-log-meta">ADMIN ${escapeHtml(log.admin_name || log.admin_id)} · ${date}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state">Ошибка загрузки журнала</div>';
+  }
 }
 
 async function setBlackwall(enabled) {

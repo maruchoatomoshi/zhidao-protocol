@@ -1022,6 +1022,128 @@ body.theme-genshin-dark .lb-points
   font-size: 9px; cursor: pointer; font-family: monospace;
 }
 .admin-sec-btn.active { background: var(--red-dim); border-color: var(--red-border); color: #cc4444; }
+.admin-console-card {
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--bg2) 90%, transparent), color-mix(in srgb, var(--bg3) 66%, transparent)),
+    var(--bg2);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.16);
+}
+.admin-console-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.admin-console-kicker {
+  color: var(--red);
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1.6px;
+}
+.admin-console-title {
+  color: var(--text);
+  font-weight: 800;
+  font-size: 14px;
+}
+.admin-console-refresh {
+  border: 1px solid var(--gold-border);
+  background: var(--gold-dim);
+  color: var(--gold);
+  border-radius: 10px;
+  padding: 7px 9px;
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 800;
+}
+.admin-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.admin-user-results,
+.admin-action-log {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-user-card,
+.admin-log-card,
+.admin-selected-user {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg3) 72%, transparent);
+  padding: 10px;
+}
+.admin-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.admin-user-card.active {
+  border-color: var(--gold-border);
+  background: color-mix(in srgb, var(--gold-dim) 60%, var(--bg3));
+}
+.admin-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--red-border);
+  background: var(--red-dim);
+  color: var(--red);
+  font-weight: 900;
+  font-family: monospace;
+}
+.admin-user-main { flex: 1; min-width: 0; }
+.admin-user-name { color: var(--text); font-size: 12px; font-weight: 800; }
+.admin-user-meta { color: var(--text3); font-size: 9px; font-family: monospace; margin-top: 2px; }
+.admin-user-points {
+  color: var(--gold);
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.admin-selected-user {
+  margin-top: 10px;
+  border-color: color-mix(in srgb, var(--gold-border) 86%, transparent);
+}
+.admin-log-card {
+  display: grid;
+  gap: 4px;
+}
+.admin-log-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.admin-log-delta {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 900;
+}
+.admin-log-delta.plus { color: #2ecc71; }
+.admin-log-delta.minus { color: #ff5a5a; }
+.admin-log-text { color: var(--text); font-size: 11px; line-height: 1.35; }
+.admin-log-meta { color: var(--text3); font-family: monospace; font-size: 8px; }
+.admin-console-note {
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 8px;
+  line-height: 1.45;
+  margin-top: 8px;
+}
 
 /* ===== АНИМАЦИИ ===== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
