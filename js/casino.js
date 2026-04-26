@@ -214,6 +214,7 @@ function gsBuildCard(cardId, cardInfo) {
 async function openGenshinCase() {
   if (gsAnimating) return;
   if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (currentPoints < 80) { tg.showAlert('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.'); return; }
   // Проверяем заморозку
   try {
     const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
@@ -241,10 +242,10 @@ async function openGenshinCase() {
     const data = await r.json();
     if (!r.ok) {
       if (data.detail==='Only for girls') tg.showAlert('Молитвы доступны только девочкам 🌸');
-      else if (data.detail==='Not enough points') tg.showAlert('Недостаточно ✦! Нужно минимум 80');
+      else if (data.detail==='Not enough points') tg.showAlert('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.');
       else if (data.detail==='Daily limit reached') tg.showAlert('Лимит молитв на сегодня исчерпан');
       else tg.showAlert('Ошибка: ' + (data.detail||''));
-      gsAnimating = false; btn.disabled=false; btn.textContent='✦ Совершить молитву — 50 ✦ ✦';
+      gsAnimating = false; btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
       currentPoints = data.new_points || currentPoints;
       updatePoints();
       return;
@@ -279,7 +280,7 @@ async function openGenshinCase() {
         document.getElementById('gsTapHint').style.display = 'block';
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
         gsAnimating = false;
-        btn.disabled=false; btn.textContent='✦ Совершить молитву — 50 ✦ ✦';
+        btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
       }, 700);
     }, cfg.revealDelay);
 
@@ -293,7 +294,7 @@ async function openGenshinCase() {
 
   } catch(e) {
     tg.showAlert('Ошибка соединения');
-    gsAnimating=false; btn.disabled=false; btn.textContent='✦ Совершить молитву — 50 ✦ ✦';
+    gsAnimating=false; btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
   }
 }
 
@@ -502,7 +503,7 @@ function initRoulette(caseType = 'gold') {
 async function openCase() {
   if (isSpinning) return;
   if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-  if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужно минимум 80 ★'); return; }
+  if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.'); return; }
   // Проверяем заморозку
   try {
     const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
@@ -520,7 +521,7 @@ async function openCase() {
     if (!r.ok) {
       const err = await r.json();
       if (err.detail==='Daily limit reached') tg.showAlert('Лимит 3 кейса в день! Купи доп кейс в магазине 😄');
-      else if (err.detail==='Not enough points') tg.showAlert('Недостаточно баллов!');
+      else if (err.detail==='Not enough points') tg.showAlert('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.');
       else tg.showAlert('Ошибка!');
       isSpinning = false;
       document.getElementById('openCaseBtn').disabled = false;
@@ -549,7 +550,7 @@ async function openCase() {
       casBtn.style.background = '';
       casBtn.style.borderColor = '';
       casBtn.style.color = '';
-      casBtn.textContent = '🏮 [ 开箱 // ОТКРЫТЬ КЕЙС — 50 ★ ] 🏮';
+      casBtn.textContent = '🏮 [ 开箱 // КЕЙС — 50 ★ · ПОРОГ 80 ★ ] 🏮';
     }
     if (prize.code==='jackpot'||prize.code==='implant_red_dragon') { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(100); }
     else if (prize.code.startsWith('implant_')) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(50); }
