@@ -891,7 +891,7 @@ async function requestArchitectQuestion(actionType) {
     box.style.display !== 'none' &&
     box.querySelector('.event-answer-feedback')
   ) {
-    return;
+    closeArchitectQuestion();
   }
 
   if (
