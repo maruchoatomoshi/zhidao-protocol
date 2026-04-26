@@ -54,6 +54,36 @@
     </div>
   </div>
 
+  <div class="profile-card profile-card-home" id="profileCard">
+    <div class="profile-avatar-wrap">
+      <img id="profileAvatarPreview" class="profile-avatar-img" alt="avatar" style="display:none;">
+      <div id="profileAvatarFallback" class="profile-avatar-fallback">?</div>
+    </div>
+    <div class="profile-card-main">
+      <div class="profile-card-kicker">OPERATOR DOSSIER</div>
+      <div class="profile-card-name" id="profileDisplayName">&#1054;&#1087;&#1077;&#1088;&#1072;&#1090;&#1086;&#1088; ZHIDAO</div>
+      <div class="profile-card-sub" id="profileAvatarStatus">&#1040;&#1074;&#1072;&#1090;&#1072;&#1088; &#1073;&#1091;&#1076;&#1077;&#1090; &#1086;&#1090;&#1086;&#1073;&#1088;&#1072;&#1078;&#1072;&#1090;&#1100;&#1089;&#1103; &#1074; &#1088;&#1077;&#1081;&#1090;&#1080;&#1085;&#1075;&#1077;</div>
+      <div class="profile-mini-grid">
+        <div class="profile-mini-stat">
+          <span>CREDITS</span>
+          <strong id="myPointsRating">&mdash;</strong>
+        </div>
+        <div class="profile-mini-stat">
+          <span>RANK</span>
+          <strong id="myRankSub">&mdash;</strong>
+        </div>
+        <div class="profile-mini-stat">
+          <span>PATH</span>
+          <strong id="profilePathBadge">SYNC</strong>
+        </div>
+      </div>
+      <div class="profile-card-actions">
+        <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
+        <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">AVATAR</button>
+        <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">RESET</button>
+      </div>
+    </div>
+  </div>
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
   <div class="card neuro-card">
@@ -143,38 +173,6 @@
     <div class="page-sub">> pái míng // таблица лидеров</div>
   </div>
 
-  <div class="alpha-boss-strip">
-    <div class="alpha-boss-mark">王</div>
-    <div class="alpha-boss-main">
-      <div class="alpha-boss-kicker">SYSTEM ENTITY // OUT OF RATING</div>
-      <div class="alpha-boss-name">АЛЬФАБОСС</div>
-    </div>
-    <div class="alpha-boss-points">999 999 ★</div>
-  </div>
-
-  <div class="my-rank-card">
-    <div style="font-size:9px;color:rgba(200,50,50,0.5);font-family:monospace;letter-spacing:1px;margin-bottom:4px;">// МОИ КРЕДИТЫ //</div>
-    <div class="my-points-big" id="myPointsRating">—</div>
-    <div class="my-rank-sub" id="myRankSub">Участвуй чтобы попасть в рейтинг!</div>
-  </div>
-
-  <div class="profile-card" id="profileCard">
-    <div class="profile-avatar-wrap">
-      <img id="profileAvatarPreview" class="profile-avatar-img" alt="avatar" style="display:none;">
-      <div id="profileAvatarFallback" class="profile-avatar-fallback">?</div>
-    </div>
-    <div class="profile-card-main">
-      <div class="profile-card-kicker">PLAYER PROFILE</div>
-      <div class="profile-card-name" id="profileDisplayName">Оператор ZHIDAO</div>
-      <div class="profile-card-sub" id="profileAvatarStatus">Аватар будет отображаться в рейтинге</div>
-      <div class="profile-card-actions">
-        <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
-        <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">Загрузить</button>
-        <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">Сбросить</button>
-      </div>
-    </div>
-  </div>
-
   <!-- НОВАЯ КНОПКА РЕЙДА (открывает оверлей) -->
 <div style="margin:4px 12px 8px;" id="raidBlock">
   <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
@@ -191,6 +189,14 @@
   </div>
 
   <div id="rating-main-tab">
+    <div class="alpha-boss-strip alpha-boss-leaderboard">
+      <div class="alpha-boss-mark">&#29579;</div>
+      <div class="alpha-boss-main">
+        <div class="alpha-boss-kicker">SYSTEM ENTITY // OUT OF RATING</div>
+        <div class="alpha-boss-name">&#1040;&#1051;&#1068;&#1060;&#1040;&#1041;&#1054;&#1057;&#1057;</div>
+      </div>
+      <div class="alpha-boss-points">999 999 &#9733;</div>
+    </div>
     <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
     <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
   </div>
@@ -631,7 +637,7 @@
     <div class="team-card">
       <div class="team-avatar-placeholder">👑</div>
       <div>
-        <div class="team-badge">АЛЬФА СТЭК</div>
+        <div class="team-badge">АЛЬФА</div>
         <div class="team-name">Михаил Юрьевич</div>
         <div class="team-role">Руководитель группы</div>
         <div class="team-desc">Отвечает за всё. Главный по всем вопросам — учёба, организация, дисциплина и общее руководство поездкой.</div>
@@ -640,36 +646,36 @@
     <div class="team-card">
       <div class="team-avatar-placeholder">祝</div>
       <div>
-        <div class="team-badge">СИГМА СТЭК</div>
+        <div class="team-badge">АЛЬФА-ВОЖАТАЯ</div>
         <div class="team-name">Юлия Витальевна</div>
         <div class="team-role">Вожатый</div>
-        <div class="team-desc">Отвечает за здоровье и дисциплину. Вопросы по самочувствию, медицине — к ней.</div>
+        <div class="team-desc">В нашем сердчечке. Поправляйтесь скорее!</div>
         <a href="https://t.me/Trufanova_Yulia" class="team-btn">✉ НАПИСАТЬ</a>
       </div>
     </div>
     <div class="team-card">
       <img src="https://i.ibb.co/WWvhDNnM/1774506558344.png" class="team-avatar" onerror="this.style.display='none'">
       <div>
-        <div class="team-badge">СИГМА СТЭК</div>
+        <div class="team-badge">СИГМА-ВОЖАТАЯ</div>
         <div class="team-name">Елизавета Сергеевна</div>
         <div class="team-role">Вожатый</div>
-        <div class="team-desc">Отвечает за духовную составляющую. Также по другим вопросам — к ней.</div>
+        <div class="team-desc">Отвечает за духовную составляющую группы и поддерживает баланс инь и ян.</div>
         <a href="https://t.me/naoayako" class="team-btn">✉ НАПИСАТЬ</a>
       </div>
     </div>
     <div class="team-card">
       <img src="https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/file_000000004784720a8c151f4c50a357d9.png?raw=true" class="team-avatar" onerror="this.style.display='none'">
       <div>
-        <div class="team-badge">IT-БЕТА СТЭК</div>
+        <div class="team-badge">СИГМА-ВОЖАТЫЙ</div>
         <div class="team-name">Марк Альбертович</div>
-        <div class="team-role">IT и досуг</div>
-        <div class="team-desc">Отвечает за связь, покупки и досуг. Проблемы с интернетом — к нему.</div>
+        <div class="team-role">АРХИТЕКТОР</div>
+        <div class="team-desc">Отвечает за связь, покупки и досуг. Архитектор системы как тот чел из фильма Matrix.</div>
         <a href="https://t.me/christianpastor" class="team-btn">✉ НАПИСАТЬ</a>
       </div>
     </div>
     <div class="cn-divider">🤫 匿名问题 АНОНИМНЫЙ ВОПРОС</div>
     <div class="card"><div class="card-inner">
-      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Имя отправителя вычисляется по ID, но содержимое — только для вожатых.</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Спамеры и шутники вычисляются по ID.</div>
       <button class="btn btn-primary" onclick="askAnonymous()">[ 发问 // ЗАДАТЬ ВОПРОС ]</button>
     </div></div>
   </div>
