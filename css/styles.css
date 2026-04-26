@@ -967,7 +967,44 @@ body.theme-genshin-dark .lb-points
 .confetti-piece { position: fixed; top: -10px; z-index: 999; animation: confettiFall linear forwards; }
 
 /* ===== УТИЛИТЫ ===== */
-.empty-state { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; font-family: monospace; }
+.empty-state {
+  position: relative;
+  text-align: center;
+  margin: 10px 0;
+  padding: 22px 18px;
+  color: var(--text3);
+  font-size: 12px;
+  line-height: 1.55;
+  font-family: monospace;
+  border: 1px dashed color-mix(in srgb, var(--border) 74%, var(--gold-border));
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--gold-dim) 42%, transparent), transparent 54%),
+    color-mix(in srgb, var(--bg2) 82%, transparent);
+  overflow: hidden;
+}
+.empty-state::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 44%, transparent), transparent);
+  opacity: 0.75;
+}
+.empty-state span {
+  color: var(--text3) !important;
+}
+.empty-state:has(br)::after {
+  content: 'STATUS // IDLE';
+  display: block;
+  margin-top: 8px;
+  color: color-mix(in srgb, var(--gold) 58%, var(--text3));
+  font-size: 8px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
 .section-pad { padding: 0 12px; }
 .mt8 { margin-top: 8px; }
 .shimmer { animation: shimmer 0.5s infinite; }
@@ -4309,6 +4346,491 @@ body.theme-genshin-dark .shop-item,
 body.theme-genshin-dark .inventory-item,
 body.theme-genshin-dark .rules-row {
   border-bottom-color: rgba(219,177,101,0.07);
+}
+
+/* UX foundation: list surfaces and tactile controls. */
+.card-inner {
+  border-radius: var(--card-radius);
+}
+
+.schedule-item,
+.shop-item,
+.inventory-item,
+.rules-row {
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.schedule-item:hover,
+.shop-item:hover,
+.inventory-item:hover,
+.rules-row:hover {
+  background: color-mix(in srgb, var(--bg3) 72%, transparent);
+}
+
+.shop-item-buy,
+.inv-btn,
+.subtab,
+.btn-primary,
+.btn-gold {
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.shop-item-buy:active,
+.inv-btn:active,
+.subtab:active,
+.btn-primary:active,
+.btn-gold:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.shop-item-buy:disabled,
+.btn-primary:disabled,
+.btn-gold:disabled,
+.event-action[disabled] {
+  filter: grayscale(0.18);
+}
+
+.prize-result,
+.casino-balance {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 10px 28px rgba(0,0,0,0.10);
+}
+
+body.theme-nw-light .empty-state,
+body.theme-genshin-light .empty-state {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(138,104,32,0.10), transparent 54%),
+    rgba(255,255,255,0.54);
+  border-color: rgba(90,65,45,0.16);
+  box-shadow: 0 10px 26px rgba(80,50,30,0.045);
+}
+
+body.theme-genshin-light .empty-state {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(219,177,101,0.14), transparent 54%),
+    rgba(255,250,238,0.62);
+  border-color: rgba(138,104,32,0.18);
+}
+
+body.theme-genshin-dark .empty-state {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(219,177,101,0.08), transparent 54%),
+    rgba(255,255,255,0.032);
+  border-color: rgba(219,177,101,0.12);
+}
+
+/* Catalog polish: implants and Genshin cards should feel like one system. */
+#implants-catalog .card,
+#cards-tab .card {
+  border-radius: 16px;
+  border-color: color-mix(in srgb, var(--border) 72%, var(--gold-border));
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--red-dim) 42%, transparent), transparent 52%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg2) 92%, transparent), color-mix(in srgb, var(--bg) 88%, transparent));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 14px 34px rgba(0,0,0,0.14);
+}
+
+#implants-catalog .card-inner,
+#cards-tab .card-inner {
+  padding: 14px;
+}
+
+#implants-catalog img[style*="width:160px"],
+#implants-catalog img[style*="width:180px"],
+#cards-tab img[style*="width:160px"],
+#cards-tab img[style*="width:180px"] {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08), transparent 46%),
+    rgba(255,255,255,0.025);
+}
+
+#implants-catalog [style*="border-top:1px solid rgba(255,255,255"],
+#cards-tab [style*="border-top:1px solid rgba(255,255,255"] {
+  border-top-color: color-mix(in srgb, var(--border) 80%, var(--gold-border)) !important;
+}
+
+#implants-catalog [style*="border-bottom:1px solid rgba(255,255,255"],
+#cards-tab [style*="border-bottom:1px solid rgba(255,255,255"] {
+  border-bottom-color: color-mix(in srgb, var(--border) 82%, var(--gold-border)) !important;
+}
+
+#myCardsContent > div:not(.empty-state) {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--gold-dim) 48%, transparent), transparent 44%),
+    color-mix(in srgb, var(--bg2) 92%, transparent) !important;
+  border-color: color-mix(in srgb, var(--border) 72%, var(--gold-border)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035),
+    0 10px 24px rgba(0,0,0,0.10);
+}
+
+#myCardsContent img {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.10), transparent 48%),
+    rgba(255,255,255,0.035);
+}
+
+body.theme-nw-light #implants-catalog .card,
+body.theme-nw-light #myImplantsPage,
+body.theme-genshin-light #cards-tab .card,
+body.theme-genshin-light #myCardsContent > div:not(.empty-state) {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(138,104,32,0.10), transparent 52%),
+    rgba(255,255,255,0.66) !important;
+  border-color: rgba(90,65,45,0.14) !important;
+  box-shadow: 0 12px 28px rgba(80,50,30,0.055);
+}
+
+body.theme-genshin-light #cards-tab .card,
+body.theme-genshin-light #myCardsContent > div:not(.empty-state) {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(219,177,101,0.14), transparent 52%),
+    rgba(255,250,238,0.72) !important;
+  border-color: rgba(138,104,32,0.18) !important;
+}
+
+body.theme-genshin-dark #cards-tab .card,
+body.theme-genshin-dark #myCardsContent > div:not(.empty-state) {
+  background:
+    radial-gradient(circle at top left, rgba(219,177,101,0.08), transparent 44%),
+    rgba(255,255,255,0.038) !important;
+  border-color: rgba(219,177,101,0.12) !important;
+}
+
+/* Page chrome polish: headers, dividers and utility tiles. */
+.page-header {
+  margin: 0 0 2px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 72%, transparent), transparent);
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 10px;
+  width: 28px;
+  height: 1px;
+  background: color-mix(in srgb, var(--gold) 58%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 28%, transparent);
+}
+
+.page-title {
+  line-height: 1.15;
+}
+
+.page-sub {
+  max-width: 92%;
+  line-height: 1.45;
+}
+
+.cn-divider {
+  margin-top: 4px;
+  color: color-mix(in srgb, var(--red) 64%, var(--gold));
+}
+
+.cn-divider::before,
+.cn-divider::after {
+  opacity: 0.72;
+}
+
+.more-item {
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--red-dim) 54%, transparent), transparent 56%),
+    var(--bg2);
+}
+
+.more-item:hover {
+  border-color: color-mix(in srgb, var(--red-border) 62%, var(--gold-border));
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+}
+
+.more-item-icon {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--red) 18%, transparent));
+}
+
+body.theme-nw-light .page-header,
+body.theme-genshin-light .page-header {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.42), transparent);
+}
+
+body.theme-nw-light .more-item,
+body.theme-genshin-light .more-item {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(138,104,32,0.08), transparent 56%),
+    rgba(255,255,255,0.58);
+  border-color: rgba(90,65,45,0.13);
+  box-shadow: 0 8px 20px rgba(80,50,30,0.04);
+}
+
+body.theme-genshin-light .more-item {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(219,177,101,0.12), transparent 56%),
+    rgba(255,250,238,0.66);
+  border-color: rgba(138,104,32,0.16);
+}
+
+/* Home screen polish: stronger first impression without changing markup. */
+#page-home .main-logo-wrap {
+  padding: 18px 16px 10px;
+  isolation: isolate;
+}
+
+#page-home .main-logo {
+  width: 148px;
+  height: 148px;
+  margin-bottom: 12px;
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--gold) 11%, transparent), transparent 48%),
+    radial-gradient(circle at 50% 58%, color-mix(in srgb, var(--red) 16%, transparent), transparent 62%);
+  filter: drop-shadow(0 18px 30px rgba(0,0,0,0.28));
+}
+
+#page-home .main-logo::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 30px;
+  border: 1px solid color-mix(in srgb, var(--gold-border) 34%, transparent);
+  opacity: 0.46;
+  pointer-events: none;
+}
+
+#page-home .main-logo::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--red) 56%, transparent), transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--red) 22%, transparent);
+  pointer-events: none;
+}
+
+#page-home .main-logo img {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 14px rgba(212,175,55,0.12));
+}
+
+#page-home .main-pinyin {
+  color: color-mix(in srgb, var(--gold) 76%, transparent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--gold) 16%, transparent);
+}
+
+#page-home .proto-tag {
+  border-radius: 999px;
+  padding: 4px 12px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--red-dim) 82%, transparent), color-mix(in srgb, var(--bg2) 72%, transparent));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--red-border) 32%, transparent),
+    0 10px 24px rgba(0,0,0,0.13);
+  backdrop-filter: blur(8px);
+}
+
+#page-home .stats-row {
+  gap: 8px;
+  margin: 4px 12px 8px;
+}
+
+#page-home .stat-box {
+  border-radius: 14px;
+  padding: 12px 10px 11px;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--gold) 8%, transparent), transparent 56%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg2) 92%, transparent), color-mix(in srgb, var(--bg) 84%, transparent));
+  border-color: color-mix(in srgb, var(--border) 84%, var(--gold-border));
+  box-shadow:
+    0 12px 28px rgba(0,0,0,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.035);
+}
+
+#page-home .stat-box::after {
+  content: '';
+  position: absolute;
+  inset: auto 10px 7px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--red) 28%, transparent), transparent);
+  opacity: 0.58;
+}
+
+#page-home .stat-cn {
+  letter-spacing: 0.08em;
+}
+
+#page-home .stat-num {
+  line-height: 1;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--gold) 16%, transparent);
+}
+
+#page-home .stat-lbl {
+  opacity: 0.86;
+}
+
+#page-home .neuro-card {
+  margin: 6px 12px 8px;
+}
+
+#page-home .neuro-card .card-inner {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--red) 12%, transparent), transparent 42%),
+    radial-gradient(circle at 92% 20%, color-mix(in srgb, var(--gold) 9%, transparent), transparent 42%),
+    color-mix(in srgb, var(--bg2) 94%, transparent);
+}
+
+#page-home .neuro-card .card-inner::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--red) 42%, transparent), color-mix(in srgb, var(--gold) 30%, transparent), transparent);
+}
+
+#page-home .neuro-status {
+  color: color-mix(in srgb, var(--red) 72%, var(--gold));
+  letter-spacing: 0.08em;
+}
+
+#page-home .neuro-name {
+  font-size: 15px;
+  line-height: 1.18;
+}
+
+#page-home .neuro-sub {
+  color: var(--text3);
+}
+
+#page-home .traffic-bar {
+  height: 5px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background: rgba(255,255,255,0.045);
+  border-radius: 999px;
+}
+
+#page-home .traffic-fill {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--red) 82%, #220000), var(--gold));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+
+#page-home .home-event-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px !important;
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--red) 18%, transparent), transparent 44%),
+    linear-gradient(135deg, color-mix(in srgb, var(--red-dim) 76%, transparent), color-mix(in srgb, var(--bg2) 90%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--red-border) 76%, var(--gold-border)) !important;
+  box-shadow:
+    0 16px 38px rgba(0,0,0,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.035);
+}
+
+#page-home .home-event-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 16%, color-mix(in srgb, var(--red) 10%, transparent) 16% 17%, transparent 17% 100%),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 6px);
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+#page-home .home-event-card::after {
+  content: '';
+  position: absolute;
+  right: -28px;
+  top: -30px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--red) 16%, transparent), transparent 68%);
+  pointer-events: none;
+}
+
+#page-home .home-event-card-kicker,
+#page-home .home-event-card-title,
+#page-home .home-event-card-copy {
+  position: relative;
+  z-index: 1;
+}
+
+#page-home .home-event-card-title {
+  letter-spacing: 0.015em;
+  text-shadow: 0 0 18px rgba(255,255,255,0.035);
+}
+
+#page-home .home-event-card-copy {
+  line-height: 1.45;
+}
+
+body.theme-nw-light #page-home .main-logo,
+body.theme-genshin-light #page-home .main-logo {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(138,104,32,0.12), transparent 50%),
+    radial-gradient(circle at 50% 60%, rgba(153,51,51,0.08), transparent 64%);
+  filter: drop-shadow(0 18px 26px rgba(80,50,30,0.10));
+}
+
+body.theme-nw-light #page-home .stat-box,
+body.theme-genshin-light #page-home .stat-box,
+body.theme-nw-light #page-home .neuro-card .card-inner,
+body.theme-genshin-light #page-home .neuro-card .card-inner {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(138,104,32,0.08), transparent 56%),
+    rgba(255,255,255,0.66);
+  border-color: rgba(90,65,45,0.13);
+  box-shadow: 0 12px 26px rgba(80,50,30,0.045);
+}
+
+body.theme-genshin-light #page-home .stat-box,
+body.theme-genshin-light #page-home .neuro-card .card-inner {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(219,177,101,0.12), transparent 56%),
+    rgba(255,250,238,0.70);
+  border-color: rgba(138,104,32,0.16);
+}
+
+body.theme-nw-light #page-home .home-event-card {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(153,51,51,0.10), transparent 44%),
+    rgba(255,255,255,0.72) !important;
+  box-shadow: 0 14px 30px rgba(80,50,30,0.055);
+}
+
+body.theme-genshin-light #page-home .home-event-card {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(219,177,101,0.14), transparent 44%),
+    rgba(255,250,238,0.74) !important;
+  box-shadow: 0 14px 30px rgba(80,50,30,0.055);
+}
+
+body.theme-genshin-dark #page-home .home-event-card {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(219,177,101,0.10), transparent 44%),
+    rgba(20,16,32,0.70) !important;
 }
 
 /* Architect polish pass: terminal result art and cleaner battle HUD. */
