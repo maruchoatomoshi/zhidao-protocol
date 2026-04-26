@@ -585,6 +585,117 @@ body.theme-genshin-dark .lb-points
 }
 .my-points-big { font-size: 36px; font-weight: 900; color: var(--gold); }
 .my-rank-sub { font-size: 10px; color: var(--text2); margin-top: 4px; font-family: monospace; }
+.profile-card {
+  margin: 0 12px 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(212,175,55,0.16);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(212,175,55,0.08), transparent 42%),
+    linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+  overflow: hidden;
+  position: relative;
+}
+.profile-card::after {
+  content: 'PROFILE';
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  color: rgba(212,175,55,0.08);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+.profile-avatar-wrap,
+.lb-avatar {
+  flex: 0 0 auto;
+  border-radius: 14px;
+  border: 1px solid rgba(212,175,55,0.22);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(212,175,55,0.14), transparent 58%),
+    rgba(255,255,255,0.04);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-avatar-wrap {
+  width: 62px;
+  height: 62px;
+}
+.profile-avatar-img,
+.lb-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.profile-avatar-fallback,
+.lb-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-family: monospace;
+  font-weight: 900;
+}
+.profile-avatar-fallback {
+  font-size: 26px;
+}
+.profile-card-main {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.profile-card-kicker {
+  font-size: 8px;
+  color: rgba(212,175,55,0.72);
+  font-family: monospace;
+  letter-spacing: 1.6px;
+}
+.profile-card-name {
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-card-sub {
+  margin-top: 2px;
+  color: var(--text3);
+  font-size: 9px;
+  line-height: 1.4;
+}
+.profile-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.profile-mini-btn {
+  border: 1px solid rgba(212,175,55,0.24);
+  background: rgba(212,175,55,0.10);
+  color: var(--gold);
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 8px;
+  font-family: monospace;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+}
+.profile-mini-btn.ghost {
+  border-color: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+}
 .lb-item {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -599,6 +710,14 @@ body.theme-genshin-dark .lb-points
 .lb-item.top2 { background: linear-gradient(90deg, rgba(180,180,180,0.06), transparent); }
 .lb-item.top3 { background: linear-gradient(90deg, rgba(184,115,51,0.06), transparent); }
 .lb-rank { font-size: 16px; min-width: 28px; text-align: center; }
+.lb-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+}
+.lb-avatar-fallback {
+  font-size: 13px;
+}
 .lb-name { font-size: 13px; color: var(--text); flex: 1; }
 .lb-points { font-size: 13px; font-weight: 700; color: var(--gold); font-family: monospace; }
 .lb-implant-glyph {
@@ -4551,6 +4670,7 @@ body.tg-ios .event-question-modal {
 /* Theme polish layer: readable cards, history, catalog and light surfaces. */
 body.theme-nw-light .card-inner,
 body.theme-nw-light .my-rank-card,
+body.theme-nw-light .profile-card,
 body.theme-nw-light .shop-item,
 body.theme-nw-light .inventory-item,
 body.theme-nw-light .schedule-item,
@@ -4559,6 +4679,7 @@ body.theme-nw-light #myImplantsPage,
 body.theme-nw-light #implants-catalog,
 body.theme-genshin-light .card-inner,
 body.theme-genshin-light .my-rank-card,
+body.theme-genshin-light .profile-card,
 body.theme-genshin-light .shop-item,
 body.theme-genshin-light .inventory-item,
 body.theme-genshin-light .schedule-item,
@@ -4571,7 +4692,8 @@ body.theme-genshin-light #cards-tab {
 body.theme-nw-light .schedule-item,
 body.theme-nw-light .shop-item,
 body.theme-nw-light .inventory-item,
-body.theme-nw-light .rules-row {
+body.theme-nw-light .rules-row,
+body.theme-nw-light .profile-card {
   background: rgba(255, 255, 255, 0.38);
   border-bottom-color: rgba(70,45,45,0.09);
 }
@@ -4579,7 +4701,8 @@ body.theme-nw-light .rules-row {
 body.theme-genshin-light .schedule-item,
 body.theme-genshin-light .shop-item,
 body.theme-genshin-light .inventory-item,
-body.theme-genshin-light .rules-row {
+body.theme-genshin-light .rules-row,
+body.theme-genshin-light .profile-card {
   background: rgba(255, 250, 238, 0.54);
   border-bottom-color: rgba(138,104,32,0.12);
 }
@@ -4588,10 +4711,12 @@ body.theme-nw-light .schedule-subject,
 body.theme-nw-light .rules-title,
 body.theme-nw-light .inventory-name,
 body.theme-nw-light .prize-result-name,
+body.theme-nw-light .profile-card-name,
 body.theme-genshin-light .schedule-subject,
 body.theme-genshin-light .rules-title,
 body.theme-genshin-light .inventory-name,
-body.theme-genshin-light .prize-result-name {
+body.theme-genshin-light .prize-result-name,
+body.theme-genshin-light .profile-card-name {
   color: var(--text) !important;
 }
 
@@ -4599,10 +4724,12 @@ body.theme-nw-light .schedule-location,
 body.theme-nw-light .rules-desc,
 body.theme-nw-light .inventory-date,
 body.theme-nw-light .prize-result-desc,
+body.theme-nw-light .profile-card-sub,
 body.theme-genshin-light .schedule-location,
 body.theme-genshin-light .rules-desc,
 body.theme-genshin-light .inventory-date,
-body.theme-genshin-light .prize-result-desc {
+body.theme-genshin-light .prize-result-desc,
+body.theme-genshin-light .profile-card-sub {
   color: var(--text2) !important;
 }
 

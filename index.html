@@ -148,6 +148,23 @@
     <div class="my-rank-sub" id="myRankSub">Участвуй чтобы попасть в рейтинг!</div>
   </div>
 
+  <div class="profile-card" id="profileCard">
+    <div class="profile-avatar-wrap">
+      <img id="profileAvatarPreview" class="profile-avatar-img" alt="avatar" style="display:none;">
+      <div id="profileAvatarFallback" class="profile-avatar-fallback">?</div>
+    </div>
+    <div class="profile-card-main">
+      <div class="profile-card-kicker">PLAYER PROFILE</div>
+      <div class="profile-card-name" id="profileDisplayName">Оператор ZHIDAO</div>
+      <div class="profile-card-sub" id="profileAvatarStatus">Аватар будет отображаться в рейтинге</div>
+      <div class="profile-card-actions">
+        <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
+        <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">Загрузить</button>
+        <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">Сбросить</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Альфабосс — вне зачёта -->
   <div style="margin:0 12px 4px;background:linear-gradient(135deg,rgba(212,175,55,0.08),rgba(180,20,20,0.05));border:1px solid rgba(212,175,55,0.3);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;">
     <div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:48px;color:rgba(212,175,55,0.04);font-family:serif;pointer-events:none;">王</div>

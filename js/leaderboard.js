@@ -38,6 +38,110 @@ function updateRatingPoints() {
 
 // ===== КОНФИГ =====
 
+function getProfileInitial(name, fallbackId) {
+  const raw = String(name || fallbackId || '?').trim();
+  return raw ? raw[0].toUpperCase() : '?';
+}
+
+function avatarMarkup(avatarUrl, name, fallbackId, className = 'profile-avatar-img') {
+  const initial = escapeHtml(getProfileInitial(name, fallbackId));
+  if (avatarUrl) {
+    return `<img class="${className}" src="${avatarUrl}" alt="${escapeHtml(name || 'avatar')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="lb-avatar-fallback" style="display:none;">${initial}</span>`;
+  }
+  return `<span class="lb-avatar-fallback">${initial}</span>`;
+}
+
+function renderProfileAvatarCard(profile = {}) {
+  const preview = document.getElementById('profileAvatarPreview');
+  const fallback = document.getElementById('profileAvatarFallback');
+  const nameEl = document.getElementById('profileDisplayName');
+  const statusEl = document.getElementById('profileAvatarStatus');
+  if (!preview || !fallback || !nameEl || !statusEl) return;
+
+  const tgUser = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+  const displayName = profile.full_name || tgUser?.first_name || profile.username || currentUserId || 'ZHIDAO';
+  const avatarUrl = profile.avatar_url || currentAvatarUrl || tgUser?.photo_url || '';
+  currentAvatarUrl = avatarUrl || null;
+
+  nameEl.textContent = displayName;
+  fallback.textContent = getProfileInitial(displayName, currentUserId);
+  if (avatarUrl) {
+    preview.src = avatarUrl;
+    preview.style.display = 'block';
+    fallback.style.display = 'none';
+    statusEl.textContent = 'Аватар активен в профиле и рейтинге';
+  } else {
+    preview.removeAttribute('src');
+    preview.style.display = 'none';
+    fallback.style.display = 'flex';
+    statusEl.textContent = 'Загрузи аватар, чтобы оживить рейтинг';
+  }
+}
+
+function compressProfileAvatar(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+      reject(new Error('Invalid image'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Read failed'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Image failed'));
+      img.onload = () => {
+        const maxSize = 320;
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.76));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveProfileAvatar(avatarUrl) {
+  if (!currentUserId) return;
+  const r = await fetch(`${API_URL}/api/user/avatar`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({telegram_id: currentUserId, avatar_url: avatarUrl || ''})
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || 'Avatar save failed');
+  currentAvatarUrl = data.avatar_url || null;
+  renderProfileAvatarCard({avatar_url: currentAvatarUrl});
+  loadLeaderboard();
+}
+
+async function handleProfileAvatarFile(input) {
+  const file = input && input.files ? input.files[0] : null;
+  if (!file) return;
+  try {
+    const avatarUrl = await compressProfileAvatar(file);
+    await saveProfileAvatar(avatarUrl);
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  } catch (e) {
+    tg.showAlert('Не удалось сохранить аватар');
+  } finally {
+    if (input) input.value = '';
+  }
+}
+
+async function removeProfileAvatar() {
+  try {
+    await saveProfileAvatar('');
+    try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
+  } catch (e) {
+    tg.showAlert('Не удалось сбросить аватар');
+  }
+}
+
 function switchRatingTab(tab, btn) {
   document.querySelectorAll('#page-rating .subtab').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -166,6 +270,7 @@ async function loadLeaderboard() {
 
       html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''}" style="${animDelay}">
         <div class="lb-rank">${medal}</div>
+        <div class="lb-avatar">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
           <div class="lb-name" style="${nameStyle}">${item.name}${titleHtml}${glyphHtml}${isMe?' 👈':''}</div>
           ${progressHtml}

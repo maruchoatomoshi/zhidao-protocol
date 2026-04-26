@@ -109,9 +109,10 @@ def init_db():
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (code TEXT PRIMARY KEY,
-                  marzban_username TEXT,
-                  telegram_id INTEGER,
-                  full_name TEXT,
+                 marzban_username TEXT,
+                 telegram_id INTEGER,
+                 full_name TEXT,
+                  avatar_url TEXT DEFAULT NULL,
                   points INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS schedule
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -330,6 +331,11 @@ def init_db():
 def migrate_db():
     conn = get_conn()
     c = conn.cursor()
+    c.execute("PRAGMA table_info(users)")
+    user_columns = {row[1] for row in c.fetchall()}
+    if 'avatar_url' not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT NULL")
+
     c.execute("PRAGMA table_info(user_status)")
     columns = {row[1] for row in c.fetchall()}
     if 'extra_raids' not in columns:
@@ -1325,16 +1331,53 @@ async def get_user(telegram_id: int):
     marzban_user = get_marzban_user_by_telegram(telegram_id)
     if not marzban_user:
         raise HTTPException(status_code=404, detail="User not found")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT full_name, avatar_url FROM users WHERE telegram_id=?", (telegram_id,))
+    profile_row = c.fetchone()
+    conn.close()
     data = await get_user_data(marzban_user)
     links = data.get("links", [])
     return {
         "username": marzban_user,
+        "full_name": profile_row[0] if profile_row and profile_row[0] else marzban_user,
+        "avatar_url": profile_row[1] if profile_row and profile_row[1] else None,
         "status": data.get("status"),
         "link": links[0] if links else None,
         "used_traffic": data.get("used_traffic", 0),
         "expire": data.get("expire"),
         "is_admin": telegram_id in ADMIN_IDS,
     }
+
+
+@app.post("/api/user/avatar")
+async def update_user_avatar(data: dict):
+    telegram_id = data.get("telegram_id")
+    avatar_url = str(data.get("avatar_url") or "").strip()
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="No telegram_id")
+    if avatar_url and not (
+        avatar_url.startswith("data:image/")
+        or avatar_url.startswith("https://")
+        or avatar_url.startswith("http://")
+    ):
+        raise HTTPException(status_code=400, detail="Invalid avatar_url")
+    if len(avatar_url) > 350000:
+        raise HTTPException(status_code=400, detail="Avatar is too large")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    c.execute(
+        "UPDATE users SET avatar_url=? WHERE telegram_id=?",
+        (avatar_url or None, telegram_id),
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True, "avatar_url": avatar_url or None}
 
 
 @app.post("/api/global-alert")
@@ -1998,7 +2041,7 @@ async def get_leaderboard():
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        f'''SELECT u.full_name, u.points, u.telegram_id,
+        f'''SELECT u.full_name, u.points, u.telegram_id, u.avatar_url,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
@@ -2018,7 +2061,17 @@ async def get_leaderboard():
     )
     result = c.fetchall()
     conn.close()
-    return [{"name": r[0] or "Аноним", "points": r[1] or 0, "telegram_id": r[2], "has_title": bool(r[3]), "implant": r[4]} for r in result]
+    return [
+        {
+            "name": r[0] or "Аноним",
+            "points": r[1] or 0,
+            "telegram_id": r[2],
+            "avatar_url": r[3],
+            "has_title": bool(r[4]),
+            "implant": r[5],
+        }
+        for r in result
+    ]
 
 
 @app.get("/api/achievements/{telegram_id}")

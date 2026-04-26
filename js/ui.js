@@ -62,6 +62,10 @@ async function loadUserData(telegramId) {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
       }
       userConfig = data.link;
+      currentAvatarUrl = data.avatar_url || null;
+      if (typeof renderProfileAvatarCard === 'function') {
+        renderProfileAvatarCard(data);
+      }
       document.getElementById('status').textContent = '● АКТИВЕН';
       document.getElementById('status').style.color = '#cc4444';
       document.getElementById('username').textContent = data.username;
