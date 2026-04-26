@@ -336,7 +336,7 @@ const GENSHIN_IMGS = {
   'card_literature':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png',
   'card_forest':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png',
   'card_sea':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png',
-  'card_moon':'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/moon_card.png?raw=true',
+  'card_moon':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/moon_card.png',
   'card_star':'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png',
 };
 
