@@ -560,11 +560,12 @@ function renderArchitectLobby(eventData, errorText = '') {
   }
 
   const isMember = teamMembers.some(member => Number(member.telegram_id) === Number(currentUserId));
+  const adminSoloReady = typeof isAdmin !== 'undefined' && isAdmin && isMember;
   const canJoin = eventData.state === 'REGISTRATION' && !isMember && teamCount < maxPlayers;
   const canLeave = eventData.state === 'REGISTRATION' && isMember;
   const canStart = eventData.state === 'REGISTRATION' &&
                    typeof isAdmin !== 'undefined' && isAdmin &&
-                   teamCount >= minPlayers;
+                   (teamCount >= minPlayers || adminSoloReady);
 
   createBtn.style.display = (isAdmin && isTerminal) ? 'inline-flex' : 'none';
   joinBtn.style.display = canJoin ? 'inline-flex' : 'none';

@@ -585,6 +585,75 @@ body.theme-genshin-dark .lb-points
 }
 .my-points-big { font-size: 36px; font-weight: 900; color: var(--gold); }
 .my-rank-sub { font-size: 10px; color: var(--text2); margin-top: 4px; font-family: monospace; }
+.alpha-boss-strip {
+  margin: 6px 12px 8px;
+  padding: 8px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(212,175,55,0.18);
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, rgba(212,175,55,0.075), rgba(180,20,20,0.035), rgba(255,255,255,0.012));
+  position: relative;
+  overflow: hidden;
+}
+.alpha-boss-strip::after {
+  content: 'UNRANKED';
+  position: absolute;
+  right: 10px;
+  top: -3px;
+  color: rgba(212,175,55,0.055);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+.alpha-boss-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(212,175,55,0.28);
+  border-radius: 10px;
+  background: rgba(212,175,55,0.08);
+  color: var(--gold);
+  font-family: serif;
+  font-size: 20px;
+  line-height: 1;
+}
+.alpha-boss-main {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.alpha-boss-kicker {
+  color: rgba(212,175,55,0.58);
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 1.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alpha-boss-name {
+  margin-top: 2px;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.alpha-boss-points {
+  position: relative;
+  z-index: 1;
+  color: rgba(212,175,55,0.62);
+  font-size: 10px;
+  font-family: monospace;
+  white-space: nowrap;
+}
 .profile-card {
   margin: 0 12px 8px;
   padding: 12px;

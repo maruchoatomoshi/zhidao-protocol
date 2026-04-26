@@ -3199,7 +3199,11 @@ async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header
         raise HTTPException(status_code=400, detail="Event is not in registration state")
 
     team_members = get_event_team_members(c, event_id)
-    if len(team_members) < event_row["min_players"]:
+    admin_is_solo_member = any(
+        int(member.get("telegram_id") or 0) == int(admin_id)
+        for member in team_members
+    )
+    if len(team_members) < event_row["min_players"] and not admin_is_solo_member:
         conn.close()
         raise HTTPException(
             status_code=400,
