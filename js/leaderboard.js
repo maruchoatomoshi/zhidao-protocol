@@ -25,15 +25,22 @@ async function loadPoints(telegramId) {
 }
 
 function updatePoints() {
-  document.getElementById('myPoints').textContent = currentPoints + ' ★';
-  document.getElementById('myPointsBig').textContent = currentPoints;
-  document.getElementById('casinoPoints').textContent = currentPoints + ' ★';
-  document.getElementById('shopPoints').textContent = currentPoints + ' ★';
-  document.getElementById('myPointsRating').textContent = currentPoints;
+  const star = ' \u2605';
+  const myPointsEl = document.getElementById('myPoints');
+  const myPointsBigEl = document.getElementById('myPointsBig');
+  const casinoPointsEl = document.getElementById('casinoPoints');
+  const shopPointsEl = document.getElementById('shopPoints');
+  const profilePointsEl = document.getElementById('myPointsRating');
+  if (myPointsEl) myPointsEl.textContent = currentPoints + star;
+  if (myPointsBigEl) myPointsBigEl.textContent = currentPoints;
+  if (casinoPointsEl) casinoPointsEl.textContent = currentPoints + star;
+  if (shopPointsEl) shopPointsEl.textContent = currentPoints + star;
+  if (profilePointsEl) profilePointsEl.textContent = currentPoints + star;
 }
 
 function updateRatingPoints() {
-  document.getElementById('myPointsRating').textContent = currentPoints;
+  const profilePointsEl = document.getElementById('myPointsRating');
+  if (profilePointsEl) profilePointsEl.textContent = currentPoints + ' \u2605';
 }
 
 // ===== КОНФИГ =====
@@ -75,6 +82,18 @@ function renderProfileAvatarCard(profile = {}) {
     preview.style.display = 'none';
     fallback.style.display = 'flex';
     statusEl.textContent = 'Загрузи аватар, чтобы оживить рейтинг';
+  }
+}
+
+function updateProfilePathBadge(path = currentThemePath) {
+  const badge = document.getElementById('profilePathBadge');
+  if (!badge) return;
+  if (path === 'genshin') {
+    badge.textContent = 'GENSHIN';
+  } else if (path === 'cyberpunk') {
+    badge.textContent = 'NETWATCH';
+  } else {
+    badge.textContent = 'SYNC';
   }
 }
 
@@ -279,7 +298,8 @@ async function loadLeaderboard() {
       </div>`;
     });
     container.innerHTML = html;
-    document.getElementById('myRankSub').textContent = myRank !== '—' ? `// Место в рейтинге: #${myRank}` : '// Участвуй чтобы попасть в рейтинг!';
+    const rankEl = document.getElementById('myRankSub');
+    if (rankEl) rankEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '\u2014');
   } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
