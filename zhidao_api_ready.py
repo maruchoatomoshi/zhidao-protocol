@@ -1366,6 +1366,187 @@ async def set_user_theme_path(data: dict):
     return {"success": True, "theme_path": path}
 
 
+@app.get("/api/profile/{telegram_id}")
+async def get_user_profile_dossier(telegram_id: int):
+    implant_info = {
+        "implant_red_dragon": {"name": "Красный Дракон 红龙", "glyph": "龍", "weight": 100},
+        "implant_netwatch": {"name": "Сетевой Дозор 网络守卫", "glyph": "衛", "weight": 95},
+        "implant_qilin": {"name": "Цилинь 麒麟", "glyph": "麒", "weight": 85},
+        "implant_caishen": {"name": "Цайшэнь 财神", "glyph": "财", "weight": 75},
+        "implant_terracota": {"name": "Терракота 兵马俑", "glyph": "兵", "weight": 70},
+        "implant_guanxi": {"name": "Гуаньси 关系", "glyph": "关", "weight": 68},
+        "implant_panda": {"name": "Панда 🐼", "glyph": "熊", "weight": 64},
+        "implant_shaolin": {"name": "Шаолинь 少林", "glyph": "武", "weight": 62},
+        "implant_linguasoft": {"name": "Linguasoft 口才", "glyph": "言", "weight": 60},
+    }
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path
+           FROM users u
+           LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
+           WHERE u.telegram_id=?''',
+        (telegram_id,),
+    )
+    user_row = c.fetchone()
+    if not user_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    full_name, points, avatar_url, theme_path = user_row
+    points = points or 0
+
+    c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND prize NOT LIKE 'genshin_%'", (telegram_id,))
+    case_opens = c.fetchone()[0] or 0
+    c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND prize LIKE 'genshin_%'", (telegram_id,))
+    prayers = c.fetchone()[0] or 0
+    c.execute("SELECT COUNT(*) FROM user_cards WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    cards_count = c.fetchone()[0] or 0
+    c.execute("SELECT COUNT(*) FROM user_implants WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    implants_count = c.fetchone()[0] or 0
+    c.execute("SELECT COUNT(*) FROM diary_entries WHERE telegram_id=? AND status IN ('submitted', 'locked')", (telegram_id,))
+    diaries_count = c.fetchone()[0] or 0
+    c.execute("SELECT COUNT(DISTINCT raid_id) FROM raid_participants WHERE telegram_id=?", (telegram_id,))
+    raid_count = c.fetchone()[0] or 0
+    c.execute(
+        '''SELECT COUNT(DISTINCT rp.raid_id)
+           FROM raid_participants rp
+           JOIN raids r ON r.id = rp.raid_id
+           WHERE rp.telegram_id=? AND r.result='success' ''',
+        (telegram_id,),
+    )
+    raid_wins = c.fetchone()[0] or 0
+
+    showcase = None
+    c.execute(
+        "SELECT implant_id, durability FROM user_implants WHERE telegram_id=? AND durability > 0",
+        (telegram_id,),
+    )
+    implants = c.fetchall()
+    c.execute(
+        "SELECT card_id, durability FROM user_cards WHERE telegram_id=? AND durability > 0",
+        (telegram_id,),
+    )
+    cards = c.fetchall()
+
+    if theme_path == "genshin" and cards:
+        card_id, durability = max(
+            cards,
+            key=lambda row: (CARD_INFO.get(row[0], {"rarity": 4}).get("rarity", 4), row[1] or 0),
+        )
+        info = CARD_INFO.get(card_id, {"name": card_id, "rarity": 4})
+        showcase = {
+            "kind": "card",
+            "code": card_id,
+            "name": info.get("name", card_id),
+            "glyph": "月" if card_id == "card_moon" else "卡",
+            "detail": f"{info.get('rarity', 4)}★ · durability {durability}",
+        }
+    elif implants:
+        implant_id, durability = max(
+            implants,
+            key=lambda row: (implant_info.get(row[0], {"weight": 1}).get("weight", 1), row[1] or 0),
+        )
+        info = implant_info.get(implant_id, {"name": implant_id, "glyph": "芯", "weight": 1})
+        showcase = {
+            "kind": "implant",
+            "code": implant_id,
+            "name": info.get("name", implant_id),
+            "glyph": info.get("glyph", "芯"),
+            "detail": f"durability {durability}",
+        }
+    elif cards:
+        card_id, durability = max(
+            cards,
+            key=lambda row: (CARD_INFO.get(row[0], {"rarity": 4}).get("rarity", 4), row[1] or 0),
+        )
+        info = CARD_INFO.get(card_id, {"name": card_id, "rarity": 4})
+        showcase = {
+            "kind": "card",
+            "code": card_id,
+            "name": info.get("name", card_id),
+            "glyph": "卡",
+            "detail": f"{info.get('rarity', 4)}★ · durability {durability}",
+        }
+
+    admin_placeholders = ','.join('?' * len(ADMIN_IDS))
+    leaderboard_rank = None
+    if telegram_id not in ADMIN_IDS:
+        c.execute(
+            f'''SELECT COUNT(*) + 1
+                FROM users
+                WHERE telegram_id IS NOT NULL
+                  AND telegram_id NOT IN ({admin_placeholders})
+                  AND points > ?''',
+            ADMIN_IDS + [points],
+        )
+        leaderboard_rank = c.fetchone()[0]
+    conn.close()
+
+    reputation_score = (
+        min(points, 1000)
+        + diaries_count * 35
+        + implants_count * 45
+        + cards_count * 35
+        + raid_count * 25
+        + raid_wins * 45
+        + case_opens * 4
+        + prayers * 4
+    )
+    if reputation_score >= 1650:
+        rank = "SS"
+    elif reputation_score >= 1150:
+        rank = "S"
+    elif reputation_score >= 760:
+        rank = "A"
+    elif reputation_score >= 420:
+        rank = "B"
+    elif reputation_score >= 180:
+        rank = "C"
+    else:
+        rank = "D"
+    sync_rate = min(99, max(1, round((reputation_score / 1650) * 100)))
+
+    if prayers >= 20:
+        title = "祈愿者 / Молитвенник"
+    elif case_opens >= 20:
+        title = "开箱狂人 / Кейсовый маньяк"
+    elif diaries_count >= 7:
+        title = "日记官 / Дневниковый офицер"
+    elif any(row[0] == "implant_red_dragon" for row in implants):
+        title = "红龙载体 / Носитель Красного Дракона"
+    elif raid_wins > 0:
+        title = "黑墙幸存者 / Выживший у Заслона"
+    else:
+        title = "协议执行者 / Исполнитель протокола"
+
+    path_label = "网络守卫" if theme_path == "cyberpunk" else "祈愿者" if theme_path == "genshin" else "未同步"
+    return {
+        "telegram_id": telegram_id,
+        "full_name": full_name,
+        "avatar_url": avatar_url,
+        "points": points,
+        "theme_path": theme_path,
+        "path_label": path_label,
+        "rank": rank,
+        "sync_rate": sync_rate,
+        "title": title,
+        "leaderboard_rank": leaderboard_rank,
+        "showcase": showcase,
+        "stats": {
+            "case_opens": case_opens,
+            "prayers": prayers,
+            "cards": cards_count,
+            "implants": implants_count,
+            "diaries": diaries_count,
+            "raids": raid_count,
+            "raid_wins": raid_wins,
+        },
+        "status_line": f"状态：在线 // 权限：学生节点 // 同步率：{sync_rate}%",
+    }
+
+
 @app.get("/api/user/{telegram_id}")
 async def get_user(telegram_id: int):
     marzban_user = get_marzban_user_by_telegram(telegram_id)

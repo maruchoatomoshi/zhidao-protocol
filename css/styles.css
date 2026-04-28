@@ -762,9 +762,23 @@ body.theme-genshin-dark .lb-points
   font-size: 9px;
   line-height: 1.4;
 }
+.profile-status-line {
+  margin-top: 6px;
+  padding: 5px 7px;
+  border: 1px solid rgba(212,175,55,0.10);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.10);
+  color: rgba(212,175,55,0.74);
+  font-size: 8px;
+  font-family: monospace;
+  letter-spacing: 0.7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .profile-mini-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   margin-top: 8px;
 }
@@ -791,6 +805,92 @@ body.theme-genshin-dark .lb-points
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.profile-showcase {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid rgba(212,175,55,0.14);
+  border-radius: 11px;
+  background:
+    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.08), transparent 48%),
+    rgba(255,255,255,0.022);
+}
+.profile-showcase-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid rgba(212,175,55,0.18);
+  background: rgba(212,175,55,0.06);
+  color: var(--gold);
+  font-size: 18px;
+  font-family: serif;
+  font-weight: 900;
+}
+.profile-showcase-copy {
+  min-width: 0;
+  flex: 1;
+}
+.profile-showcase-copy span {
+  display: block;
+  color: var(--text3);
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+.profile-showcase-copy strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-showcase-copy em {
+  display: block;
+  margin-top: 1px;
+  color: var(--gold);
+  font-size: 8px;
+  font-family: monospace;
+  font-style: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-stat-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+.profile-stat-grid div {
+  min-width: 0;
+  padding: 5px 3px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.022);
+  border: 1px solid rgba(255,255,255,0.055);
+  text-align: center;
+}
+.profile-stat-grid span {
+  display: block;
+  color: var(--text3);
+  font-size: 7px;
+  line-height: 1;
+}
+.profile-stat-grid strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--gold);
+  font-size: 10px;
+  font-family: monospace;
 }
 .profile-card-actions {
   display: flex;
@@ -4847,6 +4947,45 @@ body.theme-genshin-light .rules-desc,
 body.theme-genshin-light .inventory-date,
 body.theme-genshin-light .prize-result-desc,
 body.theme-genshin-light .profile-card-sub {
+  color: var(--text2) !important;
+}
+
+body.theme-nw-light .profile-status-line,
+body.theme-nw-light .profile-mini-stat,
+body.theme-nw-light .profile-showcase,
+body.theme-nw-light .profile-stat-grid div {
+  background: rgba(255,255,255,0.42);
+  border-color: rgba(90,60,50,0.13);
+}
+
+body.theme-genshin-light .profile-status-line,
+body.theme-genshin-light .profile-mini-stat,
+body.theme-genshin-light .profile-showcase,
+body.theme-genshin-light .profile-stat-grid div {
+  background: rgba(255,250,238,0.58);
+  border-color: rgba(138,104,32,0.16);
+}
+
+body.theme-nw-light .profile-status-line,
+body.theme-nw-light .profile-showcase-copy em,
+body.theme-nw-light .profile-mini-stat strong,
+body.theme-nw-light .profile-stat-grid strong {
+  color: #8a4a16;
+}
+
+body.theme-genshin-light .profile-status-line,
+body.theme-genshin-light .profile-showcase-copy em,
+body.theme-genshin-light .profile-mini-stat strong,
+body.theme-genshin-light .profile-stat-grid strong {
+  color: #8b6419;
+}
+
+body.theme-nw-light .profile-showcase-copy span,
+body.theme-nw-light .profile-stat-grid span,
+body.theme-nw-light .profile-mini-stat span,
+body.theme-genshin-light .profile-showcase-copy span,
+body.theme-genshin-light .profile-stat-grid span,
+body.theme-genshin-light .profile-mini-stat span {
   color: var(--text2) !important;
 }
 

@@ -20,6 +20,7 @@ async function loadPoints(telegramId) {
 
       // Применяем путь (Киберпанк / Геншин)
       if (!isAdmin) applyThemePath(data.theme_path || null);
+      loadProfileDossier();
     }
   } catch(e) {}
 }
@@ -97,6 +98,52 @@ function updateProfilePathBadge(path = currentThemePath) {
   }
 }
 
+function setProfileText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function renderProfileDossier(profile = {}) {
+  const stats = profile.stats || {};
+  const showcase = profile.showcase || null;
+  const place = profile.leaderboard_rank ? '#' + profile.leaderboard_rank : '\u2014';
+
+  if (typeof profile.points === 'number') {
+    setProfileText('myPointsRating', profile.points + ' \u2605');
+  }
+  setProfileText('myRankSub', (profile.rank || 'D') + '-RANK');
+  setProfileText('profileLeaderboardPlace', place);
+  updateProfilePathBadge(profile.theme_path || currentThemePath);
+
+  setProfileText('profileStatusLine', profile.status_line || '\u72b6\u6001\uff1a\u5728\u7ebf // \u6743\u9650\uff1a\u5b66\u751f\u8282\u70b9 // \u540c\u6b65\u7387\uff1a0%');
+  setProfileText('profileTitleBadge', profile.title || '\u534f\u8bae\u6267\u884c\u8005 / \u0418\u0441\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c');
+  setProfileText('profileStatCases', stats.case_opens || 0);
+  setProfileText('profileStatPrayers', stats.prayers || 0);
+  setProfileText('profileStatCards', stats.cards || 0);
+  setProfileText('profileStatImplants', stats.implants || 0);
+  setProfileText('profileStatDiaries', stats.diaries || 0);
+  setProfileText('profileStatRaids', stats.raids || 0);
+
+  const showcaseBox = document.getElementById('profileShowcase');
+  const showcaseIcon = showcaseBox ? showcaseBox.querySelector('.profile-showcase-icon') : null;
+  if (showcaseIcon) showcaseIcon.textContent = showcase && showcase.glyph ? showcase.glyph : '?';
+  if (showcase) {
+    setProfileText('profileShowcaseText', `${showcase.kind || 'item'}: ${showcase.name || showcase.code || 'AUTO'} // ${showcase.detail || 'active'}`);
+  } else {
+    setProfileText('profileShowcaseText', 'SHOWCASE: AUTO // no active item');
+  }
+}
+
+async function loadProfileDossier() {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/profile/${currentUserId}`);
+    const data = await r.json();
+    if (!r.ok) return;
+    renderProfileDossier(data);
+  } catch (e) {}
+}
+
 function compressProfileAvatar(file) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type || !file.type.startsWith('image/')) {
@@ -136,6 +183,7 @@ async function saveProfileAvatar(avatarUrl) {
   currentAvatarUrl = data.avatar_url || null;
   renderProfileAvatarCard({avatar_url: currentAvatarUrl});
   loadLeaderboard();
+  loadProfileDossier();
 }
 
 async function handleProfileAvatarFile(input) {
@@ -298,8 +346,8 @@ async function loadLeaderboard() {
       </div>`;
     });
     container.innerHTML = html;
-    const rankEl = document.getElementById('myRankSub');
-    if (rankEl) rankEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '\u2014');
+    const placeEl = document.getElementById('profileLeaderboardPlace');
+    if (placeEl) placeEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '\u2014');
   } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
