@@ -331,8 +331,14 @@ async function loadDiaryStarsLeaderboardRating() {
     if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
     if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
     const r = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
+    if (!r.ok) {
+      let detail = '';
+      try { const d = await r.json(); if (d.detail) detail = ': ' + d.detail; } catch(e) {}
+      container.innerHTML = `<div class="empty-state">Ошибка загрузки (${r.status}${detail})</div>`;
+      return;
+    }
     const data = await r.json();
-    if (!r.ok || !Array.isArray(data)) throw new Error(data.detail || 'Diary leaderboard failed');
+    if (!Array.isArray(data)) { container.innerHTML = '<div class="empty-state">Ошибка формата данных</div>'; return; }
     if (!data.length) { container.innerHTML = '<div class="empty-state">Пока нет данных</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
     container.innerHTML = data.map((row, i) => {
@@ -361,7 +367,7 @@ async function loadDiaryStarsLeaderboardRating() {
       </div>`;
     }).join('');
   } catch(e) {
-    container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+    container.innerHTML = '<div class="empty-state">Нет соединения</div>';
   }
 }
 

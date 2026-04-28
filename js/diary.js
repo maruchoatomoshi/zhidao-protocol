@@ -62,7 +62,12 @@ async function loadDiaryStarsList() {
     const r = await fetch(`${API_URL}/api/diary/stars/overview?entry_date=${date}`, {
       headers
     });
-    if (!r.ok) { list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Ошибка загрузки</div>'; return; }
+    if (!r.ok) {
+      let detail = '';
+      try { const d = await r.json(); if (d.detail) detail = ': ' + d.detail; } catch(e) {}
+      list.innerHTML = `<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Ошибка загрузки (${r.status}${detail})</div>`;
+      return;
+    }
     const data = await r.json();
     renderDiaryStarsList(data.entries || [], date);
   } catch(e) {
@@ -79,7 +84,7 @@ function renderDiaryStarsList(entries, date) {
 
   const STAR_POINTS = { 1: 15, 2: 30, 3: 50 };
 
-  list.innerHTML = entries.map(entry => {
+  const rows = entries.map(entry => {
     const stars = entry.stars || 0;
     const bonus = entry.bonus || false;
     const starsHtml = stars ? '⭐'.repeat(stars) : '—';
@@ -87,14 +92,17 @@ function renderDiaryStarsList(entries, date) {
     const pointsEarned = stars ? STAR_POINTS[stars] + (bonus ? 20 : 0) : 0;
     const canRate = isAdmin;
     const isMe = entry.telegram_id === currentUserId;
-    // Студент видит только свою строку
     if (!isAdmin && !isMe) return '';
 
+    const safeName = escapeHtml(entry.full_name);
+    const onclickAttr = canRate
+      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}')"`
+      : '';
     return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
-      ${canRate ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, '${entry.full_name}', '${date}')"` : ''}>
+      ${onclickAttr}>
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="flex:1;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${entry.full_name}${isMe && !isAdmin ? ' 👈' : ''}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${safeName}${isMe && !isAdmin ? ' 👈' : ''}</div>
           <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-top:2px;">
             ${stars ? starsHtml + bonusHtml + ' · +' + pointsEarned + '★' : 'ещё не оценено'}
           </div>
@@ -102,7 +110,11 @@ function renderDiaryStarsList(entries, date) {
         ${canRate ? `<div style="font-size:20px;color:var(--text3);">›</div>` : ''}
       </div>
     </div>`;
-  }).join('');
+  });
+  const html = rows.join('');
+  list.innerHTML = html.trim()
+    ? html
+    : '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет записей за этот день</div>';
 }
 
 function openDiaryStarsPopup(telegramId, name, date) {
