@@ -206,32 +206,36 @@
     <div class="page-sub">> pái míng // таблица лидеров</div>
   </div>
 
-  <!-- НОВАЯ КНОПКА РЕЙДА (открывает оверлей) -->
-<div style="margin:4px 12px 8px;" id="raidBlock">
-  <button onclick="showRaid()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(180,20,20,0.12),rgba(180,20,20,0.06));border:1px solid rgba(180,20,20,0.4);color:#cc4444;border-radius:8px;font-weight:700;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:1px;position:relative;overflow:hidden;">
-    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;">⚔️</span>
-    [ 袭击 // РЕЙД НА АЛЬФАБОССА ]
-    <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:10px;color:rgba(100,80,30,0.6);">50 ★</span>
-  </button>
-</div>
-<!-- Старый блок raidPanel мы полностью удаляем, он больше не нужен -->
-
   <div style="display:flex;gap:6px;margin:0 12px 8px;">
     <button id="tab-rating-main-btn" onclick="switchRatingTab('main',this)" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">🏆 РЕЙТИНГ</button>
     <button id="tab-rating-diary-btn" onclick="switchRatingTab('diary',this)" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⭐ ДНЕВНИК</button>
   </div>
 
   <div id="rating-main-tab">
-    <div class="alpha-boss-strip alpha-boss-leaderboard">
-      <div class="alpha-boss-mark">&#29579;</div>
-      <div class="alpha-boss-main">
-        <div class="alpha-boss-kicker">SYSTEM ENTITY // OUT OF RATING</div>
-        <div class="alpha-boss-name">&#1040;&#1051;&#1068;&#1060;&#1040;&#1041;&#1054;&#1057;&#1057;</div>
+    <div class="alpha-boss-card" id="raidBlock">
+      <div class="alpha-boss-top">
+        <div class="alpha-boss-crown">
+          <div class="alpha-boss-mark">&#29579;</div>
+          <div class="alpha-boss-unranked">UNRANKED</div>
+        </div>
+        <div class="alpha-boss-main">
+          <div class="alpha-boss-kicker">SYSTEM ENTITY // OUT OF RATING</div>
+          <div class="alpha-boss-name">&#1040;&#1051;&#1068;&#1060;&#1040;&#1041;&#1054;&#1057;&#1057;</div>
+          <div class="alpha-boss-sub">&#1053;&#1077;&#1080;&#1079;&#1074;&#1077;&#1089;&#1090;&#1085;&#1072;&#1103; &#1089;&#1091;&#1097;&#1085;&#1086;&#1089;&#1090;&#1100; &#1089;&#1080;&#1089;&#1090;&#1077;&#1084;&#1099;</div>
+        </div>
+        <div class="alpha-boss-score">
+          <div class="alpha-boss-points">999 999</div>
+          <div class="alpha-boss-points-lbl">&#9733; &#1082;&#1088;&#1077;&#1076;&#1080;&#1090;&#1086;&#1074;</div>
+        </div>
       </div>
-      <div class="alpha-boss-points">999 999 &#9733;</div>
+      <button class="alpha-boss-raid-btn" onclick="showRaid()">
+        <span>&#9876;&#65039;</span>
+        <span>&#1056;&#1045;&#1049;&#1044; &#1053;&#1040; &#1040;&#1051;&#1068;&#1060;&#1040;&#1041;&#1054;&#1057;&#1057;&#1040; <span style="opacity:0.55;">// 袭击</span></span>
+        <span class="alpha-boss-raid-cost">50 &#9733;</span>
+      </button>
     </div>
-    <div class="cn-divider">🏮 领导者 лидеры 🏮</div>
-    <div id="leaderboardContent"><div class="empty-state">Загрузка...</div></div>
+    <div class="lb-leaders-label">&#128302; 领导者 // &#1051;&#1048;&#1044;&#1045;&#1056;&#1067; &#128302;</div>
+    <div id="leaderboardContent"><div class="empty-state">&#1047;&#1072;&#1075;&#1088;&#1091;&#1079;&#1082;&#1072;...</div></div>
   </div>
 
   <div id="rating-diary-tab" style="display:none;">
