@@ -1,4 +1,10 @@
 function showPage(name, btn) {
+  if (name === 'diary' && !isAdmin) {
+    if (typeof syncDiaryAccessVisibility === 'function') syncDiaryAccessVisibility();
+    try { tg.showAlert('Архив дневника доступен только администраторам.'); } catch(e) {}
+    return;
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
@@ -65,6 +71,9 @@ async function loadUserData(telegramId) {
       currentAvatarUrl = data.avatar_url || null;
       if (typeof renderProfileAvatarCard === 'function') {
         renderProfileAvatarCard(data);
+      }
+      if (typeof syncDiaryAccessVisibility === 'function') {
+        syncDiaryAccessVisibility();
       }
       document.getElementById('status').textContent = '● АКТИВЕН';
       document.getElementById('status').style.color = '#cc4444';

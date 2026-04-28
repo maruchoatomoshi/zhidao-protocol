@@ -332,18 +332,32 @@ async function loadDiaryStarsLeaderboardRating() {
     if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
     const r = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
     const data = await r.json();
+    if (!r.ok || !Array.isArray(data)) throw new Error(data.detail || 'Diary leaderboard failed');
     if (!data.length) { container.innerHTML = '<div class="empty-state">Пока нет данных</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
     container.innerHTML = data.map((row, i) => {
       const medal = medals[i] || `${i+1}.`;
       const isMe = row.telegram_id === currentUserId;
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-        <div style="font-size:16px;min-width:28px;text-align:center;">${medal}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${row.name}${isMe?' 👈':''}</div>
-          <div style="font-size:10px;color:var(--text3);font-family:monospace;">Дней оценено: ${row.days_rated}</div>
+      const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const pathLabel = row.theme_path === 'genshin' ? 'GENSHIN' : row.theme_path === 'cyberpunk' ? 'NETWATCH' : 'SYNC';
+      const pathClass = row.theme_path === 'genshin' ? 'genshin' : row.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
+      const status = row.days_rated > 0 ? `${row.days_rated} DAYS // +${row.total_points || 0}\u2605` : 'NOT RATED YET';
+      const stars = row.total_stars || 0;
+      return `<div class="diary-rank-card ${topClass} ${isMe ? 'me' : ''}" style="animation-delay:${i*0.05}s">
+        <div class="diary-rank-place">${medal}</div>
+        <div class="lb-avatar">${avatarMarkup(row.avatar_url, row.name, row.telegram_id, 'lb-avatar-img')}</div>
+        <div class="diary-rank-main">
+          <div class="diary-rank-name-row">
+            <span class="diary-rank-name">${escapeHtml(row.name)}${isMe?' \ud83d\udc48':''}</span>
+            <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
+          </div>
+          <div class="diary-rank-sub">
+            <span>日记节点</span>
+            <span>${status}</span>
+            ${row.total_bonus ? `<span>BONUS x${row.total_bonus}</span>` : ''}
+          </div>
         </div>
-        <div style="font-size:13px;font-weight:700;color:var(--gold);">${row.total_stars} ⭐</div>
+        <div class="diary-rank-score">${stars} ⭐</div>
       </div>`;
     }).join('');
   } catch(e) {

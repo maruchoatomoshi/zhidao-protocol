@@ -1198,6 +1198,101 @@ body.theme-genshin-dark .lb-points
 }
 
 /* ===== МАГАЗИН ===== */
+.diary-rank-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 0;
+  padding: 10px;
+  border: 1px solid rgba(212,175,55,0.12);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.06), transparent 40%),
+    linear-gradient(90deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+  overflow: hidden;
+  animation: lb-fadein 0.4s ease both;
+}
+.diary-rank-card::after {
+  content: 'DIARY';
+  position: absolute;
+  right: 8px;
+  top: -2px;
+  color: rgba(212,175,55,0.045);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+.diary-rank-card.me {
+  border-left: 2px solid rgba(212,175,55,0.42);
+  background: rgba(212,175,55,0.06);
+}
+.diary-rank-card.top1 {
+  border-color: rgba(212,175,55,0.28);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.14), transparent 42%),
+    linear-gradient(90deg, rgba(212,175,55,0.08), rgba(255,255,255,0.012));
+}
+.diary-rank-card.top2 {
+  border-color: rgba(210,210,210,0.18);
+}
+.diary-rank-card.top3 {
+  border-color: rgba(184,115,51,0.20);
+}
+.diary-rank-place {
+  position: relative;
+  z-index: 1;
+  min-width: 28px;
+  text-align: center;
+  font-size: 16px;
+}
+.diary-rank-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+.diary-rank-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.diary-rank-name {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.diary-rank-sub {
+  margin-top: 3px;
+  display: flex;
+  gap: 5px;
+  color: var(--text3);
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 0.7px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.diary-rank-sub span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.diary-rank-score {
+  position: relative;
+  z-index: 1;
+  color: var(--gold);
+  font-size: 13px;
+  font-family: monospace;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .shop-header-bar {
   display: flex; justify-content: space-between; align-items: center;
   padding: 10px 14px 0;
@@ -5258,8 +5353,24 @@ body.theme-genshin-light .lb-item {
 }
 
 body.theme-nw-light .lb-subline,
-body.theme-genshin-light .lb-subline {
+body.theme-nw-light .diary-rank-sub,
+body.theme-genshin-light .lb-subline,
+body.theme-genshin-light .diary-rank-sub {
   color: var(--text2);
+}
+
+body.theme-nw-light .diary-rank-card {
+  background:
+    radial-gradient(circle at 0% 50%, rgba(153,51,51,0.06), transparent 38%),
+    rgba(255,255,255,0.42);
+  border-color: rgba(90,60,50,0.10);
+}
+
+body.theme-genshin-light .diary-rank-card {
+  background:
+    radial-gradient(circle at 0% 50%, rgba(219,177,101,0.10), transparent 38%),
+    rgba(255,250,238,0.58);
+  border-color: rgba(138,104,32,0.13);
 }
 
 body.theme-nw-light .subtab {

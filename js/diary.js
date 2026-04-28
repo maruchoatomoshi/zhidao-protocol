@@ -1,7 +1,22 @@
 function openDiaryPage() {
+  if (!isAdmin) {
+    syncDiaryAccessVisibility();
+    try { tg.showAlert('Архив дневника доступен только администраторам.'); } catch(e) {}
+    return;
+  }
   showPage('diary');
   const moreBtn = document.getElementById('nav-more-btn');
   if (moreBtn) moreBtn.classList.add('active');
+}
+
+function syncDiaryAccessVisibility() {
+  const archiveItem = document.getElementById('diaryArchiveItem');
+  if (archiveItem) archiveItem.style.display = isAdmin ? '' : 'none';
+
+  const diaryPage = document.getElementById('page-diary');
+  if (!isAdmin && diaryPage && diaryPage.classList.contains('active')) {
+    showPage('more', document.getElementById('nav-more-btn'));
+  }
 }
 
 const DIARY_WORD_ROWS = 15;
@@ -107,7 +122,7 @@ function closeDiaryStarsPopup() {
 
 async function submitDiaryStars(value) {
   if (!diaryStarsCurrentStudent || !isAdmin) return;
-  const { telegramId, date } = diaryStarsCurrentStudent;
+  const { telegramId, name, date } = diaryStarsCurrentStudent;
 
   const isBonus = value === 'bonus';
   const payload = {
@@ -127,10 +142,15 @@ async function submitDiaryStars(value) {
       const data = await r.json();
       closeDiaryStarsPopup();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      tg.showAlert(`✅ ${diaryStarsCurrentStudent.name}: +${data.points_awarded}★ начислено!`);
+      tg.showAlert(`✅ ${name}: ${data.points_delta >= 0 ? '+' : ''}${data.points_delta}★`);
       loadDiaryStarsList();
     } else {
-      tg.showAlert('Ошибка при начислении.');
+      let errorText = 'Ошибка при начислении.';
+      try {
+        const data = await r.json();
+        if (data.detail) errorText = data.detail;
+      } catch(e) {}
+      tg.showAlert(errorText);
     }
   } catch(e) {
     tg.showAlert('Нет соединения.');
@@ -728,10 +748,22 @@ async function scoreDiary() {
       body: JSON.stringify({ telegram_id: tid, entry_date: date, lesson_score: lesson, diary_score: diary })
     });
     if (r.ok) {
+      const data = await r.json();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
       tg.showAlert('⭐ Оценки выставлены.');
+      if (data.entry) {
+        const merged = { ...createEmptyDiaryEntry(date), ...data.entry };
+        fillDiaryForm(merged);
+        applyDiaryRoleUX(merged.status || 'reviewed');
+      }
+      loadDiaryOverview(date);
     } else {
-      tg.showAlert('Ошибка при сохранении оценки.');
+      let errorText = 'Ошибка при сохранении оценки.';
+      try {
+        const data = await r.json();
+        if (data.detail) errorText = data.detail;
+      } catch(e) {}
+      tg.showAlert(errorText);
     }
   } catch(e) {
     tg.showAlert('Нет соединения.');
