@@ -560,7 +560,7 @@ function renderArchitectLobby(eventData, errorText = '') {
   }
 
   const isMember = teamMembers.some(member => Number(member.telegram_id) === Number(currentUserId));
-  const adminSoloReady = typeof isAdmin !== 'undefined' && isAdmin && isMember;
+  const adminSoloReady = typeof isAdmin !== 'undefined' && isAdmin;
   const canJoin = eventData.state === 'REGISTRATION' && !isMember && teamCount < maxPlayers;
   const canLeave = eventData.state === 'REGISTRATION' && isMember;
   const canStart = eventData.state === 'REGISTRATION' &&

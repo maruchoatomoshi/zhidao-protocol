@@ -167,7 +167,8 @@ def init_db():
                   extra_cases INTEGER DEFAULT 0,
                   extra_raids INTEGER DEFAULT 0,
                   double_win INTEGER DEFAULT 0,
-                  title_date TEXT DEFAULT NULL)''')
+                  title_date TEXT DEFAULT NULL,
+                  theme_path TEXT DEFAULT NULL)''')
     c.execute('''CREATE TABLE IF NOT EXISTS user_implants
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER,
@@ -340,6 +341,8 @@ def migrate_db():
     columns = {row[1] for row in c.fetchall()}
     if 'extra_raids' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN extra_raids INTEGER DEFAULT 0")
+    if 'theme_path' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN theme_path TEXT DEFAULT NULL")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -648,6 +651,18 @@ def is_event_team_member(c, event_id: int, telegram_id: int) -> bool:
         (event_id, telegram_id),
     )
     return c.fetchone() is not None
+
+
+def ensure_admin_event_team_member(c, event_id: int, telegram_id: int) -> bool:
+    if telegram_id not in ADMIN_IDS:
+        return False
+    if is_event_team_member(c, event_id, telegram_id):
+        return True
+    c.execute(
+        "INSERT OR IGNORE INTO event_team_members (event_id, telegram_id, joined_at) VALUES (?, ?, ?)",
+        (event_id, telegram_id, now_iso()),
+    )
+    return True
 
 
 def is_vulnerability_active(event_row: dict) -> bool:
@@ -1326,6 +1341,31 @@ class LaundryBook(BaseModel):
     username: str
 
 
+@app.post("/api/user/set_path")
+async def set_user_theme_path(data: dict):
+    telegram_id = data.get("telegram_id")
+    path = str(data.get("path") or "").strip()
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="No telegram_id")
+    if path not in ("cyberpunk", "genshin"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    c.execute(
+        """INSERT INTO user_status (telegram_id, theme_path) VALUES (?, ?)
+           ON CONFLICT(telegram_id) DO UPDATE SET theme_path=excluded.theme_path""",
+        (telegram_id, path),
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True, "theme_path": path}
+
+
 @app.get("/api/user/{telegram_id}")
 async def get_user(telegram_id: int):
     marzban_user = get_marzban_user_by_telegram(telegram_id)
@@ -1556,7 +1596,7 @@ async def get_points(telegram_id: int):
     if not result:
         conn.close()
         raise HTTPException(status_code=404, detail="Not found")
-    c.execute("SELECT double_win, extra_cases, immunity, extra_raids FROM user_status WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT double_win, extra_cases, immunity, extra_raids, theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
     status = c.fetchone()
     conn.close()
     return {
@@ -1566,6 +1606,7 @@ async def get_points(telegram_id: int):
         "extra_cases": status[1] if status else 0,
         "immunity": status[2] if status else 0,
         "extra_raids": status[3] if status else 0,
+        "theme_path": status[4] if status else None,
     }
 
 
@@ -3199,16 +3240,15 @@ async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header
         raise HTTPException(status_code=400, detail="Event is not in registration state")
 
     team_members = get_event_team_members(c, event_id)
-    admin_is_solo_member = any(
-        int(member.get("telegram_id") or 0) == int(admin_id)
-        for member in team_members
-    )
-    if len(team_members) < event_row["min_players"] and not admin_is_solo_member:
+    admin_solo_mode = len(team_members) < event_row["min_players"] and admin_id in ADMIN_IDS
+    if len(team_members) < event_row["min_players"] and not admin_solo_mode:
         conn.close()
         raise HTTPException(
             status_code=400,
             detail=f"Not enough players: {len(team_members)}/{event_row['min_players']}"
         )
+    if admin_solo_mode:
+        ensure_admin_event_team_member(c, event_id, int(admin_id))
 
     started_at = now_iso()
     c.execute(
@@ -3234,9 +3274,10 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
 
     conn = get_conn()
     c = conn.cursor()
-    if not is_event_team_member(c, event_id, telegram_id):
+    if not is_event_team_member(c, event_id, telegram_id) and not ensure_admin_event_team_member(c, event_id, int(telegram_id)):
         conn.close()
         raise HTTPException(status_code=403, detail="You are not in the event team")
+    conn.commit()
 
     if action_type == "sync":
         conn.close()
@@ -3290,7 +3331,7 @@ async def resolve_event_action(data: dict):
         conn.commit()
         conn.close()
         raise HTTPException(status_code=400, detail="Event is not active")
-    if not is_event_team_member(c, int(event_id), int(telegram_id)):
+    if not is_event_team_member(c, int(event_id), int(telegram_id)) and not ensure_admin_event_team_member(c, int(event_id), int(telegram_id)):
         conn.close()
         raise HTTPException(status_code=403, detail="You are not in the event team")
 
