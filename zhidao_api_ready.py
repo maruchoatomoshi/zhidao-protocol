@@ -1522,6 +1522,12 @@ async def get_user_profile_dossier(telegram_id: int):
         title = "协议执行者 / Исполнитель протокола"
 
     path_label = "网络守卫" if theme_path == "cyberpunk" else "祈愿者" if theme_path == "genshin" else "未同步"
+    if telegram_id == 389741116:
+        permission_label = "架构师"
+    elif telegram_id in ADMIN_IDS:
+        permission_label = "系统架构师"
+    else:
+        permission_label = "学生节点"
     return {
         "telegram_id": telegram_id,
         "full_name": full_name,
@@ -1543,7 +1549,7 @@ async def get_user_profile_dossier(telegram_id: int):
             "raids": raid_count,
             "raid_wins": raid_wins,
         },
-        "status_line": f"状态：在线 // 权限：学生节点 // 同步率：{sync_rate}%",
+        "status_line": f"状态：在线 // 权限：{permission_label} // 同步率：{sync_rate}%",
     }
 
 
