@@ -667,9 +667,6 @@ body.theme-genshin-dark .lb-points
 .profile-card {
   margin: 0 12px 8px;
   padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   border: 1px solid rgba(212,175,55,0.16);
   border-radius: 14px;
   background:
@@ -711,8 +708,8 @@ body.theme-genshin-dark .lb-points
   justify-content: center;
 }
 .profile-avatar-wrap {
-  width: 62px;
-  height: 62px;
+  width: 54px;
+  height: 54px;
 }
 .profile-avatar-img,
 .lb-avatar-img {
@@ -733,13 +730,24 @@ body.theme-genshin-dark .lb-points
   font-weight: 900;
 }
 .profile-avatar-fallback {
-  font-size: 26px;
+  font-size: 22px;
 }
 .profile-card-main {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   position: relative;
   z-index: 1;
+}
+.profile-identity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding-right: 72px;
+}
+.profile-identity-copy {
+  min-width: 0;
+  flex: 1;
 }
 .profile-card-kicker {
   font-size: 8px;
