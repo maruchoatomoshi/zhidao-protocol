@@ -94,14 +94,6 @@
           <em id="profileShowcaseText">SHOWCASE: AUTO</em>
         </div>
       </div>
-      <div class="profile-stat-grid">
-        <div><span>&#24320;&#31665;</span><strong id="profileStatCases">0</strong></div>
-        <div><span>&#31048;&#24895;</span><strong id="profileStatPrayers">0</strong></div>
-        <div><span>&#21345;&#29260;</span><strong id="profileStatCards">0</strong></div>
-        <div><span>&#26893;&#20837;</span><strong id="profileStatImplants">0</strong></div>
-        <div><span>&#26085;&#35760;</span><strong id="profileStatDiaries">0</strong></div>
-        <div><span>RAID</span><strong id="profileStatRaids">0</strong></div>
-      </div>
       <div class="profile-card-actions">
         <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
         <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">AVATAR</button>
@@ -125,6 +117,45 @@
       </div>
     </div>
   </div>
+  <div class="profile-activity-card">
+    <div class="profile-activity-header">
+      <div class="profile-card-kicker" style="letter-spacing:2px;">OPERATOR ACTIVITY // 数据统计</div>
+      <div class="profile-activity-title">СТАТИСТИКА</div>
+    </div>
+    <div class="profile-activity-grid">
+      <div class="profile-activity-cell pa-gold">
+        <div class="pa-icon">🎰</div>
+        <div class="pa-num" id="profileStatCases">0</div>
+        <div class="pa-lbl">КЕЙСЫ</div>
+      </div>
+      <div class="profile-activity-cell pa-purple">
+        <div class="pa-icon">📿</div>
+        <div class="pa-num" id="profileStatPrayers">0</div>
+        <div class="pa-lbl">МОЛИТВЫ</div>
+      </div>
+      <div class="profile-activity-cell pa-blue">
+        <div class="pa-icon">🎴</div>
+        <div class="pa-num" id="profileStatCards">0</div>
+        <div class="pa-lbl">КАРТЫ</div>
+      </div>
+      <div class="profile-activity-cell pa-red">
+        <div class="pa-icon">🔩</div>
+        <div class="pa-num" id="profileStatImplants">0</div>
+        <div class="pa-lbl">ИМПЛАНТЫ</div>
+      </div>
+      <div class="profile-activity-cell pa-green">
+        <div class="pa-icon">📓</div>
+        <div class="pa-num" id="profileStatDiaries">0</div>
+        <div class="pa-lbl">ДНЕВНИК</div>
+      </div>
+      <div class="profile-activity-cell pa-orange">
+        <div class="pa-icon">⚔️</div>
+        <div class="pa-num" id="profileStatRaids">0</div>
+        <div class="pa-lbl">РЕЙДЫ</div>
+      </div>
+    </div>
+  </div>
+
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
   <div class="card neuro-card">

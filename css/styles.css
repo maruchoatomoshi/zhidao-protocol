@@ -708,8 +708,8 @@ body.theme-genshin-dark .lb-points
   justify-content: center;
 }
 .profile-avatar-wrap {
-  width: 54px;
-  height: 54px;
+  width: 62px;
+  height: 62px;
 }
 .profile-avatar-img,
 .lb-avatar-img {
@@ -815,16 +815,16 @@ body.theme-genshin-dark .lb-points
   text-overflow: ellipsis;
 }
 .profile-showcase {
-  margin-top: 8px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px;
-  border: 1px solid rgba(212,175,55,0.14);
+  padding: 8px;
+  border: 1px solid rgba(212,175,55,0.20);
   border-radius: 11px;
   background:
-    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.08), transparent 48%),
-    rgba(255,255,255,0.022);
+    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.10), transparent 52%),
+    rgba(255,255,255,0.028);
 }
 .profile-showcase-icon {
   width: 34px;
@@ -900,6 +900,85 @@ body.theme-genshin-dark .lb-points
   font-size: 10px;
   font-family: monospace;
 }
+.profile-activity-card {
+  margin: 0 12px 10px;
+  padding: 12px;
+  border: 1px solid rgba(212,175,55,0.16);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(212,175,55,0.07), transparent 45%),
+    linear-gradient(160deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  position: relative;
+  overflow: hidden;
+}
+.profile-activity-card::after {
+  content: 'DATA';
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  color: rgba(212,175,55,0.06);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+.profile-activity-header {
+  margin-bottom: 10px;
+}
+.profile-activity-title {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text);
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+.profile-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+.profile-activity-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px 8px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.025);
+  position: relative;
+  overflow: hidden;
+}
+.pa-icon {
+  font-size: 18px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.pa-num {
+  font-size: 18px;
+  font-weight: 900;
+  font-family: monospace;
+  line-height: 1;
+}
+.pa-lbl {
+  margin-top: 4px;
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  color: var(--text3);
+}
+.pa-gold  { border-color: rgba(212,175,55,0.22); background: rgba(212,175,55,0.07); }
+.pa-gold  .pa-num { color: #d4af37; }
+.pa-purple{ border-color: rgba(155,89,182,0.28); background: rgba(155,89,182,0.08); }
+.pa-purple .pa-num { color: #c39bd3; }
+.pa-blue  { border-color: rgba(52,152,219,0.28); background: rgba(52,152,219,0.08); }
+.pa-blue  .pa-num { color: #7fb3d3; }
+.pa-red   { border-color: rgba(204,34,0,0.28);   background: rgba(204,34,0,0.08); }
+.pa-red   .pa-num { color: #e07070; }
+.pa-green { border-color: rgba(46,204,113,0.28); background: rgba(46,204,113,0.08); }
+.pa-green .pa-num { color: #58d68d; }
+.pa-orange{ border-color: rgba(230,126,34,0.28); background: rgba(230,126,34,0.08); }
+.pa-orange .pa-num { color: #e59866; }
+
 .profile-card-actions {
   display: flex;
   gap: 6px;
@@ -5316,6 +5395,21 @@ body.theme-genshin-light .profile-stat-grid span,
 body.theme-genshin-light .profile-mini-stat span,
 body.theme-genshin-light .profile-showcase-option-copy span {
   color: var(--text2) !important;
+}
+
+body.theme-nw-light .profile-activity-card,
+body.theme-genshin-light .profile-activity-card {
+  border-color: rgba(120,80,30,0.18);
+  background: rgba(255,250,238,0.32);
+}
+body.theme-nw-light .profile-activity-cell,
+body.theme-genshin-light .profile-activity-cell {
+  background: rgba(255,255,255,0.44);
+  border-color: rgba(120,80,30,0.13);
+}
+body.theme-nw-light .pa-lbl,
+body.theme-genshin-light .pa-lbl {
+  color: var(--text2);
 }
 
 body.theme-nw-light .profile-showcase-panel {
