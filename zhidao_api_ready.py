@@ -2109,6 +2109,152 @@ async def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Opt
     return {"entry_date": target_date, "entries": result}
 
 
+@app.get("/api/diary/stars/overview")
+async def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+    viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
+    if not entry_date:
+        raise HTTPException(status_code=400, detail="Missing entry_date")
+
+    placeholders = ','.join('?' * len(ADMIN_IDS))
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        f'''SELECT u.telegram_id, u.full_name,
+                  COALESCE(ds.stars, 0), COALESCE(ds.bonus, 0),
+                  ds.rated_by, ds.rated_at
+           FROM users u
+           LEFT JOIN diary_stars ds
+             ON ds.telegram_id = u.telegram_id AND ds.entry_date = ?
+           WHERE u.telegram_id IS NOT NULL
+             AND u.telegram_id NOT IN ({placeholders})
+           ORDER BY u.full_name COLLATE NOCASE''',
+        [entry_date] + ADMIN_IDS,
+    )
+    rows = c.fetchall()
+    conn.close()
+
+    entries = []
+    for telegram_id, full_name, stars, bonus, rated_by, rated_at in rows:
+        if viewer_id not in ADMIN_IDS and viewer_id != telegram_id:
+            continue
+        entries.append({
+            "telegram_id": telegram_id,
+            "full_name": full_name or "Аноним",
+            "stars": stars or 0,
+            "bonus": bool(bonus),
+            "rated_by": rated_by,
+            "rated_at": rated_at,
+            "points": compute_diary_star_points(stars or 0, bonus or 0),
+        })
+    return {"entry_date": entry_date, "entries": entries}
+
+
+@app.post("/api/diary/stars/rate")
+async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if not is_diary_staff(x_admin_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    telegram_id = data.get("telegram_id")
+    entry_date = data.get("entry_date")
+    if not telegram_id or not entry_date:
+        raise HTTPException(status_code=400, detail="Missing data")
+
+    incoming_stars = data.get("stars")
+    incoming_bonus = bool(data.get("bonus", False))
+    if incoming_stars is not None:
+        try:
+            incoming_stars = int(incoming_stars)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid stars")
+        if incoming_stars not in (0, 1, 2, 3):
+            raise HTTPException(status_code=400, detail="Invalid stars")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    c.execute("SELECT stars, bonus FROM diary_stars WHERE telegram_id=? AND entry_date=?", (telegram_id, entry_date))
+    previous = c.fetchone()
+    previous_stars = previous[0] if previous else 0
+    previous_bonus = previous[1] if previous else 0
+
+    next_stars = previous_stars if incoming_stars is None else incoming_stars
+    next_bonus = 1 if incoming_bonus else previous_bonus
+    previous_points = compute_diary_star_points(previous_stars, previous_bonus)
+    next_points = compute_diary_star_points(next_stars, next_bonus)
+
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''INSERT INTO diary_stars (telegram_id, entry_date, stars, bonus, rated_by, rated_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(telegram_id, entry_date) DO UPDATE SET
+             stars=excluded.stars,
+             bonus=excluded.bonus,
+             rated_by=excluded.rated_by,
+             rated_at=excluded.rated_at''',
+        (telegram_id, entry_date, next_stars, next_bonus, x_admin_id, now_str),
+    )
+    apply_diary_points_delta(c, telegram_id, previous_points, next_points)
+    conn.commit()
+    conn.close()
+    return {
+        "success": True,
+        "telegram_id": telegram_id,
+        "entry_date": entry_date,
+        "stars": next_stars,
+        "bonus": bool(next_bonus),
+        "points_awarded": next_points,
+        "points_delta": next_points - previous_points,
+    }
+
+
+@app.get("/api/diary/stars/leaderboard")
+async def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+    placeholders = ','.join('?' * len(ADMIN_IDS))
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        f'''SELECT u.telegram_id, u.full_name, u.avatar_url, us.theme_path,
+                  COALESCE(SUM(ds.stars), 0) as total_stars,
+                  COALESCE(SUM(ds.bonus), 0) as total_bonus,
+                  COALESCE(SUM(
+                    CASE COALESCE(ds.stars, 0)
+                      WHEN 1 THEN 15
+                      WHEN 2 THEN 30
+                      WHEN 3 THEN 50
+                      ELSE 0
+                    END + CASE WHEN COALESCE(ds.bonus, 0) > 0 THEN 20 ELSE 0 END
+                  ), 0) as total_points,
+                  COUNT(CASE WHEN ds.stars > 0 OR ds.bonus > 0 THEN 1 END) as days_rated
+           FROM users u
+           LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
+           LEFT JOIN diary_stars ds ON ds.telegram_id = u.telegram_id
+           WHERE u.telegram_id IS NOT NULL
+             AND u.telegram_id NOT IN ({placeholders})
+           GROUP BY u.telegram_id, u.full_name, u.avatar_url, us.theme_path
+           ORDER BY total_stars DESC, days_rated DESC, total_bonus DESC, u.full_name COLLATE NOCASE''',
+        ADMIN_IDS,
+    )
+    rows = c.fetchall()
+    conn.close()
+    return [
+        {
+            "telegram_id": row[0],
+            "name": row[1] or "Аноним",
+            "avatar_url": row[2],
+            "theme_path": row[3],
+            "total_stars": row[4] or 0,
+            "total_bonus": row[5] or 0,
+            "total_points": row[6] or 0,
+            "days_rated": row[7] or 0,
+        }
+        for row in rows
+    ]
+
+
 @app.get("/api/diary/{telegram_id}")
 async def get_diary_entries(telegram_id: int, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
@@ -2330,152 +2476,6 @@ async def score_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)
     payload = build_diary_entry_payload(c, entry_id)
     conn.close()
     return {"success": True, "entry": payload}
-
-
-@app.get("/api/diary/stars/overview")
-async def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
-    viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
-    if not entry_date:
-        raise HTTPException(status_code=400, detail="Missing entry_date")
-
-    placeholders = ','.join('?' * len(ADMIN_IDS))
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute(
-        f'''SELECT u.telegram_id, u.full_name,
-                  COALESCE(ds.stars, 0), COALESCE(ds.bonus, 0),
-                  ds.rated_by, ds.rated_at
-           FROM users u
-           LEFT JOIN diary_stars ds
-             ON ds.telegram_id = u.telegram_id AND ds.entry_date = ?
-           WHERE u.telegram_id IS NOT NULL
-             AND u.telegram_id NOT IN ({placeholders})
-           ORDER BY u.full_name COLLATE NOCASE''',
-        [entry_date] + ADMIN_IDS,
-    )
-    rows = c.fetchall()
-    conn.close()
-
-    entries = []
-    for telegram_id, full_name, stars, bonus, rated_by, rated_at in rows:
-        if viewer_id not in ADMIN_IDS and viewer_id != telegram_id:
-            continue
-        entries.append({
-            "telegram_id": telegram_id,
-            "full_name": full_name or "Аноним",
-            "stars": stars or 0,
-            "bonus": bool(bonus),
-            "rated_by": rated_by,
-            "rated_at": rated_at,
-            "points": compute_diary_star_points(stars or 0, bonus or 0),
-        })
-    return {"entry_date": entry_date, "entries": entries}
-
-
-@app.post("/api/diary/stars/rate")
-async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if not is_diary_staff(x_admin_id):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    telegram_id = data.get("telegram_id")
-    entry_date = data.get("entry_date")
-    if not telegram_id or not entry_date:
-        raise HTTPException(status_code=400, detail="Missing data")
-
-    incoming_stars = data.get("stars")
-    incoming_bonus = bool(data.get("bonus", False))
-    if incoming_stars is not None:
-        try:
-            incoming_stars = int(incoming_stars)
-        except (TypeError, ValueError):
-            raise HTTPException(status_code=400, detail="Invalid stars")
-        if incoming_stars not in (0, 1, 2, 3):
-            raise HTTPException(status_code=400, detail="Invalid stars")
-
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-
-    c.execute("SELECT stars, bonus FROM diary_stars WHERE telegram_id=? AND entry_date=?", (telegram_id, entry_date))
-    previous = c.fetchone()
-    previous_stars = previous[0] if previous else 0
-    previous_bonus = previous[1] if previous else 0
-
-    next_stars = previous_stars if incoming_stars is None else incoming_stars
-    next_bonus = 1 if incoming_bonus else previous_bonus
-    previous_points = compute_diary_star_points(previous_stars, previous_bonus)
-    next_points = compute_diary_star_points(next_stars, next_bonus)
-
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        '''INSERT INTO diary_stars (telegram_id, entry_date, stars, bonus, rated_by, rated_at)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(telegram_id, entry_date) DO UPDATE SET
-             stars=excluded.stars,
-             bonus=excluded.bonus,
-             rated_by=excluded.rated_by,
-             rated_at=excluded.rated_at''',
-        (telegram_id, entry_date, next_stars, next_bonus, x_admin_id, now_str),
-    )
-    apply_diary_points_delta(c, telegram_id, previous_points, next_points)
-    conn.commit()
-    conn.close()
-    return {
-        "success": True,
-        "telegram_id": telegram_id,
-        "entry_date": entry_date,
-        "stars": next_stars,
-        "bonus": bool(next_bonus),
-        "points_awarded": next_points,
-        "points_delta": next_points - previous_points,
-    }
-
-
-@app.get("/api/diary/stars/leaderboard")
-async def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
-    placeholders = ','.join('?' * len(ADMIN_IDS))
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute(
-        f'''SELECT u.telegram_id, u.full_name, u.avatar_url, us.theme_path,
-                  COALESCE(SUM(ds.stars), 0) as total_stars,
-                  COALESCE(SUM(ds.bonus), 0) as total_bonus,
-                  COALESCE(SUM(
-                    CASE COALESCE(ds.stars, 0)
-                      WHEN 1 THEN 15
-                      WHEN 2 THEN 30
-                      WHEN 3 THEN 50
-                      ELSE 0
-                    END + CASE WHEN COALESCE(ds.bonus, 0) > 0 THEN 20 ELSE 0 END
-                  ), 0) as total_points,
-                  COUNT(CASE WHEN ds.stars > 0 OR ds.bonus > 0 THEN 1 END) as days_rated
-           FROM users u
-           LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
-           LEFT JOIN diary_stars ds ON ds.telegram_id = u.telegram_id
-           WHERE u.telegram_id IS NOT NULL
-             AND u.telegram_id NOT IN ({placeholders})
-           GROUP BY u.telegram_id, u.full_name, u.avatar_url, us.theme_path
-           ORDER BY total_stars DESC, days_rated DESC, total_bonus DESC, u.full_name COLLATE NOCASE''',
-        ADMIN_IDS,
-    )
-    rows = c.fetchall()
-    conn.close()
-    return [
-        {
-            "telegram_id": row[0],
-            "name": row[1] or "Аноним",
-            "avatar_url": row[2],
-            "theme_path": row[3],
-            "total_stars": row[4] or 0,
-            "total_bonus": row[5] or 0,
-            "total_points": row[6] or 0,
-            "days_rated": row[7] or 0,
-        }
-        for row in rows
-    ]
 
 
 @app.post("/api/diary/lock")
