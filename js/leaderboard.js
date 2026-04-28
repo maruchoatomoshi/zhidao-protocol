@@ -353,15 +353,26 @@ async function loadDiaryStarsLeaderboardRating() {
 
 async function loadLeaderboard() {
   const IMPLANT_GLYPHS = {
-    'implant_red_dragon':   ['龍', '#cc2200'],
-    'implant_netwatch':     ['衛', '#cc2200'],
-    'implant_guanxi':       ['義', '#9b59b6'],
-    'implant_terracota':    ['兵', '#9b59b6'],
-    'implant_panda':        ['熊', '#9b59b6'],
-    'implant_shaolin':      ['武', '#9b59b6'],
-    'implant_linguasoft':   ['言', '#9b59b6'],
-    'implant_caishen':      ['財', '#9b59b6'],
-    'implant_qilin':        ['麟', '#9b59b6'],
+    'implant_red_dragon':   ['\u9f8d', '#cc2200', 'RED DRAGON'],
+    'implant_netwatch':     ['\u885b', '#cc2200', 'NETWATCH'],
+    'implant_guanxi':       ['\u7fa9', '#9b59b6', 'GUANXI'],
+    'implant_terracota':    ['\u5175', '#9b59b6', 'TERRACOTA'],
+    'implant_panda':        ['\u718a', '#9b59b6', 'PANDA'],
+    'implant_shaolin':      ['\u6b66', '#9b59b6', 'SHAOLIN'],
+    'implant_linguasoft':   ['\u8a00', '#9b59b6', 'LINGUASOFT'],
+    'implant_caishen':      ['\u8ca1', '#9b59b6', 'CAISHEN'],
+    'implant_qilin':        ['\u9e9f', '#9b59b6', 'QILIN'],
+  };
+  const CARD_GLYPHS = {
+    'card_zhongli':    ['\u5ca9', '#d4af37', 'ZHONGLI'],
+    'card_star':       ['\u7d2b', '#9b59b6', 'STAR'],
+    'card_pyro':       ['\u7130', '#e74c3c', 'PYRO'],
+    'card_fox':        ['\u72d0', '#e67e22', 'FOX'],
+    'card_fairy':      ['\u6843', '#e91e8c', 'FAIRY'],
+    'card_literature': ['\u6587', '#3498db', 'LITERATURE'],
+    'card_forest':     ['\u6728', '#2ecc71', 'FOREST'],
+    'card_sea':        ['\u6d77', '#1abc9c', 'SEA'],
+    'card_moon':       ['\u6708', '#b0c4de', 'MOON'],
   };
   const TOP_COLORS = [
     'linear-gradient(90deg,#d4af37,#f5e070)',
@@ -402,25 +413,21 @@ async function loadLeaderboard() {
         nameStyle = 'color:#cc2200;text-shadow:0 0 10px rgba(200,0,0,0.5);font-weight:700;';
       }
 
+      const pathLabel = item.theme_path === 'genshin' ? 'GENSHIN' : item.theme_path === 'cyberpunk' ? 'NETWATCH' : 'SYNC';
+      const pathClass = item.theme_path === 'genshin' ? 'genshin' : item.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
+      const rankSignal = i === 0 ? 'ALPHA' : i < 3 ? 'ELITE' : i < 10 ? 'TOP-10' : 'OPERATOR';
+
       // Иероглиф импланта
       let glyphHtml = '';
+      let signalLabel = 'NO IMPLANT';
       if (item.implant && IMPLANT_GLYPHS[item.implant]) {
-        const [glyph, color] = IMPLANT_GLYPHS[item.implant];
+        const [glyph, color, label] = IMPLANT_GLYPHS[item.implant];
+        signalLabel = label;
         glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
       } else if (item.card) {
-        const CARD_GLYPHS = {
-          'card_zhongli':    ['岩', '#d4af37'],
-          'card_star':       ['紫', '#9b59b6'],
-          'card_pyro':       ['焰', '#e74c3c'],
-          'card_fox':        ['狐', '#e67e22'],
-          'card_fairy':      ['桃', '#e91e8c'],
-          'card_literature': ['文', '#3498db'],
-          'card_forest':     ['木', '#2ecc71'],
-          'card_sea':        ['海', '#1abc9c'],
-          'card_moon':       ['月', '#b0c4de'],
-        };
         if (CARD_GLYPHS[item.card]) {
-          const [glyph, color] = CARD_GLYPHS[item.card];
+          const [glyph, color, label] = CARD_GLYPHS[item.card];
+          signalLabel = label;
           glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
         }
       }
@@ -430,12 +437,15 @@ async function loadLeaderboard() {
 
       // Прогресс до следующего места
       let progressHtml = '';
+      let deltaHtml = i === 0 ? '<span>LEADER NODE</span>' : '';
       if (i > 0 && data[i-1]) {
         const prev = data[i-1].points;
         const curr = item.points;
+        const delta = Math.max(0, prev - curr);
         const pct = prev > 0 ? Math.round((curr / prev) * 100) : 100;
         const barColor = isLegendary ? 'rgba(200,34,0,0.5)' : i < 3 ? 'rgba(212,175,55,0.4)' : 'rgba(150,150,150,0.2)';
         progressHtml = `<div class="lb-progress" style="width:${pct}%;background:${barColor};max-width:100%;"></div>`;
+        deltaHtml = `<span>${delta} \u2605 TO NEXT</span>`;
       }
 
       // Разделитель после топ-3
@@ -445,7 +455,15 @@ async function loadLeaderboard() {
         <div class="lb-rank">${medal}</div>
         <div class="lb-avatar">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
-          <div class="lb-name" style="${nameStyle}">${item.name}${titleHtml}${glyphHtml}${isMe?' 👈':''}</div>
+          <div class="lb-name-row">
+            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${glyphHtml}${isMe?' \ud83d\udc48':''}</div>
+            <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
+          </div>
+          <div class="lb-subline">
+            <span>${rankSignal}</span>
+            <span>${signalLabel}</span>
+            ${deltaHtml}
+          </div>
           ${progressHtml}
         </div>
         <div class="lb-points">${item.points} ★</div>

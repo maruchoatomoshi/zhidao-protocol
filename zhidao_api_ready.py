@@ -2353,7 +2353,7 @@ async def get_leaderboard():
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        f'''SELECT u.full_name, u.points, u.telegram_id, u.avatar_url,
+        f'''SELECT u.full_name, u.points, u.telegram_id, u.avatar_url, us.theme_path,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
@@ -2363,7 +2363,17 @@ async def get_leaderboard():
                     WHEN 'implant_guanxi' THEN 2
                     WHEN 'implant_terracota' THEN 3
                     ELSE 4 END
-                  LIMIT 1) as top_implant
+                  LIMIT 1) as top_implant,
+                 (SELECT card_id FROM user_cards
+                  WHERE telegram_id=u.telegram_id
+                  AND durability > 0
+                  ORDER BY CASE card_id
+                    WHEN 'card_star' THEN 1
+                    WHEN 'card_zhongli' THEN 2
+                    WHEN 'card_pyro' THEN 3
+                    WHEN 'card_moon' THEN 4
+                    ELSE 5 END
+                  LIMIT 1) as top_card
                  FROM users u
                  LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
                  WHERE u.telegram_id IS NOT NULL
@@ -2379,8 +2389,10 @@ async def get_leaderboard():
             "points": r[1] or 0,
             "telegram_id": r[2],
             "avatar_url": r[3],
-            "has_title": bool(r[4]),
-            "implant": r[5],
+            "theme_path": r[4],
+            "has_title": bool(r[5]),
+            "implant": r[6],
+            "card": r[7],
         }
         for r in result
     ]
