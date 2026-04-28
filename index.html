@@ -117,45 +117,6 @@
       </div>
     </div>
   </div>
-  <div class="profile-activity-card">
-    <div class="profile-activity-header">
-      <div class="profile-card-kicker" style="letter-spacing:2px;">OPERATOR ACTIVITY // 数据统计</div>
-      <div class="profile-activity-title">СТАТИСТИКА</div>
-    </div>
-    <div class="profile-activity-grid">
-      <div class="profile-activity-cell pa-gold">
-        <div class="pa-icon">🎰</div>
-        <div class="pa-num" id="profileStatCases">0</div>
-        <div class="pa-lbl">КЕЙСЫ</div>
-      </div>
-      <div class="profile-activity-cell pa-purple">
-        <div class="pa-icon">📿</div>
-        <div class="pa-num" id="profileStatPrayers">0</div>
-        <div class="pa-lbl">МОЛИТВЫ</div>
-      </div>
-      <div class="profile-activity-cell pa-blue">
-        <div class="pa-icon">🎴</div>
-        <div class="pa-num" id="profileStatCards">0</div>
-        <div class="pa-lbl">КАРТЫ</div>
-      </div>
-      <div class="profile-activity-cell pa-red">
-        <div class="pa-icon">🔩</div>
-        <div class="pa-num" id="profileStatImplants">0</div>
-        <div class="pa-lbl">ИМПЛАНТЫ</div>
-      </div>
-      <div class="profile-activity-cell pa-green">
-        <div class="pa-icon">📓</div>
-        <div class="pa-num" id="profileStatDiaries">0</div>
-        <div class="pa-lbl">ДНЕВНИК</div>
-      </div>
-      <div class="profile-activity-cell pa-orange">
-        <div class="pa-icon">⚔️</div>
-        <div class="pa-num" id="profileStatRaids">0</div>
-        <div class="pa-lbl">РЕЙДЫ</div>
-      </div>
-    </div>
-  </div>
-
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
   <div class="card neuro-card">
@@ -580,6 +541,11 @@
       <div class="more-item-name">СТИРКА</div>
       <div class="more-item-cn">洗衣 xǐ yī</div>
     </div>
+    <div class="more-item" onclick="openMore('stats')">
+      <i class="ti ti-chart-bar more-item-icon" style="color:#5dade2;"></i>
+      <div class="more-item-name">СТАТИСТИКА</div>
+      <div class="more-item-cn">数据 shù jù</div>
+    </div>
     <div class="more-item" onclick="openMore('achievements')">
       <i class="ti ti-medal more-item-icon" style="color:var(--gold);"></i>
       <div class="more-item-name">АЧИВКИ</div>
@@ -696,6 +662,47 @@
     <div id="adminAnnounceFormMore" class="admin-announce-form" style="display:none;padding:10px 12px;">
       <textarea class="admin-input" id="announceTextMore" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
       <button class="btn btn-primary" onclick="addAnnouncement()">[ ОПУБЛИКОВАТЬ ]</button>
+    </div>
+  </div>
+
+  <div id="more-stats" style="display:none;">
+    <div class="cn-divider">📊 数据 СТАТИСТИКА</div>
+    <div class="card" style="margin:0 12px 8px;">
+      <div class="card-inner">
+        <div style="font-size:8px;color:var(--text3);font-family:monospace;letter-spacing:1.5px;margin-bottom:10px;">OPERATOR ACTIVITY // 活动统计</div>
+        <div class="more-stats-grid">
+          <div class="more-stat-cell">
+            <div class="more-stat-icon" style="background:rgba(212,175,55,0.12);border-color:rgba(212,175,55,0.25);">🎰</div>
+            <div class="more-stat-num" id="profileStatCases" style="color:#d4af37;">0</div>
+            <div class="more-stat-lbl">КЕЙСЫ<br><span>开箱</span></div>
+          </div>
+          <div class="more-stat-cell">
+            <div class="more-stat-icon" style="background:rgba(155,89,182,0.12);border-color:rgba(155,89,182,0.25);">📿</div>
+            <div class="more-stat-num" id="profileStatPrayers" style="color:#c39bd3;">0</div>
+            <div class="more-stat-lbl">МОЛИТВЫ<br><span>祈愿</span></div>
+          </div>
+          <div class="more-stat-cell">
+            <div class="more-stat-icon" style="background:rgba(52,152,219,0.12);border-color:rgba(52,152,219,0.25);">🎴</div>
+            <div class="more-stat-num" id="profileStatCards" style="color:#7fb3d3;">0</div>
+            <div class="more-stat-lbl">КАРТЫ<br><span>卡牌</span></div>
+          </div>
+          <div class="more-stat-cell">
+            <div class="more-stat-icon" style="background:rgba(204,34,0,0.10);border-color:rgba(204,34,0,0.25);">🔩</div>
+            <div class="more-stat-num" id="profileStatImplants" style="color:#e07070;">0</div>
+            <div class="more-stat-lbl">ИМПЛАНТЫ<br><span>植入</span></div>
+          </div>
+          <div class="more-stat-cell">
+            <div class="more-stat-icon" style="background:rgba(46,204,113,0.10);border-color:rgba(46,204,113,0.25);">📓</div>
+            <div class="more-stat-num" id="profileStatDiaries" style="color:#58d68d;">0</div>
+            <div class="more-stat-lbl">ДНЕВНИК<br><span>日记</span></div>
+          </div>
+          <div class="more-stat-cell">
+            <div class="more-stat-icon" style="background:rgba(230,126,34,0.10);border-color:rgba(230,126,34,0.25);">⚔️</div>
+            <div class="more-stat-num" id="profileStatRaids" style="color:#e59866;">0</div>
+            <div class="more-stat-lbl">РЕЙДЫ<br><span>突袭</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

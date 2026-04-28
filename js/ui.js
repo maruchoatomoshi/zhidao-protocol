@@ -38,7 +38,7 @@ function showPage(name, btn) {
 
 function openMore(section) {
   // Скрываем все субстраницы
-  ['themes','weather','laundry','news','achievements','team','admin'].forEach(s => {
+  ['themes','weather','laundry','news','achievements','team','admin','stats'].forEach(s => {
     const el = document.getElementById('more-' + s);
     if (el) el.style.display = 'none';
   });
