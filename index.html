@@ -105,7 +105,23 @@
       <div class="profile-card-actions">
         <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
         <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">AVATAR</button>
+        <button class="profile-mini-btn" onclick="openProfileShowcaseModal()">SHOWCASE</button>
         <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-showcase-modal" id="profileShowcaseModal" style="display:none;">
+    <div class="profile-showcase-panel">
+      <div class="profile-showcase-panel-head">
+        <div>
+          <div class="profile-card-kicker">SHOWCASE SELECT</div>
+          <div class="profile-showcase-panel-title">&#36873;&#25321;&#23637;&#31034; // &#1042;&#1080;&#1090;&#1088;&#1080;&#1085;&#1072;</div>
+        </div>
+        <button class="profile-showcase-close" onclick="closeProfileShowcaseModal()">&#10005;</button>
+      </div>
+      <div class="profile-showcase-options" id="profileShowcaseOptions">
+        <div class="empty-state">Loading...</div>
       </div>
     </div>
   </div>

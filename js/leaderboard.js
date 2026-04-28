@@ -144,6 +144,112 @@ async function loadProfileDossier() {
   } catch (e) {}
 }
 
+function getProfileShowcaseGlyph(kind, code, fallback) {
+  if (fallback) return fallback;
+  if (kind === 'card') return code === 'card_moon' ? '\u6708' : '\u5361';
+  const map = {
+    implant_red_dragon: '\u9f8d',
+    implant_netwatch: '\u885b',
+    implant_qilin: '\u9e92',
+    implant_caishen: '\u8d22',
+    implant_terracota: '\u5175',
+    implant_guanxi: '\u5173',
+    implant_panda: '\u718a',
+    implant_shaolin: '\u6b66',
+    implant_linguasoft: '\u8a00',
+  };
+  return map[code] || '\u82af';
+}
+
+function renderProfileShowcaseOptions(options) {
+  const box = document.getElementById('profileShowcaseOptions');
+  if (!box) return;
+  if (!options.length) {
+    box.innerHTML = '<div class="empty-state">No active cards or implants</div>';
+    return;
+  }
+  box.innerHTML = options.map(item => `
+    <button class="profile-showcase-option" onclick="selectProfileShowcase('${item.kind}', '${escapeHtml(item.code)}')">
+      <span class="profile-showcase-option-icon">${escapeHtml(item.glyph)}</span>
+      <span class="profile-showcase-option-copy">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${escapeHtml(item.name)}</strong>
+        <em>${escapeHtml(item.detail)}</em>
+      </span>
+    </button>
+  `).join('');
+}
+
+async function openProfileShowcaseModal() {
+  const modal = document.getElementById('profileShowcaseModal');
+  const box = document.getElementById('profileShowcaseOptions');
+  if (!modal || !box || !currentUserId) return;
+  modal.style.display = 'flex';
+  box.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const [implantsRes, cardsRes] = await Promise.all([
+      fetch(`${API_URL}/api/casino/implants/${currentUserId}`),
+      fetch(`${API_URL}/api/cards/${currentUserId}`),
+    ]);
+    const implants = implantsRes.ok ? await implantsRes.json() : [];
+    const cards = cardsRes.ok ? await cardsRes.json() : [];
+    const options = [{
+      kind: 'auto',
+      code: '',
+      glyph: '自',
+      label: 'AUTO MODE',
+      name: 'Automatic showcase',
+      detail: 'System selects the strongest active item',
+    }];
+    (Array.isArray(implants) ? implants : []).forEach(item => {
+      options.push({
+        kind: 'implant',
+        code: item.implant_id,
+        glyph: getProfileShowcaseGlyph('implant', item.implant_id, item.icon),
+        label: 'IMPLANT',
+        name: item.name || item.implant_id,
+        detail: item.desc || `durability ${item.durability || 0}`,
+      });
+    });
+    (Array.isArray(cards) ? cards : []).forEach(item => {
+      options.push({
+        kind: 'card',
+        code: item.card_id,
+        glyph: getProfileShowcaseGlyph('card', item.card_id),
+        label: `${item.rarity || 4}\u2605 CARD`,
+        name: item.name || item.card_id,
+        detail: item.passive || `durability ${item.durability || 0}`,
+      });
+    });
+    renderProfileShowcaseOptions(options);
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state">Showcase loading error</div>';
+  }
+}
+
+function closeProfileShowcaseModal() {
+  const modal = document.getElementById('profileShowcaseModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function selectProfileShowcase(kind, code) {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/profile/showcase`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId, kind, code})
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Showcase save failed');
+    closeProfileShowcaseModal();
+    await loadProfileDossier();
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  } catch (e) {
+    tg.showAlert('Showcase save failed');
+  }
+}
+
 function compressProfileAvatar(file) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type || !file.type.startsWith('image/')) {

@@ -168,7 +168,9 @@ def init_db():
                   extra_raids INTEGER DEFAULT 0,
                   double_win INTEGER DEFAULT 0,
                   title_date TEXT DEFAULT NULL,
-                  theme_path TEXT DEFAULT NULL)''')
+                  theme_path TEXT DEFAULT NULL,
+                  profile_showcase_kind TEXT DEFAULT NULL,
+                  profile_showcase_code TEXT DEFAULT NULL)''')
     c.execute('''CREATE TABLE IF NOT EXISTS user_implants
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER,
@@ -343,6 +345,10 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN extra_raids INTEGER DEFAULT 0")
     if 'theme_path' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN theme_path TEXT DEFAULT NULL")
+    if 'profile_showcase_kind' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN profile_showcase_kind TEXT DEFAULT NULL")
+    if 'profile_showcase_code' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN profile_showcase_code TEXT DEFAULT NULL")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -1383,7 +1389,8 @@ async def get_user_profile_dossier(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path
+        '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
+                  us.profile_showcase_kind, us.profile_showcase_code
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -1394,7 +1401,7 @@ async def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code = user_row
     points = points or 0
 
     c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND prize NOT LIKE 'genshin_%'", (telegram_id,))
@@ -1430,45 +1437,57 @@ async def get_user_profile_dossier(telegram_id: int):
     )
     cards = c.fetchall()
 
-    if theme_path == "genshin" and cards:
-        card_id, durability = max(
-            cards,
-            key=lambda row: (CARD_INFO.get(row[0], {"rarity": 4}).get("rarity", 4), row[1] or 0),
-        )
+    def card_showcase(card_id: str, durability: int, source: str = "auto"):
         info = CARD_INFO.get(card_id, {"name": card_id, "rarity": 4})
-        showcase = {
+        return {
             "kind": "card",
             "code": card_id,
             "name": info.get("name", card_id),
             "glyph": "月" if card_id == "card_moon" else "卡",
             "detail": f"{info.get('rarity', 4)}★ · durability {durability}",
+            "source": source,
         }
-    elif implants:
-        implant_id, durability = max(
-            implants,
-            key=lambda row: (implant_info.get(row[0], {"weight": 1}).get("weight", 1), row[1] or 0),
-        )
+
+    def implant_showcase(implant_id: str, durability: int, source: str = "auto"):
         info = implant_info.get(implant_id, {"name": implant_id, "glyph": "芯", "weight": 1})
-        showcase = {
+        return {
             "kind": "implant",
             "code": implant_id,
             "name": info.get("name", implant_id),
             "glyph": info.get("glyph", "芯"),
             "detail": f"durability {durability}",
+            "source": source,
         }
-    elif cards:
+
+    manual_kind = (manual_showcase_kind or "").strip()
+    manual_code = (manual_showcase_code or "").strip()
+    if manual_kind == "implant" and manual_code:
+        manual_implant = next((row for row in implants if row[0] == manual_code), None)
+        if manual_implant:
+            showcase = implant_showcase(manual_implant[0], manual_implant[1], "manual")
+    elif manual_kind == "card" and manual_code:
+        manual_card = next((row for row in cards if row[0] == manual_code), None)
+        if manual_card:
+            showcase = card_showcase(manual_card[0], manual_card[1], "manual")
+
+    if not showcase and theme_path == "genshin" and cards:
         card_id, durability = max(
             cards,
             key=lambda row: (CARD_INFO.get(row[0], {"rarity": 4}).get("rarity", 4), row[1] or 0),
         )
-        info = CARD_INFO.get(card_id, {"name": card_id, "rarity": 4})
-        showcase = {
-            "kind": "card",
-            "code": card_id,
-            "name": info.get("name", card_id),
-            "glyph": "卡",
-            "detail": f"{info.get('rarity', 4)}★ · durability {durability}",
-        }
+        showcase = card_showcase(card_id, durability)
+    elif not showcase and implants:
+        implant_id, durability = max(
+            implants,
+            key=lambda row: (implant_info.get(row[0], {"weight": 1}).get("weight", 1), row[1] or 0),
+        )
+        showcase = implant_showcase(implant_id, durability)
+    elif not showcase and cards:
+        card_id, durability = max(
+            cards,
+            key=lambda row: (CARD_INFO.get(row[0], {"rarity": 4}).get("rarity", 4), row[1] or 0),
+        )
+        showcase = card_showcase(card_id, durability)
 
     admin_placeholders = ','.join('?' * len(ADMIN_IDS))
     leaderboard_rank = None
@@ -1551,6 +1570,71 @@ async def get_user_profile_dossier(telegram_id: int):
         },
         "status_line": f"状态：在线 // 权限：{permission_label} // 同步率：{sync_rate}%",
     }
+
+
+@app.post("/api/profile/showcase")
+async def set_profile_showcase(data: dict):
+    telegram_id = data.get("telegram_id")
+    showcase_kind = str(data.get("kind") or "auto").strip()
+    showcase_code = str(data.get("code") or "").strip()
+
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="No telegram_id")
+    if showcase_kind not in ("auto", "implant", "card"):
+        raise HTTPException(status_code=400, detail="Invalid showcase kind")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if showcase_kind == "auto":
+        c.execute(
+            '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
+               VALUES (?, NULL, NULL)
+               ON CONFLICT(telegram_id) DO UPDATE SET
+                 profile_showcase_kind=NULL,
+                 profile_showcase_code=NULL''',
+            (telegram_id,),
+        )
+    elif showcase_kind == "implant":
+        c.execute(
+            "SELECT 1 FROM user_implants WHERE telegram_id=? AND implant_id=? AND durability > 0 LIMIT 1",
+            (telegram_id, showcase_code),
+        )
+        if not c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="Implant not found")
+        c.execute(
+            '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
+               VALUES (?, 'implant', ?)
+               ON CONFLICT(telegram_id) DO UPDATE SET
+                 profile_showcase_kind='implant',
+                 profile_showcase_code=excluded.profile_showcase_code''',
+            (telegram_id, showcase_code),
+        )
+    else:
+        c.execute(
+            "SELECT 1 FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0 LIMIT 1",
+            (telegram_id, showcase_code),
+        )
+        if not c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="Card not found")
+        c.execute(
+            '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
+               VALUES (?, 'card', ?)
+               ON CONFLICT(telegram_id) DO UPDATE SET
+                 profile_showcase_kind='card',
+                 profile_showcase_code=excluded.profile_showcase_code''',
+            (telegram_id, showcase_code),
+        )
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "kind": None if showcase_kind == "auto" else showcase_kind, "code": showcase_code or None}
 
 
 @app.get("/api/user/{telegram_id}")
