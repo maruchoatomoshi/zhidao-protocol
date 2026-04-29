@@ -1,7 +1,7 @@
 const tg = window.Telegram?.WebApp || {
   ready:()=>{}, expand:()=>{}, close:()=>{},
   setHeaderColor:()=>{}, setBackgroundColor:()=>{},
-  showAlert:(msg)=>alert(msg),
+  showAlert:(msg)=>{ if(typeof showToast==='function') showToast(msg); else alert(msg); },
   showPopup:(opts,cb)=>{ const msg=(opts.title||'')+'\n'+(opts.message||''); setTimeout(()=>{ if(confirm(msg)) cb(opts.buttons&&opts.buttons[0]?opts.buttons[0].id:'confirm'); else cb('cancel'); },0); },
   HapticFeedback:{ notificationOccurred:()=>{}, impactOccurred:()=>{}, selectionChanged:()=>{} },
   initDataUnsafe:{user:null}, BackButton:{show:()=>{},hide:()=>{},onClick:()=>{}},

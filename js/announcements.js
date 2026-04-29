@@ -63,7 +63,7 @@ async function loadAnnouncements() {
 }
 
 async function reactToAnnouncement(id, emoji, btn) {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   try {
     const r = await fetch(`${API_URL}/api/announcements/${id}/react`, {
       method: 'POST',
@@ -82,27 +82,27 @@ async function addAnnouncement() {
     .map(id => document.getElementById(id))
     .find(el => el && el.value.trim());
   const text = source ? source.value.trim() : '';
-  if (!text) { tg.showAlert('Введите текст'); return; }
+  if (!text) { showToast('Введите текст'); return; }
   try {
     const r = await fetch(`${API_URL}/api/announcements`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({text})});
     if (r.ok) {
-      tg.showAlert('✅ Опубликовано!');
+      showToast('✅ Опубликовано!');
       ['announceText', 'announceTextMore'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
       loadAnnouncements();
     }
-  } catch(e) { tg.showAlert('Ошибка'); }
+  } catch(e) { showToast('Ошибка'); }
 }
 
 async function addAnnouncementAdmin() {
   const text = document.getElementById('announceTextAdmin').value;
-  if (!text) { tg.showAlert('Введите текст'); return; }
+  if (!text) { showToast('Введите текст'); return; }
   try {
     const r = await fetch(`${API_URL}/api/announcements`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({text})});
-    if (r.ok) { tg.showAlert('✅ Опубликовано!'); document.getElementById('announceTextAdmin').value=''; loadAnnouncements(); }
-  } catch(e) { tg.showAlert('Ошибка'); }
+    if (r.ok) { showToast('✅ Опубликовано!'); document.getElementById('announceTextAdmin').value=''; loadAnnouncements(); }
+  } catch(e) { showToast('Ошибка'); }
 }
 
 async function deleteAnnouncement(id) {

@@ -35,19 +35,19 @@ async function addScheduleItem() {
   const time = timeEl ? timeEl.value.trim() : '';
   const subject = subjectEl ? subjectEl.value.trim() : '';
   const location = locationEl ? locationEl.value.trim() : '';
-  if (!day || !time || !subject || !location) { tg.showAlert('Заполните все поля'); return; }
+  if (!day || !time || !subject || !location) { showToast('Заполните все поля'); return; }
   try {
     const r = await fetch(`${API_URL}/api/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
       body: JSON.stringify({day,time,subject,location})
     });
     if (r.ok) {
-      tg.showAlert('✅ Добавлено!');
+      showToast('✅ Добавлено!');
       ['schDay','schTime','schSubject','schLocation','adminSchDay','adminSchTime','adminSchSubject','adminSchLocation']
         .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       loadSchedule();
     }
-  } catch(e) { tg.showAlert('Ошибка'); }
+  } catch(e) { showToast('Ошибка'); }
 }
 
 async function deleteSchedule(id) {

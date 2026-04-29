@@ -1,7 +1,7 @@
 function showPage(name, btn) {
   if (name === 'diary' && !isAdmin) {
     if (typeof syncDiaryAccessVisibility === 'function') syncDiaryAccessVisibility();
-    try { tg.showAlert('Архив дневника доступен только администраторам.'); } catch(e) {}
+    try { showToast('Архив дневника доступен только администраторам.'); } catch(e) {}
     return;
   }
 
@@ -97,12 +97,12 @@ async function loadUserData(telegramId) {
 // ── THEME PATH LOGIC ──────────────────────────────────────────
 
 function getConfig() {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   if (userConfig) {
     document.getElementById('configBox').textContent = userConfig;
     document.getElementById('configBox').style.display = 'block';
     document.getElementById('copyBtn').style.display = 'block';
-  } else { tg.showAlert('Конфиг не найден. Активируйте код через /start КОД в боте.'); }
+  } else { showToast('Конфиг не найден. Активируйте код через /start КОД в боте.'); }
 }
 
 function copyConfig() {
@@ -166,12 +166,12 @@ function closeQuestion() { document.getElementById('questionModal').classList.re
 
 async function submitQuestion() {
   const text = document.getElementById('questionText').value.trim();
-  if (!text) { tg.showAlert('Напиши вопрос!'); return; }
+  if (!text) { showToast('Напиши вопрос!'); return; }
   try {
     const r = await fetch(`${API_URL}/api/question`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:text,telegram_id:currentUserId})});
-    if (r.ok) { closeQuestion(); tg.showAlert('✅ Вопрос отправлен анонимно!'); try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} }
-    else tg.showAlert('Ошибка отправки');
-  } catch(e) { tg.showAlert('Ошибка соединения'); }
+    if (r.ok) { closeQuestion(); showToast('✅ Вопрос отправлен анонимно!'); try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} }
+    else showToast('Ошибка отправки');
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 // ===== АДМИН =====
@@ -211,3 +211,56 @@ function buildMatrixRain() {
 
 window.addEventListener('load', buildMatrixRain);
 window.addEventListener('resize', buildMatrixRain);
+
+// ===== TOAST NOTIFICATIONS =====
+
+function showToast(msg, type) {
+  if (!type) {
+    if (/✅/.test(msg)) type = 'success';
+    else if (/⛔|❌|Ошибка|ошибка|[Ee]rror|failed|Failed/.test(msg)) type = 'error';
+    else if (/Введи|Заполни|Напиши|Выбери|Откройте|недостаточно|Недостаточно/.test(msg)) type = 'warn';
+    else type = 'info';
+  }
+
+  const icons = { success: '✅', error: '⛔', info: '⚡', warn: '⚠️' };
+  const container = document.getElementById('toastContainer');
+  if (!container) { console.warn('[toast]', msg); return; }
+
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+
+  const iconEl = document.createElement('span');
+  iconEl.className = 'toast-icon';
+  iconEl.textContent = icons[type] || '⚡';
+
+  const msgEl = document.createElement('span');
+  msgEl.className = 'toast-msg';
+  msgEl.innerHTML = msg
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
+
+  const closeEl = document.createElement('span');
+  closeEl.className = 'toast-close';
+  closeEl.textContent = '✕';
+
+  el.appendChild(iconEl);
+  el.appendChild(msgEl);
+  el.appendChild(closeEl);
+
+  const dismiss = () => {
+    if (el._gone) return;
+    el._gone = true;
+    el.classList.add('hiding');
+    setTimeout(() => { el.parentElement && el.parentElement.removeChild(el); }, 230);
+  };
+  el._dismiss = dismiss;
+  closeEl.addEventListener('click', dismiss);
+
+  container.appendChild(el);
+  setTimeout(dismiss, 3600);
+
+  const toasts = container.querySelectorAll('.toast:not(.hiding)');
+  if (toasts.length > 4) toasts[0]._dismiss && toasts[0]._dismiss();
+}

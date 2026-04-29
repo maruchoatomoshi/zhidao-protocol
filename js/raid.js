@@ -276,8 +276,8 @@ function getRaidErrorMessage(detail) {
 
 async function joinRaid() {
     if (isJoiningRaid) return;
-    if (!currentUserId) { tg.showAlert('Откройте приложение через Telegram бота'); return; }
-    if (currentPoints < 50) { tg.showAlert('Недостаточно баллов. Нужно 50★'); return; }
+    if (!currentUserId) { showToast('Откройте приложение через Telegram бота'); return; }
+    if (currentPoints < 50) { showToast('Недостаточно баллов. Нужно 50★'); return; }
 
     tg.showPopup({
         title: '⚔️ Вступить в рейд?',
@@ -299,7 +299,7 @@ async function joinRaid() {
             const data = await r.json();
 
             if (!r.ok) {
-                tg.showAlert(getRaidErrorMessage(data.detail));
+                showToast(getRaidErrorMessage(data.detail));
                 return;
             }
 
@@ -328,11 +328,11 @@ async function joinRaid() {
                 );
             } catch(e) {}
 
-            tg.showAlert(data.message || 'Рейд обновлён.');
+            showToast(data.message || 'Рейд обновлён.');
             loadLeaderboard();
             loadPoints(currentUserId);
         } catch(e) {
-            tg.showAlert('Ошибка соединения с рейдом.');
+            showToast('Ошибка соединения с рейдом.');
         } finally {
             isJoiningRaid = false;
             loadRaidStatus();

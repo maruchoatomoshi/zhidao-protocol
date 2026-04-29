@@ -16,12 +16,12 @@ function switchLaundryTab(tab) {
 }
 
 async function bookWaterSlot(slotId) {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   try {
     const r = await fetch(`${API_URL}/api/water/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
-    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на набор воды!'); loadWaterSchedule(); }
-    else { const e=await r.json(); tg.showAlert(e.detail==='Slot full'?'Мест нет':'Вы уже записаны'); }
-  } catch(e) { tg.showAlert('Ошибка'); }
+    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} showToast('✅ Записаны на набор воды!'); loadWaterSchedule(); }
+    else { const e=await r.json(); showToast(e.detail==='Slot full'?'Мест нет':'Вы уже записаны'); }
+  } catch(e) { showToast('Ошибка'); }
 }
 
 async function cancelWaterSlot(slotId) {
@@ -98,12 +98,12 @@ async function loadWaterSchedule() {
 }
 
 async function bookLaundrySlot(slotId) {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
-    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} tg.showAlert('✅ Записаны на стирку!'); loadLaundrySchedule(); }
-    else { const e=await r.json(); tg.showAlert(e.detail==='Already booked'?'У вас уже есть запись':'Слот занят'); }
-  } catch(e) { tg.showAlert('Ошибка'); }
+    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} showToast('✅ Записаны на стирку!'); loadLaundrySchedule(); }
+    else { const e=await r.json(); showToast(e.detail==='Already booked'?'У вас уже есть запись':'Слот занят'); }
+  } catch(e) { showToast('Ошибка'); }
 }
 
 async function cancelLaundrySlot(slotId) {
@@ -122,8 +122,8 @@ async function bookLaundry(time) {}
 async function cancelLaundry(id) {
   try {
     const r = await fetch(`${API_URL}/api/laundry/${id}`,{method:'DELETE',headers:{'x-telegram-id':currentUserId}});
-    if (r.ok) { tg.showAlert('Запись отменена'); loadLaundry(); }
-  } catch(e) { tg.showAlert('Ошибка'); }
+    if (r.ok) { showToast('Запись отменена'); loadLaundry(); }
+  } catch(e) { showToast('Ошибка'); }
 }
 
 // ===== ОБЪЯВЛЕНИЯ =====

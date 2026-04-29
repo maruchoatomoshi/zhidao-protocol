@@ -1,7 +1,7 @@
 function openDiaryPage() {
   if (!isAdmin) {
     syncDiaryAccessVisibility();
-    try { tg.showAlert('Архив дневника доступен только администраторам.'); } catch(e) {}
+    try { showToast('Архив дневника доступен только администраторам.'); } catch(e) {}
     return;
   }
   showPage('diary');
@@ -154,7 +154,7 @@ async function submitDiaryStars(value) {
       const data = await r.json();
       closeDiaryStarsPopup();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      tg.showAlert(`✅ ${name}: ${data.points_delta >= 0 ? '+' : ''}${data.points_delta}★`);
+      showToast(`✅ ${name}: ${data.points_delta >= 0 ? '+' : ''}${data.points_delta}★`);
       loadDiaryStarsList();
     } else {
       let errorText = 'Ошибка при начислении.';
@@ -162,10 +162,10 @@ async function submitDiaryStars(value) {
         const data = await r.json();
         if (data.detail) errorText = data.detail;
       } catch(e) {}
-      tg.showAlert(errorText);
+      showToast(errorText);
     }
   } catch(e) {
-    tg.showAlert('Нет соединения.');
+    showToast('Нет соединения.');
   }
 }
 
@@ -636,7 +636,7 @@ async function saveDiaryDraft(showFeedback = false) {
 
     if (showFeedback) {
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      tg.showAlert(saved
+      showToast(saved
         ? '✅ День сохранён на сервере.'
         : '💾 Сохранено локально (сервер недоступен).');
     }
@@ -705,13 +705,13 @@ function validateDiary(entry) {
 }
 
 async function submitDiary() {
-  if (!currentUserId) { tg.showAlert('Открой через бота.'); return; }
+  if (!currentUserId) { showToast('Открой через бота.'); return; }
   const entry     = collectDiaryFormData();
   const wordCount = countDiaryWords(entry);
   const hasStory  = entry.story.trim().length > 0;
 
   if (wordCount < 1 && !hasStory) {
-    tg.showAlert('Заполни хотя бы несколько слов или напиши текст дня перед сдачей.');
+    showToast('Заполни хотя бы несколько слов или напиши текст дня перед сдачей.');
     return;
   }
 
@@ -737,12 +737,12 @@ async function submitDiary() {
         try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
         applyDiaryRoleUX('submitted');
         renderDiarySavedDays();
-        tg.showAlert('✅ День сдан на проверку!');
+        showToast('✅ День сдан на проверку!');
       } else {
-        tg.showAlert('Ошибка при сдаче. Попробуй ещё раз.');
+        showToast('Ошибка при сдаче. Попробуй ещё раз.');
       }
     } catch(e) {
-      tg.showAlert('Нет соединения с сервером.');
+      showToast('Нет соединения с сервером.');
     }
   });
 }
@@ -762,7 +762,7 @@ async function scoreDiary() {
     if (r.ok) {
       const data = await r.json();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      tg.showAlert('⭐ Оценки выставлены.');
+      showToast('⭐ Оценки выставлены.');
       if (data.entry) {
         const merged = { ...createEmptyDiaryEntry(date), ...data.entry };
         fillDiaryForm(merged);
@@ -775,10 +775,10 @@ async function scoreDiary() {
         const data = await r.json();
         if (data.detail) errorText = data.detail;
       } catch(e) {}
-      tg.showAlert(errorText);
+      showToast(errorText);
     }
   } catch(e) {
-    tg.showAlert('Нет соединения.');
+    showToast('Нет соединения.');
   }
 }
 
@@ -795,10 +795,10 @@ async function lockDiaryEntry(locked) {
     if (r.ok) {
       applyDiaryRoleUX(locked ? 'locked' : 'submitted');
       renderDiarySavedDays();
-      tg.showAlert(locked ? '🔒 Запись заблокирована.' : '🔓 Запись разблокирована.');
+      showToast(locked ? '🔒 Запись заблокирована.' : '🔓 Запись разблокирована.');
     }
   } catch(e) {
-    tg.showAlert('Нет соединения.');
+    showToast('Нет соединения.');
   }
 }
 

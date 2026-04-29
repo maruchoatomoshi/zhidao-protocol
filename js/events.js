@@ -149,7 +149,7 @@ async function eventAction(actionType) {
   currentEventAction = actionType;
 
   if (!currentUserId) {
-    tg.showAlert('Откройте приложение через Telegram бота');
+    showToast('Откройте приложение через Telegram бота');
     return;
   }
 
@@ -167,7 +167,7 @@ async function loadEventQuestion(actionType) {
     const data = await r.json();
 
     if (!r.ok || !data.question) {
-      tg.showAlert('Не удалось получить вопрос для действия');
+      showToast('Не удалось получить вопрос для действия');
       return;
     }
 
@@ -175,7 +175,7 @@ async function loadEventQuestion(actionType) {
     renderEventQuestion(data.question);
   } catch (e) {
     console.error('Ошибка загрузки вопроса ивента', e);
-    tg.showAlert('Ошибка загрузки вопроса');
+    showToast('Ошибка загрузки вопроса');
   }
 }
 
@@ -237,14 +237,14 @@ async function submitEventAction({ action_type, question_id = null, answer_optio
     const data = await r.json();
 
     if (!r.ok) {
-      tg.showAlert(data.detail || 'Не удалось выполнить действие');
+      showToast(data.detail || 'Не удалось выполнить действие');
       return;
     }
 
     renderEventActionResult(data);
   } catch (e) {
     console.error('Ошибка действия ивента', e);
-    tg.showAlert('Ошибка соединения с ивентом');
+    showToast('Ошибка соединения с ивентом');
   } finally {
     setEventLoading(false);
   }

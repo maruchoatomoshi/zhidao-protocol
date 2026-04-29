@@ -117,7 +117,7 @@ async function loadShop() {
 }
 
 async function buyItem(code, name, price) {
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
+  if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   tg.showPopup({
     title: `Купить ${name}?`,
     message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
@@ -134,16 +134,16 @@ async function buyItem(code, name, price) {
         currentPoints = data.new_points;
         updatePoints();
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        tg.showAlert(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`);
+        showToast(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`);
         loadShop();
       } else {
         const err = await r.json();
-        if (err.detail === 'Daily limit reached') tg.showAlert('Этот товар уже разобрали!');
-        else if (err.detail === 'Not enough points') tg.showAlert('Недостаточно баллов!');
-        else if (err.detail === 'Account frozen') tg.showAlert('⛔ Аккаунт под надзором NetWatch');
-        else tg.showAlert('Ошибка покупки');
+        if (err.detail === 'Daily limit reached') showToast('Этот товар уже разобрали!');
+        else if (err.detail === 'Not enough points') showToast('Недостаточно баллов!');
+        else if (err.detail === 'Account frozen') showToast('⛔ Аккаунт под надзором NetWatch');
+        else showToast('Ошибка покупки');
       }
-    } catch(e) { tg.showAlert('Ошибка соединения'); }
+    } catch(e) { showToast('Ошибка соединения'); }
   });
 }
 
@@ -192,12 +192,12 @@ function useItem(id, name) {
       });
       if (r.ok) {
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        tg.showAlert(`✅ ${name} использован!\nПокажи это сообщение вожатому.`);
+        showToast(`✅ ${name} использован!\nПокажи это сообщение вожатому.`);
         loadInventory();
       } else {
-        tg.showAlert('Ошибка использования');
+        showToast('Ошибка использования');
       }
-    } catch(e) { tg.showAlert('Ошибка соединения'); }
+    } catch(e) { showToast('Ошибка соединения'); }
   });
 }
 function giftItem(id, name) { tg.showPopup({title:`Подарить ${name}?`,message:'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов',buttons:[{type:'ok'}]}); }
@@ -212,16 +212,16 @@ async function sellItem(id, name, price) {
     if (btnId !== 'confirm') return;
     try {
       const r = await fetch(`${API_URL}/api/shop/sell`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({purchase_id:id,telegram_id:currentUserId})});
-      if (r.ok) { const data=await r.json(); currentPoints=data.new_points; updatePoints(); tg.showAlert(`✅ Продано! +${data.refund} ★`); loadInventory(); }
-    } catch(e) { tg.showAlert('Ошибка'); }
+      if (r.ok) { const data=await r.json(); currentPoints=data.new_points; updatePoints(); showToast(`✅ Продано! +${data.refund} ★`); loadInventory(); }
+    } catch(e) { showToast('Ошибка'); }
   });
 }
 
 async function resetShop() {
   try {
     const r = await fetch(`${API_URL}/api/admin/reset_shop`,{method:'POST',headers:{'x-admin-id':currentUserId}});
-    if (r.ok) tg.showAlert('✅ Магазин сброшен!');
-  } catch(e) { tg.showAlert('Ошибка'); }
+    if (r.ok) showToast('✅ Магазин сброшен!');
+  } catch(e) { showToast('Ошибка'); }
 }
 
 // ===== КАЗИНО =====

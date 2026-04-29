@@ -767,7 +767,7 @@ async function joinArchitectTeam() {
     const data = await res.json();
 
     if (!res.ok) {
-      tg.showAlert(data.detail || 'Не удалось вступить в команду');
+      showToast(data.detail || 'Не удалось вступить в команду');
       return;
     }
 
@@ -777,7 +777,7 @@ async function joinArchitectTeam() {
 
     try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
   } catch (e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
   }
 }
 
@@ -794,7 +794,7 @@ async function leaveArchitectTeam() {
     const data = await res.json();
 
     if (!res.ok) {
-      tg.showAlert(data.detail || 'Не удалось покинуть команду');
+      showToast(data.detail || 'Не удалось покинуть команду');
       return;
     }
 
@@ -804,7 +804,7 @@ async function leaveArchitectTeam() {
 
     try { tg.HapticFeedback.notificationOccurred('warning'); } catch (e) {}
   } catch (e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
   }
 }
 
@@ -834,7 +834,7 @@ async function createArchitectEvent() {
     const data = await res.json();
 
     if (!res.ok) {
-      tg.showAlert(data.detail || 'Не удалось создать ивент');
+      showToast(data.detail || 'Не удалось создать ивент');
       return;
     }
 
@@ -844,7 +844,7 @@ async function createArchitectEvent() {
 
     try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
   } catch (e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
   }
 }
 
@@ -864,7 +864,7 @@ async function startArchitectEvent() {
     const data = await res.json();
 
     if (!res.ok) {
-      tg.showAlert(data.detail || 'Не удалось запустить ивент');
+      showToast(data.detail || 'Не удалось запустить ивент');
       return;
     }
 
@@ -874,7 +874,7 @@ async function startArchitectEvent() {
 
     try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
   } catch (e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
   }
 }
 
@@ -916,7 +916,7 @@ async function requestArchitectQuestion(actionType) {
     const data = await res.json();
 
     if (!res.ok) {
-      tg.showAlert(data.detail || 'Не удалось получить вопрос');
+      showToast(data.detail || 'Не удалось получить вопрос');
       return;
     }
 
@@ -930,7 +930,7 @@ async function requestArchitectQuestion(actionType) {
 
     const question = data.question;
     if (!question) {
-      tg.showAlert('Вопрос не найден');
+      showToast('Вопрос не найден');
       return;
     }
 
@@ -938,7 +938,7 @@ async function requestArchitectQuestion(actionType) {
     pendingEventQuestion = question;
     showArchitectQuestion(question);
   } catch (e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
   } finally {
     isArchitectQuestionLoading = false;
   }
@@ -1055,7 +1055,7 @@ async function submitArchitectAnswer(answerOption) {
     const data = await res.json();
 
     if (!res.ok) {
-      tg.showAlert(data.detail || 'Не удалось отправить действие');
+      showToast(data.detail || 'Не удалось отправить действие');
       return;
     }
 
@@ -1088,6 +1088,6 @@ async function submitArchitectAnswer(answerOption) {
       tg.HapticFeedback.notificationOccurred(data.is_correct === false ? 'error' : 'success');
     } catch (e) {}
   } catch (e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
   }
 }

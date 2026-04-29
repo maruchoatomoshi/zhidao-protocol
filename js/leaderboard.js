@@ -246,7 +246,7 @@ async function selectProfileShowcase(kind, code) {
     await loadProfileDossier();
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
   } catch (e) {
-    tg.showAlert('Showcase save failed');
+    showToast('Showcase save failed');
   }
 }
 
@@ -300,7 +300,7 @@ async function handleProfileAvatarFile(input) {
     await saveProfileAvatar(avatarUrl);
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
   } catch (e) {
-    tg.showAlert('Не удалось сохранить аватар');
+    showToast('Не удалось сохранить аватар');
   } finally {
     if (input) input.value = '';
   }
@@ -311,7 +311,7 @@ async function removeProfileAvatar() {
     await saveProfileAvatar('');
     try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}
   } catch (e) {
-    tg.showAlert('Не удалось сбросить аватар');
+    showToast('Не удалось сбросить аватар');
   }
 }
 

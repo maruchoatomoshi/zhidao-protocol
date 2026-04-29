@@ -239,13 +239,13 @@ function gsBuildCard(cardId, cardInfo) {
 
 async function openGenshinCase() {
   if (gsAnimating) return;
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-  if (currentPoints < 80) { tg.showAlert('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.'); return; }
+  if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  if (currentPoints < 80) { showToast('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.'); return; }
   // Проверяем заморозку
   try {
     const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
     const fd = await fr.json();
-    if (fd.frozen && !isAdmin) { tg.showAlert('⛔ Аккаунт заморожен. Молитвы недоступны.'); return; }
+    if (fd.frozen && !isAdmin) { showToast('⛔ Аккаунт заморожен. Молитвы недоступны.'); return; }
   } catch(e) {}
   const btn = document.getElementById('genshinOpenBtn');
   btn.disabled = true; btn.textContent = '✦ Молитва совершается... ✦';
@@ -267,10 +267,10 @@ async function openGenshinCase() {
     });
     const data = await r.json();
     if (!r.ok) {
-      if (data.detail==='Only for girls') tg.showAlert('Молитвы доступны только девочкам 🌸');
-      else if (data.detail==='Not enough points') tg.showAlert('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.');
-      else if (data.detail==='Daily limit reached') tg.showAlert('Лимит молитв на сегодня исчерпан');
-      else tg.showAlert('Ошибка: ' + (data.detail||''));
+      if (data.detail==='Only for girls') showToast('Молитвы доступны только девочкам 🌸');
+      else if (data.detail==='Not enough points') showToast('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.');
+      else if (data.detail==='Daily limit reached') showToast('Лимит молитв на сегодня исчерпан');
+      else showToast('Ошибка: ' + (data.detail||''));
       gsAnimating = false; btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
       currentPoints = data.new_points || currentPoints;
       updatePoints();
@@ -319,7 +319,7 @@ async function openGenshinCase() {
     if (data.rarity === 5) { setTimeout(() => launchConfetti(80), cfg.revealDelay + 400); }
 
   } catch(e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
     gsAnimating=false; btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
   }
 }
@@ -473,10 +473,10 @@ async function disassembleCard(id) {
         currentPoints = data.new_points;
         updatePoints();
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        tg.showAlert(`✦ Разобрано! +50 ✦\nБаланс: ${data.new_points} ✦`);
+        showToast(`✦ Разобрано! +50 ✦\nБаланс: ${data.new_points} ✦`);
         loadCards(currentUserId);
-      } else tg.showAlert('Ошибка разборки');
-    } catch(e) { tg.showAlert('Ошибка соединения'); }
+      } else showToast('Ошибка разборки');
+    } catch(e) { showToast('Ошибка соединения'); }
   });
 }
 
@@ -544,13 +544,13 @@ function initRoulette(caseType = null, targetIdx = null) {
 
 async function openCase() {
   if (isSpinning) return;
-  if (!currentUserId) { tg.showAlert('Откройте через Telegram бота'); return; }
-  if (currentPoints < 80) { tg.showAlert('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.'); return; }
+  if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  if (currentPoints < 80) { showToast('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.'); return; }
   // Проверяем заморозку
   try {
     const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
     const fd = await fr.json();
-    if (fd.frozen && !isAdmin) { tg.showAlert('⛔ Аккаунт заморожен. Кейсы недоступны.'); return; }
+    if (fd.frozen && !isAdmin) { showToast('⛔ Аккаунт заморожен. Кейсы недоступны.'); return; }
   } catch(e) {}
   isSpinning = true;
   document.getElementById('openCaseBtn').disabled = true;
@@ -562,9 +562,9 @@ async function openCase() {
     });
     if (!r.ok) {
       const err = await r.json();
-      if (err.detail==='Daily limit reached') tg.showAlert('Лимит 3 кейса в день! Купи доп кейс в магазине 😄');
-      else if (err.detail==='Not enough points') tg.showAlert('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.');
-      else tg.showAlert('Ошибка!');
+      if (err.detail==='Daily limit reached') showToast('Лимит 3 кейса в день! Купи доп кейс в магазине 😄');
+      else if (err.detail==='Not enough points') showToast('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.');
+      else showToast('Ошибка!');
       isSpinning = false;
       document.getElementById('openCaseBtn').disabled = false;
       return;
@@ -603,7 +603,7 @@ async function openCase() {
     
     if (prize.code.startsWith('implant_')) loadImplants(currentUserId);
   } catch(e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
     isSpinning = false;
     document.getElementById('openCaseBtn').disabled = false;
   }
@@ -784,14 +784,14 @@ async function disassembleImplant(id) {
         currentPoints = data.new_points;
         updatePoints();
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        tg.showAlert(`✅ Разобрано! +100 ★\nБаланс: ${data.new_points} ★`);
+        showToast(`✅ Разобрано! +100 ★\nБаланс: ${data.new_points} ★`);
         loadImplants(currentUserId);
       } else {
         const err = await r.json();
-        if (err.detail === 'Not a duplicate') tg.showAlert('Это не дубль — нельзя разобрать!');
-        else tg.showAlert('Ошибка разборки');
+        if (err.detail === 'Not a duplicate') showToast('Это не дубль — нельзя разобрать!');
+        else showToast('Ошибка разборки');
       }
-    } catch(e) { tg.showAlert('Ошибка соединения'); }
+    } catch(e) { showToast('Ошибка соединения'); }
   });
 }
 
@@ -833,9 +833,9 @@ async function useCasinoPrize(id, name) {
     if (btnId !== 'confirm') return;
     try {
       const r = await fetch(`${API_URL}/api/casino/use/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
-      if (r.ok) { tg.showAlert('✅ Приз использован!'); loadCasinoInventory(); }
-      else { const err=await r.json(); tg.showAlert(err.detail==='Prize expired'?'⏰ Приз истёк!':'Ошибка'); }
-    } catch(e) { tg.showAlert('Ошибка соединения'); }
+      if (r.ok) { showToast('✅ Приз использован!'); loadCasinoInventory(); }
+      else { const err=await r.json(); showToast(err.detail==='Prize expired'?'⏰ Приз истёк!':'Ошибка'); }
+    } catch(e) { showToast('Ошибка соединения'); }
   });
 }
 

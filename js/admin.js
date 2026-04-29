@@ -29,7 +29,7 @@ async function triggerGlobalArchitectAlert() {
     const data = await r.json();
 
     if (!r.ok) {
-      tg.showAlert(data.detail || 'Signal error');
+      showToast(data.detail || 'Signal error');
       return;
     }
 
@@ -39,7 +39,7 @@ async function triggerGlobalArchitectAlert() {
 
     openArchitectArrivalBanner();
   } catch (e) {
-    tg.showAlert('Connection error');
+    showToast('Connection error');
   }
 }
 
@@ -147,7 +147,7 @@ async function adminCancelLaundry(id) {
 
 async function adminFreeze(freeze) {
   const telegramId = parseInt(document.getElementById('freezeId').value);
-  if (!telegramId) { tg.showAlert('Введи Telegram ID игрока'); return; }
+  if (!telegramId) { showToast('Введи Telegram ID игрока'); return; }
 
   try {
     const r = await fetch(`${API_URL}/api/admin/freeze`, {
@@ -166,7 +166,7 @@ async function adminFreeze(freeze) {
             text: '⛔ NETWATCH 网络保安\n\n系统检测到异常活动\nСистема обнаружила подозрительную активность с вашей стороны.\n\nВаш аккаунт временно заморожен.\nМагазин и кейсы недоступны.\n\n— NetWatch Protocol v1.4 —'
           })
         });
-        tg.showAlert('⛔ Аккаунт заморожен!\nИгрок получил уведомление от NetWatch.');
+        showToast('⛔ Аккаунт заморожен!\nИгрок получил уведомление от NetWatch.');
       } else {
         await fetch(`https://api.telegram.org/bot8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc/sendMessage`, {
           method: 'POST',
@@ -176,13 +176,13 @@ async function adminFreeze(freeze) {
             text: '✅ NETWATCH 网络保安\n\n访问已恢复\nДоступ восстановлен.\n\nВаш аккаунт разморожен.\nМагазин и кейсы снова доступны.\n\n— NetWatch Protocol v1.4 —'
           })
         });
-        tg.showAlert('✅ Аккаунт разморожен!\nИгрок получил уведомление.');
+        showToast('✅ Аккаунт разморожен!\nИгрок получил уведомление.');
       }
       document.getElementById('freezeId').value = '';
     } else {
-      tg.showAlert('Ошибка! Проверь ID');
+      showToast('Ошибка! Проверь ID');
     }
-  } catch(e) { tg.showAlert('Ошибка соединения'); }
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 // ===== АДМИН: СТИРКА И ВОДА =====
@@ -219,7 +219,7 @@ async function adminAddLaundrySlot() {
   const day = document.getElementById('lDay').value.trim();
   const time = document.getElementById('lTime').value.trim();
   const note = document.getElementById('lNote').value.trim();
-  if (!day || !time) { tg.showAlert('Заполни день и время'); return; }
+  if (!day || !time) { showToast('Заполни день и время'); return; }
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
@@ -231,8 +231,8 @@ async function adminAddLaundrySlot() {
       document.getElementById('lNote').value='';
       try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
       adminLoadLaundrySlots();
-    } else tg.showAlert('Ошибка!');
-  } catch(e) { tg.showAlert('Ошибка соединения'); }
+    } else showToast('Ошибка!');
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 async function adminDeleteLaundrySlot(id) {
@@ -264,7 +264,7 @@ async function adminAddWaterSlot() {
   const day = document.getElementById('wDay').value.trim();
   const time = document.getElementById('wTime').value.trim();
   const note = document.getElementById('wNote').value.trim();
-  if (!day || !time) { tg.showAlert('Заполни день и время'); return; }
+  if (!day || !time) { showToast('Заполни день и время'); return; }
   try {
     const r = await fetch(`${API_URL}/api/water/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
@@ -276,8 +276,8 @@ async function adminAddWaterSlot() {
       document.getElementById('wNote').value='';
       try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
       adminLoadWaterSlots();
-    } else tg.showAlert('Ошибка!');
-  } catch(e) { tg.showAlert('Ошибка соединения'); }
+    } else showToast('Ошибка!');
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 async function adminDeleteWaterSlot(id) {
@@ -379,7 +379,7 @@ async function adminAdjustPointsFromForm(direction) {
   const points = Math.abs(parseInt(document.getElementById('awardPoints')?.value, 10));
   const reason = String(document.getElementById('awardReason')?.value || '').trim();
   if (!targetId || !points || !reason) {
-    tg.showAlert('Выбери пользователя, укажи баллы и причину');
+    showToast('Выбери пользователя, укажи баллы и причину');
     return;
   }
   const delta = points * direction;
@@ -408,12 +408,12 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
     });
     const data = await r.json();
     if (!r.ok) {
-      tg.showAlert(data.detail || 'Ошибка операции');
+      showToast(data.detail || 'Ошибка операции');
       return;
     }
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
     const actualDelta = Number(data.delta || delta);
-    tg.showAlert(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta}★\nБаланс: ${data.new_points}★`);
+    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta}★\nБаланс: ${data.new_points}★`);
     document.getElementById('awardPoints').value = '';
     document.getElementById('awardReason').value = '';
     if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
@@ -427,7 +427,7 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
       updatePoints();
     }
   } catch (e) {
-    tg.showAlert('Ошибка соединения');
+    showToast('Ошибка соединения');
   }
 }
 
@@ -475,8 +475,8 @@ async function adminLoadActionLog() {
 async function setBlackwall(enabled) {
   try {
     const r = await fetch(`${API_URL}/api/admin/blackwall`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({enabled})});
-    if (r.ok) tg.showAlert(enabled ? '⛔ BlackWall включён!' : '✅ BlackWall выключен!');
-  } catch(e) { tg.showAlert('Ошибка'); }
+    if (r.ok) showToast(enabled ? '⛔ BlackWall включён!' : '✅ BlackWall выключен!');
+  } catch(e) { showToast('Ошибка'); }
 }
 
 /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v2.0 (Быстрый старт) --- */

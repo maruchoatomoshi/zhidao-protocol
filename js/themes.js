@@ -57,10 +57,10 @@ async function chooseThemePath(path) {
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
       applyThemePath(path);
     } else {
-      tg.showAlert('Ошибка. Попробуй ещё раз.');
+      showToast('Ошибка. Попробуй ещё раз.');
     }
   } catch(e) {
-    tg.showAlert('Нет соединения.');
+    showToast('Нет соединения.');
   }
 }
 
