@@ -113,7 +113,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','diary','laundry','users','blackwall'].forEach(s => {
+  ['schedule','announce','laundry','users','blackwall'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -125,7 +125,6 @@ function showAdminSection(name, btn) {
     adminSearchUsers();
     adminLoadActionLog();
   }
-  if (name==='diary') adminLoadDiaryOverview();
 }
 
 async function loadAdminLaundry() {
@@ -502,145 +501,4 @@ const RAID_CONFIG = {
 let raidRefreshTimer = null;
 let isJoiningRaid = false;
 let raidIntroToken = 0;
-
-// ===== ADMIN DIARY ARCHIVE =====
-
-const _diaryStatusMap = {
-  draft:     { icon: '📝', label: 'черновик',   cls: 'draft' },
-  submitted: { icon: '✅', label: 'сдано',       cls: 'submitted' },
-  locked:    { icon: '🔒', label: 'закрыто',     cls: 'locked' },
-};
-
-async function adminLoadDiaryOverview(dateOverride) {
-  const dateInput = document.getElementById('adminDiaryDate');
-  const today = typeof getShanghaiDateString === 'function' ? getShanghaiDateString() : new Date().toISOString().slice(0,10);
-  const date = dateOverride || (dateInput && dateInput.value) || today;
-  if (dateInput && !dateInput.value) dateInput.value = date;
-
-  const container = document.getElementById('adminDiaryList');
-  if (!container) return;
-  container.innerHTML = '<div class="empty-state">Загрузка...</div>';
-
-  try {
-    const r = await fetch(`${API_URL}/api/diary/admin/overview?entry_date=${date}`, {
-      headers: { 'x-admin-id': String(currentUserId) }
-    });
-    if (!r.ok) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; return; }
-    const data = await r.json();
-    const entries = data.entries || [];
-    if (!entries.length) {
-      container.innerHTML = '<div class="empty-state">Нет студентов в базе</div>';
-      return;
-    }
-    container.innerHTML = entries.map(entry => adminRenderDiaryRow(entry, date)).join('');
-  } catch(e) {
-    container.innerHTML = '<div class="empty-state">Нет соединения</div>';
-  }
-}
-
-function adminRenderDiaryRow(entry, date) {
-  const info = _diaryStatusMap[entry.status] || { icon: '💾', label: 'нет записи', cls: 'missing' };
-  const words = entry.has_entry ? `${entry.words_filled || 0}/15 сл.` : '— нет записи';
-  const scores = (entry.lesson_score || entry.diary_score)
-    ? ` · 📚${entry.lesson_score || '?'} 📓${entry.diary_score || '?'}` : '';
-
-  const canLock   = entry.status === 'submitted' || entry.status === 'draft';
-  const canUnlock = entry.status === 'locked';
-  const safeDate  = escapeHtml(date);
-  const safeName  = JSON.stringify(String(entry.full_name || 'Студент'));
-  const ls = Number(entry.lesson_score || 0);
-  const ds = Number(entry.diary_score  || 0);
-
-  const lockBtn = canLock
-    ? `<button class="admin-diary-action-btn lock" title="Закрыть запись"
-         onclick="adminSetDiaryLock(${entry.telegram_id},'${safeDate}',true)">🔒</button>`
-    : canUnlock
-    ? `<button class="admin-diary-action-btn unlock" title="Открыть запись"
-         onclick="adminSetDiaryLock(${entry.telegram_id},'${safeDate}',false)">🔓</button>`
-    : `<span style="width:28px;display:inline-block;"></span>`;
-
-  return `<div class="admin-diary-row">
-    <div class="admin-diary-row-left">
-      <span class="admin-diary-status-icon">${info.icon}</span>
-      <div class="admin-diary-row-info">
-        <div class="admin-diary-row-name">${escapeHtml(entry.full_name || 'Студент')}</div>
-        <div class="admin-diary-row-meta">${words}${scores}</div>
-      </div>
-    </div>
-    <div class="admin-diary-row-right">
-      <span class="diary-student-badge ${info.cls}">${info.label}</span>
-      ${lockBtn}
-      <button class="admin-diary-action-btn score" title="Выставить оценки"
-        onclick="adminOpenScoreModal(${entry.telegram_id},${safeName},'${safeDate}',${ls},${ds})">★</button>
-    </div>
-  </div>`;
-}
-
-async function adminSetDiaryLock(telegramId, date, locked) {
-  try {
-    const r = await fetch(`${API_URL}/api/diary/lock`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-id': String(currentUserId) },
-      body: JSON.stringify({ telegram_id: telegramId, entry_date: date, locked })
-    });
-    if (r.ok) {
-      showToast(locked ? '🔒 Запись закрыта' : '🔓 Запись открыта', locked ? 'info' : 'success');
-      adminLoadDiaryOverview(date);
-    } else {
-      showToast('Не удалось изменить статус');
-    }
-  } catch(e) {
-    showToast('Ошибка соединения');
-  }
-}
-
-function adminOpenScoreModal(telegramId, name, date, lessonScore, diaryScore) {
-  document.getElementById('adminScoreTargetId').value   = telegramId;
-  document.getElementById('adminScoreStudentName').textContent = name;
-  document.getElementById('adminScoreDateHidden').value = date;
-  document.getElementById('adminScoreLesson').value = lessonScore || '';
-  document.getElementById('adminScoreDiary').value  = diaryScore  || '';
-  document.getElementById('adminScoreModal').classList.add('show');
-}
-
-function adminCloseScoreModal() {
-  const sheet = document.getElementById('adminScoreSheet');
-  if (sheet) {
-    sheet.classList.add('hiding');
-    setTimeout(() => {
-      document.getElementById('adminScoreModal').classList.remove('show');
-      sheet.classList.remove('hiding');
-    }, 210);
-  } else {
-    document.getElementById('adminScoreModal').classList.remove('show');
-  }
-}
-
-async function adminSubmitScore() {
-  const telegramId = parseInt(document.getElementById('adminScoreTargetId').value);
-  const date       = document.getElementById('adminScoreDateHidden').value;
-  const lesson     = document.getElementById('adminScoreLesson').value.trim();
-  const diary      = document.getElementById('adminScoreDiary').value.trim();
-
-  if (!telegramId || !date) return;
-
-  try {
-    const r = await fetch(`${API_URL}/api/diary/score`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-id': String(currentUserId) },
-      body: JSON.stringify({ telegram_id: telegramId, entry_date: date, lesson_score: lesson, diary_score: diary })
-    });
-    if (r.ok) {
-      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      showToast('⭐ Оценки выставлены', 'success');
-      adminCloseScoreModal();
-      adminLoadDiaryOverview(date);
-    } else {
-      let msg = 'Ошибка сохранения';
-      try { const d = await r.json(); if (d.detail) msg = d.detail; } catch(e) {}
-      showToast(msg, 'error');
-    }
-  } catch(e) {
-    showToast('Ошибка соединения', 'error');
-  }
 }

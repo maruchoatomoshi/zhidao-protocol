@@ -765,7 +765,6 @@
     <div class="admin-section-btns">
       <button class="admin-sec-btn active" onclick="showAdminSection('schedule',this)">📅 Расписание</button>
       <button class="admin-sec-btn" onclick="showAdminSection('announce',this)">📣 Объявления</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('diary',this)">📓 Дневник</button>
       <button class="admin-sec-btn" onclick="showAdminSection('users',this)">👥 Игроки</button>
       <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">🧺 Стирка</button>
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">🌑 BlackWall</button>
@@ -781,24 +780,6 @@
     <div id="admin-announce" class="admin-section" style="padding:0 12px;">
       <textarea class="admin-input" id="announceTextAdmin" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
       <button class="btn btn-primary" onclick="addAnnouncementAdmin()">[ ОПУБЛИКОВАТЬ ]</button>
-    </div>
-
-    <div id="admin-diary" class="admin-section" style="padding:0 12px;">
-      <div class="admin-console-card">
-        <div class="admin-console-head">
-          <div>
-            <div class="admin-console-kicker">DIARY ARCHIVE // 日记档案</div>
-            <div class="admin-console-title">Архив дневников</div>
-          </div>
-          <button class="admin-console-refresh" onclick="adminLoadDiaryOverview()">↻</button>
-        </div>
-        <div class="admin-search-row" style="margin-bottom:8px;">
-          <input id="adminDiaryDate" type="date" class="admin-input" style="margin:0;" onchange="adminLoadDiaryOverview(this.value)">
-        </div>
-        <div id="adminDiaryList" class="admin-diary-list">
-          <div class="empty-state">Выбери дату для загрузки</div>
-        </div>
-      </div>
     </div>
 
     <div id="admin-laundry" class="admin-section" style="padding:0 12px;">
@@ -2132,29 +2113,6 @@
 
 <div id="toastContainer"></div>
 
-<!-- Admin: Diary score modal -->
-<div id="adminScoreModal" class="admin-score-modal" onclick="if(event.target===this)adminCloseScoreModal()">
-  <div class="admin-score-sheet" id="adminScoreSheet">
-    <div class="admin-console-kicker">SCORE ENTRY // 评分</div>
-    <div class="admin-score-student" id="adminScoreStudentName">—</div>
-    <input type="hidden" id="adminScoreTargetId">
-    <input type="hidden" id="adminScoreDateHidden">
-    <div class="admin-score-grid">
-      <div>
-        <div class="admin-score-label">📚 УРОК</div>
-        <input id="adminScoreLesson" class="admin-input" type="number" min="1" max="5" placeholder="1 – 5" step="0.5" style="margin:0;">
-      </div>
-      <div>
-        <div class="admin-score-label">📓 ДНЕВНИК</div>
-        <input id="adminScoreDiary" class="admin-input" type="number" min="1" max="5" placeholder="1 – 5" step="0.5" style="margin:0;">
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:14px;">
-      <button class="btn btn-gold" style="flex:1;padding:11px;" onclick="adminSubmitScore()">⭐ ВЫСТАВИТЬ</button>
-      <button class="btn" style="padding:11px 18px;border:1px solid var(--border);background:none;color:var(--text2);border-radius:var(--btn-radius);font-family:monospace;font-size:10px;cursor:pointer;" onclick="adminCloseScoreModal()">ОТМЕНА</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
