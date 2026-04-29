@@ -88,6 +88,16 @@ function getShopTierLabel(tier) {
   }[tier] || 'ITEM';
 }
 
+function shopEscapeHtml(value) {
+  if (typeof escapeHtml === 'function') return escapeHtml(value);
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function shopJsArg(value) {
   return String(value || '')
     .replace(/\\/g, '\\\\')
@@ -144,8 +154,8 @@ async function loadShop() {
         <div class="shop-featured-icon">${SHOP_ICONS[premiumItem.code] || premiumItem.icon || '◇'}</div>
         <div class="shop-featured-copy">
           <div class="shop-featured-kicker">РЕКОМЕНДАЦИЯ СИСТЕМЫ</div>
-          <div class="shop-featured-name">${escapeHtml(premiumItem.name)}</div>
-          <div class="shop-featured-desc">${escapeHtml(premiumItem.description || 'Особый товар протокола')}</div>
+          <div class="shop-featured-name">${shopEscapeHtml(premiumItem.name)}</div>
+          <div class="shop-featured-desc">${shopEscapeHtml(premiumItem.description || 'Особый товар протокола')}</div>
         </div>
         <div class="shop-featured-price">${premiumItem.price} ★</div>
       </div>`;
@@ -169,8 +179,8 @@ async function loadShop() {
         const canAfford = currentPoints >= item.price;
         const isUnavailable = !item.available || isSoldOut;
         const tier = getShopItemTier(item);
-        const escapedName = escapeHtml(item.name);
-        const escapedDesc = escapeHtml(item.description || '');
+        const escapedName = shopEscapeHtml(item.name);
+        const escapedDesc = shopEscapeHtml(item.description || '');
 
         let limitHtml = '';
         if (item.daily_limit > 0) {
@@ -209,7 +219,7 @@ async function loadShop() {
             <div class="shop-item-cn">${escapedDesc}</div>
             <div class="shop-item-meta">
               ${limitHtml}
-              <span class="shop-item-code">${escapeHtml(item.code)}</span>
+              <span class="shop-item-code">${shopEscapeHtml(item.code)}</span>
             </div>
           </div>
           <div class="shop-item-footer">

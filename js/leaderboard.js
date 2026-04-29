@@ -331,27 +331,30 @@ async function loadDiaryStarsLeaderboardRating() {
     const headers = {'Content-Type': 'application/json'};
     if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
     if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
-    const [diaryResult, usersResult] = await Promise.allSettled([
-      fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers}),
-      fetch(`${API_URL}/api/leaderboard`)
-    ]);
-
     let diaryRows = [];
     let userRows = [];
     let warning = '';
 
-    if (diaryResult.status === 'fulfilled' && diaryResult.value.ok) {
-      const parsed = await diaryResult.value.json();
-      if (Array.isArray(parsed)) diaryRows = parsed;
-    } else if (diaryResult.status === 'fulfilled') {
-      warning = `Дневниковый API ответил ${diaryResult.value.status}; показываю общий список.`;
-    } else {
+    try {
+      const diaryResponse = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
+      if (diaryResponse.ok) {
+        const parsed = await diaryResponse.json();
+        if (Array.isArray(parsed)) diaryRows = parsed;
+      } else {
+        warning = `Дневниковый API ответил ${diaryResponse.status}; показываю общий список.`;
+      }
+    } catch(e) {
       warning = 'Дневниковый API недоступен; показываю общий список.';
     }
 
-    if (usersResult.status === 'fulfilled' && usersResult.value.ok) {
-      const parsed = await usersResult.value.json();
-      if (Array.isArray(parsed)) userRows = parsed;
+    try {
+      const usersResponse = await fetch(`${API_URL}/api/leaderboard`);
+      if (usersResponse.ok) {
+        const parsed = await usersResponse.json();
+        if (Array.isArray(parsed)) userRows = parsed;
+      }
+    } catch(e) {
+      if (!warning) warning = 'Общий рейтинг временно недоступен.';
     }
 
     if (!diaryRows.length && !userRows.length) {
