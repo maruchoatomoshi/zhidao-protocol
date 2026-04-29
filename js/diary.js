@@ -10,11 +10,10 @@ function openDiaryPage() {
 }
 
 function syncDiaryAccessVisibility() {
+  document.body.classList.toggle('is-admin', !!isAdmin);
+
   const archiveItem = document.getElementById('diaryArchiveItem');
   if (archiveItem) archiveItem.style.display = isAdmin ? '' : 'none';
-
-  const adminBtn = document.getElementById('adminMoreBtn');
-  if (adminBtn) adminBtn.style.display = isAdmin ? '' : 'none';
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? '' : 'none';

@@ -7,8 +7,9 @@ if (user) {
   loadImplants(user.id);
   startGlobalAlertPolling();
   if (isAdmin) {
-    document.getElementById('adminMoreBtn').style.display = 'block';
-    document.getElementById('shopResetBtn').style.display = 'block';
+    document.body.classList.add('is-admin');
+    const shopReset = document.getElementById('shopResetBtn');
+    if (shopReset) shopReset.style.display = 'block';
   }
 }
 

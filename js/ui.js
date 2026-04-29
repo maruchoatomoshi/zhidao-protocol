@@ -68,9 +68,8 @@ async function loadUserData(telegramId) {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
       }
       if (isAdmin) {
-        const adminBtn = document.getElementById('adminMoreBtn');
+        document.body.classList.add('is-admin');
         const shopReset = document.getElementById('shopResetBtn');
-        if (adminBtn) adminBtn.style.display = 'block';
         if (shopReset) shopReset.style.display = 'block';
       }
       userConfig = data.link;
