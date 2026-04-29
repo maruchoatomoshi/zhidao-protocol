@@ -2439,6 +2439,132 @@ body.is-admin .more-item.admin-only-item::before {
 .shimmer { animation: shimmer 0.5s infinite; }
 @keyframes shimmer { 0%,100%{opacity:1}50%{opacity:0.6} }
 
+/* ===== CASE / ROULETTE IDLE ANIMATIONS ===== */
+@keyframes caseIdleFloat {
+  0%, 100% { transform: translateY(0) rotate(-1deg); filter: drop-shadow(0 8px 16px rgba(0,0,0,0.28)); }
+  50%      { transform: translateY(-3px) rotate(1deg); filter: drop-shadow(0 12px 18px rgba(212,175,55,0.22)); }
+}
+@keyframes caseIdlePurple {
+  0%, 100% { transform: translateY(0) scale(1);    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.32)) drop-shadow(0 0 6px rgba(155,89,182,0.35)); }
+  50%      { transform: translateY(-4px) scale(1.03); filter: drop-shadow(0 12px 22px rgba(0,0,0,0.32)) drop-shadow(0 0 14px rgba(190,100,255,0.7)); }
+}
+@keyframes caseIdleBlack {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0); filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)) drop-shadow(0 0 8px rgba(255,30,30,0.45)); }
+  35%      { transform: translateY(-2px) scale(1.02) rotate(-1.5deg); filter: drop-shadow(0 12px 22px rgba(0,0,0,0.4)) drop-shadow(0 0 16px rgba(255,40,40,0.85)); }
+  50%      { transform: translateY(-5px) scale(1.04) rotate(1.5deg); filter: drop-shadow(0 14px 26px rgba(0,0,0,0.46)) drop-shadow(0 0 22px rgba(255,55,55,1)); }
+  65%      { transform: translateY(-2px) scale(1.02) rotate(-1deg); filter: drop-shadow(0 12px 22px rgba(0,0,0,0.4)) drop-shadow(0 0 14px rgba(255,40,40,0.8)); }
+}
+.roulette-item-gold .roulette-case-img    { animation: caseIdleFloat 3.6s ease-in-out infinite; }
+.roulette-item-purple .roulette-case-img  { animation: caseIdlePurple 2.8s ease-in-out infinite; }
+.roulette-item-black .roulette-case-img   { animation: caseIdleBlack 2.0s ease-in-out infinite; }
+
+/* Inner sheen sweep for purple/black idle */
+.roulette-item-purple::before,
+.roulette-item-black::before {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.07) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: caseSheen 4.2s ease-in-out infinite;
+}
+.roulette-item-black::before { animation-duration: 2.6s; background: linear-gradient(115deg, transparent 35%, rgba(255,80,80,0.18) 50%, transparent 65%); }
+@keyframes caseSheen {
+  0%   { transform: translateX(-110%); }
+  60%  { transform: translateX(110%); }
+  100% { transform: translateX(110%); }
+}
+
+/* ===== CASE OPENING BURST (per rarity) ===== */
+@keyframes caseBurstGold {
+  0%   { transform: scale(1) rotate(0); }
+  20%  { transform: scale(1.06) rotate(-4deg); }
+  40%  { transform: scale(0.96) rotate(4deg); }
+  60%  { transform: scale(1.10) rotate(-3deg); }
+  80%  { transform: scale(1.02) rotate(2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes caseBurstPurple {
+  0%   { transform: scale(1) rotate(0); filter: brightness(1); }
+  15%  { transform: scale(1.08) rotate(-6deg); filter: brightness(1.2) saturate(1.3); }
+  35%  { transform: scale(0.92) rotate(7deg); filter: brightness(1.4) saturate(1.5); }
+  55%  { transform: scale(1.16) rotate(-5deg); filter: brightness(1.6) saturate(1.6); }
+  75%  { transform: scale(0.98) rotate(3deg); filter: brightness(1.3) saturate(1.3); }
+  100% { transform: scale(1) rotate(0); filter: brightness(1); }
+}
+@keyframes caseBurstBlack {
+  0%   { transform: scale(1) rotate(0) translateX(0); filter: brightness(1) hue-rotate(0); }
+  10%  { transform: scale(1.05) rotate(-3deg) translateX(-2px); filter: brightness(1.3) hue-rotate(-10deg); }
+  20%  { transform: scale(0.94) rotate(5deg) translateX(3px);   filter: brightness(1.6) hue-rotate(8deg); }
+  30%  { transform: scale(1.10) rotate(-6deg) translateX(-4px); filter: brightness(1.8) hue-rotate(-15deg); }
+  40%  { transform: scale(0.90) rotate(7deg) translateX(4px);   filter: brightness(2.1) hue-rotate(12deg); }
+  55%  { transform: scale(1.22) rotate(-4deg) translateX(-2px); filter: brightness(2.4) hue-rotate(-8deg); }
+  70%  { transform: scale(1.06) rotate(2deg) translateX(1px);   filter: brightness(1.6) hue-rotate(0); }
+  100% { transform: scale(1) rotate(0) translateX(0); filter: brightness(1) hue-rotate(0); }
+}
+.roulette-item.opening                 { animation: caseBurstGold 0.55s ease-in-out; }
+.roulette-item.opening.winner-purple   { animation: caseBurstPurple 0.6s ease-in-out; }
+.roulette-item.opening.winner-black    { animation: caseBurstBlack 0.7s ease-in-out; }
+
+/* Shockwave pulse on the winning case slot */
+@keyframes caseShockwave {
+  0%   { box-shadow: 0 0 0 0 rgba(212,175,55,0.55), 0 0 20px rgba(212,175,55,0.3); }
+  100% { box-shadow: 0 0 0 60px rgba(212,175,55,0), 0 0 20px rgba(212,175,55,0.3); }
+}
+@keyframes caseShockwavePurple {
+  0%   { box-shadow: 0 0 0 0 rgba(190,100,255,0.6), 0 0 26px rgba(155,89,182,0.46); }
+  100% { box-shadow: 0 0 0 80px rgba(190,100,255,0), 0 0 26px rgba(155,89,182,0.46); }
+}
+@keyframes caseShockwaveBlack {
+  0%   { box-shadow: 0 0 0 0 rgba(255,45,45,0.75), 0 0 36px rgba(255,0,0,0.58), inset 0 0 20px rgba(255,0,0,0.16); }
+  100% { box-shadow: 0 0 0 110px rgba(255,45,45,0), 0 0 36px rgba(255,0,0,0.58), inset 0 0 20px rgba(255,0,0,0.16); }
+}
+.roulette-item.winner.opened           { animation: caseShockwave 0.9s ease-out; }
+.roulette-item.winner-purple.opened    { animation: caseShockwavePurple 1.0s ease-out; }
+.roulette-item.winner-black.opened     { animation: caseShockwaveBlack 1.1s ease-out; }
+
+/* Replace generic revealPrize with rarity-tiered variants */
+@keyframes revealPrize         { 0%{transform:scale(0.5) rotate(-20deg);opacity:0} 60%{transform:scale(1.1) rotate(4deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes revealPrizePurple   { 0%{transform:scale(0.3) rotate(-180deg);opacity:0;filter:blur(6px)} 50%{transform:scale(1.18) rotate(10deg);filter:blur(0)} 75%{transform:scale(0.94) rotate(-4deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes revealPrizeLegendary{
+  0%   { transform: scale(0.2) rotate(-360deg); opacity: 0; filter: blur(10px) brightness(2); }
+  35%  { transform: scale(1.4) rotate(20deg); opacity: 1; filter: blur(0) brightness(1.6); }
+  55%  { transform: scale(0.86) rotate(-8deg); filter: brightness(1.2); }
+  75%  { transform: scale(1.08) rotate(4deg); filter: brightness(1.0); }
+  100% { transform: scale(1) rotate(0); opacity: 1; filter: brightness(1); }
+}
+.opened-purple .roulette-prize-reveal  { animation: revealPrizePurple 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.opened-black .roulette-prize-reveal   { animation: revealPrizeLegendary 1.0s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* ===== LEGENDARY SCREEN FLASH ===== */
+.legendary-screen-flash {
+  position: fixed; inset: 0; z-index: 9998;
+  background: radial-gradient(ellipse at center, rgba(255,220,80,0.85) 0%, rgba(255,80,40,0.55) 40%, rgba(0,0,0,0) 75%);
+  pointer-events: none; opacity: 0;
+  animation: legendaryFlash 0.7s ease-out forwards;
+  mix-blend-mode: screen;
+}
+.purple-screen-flash {
+  position: fixed; inset: 0; z-index: 9998;
+  background: radial-gradient(ellipse at center, rgba(190,100,255,0.6) 0%, rgba(120,40,180,0.35) 45%, rgba(0,0,0,0) 75%);
+  pointer-events: none; opacity: 0;
+  animation: legendaryFlash 0.55s ease-out forwards;
+  mix-blend-mode: screen;
+}
+@keyframes legendaryFlash {
+  0%   { opacity: 0; transform: scale(0.6); }
+  20%  { opacity: 1; transform: scale(1.05); }
+  60%  { opacity: 0.55; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+/* Stronger pulse intensity on legendary cyber overlay image */
+.cyber-result-legendary { animation: cyberPulseLegendary 1.6s ease-in-out infinite !important; }
+@keyframes cyberPulseLegendary {
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(255,200,0,0.7)) drop-shadow(0 0 28px rgba(255,80,0,0.4)); transform: scale(1); }
+  50%      { filter: drop-shadow(0 0 28px rgba(255,220,60,1)) drop-shadow(0 0 56px rgba(255,120,0,0.7)); transform: scale(1.05); }
+}
+
 /* BlackWall */
 .blackwall-screen {
   min-height: 300px; display: flex; flex-direction: column;
