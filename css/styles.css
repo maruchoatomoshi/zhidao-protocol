@@ -1822,14 +1822,36 @@ body.theme-genshin-dark .lb-points
   border-radius: 6px; padding: 8px 10px; font-size: 12px;
   margin-bottom: 6px; font-family: -apple-system, sans-serif;
 }
-.admin-section-btns { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
-.admin-sec-btn {
-  padding: 7px 12px; border-radius: 6px;
-  border: 1px solid var(--border);
-  background: transparent; color: var(--text2);
-  font-size: 9px; cursor: pointer; font-family: monospace;
+.admin-section-btns {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
-.admin-sec-btn.active { background: var(--red-dim); border-color: var(--red-border); color: #cc4444; }
+.admin-section-btns::-webkit-scrollbar { display: none; }
+.admin-sec-btn {
+  padding: 7px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 9px;
+  cursor: pointer;
+  font-family: monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+}
+.admin-sec-btn:hover { color: var(--text2); border-color: rgba(255,255,255,0.15); }
+.admin-sec-btn.active {
+  background: var(--red-dim);
+  border-color: var(--red-border);
+  color: #cc4444;
+}
 .admin-console-card {
   margin-bottom: 12px;
   padding: 12px;
@@ -1952,6 +1974,121 @@ body.theme-genshin-dark .lb-points
   line-height: 1.45;
   margin-top: 8px;
 }
+
+/* ===== ADMIN DIARY SECTION ===== */
+.admin-diary-list { display: flex; flex-direction: column; }
+.admin-diary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.admin-diary-row:last-child { border-bottom: none; }
+.admin-diary-row-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.admin-diary-status-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.admin-diary-row-info { flex: 1; min-width: 0; }
+.admin-diary-row-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-diary-row-meta {
+  font-size: 9px;
+  color: var(--text3);
+  font-family: monospace;
+  margin-top: 2px;
+}
+.admin-diary-row-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.admin-diary-action-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.admin-diary-action-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+.admin-diary-action-btn.lock:hover { border-color: rgba(180,20,20,0.4); color: #cc4444; }
+.admin-diary-action-btn.unlock:hover { border-color: rgba(40,200,100,0.3); color: #32d872; }
+.admin-diary-action-btn.score:hover { border-color: var(--gold-border); color: var(--gold); }
+
+/* Score bottom-sheet modal */
+.admin-score-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.admin-score-modal.show { display: flex; }
+.admin-score-sheet {
+  background: #0a0a18;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 18px 18px 0 0;
+  padding: 20px 16px calc(16px + var(--tg-safe-bottom));
+  width: 100%;
+  max-width: 480px;
+  animation: sheetUp 0.24s cubic-bezier(0.22,1,0.36,1) both;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.admin-score-sheet.hiding {
+  animation: sheetDown 0.2s ease forwards;
+}
+@keyframes sheetDown {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+.admin-score-student {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 6px 0 14px;
+}
+.admin-score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.admin-score-label {
+  font-family: monospace;
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
 
 /* ===== АНИМАЦИИ ===== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
