@@ -61,6 +61,40 @@ const GS_PRIZE_CONFIGS = {
 
 let gsAnimating = false, gsCardFlipped = false, curGsCardId = null;
 
+function getShopCategoryInfo(category) {
+  const info = {
+    'privilege': { name:'特权 ПРИВИЛЕГИИ', tone:'violet', note:'Права, попытки и игровые усилители' },
+    'points':    { name:'积分 БАЛЛЫ', tone:'gold', note:'Операции с кредитами протокола' },
+    'social':    { name:'社交 СОЦИАЛЬНОЕ', tone:'cyan', note:'Командные и социальные действия' },
+    'food':      { name:'食物 ЕДА', tone:'red', note:'Материальные бонусы и перекусы' },
+    'vip':       { name:'VIP 特设', tone:'gold', note:'Редкие привилегии и особые услуги' },
+  };
+  return info[category] || { name:'协议 ПРОТОКОЛ', tone:'cyan', note:'Системные товары' };
+}
+
+function getShopItemTier(item) {
+  if (item.daily_limit > 0 && Math.max(0, item.daily_limit - item.sold_today) <= 1) return 'hot';
+  if ((item.price || 0) >= 500) return 'legendary';
+  if ((item.price || 0) >= 180) return 'rare';
+  return 'standard';
+}
+
+function getShopTierLabel(tier) {
+  return {
+    hot: 'HOT',
+    legendary: 'LEGEND',
+    rare: 'RARE',
+    standard: 'ITEM'
+  }[tier] || 'ITEM';
+}
+
+function shopJsArg(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, ' ');
+}
+
 async function loadShop() {
   try {
     const settingsR = await fetch(`${API_URL}/api/settings`);
@@ -79,38 +113,75 @@ async function loadShop() {
     document.getElementById('shopPoints').textContent = currentPoints + ' ★';
     document.getElementById('shopFrozenBanner').style.display = data.frozen ? 'block' : 'none';
 
-    const catInfo = {
-      'privilege': { name:'特权 ПРИВИЛЕГИИ', cn:'🎮' },
-      'points':    { name:'积分 БАЛЛЫ', cn:'⭐' },
-      'social':    { name:'社交 СОЦИАЛЬНОЕ', cn:'🤝' },
-      'food':      { name:'食物 ЕДА', cn:'🍜' },
-      'vip':       { name:'VIP 特设', cn:'👑' },
-    };
-
     const categories = {};
-    Object.keys(catInfo).forEach(k => { categories[k] = { ...catInfo[k], items:[] }; });
-    data.items.forEach(item => { if (categories[item.category]) categories[item.category].items.push(item); });
+    data.items.forEach(item => {
+      const key = item.category || 'protocol';
+      if (!categories[key]) categories[key] = { ...getShopCategoryInfo(key), key, items:[] };
+      categories[key].items.push(item);
+    });
 
-    let html = '';
+    const totalItems = data.items.length;
+    const availableItems = data.items.filter(item => item.available && !(item.daily_limit > 0 && Math.max(0, item.daily_limit - item.sold_today) <= 0)).length;
+    const limitedItems = data.items.filter(item => item.daily_limit > 0).length;
+    const premiumItem = data.items.reduce((best, item) => !best || item.price > best.price ? item : best, null);
+
+    let html = `<div class="shop-command-card">
+      <div class="shop-command-bg">商店</div>
+      <div class="shop-command-main">
+        <div class="shop-command-kicker">ZHIDAO MARKET // ACTIVE NODE</div>
+        <div class="shop-command-title">Оперативная витрина</div>
+        <div class="shop-command-sub">Покупай усилители, услуги и редкие привилегии без лишней охоты по списку.</div>
+      </div>
+      <div class="shop-command-stats">
+        <div><span>баланс</span><strong>${currentPoints} ★</strong></div>
+        <div><span>доступно</span><strong>${availableItems}/${totalItems}</strong></div>
+        <div><span>лимиты</span><strong>${limitedItems}</strong></div>
+      </div>
+    </div>`;
+
+    if (premiumItem) {
+      html += `<div class="shop-featured-item">
+        <div class="shop-featured-icon">${SHOP_ICONS[premiumItem.code] || premiumItem.icon || '◇'}</div>
+        <div class="shop-featured-copy">
+          <div class="shop-featured-kicker">РЕКОМЕНДАЦИЯ СИСТЕМЫ</div>
+          <div class="shop-featured-name">${escapeHtml(premiumItem.name)}</div>
+          <div class="shop-featured-desc">${escapeHtml(premiumItem.description || 'Особый товар протокола')}</div>
+        </div>
+        <div class="shop-featured-price">${premiumItem.price} ★</div>
+      </div>`;
+    }
+
     for (const cat of Object.values(categories)) {
       if (!cat.items.length) continue;
-      html += `<div class="shop-cat"><span class="cn">${cat.cn}</span> ${cat.name}</div>`;
+      html += `<section class="shop-section shop-section-${cat.tone}">
+        <div class="shop-cat">
+          <div>
+            <span class="shop-cat-kicker">CATEGORY</span>
+            <strong>${cat.name}</strong>
+            <em>${cat.note}</em>
+          </div>
+          <span class="shop-cat-count">${cat.items.length}</span>
+        </div>
+        <div class="shop-grid-modern">`;
       cat.items.forEach(item => {
         const remaining = item.daily_limit > 0 ? Math.max(0, item.daily_limit - item.sold_today) : Infinity;
         const isSoldOut = item.daily_limit > 0 && remaining <= 0;
         const canAfford = currentPoints >= item.price;
         const isUnavailable = !item.available || isSoldOut;
+        const tier = getShopItemTier(item);
+        const escapedName = escapeHtml(item.name);
+        const escapedDesc = escapeHtml(item.description || '');
 
         let limitHtml = '';
         if (item.daily_limit > 0) {
           if (isSoldOut) {
-            limitHtml = `<div class="shop-item-limit limit-soldout">⛔ Сегодня всё разобрали</div>`;
+            limitHtml = `<div class="shop-item-limit limit-soldout">Сегодня всё разобрали</div>`;
           } else if (remaining === 1) {
-            limitHtml = `<div class="shop-item-limit limit-low">🔥 Последний!</div>`;
+            limitHtml = `<div class="shop-item-limit limit-low">Последний слот</div>`;
           } else if (remaining <= 2) {
-            limitHtml = `<div class="shop-item-limit limit-medium">⏳ Осталось ${remaining} из ${item.daily_limit}</div>`;
+            limitHtml = `<div class="shop-item-limit limit-medium">Осталось ${remaining} из ${item.daily_limit}</div>`;
           } else {
-            limitHtml = `<div class="shop-item-limit">📦 ${remaining} из ${item.daily_limit}</div>`;
+            limitHtml = `<div class="shop-item-limit">${remaining} из ${item.daily_limit} сегодня</div>`;
           }
         } else {
           limitHtml = `<div class="shop-item-limit">∞ Без ограничений</div>`;
@@ -123,21 +194,31 @@ async function loadShop() {
           btnHtml = `<div class="shop-item-badge unavailable">НЕДОСТУПНО</div>`;
         } else if (!canAfford) {
           const need = item.price - currentPoints;
-          btnHtml = `<button class="shop-item-buy no-money" disabled>−${need} ★</button>`;
+          btnHtml = `<button class="shop-item-buy no-money" disabled>Нужно +${need} ★</button>`;
         } else {
-          btnHtml = `<button class="shop-item-buy" onclick="buyItem('${item.code}','${item.name}',${item.price})">${item.price} ★</button>`;
+          btnHtml = `<button class="shop-item-buy" onclick="buyItem('${shopJsArg(item.code)}','${shopJsArg(item.name)}',${item.price})">Купить · ${item.price} ★</button>`;
         }
 
-        html += `<div class="shop-item ${isSoldOut ? 'sold-out' : ''} ${!item.available && !isSoldOut ? 'unavailable' : ''}" data-item-code="${item.code}">
-          <div class="shop-item-icon">${SHOP_ICONS[item.code] || item.icon}</div>
-          <div style="flex:1;min-width:0;">
-            <div class="shop-item-name">${item.name}</div>
-            <div class="shop-item-cn">${item.description}</div>
-            ${limitHtml}
+        html += `<div class="shop-item shop-item-${tier} ${isSoldOut ? 'sold-out' : ''} ${!item.available && !isSoldOut ? 'unavailable' : ''}" data-item-code="${item.code}">
+          <div class="shop-item-topline">
+            <div class="shop-item-icon">${SHOP_ICONS[item.code] || item.icon || '◇'}</div>
+            <div class="shop-item-tier">${getShopTierLabel(tier)}</div>
           </div>
-          ${btnHtml}
+          <div class="shop-item-body">
+            <div class="shop-item-name">${escapedName}</div>
+            <div class="shop-item-cn">${escapedDesc}</div>
+            <div class="shop-item-meta">
+              ${limitHtml}
+              <span class="shop-item-code">${escapeHtml(item.code)}</span>
+            </div>
+          </div>
+          <div class="shop-item-footer">
+            <div class="shop-item-price">${item.price} ★</div>
+            ${btnHtml}
+          </div>
         </div>`;
       });
+      html += `</div></section>`;
     }
 
     document.getElementById('shopStoreContent').innerHTML = html || '<div class="empty-state">Магазин пуст</div>';

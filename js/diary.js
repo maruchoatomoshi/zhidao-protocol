@@ -63,11 +63,8 @@ async function loadDiaryStarsList() {
   list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Загрузка...</div>';
 
   try {
-    const headers = { 'Content-Type': 'application/json' };
-    if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
-    if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
-    const r = await fetch(`${API_URL}/api/diary/stars/overview?entry_date=${date}`, {
-      headers
+    const r = await fetch(`${API_URL}/api/diary/stars/overview?entry_date=${encodeURIComponent(date)}`, {
+      headers: diaryHeaders()
     });
     if (!r.ok) {
       let detail = '';
@@ -142,6 +139,8 @@ function closeDiaryStarsPopup() {
 async function submitDiaryStars(value) {
   if (!diaryStarsCurrentStudent || !isAdmin) return;
   const { telegramId, name, date } = diaryStarsCurrentStudent;
+  const popup = document.getElementById('diaryStarsPopup');
+  const buttons = popup ? popup.querySelectorAll('button') : [];
 
   const isBonus = value === 'bonus';
   const payload = {
@@ -152,6 +151,7 @@ async function submitDiaryStars(value) {
   };
 
   try {
+    buttons.forEach(btn => { btn.disabled = true; });
     const r = await fetch(`${API_URL}/api/diary/stars/rate`, {
       method: 'POST',
       headers: diaryHeaders(),
@@ -173,6 +173,8 @@ async function submitDiaryStars(value) {
     }
   } catch(e) {
     showToast('Нет соединения.');
+  } finally {
+    buttons.forEach(btn => { btn.disabled = false; });
   }
 }
 

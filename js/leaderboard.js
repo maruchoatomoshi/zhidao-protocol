@@ -325,29 +325,82 @@ function switchRatingTab(tab, btn) {
 
 async function loadDiaryStarsLeaderboardRating() {
   const container = document.getElementById('diaryStarsLeaderboardRating');
+  if (!container) return;
   container.innerHTML = '<div class="empty-state">Загрузка...</div>';
   try {
     const headers = {'Content-Type': 'application/json'};
     if (currentUserId) headers['X-Telegram-Id'] = String(currentUserId);
     if (isAdmin) headers['X-Admin-Id'] = String(currentUserId);
-    const r = await fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers});
-    if (!r.ok) {
-      let detail = '';
-      try { const d = await r.json(); if (d.detail) detail = ': ' + d.detail; } catch(e) {}
-      container.innerHTML = `<div class="empty-state">Ошибка загрузки (${r.status}${detail})</div>`;
+    const [diaryResult, usersResult] = await Promise.allSettled([
+      fetch(`${API_URL}/api/diary/stars/leaderboard`, {headers}),
+      fetch(`${API_URL}/api/leaderboard`)
+    ]);
+
+    let diaryRows = [];
+    let userRows = [];
+    let warning = '';
+
+    if (diaryResult.status === 'fulfilled' && diaryResult.value.ok) {
+      const parsed = await diaryResult.value.json();
+      if (Array.isArray(parsed)) diaryRows = parsed;
+    } else if (diaryResult.status === 'fulfilled') {
+      warning = `Дневниковый API ответил ${diaryResult.value.status}; показываю общий список.`;
+    } else {
+      warning = 'Дневниковый API недоступен; показываю общий список.';
+    }
+
+    if (usersResult.status === 'fulfilled' && usersResult.value.ok) {
+      const parsed = await usersResult.value.json();
+      if (Array.isArray(parsed)) userRows = parsed;
+    }
+
+    if (!diaryRows.length && !userRows.length) {
+      container.innerHTML = '<div class="empty-state">Пока нет данных</div>';
       return;
     }
-    const data = await r.json();
-    if (!Array.isArray(data)) { container.innerHTML = '<div class="empty-state">Ошибка формата данных</div>'; return; }
-    if (!data.length) { container.innerHTML = '<div class="empty-state">Пока нет данных</div>'; return; }
+
+    const rowsById = new Map();
+    userRows.forEach(row => {
+      rowsById.set(row.telegram_id, {
+        telegram_id: row.telegram_id,
+        name: row.name || 'Аноним',
+        avatar_url: row.avatar_url || null,
+        theme_path: row.theme_path || null,
+        total_stars: 0,
+        total_bonus: 0,
+        total_points: 0,
+        days_rated: 0
+      });
+    });
+    diaryRows.forEach(row => {
+      rowsById.set(row.telegram_id, {
+        ...(rowsById.get(row.telegram_id) || {}),
+        telegram_id: row.telegram_id,
+        name: row.name || rowsById.get(row.telegram_id)?.name || 'Аноним',
+        avatar_url: row.avatar_url || rowsById.get(row.telegram_id)?.avatar_url || null,
+        theme_path: row.theme_path || rowsById.get(row.telegram_id)?.theme_path || null,
+        total_stars: Number(row.total_stars || 0),
+        total_bonus: Number(row.total_bonus || 0),
+        total_points: Number(row.total_points || 0),
+        days_rated: Number(row.days_rated || 0)
+      });
+    });
+
+    const data = Array.from(rowsById.values()).sort((a, b) =>
+      (b.total_points || 0) - (a.total_points || 0)
+      || (b.total_stars || 0) - (a.total_stars || 0)
+      || (b.days_rated || 0) - (a.days_rated || 0)
+      || String(a.name || '').localeCompare(String(b.name || ''), 'ru')
+    );
+
     const medals = ['🥇','🥈','🥉'];
-    container.innerHTML = data.map((row, i) => {
+    const cards = data.map((row, i) => {
       const medal = medals[i] || `${i+1}.`;
       const isMe = row.telegram_id === currentUserId;
       const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
       const pathLabel = row.theme_path === 'genshin' ? 'GENSHIN' : row.theme_path === 'cyberpunk' ? 'NETWATCH' : 'SYNC';
       const pathClass = row.theme_path === 'genshin' ? 'genshin' : row.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
-      const status = row.days_rated > 0 ? `${row.days_rated} DAYS // +${row.total_points || 0}\u2605` : 'NOT RATED YET';
+      const status = row.days_rated > 0 ? `${row.days_rated} DAYS // +${row.total_points || 0}\u2605` : 'ОЖИДАЕТ ОЦЕНКИ';
       const stars = row.total_stars || 0;
       return `<div class="diary-rank-card ${topClass} ${isMe ? 'me' : ''}" style="animation-delay:${i*0.05}s">
         <div class="diary-rank-place">${medal}</div>
@@ -366,6 +419,7 @@ async function loadDiaryStarsLeaderboardRating() {
         <div class="diary-rank-score">${stars} ⭐</div>
       </div>`;
     }).join('');
+    container.innerHTML = `${warning ? `<div class="diary-rank-note">${escapeHtml(warning)}</div>` : ''}${cards}`;
   } catch(e) {
     container.innerHTML = '<div class="empty-state">Нет соединения</div>';
   }
