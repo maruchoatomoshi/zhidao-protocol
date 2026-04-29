@@ -67,6 +67,12 @@ async function loadUserData(telegramId) {
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
       }
+      if (isAdmin) {
+        const adminBtn = document.getElementById('adminMoreBtn');
+        const shopReset = document.getElementById('shopResetBtn');
+        if (adminBtn) adminBtn.style.display = 'block';
+        if (shopReset) shopReset.style.display = 'block';
+      }
       userConfig = data.link;
       currentAvatarUrl = data.avatar_url || null;
       if (typeof renderProfileAvatarCard === 'function') {
