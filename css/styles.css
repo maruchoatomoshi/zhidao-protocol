@@ -1424,6 +1424,93 @@ body.theme-genshin-dark .lb-points
   font-family: monospace; white-space: nowrap;
 }
 .shop-item-buy:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* === SHOP POLISH === */
+.shop-item { transition: background 0.2s ease, transform 0.2s ease, opacity 0.25s ease; }
+.shop-item.sold-out {
+  opacity: 0.55;
+  background: rgba(180,20,20,0.025);
+}
+.shop-item.sold-out .shop-item-icon {
+  filter: grayscale(0.65);
+  opacity: 0.7;
+}
+
+/* Limit indicator variants */
+.shop-item-limit.limit-soldout { color: #cc4444; font-weight: 600; }
+.shop-item-limit.limit-low {
+  color: #e8932a;
+  font-weight: 700;
+  animation: limitLowPulse 1.6s ease-in-out infinite;
+}
+.shop-item-limit.limit-medium { color: var(--gold); }
+@keyframes limitLowPulse {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; text-shadow: 0 0 8px rgba(232,147,42,0.5); }
+}
+
+/* Soldout / unavailable badges (replace buy button) */
+.shop-item-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  text-align: center;
+}
+.shop-item-badge.soldout {
+  color: rgba(204,68,68,0.9);
+  background: rgba(180,20,20,0.1);
+  border: 1px solid rgba(180,20,20,0.32);
+}
+.shop-item-badge.unavailable {
+  color: var(--text3);
+  background: rgba(120,120,120,0.08);
+  border: 1px solid rgba(120,120,120,0.2);
+}
+
+/* Cannot afford button — shows deficit */
+.shop-item-buy.no-money {
+  background: transparent;
+  border-color: rgba(200,80,80,0.3);
+  color: rgba(200,80,80,0.75);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+/* Purchase animation on item card */
+.shop-item.shop-item-bought {
+  animation: shopItemBought 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes shopItemBought {
+  0%   { transform: scale(1); background: transparent; box-shadow: none; }
+  25%  { transform: scale(0.97); background: rgba(40,200,100,0.1); }
+  55%  { transform: scale(1.025); background: rgba(40,200,100,0.18); box-shadow: 0 0 22px rgba(40,200,100,0.32); }
+  100% { transform: scale(1); background: transparent; box-shadow: none; }
+}
+
+/* Sparkles spawned around the icon on purchase */
+.shop-item-icon { position: relative; }
+.shop-sparkle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 12px;
+  color: #32d872;
+  pointer-events: none;
+  animation: shopSparkle 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+  text-shadow: 0 0 6px rgba(50,216,114,0.7);
+}
+@keyframes shopSparkle {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  35%  { opacity: 1; transform: translate(calc(-50% + var(--sx) * 0.55), calc(-50% + var(--sy) * 0.55)) scale(1.05); }
+  100% { transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(0.5); opacity: 0; }
+}
+
 .inventory-item {
   position: relative;
   margin: 8px 0;

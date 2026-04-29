@@ -96,16 +96,46 @@ async function loadShop() {
       if (!cat.items.length) continue;
       html += `<div class="shop-cat"><span class="cn">${cat.cn}</span> ${cat.name}</div>`;
       cat.items.forEach(item => {
-        const canBuy = item.available && currentPoints >= item.price;
-        const limitText = item.daily_limit > 0 ? `Осталось: ${item.daily_limit - item.sold_today} из ${item.daily_limit}` : 'Без ограничений';
-        html += `<div class="shop-item ${!item.available?'unavailable':''}">
+        const remaining = item.daily_limit > 0 ? Math.max(0, item.daily_limit - item.sold_today) : Infinity;
+        const isSoldOut = item.daily_limit > 0 && remaining <= 0;
+        const canAfford = currentPoints >= item.price;
+        const isUnavailable = !item.available || isSoldOut;
+
+        let limitHtml = '';
+        if (item.daily_limit > 0) {
+          if (isSoldOut) {
+            limitHtml = `<div class="shop-item-limit limit-soldout">⛔ Сегодня всё разобрали</div>`;
+          } else if (remaining === 1) {
+            limitHtml = `<div class="shop-item-limit limit-low">🔥 Последний!</div>`;
+          } else if (remaining <= 2) {
+            limitHtml = `<div class="shop-item-limit limit-medium">⏳ Осталось ${remaining} из ${item.daily_limit}</div>`;
+          } else {
+            limitHtml = `<div class="shop-item-limit">📦 ${remaining} из ${item.daily_limit}</div>`;
+          }
+        } else {
+          limitHtml = `<div class="shop-item-limit">∞ Без ограничений</div>`;
+        }
+
+        let btnHtml;
+        if (isSoldOut) {
+          btnHtml = `<div class="shop-item-badge soldout">РАСПРОДАНО</div>`;
+        } else if (!item.available) {
+          btnHtml = `<div class="shop-item-badge unavailable">НЕДОСТУПНО</div>`;
+        } else if (!canAfford) {
+          const need = item.price - currentPoints;
+          btnHtml = `<button class="shop-item-buy no-money" disabled>−${need} ★</button>`;
+        } else {
+          btnHtml = `<button class="shop-item-buy" onclick="buyItem('${item.code}','${item.name}',${item.price})">${item.price} ★</button>`;
+        }
+
+        html += `<div class="shop-item ${isSoldOut ? 'sold-out' : ''} ${!item.available && !isSoldOut ? 'unavailable' : ''}" data-item-code="${item.code}">
           <div class="shop-item-icon">${SHOP_ICONS[item.code] || item.icon}</div>
-          <div style="flex:1;">
+          <div style="flex:1;min-width:0;">
             <div class="shop-item-name">${item.name}</div>
             <div class="shop-item-cn">${item.description}</div>
-            <div class="shop-item-limit">${limitText}</div>
+            ${limitHtml}
           </div>
-          <button class="shop-item-buy" onclick="buyItem('${item.code}','${item.name}',${item.price})" ${!canBuy?'disabled':''}>${item.price} ★</button>
+          ${btnHtml}
         </div>`;
       });
     }
@@ -134,8 +164,13 @@ async function buyItem(code, name, price) {
         currentPoints = data.new_points;
         updatePoints();
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        showToast(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`);
-        loadShop();
+        const itemEl = document.querySelector(`.shop-item[data-item-code="${code}"]`);
+        if (itemEl) {
+          itemEl.classList.add('shop-item-bought');
+          spawnShopSparkles(itemEl);
+        }
+        showToast(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`, 'success');
+        setTimeout(() => loadShop(), 650);
       } else {
         const err = await r.json();
         if (err.detail === 'Daily limit reached') showToast('Этот товар уже разобрали!');
@@ -215,6 +250,24 @@ async function sellItem(id, name, price) {
       if (r.ok) { const data=await r.json(); currentPoints=data.new_points; updatePoints(); showToast(`✅ Продано! +${data.refund} ★`); loadInventory(); }
     } catch(e) { showToast('Ошибка'); }
   });
+}
+
+function spawnShopSparkles(itemEl) {
+  const icon = itemEl.querySelector('.shop-item-icon');
+  if (!icon) return;
+  const count = 8;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    s.className = 'shop-sparkle';
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+    const dist = 28 + Math.random() * 18;
+    s.style.setProperty('--sx', `${Math.cos(angle) * dist}px`);
+    s.style.setProperty('--sy', `${Math.sin(angle) * dist}px`);
+    s.style.animationDelay = `${Math.random() * 80}ms`;
+    s.textContent = ['✦','✧','★','◆'][i % 4];
+    icon.appendChild(s);
+    setTimeout(() => s.remove(), 700);
+  }
 }
 
 async function resetShop() {
