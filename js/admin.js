@@ -504,4 +504,3 @@ const RAID_CONFIG = {
 let raidRefreshTimer = null;
 let isJoiningRaid = false;
 let raidIntroToken = 0;
-}
