@@ -6,11 +6,7 @@ if (user) {
   loadPoints(user.id);
   loadImplants(user.id);
   startGlobalAlertPolling();
-  if (isAdmin) {
-    document.body.classList.add('is-admin');
-    const shopReset = document.getElementById('shopResetBtn');
-    if (shopReset) shopReset.style.display = 'block';
-  }
+  if (typeof syncAdminUiVisibility === 'function') syncAdminUiVisibility();
 }
 
 loadSavedTheme();

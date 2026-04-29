@@ -1695,8 +1695,22 @@ body.theme-genshin-dark .lb-points
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 8px; margin: 10px 12px;
 }
-.admin-only-item { display: none; }
-body.is-admin .admin-only-item { display: block; }
+.more-item.admin-only-item { display: none; }
+body.is-admin .more-item.admin-only-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 94px;
+  border-color: color-mix(in srgb, var(--gold-border) 72%, var(--red-border));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212,175,55,0.12), transparent 58%),
+    linear-gradient(135deg, color-mix(in srgb, var(--bg2) 86%, rgba(120,30,30,0.18)), var(--bg2));
+  box-shadow: inset 0 0 0 1px rgba(212,175,55,0.04);
+}
+body.is-admin .more-item.admin-only-item::before {
+  background: linear-gradient(90deg, transparent, var(--gold), var(--red-border), transparent);
+}
 .more-item {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: 10px; padding: 14px 10px; text-align: center;

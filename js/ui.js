@@ -36,6 +36,13 @@ function showPage(name, btn) {
   }
 }
 
+function syncAdminUiVisibility() {
+  document.body.classList.toggle('is-admin', !!isAdmin);
+
+  const shopReset = document.getElementById('shopResetBtn');
+  if (shopReset) shopReset.style.display = isAdmin ? 'block' : 'none';
+}
+
 function openMore(section) {
   // Скрываем все субстраницы
   ['themes','weather','laundry','news','achievements','team','admin','stats'].forEach(s => {
@@ -67,11 +74,7 @@ async function loadUserData(telegramId) {
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
       }
-      if (isAdmin) {
-        document.body.classList.add('is-admin');
-        const shopReset = document.getElementById('shopResetBtn');
-        if (shopReset) shopReset.style.display = 'block';
-      }
+      syncAdminUiVisibility();
       userConfig = data.link;
       currentAvatarUrl = data.avatar_url || null;
       if (typeof renderProfileAvatarCard === 'function') {

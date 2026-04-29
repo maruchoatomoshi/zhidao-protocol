@@ -10,7 +10,9 @@ function openDiaryPage() {
 }
 
 function syncDiaryAccessVisibility() {
-  document.body.classList.toggle('is-admin', !!isAdmin);
+  if (typeof syncAdminUiVisibility === 'function') {
+    syncAdminUiVisibility();
+  }
 
   const archiveItem = document.getElementById('diaryArchiveItem');
   if (archiveItem) archiveItem.style.display = isAdmin ? '' : 'none';
