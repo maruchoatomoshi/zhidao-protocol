@@ -13,6 +13,12 @@ function syncDiaryAccessVisibility() {
   const archiveItem = document.getElementById('diaryArchiveItem');
   if (archiveItem) archiveItem.style.display = isAdmin ? '' : 'none';
 
+  const adminBtn = document.getElementById('adminMoreBtn');
+  if (adminBtn) adminBtn.style.display = isAdmin ? '' : 'none';
+
+  const shopReset = document.getElementById('shopResetBtn');
+  if (shopReset) shopReset.style.display = isAdmin ? '' : 'none';
+
   const diaryPage = document.getElementById('page-diary');
   if (!isAdmin && diaryPage && diaryPage.classList.contains('active')) {
     showPage('more', document.getElementById('nav-more-btn'));
