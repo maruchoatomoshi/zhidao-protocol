@@ -642,6 +642,13 @@ async function spinRoulette(targetPrize, caseType = 'gold', targetIdx = null) {
         const winner = items[resolvedTargetIdx];
         if (track) track.classList.add('roulette-track-reveal');
         winner.classList.add('winner', 'opening', `winner-${caseType}`);
+        if (caseType === 'black' || caseType === 'purple') {
+          const flash = document.createElement('div');
+          flash.className = caseType === 'black' ? 'legendary-screen-flash' : 'purple-screen-flash';
+          document.body.appendChild(flash);
+          setTimeout(() => flash.remove(), caseType === 'black' ? 750 : 600);
+          try { tg.HapticFeedback.impactOccurred(caseType === 'black' ? 'heavy' : 'medium'); } catch(e) {}
+        }
         setTimeout(() => {
           winner.classList.remove('opening');
           winner.classList.add('opened', `opened-${caseType}`);
@@ -687,9 +694,10 @@ function showPrizeResult(prize, caseType = 'gold') {
   const tagColor = isLegendary ? '#d4af37' : isPurple ? '#9b59b6' : '#6aa0d4';
   const tagText = isLegendary ? '★ ЛЕГЕНДАРНЫЙ ★' : isPurple ? 'РЕДКИЙ // ФИОЛЕТОВЫЙ' : 'ОБЫЧНЫЙ';
 
+  const legendaryClass = isLegendary ? ' cyber-result-legendary' : '';
   let imgHtml = prize.img
-    ? `<img src="${prize.img}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
-    : `<div style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
+    ? `<img src="${prize.img}" class="${legendaryClass.trim()}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
+    : `<div class="${legendaryClass.trim()}" style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
 
   let contentHtml = '';
   if (prize.points > 0) {
