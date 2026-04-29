@@ -1627,6 +1627,66 @@ body.theme-genshin-dark .lb-points
   display: grid; grid-template-columns: 1fr 1fr 1fr;
   gap: 6px; margin: 0 12px 8px;
 }
+
+/* === CASINO ATTEMPTS HUD === */
+.casino-attempts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+}
+.casino-attempts-kicker {
+  font-size: 8px;
+  color: var(--text3);
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+.casino-attempts-pips {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.cas-attempt-pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,0.4);
+  background: transparent;
+  display: inline-block;
+  transition: all 0.3s;
+}
+.cas-attempt-pip.filled {
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(212,175,55,0.55);
+  border-color: var(--gold);
+}
+.cas-attempt-pip.spent {
+  border-color: rgba(180,20,20,0.4);
+  background: rgba(180,20,20,0.12);
+}
+.casino-attempts.exhausted .cas-attempt-pip {
+  border-color: rgba(180,20,20,0.45);
+  background: rgba(180,20,20,0.15);
+  box-shadow: none;
+}
+.casino-attempts.low .cas-attempt-pip.filled {
+  animation: pipPulse 1.4s ease-in-out infinite;
+}
+@keyframes pipPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(212,175,55,0.55); }
+  50%      { box-shadow: 0 0 14px rgba(232,147,42,0.95); transform: scale(1.12); }
+}
+
+/* Disabled case button — uniform style instead of inline overrides */
+#openCaseBtn.case-btn-disabled {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.32) !important;
+  cursor: not-allowed;
+  animation: none;
+  box-shadow: none;
+}
 .case-card {
   border-radius: 10px; padding: 10px 5px; text-align: center;
   cursor: pointer; position: relative; overflow: hidden;

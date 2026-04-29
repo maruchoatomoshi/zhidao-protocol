@@ -31,6 +31,7 @@ function showPage(name, btn) {
           setTimeout(initRoulette, 50);
         }
         setTimeout(() => loadPoints(currentUserId), 300);
+        if (typeof loadCasinoStatus === 'function') setTimeout(loadCasinoStatus, 350);
       }
     }).catch(() => { setTimeout(initRoulette, 50); });
   }

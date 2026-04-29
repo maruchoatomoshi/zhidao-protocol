@@ -2701,6 +2701,35 @@ async def open_case(data: dict):
     return {"prize": prize, "new_points": new_points, "remaining_today": remaining}
 
 
+@app.get("/api/casino/status/{telegram_id}")
+async def get_casino_status(telegram_id: int):
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT frozen FROM user_status WHERE telegram_id=?", (telegram_id,))
+    status = c.fetchone()
+    is_frozen = bool(status and status[0] == 1)
+    c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND date=?", (telegram_id, today))
+    used = c.fetchone()[0]
+    c.execute("SELECT extra_cases FROM user_status WHERE telegram_id=?", (telegram_id,))
+    ex = c.fetchone()
+    extra = ex[0] if ex else 0
+    if telegram_id in ADMIN_IDS:
+        daily_limit = 999
+        remaining = 999
+    else:
+        daily_limit = 3 + extra
+        remaining = max(0, daily_limit - used)
+    conn.close()
+    return {
+        "frozen": is_frozen,
+        "used_today": used,
+        "daily_limit": daily_limit,
+        "remaining_today": remaining,
+        "extra_cases": extra,
+    }
+
+
 @app.get("/api/casino/history/{telegram_id}")
 async def get_casino_history(telegram_id: int):
     conn = get_conn()

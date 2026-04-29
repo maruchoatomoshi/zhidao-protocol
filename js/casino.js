@@ -580,21 +580,8 @@ async function openCase() {
     showPrizeResult(prize, caseType);
     currentPoints = data.new_points;
     updatePoints();
-    // Обновляем кнопку после открытия
-    const casBtn = document.getElementById('openCaseBtn');
-    if (data.remaining_today !== undefined && data.remaining_today <= 0) {
-      casBtn.disabled = true;
-      casBtn.style.background = 'rgba(255,255,255,0.05)';
-      casBtn.style.borderColor = 'rgba(255,255,255,0.08)';
-      casBtn.style.color = 'rgba(255,255,255,0.2)';
-      casBtn.textContent = '[ Попытки исчерпаны // Приходите завтра ]';
-    } else {
-      casBtn.disabled = false;
-      casBtn.style.background = '';
-      casBtn.style.borderColor = '';
-      casBtn.style.color = '';
-      casBtn.textContent = '🏮 [ 开箱 // КЕЙС — 50 ★ · ПОРОГ 80 ★ ] 🏮';
-    }
+    // Обновляем HUD попыток и текст кнопки
+    loadCasinoStatus();
     if (prize.code==='jackpot'||prize.code==='implant_red_dragon') { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(100); }
     else if (prize.code.startsWith('implant_')) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(50); }
     else if (prize.points > 50) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(30); }
@@ -856,6 +843,72 @@ async function loadCasinoHistory() {
       </div>`;
     }).join('');
   } catch(e) { document.getElementById('casinoHistoryList').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+}
+
+// ===== CASINO STATUS / ATTEMPTS HUD =====
+
+async function loadCasinoStatus() {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/casino/status/${currentUserId}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    renderCasinoAttempts(data);
+    updateCasinoButtonState(data);
+  } catch(e) {}
+}
+
+function renderCasinoAttempts(data) {
+  const pips = document.getElementById('casinoAttemptsPips');
+  if (!pips) return;
+  const limit = data.daily_limit || 3;
+  const remaining = data.remaining_today != null ? data.remaining_today : limit;
+
+  if (limit >= 999) {
+    pips.innerHTML = `<span class="cas-attempt-pip filled" style="color:var(--gold);">∞</span>`;
+    return;
+  }
+
+  let html = '';
+  for (let i = 0; i < limit; i++) {
+    const filled = i < remaining;
+    html += `<span class="cas-attempt-pip ${filled ? 'filled' : 'spent'}"></span>`;
+  }
+  pips.innerHTML = html;
+
+  const wrap = document.getElementById('casinoAttempts');
+  if (wrap) {
+    wrap.classList.toggle('exhausted', remaining <= 0);
+    wrap.classList.toggle('low', remaining > 0 && remaining <= 1);
+  }
+}
+
+function updateCasinoButtonState(data) {
+  const btn = document.getElementById('openCaseBtn');
+  if (!btn) return;
+  const remaining = data.remaining_today != null ? data.remaining_today : 999;
+  if (data.frozen && !isAdmin) {
+    btn.disabled = true;
+    btn.classList.add('case-btn-disabled');
+    btn.textContent = '⛔ АККАУНТ ЗАМОРОЖЕН';
+    return;
+  }
+  if (remaining <= 0) {
+    btn.disabled = true;
+    btn.classList.add('case-btn-disabled');
+    btn.textContent = '[ Попытки исчерпаны // Приходите завтра ]';
+    return;
+  }
+  if (currentPoints < 80) {
+    const need = 80 - currentPoints;
+    btn.disabled = true;
+    btn.classList.add('case-btn-disabled');
+    btn.textContent = `🔒 НУЖНО ЕЩЁ ${need} ★ (порог 80 ★)`;
+    return;
+  }
+  btn.disabled = false;
+  btn.classList.remove('case-btn-disabled');
+  btn.textContent = `🏮 [ 开箱 // КЕЙС — 50 ★ · ${remaining}/${data.daily_limit} ] 🏮`;
 }
 
 // ===== ПОГОДА =====
