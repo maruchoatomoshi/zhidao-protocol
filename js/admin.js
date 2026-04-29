@@ -202,15 +202,16 @@ async function adminLoadLaundrySlots() {
     const data = r.ok ? await r.json() : [];
     if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
     container.innerHTML = data.map(slot => {
-      const taken = slot.taken_by ? `<span style="color:#2ecc71;font-size:9px;">✓ ${slot.taken_by.name}</span>` : `<span style="color:var(--text3);font-size:9px;">Свободно</span>`;
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
-        <div style="flex:1;">
-          <div style="font-size:11px;color:var(--text);font-weight:600;">${slot.day} · ${slot.time}</div>
-          <div style="font-size:9px;color:var(--text3);">${slot.note||''}</div>
-          ${taken}
-        </div>
-        <button onclick="adminDeleteLaundrySlot(${slot.id})" style="background:none;border:1px solid rgba(200,50,50,0.3);color:rgba(200,80,80,0.7);padding:4px 10px;border-radius:4px;font-size:9px;font-family:monospace;cursor:pointer;"><i class="ti ti-trash"></i></button>
-      </div>`;
+      const taken = !!slot.taken_by;
+      return `<div class="admin-slot-item ${taken ? 'taken' : 'free'}">
+    <div class="admin-slot-icon">${taken ? '✓' : '○'}</div>
+    <div class="admin-slot-info">
+      <div class="admin-slot-time">${slot.day} · ${slot.time}</div>
+      ${slot.note ? `<div class="admin-slot-note">${slot.note}</div>` : ''}
+      <div class="admin-slot-status">${taken ? slot.taken_by.name : 'Свободно'}</div>
+    </div>
+    <button class="admin-slot-del" onclick="adminDeleteLaundrySlot(${slot.id})"><i class="ti ti-trash"></i></button>
+  </div>`;
     }).join('');
   } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
 }
@@ -250,13 +251,15 @@ async function adminLoadWaterSlots() {
     const data = r.ok ? await r.json() : [];
     if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
     container.innerHTML = data.map(slot => `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
-        <div style="flex:1;">
-          <div style="font-size:11px;color:var(--text);font-weight:600;">${slot.day} · ${slot.time}</div>
-          <div style="font-size:9px;color:var(--text3);">${slot.note||''}</div>
-        </div>
-        <button onclick="adminDeleteWaterSlot(${slot.id})" style="background:none;border:1px solid rgba(200,50,50,0.3);color:rgba(200,80,80,0.7);padding:4px 10px;border-radius:4px;font-size:9px;font-family:monospace;cursor:pointer;"><i class="ti ti-trash"></i></button>
-      </div>`).join('');
+  <div class="admin-slot-item free">
+    <div class="admin-slot-icon">💧</div>
+    <div class="admin-slot-info">
+      <div class="admin-slot-time">${slot.day} · ${slot.time}</div>
+      ${slot.note ? `<div class="admin-slot-note">${slot.note}</div>` : ''}
+      <div class="admin-slot-status">Свободно</div>
+    </div>
+    <button class="admin-slot-del" onclick="adminDeleteWaterSlot(${slot.id})"><i class="ti ti-trash"></i></button>
+  </div>`).join('');
   } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
 }
 

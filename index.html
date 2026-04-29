@@ -761,7 +761,13 @@
   </div>
 
   <div id="more-admin" style="display:none;">
-    <div class="cn-divider">👑 ПАНЕЛЬ АДМИНИСТРАТОРА</div>
+    <div class="admin-panel-header">
+      <div>
+        <div class="admin-panel-kicker">// NETWATCH PROTOCOL //</div>
+        <div class="admin-panel-title">Панель управления</div>
+      </div>
+      <div class="admin-panel-badge">👑 ADMIN</div>
+    </div>
     <div class="admin-section-btns">
       <button class="admin-sec-btn active" onclick="showAdminSection('schedule',this)">📅 Расписание</button>
       <button class="admin-sec-btn" onclick="showAdminSection('announce',this)">📣 Объявления</button>
@@ -771,47 +777,60 @@
       <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()">⚡ Architect</button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
-      <input class="admin-input" id="adminSchDay" placeholder="День (Пн, Вт...)">
-      <input class="admin-input" id="adminSchTime" placeholder="Время (09:00)">
-      <input class="admin-input" id="adminSchSubject" placeholder="Предмет">
-      <input class="admin-input" id="adminSchLocation" placeholder="Место">
-      <button class="btn btn-primary" onclick="addScheduleItem()">[ ДОБАВИТЬ ЗАНЯТИЕ ]</button>
+      <div class="admin-console-card">
+        <div class="admin-console-kicker">ДОБАВИТЬ ЗАНЯТИЕ</div>
+        <div class="admin-form-grid">
+          <input class="admin-input" id="adminSchDay" placeholder="День (Пн, Вт...)">
+          <input class="admin-input" id="adminSchTime" placeholder="Время (09:00)">
+          <input class="admin-input" id="adminSchSubject" placeholder="Предмет">
+          <input class="admin-input" id="adminSchLocation" placeholder="Место">
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:9px;" onclick="addScheduleItem()">+ ДОБАВИТЬ ЗАНЯТИЕ</button>
+      </div>
     </div>
     <div id="admin-announce" class="admin-section" style="padding:0 12px;">
-      <textarea class="admin-input" id="announceTextAdmin" placeholder="Текст объявления..." style="height:80px;resize:none;"></textarea>
-      <button class="btn btn-primary" onclick="addAnnouncementAdmin()">[ ОПУБЛИКОВАТЬ ]</button>
+      <div class="admin-console-card">
+        <div class="admin-console-kicker">НОВОЕ ОБЪЯВЛЕНИЕ</div>
+        <textarea class="admin-input" id="announceTextAdmin" placeholder="Текст объявления..." style="height:90px;resize:none;margin-bottom:8px;"></textarea>
+        <button class="btn btn-primary" style="width:100%;padding:9px;" onclick="addAnnouncementAdmin()">📣 ОПУБЛИКОВАТЬ</button>
+      </div>
     </div>
 
     <div id="admin-laundry" class="admin-section" style="padding:0 12px;">
 
-      <!-- Табы стирка/вода -->
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <button id="altab-laundry" onclick="switchAdminLaundryTab('laundry')" class="subtab active" style="flex:1;padding:7px;font-size:9px;font-family:monospace;">🧺 СТИРКА</button>
-        <button id="altab-water" onclick="switchAdminLaundryTab('water')" class="subtab" style="flex:1;padding:7px;font-size:9px;font-family:monospace;">💧 ВОДА</button>
+      <div class="admin-laundry-tabs">
+        <button id="altab-laundry" onclick="switchAdminLaundryTab('laundry')" class="admin-laundry-tab active">🧺 СТИРКА</button>
+        <button id="altab-water" onclick="switchAdminLaundryTab('water')" class="admin-laundry-tab">💧 ВОДА</button>
       </div>
 
-      <!-- СТИРКА -->
       <div id="al-laundry-tab">
-        <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ СТИРКИ</div>
-        <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
-        <input class="admin-input" id="lTime" placeholder="Время (08:00)">
-        <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
-        <input class="admin-input" id="lCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
-        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddLaundrySlot()">[ ДОБАВИТЬ СЛОТ ]</button>
-        <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
-        <div id="adminLaundryList"><div class="empty-state">Загрузка...</div></div>
+        <div class="admin-console-card">
+          <div class="admin-console-kicker">ДОБАВИТЬ СЛОТ СТИРКИ</div>
+          <div class="admin-form-grid">
+            <input class="admin-input" id="lDay" placeholder="День (Пн 5 мая)">
+            <input class="admin-input" id="lTime" placeholder="Время (08:00)">
+          </div>
+          <input class="admin-input" id="lNote" placeholder="Заметка (необязательно)">
+          <input class="admin-input" id="lCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
+          <button class="btn btn-primary" style="width:100%;padding:9px;" onclick="adminAddLaundrySlot()">+ ДОБАВИТЬ СЛОТ</button>
+        </div>
+        <div class="admin-slot-list-label">📋 РАСПИСАНИЕ</div>
+        <div id="adminLaundryList" class="admin-slot-list"><div class="empty-state">Загрузка...</div></div>
       </div>
 
-      <!-- ВОДА -->
       <div id="al-water-tab" style="display:none;">
-        <div class="cn-divider">➕ ДОБАВИТЬ СЛОТ ВОДЫ</div>
-        <input class="admin-input" id="wDay" placeholder="День (Пн 5 мая)">
-        <input class="admin-input" id="wTime" placeholder="Время (08:00)">
-        <input class="admin-input" id="wNote" placeholder="Заметка (необязательно)">
-        <input class="admin-input" id="wCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
-        <button class="btn btn-primary" style="width:100%;padding:8px;margin-bottom:12px;" onclick="adminAddWaterSlot()">[ ДОБАВИТЬ СЛОТ ]</button>
-        <div class="cn-divider">📋 ТЕКУЩЕЕ РАСПИСАНИЕ</div>
-        <div id="adminWaterList"><div class="empty-state">Загрузка...</div></div>
+        <div class="admin-console-card">
+          <div class="admin-console-kicker">ДОБАВИТЬ СЛОТ ВОДЫ</div>
+          <div class="admin-form-grid">
+            <input class="admin-input" id="wDay" placeholder="День (Пн 5 мая)">
+            <input class="admin-input" id="wTime" placeholder="Время (08:00)">
+          </div>
+          <input class="admin-input" id="wNote" placeholder="Заметка (необязательно)">
+          <input class="admin-input" id="wCapacity" placeholder="Мест (по умолчанию 1)" type="number" min="1">
+          <button class="btn btn-primary" style="width:100%;padding:9px;" onclick="adminAddWaterSlot()">+ ДОБАВИТЬ СЛОТ</button>
+        </div>
+        <div class="admin-slot-list-label">📋 РАСПИСАНИЕ</div>
+        <div id="adminWaterList" class="admin-slot-list"><div class="empty-state">Загрузка...</div></div>
       </div>
 
     </div>
@@ -861,15 +880,23 @@
       </div>
     </div>
     <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
-      <div class="card"><div class="card-inner">
-        <div class="card-label">🌑 BlackWall 已激活</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Глобальная блокировка магазина и кейсов для всех участников</div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="setBlackwall(true)">[ ВКЛЮЧИТЬ ]</button>
-          <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="setBlackwall(false)">[ ВЫКЛЮЧИТЬ ]</button>
+      <div class="admin-blackwall-card">
+        <div class="admin-blackwall-glyph">黑</div>
+        <div class="admin-blackwall-info">
+          <div class="admin-console-kicker">BLACKWALL PROTOCOL // 黑墙</div>
+          <div class="admin-blackwall-title">Глобальный контроль</div>
+          <div class="admin-blackwall-desc">Блокировка магазина и кейсов для всех участников сети</div>
         </div>
-      </div></div>
-      <button class="btn btn-gold mt8" style="width:100%;padding:9px;" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
+      </div>
+      <div class="admin-blackwall-btns">
+        <button class="admin-bw-btn bw-on" onclick="setBlackwall(true)">⛔ ВКЛЮЧИТЬ</button>
+        <button class="admin-bw-btn bw-off" onclick="setBlackwall(false)">✅ ВЫКЛЮЧИТЬ</button>
+      </div>
+      <div class="admin-danger-zone">
+        <div class="admin-danger-label">⚠ DANGER ZONE</div>
+        <div class="admin-danger-desc">Сброс магазина снимает все записи о покупках за сегодня. Действие необратимо.</div>
+        <button class="admin-danger-btn" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
+      </div>
     </div>
   </div>
 </div>

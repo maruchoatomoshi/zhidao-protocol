@@ -1975,7 +1975,212 @@ body.theme-genshin-dark .lb-points
   margin-top: 8px;
 }
 
+/* Admin panel header */
+.admin-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 8px;
+  gap: 10px;
+}
+.admin-panel-kicker {
+  font-family: monospace;
+  font-size: 8px;
+  color: var(--red);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.admin-panel-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.admin-panel-badge {
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--gold);
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
 
+/* Admin 2-col form grid */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+/* Admin laundry tabs */
+.admin-laundry-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.admin-laundry-tab {
+  padding: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.admin-laundry-tab.active {
+  background: var(--red-dim);
+  border-color: var(--red-border);
+  color: #cc4444;
+}
+
+/* Admin slot list */
+.admin-slot-list-label {
+  font-family: monospace;
+  font-size: 8px;
+  color: var(--text3);
+  letter-spacing: 1.5px;
+  padding: 0 2px 8px;
+}
+.admin-slot-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.admin-slot-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  transition: border-color 0.15s;
+}
+.admin-slot-item.taken {
+  border-color: rgba(40,200,100,0.22);
+  background: rgba(40,200,100,0.04);
+}
+.admin-slot-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+.admin-slot-item.taken .admin-slot-icon { color: #32d872; }
+.admin-slot-item.free  .admin-slot-icon { color: var(--text3); }
+.admin-slot-info { flex: 1; min-width: 0; }
+.admin-slot-time { font-size: 11px; font-weight: 700; color: var(--text); font-family: monospace; }
+.admin-slot-note { font-size: 9px; color: var(--text3); margin-top: 1px; }
+.admin-slot-status { font-size: 9px; margin-top: 2px; }
+.admin-slot-item.taken .admin-slot-status { color: #32d872; }
+.admin-slot-item.free  .admin-slot-status { color: var(--text3); }
+.admin-slot-del {
+  background: none;
+  border: 1px solid rgba(200,50,50,0.25);
+  color: rgba(200,80,80,0.55);
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.admin-slot-del:hover { border-color: rgba(200,50,50,0.55); color: #cc4444; }
+
+/* BlackWall card */
+.admin-blackwall-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(12,5,22,0.95), rgba(22,10,35,0.85));
+  border: 1px solid rgba(155,89,182,0.28);
+  box-shadow: 0 0 24px rgba(155,89,182,0.08), 0 8px 24px rgba(0,0,0,0.3);
+  margin-bottom: 12px;
+}
+.admin-blackwall-glyph {
+  font-size: 40px;
+  color: rgba(155,89,182,0.35);
+  font-weight: 900;
+  line-height: 1;
+  flex-shrink: 0;
+  font-family: serif;
+  text-shadow: 0 0 12px rgba(155,89,182,0.3);
+}
+.admin-blackwall-info { flex: 1; min-width: 0; }
+.admin-blackwall-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 4px 0 5px;
+}
+.admin-blackwall-desc { font-size: 10px; color: var(--text3); line-height: 1.4; }
+.admin-blackwall-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.admin-bw-btn {
+  padding: 12px;
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.15s;
+}
+.admin-bw-btn.bw-on {
+  background: rgba(180,20,20,0.1);
+  border-color: rgba(180,20,20,0.32);
+  color: #cc4444;
+}
+.admin-bw-btn.bw-on:hover { background: rgba(180,20,20,0.18); }
+.admin-bw-btn.bw-off {
+  background: rgba(40,200,100,0.07);
+  border-color: rgba(40,200,100,0.22);
+  color: #32d872;
+}
+.admin-bw-btn.bw-off:hover { background: rgba(40,200,100,0.13); }
+
+/* Danger zone */
+.admin-danger-zone {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(200,140,30,0.2);
+  background: rgba(200,140,30,0.04);
+}
+.admin-danger-label {
+  font-family: monospace;
+  font-size: 8px;
+  color: #e09a28;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+.admin-danger-desc {
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 10px;
+  line-height: 1.45;
+}
+.admin-danger-btn {
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 1px solid rgba(200,140,30,0.28);
+  color: #e09a28;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.admin-danger-btn:hover { background: rgba(200,140,30,0.08); border-color: rgba(200,140,30,0.45); }
 
 /* ===== АНИМАЦИИ ===== */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
