@@ -695,119 +695,229 @@ body.theme-genshin-dark .lb-points
   border-top: 1px solid rgba(212,175,55,0.09);
   border-bottom: 1px solid rgba(212,175,55,0.09);
 }
+/* ===== PROFILE CARD v3 ===== */
 .profile-card {
   margin: 0 12px 8px;
-  padding: 12px;
-  border: 1px solid rgba(212,175,55,0.16);
-  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid rgba(212,175,55,0.18);
+  border-radius: 18px;
   background:
-    radial-gradient(circle at 0% 0%, rgba(212,175,55,0.08), transparent 42%),
-    linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+    radial-gradient(ellipse at 0% 0%, rgba(212,175,55,0.09), transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(180,20,20,0.06), transparent 52%),
+    linear-gradient(155deg, rgba(255,255,255,0.032), rgba(10,10,28,0.6));
   overflow: hidden;
   position: relative;
 }
 .profile-card-home {
   margin-top: 8px;
   margin-bottom: 10px;
-  border-color: rgba(212,175,55,0.22);
-  background:
-    radial-gradient(circle at 0% 0%, rgba(212,175,55,0.10), transparent 42%),
-    linear-gradient(145deg, rgba(180,20,20,0.055), rgba(255,255,255,0.016));
+  border-color: rgba(212,175,55,0.26);
 }
-.profile-card::after {
-  content: 'PROFILE';
+
+/* Corner brackets */
+.profile-card-home::before,
+.profile-card-home::after {
+  content: '';
   position: absolute;
-  right: 10px;
-  top: 8px;
-  color: rgba(212,175,55,0.08);
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: 2px;
+  width: 12px; height: 12px;
   pointer-events: none;
+  z-index: 0;
 }
+.profile-card-home::before {
+  top: 6px; left: 6px;
+  border-top: 1px solid rgba(212,175,55,0.45);
+  border-left: 1px solid rgba(212,175,55,0.45);
+  border-radius: 3px 0 0 0;
+}
+.profile-card-home::after {
+  bottom: 6px; right: 6px;
+  border-bottom: 1px solid rgba(212,175,55,0.45);
+  border-right: 1px solid rgba(212,175,55,0.45);
+  border-radius: 0 0 3px 0;
+}
+
+/* Scan line */
+.profile-scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.5) 40%, rgba(212,175,55,0.7) 50%, rgba(212,175,55,0.5) 60%, transparent 100%);
+  top: 0;
+  animation: profileScanDown 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes profileScanDown {
+  0%   { top: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Admin badge on avatar */
+.profile-admin-badge {
+  display: none;
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  text-align: center;
+  background: rgba(180,20,20,0.88);
+  color: #fff;
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+  padding: 2px 0;
+  font-weight: 700;
+}
+body.is-admin .profile-card-home .profile-admin-badge { display: block; }
+
+/* Admin card: red glow + border */
+body.is-admin .profile-card-home {
+  border-color: rgba(200,30,30,0.55);
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(200,30,30,0.12), transparent 48%),
+    radial-gradient(ellipse at 100% 100%, rgba(212,175,55,0.07), transparent 52%),
+    linear-gradient(155deg, rgba(255,255,255,0.032), rgba(20,5,5,0.7));
+  box-shadow: 0 0 28px rgba(180,20,20,0.14), inset 0 0 20px rgba(180,20,20,0.06);
+}
+body.is-admin .profile-card-home::before {
+  border-color: rgba(200,30,30,0.7);
+}
+body.is-admin .profile-card-home::after {
+  border-color: rgba(200,30,30,0.7);
+}
+body.is-admin .profile-scan-line {
+  background: linear-gradient(90deg, transparent, rgba(220,40,40,0.6) 40%, rgba(255,60,60,0.9) 50%, rgba(220,40,40,0.6) 60%, transparent);
+}
+body.is-admin .profile-card-kicker {
+  color: rgba(255,80,80,0.85);
+}
+
+/* Avatar */
 .profile-avatar-wrap,
 .lb-avatar {
   flex: 0 0 auto;
-  border-radius: 14px;
-  border: 1px solid rgba(212,175,55,0.22);
+  border-radius: 16px;
+  border: 1px solid rgba(212,175,55,0.28);
   background:
     radial-gradient(circle at 50% 30%, rgba(212,175,55,0.14), transparent 58%),
     rgba(255,255,255,0.04);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.profile-avatar-wrap {
-  width: 62px;
-  height: 62px;
-}
-.profile-avatar-img,
-.lb-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.profile-avatar-fallback,
-.lb-avatar-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gold);
-  font-family: monospace;
-  font-weight: 900;
-}
-.profile-avatar-fallback {
-  font-size: 22px;
-}
-.profile-card-main {
-  width: 100%;
-  min-width: 0;
   position: relative;
-  z-index: 1;
+}
+.profile-avatar-wrap { width: 72px; height: 72px; overflow: hidden; }
+.profile-avatar-img, .lb-avatar-img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.profile-avatar-fallback, .lb-avatar-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); font-family: monospace; font-weight: 900;
+}
+.profile-avatar-fallback { font-size: 26px; }
+
+/* Main content layout */
+.profile-card-main {
+  width: 100%; min-width: 0; position: relative; z-index: 1;
 }
 .profile-identity-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 12px;
   min-width: 0;
-  padding-right: 72px;
 }
 .profile-identity-copy {
   min-width: 0;
   flex: 1;
+  padding-top: 2px;
 }
 .profile-card-kicker {
-  font-size: 8px;
-  color: rgba(212,175,55,0.72);
+  font-size: 7px;
+  color: rgba(212,175,55,0.68);
   font-family: monospace;
-  letter-spacing: 1.6px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
 }
 .profile-card-name {
-  margin-top: 3px;
+  margin-top: 4px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 900;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.2px;
 }
-.profile-card-sub {
-  margin-top: 2px;
-  color: var(--text3);
-  font-size: 9px;
-  line-height: 1.4;
+
+/* Badge row: rank / place / path */
+.profile-badge-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 7px;
+  flex-wrap: wrap;
 }
+.profile-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-family: monospace;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.profile-badge-rank {
+  background: rgba(212,175,55,0.14);
+  border-color: rgba(212,175,55,0.35);
+  color: var(--gold);
+}
+.profile-badge-place {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.14);
+  color: var(--text2);
+}
+.profile-badge-path {
+  background: rgba(180,20,20,0.12);
+  border-color: rgba(180,20,20,0.28);
+  color: rgba(255,100,100,0.85);
+}
+
+/* Credits block (right side) */
+.profile-credits-block {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding-top: 2px;
+}
+.profile-credits-val {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: monospace;
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(212,175,55,0.4);
+}
+.profile-credits-lbl {
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 1.4px;
+  color: rgba(212,175,55,0.5);
+  margin-top: 3px;
+}
+
+/* Status line */
 .profile-status-line {
-  margin-top: 6px;
-  padding: 5px 7px;
+  margin-top: 10px;
+  padding: 5px 8px;
   border: 1px solid rgba(212,175,55,0.10);
   border-radius: 8px;
-  background: rgba(0,0,0,0.10);
-  color: rgba(212,175,55,0.74);
+  background: rgba(0,0,0,0.12);
+  color: rgba(212,175,55,0.7);
   font-size: 8px;
   font-family: monospace;
   letter-spacing: 0.7px;
@@ -815,36 +925,10 @@ body.theme-genshin-dark .lb-points
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.profile-mini-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 8px;
-}
-.profile-mini-stat {
-  min-width: 0;
-  padding: 6px 7px;
-  border: 1px solid rgba(212,175,55,0.12);
-  border-radius: 9px;
-  background: rgba(255,255,255,0.025);
-}
-.profile-mini-stat span {
-  display: block;
-  color: var(--text3);
-  font-size: 7px;
-  font-family: monospace;
-  letter-spacing: 0.8px;
-}
-.profile-mini-stat strong {
-  display: block;
-  margin-top: 2px;
-  color: var(--gold);
-  font-size: 10px;
-  font-family: monospace;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+
+/* Keep old mini-grid hidden if still present */
+.profile-mini-grid { display: none; }
+.profile-mini-stat, .profile-mini-stat span, .profile-mini-stat strong { display: none; }
 .profile-showcase {
   margin-top: 10px;
   display: flex;
@@ -6414,7 +6498,6 @@ body.theme-genshin-light .profile-card-sub {
 }
 
 body.theme-nw-light .profile-status-line,
-body.theme-nw-light .profile-mini-stat,
 body.theme-nw-light .profile-showcase,
 body.theme-nw-light .profile-stat-grid div {
   background: rgba(255,255,255,0.42);
@@ -6422,7 +6505,6 @@ body.theme-nw-light .profile-stat-grid div {
 }
 
 body.theme-genshin-light .profile-status-line,
-body.theme-genshin-light .profile-mini-stat,
 body.theme-genshin-light .profile-showcase,
 body.theme-genshin-light .profile-stat-grid div {
   background: rgba(255,250,238,0.58);
@@ -6431,25 +6513,27 @@ body.theme-genshin-light .profile-stat-grid div {
 
 body.theme-nw-light .profile-status-line,
 body.theme-nw-light .profile-showcase-copy em,
-body.theme-nw-light .profile-mini-stat strong,
 body.theme-nw-light .profile-stat-grid strong {
   color: #8a4a16;
 }
 
 body.theme-genshin-light .profile-status-line,
 body.theme-genshin-light .profile-showcase-copy em,
-body.theme-genshin-light .profile-mini-stat strong,
 body.theme-genshin-light .profile-stat-grid strong {
   color: #8b6419;
 }
 
+body.theme-nw-light .profile-badge-rank { background: rgba(138,74,22,0.12); border-color: rgba(138,74,22,0.30); color: #8a4a16; }
+body.theme-nw-light .profile-badge-place { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.12); color: var(--text2); }
+body.theme-nw-light .profile-badge-path  { background: rgba(140,20,20,0.08); border-color: rgba(140,20,20,0.20); color: #a83030; }
+body.theme-nw-light .profile-credits-val { color: #8a4a16; text-shadow: none; }
+body.theme-nw-light .profile-credits-lbl { color: rgba(138,74,22,0.55); }
+
 body.theme-nw-light .profile-showcase-copy span,
 body.theme-nw-light .profile-stat-grid span,
-body.theme-nw-light .profile-mini-stat span,
 body.theme-nw-light .profile-showcase-option-copy span,
 body.theme-genshin-light .profile-showcase-copy span,
 body.theme-genshin-light .profile-stat-grid span,
-body.theme-genshin-light .profile-mini-stat span,
 body.theme-genshin-light .profile-showcase-option-copy span {
   color: var(--text2) !important;
 }
