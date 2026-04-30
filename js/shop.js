@@ -63,13 +63,13 @@ let gsAnimating = false, gsCardFlipped = false, curGsCardId = null;
 
 function getShopCategoryInfo(category) {
   const info = {
-    'privilege': { name:'特权 ПРИВИЛЕГИИ', tone:'violet', note:'Права, попытки и игровые усилители' },
-    'points':    { name:'积分 БАЛЛЫ', tone:'gold', note:'Операции с кредитами протокола' },
-    'social':    { name:'社交 СОЦИАЛЬНОЕ', tone:'cyan', note:'Командные и социальные действия' },
-    'food':      { name:'食物 ЕДА', tone:'red', note:'Материальные бонусы и перекусы' },
-    'vip':       { name:'VIP 特设', tone:'gold', note:'Редкие привилегии и особые услуги' },
+    'privilege': { name:'Бонусы и права', tone:'violet', icon:'⚡', note:'Защита, доп. попытки и особые действия' },
+    'points':    { name:'Баллы', tone:'gold', icon:'★', note:'Всё, что связано со звёздами' },
+    'social':    { name:'Для команды', tone:'cyan', icon:'🤝', note:'Помощь друзьям и общие действия' },
+    'food':      { name:'Еда и приятности', tone:'red', icon:'🍜', note:'Вкусное и реальные бонусы' },
+    'vip':       { name:'Редкое', tone:'gold', icon:'👑', note:'Дорогие и особые товары' },
   };
-  return info[category] || { name:'协议 ПРОТОКОЛ', tone:'cyan', note:'Системные товары' };
+  return info[category] || { name:'Другое', tone:'cyan', icon:'◇', note:'Системные товары' };
 }
 
 function getShopItemTier(item) {
@@ -86,6 +86,17 @@ function getShopTierLabel(tier) {
     rare: 'RARE',
     standard: 'ITEM'
   }[tier] || 'ITEM';
+}
+
+function getShopItemHint(item) {
+  const code = item.code || '';
+  if (code.includes('case')) return 'для кейсов';
+  if (code.includes('raid')) return 'для рейда';
+  if (code.includes('immunity') || code.includes('amnesty')) return 'защита';
+  if (code.includes('food') || code === 'kfc' || code === 'bubbletea' || code === 'snack') return 'приятность';
+  if (code.includes('path') || code.includes('title')) return 'профиль';
+  if (code.includes('double')) return 'усиление';
+  return item.category === 'social' ? 'команда' : 'бонус';
 }
 
 function shopEscapeHtml(value) {
@@ -133,31 +144,49 @@ async function loadShop() {
     const totalItems = data.items.length;
     const availableItems = data.items.filter(item => item.available && !(item.daily_limit > 0 && Math.max(0, item.daily_limit - item.sold_today) <= 0)).length;
     const limitedItems = data.items.filter(item => item.daily_limit > 0).length;
-    const premiumItem = data.items.reduce((best, item) => !best || item.price > best.price ? item : best, null);
+    const purchasableItems = data.items.filter(item => {
+      const remaining = item.daily_limit > 0 ? Math.max(0, item.daily_limit - item.sold_today) : Infinity;
+      return item.available && remaining > 0;
+    });
+    const suggestionPriority = ['immunity', 'extra_case', 'extra_raid_attempt', 'amnesty', 'double_win', 'laundry_vip', 'title_player'];
+    const priorityIndex = (item) => {
+      const index = suggestionPriority.indexOf(item.code);
+      return index === -1 ? 99 : index;
+    };
+    const suggestedItem = purchasableItems
+      .filter(item => currentPoints >= item.price)
+      .sort((a, b) => priorityIndex(a) - priorityIndex(b) || a.price - b.price)[0]
+      || purchasableItems.sort((a, b) => a.price - b.price)[0]
+      || null;
+    const canBuyNow = data.items.filter(item => {
+      const remaining = item.daily_limit > 0 ? Math.max(0, item.daily_limit - item.sold_today) : Infinity;
+      return item.available && remaining > 0 && currentPoints >= item.price;
+    }).length;
 
     let html = `<div class="shop-command-card">
       <div class="shop-command-bg">商店</div>
       <div class="shop-command-main">
-        <div class="shop-command-kicker">ZHIDAO MARKET // ACTIVE NODE</div>
-        <div class="shop-command-title">Оперативная витрина</div>
-        <div class="shop-command-sub">Покупай усилители, услуги и редкие привилегии без лишней охоты по списку.</div>
+        <div class="shop-command-kicker">ZHIDAO MARKET // ПРОСТОЙ РЕЖИМ</div>
+        <div class="shop-command-title">Что можно купить?</div>
+        <div class="shop-command-sub">Выбирай категорию, смотри цену и жми “Купить”. Если звёзд не хватает, кнопка сама покажет сколько нужно накопить.</div>
       </div>
       <div class="shop-command-stats">
-        <div><span>баланс</span><strong>${currentPoints} ★</strong></div>
-        <div><span>доступно</span><strong>${availableItems}/${totalItems}</strong></div>
-        <div><span>лимиты</span><strong>${limitedItems}</strong></div>
+        <div><span>твои звёзды</span><strong>${currentPoints} ★</strong></div>
+        <div><span>можно сейчас</span><strong>${canBuyNow}</strong></div>
+        <div><span>товаров</span><strong>${availableItems}/${totalItems}</strong></div>
       </div>
     </div>`;
 
-    if (premiumItem) {
+    if (suggestedItem) {
+      const enough = currentPoints >= suggestedItem.price;
       html += `<div class="shop-featured-item">
-        <div class="shop-featured-icon">${SHOP_ICONS[premiumItem.code] || premiumItem.icon || '◇'}</div>
+        <div class="shop-featured-icon">${SHOP_ICONS[suggestedItem.code] || suggestedItem.icon || '◇'}</div>
         <div class="shop-featured-copy">
-          <div class="shop-featured-kicker">РЕКОМЕНДАЦИЯ СИСТЕМЫ</div>
-          <div class="shop-featured-name">${shopEscapeHtml(premiumItem.name)}</div>
-          <div class="shop-featured-desc">${shopEscapeHtml(premiumItem.description || 'Особый товар протокола')}</div>
+          <div class="shop-featured-kicker">${enough ? 'МОЖНО КУПИТЬ СЕЙЧАС' : 'БЛИЖАЙШАЯ ЦЕЛЬ'}</div>
+          <div class="shop-featured-name">${shopEscapeHtml(suggestedItem.name)}</div>
+          <div class="shop-featured-desc">${enough ? 'Звёзд хватает. Хороший вариант, если не знаешь, с чего начать.' : `Нужно ещё ${Math.max(0, suggestedItem.price - currentPoints)} ★.`}</div>
         </div>
-        <div class="shop-featured-price">${premiumItem.price} ★</div>
+        <div class="shop-featured-price">${suggestedItem.price} ★</div>
       </div>`;
     }
 
@@ -166,8 +195,8 @@ async function loadShop() {
       html += `<section class="shop-section shop-section-${cat.tone}">
         <div class="shop-cat">
           <div>
-            <span class="shop-cat-kicker">CATEGORY</span>
-            <strong>${cat.name}</strong>
+            <span class="shop-cat-kicker">${cat.icon || '◇'} КАТЕГОРИЯ</span>
+            <strong>${shopEscapeHtml(cat.name)}</strong>
             <em>${cat.note}</em>
           </div>
           <span class="shop-cat-count">${cat.items.length}</span>
@@ -219,11 +248,14 @@ async function loadShop() {
             <div class="shop-item-cn">${escapedDesc}</div>
             <div class="shop-item-meta">
               ${limitHtml}
-              <span class="shop-item-code">${shopEscapeHtml(item.code)}</span>
+              <span class="shop-item-hint">${getShopItemHint(item)}</span>
             </div>
           </div>
           <div class="shop-item-footer">
-            <div class="shop-item-price">${item.price} ★</div>
+            <div>
+              <div class="shop-item-price">${item.price} ★</div>
+              <div class="shop-item-state">${canAfford ? 'звёзд хватает' : `не хватает ${item.price - currentPoints} ★`}</div>
+            </div>
             ${btnHtml}
           </div>
         </div>`;

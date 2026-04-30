@@ -1525,7 +1525,7 @@ body.theme-genshin-dark .lb-points
 .shop-command-card {
   position: relative;
   margin: 6px 12px 10px;
-  padding: 14px;
+  padding: 13px;
   border: 1px solid color-mix(in srgb, var(--gold-border) 66%, transparent);
   border-radius: 20px;
   background:
@@ -1560,7 +1560,7 @@ body.theme-genshin-dark .lb-points
 .shop-command-title {
   margin-top: 3px;
   color: var(--text);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 900;
   letter-spacing: -0.03em;
 }
@@ -1576,11 +1576,11 @@ body.theme-genshin-dark .lb-points
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 11px;
 }
 .shop-command-stats div {
-  padding: 8px;
+  padding: 7px;
   border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
   border-radius: 12px;
   background: rgba(0,0,0,0.14);
@@ -1589,7 +1589,7 @@ body.theme-genshin-dark .lb-points
   display: block;
   color: var(--text3);
   font-family: monospace;
-  font-size: 8px;
+  font-size: 7px;
   text-transform: uppercase;
 }
 .shop-command-stats strong {
@@ -1603,8 +1603,8 @@ body.theme-genshin-dark .lb-points
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 12px 10px;
-  padding: 10px;
+  margin: 0 12px 9px;
+  padding: 9px;
   border: 1px solid rgba(180,20,20,0.22);
   border-radius: 16px;
   background: linear-gradient(90deg, rgba(180,20,20,0.12), rgba(212,175,55,0.08));
@@ -1657,7 +1657,7 @@ body.theme-genshin-dark .lb-points
 .shop-cat strong {
   display: block;
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 1.1px;
 }
 .shop-cat em {
@@ -1683,16 +1683,16 @@ body.theme-genshin-dark .lb-points
 .shop-grid-modern {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 .shop-grid-modern .shop-item {
   position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 10px;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
-  border-radius: 18px;
+  padding: 11px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 16px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--bg2) 90%, transparent), color-mix(in srgb, var(--bg3) 76%, transparent)),
     var(--bg2);
@@ -1720,9 +1720,9 @@ body.theme-genshin-dark .lb-points
   gap: 6px;
 }
 .shop-grid-modern .shop-item-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 15px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background:
     radial-gradient(circle at 30% 20%, rgba(255,255,255,0.10), transparent 40%),
     color-mix(in srgb, var(--bg2) 90%, transparent);
@@ -1781,6 +1781,19 @@ body.theme-genshin-dark .lb-points
   font-family: monospace;
   font-size: 8px;
 }
+.shop-item-hint {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--gold) 88%, var(--text));
+  background: color-mix(in srgb, var(--gold-dim) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold-border) 68%, transparent);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
 .shop-item-footer {
   position: relative;
   z-index: 1;
@@ -1789,7 +1802,7 @@ body.theme-genshin-dark .lb-points
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding-top: 10px;
+  padding-top: 9px;
   border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 .shop-item-price {
@@ -1798,9 +1811,15 @@ body.theme-genshin-dark .lb-points
   font-size: 14px;
   font-weight: 900;
 }
+.shop-item-state {
+  margin-top: 2px;
+  color: var(--text3);
+  font-size: 9px;
+  line-height: 1.2;
+}
 .shop-grid-modern .shop-item-buy {
-  min-width: 108px;
-  padding: 9px 12px;
+  min-width: 104px;
+  padding: 9px 11px;
   border-radius: 999px;
   font-size: 10px;
   text-transform: uppercase;
@@ -6266,6 +6285,80 @@ body.theme-genshin-light .shop-grid-modern .shop-item {
     linear-gradient(135deg, rgba(255,250,238,0.78), rgba(238,229,211,0.62));
   border-color: rgba(138,104,32,0.16);
   box-shadow: 0 12px 28px rgba(96,68,24,0.10);
+}
+
+body.theme-genshin-light #page-shop .shop-command-card {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(255,255,255,0.72), transparent 34%),
+    radial-gradient(circle at 94% 8%, rgba(219,177,101,0.22), transparent 42%),
+    linear-gradient(145deg, rgba(255,252,242,0.88), rgba(239,228,207,0.74));
+  border-color: rgba(138,104,32,0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.72),
+    0 12px 26px rgba(94,67,25,0.10);
+}
+
+body.theme-genshin-light #page-shop .shop-command-bg {
+  color: rgba(138,104,32,0.07);
+}
+
+body.theme-genshin-light #page-shop .shop-command-kicker,
+body.theme-genshin-light #page-shop .shop-featured-kicker,
+body.theme-genshin-light #page-shop .shop-cat-kicker {
+  color: #9b6b18;
+  letter-spacing: 1.4px;
+}
+
+body.theme-genshin-light #page-shop .shop-command-stats div {
+  background: rgba(255,255,255,0.52);
+  border-color: rgba(138,104,32,0.16);
+}
+
+body.theme-genshin-light #page-shop .shop-featured-item {
+  background:
+    radial-gradient(circle at 12% 50%, rgba(219,177,101,0.16), transparent 44%),
+    linear-gradient(90deg, rgba(255,252,242,0.82), rgba(236,226,207,0.70));
+  border-color: rgba(138,104,32,0.22);
+  box-shadow: 0 10px 22px rgba(96,68,24,0.08);
+}
+
+body.theme-genshin-light #page-shop .shop-featured-icon,
+body.theme-genshin-light #page-shop .shop-grid-modern .shop-item-icon {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.82), transparent 42%),
+    linear-gradient(145deg, rgba(255,250,238,0.92), rgba(232,216,181,0.58));
+  border-color: rgba(138,104,32,0.20);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.76);
+}
+
+body.theme-genshin-light #page-shop .shop-grid-modern .shop-item {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(219,177,101,0.14), transparent 44%),
+    linear-gradient(145deg, rgba(255,252,242,0.80), rgba(239,229,210,0.66));
+  border-color: rgba(138,104,32,0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.60),
+    0 8px 18px rgba(96,68,24,0.07);
+}
+
+body.theme-genshin-light #page-shop .shop-grid-modern .shop-item::before {
+  background: linear-gradient(90deg, rgba(219,177,101,0.18), transparent 40%);
+}
+
+body.theme-genshin-light #page-shop .shop-item-tier,
+body.theme-genshin-light #page-shop .shop-item-hint {
+  color: #7a5010;
+  background: rgba(219,177,101,0.13);
+  border-color: rgba(138,104,32,0.18);
+}
+
+body.theme-genshin-light #page-shop .shop-item-state,
+body.theme-genshin-light #page-shop .shop-item-limit {
+  color: #786b56;
+}
+
+body.theme-genshin-light #page-shop .shop-item-price {
+  color: #8b6419;
 }
 
 body.theme-nw-light .shop-command-stats div,
