@@ -7592,4 +7592,372 @@ body.tg-ios .event-overlay.event-terminal .event-log {
   50% { opacity: 1; filter: saturate(1.55); }
 }
 
+/* ===== GENSHIN PROFILE CARD v3 ===== */
+body.theme-genshin-light .profile-card-home,
+body.theme-genshin-dark .profile-card-home {
+  border-width: 2px;
+  border-radius: 20px;
+  padding: 14px 16px 16px;
+  font-family: Georgia, serif;
+}
+body.theme-genshin-light .profile-card-home {
+  border-color: rgba(180,140,60,0.45);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(219,177,101,0.20), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(180,140,60,0.16), transparent 60%),
+    linear-gradient(155deg, #fbf5e6 0%, #f3e8c8 50%, #e8d8a8 100%);
+  box-shadow: 0 6px 24px rgba(160,120,40,0.18), inset 0 0 30px rgba(255,240,200,0.5);
+}
+body.theme-genshin-dark .profile-card-home {
+  border-color: rgba(219,177,101,0.45);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(219,177,101,0.16), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(120,80,180,0.14), transparent 60%),
+    linear-gradient(155deg, rgba(40,28,60,0.95) 0%, rgba(28,22,46,0.98) 100%);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5), inset 0 0 30px rgba(219,177,101,0.06);
+}
+
+/* Genshin: replace tech corners with floral ornaments */
+body.theme-genshin-light .profile-card-home::before,
+body.theme-genshin-light .profile-card-home::after,
+body.theme-genshin-dark .profile-card-home::before,
+body.theme-genshin-dark .profile-card-home::after {
+  width: 22px; height: 22px;
+  border: none !important;
+  border-radius: 0 !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.65;
+}
+body.theme-genshin-light .profile-card-home::before,
+body.theme-genshin-dark .profile-card-home::before {
+  top: 4px; left: 4px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 2 L12 2 L10 4 L4 4 L4 10 L2 12 Z M5 5 L5 8 L8 5 Z' fill='%23b8893a'/%3E%3Ccircle cx='3' cy='3' r='1.5' fill='%23dbb165'/%3E%3C/svg%3E");
+}
+body.theme-genshin-light .profile-card-home::after,
+body.theme-genshin-dark .profile-card-home::after {
+  bottom: 4px; right: 4px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22 22 L12 22 L14 20 L20 20 L20 14 L22 12 Z M19 19 L19 16 L16 19 Z' fill='%23b8893a'/%3E%3Ccircle cx='21' cy='21' r='1.5' fill='%23dbb165'/%3E%3C/svg%3E");
+}
+
+/* Genshin scan line: warm gold gradient */
+body.theme-genshin-light .profile-scan-line,
+body.theme-genshin-dark .profile-scan-line {
+  background: linear-gradient(90deg, transparent 0%, rgba(219,177,101,0.55) 40%, rgba(255,225,150,0.85) 50%, rgba(219,177,101,0.55) 60%, transparent 100%);
+  height: 1px;
+  filter: blur(0.4px);
+}
+
+/* Avatar: round, gold double-ring */
+body.theme-genshin-light .profile-card-home .profile-avatar-wrap,
+body.theme-genshin-dark .profile-card-home .profile-avatar-wrap {
+  border-radius: 50%;
+  width: 76px; height: 76px;
+  border: 2px solid;
+  box-shadow: 0 0 0 3px rgba(255,240,200,0.5), 0 4px 16px rgba(160,120,40,0.3);
+  position: relative;
+  overflow: visible;
+}
+body.theme-genshin-light .profile-card-home .profile-avatar-wrap {
+  border-color: #c89b4a;
+  background:
+    radial-gradient(circle at 50% 25%, rgba(255,235,180,0.8), rgba(230,200,130,0.6) 70%);
+}
+body.theme-genshin-dark .profile-card-home .profile-avatar-wrap {
+  border-color: rgba(219,177,101,0.85);
+  box-shadow: 0 0 0 3px rgba(219,177,101,0.18), 0 4px 18px rgba(0,0,0,0.6);
+  background:
+    radial-gradient(circle at 50% 25%, rgba(80,60,30,0.6), rgba(40,28,60,0.8) 70%);
+}
+body.theme-genshin-light .profile-avatar-img,
+body.theme-genshin-dark .profile-avatar-img {
+  border-radius: 50%;
+}
+body.theme-genshin-light .profile-avatar-fallback,
+body.theme-genshin-dark .profile-avatar-fallback {
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 30px;
+}
+
+/* Decorative star above avatar (rarity flair) */
+body.theme-genshin-light .profile-card-home .profile-avatar-wrap::before,
+body.theme-genshin-dark .profile-card-home .profile-avatar-wrap::before {
+  content: '✦';
+  position: absolute;
+  top: -10px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #d4af37;
+  text-shadow: 0 0 6px rgba(255,220,120,0.9);
+  pointer-events: none;
+  animation: gsAvatarStar 3s ease-in-out infinite;
+}
+@keyframes gsAvatarStar {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.18); }
+}
+
+/* Kicker → decorative serif label */
+body.theme-genshin-light .profile-card-kicker,
+body.theme-genshin-dark .profile-card-kicker {
+  font-family: Georgia, serif;
+  font-size: 9px;
+  font-style: italic;
+  letter-spacing: 1.2px;
+  text-transform: none;
+}
+body.theme-genshin-light .profile-card-kicker { color: #a07028; }
+body.theme-genshin-dark .profile-card-kicker  { color: rgba(219,177,101,0.75); }
+
+body.theme-genshin-light .profile-card-kicker::before,
+body.theme-genshin-light .profile-card-kicker::after,
+body.theme-genshin-dark .profile-card-kicker::before,
+body.theme-genshin-dark .profile-card-kicker::after {
+  content: '❋';
+  display: inline-block;
+  margin: 0 5px;
+  font-size: 8px;
+  vertical-align: 1px;
+  opacity: 0.7;
+}
+
+/* Name: serif, italic-ish */
+body.theme-genshin-light .profile-card-home .profile-card-name,
+body.theme-genshin-dark .profile-card-home .profile-card-name {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  margin-top: 5px;
+}
+body.theme-genshin-light .profile-card-home .profile-card-name {
+  color: #2d3344;
+  text-shadow: 0 1px 0 rgba(255,250,235,0.6);
+}
+body.theme-genshin-dark .profile-card-home .profile-card-name {
+  color: #ede2cc;
+  text-shadow: 0 0 8px rgba(219,177,101,0.3);
+}
+
+/* Badges → star rarity + path glyph */
+body.theme-genshin-light .profile-badge,
+body.theme-genshin-dark .profile-badge {
+  font-family: Georgia, serif;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+body.theme-genshin-light .profile-badge-rank {
+  background: linear-gradient(180deg, #fff5d8, #f0d896);
+  border: 1px solid #c89b4a;
+  color: #6b4a18;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+body.theme-genshin-dark .profile-badge-rank {
+  background: linear-gradient(180deg, rgba(219,177,101,0.30), rgba(150,110,50,0.4));
+  border: 1px solid rgba(219,177,101,0.7);
+  color: #f5e3b8;
+}
+body.theme-genshin-light .profile-badge-place {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(180,140,60,0.4);
+  color: #5a4a28;
+}
+body.theme-genshin-dark .profile-badge-place {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(219,177,101,0.3);
+  color: #d8c8a8;
+}
+body.theme-genshin-light .profile-badge-path,
+body.theme-genshin-dark .profile-badge-path {
+  background: linear-gradient(180deg, rgba(180,80,180,0.18), rgba(100,40,140,0.25));
+  border: 1px solid rgba(180,100,200,0.55);
+  color: #7a3a8a;
+}
+body.theme-genshin-dark .profile-badge-path { color: #d8a8e8; }
+
+/* Credits: ornate gold "Primogem" feel */
+body.theme-genshin-light .profile-credits-val,
+body.theme-genshin-dark .profile-credits-val {
+  font-family: Georgia, serif;
+  font-size: 24px;
+  font-style: italic;
+  font-weight: 700;
+}
+body.theme-genshin-light .profile-credits-val {
+  color: #8a6820;
+  text-shadow: 0 1px 0 rgba(255,250,235,0.7), 0 0 18px rgba(219,177,101,0.45);
+}
+body.theme-genshin-dark .profile-credits-val {
+  color: #f0d896;
+  text-shadow: 0 0 14px rgba(219,177,101,0.7);
+}
+body.theme-genshin-light .profile-credits-val::before,
+body.theme-genshin-dark .profile-credits-val::before {
+  content: '✦ ';
+  font-size: 0.7em;
+  vertical-align: 1px;
+  margin-right: 1px;
+}
+body.theme-genshin-light .profile-credits-lbl,
+body.theme-genshin-dark .profile-credits-lbl {
+  font-family: Georgia, serif;
+  font-size: 8px;
+  letter-spacing: 1.6px;
+  font-style: italic;
+  text-transform: lowercase;
+}
+body.theme-genshin-light .profile-credits-lbl { color: rgba(138,104,32,0.65); }
+body.theme-genshin-dark .profile-credits-lbl  { color: rgba(219,177,101,0.5); }
+
+/* Status line: parchment strip */
+body.theme-genshin-light .profile-card-home .profile-status-line,
+body.theme-genshin-dark .profile-card-home .profile-status-line {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  border-radius: 10px;
+  padding: 6px 10px;
+  text-align: center;
+}
+body.theme-genshin-light .profile-card-home .profile-status-line {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,250,225,0.7) 50%, transparent 100%);
+  border: 1px solid rgba(180,140,60,0.25);
+  color: #6b4a18;
+}
+body.theme-genshin-dark .profile-card-home .profile-status-line {
+  background: linear-gradient(90deg, transparent 0%, rgba(219,177,101,0.10) 50%, transparent 100%);
+  border: 1px solid rgba(219,177,101,0.22);
+  color: #d8c4a0;
+}
+
+/* Showcase: artifact-card */
+body.theme-genshin-light .profile-card-home .profile-showcase,
+body.theme-genshin-dark .profile-card-home .profile-showcase {
+  border-radius: 14px;
+  border-width: 1px;
+  font-family: Georgia, serif;
+}
+body.theme-genshin-light .profile-card-home .profile-showcase {
+  background: linear-gradient(135deg, rgba(255,245,210,0.7), rgba(250,225,170,0.5));
+  border-color: rgba(180,140,60,0.4);
+}
+body.theme-genshin-dark .profile-card-home .profile-showcase {
+  background: linear-gradient(135deg, rgba(60,45,30,0.5), rgba(40,28,55,0.6));
+  border-color: rgba(219,177,101,0.35);
+}
+body.theme-genshin-light .profile-card-home .profile-showcase-icon,
+body.theme-genshin-dark .profile-card-home .profile-showcase-icon {
+  border-radius: 10px;
+  font-family: Georgia, serif;
+  border-width: 1px;
+}
+body.theme-genshin-light .profile-card-home .profile-showcase-icon {
+  background: linear-gradient(180deg, #fff8e0, #f0d896);
+  border-color: #c89b4a;
+  color: #6b4a18;
+}
+body.theme-genshin-dark .profile-card-home .profile-showcase-icon {
+  background: linear-gradient(180deg, rgba(219,177,101,0.25), rgba(120,80,30,0.35));
+  border-color: rgba(219,177,101,0.6);
+  color: #f0d896;
+}
+body.theme-genshin-light .profile-card-home .profile-showcase-copy strong {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 11px;
+  color: #2d3344;
+}
+body.theme-genshin-dark .profile-card-home .profile-showcase-copy strong {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 11px;
+  color: #ede2cc;
+}
+body.theme-genshin-light .profile-card-home .profile-showcase-copy span,
+body.theme-genshin-dark .profile-card-home .profile-showcase-copy span {
+  font-family: Georgia, serif;
+  font-style: italic;
+  text-transform: lowercase;
+  letter-spacing: 0.6px;
+}
+body.theme-genshin-light .profile-card-home .profile-showcase-copy em {
+  color: #8a6820;
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+body.theme-genshin-dark .profile-card-home .profile-showcase-copy em {
+  color: rgba(219,177,101,0.85);
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+
+/* Buttons */
+body.theme-genshin-light .profile-card-home .profile-mini-btn,
+body.theme-genshin-dark .profile-card-home .profile-mini-btn {
+  font-family: Georgia, serif;
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: lowercase;
+  font-style: italic;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border-width: 1px;
+}
+body.theme-genshin-light .profile-card-home .profile-mini-btn {
+  background: linear-gradient(180deg, #fff5d8, #e8c878);
+  border-color: #c89b4a;
+  color: #6b4a18;
+  box-shadow: 0 2px 6px rgba(160,120,40,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+body.theme-genshin-dark .profile-card-home .profile-mini-btn {
+  background: linear-gradient(180deg, rgba(219,177,101,0.28), rgba(150,110,50,0.35));
+  border-color: rgba(219,177,101,0.6);
+  color: #f5e3b8;
+}
+body.theme-genshin-light .profile-card-home .profile-mini-btn.ghost {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(120,80,30,0.3);
+  color: #6b6055;
+}
+body.theme-genshin-dark .profile-card-home .profile-mini-btn.ghost {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(219,177,101,0.25);
+  color: #a09880;
+}
+
+/* Admin variant for Genshin: imperial red-gold */
+body.is-admin.theme-genshin-light .profile-card-home,
+body.is-admin.theme-genshin-dark .profile-card-home {
+  border-color: rgba(160,40,40,0.65);
+}
+body.is-admin.theme-genshin-light .profile-card-home {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(180,40,40,0.16), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(219,177,101,0.20), transparent 60%),
+    linear-gradient(155deg, #fdf2e0 0%, #f6dec8 60%, #ecc8a0 100%);
+  box-shadow: 0 6px 24px rgba(160,40,40,0.22), inset 0 0 30px rgba(255,220,180,0.4);
+}
+body.is-admin.theme-genshin-dark .profile-card-home {
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(180,40,40,0.20), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(219,177,101,0.16), transparent 60%),
+    linear-gradient(155deg, rgba(50,22,32,0.95) 0%, rgba(34,20,38,0.98) 100%);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6), inset 0 0 30px rgba(180,40,40,0.10);
+}
+body.is-admin.theme-genshin-light .profile-card-kicker,
+body.is-admin.theme-genshin-dark .profile-card-kicker {
+  color: #a83030;
+}
+body.is-admin.theme-genshin-light .profile-card-home .profile-avatar-wrap,
+body.is-admin.theme-genshin-dark .profile-card-home .profile-avatar-wrap {
+  border-color: #c8403a;
+}
+
   
