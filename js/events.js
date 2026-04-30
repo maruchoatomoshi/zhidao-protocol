@@ -9,7 +9,11 @@ function openEventOverlay() {
 
   document.body.style.overflow = 'hidden';
   setArchitectAmbientVisibility(false);
-  architectMusicUnlocked = true;
+  if (typeof primeArchitectMusicUnlock === 'function') {
+    primeArchitectMusicUnlock();
+  } else {
+    architectMusicUnlocked = true;
+  }
   openArchitectEventEntryBanner();
 
   const log = document.getElementById('eventLog');

@@ -27,6 +27,9 @@ let architectMusicUnlocked = false;
 let architectMusicCurrentTrack = '';
 let architectMusicActiveDeck = 'a';
 let architectMusicFadeFrame = null;
+let architectMusicPendingTrack = '';
+let architectMusicRetryTimer = null;
+let architectMusicRetryAttempts = 0;
 let architectLastRenderedPhase = null;
 let architectActionFxTimer = null;
 let architectPhaseFxTimer = null;
@@ -70,10 +73,89 @@ function getArchitectMusicPlayers() {
   };
 }
 
+function clearArchitectMusicRetry() {
+  if (architectMusicRetryTimer) {
+    clearTimeout(architectMusicRetryTimer);
+    architectMusicRetryTimer = null;
+  }
+}
+
+function isArchitectOverlayVisible() {
+  const overlay = document.getElementById('eventOverlay');
+  return !!overlay && overlay.style.display !== 'none';
+}
+
 function stopArchitectMusicFade() {
   if (architectMusicFadeFrame) {
     cancelAnimationFrame(architectMusicFadeFrame);
     architectMusicFadeFrame = null;
+  }
+}
+
+function armArchitectMusicGestureRetry() {
+  const overlay = document.getElementById('eventOverlay');
+  if (!overlay || overlay.dataset.musicRetryArmed === '1') return;
+
+  overlay.dataset.musicRetryArmed = '1';
+  const retry = () => {
+    overlay.dataset.musicRetryArmed = '';
+    if (architectMusicPendingTrack && isArchitectOverlayVisible()) {
+      switchArchitectMusic(architectMusicPendingTrack, true);
+    }
+  };
+
+  overlay.addEventListener('pointerdown', retry, { once: true, passive: true });
+  overlay.addEventListener('touchstart', retry, { once: true, passive: true });
+  overlay.addEventListener('click', retry, { once: true });
+}
+
+function scheduleArchitectMusicRetry(trackUrl) {
+  if (!trackUrl || !isArchitectOverlayVisible()) return;
+  architectMusicPendingTrack = trackUrl;
+  clearArchitectMusicRetry();
+  armArchitectMusicGestureRetry();
+
+  if (architectMusicRetryAttempts >= 4) return;
+  architectMusicRetryAttempts += 1;
+  architectMusicRetryTimer = setTimeout(() => {
+    architectMusicRetryTimer = null;
+    if (architectMusicPendingTrack && isArchitectOverlayVisible()) {
+      switchArchitectMusic(architectMusicPendingTrack, true);
+    }
+  }, 260 + architectMusicRetryAttempts * 340);
+}
+
+function primeArchitectMusicUnlock() {
+  architectMusicUnlocked = true;
+  architectMusicRetryAttempts = 0;
+
+  const players = getArchitectMusicPlayers();
+  const audio = players[architectMusicActiveDeck] || players.a || players.b;
+  if (!audio) return;
+
+  try {
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0;
+    if (!audio.dataset.currentTrack) {
+      audio.src = ARCHITECT_PHASE_MUSIC[1];
+      audio.dataset.currentTrack = ARCHITECT_PHASE_MUSIC[1];
+      audio.load();
+    }
+
+    const unlockPromise = audio.play();
+    if (unlockPromise && typeof unlockPromise.then === 'function') {
+      unlockPromise
+        .then(() => {
+          try { audio.pause(); } catch (e) {}
+          try { audio.currentTime = 0; } catch (e) {}
+        })
+        .catch(() => {
+          armArchitectMusicGestureRetry();
+        });
+    }
+  } catch (e) {
+    armArchitectMusicGestureRetry();
   }
 }
 
@@ -123,6 +205,9 @@ function stopArchitectMusic(immediate = false) {
   const allPlayers = [players.a, players.b].filter(Boolean);
 
   stopArchitectMusicFade();
+  clearArchitectMusicRetry();
+  architectMusicPendingTrack = '';
+  architectMusicRetryAttempts = 0;
 
   if (immediate) {
     allPlayers.forEach((audio) => {
@@ -146,7 +231,7 @@ function stopArchitectMusic(immediate = false) {
   architectMusicCurrentTrack = '';
 }
 
-function switchArchitectMusic(trackUrl) {
+function switchArchitectMusic(trackUrl, forceRetry = false) {
   const players = getArchitectMusicPlayers();
   const activePlayer = players[architectMusicActiveDeck];
   const nextDeck = architectMusicActiveDeck === 'a' ? 'b' : 'a';
@@ -161,11 +246,11 @@ function switchArchitectMusic(trackUrl) {
     return;
   }
 
-  if (architectMusicCurrentTrack === trackUrl && activePlayer.dataset.currentTrack === trackUrl) {
+  if (!forceRetry && architectMusicCurrentTrack === trackUrl && activePlayer.dataset.currentTrack === trackUrl) {
     if (activePlayer.paused) {
       const resumePromise = activePlayer.play();
       if (resumePromise && typeof resumePromise.catch === 'function') {
-        resumePromise.catch(() => {});
+        resumePromise.catch(() => scheduleArchitectMusicRetry(trackUrl));
       }
     }
     activePlayer.volume = ARCHITECT_MUSIC_TARGET_VOLUME;
@@ -190,7 +275,18 @@ function switchArchitectMusic(trackUrl) {
 
   const playPromise = nextPlayer.play();
   if (playPromise && typeof playPromise.catch === 'function') {
-    playPromise.catch(() => {});
+    playPromise
+      .then(() => {
+        architectMusicPendingTrack = '';
+        architectMusicRetryAttempts = 0;
+      })
+      .catch(() => {
+        try {
+          nextPlayer.pause();
+          nextPlayer.volume = 0;
+        } catch (e) {}
+        scheduleArchitectMusicRetry(trackUrl);
+      });
   }
 
   fadeArchitectMusic(activePlayer, nextPlayer);
@@ -596,10 +692,16 @@ function renderArchitectResultPanel(eventData, leaderboard = null) {
   const totalActions = Number(eventData.total_actions || 0);
   const state = String(eventData.state || '').toUpperCase();
   const resultLabel = state === 'FINISHED' ? 'Награда разблокирована' : 'Протокол не пробит';
+  const resultTone = state === 'FINISHED' ? 'WIN' : 'FAIL';
 
   rewardEl.innerHTML = `
     <span class="event-result-reward-main">${escapeHtml(rewardText)}</span>
-    <span class="event-result-reward-sub">${resultLabel} · урон команды ${totalDamage} · действий ${totalActions}</span>
+    <span class="event-result-reward-sub">${resultLabel}</span>
+    <span class="event-result-summary">
+      <span>${resultTone}</span>
+      <span>${totalDamage} DMG</span>
+      <span>${totalActions} ACTIONS</span>
+    </span>
   `;
 
   const names = getArchitectTeamNameMap(eventData);

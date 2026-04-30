@@ -7236,44 +7236,47 @@ body.theme-genshin-dark #page-home .home-event-card {
 
 .event-overlay.event-terminal .event-lobby-card.event-result-card {
   position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  right: auto;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  width: min(430px, calc(100vw - 24px));
   z-index: 18;
   display: block;
-  max-height: min(176px, 26vh);
+  max-height: min(148px, 22vh);
   margin: 0;
-  padding: 10px 12px;
+  padding: 9px 11px;
   overflow: hidden;
-  border-radius: 15px;
+  border-radius: 14px;
   background:
-    linear-gradient(180deg, rgba(7, 8, 14, 0.46), rgba(7, 8, 14, 0.72)),
-    rgba(8, 8, 16, 0.58);
-  border-color: rgba(0, 230, 255, 0.22);
+    linear-gradient(180deg, rgba(7, 8, 14, 0.28), rgba(7, 8, 14, 0.54)),
+    rgba(8, 8, 16, 0.38);
+  border-color: rgba(0, 230, 255, 0.18);
   box-shadow:
-    0 18px 36px rgba(0,0,0,0.26),
+    0 14px 32px rgba(0,0,0,0.22),
     inset 0 0 0 1px rgba(255,255,255,0.03);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
   pointer-events: auto;
+  transform: translateX(-50%);
 }
 
 .event-overlay.event-terminal .event-lobby-card.event-result-win {
   border-color: rgba(0, 230, 255, 0.30);
   background:
-    radial-gradient(circle at 18% 0%, rgba(0, 230, 255, 0.10), transparent 42%),
-    linear-gradient(180deg, rgba(7, 12, 18, 0.42), rgba(7, 8, 14, 0.74));
+    radial-gradient(circle at 18% 0%, rgba(0, 230, 255, 0.08), transparent 42%),
+    linear-gradient(180deg, rgba(7, 12, 18, 0.28), rgba(7, 8, 14, 0.56));
 }
 
 .event-overlay.event-terminal .event-lobby-card.event-result-lose {
   border-color: rgba(255, 54, 54, 0.30);
   background:
-    radial-gradient(circle at 18% 0%, rgba(255, 30, 30, 0.13), transparent 42%),
-    linear-gradient(180deg, rgba(18, 5, 8, 0.42), rgba(7, 8, 14, 0.74));
+    radial-gradient(circle at 18% 0%, rgba(255, 30, 30, 0.10), transparent 42%),
+    linear-gradient(180deg, rgba(18, 5, 8, 0.30), rgba(7, 8, 14, 0.56));
 }
 
 .event-result-card .event-lobby-head {
   align-items: center;
   gap: 10px;
+  padding-right: 82px;
 }
 
 .event-result-card .event-lobby-kicker {
@@ -7288,7 +7291,7 @@ body.theme-genshin-dark #page-home .home-event-card {
 
 .event-result-card .event-lobby-status {
   margin-top: 2px;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -7303,7 +7306,7 @@ body.theme-genshin-dark #page-home .home-event-card {
 
 .event-result-card .event-lobby-reward,
 .event-result-card .event-lobby-members {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .event-result-card .event-lobby-label {
@@ -7313,7 +7316,7 @@ body.theme-genshin-dark #page-home .home-event-card {
 }
 
 .event-result-card .event-lobby-value {
-  margin-top: 4px;
+  margin-top: 3px;
   font-size: 12px;
   line-height: 1.25;
 }
@@ -7333,9 +7336,31 @@ body.theme-genshin-dark #page-home .home-event-card {
   font-weight: 600;
 }
 
+.event-result-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.event-result-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 14px;
+  padding: 1px 5px;
+  border: 1px solid rgba(84, 245, 255, 0.20);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(210, 252, 255, 0.82);
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
 .event-result-card .event-team-list {
   margin-top: 5px;
-  max-height: 54px;
+  max-height: 42px;
   padding: 0;
   border: none;
   background: transparent;
@@ -7347,7 +7372,7 @@ body.theme-genshin-dark #page-home .home-event-card {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  padding: 3px 0;
+  padding: 2px 0;
   color: rgba(255,255,255,0.84);
   font-size: 10px;
   line-height: 1.2;
@@ -7377,31 +7402,28 @@ body.theme-genshin-dark #page-home .home-event-card {
 
 .event-result-card .event-lobby-actions {
   position: absolute;
-  right: 10px;
-  top: 10px;
+  right: 9px;
+  top: 9px;
   margin: 0;
 }
 
 .event-result-card .event-lobby-btn {
-  padding: 6px 9px;
+  padding: 5px 8px;
   border-radius: 999px;
-  font-size: 9px;
+  font-size: 8px;
   min-height: 0;
 }
 
 .event-overlay.event-terminal .event-log {
-  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
-  min-height: 38px;
-  max-height: 52px;
-  background: rgba(8,8,16,0.56);
+  display: none;
 }
 
 body.tg-ios .event-overlay.event-terminal .event-lobby-card.event-result-card {
-  bottom: calc(70px + var(--tg-safe-bottom));
+  bottom: calc(14px + var(--tg-safe-bottom));
 }
 
 body.tg-ios .event-overlay.event-terminal .event-log {
-  bottom: calc(8px + var(--tg-safe-bottom));
+  display: none;
 }
 
 .event-overlay.event-state-terminal #eventBossImage {
