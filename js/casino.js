@@ -546,14 +546,22 @@ async function openCase() {
   if (isSpinning) return;
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   if (currentPoints < 80) { showToast('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.'); return; }
-  // Проверяем заморозку
+
+  // Lock immediately — before any async work
+  isSpinning = true;
+  const btn = document.getElementById('openCaseBtn');
+  if (btn) btn.disabled = true;
+
   try {
     const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
     const fd = await fr.json();
-    if (fd.frozen && !isAdmin) { showToast('⛔ Аккаунт заморожен. Кейсы недоступны.'); return; }
+    if (fd.frozen && !isAdmin) {
+      showToast('⛔ Аккаунт заморожен. Кейсы недоступны.');
+      isSpinning = false;
+      if (btn) btn.disabled = false;
+      return;
+    }
   } catch(e) {}
-  isSpinning = true;
-  document.getElementById('openCaseBtn').disabled = true;
   document.getElementById('prizeResult').classList.remove('show');
   try {
     const r = await fetch(`${API_URL}/api/casino/open`, {
