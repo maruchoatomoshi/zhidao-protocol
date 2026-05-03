@@ -26,6 +26,22 @@ MARZBAN_PASS = "sqU5QN0jgus!"
 ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
+PRESENCE_CHECK_TYPES = {"morning", "evening"}
+PRESENCE_STATUSES = {
+    "pending",
+    "confirmed",
+    "free_time",
+    "leave_requested",
+    "admin_approved",
+    "leave_rejected",
+    "needs_attention",
+    "penalized",
+    "skipped",
+}
+PRESENCE_SAFE_STATUSES = {"confirmed", "free_time", "admin_approved", "skipped"}
+PRESENCE_ATTEMPT_LIMIT = 3
+PRESENCE_PENALTY_POINTS = 50
+
 RAID_ENTRY_COST = 50
 RAID_SUCCESS_REWARD = 150
 RAID_SUCCESS_CHANCE = 0.4
@@ -267,6 +283,34 @@ def init_db():
                   message TEXT NOT NULL,
                   created_at TEXT NOT NULL,
                   is_active INTEGER DEFAULT 1)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS daily_checks
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  check_type TEXT NOT NULL,
+                  check_date TEXT NOT NULL,
+                  telegram_id INTEGER NOT NULL,
+                  status TEXT NOT NULL DEFAULT 'pending',
+                  attempts_sent INTEGER NOT NULL DEFAULT 0,
+                  first_sent_at TEXT DEFAULT NULL,
+                  last_attempt_at TEXT DEFAULT NULL,
+                  confirmed_at TEXT DEFAULT NULL,
+                  escalated_at TEXT DEFAULT NULL,
+                  penalized_at TEXT DEFAULT NULL,
+                  penalty_points INTEGER NOT NULL DEFAULT 0,
+                  note TEXT DEFAULT '',
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL,
+                  UNIQUE(check_type, check_date, telegram_id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS daily_check_exemptions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  check_type TEXT NOT NULL,
+                  check_date TEXT NOT NULL,
+                  reason_text TEXT DEFAULT '',
+                  starts_at TEXT DEFAULT NULL,
+                  ends_at TEXT DEFAULT NULL,
+                  created_by INTEGER NOT NULL,
+                  created_at TEXT NOT NULL,
+                  status TEXT NOT NULL DEFAULT 'active')''')
     c.execute('''CREATE TABLE IF NOT EXISTS events
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   code TEXT NOT NULL,
@@ -395,6 +439,34 @@ def migrate_db():
                   telegram_id INTEGER NOT NULL,
                   joined_at TEXT NOT NULL,
                   UNIQUE(event_id, telegram_id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS daily_checks
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  check_type TEXT NOT NULL,
+                  check_date TEXT NOT NULL,
+                  telegram_id INTEGER NOT NULL,
+                  status TEXT NOT NULL DEFAULT 'pending',
+                  attempts_sent INTEGER NOT NULL DEFAULT 0,
+                  first_sent_at TEXT DEFAULT NULL,
+                  last_attempt_at TEXT DEFAULT NULL,
+                  confirmed_at TEXT DEFAULT NULL,
+                  escalated_at TEXT DEFAULT NULL,
+                  penalized_at TEXT DEFAULT NULL,
+                  penalty_points INTEGER NOT NULL DEFAULT 0,
+                  note TEXT DEFAULT '',
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT NOT NULL,
+                  UNIQUE(check_type, check_date, telegram_id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS daily_check_exemptions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  check_type TEXT NOT NULL,
+                  check_date TEXT NOT NULL,
+                  reason_text TEXT DEFAULT '',
+                  starts_at TEXT DEFAULT NULL,
+                  ends_at TEXT DEFAULT NULL,
+                  created_by INTEGER NOT NULL,
+                  created_at TEXT NOT NULL,
+                  status TEXT NOT NULL DEFAULT 'active')''')
     conn.commit()
     conn.close()
 
@@ -518,6 +590,100 @@ def get_user_display_name(c, telegram_id: int) -> str:
     c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
     row = c.fetchone()
     return row[0] if row and row[0] else str(telegram_id)
+
+
+def normalize_presence_check_type(value: str) -> str:
+    check_type = str(value or "").strip().lower()
+    if check_type not in PRESENCE_CHECK_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid check_type")
+    return check_type
+
+
+def normalize_presence_date(value: Optional[str] = None) -> str:
+    return str(value or datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')).strip()
+
+
+def serialize_presence_row(row):
+    return {
+        "id": row[0],
+        "check_type": row[1],
+        "check_date": row[2],
+        "telegram_id": row[3],
+        "full_name": row[4] or str(row[3]),
+        "status": row[5],
+        "attempts_sent": row[6],
+        "first_sent_at": row[7],
+        "last_attempt_at": row[8],
+        "confirmed_at": row[9],
+        "escalated_at": row[10],
+        "penalized_at": row[11],
+        "penalty_points": row[12],
+        "note": row[13] or "",
+        "points": row[14] or 0,
+    }
+
+
+def fetch_presence_row(c, check_type: str, check_date: str, telegram_id: int):
+    c.execute(
+        '''SELECT dc.id, dc.check_type, dc.check_date, dc.telegram_id, u.full_name,
+                  dc.status, dc.attempts_sent, dc.first_sent_at, dc.last_attempt_at,
+                  dc.confirmed_at, dc.escalated_at, dc.penalized_at,
+                  dc.penalty_points, dc.note, u.points
+           FROM daily_checks dc
+           LEFT JOIN users u ON u.telegram_id = dc.telegram_id
+           WHERE dc.check_type=? AND dc.check_date=? AND dc.telegram_id=?''',
+        (check_type, check_date, telegram_id),
+    )
+    row = c.fetchone()
+    return serialize_presence_row(row) if row else None
+
+
+def ensure_presence_check(c, check_type: str, check_date: str, telegram_id: int, note: str = ""):
+    now = now_iso()
+    c.execute(
+        '''INSERT INTO daily_checks
+           (check_type, check_date, telegram_id, status, note, created_at, updated_at)
+           VALUES (?, ?, ?, 'pending', ?, ?, ?)
+           ON CONFLICT(check_type, check_date, telegram_id) DO NOTHING''',
+        (check_type, check_date, telegram_id, note, now, now),
+    )
+    return fetch_presence_row(c, check_type, check_date, telegram_id)
+
+
+def has_active_free_time(c, telegram_id: int) -> Optional[int]:
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''SELECT id
+           FROM shop_purchases
+           WHERE telegram_id=?
+             AND item_code='casino_walk'
+             AND status='active'
+             AND (expires_at IS NULL OR expires_at >= ?)
+           ORDER BY id DESC
+           LIMIT 1''',
+        (telegram_id, now_str),
+    )
+    row = c.fetchone()
+    return row[0] if row else None
+
+
+def apply_presence_status(c, check_type: str, check_date: str, telegram_id: int, status: str, note: str = ""):
+    if status not in PRESENCE_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    ensure_presence_check(c, check_type, check_date, telegram_id)
+    now = now_iso()
+    confirmed_at = now if status in ("confirmed", "free_time", "admin_approved") else None
+    c.execute(
+        '''UPDATE daily_checks
+           SET status=?,
+               note=?,
+               confirmed_at=COALESCE(?, confirmed_at),
+               updated_at=?
+           WHERE check_type=? AND check_date=? AND telegram_id=?''',
+        (status, note, confirmed_at, now, check_type, check_date, telegram_id),
+    )
+    return fetch_presence_row(c, check_type, check_date, telegram_id)
 
 
 def get_player_modifier(c, telegram_id: int):
@@ -2046,6 +2212,353 @@ async def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(N
     }
 
 
+@app.post("/api/presence/start")
+async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    target_ids = data.get("telegram_ids")
+    note = str(data.get("note") or "").strip()
+
+    conn = get_conn()
+    c = conn.cursor()
+    if target_ids:
+        ids = []
+        for raw_id in target_ids:
+            try:
+                ids.append(int(raw_id))
+            except (TypeError, ValueError):
+                continue
+        ids = [tid for tid in ids if tid not in ADMIN_IDS]
+    else:
+        placeholders = ','.join('?' * len(ADMIN_IDS))
+        c.execute(
+            f'''SELECT telegram_id
+                FROM users
+                WHERE telegram_id IS NOT NULL
+                  AND telegram_id NOT IN ({placeholders})''',
+            ADMIN_IDS,
+        )
+        ids = [row[0] for row in c.fetchall()]
+
+    created = []
+    for telegram_id in ids:
+        created.append(ensure_presence_check(c, check_type, check_date, telegram_id, note))
+
+    conn.commit()
+    conn.close()
+    return {
+        "success": True,
+        "check_type": check_type,
+        "check_date": check_date,
+        "created_count": len(created),
+        "checks": created,
+    }
+
+
+@app.get("/api/presence/status")
+async def get_presence_status(check_type: str, telegram_id: int, check_date: Optional[str] = None):
+    check_type = normalize_presence_check_type(check_type)
+    check_date = normalize_presence_date(check_date)
+    conn = get_conn()
+    c = conn.cursor()
+    row = fetch_presence_row(c, check_type, check_date, telegram_id)
+    conn.close()
+    return {
+        "check_type": check_type,
+        "check_date": check_date,
+        "telegram_id": telegram_id,
+        "check": row,
+    }
+
+
+@app.post("/api/presence/confirm")
+async def confirm_presence(data: dict):
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    action = str(data.get("action") or "confirm").strip().lower()
+    note = str(data.get("note") or "").strip()
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if action == "confirm":
+        row = apply_presence_status(c, check_type, check_date, telegram_id, "confirmed", note)
+    elif action == "request_leave":
+        row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_requested", note)
+    elif action == "free_time":
+        purchase_id = has_active_free_time(c, telegram_id)
+        if not purchase_id:
+            conn.close()
+            raise HTTPException(status_code=400, detail="No active free time")
+        row = apply_presence_status(
+            c,
+            check_type,
+            check_date,
+            telegram_id,
+            "free_time",
+            note or f"casino_walk purchase #{purchase_id}",
+        )
+    else:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "check": row}
+
+
+@app.post("/api/presence/attempt")
+async def mark_presence_attempt(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    conn = get_conn()
+    c = conn.cursor()
+    ensure_presence_check(c, check_type, check_date, telegram_id)
+    now = now_iso()
+    c.execute(
+        '''UPDATE daily_checks
+           SET attempts_sent=attempts_sent+1,
+               first_sent_at=COALESCE(first_sent_at, ?),
+               last_attempt_at=?,
+               updated_at=?
+           WHERE check_type=? AND check_date=? AND telegram_id=?''',
+        (now, now, now, check_type, check_date, telegram_id),
+    )
+    row = fetch_presence_row(c, check_type, check_date, telegram_id)
+    conn.commit()
+    conn.close()
+    return {
+        "success": True,
+        "needs_admin_alert": row["attempts_sent"] >= PRESENCE_ATTEMPT_LIMIT and row["status"] not in PRESENCE_SAFE_STATUSES,
+        "check": row,
+    }
+
+
+@app.post("/api/presence/admin/approve")
+async def approve_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    reason = str(data.get("reason") or "admin_approved").strip()
+    starts_at = data.get("starts_at")
+    ends_at = data.get("ends_at")
+
+    conn = get_conn()
+    c = conn.cursor()
+    row = apply_presence_status(c, check_type, check_date, telegram_id, "admin_approved", reason)
+    c.execute(
+        '''INSERT INTO daily_check_exemptions
+           (telegram_id, check_type, check_date, reason_text, starts_at, ends_at, created_by, created_at, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')''',
+        (telegram_id, check_type, check_date, reason, starts_at, ends_at, x_admin_id, now_iso()),
+    )
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, ?, 'presence_approve', 0, ?, ?)''',
+        (x_admin_id, telegram_id, f"{check_type} {check_date}: {reason}", now_iso()),
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True, "check": row}
+
+
+@app.post("/api/presence/admin/reject")
+async def reject_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    reason = str(data.get("reason") or "leave rejected").strip()
+    conn = get_conn()
+    c = conn.cursor()
+    row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_rejected", reason)
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, ?, 'presence_reject', 0, ?, ?)''',
+        (x_admin_id, telegram_id, f"{check_type} {check_date}: {reason}", now_iso()),
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True, "check": row}
+
+
+@app.post("/api/presence/admin/escalate")
+async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    conn = get_conn()
+    c = conn.cursor()
+    now = now_iso()
+    c.execute(
+        '''UPDATE daily_checks
+           SET status='needs_attention',
+               escalated_at=COALESCE(escalated_at, ?),
+               updated_at=?
+           WHERE check_type=?
+             AND check_date=?
+             AND status IN ('pending', 'leave_requested', 'leave_rejected')
+             AND attempts_sent >= ?''',
+        (now, now, check_type, check_date, PRESENCE_ATTEMPT_LIMIT),
+    )
+    changed = c.rowcount
+    conn.commit()
+    c.execute(
+        '''SELECT dc.id, dc.check_type, dc.check_date, dc.telegram_id, u.full_name,
+                  dc.status, dc.attempts_sent, dc.first_sent_at, dc.last_attempt_at,
+                  dc.confirmed_at, dc.escalated_at, dc.penalized_at,
+                  dc.penalty_points, dc.note, u.points
+           FROM daily_checks dc
+           LEFT JOIN users u ON u.telegram_id = dc.telegram_id
+           WHERE dc.check_type=? AND dc.check_date=? AND dc.status='needs_attention'
+           ORDER BY u.full_name COLLATE NOCASE''',
+        (check_type, check_date),
+    )
+    rows = [serialize_presence_row(row) for row in c.fetchall()]
+    conn.close()
+    return {"success": True, "changed": changed, "needs_attention": rows}
+
+
+@app.post("/api/presence/admin/penalize")
+async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    penalty = int(data.get("penalty_points") or PRESENCE_PENALTY_POINTS)
+    if penalty <= 0 or penalty > 500:
+        raise HTTPException(status_code=400, detail="Invalid penalty")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT dc.telegram_id, u.full_name, COALESCE(u.points, 0)
+           FROM daily_checks dc
+           JOIN users u ON u.telegram_id = dc.telegram_id
+           WHERE dc.check_type=?
+             AND dc.check_date=?
+             AND dc.status='needs_attention'
+             AND dc.telegram_id NOT IN ({})'''.format(','.join('?' * len(ADMIN_IDS))),
+        [check_type, check_date] + ADMIN_IDS,
+    )
+    targets = c.fetchall()
+    penalized = []
+    now = now_iso()
+    for telegram_id, full_name, previous_points in targets:
+        c.execute(
+            "UPDATE users SET points = MAX(0, COALESCE(points, 0) - ?) WHERE telegram_id=?",
+            (penalty, telegram_id),
+        )
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        new_points = c.fetchone()[0] or 0
+        actual_delta = new_points - (previous_points or 0)
+        c.execute(
+            '''UPDATE daily_checks
+               SET status='penalized',
+                   penalized_at=?,
+                   penalty_points=?,
+                   updated_at=?
+               WHERE check_type=? AND check_date=? AND telegram_id=?''',
+            (now, abs(actual_delta), now, check_type, check_date, telegram_id),
+        )
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, ?, 'presence_penalty', ?, ?, ?)''',
+            (x_admin_id, telegram_id, actual_delta, f"{check_type} {check_date}", now),
+        )
+        penalized.append({
+            "telegram_id": telegram_id,
+            "full_name": full_name or str(telegram_id),
+            "previous_points": previous_points or 0,
+            "new_points": new_points,
+            "delta": actual_delta,
+        })
+    conn.commit()
+    conn.close()
+    return {"success": True, "penalized": penalized}
+
+
+@app.get("/api/presence/admin/overview")
+async def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    check_type = normalize_presence_check_type(check_type)
+    check_date = normalize_presence_date(check_date)
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT dc.id, dc.check_type, dc.check_date, dc.telegram_id, u.full_name,
+                  dc.status, dc.attempts_sent, dc.first_sent_at, dc.last_attempt_at,
+                  dc.confirmed_at, dc.escalated_at, dc.penalized_at,
+                  dc.penalty_points, dc.note, u.points
+           FROM daily_checks dc
+           LEFT JOIN users u ON u.telegram_id = dc.telegram_id
+           WHERE dc.check_type=? AND dc.check_date=?
+           ORDER BY
+             CASE dc.status
+               WHEN 'needs_attention' THEN 1
+               WHEN 'leave_requested' THEN 2
+               WHEN 'leave_rejected' THEN 3
+               WHEN 'pending' THEN 4
+               WHEN 'penalized' THEN 5
+               ELSE 9
+             END,
+             u.full_name COLLATE NOCASE''',
+        (check_type, check_date),
+    )
+    checks = [serialize_presence_row(row) for row in c.fetchall()]
+    counts = {status: 0 for status in PRESENCE_STATUSES}
+    for item in checks:
+        counts[item["status"]] = counts.get(item["status"], 0) + 1
+    conn.close()
+    return {
+        "check_type": check_type,
+        "check_date": check_date,
+        "counts": counts,
+        "checks": checks,
+    }
+
+
 @app.get("/api/diary/admin/overview")
 async def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
     if not is_diary_staff(x_admin_id):
@@ -2647,8 +3160,13 @@ async def open_case(data: dict):
         ]
     elif case_type == 'purple':
         prizes = [
-            {"code": "implant_guanxi", "name": "Имплант Гуаньси 关系", "points": 0, "weight": 50, "icon": "🤝", "case_type": "purple"},
-            {"code": "implant_terracota", "name": "Имплант Терракота 兵马俑", "points": 0, "weight": 50, "icon": "🗿", "case_type": "purple"},
+            {"code": "implant_guanxi", "name": "Имплант Гуаньси 关系", "points": 0, "weight": 68, "icon": "🤝", "case_type": "purple"},
+            {"code": "implant_terracota", "name": "Имплант Терракота 兵马俑", "points": 0, "weight": 70, "icon": "🗿", "case_type": "purple"},
+            {"code": "implant_panda", "name": "Имплант Панда 🐼", "points": 0, "weight": 64, "icon": "🐼", "case_type": "purple"},
+            {"code": "implant_shaolin", "name": "Имплант Шаолинь 少林", "points": 0, "weight": 62, "icon": "🥋", "case_type": "purple"},
+            {"code": "implant_linguasoft", "name": "Имплант Linguasoft 口才", "points": 0, "weight": 60, "icon": "🎙", "case_type": "purple"},
+            {"code": "implant_caishen", "name": "Имплант Цайшэнь 财神", "points": 0, "weight": 75, "icon": "💰", "case_type": "purple"},
+            {"code": "implant_qilin", "name": "Имплант Цилинь 麒麟", "points": 0, "weight": 85, "icon": "🐉", "case_type": "purple"},
         ]
     else:
         prizes = [
@@ -2677,7 +3195,7 @@ async def open_case(data: dict):
         c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
     elif prize["code"] == "laundry":
         c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_laundry', now_str, 'active'))
-    elif prize["code"] in ("implant_guanxi", "implant_terracota", "implant_red_dragon"):
+    elif prize["code"].startswith("implant_"):
         c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
 
     c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
@@ -2749,6 +3267,11 @@ async def get_casino_history(telegram_id: int):
         "jackpot": {"name": "ДЖЕКПОТ! +250!", "icon": "👑"},
         "implant_guanxi": {"name": "Имплант Гуаньси 关系", "icon": "🤝"},
         "implant_terracota": {"name": "Имплант Терракота 兵马俑", "icon": "🗿"},
+        "implant_panda": {"name": "Имплант Панда 🐼", "icon": "🐼"},
+        "implant_shaolin": {"name": "Имплант Шаолинь 少林", "icon": "🥋"},
+        "implant_linguasoft": {"name": "Имплант Linguasoft 口才", "icon": "🎙"},
+        "implant_caishen": {"name": "Имплант Цайшэнь 财神", "icon": "💰"},
+        "implant_qilin": {"name": "Имплант Цилинь 麒麟", "icon": "🐉"},
         "implant_red_dragon": {"name": "Красный Дракон 红龙", "icon": "🐉"},
     }
     result = []
