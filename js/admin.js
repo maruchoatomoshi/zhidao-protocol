@@ -8,6 +8,7 @@ function setLastSeenGlobalAlertId(alertId) {
 
 let adminSelectedUser = null;
 let adminSearchTimer = null;
+let adminUsersCache = [];
 
 async function triggerGlobalArchitectAlert() {
   if (!currentUserId) {
@@ -319,14 +320,24 @@ function adminUserInitial(name) {
   return (text[0] || '?').toUpperCase();
 }
 
+function adminUserAvatarHtml(user, large = false) {
+  const avatar = String(user?.avatar_url || '').trim();
+  const name = user?.full_name || user?.name || '?';
+  const cls = large ? 'admin-user-avatar large' : 'admin-user-avatar';
+  if (avatar) {
+    return `<div class="${cls} has-image"><img src="${escapeHtml(avatar)}" alt=""></div>`;
+  }
+  return `<div class="${cls}">${escapeHtml(adminUserInitial(name))}</div>`;
+}
+
 function adminRenderUserCard(user) {
   const active = adminSelectedUser && adminSelectedUser.telegram_id === user.telegram_id;
-  const safeName = JSON.stringify(String(user.full_name || 'Аноним'));
-  return `<div class="admin-user-card ${active ? 'active' : ''}" onclick='adminSelectUser(${user.telegram_id}, ${safeName}, ${user.points || 0})'>
-    <div class="admin-user-avatar">${escapeHtml(adminUserInitial(user.full_name))}</div>
+  const room = String(user.room_number || '').trim();
+  return `<div class="admin-user-card ${active ? 'active' : ''}" onclick="adminSelectUserById(${Number(user.telegram_id) || 0})">
+    ${adminUserAvatarHtml(user)}
     <div class="admin-user-main">
       <div class="admin-user-name">${escapeHtml(user.full_name)} ${user.is_admin ? '<span class="inventory-pill">ADMIN</span>' : ''}</div>
-      <div class="admin-user-meta">ID ${user.telegram_id}${user.username ? ` · ${escapeHtml(user.username)}` : ''}</div>
+      <div class="admin-user-meta">ID ${user.telegram_id}${user.username ? ` · ${escapeHtml(user.username)}` : ''}${room ? ` · комната ${escapeHtml(room)}` : ''}</div>
     </div>
     <div class="admin-user-points">${user.points || 0}★</div>
   </div>`;
@@ -348,6 +359,7 @@ async function adminSearchUsers() {
       return;
     }
     const users = Array.isArray(data.users) ? data.users : [];
+    adminUsersCache = users;
     container.innerHTML = users.length
       ? users.map(adminRenderUserCard).join('')
       : '<div class="empty-state">Никого не найдено</div>';
@@ -356,8 +368,35 @@ async function adminSearchUsers() {
   }
 }
 
-function adminSelectUser(telegramId, fullName, points) {
-  adminSelectedUser = { telegram_id: telegramId, full_name: fullName, points };
+function adminSelectUserById(telegramId) {
+  const user = adminUsersCache.find(item => Number(item.telegram_id) === Number(telegramId));
+  if (!user) {
+    showToast('Не удалось открыть карточку игрока');
+    return;
+  }
+  adminSelectUser(user.telegram_id, user.full_name, user.points, user);
+}
+
+function adminRenderRoommates(roommates) {
+  if (!Array.isArray(roommates) || !roommates.length) {
+    return '<div class="admin-roommate-empty">Соседи пока не указаны</div>';
+  }
+  return roommates.map(roommate => `
+    <div class="admin-roommate-chip">
+      ${adminUserAvatarHtml(roommate)}
+      <span>${escapeHtml(roommate.full_name || roommate.telegram_id)}</span>
+    </div>
+  `).join('');
+}
+
+function adminSelectUser(telegramId, fullName, points, extra = {}) {
+  adminSelectedUser = {
+    ...(adminSelectedUser || {}),
+    ...extra,
+    telegram_id: telegramId,
+    full_name: fullName,
+    points,
+  };
   const awardName = document.getElementById('awardName');
   const freezeId = document.getElementById('freezeId');
   if (awardName) awardName.value = telegramId;
@@ -365,17 +404,58 @@ function adminSelectUser(telegramId, fullName, points) {
   const selected = document.getElementById('adminSelectedUser');
   if (selected) {
     selected.style.display = 'block';
+    const room = String(adminSelectedUser.room_number || '').trim();
+    const roommates = adminSelectedUser.roommates || [];
     selected.innerHTML = `
       <div class="admin-console-kicker">SELECTED TARGET</div>
-      <div class="admin-log-top">
-        <div>
-          <div class="admin-user-name">${escapeHtml(fullName)}</div>
-          <div class="admin-user-meta">Telegram ID ${telegramId}</div>
+      <div class="admin-dossier-head">
+        ${adminUserAvatarHtml(adminSelectedUser, true)}
+        <div class="admin-dossier-main">
+          <div class="admin-user-name">${escapeHtml(fullName)} ${adminSelectedUser.is_admin ? '<span class="inventory-pill">ADMIN</span>' : ''}</div>
+          <div class="admin-user-meta">Telegram ID ${telegramId}${adminSelectedUser.username ? ` · ${escapeHtml(adminSelectedUser.username)}` : ''}</div>
         </div>
         <div class="admin-user-points">${points || 0}★</div>
+      </div>
+      <div class="admin-dossier-room">
+        <div class="admin-room-row">
+          <input class="admin-input admin-room-input" id="adminRoomInput" placeholder="Комната" value="${escapeHtml(room)}">
+          <button class="admin-console-refresh" onclick="adminSaveSelectedRoom()">СОХРАНИТЬ</button>
+        </div>
+        <div class="admin-roommate-title">Соседи</div>
+        <div id="adminRoommates" class="admin-roommate-list">${adminRenderRoommates(roommates)}</div>
       </div>`;
   }
   adminSearchUsers();
+}
+
+async function adminSaveSelectedRoom() {
+  if (!adminSelectedUser || !currentUserId) {
+    showToast('Сначала выбери игрока');
+    return;
+  }
+  const input = document.getElementById('adminRoomInput');
+  const roomNumber = String(input?.value || '').trim();
+  try {
+    const r = await fetch(`${API_URL}/api/admin/user/room`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: adminSelectedUser.telegram_id, room_number: roomNumber}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось сохранить комнату');
+      return;
+    }
+    adminSelectedUser.room_number = data.room_number || '';
+    adminSelectedUser.roommates = data.roommates || [];
+    const list = document.getElementById('adminRoommates');
+    if (list) list.innerHTML = adminRenderRoommates(adminSelectedUser.roommates);
+    showToast(data.room_number ? `Комната сохранена: ${data.room_number}` : 'Комната очищена');
+    adminSearchUsers();
+    adminLoadActionLog();
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
 }
 
 async function adminAdjustPointsFromForm(direction) {
@@ -422,7 +502,7 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
     document.getElementById('awardReason').value = '';
     if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
       adminSelectedUser.points = data.new_points;
-      adminSelectUser(targetId, data.full_name, data.new_points);
+      adminSelectUser(targetId, data.full_name, data.new_points, adminSelectedUser);
     }
     adminSearchUsers();
     adminLoadActionLog();

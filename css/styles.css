@@ -2472,6 +2472,23 @@ body.is-admin .more-item.admin-only-item::before {
   color: var(--red);
   font-weight: 900;
   font-family: monospace;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.admin-user-avatar.large {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+}
+.admin-user-avatar.has-image {
+  background: color-mix(in srgb, var(--bg3) 80%, transparent);
+  color: transparent;
+}
+.admin-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .admin-user-main { flex: 1; min-width: 0; }
 .admin-user-name { color: var(--text); font-size: 12px; font-weight: 800; }
@@ -2486,6 +2503,65 @@ body.is-admin .more-item.admin-only-item::before {
 .admin-selected-user {
   margin-top: 10px;
   border-color: color-mix(in srgb, var(--gold-border) 86%, transparent);
+}
+.admin-dossier-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.admin-dossier-main {
+  flex: 1;
+  min-width: 0;
+}
+.admin-dossier-room {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+.admin-room-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 8px;
+}
+.admin-room-input {
+  margin-bottom: 0;
+}
+.admin-roommate-title {
+  margin: 10px 0 6px;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+.admin-roommate-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.admin-roommate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 8px 5px 5px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--bg3) 70%, transparent);
+  color: var(--text2);
+  font-size: 9px;
+  font-weight: 700;
+}
+.admin-roommate-chip .admin-user-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 8px;
+}
+.admin-roommate-empty {
+  color: var(--text3);
+  font-size: 10px;
 }
 .admin-log-card {
   display: grid;

@@ -130,6 +130,7 @@ def init_db():
                  telegram_id INTEGER,
                  full_name TEXT,
                   avatar_url TEXT DEFAULT NULL,
+                  room_number TEXT DEFAULT NULL,
                   points INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS schedule
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -392,6 +393,8 @@ def migrate_db():
     user_columns = {row[1] for row in c.fetchall()}
     if 'avatar_url' not in user_columns:
         c.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT NULL")
+    if 'room_number' not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN room_number TEXT DEFAULT NULL")
 
     c.execute("PRAGMA table_info(user_status)")
     columns = {row[1] for row in c.fetchall()}
@@ -2130,7 +2133,7 @@ async def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(Non
         like = f"%{query}%"
         if query.isdigit():
             c.execute(
-                '''SELECT telegram_id, full_name, marzban_username, points
+                '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
                    FROM users
                    WHERE telegram_id IS NOT NULL
                      AND (CAST(telegram_id AS TEXT) LIKE ? OR full_name LIKE ? OR marzban_username LIKE ?)
@@ -2140,7 +2143,7 @@ async def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(Non
             )
         else:
             c.execute(
-                '''SELECT telegram_id, full_name, marzban_username, points
+                '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
                    FROM users
                    WHERE telegram_id IS NOT NULL
                      AND (full_name LIKE ? OR marzban_username LIKE ?)
@@ -2150,13 +2153,31 @@ async def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(Non
             )
     else:
         c.execute(
-            '''SELECT telegram_id, full_name, marzban_username, points
+            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
                FROM users
                WHERE telegram_id IS NOT NULL
                ORDER BY points DESC
                LIMIT 20''',
         )
     rows = c.fetchall()
+    roommate_map = {}
+    room_numbers = sorted({row[5] for row in rows if row[5]})
+    for room_number in room_numbers:
+        c.execute(
+            '''SELECT telegram_id, full_name, avatar_url
+               FROM users
+               WHERE room_number=? AND telegram_id IS NOT NULL
+               ORDER BY full_name COLLATE NOCASE''',
+            (room_number,),
+        )
+        roommate_map[room_number] = [
+            {
+                "telegram_id": roommate_row[0],
+                "full_name": roommate_row[1] or str(roommate_row[0]),
+                "avatar_url": roommate_row[2],
+            }
+            for roommate_row in c.fetchall()
+        ]
     conn.close()
     return {
         "users": [
@@ -2165,10 +2186,78 @@ async def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(Non
                 "full_name": row[1] or "Аноним",
                 "username": row[2] or "",
                 "points": row[3] or 0,
+                "avatar_url": row[4],
+                "room_number": row[5] or "",
+                "roommates": [
+                    roommate for roommate in roommate_map.get(row[5], [])
+                    if roommate["telegram_id"] != row[0]
+                ],
                 "is_admin": row[0] in ADMIN_IDS,
             }
             for row in rows
         ]
+    }
+
+
+@app.post("/api/admin/user/room")
+async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    room_number = str(data.get("room_number") or "").strip()
+    if len(room_number) > 40:
+        raise HTTPException(status_code=400, detail="Room number is too long")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
+    target = c.fetchone()
+    if not target:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    c.execute(
+        "UPDATE users SET room_number=? WHERE telegram_id=?",
+        (room_number or None, telegram_id),
+    )
+    roommates = []
+    if room_number:
+        c.execute(
+            '''SELECT telegram_id, full_name, avatar_url
+               FROM users
+               WHERE room_number=?
+                 AND telegram_id IS NOT NULL
+                 AND telegram_id != ?
+               ORDER BY full_name COLLATE NOCASE''',
+            (room_number, telegram_id),
+        )
+        roommates = [
+            {
+                "telegram_id": row[0],
+                "full_name": row[1] or str(row[0]),
+                "avatar_url": row[2],
+            }
+            for row in c.fetchall()
+        ]
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, ?, 'room_update', 0, ?, ?)''',
+        (x_admin_id, telegram_id, f"room: {room_number or 'empty'}", now_iso()),
+    )
+    conn.commit()
+    conn.close()
+    return {
+        "success": True,
+        "telegram_id": telegram_id,
+        "full_name": target[0] or str(telegram_id),
+        "room_number": room_number,
+        "roommates": roommates,
     }
 
 
