@@ -86,7 +86,11 @@ async function addAnnouncement() {
   try {
     const r = await fetch(`${API_URL}/api/announcements`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({text})});
     if (r.ok) {
-      showToast('✅ Опубликовано!');
+      const result = await r.json();
+      const sent = result.telegram_delivery && Number.isFinite(Number(result.telegram_delivery.sent))
+        ? Number(result.telegram_delivery.sent)
+        : null;
+      showToast(sent === null ? '✅ Опубликовано!' : `✅ Опубликовано! Бот отправил: ${sent}`);
       ['announceText', 'announceTextMore'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
@@ -101,7 +105,15 @@ async function addAnnouncementAdmin() {
   if (!text) { showToast('Введите текст'); return; }
   try {
     const r = await fetch(`${API_URL}/api/announcements`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({text})});
-    if (r.ok) { showToast('✅ Опубликовано!'); document.getElementById('announceTextAdmin').value=''; loadAnnouncements(); }
+    if (r.ok) {
+      const result = await r.json();
+      const sent = result.telegram_delivery && Number.isFinite(Number(result.telegram_delivery.sent))
+        ? Number(result.telegram_delivery.sent)
+        : null;
+      showToast(sent === null ? '✅ Опубликовано!' : `✅ Опубликовано! Бот отправил: ${sent}`);
+      document.getElementById('announceTextAdmin').value='';
+      loadAnnouncements();
+    }
   } catch(e) { showToast('Ошибка'); }
 }
 

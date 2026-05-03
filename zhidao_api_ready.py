@@ -865,6 +865,31 @@ async def send_telegram_message(chat_id: int, text: str, reply_markup: Optional[
             return True, await r.json()
 
 
+async def broadcast_announcement_to_telegram(text: str):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT telegram_id
+           FROM users
+           WHERE telegram_id IS NOT NULL
+           ORDER BY full_name COLLATE NOCASE'''
+    )
+    recipients = [int(row[0]) for row in c.fetchall() if row[0]]
+    conn.close()
+
+    sent = 0
+    failed = 0
+    message = f"📢 Объявление:\n\n{text}"
+    for telegram_id in recipients:
+        ok, _ = await send_telegram_message(telegram_id, message)
+        if ok:
+            sent += 1
+        else:
+            failed += 1
+
+    return {"total": len(recipients), "sent": sent, "failed": failed}
+
+
 def get_player_modifier(c, telegram_id: int):
     c.execute(
         '''SELECT implant_id
@@ -2140,12 +2165,19 @@ async def get_announcements():
 async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
+    text = item.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Announcement text is empty")
+
     conn = get_conn()
     c = conn.cursor()
-    c.execute("INSERT INTO announcements (text) VALUES (?)", (item.text,))
+    c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
+    announcement_id = c.lastrowid
     conn.commit()
     conn.close()
-    return {"success": True}
+
+    telegram_delivery = await broadcast_announcement_to_telegram(text)
+    return {"success": True, "id": announcement_id, "telegram_delivery": telegram_delivery}
 
 
 @app.delete("/api/announcements/{item_id}")
