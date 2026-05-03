@@ -223,6 +223,19 @@ async def presence_penalize(check_type, penalty_points=PRESENCE_PENALTY_POINTS):
     )
 
 
+async def presence_cancel(check_type, admin_id, reason="manual cancel from bot"):
+    return await api_request(
+        "POST",
+        "/api/presence/admin/cancel",
+        {
+            "check_type": check_type,
+            "admin_id": admin_id,
+            "reason": reason,
+        },
+        admin=True,
+    )
+
+
 async def presence_approve(telegram_id, check_type, admin_id, reason="admin_approved"):
     return await api_request(
         "POST",
@@ -795,6 +808,7 @@ async def admin_help(message: types.Message):
         "/перекличка — запустить вечернюю отметку\n"
         "/подъем — запустить утреннюю отметку\n"
         "/presence morning|evening — статус отметки\n"
+        "/отмена morning|evening — отменить случайную отметку\n"
         "/award ИМЯ БАЛЛЫ ПРИЧИНА — начислить баллы\n"
         "/penalize ИМЯ БАЛЛЫ ПРИЧИНА — снять баллы\n"
         "/зп СУММА — воскресная зарплата\n"
@@ -873,6 +887,29 @@ async def manual_morning_presence(message: types.Message):
         return
     await message.answer("✅ Запускаю утреннюю отметку...")
     await send_morning_presence()
+
+
+@dp.message(Command("отмена", "presence_cancel"))
+async def presence_cancel_cmd(message: types.Message):
+    if not is_admin(message.from_user.id):
+        await message.answer("❌ У вас нет прав администратора.")
+        return
+
+    args = message.text.split(maxsplit=2)
+    check_type = args[1] if len(args) > 1 else "evening"
+    reason = args[2] if len(args) > 2 else "Отменено администратором"
+
+    if check_type not in ("morning", "evening"):
+        await message.answer("Использование: /отмена morning или /отмена evening")
+        return
+
+    try:
+        data = await presence_cancel(check_type, message.from_user.id, reason)
+        cancelled = data.get("cancelled", 0)
+        label = PRESENCE_TYPE_LABELS.get(check_type, check_type)
+        await message.answer(f"✅ {label.capitalize()} отменена.\nСтатусов сброшено: {cancelled}")
+    except Exception as e:
+        await message.answer(f"❌ Не удалось отменить отметку: {e}")
 
 
 @dp.message(Command("presence"))

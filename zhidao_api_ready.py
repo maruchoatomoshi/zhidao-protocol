@@ -2456,6 +2456,40 @@ async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header
     return {"success": True, "changed": changed, "needs_attention": rows}
 
 
+@app.post("/api/presence/admin/cancel")
+async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    reason = str(data.get("reason") or "manual cancel").strip()
+    now = now_iso()
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''UPDATE daily_checks
+           SET status='skipped',
+               note=?,
+               updated_at=?
+           WHERE check_type=?
+             AND check_date=?
+             AND status IN ('pending', 'leave_requested', 'leave_rejected', 'needs_attention')''',
+        (reason, now, check_type, check_date),
+    )
+    cancelled = c.rowcount
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, NULL, 'presence_cancel', 0, ?, ?)''',
+        (x_admin_id, f"{check_type} {check_date}: {reason}", now),
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True, "cancelled": cancelled, "check_type": check_type, "check_date": check_date}
+
+
 @app.post("/api/presence/admin/penalize")
 async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
