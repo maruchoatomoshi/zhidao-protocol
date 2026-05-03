@@ -8719,3 +8719,193 @@ body.theme-genshin-dark  #page-shop .shop-subtabs::after {
 }
 
   
+
+
+/* ================================================================
+   PAGE ANIMATIONS — glitch / stagger / pulse
+   ================================================================ */
+
+/* ── 1. GLITCH на китайских заголовках ───────────────────────── */
+@keyframes glitchCn {
+  0%, 80%, 100% {
+    transform: none;
+    text-shadow: none;
+    clip-path: none;
+    opacity: 1;
+  }
+  81% {
+    transform: translateX(-3px) skewX(-3deg);
+    text-shadow: 2px 0 #ff0044, -2px 0 #00eeff;
+    opacity: 0.9;
+  }
+  82% {
+    transform: translateX(3px);
+    text-shadow: -3px 0 #ff0044, 2px 0 #00eeff;
+    clip-path: polygon(0 20%, 100% 20%, 100% 55%, 0 55%);
+    opacity: 0.85;
+  }
+  83% {
+    transform: translateX(-1px);
+    clip-path: polygon(0 60%, 100% 60%, 100% 85%, 0 85%);
+    text-shadow: 1px 0 rgba(255,0,68,0.7);
+  }
+  84% {
+    transform: none;
+    text-shadow: none;
+    clip-path: none;
+    opacity: 1;
+  }
+  91% {
+    transform: translateX(1px);
+    text-shadow: -1px 0 rgba(0,238,255,0.5);
+  }
+  92%, 94% { transform: none; text-shadow: none; }
+  93% {
+    transform: translateX(-1px) skewX(-1deg);
+    text-shadow: 1px 0 rgba(255,0,68,0.35);
+  }
+}
+
+.page-title-cn {
+  animation: glitchCn 10s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Делители: более тихий глитч, разные фазы у разных элементов */
+@keyframes glitchDividerText {
+  0%, 88%, 100% { text-shadow: none; letter-spacing: inherit; }
+  89% { text-shadow: 1px 0 rgba(255,0,68,0.5), -1px 0 rgba(0,238,255,0.5); letter-spacing: 1.5px; }
+  90% { text-shadow: -1px 0 rgba(255,0,68,0.4); letter-spacing: inherit; }
+  91% { text-shadow: none; }
+}
+
+.cn-divider {
+  animation: glitchDividerText 13s ease-in-out infinite;
+}
+/* Сдвигаем фазы у вложенных делителей чтобы не глитчили синхронно */
+.card .cn-divider:nth-of-type(2) { animation-delay: -4.3s; }
+.card .cn-divider:nth-of-type(3) { animation-delay: -8.7s; }
+
+/* Для admin-темы глитч в синей гамме */
+body.theme-admin .page-title-cn {
+  animation-name: glitchCnBlue;
+}
+@keyframes glitchCnBlue {
+  0%, 80%, 100% { transform: none; text-shadow: none; clip-path: none; opacity: 1; }
+  81% { transform: translateX(-3px) skewX(-3deg); text-shadow: 2px 0 #ff4488, -2px 0 #6478ff; opacity: 0.9; }
+  82% { transform: translateX(3px); text-shadow: -3px 0 #ff4488, 2px 0 #00d4ff; clip-path: polygon(0 20%, 100% 20%, 100% 55%, 0 55%); }
+  83% { transform: none; text-shadow: none; clip-path: none; opacity: 1; }
+  91% { transform: translateX(1px); text-shadow: -1px 0 rgba(0,212,255,0.5); }
+  92% { transform: none; text-shadow: none; }
+}
+
+/* ── 2. STAGGER ВХОД КАРТОЧЕК ────────────────────────────────── */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* .card внутри активной страницы */
+.page.active .card {
+  animation: cardEnter 0.38s ease backwards;
+}
+.page.active .card:nth-child(2)      { animation-delay: 0.06s; }
+.page.active .card:nth-child(3)      { animation-delay: 0.12s; }
+.page.active .card:nth-child(4)      { animation-delay: 0.18s; }
+.page.active .card:nth-child(5)      { animation-delay: 0.24s; }
+.page.active .card:nth-child(6)      { animation-delay: 0.29s; }
+.page.active .card:nth-child(7)      { animation-delay: 0.33s; }
+.page.active .card:nth-child(n+8)    { animation-delay: 0.37s; }
+
+/* Карточки в подконтейнерах (rating, diary, etc.) */
+.page.active > * > .card:nth-child(1)    { animation-delay: 0.00s; }
+.page.active > * > .card:nth-child(2)    { animation-delay: 0.07s; }
+.page.active > * > .card:nth-child(3)    { animation-delay: 0.14s; }
+.page.active > * > .card:nth-child(4)    { animation-delay: 0.21s; }
+.page.active > * > .card:nth-child(n+5)  { animation-delay: 0.28s; }
+
+/* More-меню: иконки выпрыгивают */
+@keyframes moreItemEnter {
+  from { opacity: 0; transform: scale(0.88) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.page.active .more-grid .more-item {
+  animation: moreItemEnter 0.30s cubic-bezier(0.34,1.56,0.64,1) backwards;
+}
+.page.active .more-grid .more-item:nth-child(1)   { animation-delay: 0.00s; }
+.page.active .more-grid .more-item:nth-child(2)   { animation-delay: 0.05s; }
+.page.active .more-grid .more-item:nth-child(3)   { animation-delay: 0.10s; }
+.page.active .more-grid .more-item:nth-child(4)   { animation-delay: 0.15s; }
+.page.active .more-grid .more-item:nth-child(5)   { animation-delay: 0.20s; }
+.page.active .more-grid .more-item:nth-child(6)   { animation-delay: 0.24s; }
+.page.active .more-grid .more-item:nth-child(7)   { animation-delay: 0.28s; }
+.page.active .more-grid .more-item:nth-child(8)   { animation-delay: 0.32s; }
+.page.active .more-grid .more-item:nth-child(9)   { animation-delay: 0.35s; }
+.page.active .more-grid .more-item:nth-child(n+10){ animation-delay: 0.37s; }
+
+/* Shop items стagger */
+.shop-grid-modern .shop-item {
+  animation: cardEnter 0.36s ease backwards;
+}
+.shop-grid-modern .shop-item:nth-child(1)   { animation-delay: 0.00s; }
+.shop-grid-modern .shop-item:nth-child(2)   { animation-delay: 0.07s; }
+.shop-grid-modern .shop-item:nth-child(3)   { animation-delay: 0.14s; }
+.shop-grid-modern .shop-item:nth-child(4)   { animation-delay: 0.21s; }
+.shop-grid-modern .shop-item:nth-child(5)   { animation-delay: 0.27s; }
+.shop-grid-modern .shop-item:nth-child(6)   { animation-delay: 0.32s; }
+.shop-grid-modern .shop-item:nth-child(n+7) { animation-delay: 0.36s; }
+
+/* Inventory items */
+@keyframes invItemEnter {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.page.active .inventory-item {
+  animation: invItemEnter 0.30s ease backwards;
+}
+.page.active .inventory-item:nth-child(1)   { animation-delay: 0.00s; }
+.page.active .inventory-item:nth-child(2)   { animation-delay: 0.05s; }
+.page.active .inventory-item:nth-child(3)   { animation-delay: 0.10s; }
+.page.active .inventory-item:nth-child(4)   { animation-delay: 0.15s; }
+.page.active .inventory-item:nth-child(5)   { animation-delay: 0.20s; }
+.page.active .inventory-item:nth-child(n+6) { animation-delay: 0.24s; }
+
+/* ── 3. PULSE GLOW профильной карточки ──────────────────────── */
+
+/* Базовый пульс — золотой (NetWatch default) */
+@keyframes profilePulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 0 10px rgba(212,175,55,0.06); }
+  50%       { box-shadow: 0 4px 28px rgba(0,0,0,0.30), 0 0 28px rgba(212,175,55,0.18), 0 0 56px rgba(212,175,55,0.07); }
+}
+.profile-card-home {
+  animation: profilePulse 4.5s ease-in-out infinite;
+}
+
+/* Admin-роль: красный пульс */
+@keyframes profilePulseRed {
+  0%, 100% { box-shadow: 0 0 14px rgba(200,30,30,0.10), inset 0 0 18px rgba(200,30,30,0.04); }
+  50%       { box-shadow: 0 0 36px rgba(200,30,30,0.28), 0 0 70px rgba(200,30,30,0.10), inset 0 0 26px rgba(200,30,30,0.10); }
+}
+body.is-admin .profile-card-home {
+  animation: profilePulseRed 4s ease-in-out infinite;
+}
+
+/* Admin theme: синий пульс */
+@keyframes profilePulseBlue {
+  0%, 100% { box-shadow: 0 0 14px rgba(100,120,255,0.10), inset 0 0 18px rgba(100,120,255,0.05); }
+  50%       { box-shadow: 0 0 36px rgba(100,120,255,0.32), 0 0 70px rgba(100,120,255,0.12), inset 0 0 26px rgba(100,120,255,0.10); }
+}
+body.is-admin.theme-admin .profile-card-home {
+  animation: profilePulseBlue 4s ease-in-out infinite;
+}
+
+/* Genshin: мягкий золотой пульс */
+@keyframes profilePulseGold {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.20), 0 0 10px rgba(219,177,101,0.06); }
+  50%       { box-shadow: 0 4px 30px rgba(0,0,0,0.28), 0 0 30px rgba(219,177,101,0.22), 0 0 60px rgba(219,177,101,0.08); }
+}
+body.theme-genshin-light .profile-card-home,
+body.theme-genshin-dark  .profile-card-home {
+  animation: profilePulseGold 5.5s ease-in-out infinite;
+}
