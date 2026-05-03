@@ -234,6 +234,187 @@ body.is-admin #theme-btn-admin {
   display: block;
 }
 
+/* ===== ARCHITECT PROTOCOL THEME ===== */
+body.theme-architect {
+  --accent:       #e82200;
+  --accent2:      #ffcc00;
+  --accent3:      #9d4edd;
+  --red:          #e82200;
+  --red-dim:      rgba(232,34,0,0.13);
+  --red-border:   rgba(232,34,0,0.40);
+  --gold:         #ffcc00;
+  --gold-dim:     rgba(255,204,0,0.11);
+  --gold-border:  rgba(255,204,0,0.30);
+  --bg:           #050508;
+  --bg2:          #0b0808;
+  --bg3:          rgba(232,34,0,0.06);
+  --border:       rgba(232,34,0,0.20);
+  --text:         #fff5f0;
+  --text2:        rgba(255,245,240,0.60);
+  --text3:        rgba(255,245,240,0.32);
+  --scan-opacity: 0.05;
+}
+body.theme-architect .bottom-nav {
+  background: rgba(5,5,8,0.97);
+  border-top-color: rgba(232,34,0,0.45);
+}
+body.theme-architect .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(232,34,0,0.6), rgba(255,204,0,0.5), rgba(157,78,221,0.25), rgba(255,204,0,0.5), rgba(232,34,0,0.6), transparent);
+}
+body.theme-architect .page-title {
+  text-shadow: 0 0 30px rgba(232,34,0,0.7), 0 0 70px rgba(232,34,0,0.25);
+}
+body.theme-architect .nav-item.active { color: rgba(232,40,0,0.95); }
+body.theme-architect .nav-item.active::before {
+  background: linear-gradient(90deg, transparent, rgba(232,40,0,0.9), rgba(255,204,0,0.5), rgba(232,40,0,0.9), transparent);
+}
+body.theme-architect .nav-item.active .ti {
+  color: rgba(232,40,0,0.95);
+  filter: drop-shadow(0 0 8px rgba(232,40,0,0.55)) drop-shadow(0 0 16px rgba(232,40,0,0.2));
+}
+body.theme-architect .btn-primary { color: #e82200; }
+body.theme-architect .btn-primary::after {
+  background: linear-gradient(90deg, transparent, rgba(232,34,0,0.15), rgba(255,204,0,0.08), transparent);
+}
+body.theme-architect .card-label { color: rgba(232,60,0,0.9); }
+body.theme-architect .card-label::after {
+  background: linear-gradient(90deg, rgba(232,34,0,0.3), rgba(255,204,0,0.1), transparent);
+}
+body.theme-architect .neuro-status { color: #e82200; }
+body.theme-architect .subtab.active { color: #e82200; }
+body.theme-architect .date-btn.active { color: #e82200; }
+body.theme-architect .profile-card-kicker { color: rgba(232,34,0,0.75); }
+body.theme-architect .profile-badge-path {
+  background: rgba(232,34,0,0.13);
+  border-color: rgba(232,34,0,0.35);
+  color: rgba(255,120,80,0.9);
+}
+body.theme-architect .profile-badge-rank {
+  background: rgba(255,204,0,0.12);
+  border-color: rgba(255,204,0,0.35);
+  color: #ffcc00;
+}
+
+/* ── Architect profile card ────────────────────────────────── */
+body.is-architect .profile-card-home {
+  border-color: rgba(232,34,0,0.65);
+  background:
+    radial-gradient(ellipse at 0% 0%,    rgba(232,34,0,0.18),    transparent 44%),
+    radial-gradient(ellipse at 100% 100%,rgba(255,204,0,0.14),   transparent 44%),
+    radial-gradient(ellipse at 55% 45%,  rgba(157,78,221,0.07),  transparent 55%),
+    linear-gradient(155deg, rgba(255,255,255,0.04), rgba(5,3,3,0.9));
+}
+body.is-architect .profile-card-home::before,
+body.is-architect .profile-card-home::after {
+  border-color: rgba(232,34,0,0.75);
+}
+body.is-architect .profile-scan-line {
+  animation: architectScanLine 4s ease-in-out infinite;
+}
+body.is-architect .profile-card-kicker {
+  color: rgba(232,34,0,0.8);
+  text-shadow: 0 0 8px rgba(232,34,0,0.4);
+}
+body.is-architect .profile-admin-badge {
+  background: linear-gradient(90deg, rgba(220,30,0,0.92), rgba(180,0,0,0.88), rgba(120,40,160,0.5));
+  border-top: 1px solid rgba(255,204,0,0.3);
+  font-size: 8px;
+  letter-spacing: 2px;
+  padding: 3px 0;
+  text-shadow: 0 0 10px rgba(255,80,0,0.5);
+}
+
+/* Pulse glow — architect */
+body.is-architect .profile-card-home {
+  animation: profilePulseArchitect 3.5s ease-in-out infinite;
+}
+
+/* Архитектор + architect тема */
+body.is-architect.theme-architect .profile-card-home {
+  animation: profilePulseArchitect 3.5s ease-in-out infinite;
+}
+
+/* Architect scan line animation */
+@keyframes architectScanLine {
+  0%   { top: 0%; opacity: 0; background: linear-gradient(90deg, transparent, rgba(232,34,0,0.8) 40%, rgba(255,80,0,1.0) 50%, rgba(232,34,0,0.8) 60%, transparent); }
+  8%   { opacity: 1; }
+  45%  { background: linear-gradient(90deg, transparent, rgba(255,180,0,0.6) 40%, rgba(255,204,0,0.9) 50%, rgba(255,180,0,0.6) 60%, transparent); }
+  85%  { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; background: linear-gradient(90deg, transparent, rgba(157,78,221,0.5) 40%, rgba(232,34,0,0.8) 50%, rgba(157,78,221,0.5) 60%, transparent); }
+}
+
+/* Architect triple-layer pulse */
+@keyframes profilePulseArchitect {
+  0%, 100% {
+    box-shadow:
+      0 0 18px rgba(232,34,0,0.18),
+      0 0 0 1px rgba(232,34,0,0.30),
+      inset 0 0 22px rgba(232,34,0,0.07);
+  }
+  33% {
+    box-shadow:
+      0 0 50px rgba(232,34,0,0.38),
+      0 0 100px rgba(232,34,0,0.14),
+      0 0 0 1px rgba(255,204,0,0.55),
+      0 0 0 3px rgba(232,34,0,0.12),
+      inset 0 0 35px rgba(232,34,0,0.13);
+  }
+  66% {
+    box-shadow:
+      0 0 32px rgba(232,34,0,0.26),
+      0 0 72px rgba(157,78,221,0.12),
+      0 0 0 1px rgba(232,34,0,0.38),
+      inset 0 0 28px rgba(232,34,0,0.10);
+  }
+}
+
+/* Architect glitch — faster, red/gold instead of red/cyan */
+body.is-architect .page-title-cn,
+body.theme-architect .page-title-cn {
+  animation-name: glitchCnArchitect;
+  animation-duration: 7s;
+}
+@keyframes glitchCnArchitect {
+  0%, 72%, 100% { transform: none; text-shadow: none; clip-path: none; opacity: 1; }
+  73% { transform: translateX(-4px) skewX(-5deg); text-shadow: 3px 0 #ff0000, -3px 0 #ffcc00; opacity: 0.75; }
+  74% {
+    transform: translateX(5px);
+    text-shadow: -4px 0 #ff2200, 4px 0 #ffcc00;
+    clip-path: polygon(0 12%, 100% 12%, 100% 46%, 0 46%);
+    opacity: 0.7;
+  }
+  75% {
+    transform: translateX(-2px);
+    text-shadow: 2px 0 rgba(255,34,0,0.9);
+    clip-path: polygon(0 54%, 100% 54%, 100% 83%, 0 83%);
+  }
+  76% { transform: none; text-shadow: none; clip-path: none; opacity: 1; }
+  82% { transform: translateX(2px); text-shadow: -2px 0 rgba(255,204,0,0.7); }
+  83% { transform: none; text-shadow: none; }
+  90% { transform: translateX(-1px) skewX(-2deg); text-shadow: 1px 0 rgba(255,0,0,0.5), -1px 0 rgba(157,78,221,0.45); }
+  91% { transform: none; text-shadow: none; }
+}
+
+/* Shimmer-sweep на карточке темы */
+.architect-theme-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -120%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.055), rgba(255,204,0,0.04), transparent);
+  animation: architectCardSweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes architectCardSweep {
+  0%   { left: -120%; opacity: 0; }
+  20%  { opacity: 1; }
+  100% { left: 120%; opacity: 0; }
+}
+
+/* Hidden until is-architect */
+#theme-btn-architect { display: none; }
+body.is-architect #theme-btn-architect { display: block; }
+
 body {
   background: var(--bg);
   color: var(--text);

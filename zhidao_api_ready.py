@@ -25,6 +25,7 @@ MARZBAN_USER = "marucho"
 MARZBAN_PASS = "sqU5QN0jgus!"
 BOT_TOKEN = "8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc"
 ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
+ARCHITECT_IDS = [389741116]
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
 PRESENCE_CHECK_TYPES = {"morning", "evening"}
@@ -2045,6 +2046,7 @@ async def get_user(telegram_id: int):
             "used_traffic": 0,
             "expire": None,
             "is_admin": telegram_id in ADMIN_IDS,
+            "is_architect": telegram_id in ARCHITECT_IDS,
             "has_vpn": False,
         }
 
@@ -2059,6 +2061,7 @@ async def get_user(telegram_id: int):
         "used_traffic": data.get("used_traffic", 0),
         "expire": data.get("expire"),
         "is_admin": telegram_id in ADMIN_IDS,
+        "is_architect": telegram_id in ARCHITECT_IDS,
         "has_vpn": True,
     }
 

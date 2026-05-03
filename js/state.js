@@ -4,6 +4,7 @@ let currentPoints = 0;
 let currentAvatarUrl = null;
 let userConfig = null;
 let isAdmin = false;
+let isArchitect = false;
 let isSpinning = false;
 let selectedLaundryDate = null;
 let laundryData = [];

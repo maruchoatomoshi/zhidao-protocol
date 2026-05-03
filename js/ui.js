@@ -54,6 +54,9 @@ function syncAdminUiVisibility() {
 
   const adminThemeBtn = document.getElementById('theme-btn-admin');
   if (adminThemeBtn) adminThemeBtn.style.display = isAdmin ? '' : 'none';
+
+  const architectThemeBtn = document.getElementById('theme-btn-architect');
+  if (architectThemeBtn) architectThemeBtn.style.display = isArchitect ? '' : 'none';
 }
 
 function openMore(section) {
@@ -84,6 +87,14 @@ async function loadUserData(telegramId) {
     if (r.ok) {
       const data = await r.json();
       isAdmin = !!data.is_admin;
+      isArchitect = !!data.is_architect;
+      document.body.classList.toggle('is-architect', isArchitect);
+      if (isArchitect) {
+        const badge = document.querySelector('.profile-admin-badge');
+        if (badge) badge.textContent = '架构师 // ARCHITECT';
+        const kicker = document.getElementById('profileKicker');
+        if (kicker) kicker.textContent = 'ARCHITECT // PROTOCOL';
+      }
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
       }
