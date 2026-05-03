@@ -23,6 +23,7 @@ app.add_middleware(
 MARZBAN_URL = "http://127.0.0.1:8000"
 MARZBAN_USER = "marucho"
 MARZBAN_PASS = "sqU5QN0jgus!"
+BOT_TOKEN = "8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc"
 ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
@@ -684,6 +685,59 @@ def apply_presence_status(c, check_type: str, check_date: str, telegram_id: int,
         (status, note, confirmed_at, now, check_type, check_date, telegram_id),
     )
     return fetch_presence_row(c, check_type, check_date, telegram_id)
+
+
+def get_presence_keyboard_markup(check_type: str):
+    if check_type == "morning":
+        return {
+            "inline_keyboard": [[
+                {"text": "✅ Я проснулся", "callback_data": "presence:morning:confirm"},
+                {"text": "🙋 Нужна помощь", "callback_data": "presence:morning:request_leave"},
+            ]]
+        }
+
+    return {
+        "inline_keyboard": [
+            [{"text": "✅ Я в комнате", "callback_data": "presence:evening:confirm"}],
+            [
+                {"text": "🕐 Свободное время", "callback_data": "presence:evening:free_time"},
+                {"text": "🙋 Нужен отгул", "callback_data": "presence:evening:request_leave"},
+            ],
+        ]
+    }
+
+
+def get_presence_message_text(check_type: str, attempt_no: int = 1):
+    if check_type == "morning":
+        return (
+            "🌅 Утренняя отметка\n\n"
+            f"Попытка {attempt_no}/3. Нажми кнопку, чтобы подтвердить подъём."
+        )
+
+    return (
+        "🌙 Вечерняя отметка\n\n"
+        f"Попытка {attempt_no}/3. 21:00 — нужно быть в комнате.\n"
+        "Если у тебя разрешение от админа или активное «Свободное время», выбери нужную кнопку."
+    )
+
+
+async def send_telegram_message(chat_id: int, text: str, reply_markup: Optional[dict] = None):
+    payload = {"chat_id": chat_id, "text": text}
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            json=payload,
+        ) as r:
+            if r.status >= 400:
+                try:
+                    data = await r.json()
+                except Exception:
+                    data = {"detail": await r.text()}
+                return False, data
+            return True, await r.json()
 
 
 def get_player_modifier(c, telegram_id: int):
@@ -2255,6 +2309,101 @@ async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(No
         "check_date": check_date,
         "created_count": len(created),
         "checks": created,
+    }
+
+
+@app.post("/api/presence/admin/dispatch")
+async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    attempt_no = int(data.get("attempt_no") or 1)
+    note = str(data.get("note") or f"admin dispatch attempt {attempt_no}").strip()
+    target_ids = data.get("telegram_ids")
+
+    conn = get_conn()
+    c = conn.cursor()
+    if target_ids:
+        ids = []
+        for raw_id in target_ids:
+            try:
+                ids.append(int(raw_id))
+            except (TypeError, ValueError):
+                continue
+        ids = [tid for tid in ids if tid not in ADMIN_IDS]
+    else:
+        placeholders = ','.join('?' * len(ADMIN_IDS))
+        c.execute(
+            f'''SELECT telegram_id
+                FROM users
+                WHERE telegram_id IS NOT NULL
+                  AND telegram_id NOT IN ({placeholders})''',
+            ADMIN_IDS,
+        )
+        ids = [row[0] for row in c.fetchall()]
+
+    eligible = []
+    skipped = 0
+    for telegram_id in ids:
+        row = ensure_presence_check(c, check_type, check_date, telegram_id, note)
+        if row and row.get("status") == "skipped":
+            c.execute(
+                '''UPDATE daily_checks
+                   SET status='pending',
+                       attempts_sent=0,
+                       first_sent_at=NULL,
+                       last_attempt_at=NULL,
+                       note=?,
+                       updated_at=?
+                   WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                (note, now_iso(), check_type, check_date, telegram_id),
+            )
+            row = fetch_presence_row(c, check_type, check_date, telegram_id)
+        if row and row.get("status") in ("pending", "leave_rejected"):
+            eligible.append(telegram_id)
+        else:
+            skipped += 1
+    conn.commit()
+    conn.close()
+
+    sent = []
+    failed = []
+    markup = get_presence_keyboard_markup(check_type)
+    text = get_presence_message_text(check_type, attempt_no)
+    for telegram_id in eligible:
+        ok, response = await send_telegram_message(telegram_id, text, markup)
+        if ok:
+            sent.append(telegram_id)
+            conn = get_conn()
+            c = conn.cursor()
+            now = now_iso()
+            c.execute(
+                '''UPDATE daily_checks
+                   SET attempts_sent=COALESCE(attempts_sent, 0) + 1,
+                       first_sent_at=COALESCE(first_sent_at, ?),
+                       last_attempt_at=?,
+                       updated_at=?
+                   WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                (now, now, now, check_type, check_date, telegram_id),
+            )
+            conn.commit()
+            conn.close()
+        else:
+            failed.append({"telegram_id": telegram_id, "error": response})
+
+    return {
+        "success": True,
+        "check_type": check_type,
+        "check_date": check_date,
+        "attempt_no": attempt_no,
+        "eligible_count": len(eligible),
+        "sent_count": len(sent),
+        "skipped_count": skipped,
+        "failed_count": len(failed),
+        "sent": sent,
+        "failed": failed,
     }
 
 

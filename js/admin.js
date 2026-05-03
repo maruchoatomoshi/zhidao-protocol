@@ -113,7 +113,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','blackwall'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -125,6 +125,7 @@ function showAdminSection(name, btn) {
     adminSearchUsers();
     adminLoadActionLog();
   }
+  if (name==='presence') adminLoadPresenceAll();
 }
 
 async function loadAdminLaundry() {
@@ -432,6 +433,159 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
   } catch (e) {
     showToast('Ошибка соединения');
   }
+}
+
+const ADMIN_PRESENCE_LABELS = {
+  pending: 'Ожидают',
+  confirmed: 'Подтвердили',
+  free_time: 'Свободное время',
+  leave_requested: 'Запросили отгул',
+  admin_approved: 'Разрешено',
+  leave_rejected: 'Отгул отклонён',
+  needs_attention: 'Проверить',
+  penalized: 'Оштрафованы',
+  skipped: 'Отменены',
+};
+
+const ADMIN_PRESENCE_ORDER = [
+  'pending',
+  'confirmed',
+  'free_time',
+  'leave_requested',
+  'admin_approved',
+  'leave_rejected',
+  'needs_attention',
+  'penalized',
+  'skipped',
+];
+
+function adminPresenceTarget(checkType) {
+  return document.getElementById(checkType === 'morning' ? 'adminPresenceMorning' : 'adminPresenceEvening');
+}
+
+function adminPresenceLabel(checkType) {
+  return checkType === 'morning' ? 'утренняя отметка' : 'вечерняя отметка';
+}
+
+function adminRenderPresenceOverview(checkType, data) {
+  const container = adminPresenceTarget(checkType);
+  if (!container) return;
+
+  const counts = data.counts || {};
+  const checks = Array.isArray(data.checks) ? data.checks : [];
+  const activeRows = checks.filter(row => ['pending', 'leave_requested', 'leave_rejected', 'needs_attention'].includes(row.status));
+  const statusGrid = ADMIN_PRESENCE_ORDER.map(key => `
+    <div class="admin-presence-chip ${key}">
+      <span>${ADMIN_PRESENCE_LABELS[key] || key}</span>
+      <strong>${counts[key] || 0}</strong>
+    </div>
+  `).join('');
+
+  const attentionList = activeRows.length
+    ? `<div class="admin-presence-list">
+        ${activeRows.slice(0, 8).map(row => `
+          <div class="admin-presence-row ${row.status}">
+            <div>
+              <div class="admin-presence-name">${escapeHtml(row.full_name || row.telegram_id || 'Без имени')}</div>
+              <div class="admin-presence-meta">ID ${escapeHtml(row.telegram_id)} · ${ADMIN_PRESENCE_LABELS[row.status] || row.status} · попыток ${row.attempts_sent || 0}</div>
+            </div>
+            <div class="admin-presence-row-badge">${row.status === 'needs_attention' ? 'ALERT' : 'WAIT'}</div>
+          </div>
+        `).join('')}
+      </div>`
+    : '<div class="empty-state">Нет активных тревог или ожиданий</div>';
+
+  container.innerHTML = `
+    <div class="admin-presence-date">Дата: ${escapeHtml(data.check_date || 'сегодня')}</div>
+    <div class="admin-presence-chips">${statusGrid}</div>
+    ${attentionList}
+  `;
+}
+
+async function adminLoadPresence(checkType) {
+  if (!isAdmin || !currentUserId) return;
+  const container = adminPresenceTarget(checkType);
+  if (container) container.innerHTML = '<div class="empty-state">Загрузка статуса...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/presence/admin/overview?check_type=${encodeURIComponent(checkType)}`, {
+      headers: {'x-admin-id': currentUserId},
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      if (container) container.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Нет доступа')}</div>`;
+      return;
+    }
+    adminRenderPresenceOverview(checkType, data);
+  } catch (e) {
+    if (container) container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
+}
+
+function adminLoadPresenceAll() {
+  adminLoadPresence('morning');
+  adminLoadPresence('evening');
+}
+
+async function adminDispatchPresence(checkType) {
+  if (!isAdmin || !currentUserId) return;
+  const label = adminPresenceLabel(checkType);
+  tg.showPopup({
+    title: 'Запустить отметку?',
+    message: `${label} будет отправлена детям прямо сейчас через Telegram-бота.`,
+    buttons: [
+      {id: 'confirm', type: 'default', text: 'Запустить'},
+      {type: 'cancel'}
+    ]
+  }, async (buttonId) => {
+    if (buttonId !== 'confirm') return;
+    try {
+      const r = await fetch(`${API_URL}/api/presence/admin/dispatch`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+        body: JSON.stringify({check_type: checkType, attempt_no: 1, note: 'Mini App dispatch'}),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        showToast(data.detail || 'Не удалось запустить отметку');
+        return;
+      }
+      showToast(`Отправлено: ${data.sent_count || 0}\nОшибок: ${data.failed_count || 0}`);
+      adminLoadPresence(checkType);
+    } catch (e) {
+      showToast('Ошибка соединения');
+    }
+  });
+}
+
+async function adminCancelPresence(checkType) {
+  if (!isAdmin || !currentUserId) return;
+  const label = adminPresenceLabel(checkType);
+  tg.showPopup({
+    title: 'Отменить отметку?',
+    message: `${label} будет помечена как отменённая для тех, кто ещё не подтвердил.`,
+    buttons: [
+      {id: 'confirm', type: 'destructive', text: 'Отменить'},
+      {type: 'cancel'}
+    ]
+  }, async (buttonId) => {
+    if (buttonId !== 'confirm') return;
+    try {
+      const r = await fetch(`${API_URL}/api/presence/admin/cancel`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+        body: JSON.stringify({check_type: checkType, admin_id: currentUserId, reason: 'Отменено из Mini App'}),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        showToast(data.detail || 'Не удалось отменить отметку');
+        return;
+      }
+      showToast(`Отменено статусов: ${data.cancelled || 0}`);
+      adminLoadPresence(checkType);
+    } catch (e) {
+      showToast('Ошибка соединения');
+    }
+  });
 }
 
 async function adminLoadActionLog() {

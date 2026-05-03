@@ -2514,6 +2514,176 @@ body.is-admin .more-item.admin-only-item::before {
   margin-top: 8px;
 }
 
+.admin-presence-hero {
+  border-color: color-mix(in srgb, var(--gold-border) 55%, var(--border));
+}
+.admin-presence-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.admin-presence-card {
+  position: relative;
+  overflow: hidden;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--red-dim) 52%, transparent), transparent 46%),
+    linear-gradient(145deg, color-mix(in srgb, var(--bg2) 92%, transparent), color-mix(in srgb, var(--bg3) 72%, transparent));
+  box-shadow: 0 12px 28px rgba(0,0,0,0.16);
+}
+.admin-presence-card::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+  opacity: 0.6;
+}
+.admin-presence-icon {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  color: color-mix(in srgb, var(--red) 18%, transparent);
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+.admin-presence-main {
+  position: relative;
+  padding-right: 42px;
+  margin-bottom: 12px;
+}
+.admin-presence-kicker {
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1.6px;
+  color: var(--gold);
+}
+.admin-presence-title {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 900;
+  margin-top: 3px;
+}
+.admin-presence-desc {
+  color: var(--text3);
+  font-size: 10px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+.admin-presence-actions {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.admin-presence-btn {
+  min-height: 36px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg3) 70%, transparent);
+  color: var(--text2);
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+.admin-presence-btn.primary {
+  border-color: var(--gold-border);
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+.admin-presence-btn.danger {
+  border-color: var(--red-border);
+  background: var(--red-dim);
+  color: #cc4444;
+}
+.admin-presence-status {
+  display: grid;
+  gap: 9px;
+}
+.admin-presence-date {
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--text3);
+}
+.admin-presence-chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.admin-presence-chip {
+  padding: 7px 8px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  background: color-mix(in srgb, var(--bg3) 72%, transparent);
+}
+.admin-presence-chip span {
+  display: block;
+  color: var(--text3);
+  font-size: 8px;
+  line-height: 1.2;
+}
+.admin-presence-chip strong {
+  display: block;
+  color: var(--text);
+  font-family: monospace;
+  font-size: 15px;
+  margin-top: 2px;
+}
+.admin-presence-chip.pending strong,
+.admin-presence-chip.leave_requested strong,
+.admin-presence-chip.needs_attention strong { color: var(--gold); }
+.admin-presence-chip.confirmed strong,
+.admin-presence-chip.free_time strong,
+.admin-presence-chip.admin_approved strong { color: #32d872; }
+.admin-presence-chip.penalized strong,
+.admin-presence-chip.leave_rejected strong { color: #ff5a5a; }
+.admin-presence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-presence-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--bg3) 66%, transparent);
+}
+.admin-presence-name {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+}
+.admin-presence-meta {
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 8px;
+  margin-top: 2px;
+}
+.admin-presence-row-badge {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-dim);
+  color: var(--gold);
+  font-family: monospace;
+  font-size: 7px;
+  font-weight: 900;
+}
+
 /* Admin panel header */
 .admin-panel-header {
   display: flex;

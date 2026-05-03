@@ -770,6 +770,7 @@
       <button class="admin-sec-btn active" onclick="showAdminSection('schedule',this)">📅 Расписание</button>
       <button class="admin-sec-btn" onclick="showAdminSection('announce',this)">📣 Объявления</button>
       <button class="admin-sec-btn" onclick="showAdminSection('users',this)">👥 Игроки</button>
+      <button class="admin-sec-btn" onclick="showAdminSection('presence',this)">📡 Перекличка</button>
       <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">🧺 Стирка</button>
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">🌑 BlackWall</button>
       <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()">⚡ Architect</button>
@@ -875,6 +876,56 @@
       <div class="cn-divider">📜 ЖУРНАЛ ОПЕРАЦИЙ</div>
       <div id="adminActionLog" class="admin-action-log">
         <div class="empty-state">Журнал загрузится при открытии раздела</div>
+      </div>
+    </div>
+    <div id="admin-presence" class="admin-section" style="padding:0 12px;">
+      <div class="admin-console-card admin-presence-hero">
+        <div class="admin-console-head">
+          <div>
+            <div class="admin-console-kicker">PRESENCE PROTOCOL // 点名</div>
+            <div class="admin-console-title">Перекличка и подъём</div>
+          </div>
+          <button class="admin-console-refresh" onclick="adminLoadPresenceAll()">ОБНОВИТЬ</button>
+        </div>
+        <div class="admin-console-note">
+          Mini App управляет тем же протоколом, что и бот: запуск отправляет детям Telegram-кнопки, статус берётся из API, отмена сбрасывает случайный запуск.
+        </div>
+      </div>
+
+      <div class="admin-presence-grid">
+        <div class="admin-presence-card">
+          <div class="admin-presence-icon">晨</div>
+          <div class="admin-presence-main">
+            <div class="admin-presence-kicker">УТРО // 起床</div>
+            <div class="admin-presence-title">Подъём</div>
+            <div class="admin-presence-desc">07:30 / 07:40 / 07:50, затем тревога админам.</div>
+          </div>
+          <div class="admin-presence-actions">
+            <button class="admin-presence-btn primary" onclick="adminDispatchPresence('morning')">Запустить</button>
+            <button class="admin-presence-btn" onclick="adminLoadPresence('morning')">Статус</button>
+            <button class="admin-presence-btn danger" onclick="adminCancelPresence('morning')">Отменить</button>
+          </div>
+          <div id="adminPresenceMorning" class="admin-presence-status">
+            <div class="empty-state">Статус ещё не загружен</div>
+          </div>
+        </div>
+
+        <div class="admin-presence-card">
+          <div class="admin-presence-icon">夜</div>
+          <div class="admin-presence-main">
+            <div class="admin-presence-kicker">ВЕЧЕР // 晚点名</div>
+            <div class="admin-presence-title">Комнаты / отбой</div>
+            <div class="admin-presence-desc">21:00 / 21:15 / 21:30, отгулы и «Свободное время».</div>
+          </div>
+          <div class="admin-presence-actions">
+            <button class="admin-presence-btn primary" onclick="adminDispatchPresence('evening')">Запустить</button>
+            <button class="admin-presence-btn" onclick="adminLoadPresence('evening')">Статус</button>
+            <button class="admin-presence-btn danger" onclick="adminCancelPresence('evening')">Отменить</button>
+          </div>
+          <div id="adminPresenceEvening" class="admin-presence-status">
+            <div class="empty-state">Статус ещё не загружен</div>
+          </div>
+        </div>
       </div>
     </div>
     <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
