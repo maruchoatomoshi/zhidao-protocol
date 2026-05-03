@@ -19,9 +19,28 @@ loadLeaderboard();
 loadAchievements();
 initLaundry();
 
+function initBlackwallBootSequence() {
+  const overlay = document.getElementById('blackwallBootSequence');
+  if (!overlay || overlay.dataset.started === '1') return;
+
+  overlay.dataset.started = '1';
+  overlay.classList.add('show');
+
+  window.setTimeout(() => {
+    overlay.classList.add('closing');
+  }, 2600);
+
+  window.setTimeout(() => {
+    overlay.classList.remove('show', 'closing');
+    overlay.style.display = 'none';
+  }, 3250);
+}
+
 // ===== НАВИГАЦИЯ =====
 
 document.addEventListener('DOMContentLoaded', () => {
+  initBlackwallBootSequence();
+
   const screen = document.getElementById('gsPrayScreen');
   if (screen) screen.addEventListener('click', () => {
     if (gsAnimating || gsCardFlipped) return;

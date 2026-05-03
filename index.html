@@ -55,6 +55,7 @@
   </div>
 
   <div class="profile-card profile-card-home" id="profileCard">
+    <div class="profile-holo-ring" aria-hidden="true"></div>
     <div class="profile-scan-line"></div>
     <div class="blackwall-overlay"></div>
     <div class="profile-card-main">
@@ -1962,7 +1963,21 @@
         </button>
     </div>
 </div>
-  
+
+<div id="blackwallBootSequence" class="blackwall-boot-overlay" aria-hidden="true">
+  <div class="blackwall-boot-card">
+    <div class="blackwall-boot-grid"></div>
+    <div class="blackwall-boot-kicker">ZHIDAO PROTOCOL // BLACKWALL</div>
+    <div class="blackwall-boot-line" style="--boot-delay:0.12s;">&gt; BLACKWALL NODE INITIALIZING...</div>
+    <div class="blackwall-boot-line" style="--boot-delay:0.52s;">&gt; ARCHITECT SIGNATURE DETECTED</div>
+    <div class="blackwall-boot-line" style="--boot-delay:0.92s;">&gt; ACCESS LEVEL: OMEGA</div>
+    <div class="blackwall-boot-line" style="--boot-delay:1.32s;">&gt; CONNECTION ESTABLISHED <span>■</span></div>
+    <div class="blackwall-boot-progress">
+      <div></div>
+    </div>
+  </div>
+</div>
+
 <script src="./js/config.js"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js"></script>
