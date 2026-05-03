@@ -1,4 +1,9 @@
 function openEventOverlay() {
+  if (typeof isLaunchGateActive === 'function' && isLaunchGateActive()) {
+    showLaunchGateOverlay();
+    return;
+  }
+
   const overlay = document.getElementById('eventOverlay');
   if (!overlay) return;
 

@@ -7,7 +7,69 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
+function isLaunchGateActive() {
+  return !!window.APP_LAUNCH_LOCK_ENABLED && !!currentUserId && !isAdmin && !isArchitect;
+}
+
+function getLaunchGateTargetDate() {
+  const value = window.APP_LAUNCH_TARGET_AT || '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatLaunchGateCountdown() {
+  const target = getLaunchGateTargetDate();
+  if (!target) return 'Ожидаем дату запуска';
+
+  const diff = target.getTime() - Date.now();
+  if (diff <= 0) return 'Ожидаем официальный запуск';
+
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${days}д ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
+function updateLaunchGateCountdowns() {
+  const text = formatLaunchGateCountdown();
+  document.querySelectorAll('[data-launch-countdown]').forEach(el => {
+    el.textContent = text;
+  });
+}
+
+function syncLaunchGateVisibility() {
+  const active = isLaunchGateActive();
+  document.body.classList.toggle('launch-locked', active);
+
+  const card = document.getElementById('launchGateCard');
+  if (card) card.style.display = active ? 'block' : 'none';
+
+  updateLaunchGateCountdowns();
+}
+
+function showLaunchGateOverlay() {
+  syncLaunchGateVisibility();
+  const overlay = document.getElementById('launchGateOverlay');
+  if (!overlay) return;
+
+  overlay.classList.add('show');
+  try { tg.HapticFeedback.notificationOccurred('warning'); } catch(e) {}
+}
+
+function closeLaunchGateOverlay() {
+  const overlay = document.getElementById('launchGateOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
 function showPage(name, btn) {
+  if (isLaunchGateActive() && name !== 'home') {
+    showLaunchGateOverlay();
+    return;
+  }
+
   if (name === 'diary' && !isAdmin) {
     if (typeof syncDiaryAccessVisibility === 'function') syncDiaryAccessVisibility();
     try { showToast('Архив дневника доступен только администраторам.'); } catch(e) {}
@@ -48,6 +110,7 @@ function showPage(name, btn) {
 
 function syncAdminUiVisibility() {
   document.body.classList.toggle('is-admin', !!isAdmin);
+  syncLaunchGateVisibility();
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? 'block' : 'none';
@@ -60,6 +123,11 @@ function syncAdminUiVisibility() {
 }
 
 function openMore(section) {
+  if (isLaunchGateActive()) {
+    showLaunchGateOverlay();
+    return;
+  }
+
   // Скрываем все субстраницы
   ['themes','weather','laundry','news','achievements','team','admin','stats'].forEach(s => {
     const el = document.getElementById('more-' + s);

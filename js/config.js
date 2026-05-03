@@ -16,3 +16,6 @@ const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark', 'admin', 'archi
 const WEATHER_KEY = '03232b342b9270f8b24ed68e2c55d8f4';
 const EXCHANGE_KEY = 'a8c5f8c5d5e5b5a5';
 const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731];
+
+window.APP_LAUNCH_LOCK_ENABLED = true;
+window.APP_LAUNCH_TARGET_AT = '2026-05-18T09:00:00+08:00';

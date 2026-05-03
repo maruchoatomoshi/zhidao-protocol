@@ -108,6 +108,17 @@
       </div>
     </div>
   </div>
+
+  <div id="launchGateCard" class="launch-gate-card" style="display:none;">
+    <div class="launch-gate-mark">禁止入口</div>
+    <div class="launch-gate-title">Официальный запуск скоро</div>
+    <div class="launch-gate-copy">
+      Система активирована, профиль зарегистрирован. Полный доступ откроется после начала поездки.
+    </div>
+    <div class="launch-gate-countdown" data-launch-countdown>--:--:--:--</div>
+    <div class="launch-gate-note">BLACKWALL HOLD // WAITING FOR SETTLEMENT</div>
+  </div>
+
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
   <div class="card neuro-card">
@@ -1975,6 +1986,21 @@
     <div class="blackwall-boot-progress">
       <div></div>
     </div>
+  </div>
+</div>
+
+<div id="launchGateOverlay" class="launch-gate-overlay" onclick="closeLaunchGateOverlay()">
+  <div class="launch-gate-panel" onclick="event.stopPropagation()">
+    <div class="launch-gate-scan"></div>
+    <button class="launch-gate-close" onclick="closeLaunchGateOverlay()">×</button>
+    <div class="launch-gate-kicker">BLACKWALL ACCESS CONTROL</div>
+    <div class="launch-gate-big">禁止入口</div>
+    <div class="launch-gate-panel-title">Доступ пока закрыт</div>
+    <div class="launch-gate-panel-copy">
+      Приложение уже приняло регистрацию, но игровые разделы откроются после официального старта поездки.
+    </div>
+    <div class="launch-gate-panel-timer" data-launch-countdown>--:--:--:--</div>
+    <button class="launch-gate-return" onclick="closeLaunchGateOverlay()">Вернуться на главную</button>
   </div>
 </div>
 

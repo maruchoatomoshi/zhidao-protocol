@@ -36,10 +36,15 @@ function initBlackwallBootSequence() {
   }, 3250);
 }
 
+window.setInterval(() => {
+  if (typeof updateLaunchGateCountdowns === 'function') updateLaunchGateCountdowns();
+}, 1000);
+
 // ===== НАВИГАЦИЯ =====
 
 document.addEventListener('DOMContentLoaded', () => {
   initBlackwallBootSequence();
+  if (typeof syncLaunchGateVisibility === 'function') syncLaunchGateVisibility();
 
   const screen = document.getElementById('gsPrayScreen');
   if (screen) screen.addEventListener('click', () => {
