@@ -156,6 +156,76 @@ body.theme-admin .page-title {
   text-shadow: 0 0 20px rgba(100,120,255,0.4);
 }
 
+/* Nav active: синий вместо красного */
+body.theme-admin .nav-item.active { color: #6478ff; }
+body.theme-admin .nav-item.active::before {
+  background: linear-gradient(90deg, transparent, rgba(100,120,255,0.9), transparent);
+}
+body.theme-admin .nav-item.active .ti {
+  color: #6478ff;
+  filter: drop-shadow(0 0 6px rgba(100,120,255,0.5));
+}
+
+/* Кнопки */
+body.theme-admin .btn-primary { color: #8090ff; }
+body.theme-admin .btn-primary::after {
+  background: linear-gradient(90deg, transparent, rgba(100,120,255,0.12), transparent);
+}
+
+/* Card label + divider accent */
+body.theme-admin .card-label { color: rgba(140,160,255,0.85); }
+body.theme-admin .card-label::after {
+  background: linear-gradient(90deg, rgba(100,120,255,0.2), transparent);
+}
+
+/* Neuro статус и кикер */
+body.theme-admin .neuro-status { color: #6478ff; }
+body.theme-admin .profile-card-kicker { color: rgba(100,120,255,0.7); }
+
+/* Subtabs и date-btn active */
+body.theme-admin .subtab.active { color: #6478ff; }
+body.theme-admin .date-btn.active { color: #6478ff; }
+
+/* Разные #cc4444 метки */
+body.theme-admin .shop-item-limit.limit-soldout { color: #8090ff; }
+body.theme-admin .prize-result-points.negative { color: #ff7f7f; }
+body.theme-admin .inv-btn-sell { background: rgba(100,120,255,0.1); color: #8090ff; }
+
+/* Профильные бейджи */
+body.theme-admin .profile-badge-path {
+  background: rgba(100,120,255,0.12);
+  border-color: rgba(100,120,255,0.28);
+  color: rgba(160,180,255,0.9);
+}
+body.theme-admin .profile-badge-rank {
+  background: rgba(0,212,255,0.1);
+  border-color: rgba(0,212,255,0.3);
+  color: #00d4ff;
+}
+
+/* Admin profile card: синий гlow вместо красного */
+body.is-admin.theme-admin .profile-card-home {
+  border-color: rgba(100,120,255,0.5);
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(100,120,255,0.12), transparent 48%),
+    radial-gradient(ellipse at 100% 100%, rgba(0,212,255,0.07), transparent 52%),
+    linear-gradient(155deg, rgba(255,255,255,0.03), rgba(5,5,20,0.7));
+  box-shadow: 0 0 28px rgba(100,120,255,0.14), inset 0 0 20px rgba(100,120,255,0.06);
+}
+body.is-admin.theme-admin .profile-card-home::before,
+body.is-admin.theme-admin .profile-card-home::after {
+  border-color: rgba(100,120,255,0.55);
+}
+body.is-admin.theme-admin .profile-scan-line {
+  background: linear-gradient(90deg, transparent, rgba(100,120,255,0.6) 40%, rgba(140,160,255,0.9) 50%, rgba(100,120,255,0.6) 60%, transparent);
+}
+body.is-admin.theme-admin .profile-card-kicker {
+  color: rgba(100,120,255,0.75);
+}
+body.is-admin.theme-admin .profile-admin-badge {
+  background: rgba(80,100,220,0.88);
+}
+
 /* Карточка темы admin скрыта для обычных пользователей */
 #theme-btn-admin {
   display: none;
