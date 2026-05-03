@@ -127,6 +127,7 @@ function showAdminSection(name, btn) {
     adminLoadActionLog();
   }
   if (name==='presence') adminLoadPresenceAll();
+  if (name==='blackwall' && typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
 }
 
 async function loadAdminLaundry() {
@@ -749,6 +750,28 @@ async function setBlackwall(enabled) {
     const r = await fetch(`${API_URL}/api/admin/blackwall`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({enabled})});
     if (r.ok) showToast(enabled ? '⛔ BlackWall включён!' : '✅ BlackWall выключен!');
   } catch(e) { showToast('Ошибка'); }
+}
+
+async function setArchitectEventEnabled(enabled) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/architect-event`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({enabled})
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка переключения ивента');
+      return;
+    }
+
+    if (typeof syncArchitectEventAvailability === 'function') {
+      syncArchitectEventAvailability(!!data.architect_event);
+    }
+    showToast(enabled ? '⚡ Architect Event открыт!' : '⛔ Architect Event скрыт!');
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
 }
 
 /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v2.0 (Быстрый старт) --- */

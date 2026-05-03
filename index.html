@@ -147,7 +147,7 @@
   <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
 </div>
 
-<div class="home-event-card" onclick="openEventOverlay()" style="
+<div class="home-event-card" id="homeArchitectEventCard" onclick="openEventOverlay()" style="
   margin:8px 12px 12px;
   padding:14px 16px;
   border-radius:16px;
@@ -979,6 +979,21 @@
         <button class="admin-bw-btn bw-on" onclick="setBlackwall(true)">⛔ ВКЛЮЧИТЬ</button>
         <button class="admin-bw-btn bw-off" onclick="setBlackwall(false)">✅ ВЫКЛЮЧИТЬ</button>
       </div>
+
+      <div class="admin-blackwall-card admin-architect-event-card">
+        <div class="admin-blackwall-glyph">构</div>
+        <div class="admin-blackwall-info">
+          <div class="admin-console-kicker">ARCHITECT EVENT // 架构师</div>
+          <div class="admin-blackwall-title">Доступ к ивенту</div>
+          <div class="admin-blackwall-desc">Показывает или скрывает карточку Architect Protocol для детей.</div>
+          <div class="admin-architect-event-status" id="adminArchitectEventStatus">STATUS // CHECKING</div>
+        </div>
+      </div>
+      <div class="admin-blackwall-btns">
+        <button class="admin-bw-btn bw-on" onclick="setArchitectEventEnabled(true)">⚡ ОТКРЫТЬ ИВЕНТ</button>
+        <button class="admin-bw-btn bw-off" onclick="setArchitectEventEnabled(false)">⛔ СКРЫТЬ ИВЕНТ</button>
+      </div>
+
       <div class="admin-danger-zone">
         <div class="admin-danger-label">⚠ DANGER ZONE</div>
         <div class="admin-danger-desc">Сброс магазина снимает все записи о покупках за сегодня. Действие необратимо.</div>

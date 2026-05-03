@@ -45,6 +45,7 @@ window.setInterval(() => {
 document.addEventListener('DOMContentLoaded', () => {
   initBlackwallBootSequence();
   if (typeof syncLaunchGateVisibility === 'function') syncLaunchGateVisibility();
+  if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
 
   const screen = document.getElementById('gsPrayScreen');
   if (screen) screen.addEventListener('click', () => {

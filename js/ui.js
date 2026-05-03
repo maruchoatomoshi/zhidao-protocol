@@ -111,6 +111,7 @@ function showPage(name, btn) {
 function syncAdminUiVisibility() {
   document.body.classList.toggle('is-admin', !!isAdmin);
   syncLaunchGateVisibility();
+  if (typeof syncArchitectEventAvailability === 'function') syncArchitectEventAvailability();
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? 'block' : 'none';

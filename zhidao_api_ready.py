@@ -4139,9 +4139,14 @@ async def get_settings():
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT value FROM settings WHERE key='blackwall'")
-    result = c.fetchone()
+    blackwall = c.fetchone()
+    c.execute("SELECT value FROM settings WHERE key='architect_event'")
+    architect_event = c.fetchone()
     conn.close()
-    return {"blackwall": result[0] == '1' if result else False}
+    return {
+        "blackwall": blackwall[0] == '1' if blackwall else False,
+        "architect_event": architect_event[0] == '1' if architect_event else False,
+    }
 
 
 @app.post("/api/admin/blackwall")
@@ -4161,6 +4166,25 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
     conn.commit()
     conn.close()
     return {"success": True, "blackwall": enabled}
+
+
+@app.post("/api/admin/architect-event")
+async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    enabled = bool(data.get("enabled", False))
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('architect_event', ?)", ('1' if enabled else '0',))
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, NULL, 'architect_event', 0, ?, ?)''',
+        (x_admin_id, 'Architect event enabled' if enabled else 'Architect event disabled', now_iso()),
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True, "architect_event": enabled}
 
 
 @app.get("/api/raid/status")

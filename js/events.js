@@ -1,6 +1,54 @@
+let architectEventPublicEnabled = !!window.ARCHITECT_EVENT_ENABLED;
+
+function isArchitectEventPublicEnabled() {
+  return !!architectEventPublicEnabled;
+}
+
+function canOpenArchitectEvent() {
+  return isAdmin || isArchitect || isArchitectEventPublicEnabled();
+}
+
+function syncArchitectEventAvailability(enabled) {
+  if (typeof enabled === 'boolean') {
+    architectEventPublicEnabled = enabled;
+    window.ARCHITECT_EVENT_ENABLED = enabled;
+  }
+
+  const visible = canOpenArchitectEvent();
+  const card = document.getElementById('homeArchitectEventCard');
+  if (card) {
+    card.style.display = visible ? 'block' : 'none';
+    card.classList.toggle('event-disabled-admin-view', !isArchitectEventPublicEnabled() && (isAdmin || isArchitect));
+  }
+
+  const status = document.getElementById('adminArchitectEventStatus');
+  if (status) {
+    status.textContent = isArchitectEventPublicEnabled()
+      ? 'STATUS // PUBLIC ACCESS ENABLED'
+      : 'STATUS // HIDDEN FROM STUDENTS';
+    status.classList.toggle('enabled', isArchitectEventPublicEnabled());
+  }
+}
+
+async function loadArchitectEventAvailability() {
+  try {
+    const r = await fetch(`${API_URL}/api/settings`);
+    if (!r.ok) throw new Error('settings');
+    const settings = await r.json();
+    syncArchitectEventAvailability(!!settings.architect_event);
+  } catch (e) {
+    syncArchitectEventAvailability(!!window.ARCHITECT_EVENT_ENABLED);
+  }
+}
+
 function openEventOverlay() {
   if (typeof isLaunchGateActive === 'function' && isLaunchGateActive()) {
     showLaunchGateOverlay();
+    return;
+  }
+
+  if (!canOpenArchitectEvent()) {
+    showToast('Architect Protocol пока закрыт.');
     return;
   }
 

@@ -9762,6 +9762,46 @@ body.launch-locked .home-event-card {
   filter: grayscale(0.35) brightness(0.78);
 }
 
+.home-event-card.event-disabled-admin-view {
+  opacity: 0.68;
+  filter: grayscale(0.45) brightness(0.82);
+}
+
+.home-event-card.event-disabled-admin-view::after {
+  content: 'ADMIN PREVIEW // EVENT HIDDEN';
+  display: block;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,80,80,0.72);
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1.6px;
+}
+
+.admin-architect-event-card {
+  margin-top: 12px;
+}
+
+.admin-architect-event-status {
+  width: fit-content;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255,80,80,0.22);
+  border-radius: 999px;
+  background: rgba(180,20,20,0.08);
+  color: rgba(255,100,100,0.78);
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+
+.admin-architect-event-status.enabled {
+  border-color: rgba(70,220,120,0.24);
+  background: rgba(40,180,90,0.08);
+  color: rgba(100,240,150,0.82);
+}
+
 @keyframes launchGateFadeIn {
   from { opacity: 0; transform: scale(1.01); }
   to { opacity: 1; transform: scale(1); }
