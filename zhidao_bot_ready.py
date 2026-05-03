@@ -33,6 +33,32 @@ API_URL = "https://127.0.0.1:8443"
 PRESENCE_ADMIN_ID = ADMIN_IDS[0]
 PRESENCE_PENALTY_POINTS = 50
 PRESENCE_RETRY_STATUSES = {"pending", "leave_rejected"}
+PRESENCE_STATUS_LABELS = {
+    "pending": "Ожидают ответа",
+    "confirmed": "Подтвердили",
+    "free_time": "Свободное время",
+    "leave_requested": "Запросили отгул",
+    "admin_approved": "Разрешено админом",
+    "leave_rejected": "Отгул отклонён",
+    "needs_attention": "Нужно проверить",
+    "penalized": "Оштрафованы",
+    "skipped": "Пропущены",
+}
+PRESENCE_STATUS_ORDER = [
+    "pending",
+    "confirmed",
+    "free_time",
+    "leave_requested",
+    "admin_approved",
+    "leave_rejected",
+    "needs_attention",
+    "penalized",
+    "skipped",
+]
+PRESENCE_TYPE_LABELS = {
+    "morning": "утренняя отметка",
+    "evening": "вечерняя отметка",
+}
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
@@ -861,9 +887,10 @@ async def presence_status_cmd(message: types.Message):
         return
     data = await presence_overview(check_type)
     counts = data.get("counts", {})
-    text = f"📊 Presence {check_type}\n\n"
-    for key, value in counts.items():
-        text += f"• {key}: {value}\n"
+    label = PRESENCE_TYPE_LABELS.get(check_type, check_type)
+    text = f"📊 {label.capitalize()}\n\n"
+    for key in PRESENCE_STATUS_ORDER:
+        text += f"• {PRESENCE_STATUS_LABELS.get(key, key)}: {counts.get(key, 0)}\n"
     await message.answer(text)
 
 
