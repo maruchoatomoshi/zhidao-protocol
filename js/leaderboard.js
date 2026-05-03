@@ -31,17 +31,13 @@ function updatePoints() {
   const myPointsBigEl = document.getElementById('myPointsBig');
   const casinoPointsEl = document.getElementById('casinoPoints');
   const shopPointsEl = document.getElementById('shopPoints');
-  const profilePointsEl = document.getElementById('myPointsRating');
   if (myPointsEl) myPointsEl.textContent = currentPoints + star;
   if (myPointsBigEl) myPointsBigEl.textContent = currentPoints;
   if (casinoPointsEl) casinoPointsEl.textContent = currentPoints + star;
   if (shopPointsEl) shopPointsEl.textContent = currentPoints + star;
-  if (profilePointsEl) profilePointsEl.textContent = currentPoints + star;
 }
 
 function updateRatingPoints() {
-  const profilePointsEl = document.getElementById('myPointsRating');
-  if (profilePointsEl) profilePointsEl.textContent = currentPoints + ' \u2605';
 }
 
 // ===== КОНФИГ =====
@@ -108,9 +104,6 @@ function renderProfileDossier(profile = {}) {
   const showcase = profile.showcase || null;
   const place = profile.leaderboard_rank ? '#' + profile.leaderboard_rank : '\u2014';
 
-  if (typeof profile.points === 'number') {
-    setProfileText('myPointsRating', profile.points + ' \u2605');
-  }
   setProfileText('myRankSub', (profile.rank || 'D') + '-RANK');
   setProfileText('profileLeaderboardPlace', place);
   updateProfilePathBadge(profile.theme_path || currentThemePath);
