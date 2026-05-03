@@ -51,6 +51,9 @@ function syncAdminUiVisibility() {
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? 'block' : 'none';
+
+  const adminThemeBtn = document.getElementById('theme-btn-admin');
+  if (adminThemeBtn) adminThemeBtn.style.display = isAdmin ? '' : 'none';
 }
 
 function openMore(section) {

@@ -125,6 +125,45 @@ body.theme-genshin-dark .page-title {
   text-shadow: none;
 }
 
+/* ===== ADMIN PROTOCOL ===== */
+body.theme-admin {
+  --accent:       #6478ff;
+  --accent2:      #00d4ff;
+  --accent-warn:  #ffb400;
+  --red:          #6478ff;
+  --red-dim:      rgba(100,120,255,0.1);
+  --red-border:   rgba(100,120,255,0.3);
+  --gold:         #00d4ff;
+  --gold-dim:     rgba(0,212,255,0.08);
+  --gold-border:  rgba(0,212,255,0.2);
+  --bg:           #0a0a14;
+  --bg2:          #0d0d20;
+  --bg3:          rgba(100,120,255,0.06);
+  --border:       rgba(100,120,255,0.2);
+  --text:         #e0e8ff;
+  --text2:        rgba(224,232,255,0.55);
+  --text3:        rgba(224,232,255,0.3);
+  --scan-opacity: 0.03;
+}
+body.theme-admin .bottom-nav {
+  background: rgba(10,10,20,0.97);
+  border-top-color: rgba(100,120,255,0.25);
+}
+body.theme-admin .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(100,120,255,0.5), transparent);
+}
+body.theme-admin .page-title {
+  text-shadow: 0 0 20px rgba(100,120,255,0.4);
+}
+
+/* Карточка темы admin скрыта для обычных пользователей */
+#theme-btn-admin {
+  display: none;
+}
+body.is-admin #theme-btn-admin {
+  display: block;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
