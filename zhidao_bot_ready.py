@@ -112,7 +112,18 @@ def get_marzban_user(code):
     c.execute("SELECT marzban_username FROM users WHERE code=?", (code,))
     result = c.fetchone()
     conn.close()
-    return result[0] if result else None
+    if not result:
+        return None
+    return result[0] or ""
+
+
+def code_exists(code):
+    conn = sqlite3.connect("/root/zhidao.db")
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE code=?", (code,))
+    result = c.fetchone()
+    conn.close()
+    return bool(result)
 
 
 def add_user(code, marzban_username):
@@ -120,7 +131,7 @@ def add_user(code, marzban_username):
     c = conn.cursor()
     c.execute(
         "INSERT OR REPLACE INTO users (code, marzban_username) VALUES (?,?)",
-        (code, marzban_username),
+        (code, marzban_username or None),
     )
     conn.commit()
     conn.close()
@@ -708,8 +719,7 @@ async def start(message: types.Message, state: FSMContext):
     args = message.text.split()
     if len(args) > 1:
         code = args[1]
-        marzban_user = get_marzban_user(code)
-        if marzban_user:
+        if code_exists(code):
             pending_codes[message.from_user.id] = code
             await state.set_state(Form.waiting_name)
             await message.answer(
@@ -751,14 +761,21 @@ async def process_name(message: types.Message, state: FSMContext):
     del pending_codes[user_id]
     await state.clear()
     marzban_user = get_marzban_user(code)
-    link = await get_user_link(marzban_user)
-    if link:
+    link = await get_user_link(marzban_user) if marzban_user else None
+    if marzban_user and link:
         await message.answer(
             f"✅ Отлично, {full_name}!\n\n"
             f"Ваш конфиг для ZHIDAO Protocol:\n\n"
             f"`{link}`\n\n"
             f"📖 Скопируйте ссылку и добавьте в Happ",
             parse_mode="Markdown",
+            reply_markup=get_mini_app_keyboard(),
+        )
+    elif not marzban_user:
+        await message.answer(
+            f"✅ Отлично, {full_name}!\n\n"
+            "Профиль ZHIDAO Protocol активирован.\n"
+            "VPN-конфиг к этому аккаунту пока не привязан, но Mini App уже доступен.",
             reply_markup=get_mini_app_keyboard(),
         )
     else:
@@ -888,7 +905,7 @@ async def admin_help(message: types.Message):
     status = "✅ вкл" if reminders_enabled else "❌ выкл"
     await message.answer(
         "👑 Команды администратора:\n\n"
-        "/adduser КОД USERNAME — добавить пользователя\n"
+        "/adduser КОД [USERNAME] — добавить пользователя, VPN можно позже\n"
         "/listusers — список пользователей\n"
         "/broadcast ТЕКСТ — рассылка всем\n"
         "/разбудить ИМЯ — будильник\n"
@@ -910,11 +927,17 @@ async def add_user_cmd(message: types.Message):
         await message.answer("❌ У вас нет прав администратора.")
         return
     args = message.text.split()
-    if len(args) != 3:
-        await message.answer("Использование: /adduser КОД MARZBAN_USERNAME")
+    if len(args) not in (2, 3):
+        await message.answer(
+            "Использование:\n"
+            "/adduser КОД — student-only без VPN\n"
+            "/adduser КОД MARZBAN_USERNAME — с VPN"
+        )
         return
-    add_user(args[1], args[2])
-    await message.answer(f"✅ Добавлен: код {args[1]} → {args[2]}")
+    marzban_username = args[2] if len(args) == 3 else None
+    add_user(args[1], marzban_username)
+    suffix = f" → {marzban_username}" if marzban_username else " → student-only"
+    await message.answer(f"✅ Добавлен: код {args[1]}{suffix}")
 
 
 @dp.message(Command("listusers", "список"))

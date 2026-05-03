@@ -95,11 +95,13 @@ async function loadUserData(telegramId) {
       }
       document.getElementById('status').textContent = '● АКТИВЕН';
       document.getElementById('status').style.color = '#cc4444';
-      document.getElementById('username').textContent = data.username;
-      document.getElementById('serverTag').textContent = 'HK NODE // ' + ((data.used_traffic || 0) / 1024/1024/1024).toFixed(2) + ' GB';
+      document.getElementById('username').textContent = data.full_name || data.username;
+      document.getElementById('serverTag').textContent = data.has_vpn === false
+        ? 'STUDENT NODE // VPN не привязан'
+        : 'HK NODE // ' + ((data.used_traffic || 0) / 1024/1024/1024).toFixed(2) + ' GB';
       const used = data.used_traffic || 0;
       const usedGB = (used / 1024/1024/1024).toFixed(2);
-      document.getElementById('trafficValue').textContent = usedGB + ' GB';
+      document.getElementById('trafficValue').textContent = data.has_vpn === false ? '— GB' : usedGB + ' GB';
       const percent = Math.min((used / (10*1024*1024*1024)) * 100, 100);
       setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
     } else {
@@ -120,7 +122,7 @@ function getConfig() {
     document.getElementById('configBox').textContent = userConfig;
     document.getElementById('configBox').style.display = 'block';
     document.getElementById('copyBtn').style.display = 'block';
-  } else { showToast('Конфиг не найден. Активируйте код через /start КОД в боте.'); }
+  } else { showToast('VPN-конфиг не привязан. Mini App доступен без VPN.'); }
 }
 
 function copyConfig() {

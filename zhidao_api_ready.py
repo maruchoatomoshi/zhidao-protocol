@@ -2001,25 +2001,40 @@ async def set_profile_showcase(data: dict):
 
 @app.get("/api/user/{telegram_id}")
 async def get_user(telegram_id: int):
-    marzban_user = get_marzban_user_by_telegram(telegram_id)
-    if not marzban_user:
-        raise HTTPException(status_code=404, detail="User not found")
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT full_name, avatar_url FROM users WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT full_name, avatar_url, marzban_username FROM users WHERE telegram_id=?", (telegram_id,))
     profile_row = c.fetchone()
     conn.close()
+    if not profile_row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    full_name, avatar_url, marzban_user = profile_row
+    if not marzban_user:
+        return {
+            "username": full_name or f"student_{telegram_id}",
+            "full_name": full_name or f"student_{telegram_id}",
+            "avatar_url": avatar_url,
+            "status": "student_only",
+            "link": None,
+            "used_traffic": 0,
+            "expire": None,
+            "is_admin": telegram_id in ADMIN_IDS,
+            "has_vpn": False,
+        }
+
     data = await get_user_data(marzban_user)
     links = data.get("links", [])
     return {
         "username": marzban_user,
-        "full_name": profile_row[0] if profile_row and profile_row[0] else marzban_user,
-        "avatar_url": profile_row[1] if profile_row and profile_row[1] else None,
+        "full_name": full_name or marzban_user,
+        "avatar_url": avatar_url,
         "status": data.get("status"),
         "link": links[0] if links else None,
         "used_traffic": data.get("used_traffic", 0),
         "expire": data.get("expire"),
         "is_admin": telegram_id in ADMIN_IDS,
+        "has_vpn": True,
     }
 
 
