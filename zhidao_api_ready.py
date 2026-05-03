@@ -43,6 +43,91 @@ PRESENCE_SAFE_STATUSES = {"confirmed", "free_time", "admin_approved", "skipped"}
 PRESENCE_ATTEMPT_LIMIT = 3
 PRESENCE_PENALTY_POINTS = 50
 
+EXPECTED_STUDENT_NAMES = [
+    "Айвазов Арсен",
+    "Албу Александр",
+    "Анисимова Кристина",
+    "Афанасьева Ирина",
+    "Ахметова Карина",
+    "Башилова Василиса",
+    "Болотникова Евгения",
+    "Бородин Станислав",
+    "Будаева Елизавета",
+    "Бурлакова Елизавета",
+    "Васильчиков Николай",
+    "Гильмутдинова Варвара",
+    "Гончаров Тимофей",
+    "Горьковенко Алена",
+    "Гостев Семен",
+    "Гусаров Сергей",
+    "Дюзйол Алина",
+    "Евстигнеева Настя",
+    "Евтухова Мария",
+    "Еремин Арсений",
+    "Живаева Тамара",
+    "Зеленова Ангелина",
+    "Казенова Полина",
+    "Каминская Кристина",
+    "Каминский Олег",
+    "Кисимов Федор",
+    "Клочай Алина",
+    "Козлова Александра",
+    "Королева Алина",
+    "Котлячков Никита",
+    "Краснов Алексей",
+    "Кудашова Анастасия",
+    "Кулаков Владимир",
+    "Кулаков Георгий",
+    "Кулешова Виктория",
+    "Кулешова Анастасия",
+    "Куприна Елизавета",
+    "Лавринов Тимур",
+    "Лайков Артем",
+    "Лебедев Матвей",
+    "Левицкая Анастасия",
+    "Любимова Валерия",
+    "Макарова Мария",
+    "Малютин Георгий",
+    "Метелев Алексей",
+    "Минаева Алиса",
+    "Мироненко Андрей",
+    "Мироненко Влвдимир",
+    "Мокрецова Мария",
+    "Немтырев Геннадий",
+    "Нуштаев Михаил",
+    "Островкин Илья",
+    "Павлов Григорий",
+    "Павлов Георгий",
+    "Пан Юлия",
+    "Пинчук Андрей",
+    "Рванцева Дарья",
+    "Резанова Екатерина",
+    "Рыжкова Арина",
+    "Рычкин Мирослав",
+    "Савкова Анна",
+    "Семенов Артем",
+    "Скрипин Захар",
+    "Смирнова Александра",
+    "Соколов Александр",
+    "Спирин Дмитрий",
+    "Сурина Ксения",
+    "Терехова Стефания",
+    "Уланов Матвей",
+    "Уткина Алиса",
+    "Федосова Александра",
+    "Фоменко Виктория",
+    "Хмелева Виктория",
+    "Холоша Ксения",
+    "Хорбенко Маргарита",
+    "Чумаков Александр",
+    "Шакиров Мухамедали",
+    "Шакирова Олия",
+    "Шарина Мария",
+    "Шелякина Ульяна",
+    "Шелякина Полина",
+    "Языкова Вера",
+]
+
 RAID_ENTRY_COST = 50
 RAID_SUCCESS_REWARD = 150
 RAID_SUCCESS_CHANCE = 0.4
@@ -121,6 +206,11 @@ def get_conn():
     return sqlite3.connect('/root/zhidao.db')
 
 
+def normalize_expected_student_name(value: str) -> str:
+    text = str(value or "").replace("\t", " ").replace("Ё", "Е").replace("ё", "е")
+    return re.sub(r"\s+", " ", text.strip()).lower()
+
+
 def init_db():
     conn = get_conn()
     c = conn.cursor()
@@ -153,6 +243,16 @@ def init_db():
                   points_delta INTEGER DEFAULT 0,
                   reason TEXT DEFAULT '',
                   created_at TEXT NOT NULL)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS expected_students
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  full_name TEXT NOT NULL,
+                  normalized_name TEXT UNIQUE NOT NULL,
+                  group_label TEXT DEFAULT '',
+                  room_number TEXT DEFAULT NULL,
+                  telegram_id INTEGER DEFAULT NULL,
+                  status TEXT DEFAULT 'pending',
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  updated_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
     c.execute('''CREATE TABLE IF NOT EXISTS laundry
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   date TEXT, time TEXT, telegram_id INTEGER, username TEXT,
@@ -389,6 +489,16 @@ def init_db():
 def migrate_db():
     conn = get_conn()
     c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS expected_students
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  full_name TEXT NOT NULL,
+                  normalized_name TEXT UNIQUE NOT NULL,
+                  group_label TEXT DEFAULT '',
+                  room_number TEXT DEFAULT NULL,
+                  telegram_id INTEGER DEFAULT NULL,
+                  status TEXT DEFAULT 'pending',
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  updated_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
     c.execute("PRAGMA table_info(users)")
     user_columns = {row[1] for row in c.fetchall()}
     if 'avatar_url' not in user_columns:
@@ -478,6 +588,18 @@ def migrate_db():
 def ensure_seed_data():
     conn = get_conn()
     c = conn.cursor()
+    for full_name in EXPECTED_STUDENT_NAMES:
+        normalized_name = normalize_expected_student_name(full_name)
+        c.execute(
+            '''INSERT INTO expected_students
+               (full_name, normalized_name, group_label, status)
+               VALUES (?, ?, 'beijing_2026', 'pending')
+               ON CONFLICT(normalized_name) DO UPDATE SET
+                 full_name=excluded.full_name,
+                 group_label=COALESCE(NULLIF(expected_students.group_label, ''), excluded.group_label),
+                 updated_at=CURRENT_TIMESTAMP''',
+            (full_name, normalized_name),
+        )
     c.execute(
         '''INSERT INTO shop_items
            (code, name, description, icon, price, daily_limit, category, active)
@@ -2258,6 +2380,54 @@ async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(
         "full_name": target[0] or str(telegram_id),
         "room_number": room_number,
         "roommates": roommates,
+    }
+
+
+@app.get("/api/admin/expected-students")
+async def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = str(q or "").strip()
+    conn = get_conn()
+    c = conn.cursor()
+    if query:
+        like = f"%{query}%"
+        c.execute(
+            '''SELECT es.id, es.full_name, es.group_label, es.room_number,
+                      es.telegram_id, es.status, u.full_name, u.avatar_url
+               FROM expected_students es
+               LEFT JOIN users u ON u.telegram_id = es.telegram_id
+               WHERE es.full_name LIKE ? OR es.group_label LIKE ? OR CAST(es.telegram_id AS TEXT) LIKE ?
+               ORDER BY es.status ASC, es.full_name COLLATE NOCASE
+               LIMIT 120''',
+            (like, like, like),
+        )
+    else:
+        c.execute(
+            '''SELECT es.id, es.full_name, es.group_label, es.room_number,
+                      es.telegram_id, es.status, u.full_name, u.avatar_url
+               FROM expected_students es
+               LEFT JOIN users u ON u.telegram_id = es.telegram_id
+               ORDER BY es.status ASC, es.full_name COLLATE NOCASE
+               LIMIT 160''',
+        )
+    rows = c.fetchall()
+    conn.close()
+    return {
+        "students": [
+            {
+                "id": row[0],
+                "full_name": row[1],
+                "group_label": row[2] or "",
+                "room_number": row[3] or "",
+                "telegram_id": row[4],
+                "status": row[5] or "pending",
+                "registered_name": row[6] or "",
+                "avatar_url": row[7],
+            }
+            for row in rows
+        ]
     }
 
 

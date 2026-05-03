@@ -1,4 +1,5 @@
 import asyncio
+import re
 import sqlite3
 import aiohttp
 from aiogram import Bot, Dispatcher, types
@@ -89,6 +90,18 @@ def init_db():
                   last_rob TEXT DEFAULT NULL,
                   last_transfer TEXT DEFAULT NULL)"""
     )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS expected_students
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  full_name TEXT NOT NULL,
+                  normalized_name TEXT UNIQUE NOT NULL,
+                  group_label TEXT DEFAULT '',
+                  room_number TEXT DEFAULT NULL,
+                  telegram_id INTEGER DEFAULT NULL,
+                  status TEXT DEFAULT 'pending',
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  updated_at TEXT DEFAULT CURRENT_TIMESTAMP)"""
+    )
     conn.commit()
     conn.close()
 
@@ -119,6 +132,70 @@ def save_telegram_id(code, telegram_id, full_name):
     c.execute(
         "UPDATE users SET telegram_id=?, full_name=? WHERE code=?",
         (telegram_id, full_name, code),
+    )
+    conn.commit()
+    conn.close()
+
+
+def normalize_registration_name(value):
+    text = str(value or "").replace("\t", " ").replace("Ё", "Е").replace("ё", "е")
+    return re.sub(r"\s+", " ", text.strip()).lower()
+
+
+def is_cyrillic_full_name(value):
+    text = re.sub(r"\s+", " ", str(value or "").strip())
+    return bool(re.fullmatch(r"[А-Яа-яЁё][А-Яа-яЁё'\-]+ [А-Яа-яЁё][А-Яа-яЁё'\-]+(?: [А-Яа-яЁё][А-Яа-яЁё'\-]+)?", text))
+
+
+def validate_expected_student_name(full_name, telegram_id):
+    if telegram_id in ADMIN_IDS or full_name == "舒珩 佟佳":
+        return True, full_name, ""
+
+    if not is_cyrillic_full_name(full_name):
+        return False, full_name, "ФИО нужно ввести кириллицей: Фамилия Имя."
+
+    normalized = normalize_registration_name(full_name)
+    conn = sqlite3.connect("/root/zhidao.db")
+    c = conn.cursor()
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expected_students'")
+    if not c.fetchone():
+        conn.close()
+        return True, full_name, ""
+
+    c.execute("SELECT COUNT(*) FROM expected_students")
+    if (c.fetchone()[0] or 0) == 0:
+        conn.close()
+        return True, full_name, ""
+
+    c.execute(
+        "SELECT full_name, telegram_id FROM expected_students WHERE normalized_name=?",
+        (normalized,),
+    )
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return False, full_name, "ФИО не найдено в списке участников. Проверь написание или обратись к администратору."
+
+    canonical_name, linked_telegram_id = row
+    if linked_telegram_id and int(linked_telegram_id) != int(telegram_id):
+        return False, canonical_name, "Это ФИО уже привязано к другому Telegram аккаунту. Обратись к администратору."
+
+    return True, canonical_name, ""
+
+
+def link_expected_student(full_name, telegram_id):
+    normalized = normalize_registration_name(full_name)
+    conn = sqlite3.connect("/root/zhidao.db")
+    c = conn.cursor()
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expected_students'")
+    if not c.fetchone():
+        conn.close()
+        return
+    c.execute(
+        """UPDATE expected_students
+           SET telegram_id=?, status='registered', updated_at=CURRENT_TIMESTAMP
+           WHERE normalized_name=?""",
+        (telegram_id, normalized),
     )
     conn.commit()
     conn.close()
@@ -660,7 +737,17 @@ async def process_name(message: types.Message, state: FSMContext):
         await message.answer("❌ Ошибка. Попробуйте снова через /start КОД")
         await state.clear()
         return
+    is_valid_name, canonical_name, validation_error = validate_expected_student_name(full_name, user_id)
+    if not is_valid_name:
+        await message.answer(
+            "❌ Не удалось подтвердить ФИО.\n\n"
+            f"{validation_error}\n\n"
+            "Введи имя ещё раз в формате: Фамилия Имя"
+        )
+        return
+    full_name = canonical_name
     save_telegram_id(code, user_id, full_name)
+    link_expected_student(full_name, user_id)
     del pending_codes[user_id]
     await state.clear()
     marzban_user = get_marzban_user(code)

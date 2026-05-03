@@ -389,6 +389,35 @@ function adminRenderRoommates(roommates) {
   `).join('');
 }
 
+function adminEnsureDossierModal() {
+  let modal = document.getElementById('adminDossierModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'adminDossierModal';
+    modal.className = 'admin-dossier-modal';
+    modal.innerHTML = `
+      <div class="admin-dossier-backdrop" onclick="adminCloseDossier()"></div>
+      <div class="admin-dossier-sheet">
+        <div class="admin-dossier-sheet-head">
+          <div>
+            <div class="admin-console-kicker">OPERATOR DOSSIER</div>
+            <div class="admin-console-title">Карточка игрока</div>
+          </div>
+          <button class="event-close-btn" onclick="adminCloseDossier()">×</button>
+        </div>
+        <div id="adminDossierBody"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  return modal;
+}
+
+function adminCloseDossier() {
+  const modal = document.getElementById('adminDossierModal');
+  if (modal) modal.classList.remove('show');
+}
+
 function adminSelectUser(telegramId, fullName, points, extra = {}) {
   adminSelectedUser = {
     ...(adminSelectedUser || {}),
@@ -401,13 +430,18 @@ function adminSelectUser(telegramId, fullName, points, extra = {}) {
   const freezeId = document.getElementById('freezeId');
   if (awardName) awardName.value = telegramId;
   if (freezeId) freezeId.value = telegramId;
-  const selected = document.getElementById('adminSelectedUser');
+  const inlineSelected = document.getElementById('adminSelectedUser');
+  if (inlineSelected) {
+    inlineSelected.style.display = 'none';
+    inlineSelected.innerHTML = '';
+  }
+
+  const modal = adminEnsureDossierModal();
+  const selected = document.getElementById('adminDossierBody');
   if (selected) {
-    selected.style.display = 'block';
     const room = String(adminSelectedUser.room_number || '').trim();
     const roommates = adminSelectedUser.roommates || [];
     selected.innerHTML = `
-      <div class="admin-console-kicker">SELECTED TARGET</div>
       <div class="admin-dossier-head">
         ${adminUserAvatarHtml(adminSelectedUser, true)}
         <div class="admin-dossier-main">
@@ -424,6 +458,7 @@ function adminSelectUser(telegramId, fullName, points, extra = {}) {
         <div class="admin-roommate-title">Соседи</div>
         <div id="adminRoommates" class="admin-roommate-list">${adminRenderRoommates(roommates)}</div>
       </div>`;
+    modal.classList.add('show');
   }
   adminSearchUsers();
 }
