@@ -9090,3 +9090,233 @@ body.theme-genshin-light .profile-card-home,
 body.theme-genshin-dark  .profile-card-home {
   animation: profilePulseGold 5.5s ease-in-out infinite;
 }
+
+
+/* ================================================================
+   BLACKWALL — ARCHITECT MODE ANIMATIONS & ATMOSPHERE
+   ================================================================ */
+
+/* ── Corner vignette: красный+фиолетовый по краям экрана ────── */
+body.is-architect::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 0% 0%,    rgba(232,0,0,0.09)   0%, transparent 38%),
+    radial-gradient(ellipse at 100% 0%,  rgba(157,0,221,0.06) 0%, transparent 32%),
+    radial-gradient(ellipse at 0% 100%,  rgba(232,0,0,0.07)   0%, transparent 32%),
+    radial-gradient(ellipse at 100% 100%,rgba(157,0,221,0.05) 0%, transparent 30%);
+  pointer-events: none;
+  z-index: 0;
+  animation: blackwallEdgePulse 4s ease-in-out infinite;
+}
+@keyframes blackwallEdgePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+/* ── Scan overlay на профильной карточке ───────────────────── */
+.blackwall-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+body.is-architect .blackwall-overlay { display: block; }
+
+/* Горизонтальная линия скана */
+body.is-architect .blackwall-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -5%;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(232,34,0,0.7) 20%,
+    rgba(255,204,0,0.95) 50%,
+    rgba(232,34,0,0.7) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px rgba(232,34,0,0.6), 0 0 20px rgba(232,34,0,0.2);
+  animation: blackwallHScan 5.5s ease-in-out infinite;
+}
+@keyframes blackwallHScan {
+  0%   { left: -5%;  opacity: 0; }
+  4%   { opacity: 1; }
+  95%  { opacity: 0.7; }
+  100% { left: 106%; opacity: 0; }
+}
+
+/* Анимированная сетка нейронных узлов */
+body.is-architect .blackwall-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(232,34,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,34,0,0.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+  animation: blackwallGridDrift 18s linear infinite;
+}
+@keyframes blackwallGridDrift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 22px 22px, 22px 22px; }
+}
+
+/* ── Heartbeat pulse — двойной удар (кардиомонитор) ─────────── */
+@keyframes blackwallHeartbeat {
+  0%,  100% { box-shadow: 0 0 12px rgba(232,34,0,0.12), inset 0 0 16px rgba(232,34,0,0.05); }
+  6%         { box-shadow: 0 0 55px rgba(232,34,0,0.45), 0 0 110px rgba(232,34,0,0.18), 0 0 0 2px rgba(255,204,0,0.5), inset 0 0 36px rgba(232,34,0,0.16); }
+  12%        { box-shadow: 0 0 16px rgba(232,34,0,0.15), inset 0 0 18px rgba(232,34,0,0.06); }
+  18%        { box-shadow: 0 0 38px rgba(232,34,0,0.30), 0 0 80px rgba(232,34,0,0.12), 0 0 0 1px rgba(255,204,0,0.35), inset 0 0 26px rgba(232,34,0,0.11); }
+  24%        { box-shadow: 0 0 12px rgba(232,34,0,0.12), inset 0 0 16px rgba(232,34,0,0.05); }
+  36%        { box-shadow: 0 0 14px rgba(157,78,221,0.10), inset 0 0 18px rgba(232,34,0,0.04); }
+}
+
+body.is-architect .profile-card-home {
+  animation: blackwallHeartbeat 3.5s ease-in-out infinite !important;
+}
+
+/* ── Warning beacon на активных nav-кнопках ────────────────── */
+@keyframes blackwallNavBeacon {
+  0%, 100% { text-shadow: 0 0 4px rgba(232,34,0,0.3); }
+  5%        { text-shadow: 0 0 14px rgba(232,34,0,1), 0 0 28px rgba(255,204,0,0.5); }
+  10%       { text-shadow: 0 0 4px rgba(232,34,0,0.3); }
+  16%       { text-shadow: 0 0 10px rgba(232,34,0,0.8), 0 0 22px rgba(232,34,0,0.3); }
+  22%       { text-shadow: 0 0 4px rgba(232,34,0,0.3); }
+}
+body.is-architect .nav-item.active,
+body.is-architect .nav-item.active .ti {
+  animation: blackwallNavBeacon 3s ease-in-out infinite;
+}
+
+/* ── Corruption на кикере (ARCHITECT // PROTOCOL мигает) ─────── */
+@keyframes blackwallKickerCorrupt {
+  0%, 86%, 100% { opacity: 1; filter: none; transform: none; }
+  87%  { opacity: 0.15; filter: brightness(6) saturate(0); transform: translateX(3px); }
+  88%  { opacity: 1;    filter: none;                       transform: none; }
+  90%  { opacity: 0.4;  filter: hue-rotate(120deg) brightness(3); transform: translateX(-1px); }
+  91%  { opacity: 1;    filter: none; transform: none; }
+  95%  { opacity: 0.7;  filter: brightness(1.4); }
+  96%  { opacity: 1;    filter: none; }
+}
+body.is-architect .profile-card-kicker {
+  animation: blackwallKickerCorrupt 9s ease-in-out infinite;
+}
+
+/* ── LED индикатор на бейдже ───────────────────────────────── */
+@keyframes architectLED {
+  0%, 100% { opacity: 0.35; text-shadow: none; }
+  50%       { opacity: 1;    text-shadow: 0 0 8px #ff1500, 0 0 16px rgba(232,0,0,0.4); }
+}
+body.is-architect .profile-admin-badge::before {
+  content: '◆ ';
+  color: #ff1500;
+  animation: architectLED 1.4s ease-in-out infinite;
+}
+
+/* ── Глитч страничного заголовка ───────────────────────────── */
+@keyframes blackwallTitleGlitch {
+  0%, 88%, 100% {
+    text-shadow: 0 0 30px rgba(232,34,0,0.7), 0 0 70px rgba(232,34,0,0.25);
+    filter: none;
+    transform: none;
+  }
+  89% {
+    text-shadow: 5px 0 rgba(232,34,0,0.95), -5px 0 rgba(255,204,0,0.95), 0 0 50px rgba(232,34,0,0.9);
+    filter: brightness(1.3);
+    transform: skewX(-2deg);
+  }
+  90% {
+    text-shadow: -3px 0 rgba(255,0,0,0.9), 4px 0 rgba(255,204,0,0.7);
+    filter: none;
+    transform: none;
+  }
+  91% {
+    text-shadow: 0 0 30px rgba(232,34,0,0.7), 0 0 70px rgba(232,34,0,0.25);
+    filter: none;
+  }
+  95% {
+    text-shadow: 2px 0 rgba(157,78,221,0.5), 0 0 40px rgba(232,34,0,0.8);
+    transform: translateX(1px);
+  }
+  96% {
+    text-shadow: 0 0 30px rgba(232,34,0,0.7), 0 0 70px rgba(232,34,0,0.25);
+    transform: none;
+  }
+}
+body.is-architect .page-title {
+  animation: blackwallTitleGlitch 11s ease-in-out infinite;
+}
+
+/* ── Data-stream на строке статуса профиля ─────────────────── */
+@keyframes blackwallStatusFlicker {
+  0%, 92%, 100% { opacity: 1; }
+  93%  { opacity: 0.2; filter: brightness(3) saturate(0); }
+  94%  { opacity: 1;   filter: none; }
+  96%  { opacity: 0.5; filter: brightness(2) hue-rotate(90deg); }
+  97%  { opacity: 1;   filter: none; }
+}
+body.is-architect .profile-status-line {
+  animation: blackwallStatusFlicker 12s ease-in-out infinite;
+  color: rgba(232,34,0,0.55);
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+/* ── Flowing data border на cn-divider ──────────────────────── */
+@keyframes blackwallDividerFlow {
+  0%   { background-position: -200% center, 200% center; }
+  100% { background-position: 200% center, -200% center; }
+}
+body.is-architect .cn-divider {
+  animation: none;
+  background-size: 200% 1px, 200% 1px;
+  background-repeat: no-repeat;
+  background-position: -200% center, 200% center;
+  animation: blackwallDividerFlow 4s linear infinite;
+}
+
+/* ── Card-label мигает как системный предупреждающий код ────── */
+@keyframes blackwallLabelPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; letter-spacing: 2.5px; }
+}
+body.is-architect .card-label {
+  animation: blackwallLabelPulse 2.8s ease-in-out infinite;
+}
+
+/* ── Architect theme card: улучшенная версия с живой полосой ── */
+body.is-architect .architect-theme-card {
+  border-color: rgba(232,34,0,0.7);
+  box-shadow: 0 0 20px rgba(232,34,0,0.2), inset 0 0 30px rgba(232,34,0,0.04);
+  animation: blackwallCardPulse 3s ease-in-out infinite;
+}
+@keyframes blackwallCardPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(232,34,0,0.15), inset 0 0 20px rgba(232,34,0,0.03); border-color: rgba(232,34,0,0.55); }
+  50%       { box-shadow: 0 0 40px rgba(232,34,0,0.35), 0 0 80px rgba(157,78,221,0.08), inset 0 0 30px rgba(232,34,0,0.07); border-color: rgba(255,100,0,0.75); }
+}
+
+/* ── Scan-линия на аватаре (радар по окружности) ────────────── */
+@keyframes blackwallAvatarRing {
+  0%, 100% { box-shadow: 0 0 0 0px rgba(232,34,0,0.5), 0 0 0 0px rgba(255,204,0,0); }
+  40%       { box-shadow: 0 0 0 6px rgba(232,34,0,0.2), 0 0 0 12px rgba(255,204,0,0.08); }
+  60%       { box-shadow: 0 0 0 8px rgba(232,34,0,0.0), 0 0 0 16px rgba(232,34,0,0.0); }
+}
+body.is-architect .profile-avatar-wrap {
+  animation: blackwallAvatarRing 3.5s ease-out infinite;
+}
+
+/* Всё вместе: body.theme-architect усиливает scan-линии */
+body.theme-architect::before {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent, transparent 3px,
+    rgba(0,0,0,0.055) 3px, rgba(0,0,0,0.055) 4px
+  );
+}
