@@ -947,11 +947,15 @@ const RAID_CONFIG = {
     cyberpunk: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
         title: '// MU NIGHT RAID // TARGET: МЮ',
+        kicker: 'MU RAID // 夜间行动',
+        chips: ['Stealth', 'Team Sync', 'Risk 40%'],
         placeholderColor: '#ff003c'
     },
     genshin: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme.png?raw=true',
-        title: '💎 МИКЕЛАНДЖЕЛО // РЕЙД МЮ',
+        title: '璃月试炼 // МИКЕЛАНДЖЕЛО',
+        kicker: 'LIYUE TRIAL // 璃月试炼',
+        chips: ['契约', '共鸣', '胜算 40%'],
         placeholderColor: '#dbb165'
     }
 };

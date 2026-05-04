@@ -129,9 +129,15 @@ function prepareRaidVisual() {
     const bossImg = document.getElementById('boss-img');
     const bossTitle = document.getElementById('boss-title');
     const frame = document.querySelector('.boss-frame');
+    const kickerText = document.querySelector('.raid-kicker span:last-child');
+    const threatStrip = document.querySelector('.raid-threat-strip');
     const existingPlaceholder = frame ? frame.querySelector('.boss-placeholder') : null;
 
     if (bossTitle) bossTitle.innerText = config.title;
+    if (kickerText) kickerText.textContent = config.kicker || 'MU RAID // 夜间行动';
+    if (threatStrip && Array.isArray(config.chips)) {
+        threatStrip.innerHTML = config.chips.map(chip => `<span class="raid-chip">${escapeHtml(chip)}</span>`).join('');
+    }
     if (existingPlaceholder) existingPlaceholder.remove();
     if (!bossImg) return;
 
