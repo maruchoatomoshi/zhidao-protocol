@@ -10252,3 +10252,170 @@ body.launch-locked .home-event-card {
   82% { opacity: 0.65; }
   to { transform: translateY(360px); opacity: 0; }
 }
+/* ═══════════════════════════════════════════════════════════════
+   ARCHITECT // WOW LAYER II — Holographic · Neon · Boot · Tilt
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1 ── Holographic border cycling: red → orange → gold → violet */
+@keyframes holoBorderCycle {
+  0%   { border-color: rgba(232,34,0,0.95);  }
+  20%  { border-color: rgba(255,80,0,0.9);   }
+  40%  { border-color: rgba(255,204,0,0.9);  }
+  60%  { border-color: rgba(200,80,255,0.85); }
+  80%  { border-color: rgba(157,78,221,0.95); }
+  100% { border-color: rgba(232,34,0,0.95);  }
+}
+body.is-architect .profile-card-home {
+  border: 2px solid rgba(232,34,0,0.95);
+  animation: blackwallHeartbeat 3.5s ease-in-out infinite,
+             holoBorderCycle 5s linear infinite !important;
+}
+
+/* 2 ── Neon flicker on profile name (irregular dropout + color drift) */
+@keyframes neonFlicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    color: #fff5f0;
+    text-shadow:
+      0 0 8px rgba(232,34,0,0.95),
+      0 0 20px rgba(232,34,0,0.6),
+      0 0 45px rgba(232,34,0,0.25);
+    filter: brightness(1);
+  }
+  19%, 23%, 54% {
+    color: rgba(255,245,240,0.25);
+    text-shadow: none;
+    filter: brightness(0.35);
+  }
+  68% {
+    color: #fffce0;
+    text-shadow:
+      0 0 12px rgba(255,204,0,0.9),
+      0 0 28px rgba(255,204,0,0.45);
+  }
+  84% {
+    color: #f5eaff;
+    text-shadow:
+      0 0 10px rgba(180,80,255,0.9),
+      0 0 24px rgba(157,78,221,0.45);
+  }
+}
+body.is-architect .profile-card-name {
+  animation: neonFlicker 9s ease-in-out infinite;
+}
+
+/* 3 ── BLACKWALL BOOT SEQUENCE overlay */
+#blackwall-boot {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 99999;
+  font-family: 'Courier New', monospace;
+  align-items: center;
+  justify-content: center;
+}
+#blackwall-boot.bw-active { display: flex; }
+#blackwall-boot.bw-fadeout {
+  animation: bootFadeOut 0.9s ease-in forwards;
+}
+@keyframes bootFadeOut {
+  to { opacity: 0; pointer-events: none; }
+}
+.boot-terminal {
+  width: 92%;
+  max-width: 340px;
+}
+.boot-line {
+  font-size: 11px;
+  line-height: 1.9;
+  letter-spacing: 0.8px;
+}
+.boot-line span {
+  display: block;
+  color: rgba(232,34,0,0.55);
+}
+.boot-line span.bw-current {
+  color: #ff3300;
+  text-shadow: 0 0 8px rgba(232,34,0,0.5);
+}
+.boot-line span.bw-gold {
+  color: #ffcc00;
+  text-shadow: 0 0 8px rgba(255,204,0,0.5);
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+.boot-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: #e82200;
+  margin-left: 3px;
+  vertical-align: middle;
+  animation: bootBlink 0.55s step-end infinite;
+}
+@keyframes bootBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.boot-scanline {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent, transparent 3px,
+    rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+}
+
+/* 4 ── 3D tilt transitions (transform applied by JS) */
+body.is-architect .profile-card-home {
+  will-change: transform;
+}
+.profile-card-home.tilt-move {
+  transition: transform 0.12s ease-out !important;
+}
+.profile-card-home.tilt-reset {
+  transition: transform 0.55s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+
+/* 5 ── EXTRA: Corner spark pulse on profile card (architect) */
+@keyframes cornerSparkTL {
+  0%, 100% { opacity: 0; transform: scale(0.4) translate(-2px,-2px); }
+  50%       { opacity: 1; transform: scale(1.2) translate(-4px,-4px); box-shadow: 0 0 10px rgba(255,204,0,0.9), 0 0 20px rgba(232,34,0,0.5); }
+}
+@keyframes cornerSparkBR {
+  0%, 100% { opacity: 0; transform: scale(0.4) translate(2px,2px); }
+  50%       { opacity: 1; transform: scale(1.2) translate(4px,4px); box-shadow: 0 0 10px rgba(157,78,221,0.9), 0 0 20px rgba(200,80,255,0.5); }
+}
+.profile-card-spark {
+  display: none;
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+}
+body.is-architect .profile-card-spark { display: block; }
+body.is-architect .profile-card-spark.spark-tl {
+  top: 8px; left: 8px;
+  background: #ffcc00;
+  animation: cornerSparkTL 2.8s ease-in-out infinite;
+}
+body.is-architect .profile-card-spark.spark-br {
+  bottom: 8px; right: 8px;
+  background: #9d4edd;
+  animation: cornerSparkBR 2.8s ease-in-out infinite 1.4s;
+}
+body.is-architect .profile-card-spark.spark-tr {
+  top: 8px; right: 8px;
+  background: #e82200;
+  animation: cornerSparkTL 3.2s ease-in-out infinite 0.7s;
+}
+body.is-architect .profile-card-spark.spark-bl {
+  bottom: 8px; left: 8px;
+  background: #ff6600;
+  animation: cornerSparkBR 3.2s ease-in-out infinite 2.1s;
+}

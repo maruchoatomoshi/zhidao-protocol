@@ -163,6 +163,11 @@ async function loadUserData(telegramId) {
         if (badge) badge.textContent = '架构师 // ARCHITECT';
         const kicker = document.getElementById('profileKicker');
         if (kicker) kicker.textContent = 'ARCHITECT // PROTOCOL';
+        startBlackwallBoot(() => {
+          const nameEl = document.getElementById('profileDisplayName');
+          cipherDecode(nameEl);
+        });
+        setupProfileTilt();
       }
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
@@ -194,6 +199,124 @@ async function loadUserData(telegramId) {
   } catch(e) {
     document.getElementById('status').textContent = '● ОФЛАЙН';
     document.getElementById('username').textContent = 'Ошибка связи';
+  }
+}
+
+// ── ARCHITECT WOW ANIMATIONS ─────────────────────────────────
+
+function cipherDecode(el) {
+  if (!el) return;
+  const GLYPHS = '智道龙福网络协议数据流天命链接黑墙信义勇ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789◆◈▓░▒■□';
+  const final = el.textContent;
+  const len = final.length;
+  let frame = 0;
+  const revealAt = 10; // frames before first char resolves
+  const framesPerChar = 4;
+  const totalFrames = revealAt + len * framesPerChar + 6;
+
+  function tick() {
+    frame++;
+    let result = '';
+    const revealed = Math.max(0, Math.floor((frame - revealAt) / framesPerChar));
+    for (let i = 0; i < len; i++) {
+      if (i < revealed) {
+        result += final[i];
+      } else {
+        result += GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      }
+    }
+    el.textContent = result;
+    if (frame < totalFrames) {
+      requestAnimationFrame(tick);
+    } else {
+      el.textContent = final;
+    }
+  }
+  setTimeout(tick, 800);
+}
+
+function startBlackwallBoot(cb) {
+  if (sessionStorage.getItem('bw_boot_done')) { if (cb) cb(); return; }
+  const overlay = document.getElementById('blackwall-boot');
+  const linesEl = document.getElementById('bootLines');
+  if (!overlay || !linesEl) { if (cb) cb(); return; }
+
+  const LINES = [
+    { text: '> ZHIDAO PROTOCOL v2.7.0', delay: 0 },
+    { text: '> INITIALIZING BLACKWALL...', delay: 260 },
+    { text: '> ARCHITECT ACCESS CONFIRMED', delay: 280 },
+    { text: '> CLEARANCE LEVEL: OMEGA', delay: 240 },
+    { text: '> LOADING NEURAL MESH... [████████] 100%', delay: 380 },
+    { text: '> THREAT MATRIX: NOMINAL', delay: 220 },
+    { text: '> 智道黑壁 — ONLINE', delay: 300 },
+    { text: '欢迎回来, 架构师', delay: 420, gold: true },
+  ];
+
+  overlay.classList.add('bw-active');
+  let elapsed = 120;
+
+  LINES.forEach((l, i) => {
+    elapsed += l.delay;
+    setTimeout(() => {
+      const span = document.createElement('span');
+      if (l.gold) span.className = 'bw-gold';
+      else span.className = 'bw-current';
+      span.textContent = l.text;
+      linesEl.appendChild(span);
+      // fade previous to dim
+      const prev = linesEl.querySelectorAll('span.bw-current');
+      prev.forEach((s, si) => { if (si < prev.length - 1) s.className = ''; });
+
+      if (i === LINES.length - 1) {
+        setTimeout(() => {
+          const cursor = document.getElementById('bootCursor');
+          if (cursor) cursor.style.display = 'none';
+          overlay.classList.add('bw-fadeout');
+          setTimeout(() => {
+            overlay.classList.remove('bw-active', 'bw-fadeout');
+            linesEl.innerHTML = '';
+            sessionStorage.setItem('bw_boot_done', '1');
+            if (cb) cb();
+          }, 900);
+        }, 900);
+      }
+    }, elapsed);
+  });
+}
+
+function setupProfileTilt() {
+  const card = document.getElementById('profileCard');
+  if (!card) return;
+  const MAX = 10;
+
+  function applyTilt(rx, ry) {
+    card.classList.add('tilt-move');
+    card.classList.remove('tilt-reset');
+    card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+  }
+  function resetTilt() {
+    card.classList.remove('tilt-move');
+    card.classList.add('tilt-reset');
+    card.style.transform = '';
+  }
+
+  // Desktop pointer tilt
+  card.addEventListener('pointermove', (e) => {
+    const r = card.getBoundingClientRect();
+    const rx = (((e.clientY - r.top) / r.height) - 0.5) * -MAX;
+    const ry = (((e.clientX - r.left) / r.width) - 0.5) * MAX;
+    applyTilt(rx, ry);
+  });
+  card.addEventListener('pointerleave', resetTilt);
+
+  // Mobile gyroscope tilt
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', (e) => {
+      if (e.beta == null) return;
+      const rx = Math.max(-MAX, Math.min(MAX, (e.beta - 45) * 0.25));
+      const ry = Math.max(-MAX, Math.min(MAX, (e.gamma || 0) * 0.25));
+      applyTilt(rx, ry);
+    }, { passive: true });
   }
 }
 

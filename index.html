@@ -7,7 +7,7 @@
 <!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260503d">
+<link rel="stylesheet" href="./css/styles.css?v=20260504a">
 </head>
 <body>
 
@@ -58,6 +58,10 @@
     <div class="profile-holo-ring" aria-hidden="true"></div>
     <div class="profile-scan-line"></div>
     <div class="blackwall-overlay"></div>
+    <div class="profile-card-spark spark-tl"></div>
+    <div class="profile-card-spark spark-tr"></div>
+    <div class="profile-card-spark spark-bl"></div>
+    <div class="profile-card-spark spark-br"></div>
     <div class="profile-card-main">
       <div class="profile-identity-row">
         <div class="profile-avatar-wrap">
@@ -2298,6 +2302,14 @@
 
 <div id="toastContainer"></div>
 
+<!-- BLACKWALL BOOT SEQUENCE — architect only, plays once per session -->
+<div id="blackwall-boot">
+  <div class="boot-scanline"></div>
+  <div class="boot-terminal">
+    <div class="boot-line" id="bootLines"></div>
+    <span class="boot-cursor" id="bootCursor"></span>
+  </div>
+</div>
 
 </body>
 </html>
