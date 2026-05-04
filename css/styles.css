@@ -2940,6 +2940,127 @@ body.is-admin .more-item.admin-only-item::before {
   color: var(--text3);
   font-size: 10px;
 }
+.admin-dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.admin-dossier-stat {
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--gold-dim) 42%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg3) 70%, transparent);
+}
+.admin-dossier-stat span,
+.admin-dossier-panel-title {
+  display: block;
+  color: color-mix(in srgb, var(--gold) 82%, var(--text3));
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.admin-dossier-stat strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-dossier-stat em {
+  display: block;
+  margin-top: 2px;
+  color: var(--text3);
+  font-size: 9px;
+  font-style: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-dossier-quick {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+.admin-dossier-quick button {
+  min-height: 34px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--gold-border) 55%, var(--border));
+  background: color-mix(in srgb, var(--bg3) 72%, transparent);
+  color: var(--gold);
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.admin-dossier-quick button:nth-child(n + 3) {
+  border-color: color-mix(in srgb, var(--red-border) 68%, var(--border));
+  color: #ff6666;
+}
+.admin-dossier-panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.admin-dossier-panel {
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--bg2) 80%, transparent);
+}
+.admin-dossier-panel-title {
+  margin-bottom: 7px;
+}
+.admin-dossier-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 52%, transparent);
+}
+.admin-dossier-row:first-of-type {
+  border-top: 0;
+}
+.admin-dossier-row strong {
+  display: block;
+  color: var(--text);
+  font-size: 10px;
+  line-height: 1.35;
+}
+.admin-dossier-row span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text3);
+  font-size: 9px;
+  line-height: 1.35;
+}
+.admin-dossier-row b {
+  flex: 0 0 auto;
+  color: var(--gold);
+  font-family: monospace;
+  font-size: 10px;
+}
+.admin-dossier-row b.plus { color: #2ecc71; }
+.admin-dossier-row b.minus { color: #ff5a5a; }
+.admin-dossier-row.needs_attention strong,
+.admin-dossier-row.penalized strong {
+  color: #ff6b6b;
+}
+.admin-dossier-empty {
+  padding: 8px 0 2px;
+  color: var(--text3);
+  font-size: 10px;
+}
 .admin-log-card {
   display: grid;
   gap: 4px;

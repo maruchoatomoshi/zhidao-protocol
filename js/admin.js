@@ -376,6 +376,7 @@ function adminSelectUserById(telegramId) {
     return;
   }
   adminSelectUser(user.telegram_id, user.full_name, user.points, user);
+  adminLoadUserDossier(user.telegram_id);
 }
 
 function adminRenderRoommates(roommates) {
@@ -388,6 +389,138 @@ function adminRenderRoommates(roommates) {
       <span>${escapeHtml(roommate.full_name || roommate.telegram_id)}</span>
     </div>
   `).join('');
+}
+
+function adminDossierStatusLabel(status) {
+  const labels = {
+    pending: 'Ожидает',
+    confirmed: 'Отмечен',
+    free_time: 'Свободное время',
+    leave_requested: 'Запрос отгула',
+    admin_approved: 'Разрешено',
+    leave_rejected: 'Отгул отклонён',
+    needs_attention: 'Проверить',
+    penalized: 'Штраф',
+    skipped: 'Отменено',
+  };
+  return labels[status] || status || '—';
+}
+
+function adminDossierCheckTypeLabel(type) {
+  if (type === 'morning') return 'Подъём';
+  if (type === 'evening') return 'Вечер';
+  if (type === 'excursion') return 'Экскурсия';
+  return type || 'Отметка';
+}
+
+function adminDossierActionLabel(action) {
+  const labels = {
+    points_adjust: 'Баллы',
+    room_update: 'Комната',
+    presence_approve: 'Отметка разрешена',
+    presence_reject: 'Отгул отклонён',
+    presence_penalty: 'Штраф отметки',
+    presence_cancel: 'Отметка отменена',
+    reset_shop: 'Сброс магазина',
+    blackwall: 'BlackWall',
+    architect_event: 'Architect Event',
+  };
+  return labels[action] || String(action || 'Операция').replace(/_/g, ' ');
+}
+
+function adminRenderDossierStat(label, value, note = '') {
+  return `<div class="admin-dossier-stat">
+    <span>${escapeHtml(label)}</span>
+    <strong>${escapeHtml(value)}</strong>
+    ${note ? `<em>${escapeHtml(note)}</em>` : ''}
+  </div>`;
+}
+
+function adminRenderDossierPresence(rows) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return '<div class="admin-dossier-empty">Отметок пока нет</div>';
+  }
+  return rows.map(row => `
+    <div class="admin-dossier-row ${escapeHtml(row.status || '')}">
+      <div>
+        <strong>${escapeHtml(adminDossierCheckTypeLabel(row.check_type))} · ${escapeHtml(row.check_date || '')}</strong>
+        <span>${escapeHtml(adminDossierStatusLabel(row.status))}${row.attempts_sent ? ` · попыток ${row.attempts_sent}` : ''}</span>
+      </div>
+      ${row.penalty_points ? `<b class="minus">-${Number(row.penalty_points)}★</b>` : ''}
+    </div>
+  `).join('');
+}
+
+function adminRenderDossierDiary(rows) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return '<div class="admin-dossier-empty">Оценок дневника пока нет</div>';
+  }
+  return rows.map(row => `
+    <div class="admin-dossier-row">
+      <div>
+        <strong>${escapeHtml(row.entry_date || '')}</strong>
+        <span>дневник</span>
+      </div>
+      <b>${Number(row.stars || 0)}★${row.bonus ? ` +${Number(row.bonus)} бонус` : ''}</b>
+    </div>
+  `).join('');
+}
+
+function adminRenderDossierActions(rows) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return '<div class="admin-dossier-empty">Истории операций пока нет</div>';
+  }
+  return rows.map(row => {
+    const delta = Number(row.points_delta || 0);
+    const date = row.created_at ? new Date(row.created_at).toLocaleDateString('ru-RU') : '';
+    return `<div class="admin-dossier-row">
+      <div>
+        <strong>${escapeHtml(adminDossierActionLabel(row.action_type))}</strong>
+        <span>${escapeHtml(row.reason || '')}${date ? ` · ${escapeHtml(date)}` : ''}</span>
+      </div>
+      ${delta ? `<b class="${delta > 0 ? 'plus' : 'minus'}">${delta > 0 ? '+' : ''}${delta}★</b>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function adminPreparePointAction(delta, reason) {
+  if (!adminSelectedUser) {
+    showToast('Сначала выбери игрока');
+    return;
+  }
+  const awardName = document.getElementById('awardName');
+  const awardPoints = document.getElementById('awardPoints');
+  const awardReason = document.getElementById('awardReason');
+  if (awardName) awardName.value = adminSelectedUser.telegram_id;
+  if (awardPoints) awardPoints.value = Math.abs(Number(delta || 0));
+  if (awardReason) awardReason.value = reason || '';
+  adminAdjustPointsFromForm(delta > 0 ? 1 : -1);
+}
+
+async function adminLoadUserDossier(telegramId) {
+  if (!isAdmin || !currentUserId || !telegramId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/admin/user/${encodeURIComponent(telegramId)}/dossier`, {
+      headers: {'x-admin-id': currentUserId},
+    });
+    const data = await r.json();
+    if (!r.ok || !data.user) {
+      showToast(data.detail || 'Не удалось загрузить досье');
+      return;
+    }
+    const user = {
+      ...data.user,
+      dossier: {
+        stats: data.stats || {},
+        presence: Array.isArray(data.presence) ? data.presence : [],
+        diary: Array.isArray(data.diary) ? data.diary : [],
+        actions: Array.isArray(data.actions) ? data.actions : [],
+      },
+    };
+    adminSelectUser(user.telegram_id, user.full_name, user.points, user, {skipSearch: true});
+  } catch (e) {
+    showToast('Ошибка загрузки досье');
+  }
 }
 
 function adminEnsureDossierModal() {
@@ -419,7 +552,7 @@ function adminCloseDossier() {
   if (modal) modal.classList.remove('show');
 }
 
-function adminSelectUser(telegramId, fullName, points, extra = {}) {
+function adminSelectUser(telegramId, fullName, points, extra = {}, options = {}) {
   adminSelectedUser = {
     ...(adminSelectedUser || {}),
     ...extra,
@@ -442,6 +575,8 @@ function adminSelectUser(telegramId, fullName, points, extra = {}) {
   if (selected) {
     const room = String(adminSelectedUser.room_number || '').trim();
     const roommates = adminSelectedUser.roommates || [];
+    const dossier = adminSelectedUser.dossier || {};
+    const stats = dossier.stats || {};
     selected.innerHTML = `
       <div class="admin-dossier-head">
         ${adminUserAvatarHtml(adminSelectedUser, true)}
@@ -451,6 +586,18 @@ function adminSelectUser(telegramId, fullName, points, extra = {}) {
         </div>
         <div class="admin-user-points">${points || 0}★</div>
       </div>
+      <div class="admin-dossier-grid">
+        ${adminRenderDossierStat('Баланс', `${points || 0}★`, 'сейчас')}
+        ${adminRenderDossierStat('Комната', room || '—', roommates.length ? `соседей: ${roommates.length}` : 'не задана')}
+        ${adminRenderDossierStat('Отметки', stats.presence_confirmed || 0, `${stats.presence_attention || 0} требуют внимания`)}
+        ${adminRenderDossierStat('Дневник', `${stats.diary_stars || 0}★`, `${stats.diary_days || 0} дней`)}
+      </div>
+      <div class="admin-dossier-quick">
+        <button onclick="adminPreparePointAction(10, 'быстрый бонус')">+10★</button>
+        <button onclick="adminPreparePointAction(50, 'особый бонус')">+50★</button>
+        <button onclick="adminPreparePointAction(-10, 'небольшой штраф')">-10★</button>
+        <button onclick="adminPreparePointAction(-20, 'нарушение режима')">-20★</button>
+      </div>
       <div class="admin-dossier-room">
         <div class="admin-room-row">
           <input class="admin-input admin-room-input" id="adminRoomInput" placeholder="Комната" value="${escapeHtml(room)}">
@@ -458,10 +605,24 @@ function adminSelectUser(telegramId, fullName, points, extra = {}) {
         </div>
         <div class="admin-roommate-title">Соседи</div>
         <div id="adminRoommates" class="admin-roommate-list">${adminRenderRoommates(roommates)}</div>
+      </div>
+      <div class="admin-dossier-panels">
+        <div class="admin-dossier-panel">
+          <div class="admin-dossier-panel-title">Последние отметки</div>
+          ${adminRenderDossierPresence(dossier.presence)}
+        </div>
+        <div class="admin-dossier-panel">
+          <div class="admin-dossier-panel-title">Дневник</div>
+          ${adminRenderDossierDiary(dossier.diary)}
+        </div>
+        <div class="admin-dossier-panel wide">
+          <div class="admin-dossier-panel-title">История действий</div>
+          ${adminRenderDossierActions(dossier.actions)}
+        </div>
       </div>`;
     modal.classList.add('show');
   }
-  adminSearchUsers();
+  if (!options.skipSearch) adminSearchUsers();
 }
 
 async function adminSaveSelectedRoom() {
@@ -489,6 +650,7 @@ async function adminSaveSelectedRoom() {
     showToast(data.room_number ? `Комната сохранена: ${data.room_number}` : 'Комната очищена');
     adminSearchUsers();
     adminLoadActionLog();
+    adminLoadUserDossier(adminSelectedUser.telegram_id);
   } catch (e) {
     showToast('Ошибка соединения');
   }
@@ -539,6 +701,7 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
     if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
       adminSelectedUser.points = data.new_points;
       adminSelectUser(targetId, data.full_name, data.new_points, adminSelectedUser);
+      adminLoadUserDossier(targetId);
     }
     adminSearchUsers();
     adminLoadActionLog();

@@ -2433,6 +2433,171 @@ async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(
     }
 
 
+@app.get("/api/admin/user/{telegram_id}/dossier")
+async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT u.telegram_id, u.full_name, u.marzban_username, u.points,
+                  u.avatar_url, u.room_number, us.theme_path
+           FROM users u
+           LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
+           WHERE u.telegram_id=?''',
+        (telegram_id,),
+    )
+    user_row = c.fetchone()
+    if not user_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    room_number = user_row[5] or ""
+    roommates = []
+    if room_number:
+        c.execute(
+            '''SELECT telegram_id, full_name, avatar_url
+               FROM users
+               WHERE room_number=?
+                 AND telegram_id IS NOT NULL
+                 AND telegram_id != ?
+               ORDER BY full_name COLLATE NOCASE''',
+            (room_number, telegram_id),
+        )
+        roommates = [
+            {
+                "telegram_id": row[0],
+                "full_name": row[1] or str(row[0]),
+                "avatar_url": row[2],
+            }
+            for row in c.fetchall()
+        ]
+
+    c.execute(
+        '''SELECT check_type, check_date, status, attempts_sent, penalty_points,
+                  confirmed_at, escalated_at, note
+           FROM daily_checks
+           WHERE telegram_id=?
+           ORDER BY check_date DESC, id DESC
+           LIMIT 8''',
+        (telegram_id,),
+    )
+    presence_rows = c.fetchall()
+
+    c.execute(
+        '''SELECT COALESCE(SUM(stars), 0), COALESCE(SUM(bonus), 0), COUNT(*)
+           FROM diary_stars
+           WHERE telegram_id=?''',
+        (telegram_id,),
+    )
+    diary_total = c.fetchone() or (0, 0, 0)
+    c.execute(
+        '''SELECT entry_date, stars, bonus, rated_at
+           FROM diary_stars
+           WHERE telegram_id=?
+           ORDER BY entry_date DESC
+           LIMIT 7''',
+        (telegram_id,),
+    )
+    diary_rows = c.fetchall()
+
+    c.execute(
+        '''SELECT l.id, l.admin_id, au.full_name, l.action_type,
+                  l.points_delta, l.reason, l.created_at
+           FROM admin_action_logs l
+           LEFT JOIN users au ON au.telegram_id = l.admin_id
+           WHERE l.target_id=?
+           ORDER BY l.id DESC
+           LIMIT 10''',
+        (telegram_id,),
+    )
+    action_rows = c.fetchall()
+
+    c.execute(
+        '''SELECT
+             COALESCE(SUM(CASE WHEN points_delta > 0 THEN points_delta ELSE 0 END), 0),
+             COALESCE(SUM(CASE WHEN points_delta < 0 THEN ABS(points_delta) ELSE 0 END), 0),
+             COUNT(*)
+           FROM admin_action_logs
+           WHERE target_id=?''',
+        (telegram_id,),
+    )
+    action_total = c.fetchone() or (0, 0, 0)
+
+    c.execute(
+        '''SELECT status, COUNT(*)
+           FROM daily_checks
+           WHERE telegram_id=?
+           GROUP BY status''',
+        (telegram_id,),
+    )
+    presence_counts = {row[0]: row[1] for row in c.fetchall()}
+    conn.close()
+
+    return {
+        "user": {
+            "telegram_id": user_row[0],
+            "full_name": user_row[1] or str(user_row[0]),
+            "username": user_row[2] or "",
+            "points": user_row[3] or 0,
+            "avatar_url": user_row[4],
+            "room_number": room_number,
+            "theme_path": user_row[6],
+            "is_admin": user_row[0] in ADMIN_IDS,
+            "roommates": roommates,
+        },
+        "stats": {
+            "points_awarded": action_total[0] or 0,
+            "points_penalized": action_total[1] or 0,
+            "actions_count": action_total[2] or 0,
+            "presence_confirmed": presence_counts.get("confirmed", 0),
+            "presence_attention": (
+                presence_counts.get("needs_attention", 0)
+                + presence_counts.get("penalized", 0)
+                + presence_counts.get("pending", 0)
+            ),
+            "diary_stars": diary_total[0] or 0,
+            "diary_bonus": diary_total[1] or 0,
+            "diary_days": diary_total[2] or 0,
+        },
+        "presence": [
+            {
+                "check_type": row[0],
+                "check_date": row[1],
+                "status": row[2],
+                "attempts_sent": row[3] or 0,
+                "penalty_points": row[4] or 0,
+                "confirmed_at": row[5],
+                "escalated_at": row[6],
+                "note": row[7] or "",
+            }
+            for row in presence_rows
+        ],
+        "diary": [
+            {
+                "entry_date": row[0],
+                "stars": row[1] or 0,
+                "bonus": row[2] or 0,
+                "rated_at": row[3],
+            }
+            for row in diary_rows
+        ],
+        "actions": [
+            {
+                "id": row[0],
+                "admin_id": row[1],
+                "admin_name": row[2] or str(row[1]),
+                "action_type": row[3],
+                "points_delta": row[4] or 0,
+                "reason": row[5] or "",
+                "created_at": row[6],
+            }
+            for row in action_rows
+        ],
+    }
+
+
 @app.get("/api/admin/expected-students")
 async def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
