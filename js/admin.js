@@ -946,12 +946,12 @@ const RAID_CONFIG = {
     adminIds: [389741116, 244487659, 1190015933, 491711713],
     cyberpunk: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
-        title: '// MICHAEL SMASHER PROTOCOL // TARGET: МЮ',
+        title: '// MU NIGHT RAID // TARGET: МЮ',
         placeholderColor: '#ff003c'
     },
     genshin: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme.png?raw=true',
-        title: '💎 МИКЕЛАНДЖЕЛО // ПЕРВЫЙ ПРЕДВЕСТНИК ОТБОЯ',
+        title: '💎 МИКЕЛАНДЖЕЛО // РЕЙД МЮ',
         placeholderColor: '#dbb165'
     }
 };

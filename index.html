@@ -1945,7 +1945,7 @@
         <button onclick="closeRaid()" class="btn-close-raid">×</button>
         <div class="raid-kicker">
             <span class="raid-kicker-dot"></span>
-            <span>ALPHABOSS NEURAL LINK</span>
+            <span>MU RAID // 夜间行动</span>
         </div>
         
         <div class="boss-frame">
@@ -1957,9 +1957,24 @@
             <div id="boss-title" class="boss-title">// ADAM SMASHER PROTOCOL</div>
         </div>
         <div class="raid-threat-strip">
-            <span class="raid-chip">BlackWall</span>
-            <span class="raid-chip">NetWatch</span>
-            <span class="raid-chip">Lethal</span>
+            <span class="raid-chip">Stealth</span>
+            <span class="raid-chip">Team Sync</span>
+            <span class="raid-chip">Risk 40%</span>
+        </div>
+
+        <div class="raid-brief-grid">
+            <div class="raid-brief-card">
+                <span>СТАВКА</span>
+                <strong>50★</strong>
+            </div>
+            <div class="raid-brief-card">
+                <span>НАГРАДА</span>
+                <strong>150★</strong>
+            </div>
+            <div class="raid-brief-card">
+                <span>ОТРЯД</span>
+                <strong>3+</strong>
+            </div>
         </div>
         
         <div class="raid-status-block">
@@ -1983,7 +1998,19 @@
                 // RAID STATUS //
             </div>
         </div>
-        
+
+        <div id="raid-result-panel" class="raid-result-panel" style="display:none;"></div>
+
+        <div class="raid-roster-box">
+            <div class="raid-roster-head">
+                <span>СОСТАВ ОТРЯДА</span>
+                <span id="raid-roster-risk">RISK: MEDIUM</span>
+            </div>
+            <div id="raid-roster" class="raid-roster">
+                <span class="raid-roster-empty">Ожидание бойцов...</span>
+            </div>
+        </div>
+
         <button id="raid-action-btn" onclick="joinRaid()">
             <i class="ti ti-broadcast"></i> ПОДКЛЮЧИТЬСЯ К НЕЙРОЛИНКУ
         </button>

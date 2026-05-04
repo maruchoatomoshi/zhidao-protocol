@@ -23,6 +23,50 @@ function setRaidStatusText(text, color = 'var(--text2)') {
     status.style.color = color;
 }
 
+function setRaidResultPanel(mode = '', title = '', text = '') {
+    const panel = document.getElementById('raid-result-panel');
+    if (!panel) return;
+    if (!mode) {
+        panel.style.display = 'none';
+        panel.className = 'raid-result-panel';
+        panel.innerHTML = '';
+        return;
+    }
+    panel.style.display = 'block';
+    panel.className = `raid-result-panel ${mode}`;
+    panel.innerHTML = `
+        <div class="raid-result-title">${escapeHtml(title)}</div>
+        <div class="raid-result-text">${escapeHtml(text)}</div>
+    `;
+}
+
+function updateRaidRoster(participants = [], currentUserIdValue = currentUserId) {
+    const roster = document.getElementById('raid-roster');
+    const risk = document.getElementById('raid-roster-risk');
+    if (!roster) return;
+
+    const list = Array.isArray(participants) ? participants : [];
+    if (!list.length) {
+        roster.innerHTML = '<span class="raid-roster-empty">Ожидание бойцов...</span>';
+        if (risk) risk.textContent = 'RISK: MEDIUM';
+        return;
+    }
+
+    roster.innerHTML = list.map((player, index) => {
+        const isMe = Number(player.telegram_id) === Number(currentUserIdValue);
+        const name = player.name || player.full_name || `Боец ${index + 1}`;
+        return `<span class="raid-roster-chip ${isMe ? 'me' : ''}">
+            <b>${escapeHtml(String(name).slice(0, 1).toUpperCase())}</b>
+            ${escapeHtml(name)}
+        </span>`;
+    }).join('');
+
+    if (risk) {
+        const ready = list.length >= RAID_CONFIG.minPlayers;
+        risk.textContent = ready ? 'RISK: HIGH // READY' : 'RISK: MEDIUM';
+    }
+}
+
 function setRaidProgressVisual(percent, state = 'INIT', hint = 'Neural handshake pending', tone = 'pending') {
     const progressBar = document.getElementById('raid-progress-bar');
     const percentLabel = document.getElementById('raid-progress-percent');
@@ -133,12 +177,12 @@ function prepareRaidVisual() {
 
 async function playRaidIntro(token) {
     const steps = [
-        { percent: 8, state: 'LINK', hint: 'Нейролинк инициирован', status: 'Подготовка боевого канала...' },
-        { percent: 24, state: 'SCAN', hint: 'Сканирование сигнатуры босса', status: 'Считываем поведенческий профиль Альфабосса...' },
-        { percent: 41, state: 'WALL', hint: 'Обход BlackWall', status: 'Пробиваем внешний защитный слой...' },
-        { percent: 63, state: 'ROUTE', hint: 'Маршрутизация отряда', status: 'Собираем точки входа для ударной группы...' },
-        { percent: 82, state: 'LOCK', hint: 'Фиксация боевого канала', status: 'Канал почти стабилен. Держим сигнал...' },
-        { percent: 100, state: 'READY', hint: 'Система готова к рейду', status: 'Контур активен. Можно подключаться к атаке.' }
+        { percent: 8, state: 'LINK', hint: 'Нейролинк инициирован', status: 'Поднимаем скрытый канал МЮ...' },
+        { percent: 24, state: 'SCAN', hint: 'Разведка маршрута', status: 'Сканируем коридоры, расписание и окна риска...' },
+        { percent: 41, state: 'MASK', hint: 'Маскировка сигнала', status: 'Глушим следы отряда в локальной сети...' },
+        { percent: 63, state: 'ROUTE', hint: 'Маршрут отхода', status: 'Собираем точки входа и запасной выход...' },
+        { percent: 82, state: 'LOCK', hint: 'Фиксация операции', status: 'Канал почти стабилен. Держим синхронизацию...' },
+        { percent: 100, state: 'READY', hint: 'Операция готова', status: 'Контур активен. Можно подключаться к рейду.' }
     ];
 
     for (const step of steps) {
@@ -164,6 +208,8 @@ function closeRaid() {
 async function showRaid() {
     prepareRaidVisual();
     updateRaidUI(0);
+    updateRaidRoster([]);
+    setRaidResultPanel();
     setRaidStatusText('Синхронизация рейда...');
     setRaidButtonState('Загрузка статуса...', true);
 
@@ -196,17 +242,20 @@ async function loadRaidStatus() {
         const data = await r.json();
         const raidLimit = data.limit_today || 3;
         const finishedToday = data.finished_today || 0;
+        const requiredPlayers = data.required_players || RAID_CONFIG.minPlayers;
         const numericRemaining = typeof data.remaining_today === 'number'
             ? data.remaining_today
             : Math.max(0, raidLimit - finishedToday);
         const remainingToday = isAdmin ? 'без лимита' : `${numericRemaining}/${raidLimit}`;
 
         if (!data.raid) {
-            updateRaidUI(0);
-            setRaidProgressVisual(6, 'STANDBY', 'Ни один отряд ещё не собран', 'pending');
+            updateRaidUI(0, requiredPlayers);
+            updateRaidRoster([]);
+            setRaidResultPanel();
+            setRaidProgressVisual(6, 'STANDBY', 'Операция ждёт первого бойца', 'pending');
             setRaidStatusText(
                 isAdmin
-                    ? 'Рейд ещё не создан. Админ может стартовать в любой момент.'
+                    ? 'Рейд ещё не создан. Админ может запустить одиночный тест или собрать команду.'
                     : `Рейд ещё не собран. Осталось попыток сегодня: ${remainingToday}.`
             );
             setRaidButtonState(
@@ -218,22 +267,30 @@ async function loadRaidStatus() {
 
         const participants = data.participants || [];
         const count = data.count ?? participants.length ?? 0;
-        const participantNames = participants.map(p => p.name).join(' • ');
+        const participantNames = participants.map(p => p.name).filter(Boolean).join(' • ');
         const alreadyJoined = participants.some(p => p.telegram_id === currentUserId);
+        updateRaidRoster(participants);
 
         if (data.raid.status === 'finished') {
             const success = data.raid.result === 'success';
-            updateRaidUI(Math.max(count, RAID_CONFIG.minPlayers));
+            updateRaidUI(Math.max(count, requiredPlayers), requiredPlayers);
             setRaidProgressVisual(
                 100,
                 success ? 'VICTORY' : 'FAIL',
-                success ? 'Альфабосс пробит. Награда начислена.' : 'Контур сорван. Ставки потеряны.',
+                success ? 'Операция прошла. Награда начислена.' : 'Операция сорвана. Ставки потеряны.',
                 success ? 'success' : 'danger'
+            );
+            setRaidResultPanel(
+                success ? 'success' : 'danger',
+                success ? 'РЕЙД УСПЕШЕН' : 'РЕЙД СОРВАН',
+                success
+                    ? `Команда вышла чисто. +150★ каждому участнику.`
+                    : 'Система заметила отряд. Ставка сгорела.'
             );
             setRaidStatusText(
                 success
-                    ? `Рейд завершён: +150★ каждому.${participantNames ? ' Бойцы: ' + participantNames : ''}`
-                    : `Альфабосс отбился.${participantNames ? ' В отряде были: ' + participantNames : ''}`,
+                    ? `Финал: успех.${participantNames ? ' Отряд: ' + participantNames : ''}`
+                    : `Финал: провал.${participantNames ? ' Отряд: ' + participantNames : ''}`,
                 success ? '#2ecc71' : '#cc4444'
             );
             setRaidButtonState(
@@ -243,17 +300,18 @@ async function loadRaidStatus() {
             return;
         }
 
-        updateRaidUI(count);
+        setRaidResultPanel();
+        updateRaidUI(count, requiredPlayers);
         setRaidProgressVisual(
-            Math.min((count / RAID_CONFIG.minPlayers) * 100, 100),
+            Math.min((count / requiredPlayers) * 100, 100),
             alreadyJoined ? 'LINKED' : 'ASSEMBLING',
             alreadyJoined ? 'Ты уже синхронизирован с отрядом.' : 'Идёт добор бойцов для запуска.',
-            count >= RAID_CONFIG.minPlayers ? 'success' : 'pending'
+            count >= requiredPlayers ? 'success' : 'pending'
         );
         setRaidStatusText(
             alreadyJoined
-                ? `Ты уже в отряде. Бойцов: ${count}/${RAID_CONFIG.minPlayers}.${participantNames ? ' ' + participantNames : ''}`
-                : `Сбор отряда: ${count}/${RAID_CONFIG.minPlayers}.${participantNames ? ' ' + participantNames : ''} ${isAdmin ? '' : 'Осталось рейдов: ' + remainingToday + '.'}`,
+                ? `Ты уже в отряде. Бойцов: ${count}/${requiredPlayers}.${participantNames ? ' ' + participantNames : ''}`
+                : `Сбор отряда: ${count}/${requiredPlayers}.${participantNames ? ' ' + participantNames : ''} ${isAdmin ? '' : 'Осталось рейдов: ' + remainingToday + '.'}`,
             alreadyJoined ? '#2ecc71' : 'var(--text2)'
         );
         setRaidButtonState(
@@ -262,6 +320,8 @@ async function loadRaidStatus() {
         );
     } catch(e) {
         updateRaidUI(0);
+        updateRaidRoster([]);
+        setRaidResultPanel('danger', 'СВЯЗЬ ПОТЕРЯНА', 'Не удалось получить статус операции.');
         setRaidStatusText('Не удалось загрузить статус рейда.', '#cc4444');
         setRaidButtonState('Повторить подключение', false);
     }
@@ -281,13 +341,13 @@ async function joinRaid() {
 
     tg.showPopup({
         title: '⚔️ Вступить в рейд?',
-        message: 'Ты ставишь 50★. Победа даст +150★ каждому участнику, поражение сожжёт ставку. Рейд стартует при 3 бойцах.',
-        buttons: [{id:'confirm', type:'default', text:'⚔️ В БОЙ!'}, {type:'cancel'}]
+        message: 'Ты ставишь 50★. Если отряд соберётся и операция пройдёт успешно, каждый участник получит +150★. При провале ставка сгорает.',
+        buttons: [{id:'confirm', type:'default', text:'⚔️ В РЕЙД'}, {type:'cancel'}]
     }, async (btnId) => {
         if (btnId !== 'confirm') return;
 
         isJoiningRaid = true;
-        setRaidProgressVisual(92, 'BREACH', 'Подключаем тебя к боевому контуру...', 'pending');
+        setRaidProgressVisual(92, 'BREACH', 'Подключаем тебя к скрытому контуру...', 'pending');
         setRaidButtonState('Синхронизация...', true, '#e67e22', '#fff');
 
         try {
@@ -310,9 +370,11 @@ async function joinRaid() {
 
             if (data.launched && data.result === 'success') {
                 setRaidProgressVisual(100, 'VICTORY', 'Альфабосс пробит. Награда зачислена.', 'success');
+                setRaidResultPanel('success', 'РЕЙД УСПЕШЕН', 'Команда вышла чисто. Награда начислена.');
                 launchConfetti(80);
             } else if (data.launched && data.result === 'defended') {
-                setRaidProgressVisual(100, 'FAIL', 'Контур сорван. Альфабосс удержал защиту.', 'danger');
+                setRaidProgressVisual(100, 'FAIL', 'Контур сорван. Операция провалена.', 'danger');
+                setRaidResultPanel('danger', 'РЕЙД СОРВАН', 'Система заметила отряд. Ставка сгорела.');
             } else {
                 setRaidProgressVisual(
                     Math.min(((data.count || 1) / RAID_CONFIG.minPlayers) * 100, 100),

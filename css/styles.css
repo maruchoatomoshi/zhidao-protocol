@@ -4518,6 +4518,9 @@ body.is-admin .more-item.admin-only-item::before {
 .raid-content {
     width: 90%;
     max-width: 400px;
+    max-height: min(92vh, 760px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     background:
         linear-gradient(180deg, rgba(255,255,255,0.03), transparent 35%),
         linear-gradient(145deg, rgba(204,34,0,0.08), rgba(5,5,16,0.96) 55%);
@@ -4527,7 +4530,7 @@ body.is-admin .more-item.admin-only-item::before {
     padding: 18px 18px 20px;
     text-align: center;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
     transform: scale(0.8) translateY(20px);
     transition: transform 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
@@ -4691,6 +4694,38 @@ body.is-admin .more-item.admin-only-item::before {
     text-transform: uppercase;
 }
 
+.raid-brief-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    margin: 0 0 12px;
+}
+
+.raid-brief-card {
+    padding: 8px 7px;
+    border-radius: 12px;
+    border: 1px solid rgba(212,175,55,0.14);
+    background:
+      radial-gradient(circle at top, rgba(212,175,55,0.10), transparent 62%),
+      rgba(255,255,255,0.035);
+}
+
+.raid-brief-card span {
+    display: block;
+    color: var(--text3);
+    font-family: monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+}
+
+.raid-brief-card strong {
+    display: block;
+    margin-top: 3px;
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 900;
+}
+
 /* Блок Прогресса */
 .raid-status-block {
     background:
@@ -4699,7 +4734,7 @@ body.is-admin .more-item.admin-only-item::before {
     border: 1px solid rgba(255,255,255,0.09);
     border-radius: 14px;
     padding: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     position: relative;
     overflow: hidden;
 }
@@ -4908,6 +4943,24 @@ body.theme-genshin .raid-kicker,
 body.theme-genshin .raid-meter-state {
     border-color: rgba(75,83,102,0.18);
     background: rgba(75,83,102,0.08);
+    color: #4b5366;
+}
+
+body.theme-genshin .raid-brief-card,
+body.theme-genshin .raid-roster-box,
+body.theme-genshin .raid-result-panel {
+    border-color: rgba(75,83,102,0.14);
+    background: rgba(255,255,255,0.48);
+}
+
+body.theme-genshin .raid-brief-card strong,
+body.theme-genshin .raid-roster-chip b {
+    color: #9b6f2c;
+}
+
+body.theme-genshin .raid-roster-chip {
+    background: rgba(75,83,102,0.07);
+    border-color: rgba(75,83,102,0.12);
     color: #4b5366;
 }
 
@@ -9444,6 +9497,118 @@ body.is-architect::after {
   pointer-events: none;
   z-index: 0;
   animation: blackwallEdgePulse 4s ease-in-out infinite;
+}
+
+.raid-result-panel {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    text-align: left;
+    animation: fadeIn 0.22s ease-out;
+}
+
+.raid-result-panel.success {
+    border-color: rgba(46,204,113,0.36);
+    background: rgba(46,204,113,0.10);
+}
+
+.raid-result-panel.danger {
+    border-color: rgba(255,75,85,0.38);
+    background: rgba(180,20,20,0.14);
+}
+
+.raid-result-title {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.raid-result-text {
+    margin-top: 4px;
+    color: var(--text2);
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.raid-roster-box {
+    margin: 0 0 12px;
+    padding: 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(0,0,0,0.16);
+}
+
+.raid-roster-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--text3);
+    font-family: monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+}
+
+.raid-roster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 30px;
+}
+
+.raid-roster-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 5px 8px 5px 5px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.04);
+    color: var(--text2);
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.raid-roster-chip.me {
+    border-color: rgba(46,204,113,0.34);
+    background: rgba(46,204,113,0.10);
+    color: #d6ffe9;
+}
+
+.raid-roster-chip b {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(212,175,55,0.14);
+    color: var(--gold);
+    font-size: 8px;
+}
+
+.raid-roster-empty {
+    align-self: center;
+    color: var(--text3);
+    font-size: 10px;
+}
+
+body.theme-genshin .raid-brief-card,
+body.theme-genshin .raid-roster-box,
+body.theme-genshin .raid-result-panel {
+    border-color: rgba(75,83,102,0.14);
+    background: rgba(255,255,255,0.48);
+}
+
+body.theme-genshin .raid-roster-chip {
+    background: rgba(75,83,102,0.07);
+    border-color: rgba(75,83,102,0.12);
+    color: #4b5366;
 }
 @keyframes blackwallEdgePulse {
   0%, 100% { opacity: 1; }
