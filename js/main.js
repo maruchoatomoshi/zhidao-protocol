@@ -19,23 +19,6 @@ loadLeaderboard();
 loadAchievements();
 initLaundry();
 
-function initBlackwallBootSequence() {
-  const overlay = document.getElementById('blackwallBootSequence');
-  if (!overlay || overlay.dataset.started === '1') return;
-
-  overlay.dataset.started = '1';
-  overlay.classList.add('show');
-
-  window.setTimeout(() => {
-    overlay.classList.add('closing');
-  }, 2600);
-
-  window.setTimeout(() => {
-    overlay.classList.remove('show', 'closing');
-    overlay.style.display = 'none';
-  }, 3250);
-}
-
 window.setInterval(() => {
   if (typeof updateLaunchGateCountdowns === 'function') updateLaunchGateCountdowns();
 }, 1000);
@@ -43,7 +26,6 @@ window.setInterval(() => {
 // ===== НАВИГАЦИЯ =====
 
 document.addEventListener('DOMContentLoaded', () => {
-  initBlackwallBootSequence();
   if (typeof syncLaunchGateVisibility === 'function') syncLaunchGateVisibility();
   if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
 
