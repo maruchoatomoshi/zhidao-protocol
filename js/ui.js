@@ -159,6 +159,7 @@ async function loadUserData(telegramId) {
       isArchitect = !!data.is_architect;
       document.body.classList.toggle('is-architect', isArchitect);
       if (isArchitect) {
+        localStorage.setItem('zhidao_architect', '1');
         const badge = document.querySelector('.profile-admin-badge');
         if (badge) badge.textContent = '架构师 // ARCHITECT';
         const kicker = document.getElementById('profileKicker');
@@ -168,6 +169,16 @@ async function loadUserData(telegramId) {
           cipherDecode(nameEl);
         });
         setupProfileTilt();
+      } else {
+        // Clear flag — not architect (covers account change / stale localStorage)
+        localStorage.removeItem('zhidao_architect');
+        // Abort boot overlay if it was pre-shown from stale localStorage
+        if (_bootRunning) {
+          const _ov = document.getElementById('blackwall-boot');
+          if (_ov) { _ov.classList.remove('bw-active', 'bw-fadeout'); }
+          _bootRunning = false;
+          _bootCbs = [];
+        }
       }
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
@@ -235,11 +246,25 @@ function cipherDecode(el) {
   setTimeout(tick, 800);
 }
 
+let _bootRunning = false;
+let _bootCbs = [];
+
 function startBlackwallBoot(cb) {
+  // Already finished this session — fire callback immediately
   if (sessionStorage.getItem('bw_boot_done')) { if (cb) cb(); return; }
+  if (cb) _bootCbs.push(cb);
+  // Already running — callback queued, will fire on completion
+  if (_bootRunning) return;
+  _bootRunning = true;
+
   const overlay = document.getElementById('blackwall-boot');
   const linesEl = document.getElementById('bootLines');
-  if (!overlay || !linesEl) { if (cb) cb(); return; }
+  if (!overlay || !linesEl) {
+    _bootCbs.forEach(f => f()); _bootCbs = []; return;
+  }
+
+  // Show overlay immediately (may already be shown by inline script)
+  overlay.classList.add('bw-active');
 
   const LINES = [
     { text: '> ZHIDAO PROTOCOL v2.7.0', delay: 0 },
@@ -252,20 +277,17 @@ function startBlackwallBoot(cb) {
     { text: '欢迎回来, 架构师', delay: 420, gold: true },
   ];
 
-  overlay.classList.add('bw-active');
-  let elapsed = 120;
-
+  let elapsed = 80;
   LINES.forEach((l, i) => {
     elapsed += l.delay;
     setTimeout(() => {
       const span = document.createElement('span');
-      if (l.gold) span.className = 'bw-gold';
-      else span.className = 'bw-current';
+      span.className = l.gold ? 'bw-gold' : 'bw-current';
       span.textContent = l.text;
       linesEl.appendChild(span);
-      // fade previous to dim
-      const prev = linesEl.querySelectorAll('span.bw-current');
-      prev.forEach((s, si) => { if (si < prev.length - 1) s.className = ''; });
+      linesEl.querySelectorAll('span.bw-current').forEach((s, si, arr) => {
+        if (si < arr.length - 1) s.className = '';
+      });
 
       if (i === LINES.length - 1) {
         setTimeout(() => {
@@ -276,7 +298,9 @@ function startBlackwallBoot(cb) {
             overlay.classList.remove('bw-active', 'bw-fadeout');
             linesEl.innerHTML = '';
             sessionStorage.setItem('bw_boot_done', '1');
-            if (cb) cb();
+            _bootRunning = false;
+            _bootCbs.forEach(f => f());
+            _bootCbs = [];
           }, 900);
         }, 900);
       }
