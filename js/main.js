@@ -4,18 +4,15 @@ if (user) {
   isAdmin = ADMIN_IDS.includes(user.id);
   loadUserData(user.id);
   loadPoints(user.id);
-  loadImplants(user.id);
   startGlobalAlertPolling();
   if (typeof syncAdminUiVisibility === 'function') syncAdminUiVisibility();
 }
 
 loadSavedTheme();
-// genshinTabBtn управляется через applyThemePath
 loadWeather();
 loadYuanRate();
 loadSchedule();
 loadAnnouncements();
-loadLeaderboard();
 loadAchievements();
 initLaundry();
 

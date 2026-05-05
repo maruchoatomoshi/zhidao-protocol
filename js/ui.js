@@ -64,6 +64,8 @@ function closeLaunchGateOverlay() {
   if (overlay) overlay.classList.remove('show');
 }
 
+let _currentPage = 'home';
+
 function showPage(name, btn) {
   if (isLaunchGateActive() && name !== 'home') {
     showLaunchGateOverlay();
@@ -76,14 +78,19 @@ function showPage(name, btn) {
     return;
   }
 
+  const alreadyActive = _currentPage === name;
+  _currentPage = name;
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
 
+  // Pages that always refresh (live data)
   if (name === 'schedule') { loadAnnouncements(); loadSchedule(); }
-  if (name === 'implants') loadImplants(currentUserId);
-  if (name === 'shop') loadShop();
+  // Pages that load only on first visit or explicit re-tap
+  if (name === 'implants' && !alreadyActive) loadImplants(currentUserId);
+  if (name === 'shop' && !alreadyActive) loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'diary') loadDiaryPage();
   if (name === 'diary-stars') initDiaryStarsPage();
