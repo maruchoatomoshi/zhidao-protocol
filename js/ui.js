@@ -83,12 +83,26 @@ function showPage(name, btn) {
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+  // Clear stale DOM content BEFORE .active is set so old cards don't animate
+  if (!alreadyActive) {
+    const clearMap = {
+      shop:     ['shopStoreContent'],
+      implants: ['myImplantsPage'],
+      rating:   ['leaderboardContent'],
+    };
+    (clearMap[name] || []).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    });
+  }
+
   document.getElementById('page-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
 
   // Pages that always refresh (live data)
   if (name === 'schedule') { loadAnnouncements(); loadSchedule(); }
-  // Pages that load only on first visit or explicit re-tap
+  // Pages that load only once per visit
   if (name === 'implants' && !alreadyActive) loadImplants(currentUserId);
   if (name === 'shop' && !alreadyActive) loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
