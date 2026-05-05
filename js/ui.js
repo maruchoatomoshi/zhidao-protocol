@@ -173,9 +173,10 @@ async function loadUserData(telegramId) {
         // Clear flag — not architect (covers account change / stale localStorage)
         localStorage.removeItem('zhidao_architect');
         // Abort boot overlay if it was pre-shown from stale localStorage
+        // Also hide overlay if it was pre-shown by inline script (stale localStorage)
+        const _ov = document.getElementById('blackwall-boot');
+        if (_ov) _ov.style.display = 'none';
         if (_bootRunning) {
-          const _ov = document.getElementById('blackwall-boot');
-          if (_ov) { _ov.classList.remove('bw-active', 'bw-fadeout'); }
           _bootRunning = false;
           _bootCbs = [];
         }
@@ -263,8 +264,8 @@ function startBlackwallBoot(cb) {
     _bootCbs.forEach(f => f()); _bootCbs = []; return;
   }
 
-  // Show overlay immediately (may already be shown by inline script)
-  overlay.classList.add('bw-active');
+  // Overlay is already visible (CSS default + inline script logic)
+  overlay.style.display = 'flex';
 
   const LINES = [
     { text: '> ZHIDAO PROTOCOL v2.7.0', delay: 0 },
@@ -295,7 +296,8 @@ function startBlackwallBoot(cb) {
           if (cursor) cursor.style.display = 'none';
           overlay.classList.add('bw-fadeout');
           setTimeout(() => {
-            overlay.classList.remove('bw-active', 'bw-fadeout');
+            overlay.style.display = 'none';
+            overlay.classList.remove('bw-fadeout');
             linesEl.innerHTML = '';
             sessionStorage.setItem('bw_boot_done', '1');
             _bootRunning = false;

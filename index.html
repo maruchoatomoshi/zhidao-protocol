@@ -7,9 +7,28 @@
 <!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260504a">
+<link rel="stylesheet" href="./css/styles.css?v=20260504b">
 </head>
 <body>
+
+<!-- BLACKWALL BOOT SEQUENCE — первый элемент body, виден до первой отрисовки -->
+<div id="blackwall-boot">
+  <div class="boot-scanline"></div>
+  <div class="boot-terminal">
+    <div class="boot-line" id="bootLines"></div>
+    <span class="boot-cursor" id="bootCursor"></span>
+  </div>
+</div>
+<!-- Синхронный скрипт: скрывает оверлей ДО первого пейнта если не архитектор -->
+<script>
+(function() {
+  var el = document.getElementById('blackwall-boot');
+  if (!el) return;
+  if (!localStorage.getItem('zhidao_architect') || sessionStorage.getItem('bw_boot_done')) {
+    el.style.display = 'none';
+  }
+})();
+</script>
 
 <!-- Фоновые иероглифы -->
 <div class="bg-kanji" style="font-size:160px;top:-20px;right:-20px;color:rgba(180,20,20,0.03);font-family:serif;--kanji-duration:18s;animation-delay:-3s;">道</div>
@@ -2287,15 +2306,6 @@
 <audio id="architectMusicB" preload="auto" loop style="display:none;"></audio>
 
 <div id="toastContainer"></div>
-
-<!-- BLACKWALL BOOT SEQUENCE — architect only, plays once per session -->
-<div id="blackwall-boot">
-  <div class="boot-scanline"></div>
-  <div class="boot-terminal">
-    <div class="boot-line" id="bootLines"></div>
-    <span class="boot-cursor" id="bootCursor"></span>
-  </div>
-</div>
 
 </body>
 </html>

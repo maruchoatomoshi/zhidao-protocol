@@ -10144,7 +10144,7 @@ body.is-architect .profile-card-name {
 
 /* 3 ── BLACKWALL BOOT SEQUENCE overlay */
 #blackwall-boot {
-  display: none;
+  display: flex;
   position: fixed;
   inset: 0;
   background: #000;
@@ -10153,7 +10153,6 @@ body.is-architect .profile-card-name {
   align-items: center;
   justify-content: center;
 }
-#blackwall-boot.bw-active { display: flex; }
 #blackwall-boot.bw-fadeout {
   animation: bootFadeOut 0.9s ease-in forwards;
 }

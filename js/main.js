@@ -26,11 +26,6 @@ window.setInterval(() => {
 // ===== НАВИГАЦИЯ =====
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Show architect boot IMMEDIATELY if returning architect (localStorage flag)
-  // On first-ever session flag isn't set yet — will play after API confirms identity
-  if (localStorage.getItem('zhidao_architect') && !sessionStorage.getItem('bw_boot_done')) {
-    if (typeof startBlackwallBoot === 'function') startBlackwallBoot(null);
-  }
   if (typeof syncLaunchGateVisibility === 'function') syncLaunchGateVisibility();
   if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
 
