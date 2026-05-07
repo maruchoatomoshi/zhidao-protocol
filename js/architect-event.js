@@ -696,7 +696,7 @@ function renderArchitectLobby(eventData, errorText = '') {
   const teamCount = typeof eventData.team_count === 'number' ? eventData.team_count : teamMembers.length;
   const hasReward = !!(eventData.reward_text && String(eventData.reward_text).trim());
   const isTerminal = eventData.state === 'FAILED' || eventData.state === 'FINISHED';
-  const showLobbyCard = eventData.state === 'REGISTRATION' || (isTerminal && (teamCount > 0 || hasReward || isAdmin));
+  const showLobbyCard = eventData.state === 'REGISTRATION' || isTerminal;
 
   if (overlay) {
     overlay.classList.toggle('event-terminal', isTerminal);
@@ -711,6 +711,17 @@ function renderArchitectLobby(eventData, errorText = '') {
   } else {
     lobbyCard.style.display = showLobbyCard ? 'block' : 'none';
     lobbyCard.classList.remove('result-banner-hidden', 'result-banner-reveal');
+  }
+
+  const verdictEl = document.getElementById('eventResultVerdict');
+  const verdictRow = document.getElementById('eventResultHeader');
+  if (verdictEl && verdictRow) {
+    if (isTerminal) {
+      verdictEl.textContent = eventData.state === 'FINISHED' ? 'ПРОТОКОЛ ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
+      verdictRow.style.display = 'block';
+    } else {
+      verdictRow.style.display = 'none';
+    }
   }
 
   if (kickerEl) {

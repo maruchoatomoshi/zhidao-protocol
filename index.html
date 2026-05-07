@@ -7,7 +7,7 @@
 <!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260505b">
+<link rel="stylesheet" href="./css/styles.css?v=20260507a">
 </head>
 <body>
 
@@ -2188,6 +2188,10 @@
     <div class="event-phase-warning" id="eventPhaseWarning" style="display:none;">OVERLOAD WARNING</div>
 
 <div class="event-lobby-card" id="eventLobbyCard">
+  <div class="event-result-header" id="eventResultHeader" style="display:none;">
+    <div class="event-result-verdict" id="eventResultVerdict"></div>
+    <div class="event-result-divider"></div>
+  </div>
   <div class="event-lobby-head">
     <div>
       <div class="event-lobby-kicker">КОМАНДА</div>
@@ -2243,10 +2247,26 @@
     </div>
 
   <div class="event-actions">
-  <button class="event-action attack" onclick="requestArchitectQuestion('attack')">Атака</button>
-  <button class="event-action protocol" onclick="requestArchitectQuestion('protocol')">Protocol</button>
-  <button class="event-action sync" onclick="requestArchitectQuestion('sync')">Синхронизация</button>
-  <button class="event-action stabilize" onclick="requestArchitectQuestion('stabilize')">Стабилизация</button>
+  <button class="event-action attack" onclick="requestArchitectQuestion('attack')">
+    <span class="event-action-kanji">攻</span>
+    <span class="event-action-name">АТАКА</span>
+    <span class="event-action-sub">ПРЯМОЙ УРОН</span>
+  </button>
+  <button class="event-action protocol" onclick="requestArchitectQuestion('protocol')">
+    <span class="event-action-kanji">协</span>
+    <span class="event-action-name">ПРОТОКОЛ</span>
+    <span class="event-action-sub">ТАКТИЧЕСКИЙ УРОН</span>
+  </button>
+  <button class="event-action sync" onclick="requestArchitectQuestion('sync')">
+    <span class="event-action-kanji">同</span>
+    <span class="event-action-name">СИНХРОНИЗАЦИЯ</span>
+    <span class="event-action-sub">КОНТРОЛЬ УЯЗВИМОСТИ</span>
+  </button>
+  <button class="event-action stabilize" onclick="requestArchitectQuestion('stabilize')">
+    <span class="event-action-kanji">稳</span>
+    <span class="event-action-name">СТАБИЛИЗАЦИЯ</span>
+    <span class="event-action-sub">ДАВЛЕНИЕ И ПОДДЕРЖКА</span>
+  </button>
 </div>
 
     <div class="event-question-modal" id="eventQuestionBox" style="display:none;">
