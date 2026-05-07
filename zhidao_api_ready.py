@@ -2052,7 +2052,7 @@ async def set_profile_showcase(data: dict):
     return {"success": True, "kind": None if showcase_kind == "auto" else showcase_kind, "code": showcase_code or None}
 
 
-def get_last_event_mvp_id(c) -> int | None:
+def get_last_event_mvp_id(c) -> Optional[int]:
     """Return mvp_user_id of the most recently finished event, or None."""
     c.execute(
         "SELECT mvp_user_id FROM events WHERE state='FINISHED' ORDER BY ended_at DESC LIMIT 1"
