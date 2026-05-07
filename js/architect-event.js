@@ -129,22 +129,23 @@ function scheduleArchitectMusicRetry(trackUrl) {
 }
 
 function primeArchitectMusicUnlock() {
+  stopArchitectMusicFade();
   architectMusicUnlocked = true;
   architectMusicRetryAttempts = 0;
 
   const players = getArchitectMusicPlayers();
-  const audio = players[architectMusicActiveDeck] || players.a || players.b;
+  const audio = players.a || players.b;
   if (!audio) return;
+
+  architectMusicActiveDeck = 'a';
 
   try {
     audio.loop = true;
     audio.preload = 'auto';
     audio.volume = 0;
-    if (!audio.dataset.currentTrack) {
-      audio.src = ARCHITECT_PHASE_MUSIC[1];
-      audio.dataset.currentTrack = ARCHITECT_PHASE_MUSIC[1];
-      audio.load();
-    }
+    audio.src = ARCHITECT_PHASE_MUSIC[1];
+    audio.dataset.currentTrack = ARCHITECT_PHASE_MUSIC[1];
+    audio.load();
 
     const unlockPromise = audio.play();
     if (unlockPromise && typeof unlockPromise.then === 'function') {
@@ -232,6 +233,34 @@ function stopArchitectMusic(immediate = false) {
 
   fadeArchitectMusic(activePlayer, null, 0, 700);
   architectMusicCurrentTrack = '';
+}
+
+let architectMusicMuted = false;
+
+function toggleArchitectMusicMute() {
+  architectMusicMuted = !architectMusicMuted;
+  const players = getArchitectMusicPlayers();
+  [players.a, players.b].forEach((p) => {
+    if (p) p.muted = architectMusicMuted;
+  });
+  const btn = document.getElementById('eventMuteBtn');
+  if (btn) {
+    btn.textContent = architectMusicMuted ? '🔇' : '🔊';
+    btn.classList.toggle('muted', architectMusicMuted);
+  }
+}
+
+function stopArchitectMusicOnClose() {
+  stopArchitectMusic(true);
+  architectMusicUnlocked = false;
+  architectMusicCurrentTrack = '';
+  architectMusicActiveDeck = 'a';
+  architectMusicMuted = false;
+  const players = getArchitectMusicPlayers();
+  if (players.a) { players.a.dataset.currentTrack = ''; players.a.muted = false; }
+  if (players.b) { players.b.dataset.currentTrack = ''; players.b.muted = false; }
+  const btn = document.getElementById('eventMuteBtn');
+  if (btn) { btn.textContent = '🔊'; btn.classList.remove('muted'); }
 }
 
 function switchArchitectMusic(trackUrl, forceRetry = false) {

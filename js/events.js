@@ -99,7 +99,11 @@ function closeEventOverlay() {
     bossVideo.pause();
   }
 
-  stopArchitectMusic();
+  if (typeof stopArchitectMusicOnClose === 'function') {
+    stopArchitectMusicOnClose();
+  } else {
+    stopArchitectMusic(true);
+  }
 
   // Cancel pending result banner reveal timer
   if (typeof architectResultRevealTimer !== 'undefined' && architectResultRevealTimer) {
