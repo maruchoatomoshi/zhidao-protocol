@@ -100,6 +100,13 @@ function closeEventOverlay() {
   }
 
   stopArchitectMusic();
+
+  // Cancel pending result banner reveal timer
+  if (typeof architectResultRevealTimer !== 'undefined' && architectResultRevealTimer) {
+    clearTimeout(architectResultRevealTimer);
+    architectResultRevealTimer = null;
+    architectResultRevealEventKey = null;
+  }
 }
 
 let architectEventEntryBannerTimer = null;

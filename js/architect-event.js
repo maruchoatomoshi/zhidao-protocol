@@ -35,7 +35,10 @@ let architectActionFxTimer = null;
 let architectPhaseFxTimer = null;
 let architectFinalTimerHandle = null;
 let architectQuestionAutoCloseTimer = null;
+let architectResultRevealTimer = null;
+let architectResultRevealEventKey = null;
 const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
+const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
 
 function getArchitectPhaseImage(eventData) {
   if (!eventData) return ARCHITECT_PHASE_IMAGES[1];
@@ -559,6 +562,54 @@ async function loadCurrentArchitectEvent() {
   }
 }
 
+function scheduleArchitectResultReveal(lobbyCard, eventData) {
+  const revealKey = `arch_result_${eventData.id}_${eventData.state}`;
+  const alreadySeen = sessionStorage.getItem(revealKey);
+
+  // Already seen this result — show immediately, no delay
+  if (alreadySeen) {
+    lobbyCard.style.display = 'block';
+    lobbyCard.classList.remove('result-banner-hidden', 'result-banner-reveal');
+    return;
+  }
+
+  // Timer already running for this key — keep card hidden, don't restart
+  if (architectResultRevealEventKey === revealKey) {
+    lobbyCard.style.display = 'block';
+    lobbyCard.classList.add('result-banner-hidden');
+    return;
+  }
+
+  // Cancel any previous timer (different event/state)
+  if (architectResultRevealTimer) {
+    clearTimeout(architectResultRevealTimer);
+    architectResultRevealTimer = null;
+  }
+  architectResultRevealEventKey = revealKey;
+
+  // Show card but invisible — prevents layout flash
+  lobbyCard.style.display = 'block';
+  lobbyCard.classList.add('result-banner-hidden');
+  lobbyCard.classList.remove('result-banner-reveal');
+
+  // Animate result image entrance
+  const img = document.getElementById('eventBossImage');
+  if (img) {
+    img.classList.remove('result-image-reveal');
+    void img.offsetWidth;
+    img.classList.add('result-image-reveal');
+  }
+
+  // Reveal banner after delay
+  architectResultRevealTimer = setTimeout(() => {
+    lobbyCard.classList.remove('result-banner-hidden');
+    lobbyCard.classList.add('result-banner-reveal');
+    sessionStorage.setItem(revealKey, '1');
+    architectResultRevealTimer = null;
+    architectResultRevealEventKey = null;
+  }, ARCHITECT_RESULT_REVEAL_DELAY);
+}
+
 function renderArchitectLobby(eventData, errorText = '') {
   const lobbyCard = document.getElementById('eventLobbyCard');
   const overlay = document.getElementById('eventOverlay');
@@ -625,7 +676,13 @@ function renderArchitectLobby(eventData, errorText = '') {
   lobbyCard.classList.toggle('event-result-card', isTerminal);
   lobbyCard.classList.toggle('event-result-win', eventData.state === 'FINISHED');
   lobbyCard.classList.toggle('event-result-lose', eventData.state === 'FAILED');
-  lobbyCard.style.display = showLobbyCard ? 'block' : 'none';
+
+  if (isTerminal && showLobbyCard) {
+    scheduleArchitectResultReveal(lobbyCard, eventData);
+  } else {
+    lobbyCard.style.display = showLobbyCard ? 'block' : 'none';
+    lobbyCard.classList.remove('result-banner-hidden', 'result-banner-reveal');
+  }
 
   if (kickerEl) {
     kickerEl.textContent = isTerminal
