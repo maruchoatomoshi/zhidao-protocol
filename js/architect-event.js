@@ -1177,9 +1177,9 @@ function showArchitectQuestion(question) {
 
   const opts = question.options || {};
   options.innerHTML = `
-    <button class="event-option-btn" data-option="a" onclick="submitArchitectAnswer('a')">${escapeHtml(opts.a || '')}</button>
-    <button class="event-option-btn" data-option="b" onclick="submitArchitectAnswer('b')">${escapeHtml(opts.b || '')}</button>
-    <button class="event-option-btn" data-option="c" onclick="submitArchitectAnswer('c')">${escapeHtml(opts.c || '')}</button>
+    <button class="event-option-btn" data-option="a" onclick="submitArchitectAnswer('a')"><span class="event-option-mark">01</span><span class="event-option-text">${escapeHtml(opts.a || '')}</span></button>
+    <button class="event-option-btn" data-option="b" onclick="submitArchitectAnswer('b')"><span class="event-option-mark">02</span><span class="event-option-text">${escapeHtml(opts.b || '')}</span></button>
+    <button class="event-option-btn" data-option="c" onclick="submitArchitectAnswer('c')"><span class="event-option-mark">03</span><span class="event-option-text">${escapeHtml(opts.c || '')}</span></button>
   `;
 
   box.querySelectorAll('.event-answer-feedback').forEach((node) => {
