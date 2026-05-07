@@ -434,6 +434,15 @@ def init_db():
                   vulnerability_until TEXT DEFAULT NULL,
                   overload_pressure INTEGER NOT NULL DEFAULT 0,
                   created_at TEXT NOT NULL)''')
+    # Migrate: add mvp_user_id and extra_participants if not present
+    try:
+        c.execute("ALTER TABLE events ADD COLUMN mvp_user_id INTEGER DEFAULT NULL")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE events ADD COLUMN extra_participants TEXT DEFAULT NULL")
+    except Exception:
+        pass
     c.execute('''CREATE TABLE IF NOT EXISTS event_logs
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   event_id INTEGER NOT NULL,
@@ -982,13 +991,20 @@ def fetch_event_row(c, event_id: int):
                   reward_text, min_players, max_players,
                   max_hp, current_hp, phase, state,
                   phase_started_at, started_at, ended_at, final_phase_deadline,
-                  vulnerability_until, overload_pressure, created_at
+                  vulnerability_until, overload_pressure, created_at,
+                  mvp_user_id, extra_participants
            FROM events WHERE id=?''',
         (event_id,),
     )
     row = c.fetchone()
     if not row:
         return None
+    import json as _json
+    raw_extra = row[20]
+    try:
+        extra = _json.loads(raw_extra) if raw_extra else []
+    except Exception:
+        extra = []
     return {
         "id": row[0],
         "code": row[1],
@@ -1009,6 +1025,8 @@ def fetch_event_row(c, event_id: int):
         "vulnerability_until": row[16],
         "overload_pressure": row[17],
         "created_at": row[18],
+        "mvp_user_id": row[19],
+        "extra_participants": extra,
     }
 
 
@@ -1105,10 +1123,19 @@ def refresh_event_state(c, event_row: dict):
         event_row["state"] = "FINISHED"
         event_row["phase"] = 4
         event_row["ended_at"] = now_iso()
+        # Calculate MVP: participant with highest total_damage
         c.execute(
-            "UPDATE events SET current_hp=0, state='FINISHED', phase=4, ended_at=? WHERE id=?",
-            (event_row["ended_at"], event_row["id"]),
+            """SELECT telegram_id FROM event_participants
+               WHERE event_id=? ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
+            (event_row["id"],),
         )
+        mvp_row = c.fetchone()
+        mvp_id = mvp_row[0] if mvp_row else None
+        c.execute(
+            "UPDATE events SET current_hp=0, state='FINISHED', phase=4, ended_at=?, mvp_user_id=? WHERE id=?",
+            (event_row["ended_at"], mvp_id, event_row["id"]),
+        )
+        event_row["mvp_user_id"] = mvp_id
         add_event_log(c, event_row["id"], "system", "Architect event completed.")
 
     apply_architect_phase_transitions(c, event_row)
@@ -2025,12 +2052,22 @@ async def set_profile_showcase(data: dict):
     return {"success": True, "kind": None if showcase_kind == "auto" else showcase_kind, "code": showcase_code or None}
 
 
+def get_last_event_mvp_id(c) -> int | None:
+    """Return mvp_user_id of the most recently finished event, or None."""
+    c.execute(
+        "SELECT mvp_user_id FROM events WHERE state='FINISHED' ORDER BY ended_at DESC LIMIT 1"
+    )
+    row = c.fetchone()
+    return row[0] if row else None
+
+
 @app.get("/api/user/{telegram_id}")
 async def get_user(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT full_name, avatar_url, marzban_username FROM users WHERE telegram_id=?", (telegram_id,))
     profile_row = c.fetchone()
+    is_last_mvp = get_last_event_mvp_id(c) == telegram_id
     conn.close()
     if not profile_row:
         raise HTTPException(status_code=404, detail="User not found")
@@ -2048,6 +2085,7 @@ async def get_user(telegram_id: int):
             "is_admin": telegram_id in ADMIN_IDS,
             "is_architect": telegram_id in ARCHITECT_IDS,
             "has_vpn": False,
+            "is_last_mvp": is_last_mvp,
         }
 
     data = await get_user_data(marzban_user)
@@ -2063,6 +2101,7 @@ async def get_user(telegram_id: int):
         "is_admin": telegram_id in ADMIN_IDS,
         "is_architect": telegram_id in ARCHITECT_IDS,
         "has_vpn": True,
+        "is_last_mvp": is_last_mvp,
     }
 
 
@@ -4900,6 +4939,49 @@ async def get_event_team(event_id: int):
         "team_count": snapshot.get("team_count", 0),
         "team_members": snapshot.get("team_members", []),
     }
+
+
+@app.post("/api/events/{event_id}/extra")
+async def add_event_extra_participant(
+    event_id: int,
+    data: dict,
+    x_admin_id: int = Header(None),
+):
+    """Admin: add or remove a free-text name from extra_participants list."""
+    import json as _json
+    if not x_admin_id or x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    name = str(data.get("name", "")).strip()
+    action = str(data.get("action", "add")).strip()  # "add" | "remove"
+    if not name:
+        raise HTTPException(status_code=400, detail="name required")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT extra_participants FROM events WHERE id=?", (event_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    try:
+        current = _json.loads(row[0]) if row[0] else []
+    except Exception:
+        current = []
+
+    if action == "remove":
+        current = [n for n in current if n != name]
+    else:
+        if name not in current:
+            current.append(name)
+
+    c.execute(
+        "UPDATE events SET extra_participants=? WHERE id=?",
+        (_json.dumps(current, ensure_ascii=False), event_id),
+    )
+    conn.commit()
+    conn.close()
+    return {"event_id": event_id, "extra_participants": current}
 
 
 @app.post("/api/events/{event_id}/start")

@@ -700,6 +700,28 @@ function renderArchitectLobby(eventData, errorText = '') {
     teamCountEl.textContent = `${teamCount} чел.`;
   }
 
+  // Extra participants section (result only)
+  const extraSection = document.getElementById('eventExtraSection');
+  const extraList = document.getElementById('eventExtraList');
+  const extraInputRow = document.getElementById('eventExtraInputRow');
+  if (extraSection) {
+    if (isTerminal) {
+      extraSection.style.display = 'block';
+      const extras = Array.isArray(eventData.extra_participants) ? eventData.extra_participants : [];
+      if (extraList) {
+        extraList.innerHTML = extras.length
+          ? extras.map(n => `<div class="event-extra-item">
+              <span>${escapeHtml(n)}</span>
+              ${isAdmin ? `<button class="event-extra-remove" onclick="removeEventExtraParticipant(${eventData.id}, '${escapeHtml(n).replace(/'/g,"\\'")}')">✕</button>` : ''}
+            </div>`).join('')
+          : (isAdmin ? '' : '<div class="event-team-empty">—</div>');
+      }
+      if (extraInputRow) extraInputRow.style.display = isAdmin ? 'flex' : 'none';
+    } else {
+      extraSection.style.display = 'none';
+    }
+  }
+
   if (isTerminal) {
     renderArchitectResultPanel(eventData);
     loadArchitectResultStats(eventData);
@@ -1249,4 +1271,41 @@ async function submitArchitectAnswer(answerOption) {
   } catch (e) {
     showToast('Ошибка соединения');
   }
+}
+
+// ── Extra participants (admin adds names to trip list after FINISHED) ───
+
+async function addEventExtraParticipant() {
+  const input = document.getElementById('eventExtraInput');
+  const name = input ? input.value.trim() : '';
+  if (!name) { showToast('Введи имя участника'); return; }
+  const eventId = currentArchitectEvent && currentArchitectEvent.id;
+  if (!eventId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/events/${eventId}/extra`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Id': String(currentUserId) },
+      body: JSON.stringify({ name, action: 'add' }),
+    });
+    if (!r.ok) { showToast('Ошибка'); return; }
+    const data = await r.json();
+    if (input) input.value = '';
+    if (currentArchitectEvent) currentArchitectEvent.extra_participants = data.extra_participants;
+    renderArchitectLobby(currentArchitectEvent);
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  } catch(e) { showToast('Ошибка соединения'); }
+}
+
+async function removeEventExtraParticipant(eventId, name) {
+  try {
+    const r = await fetch(`${API_URL}/api/events/${eventId}/extra`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Id': String(currentUserId) },
+      body: JSON.stringify({ name, action: 'remove' }),
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (currentArchitectEvent) currentArchitectEvent.extra_participants = data.extra_participants;
+    renderArchitectLobby(currentArchitectEvent);
+  } catch(e) {}
 }

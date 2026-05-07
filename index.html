@@ -7,7 +7,7 @@
 <!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260505a">
+<link rel="stylesheet" href="./css/styles.css?v=20260505b">
 </head>
 <body>
 
@@ -96,6 +96,7 @@
             <span class="profile-badge profile-badge-rank" id="myRankSub">D-RANK</span>
             <span class="profile-badge profile-badge-place" id="profileLeaderboardPlace">&mdash;</span>
             <span class="profile-badge profile-badge-path" id="profilePathBadge">SYNC</span>
+            <span class="profile-badge profile-badge-mvp" id="profileMvpBadge" style="display:none;">⚡ MVP</span>
           </div>
         </div>
       </div>
@@ -2201,6 +2202,16 @@
     <div class="event-lobby-label">СОСТАВ КОМАНДЫ</div>
     <div class="event-team-list" id="eventTeamList">
       <div class="event-team-empty">Пока никто не вступил</div>
+    </div>
+  </div>
+
+  <!-- Доп. участники — только для результата FINISHED, только admin видит форму -->
+  <div class="event-extra-participants" id="eventExtraSection" style="display:none;">
+    <div class="event-lobby-label">ДОПОЛНИТЕЛЬНО</div>
+    <div class="event-extra-list" id="eventExtraList"></div>
+    <div class="event-extra-input-row" id="eventExtraInputRow" style="display:none;">
+      <input class="event-extra-input" id="eventExtraInput" type="text" placeholder="Имя участника..." maxlength="60">
+      <button class="event-extra-add-btn" onclick="addEventExtraParticipant()">+</button>
     </div>
   </div>
 

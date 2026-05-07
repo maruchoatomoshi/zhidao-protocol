@@ -206,6 +206,9 @@ async function loadUserData(telegramId) {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
       }
       syncAdminUiVisibility();
+      // MVP badge on profile
+      const mvpBadge = document.getElementById('profileMvpBadge');
+      if (mvpBadge) mvpBadge.style.display = data.is_last_mvp ? 'inline-flex' : 'none';
       userConfig = data.link;
       currentAvatarUrl = data.avatar_url || null;
       if (typeof renderProfileAvatarCard === 'function') {
