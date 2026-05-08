@@ -5,8 +5,8 @@ const ARCHITECT_PHASE_IMAGES = {
 };
 
 const ARCHITECT_TERMINAL_IMAGES = {
-  FINISHED: 'architect_ivent_win.png',
-  FAILED: 'architect_ivent_lose.png'
+  FINISHED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_win.png',
+  FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lose.png'
 };
 
 const ARCHITECT_PHASE_VIDEOS = {

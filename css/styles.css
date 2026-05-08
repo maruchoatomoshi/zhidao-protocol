@@ -5798,12 +5798,11 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
 .event-overlay::before {
   z-index: 6;
   opacity: 0;
-  mix-blend-mode: screen;
   background:
     repeating-linear-gradient(
       180deg,
-      rgba(255, 40, 40, 0.06) 0,
-      rgba(255, 40, 40, 0.06) 1px,
+      rgba(255, 40, 40, 0.08) 0,
+      rgba(255, 40, 40, 0.08) 1px,
       transparent 1px,
       transparent 8px
     );
@@ -6688,10 +6687,10 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
   animation: architectButtonFire 0.52s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
-.event-action.attack.is-firing    { box-shadow: 0 -6px 32px rgba(255,54,54,0.55), inset 0 0 16px rgba(255,54,54,0.10); border-top-color: #ff6060; }
-.event-action.protocol.is-firing  { box-shadow: 0 -6px 32px rgba(255,200,48,0.55), inset 0 0 16px rgba(255,200,48,0.10); border-top-color: #ffe06a; }
-.event-action.sync.is-firing      { box-shadow: 0 -6px 32px rgba(91,112,255,0.55), inset 0 0 16px rgba(91,112,255,0.10); border-top-color: #8a9fff; }
-.event-action.stabilize.is-firing { box-shadow: 0 -6px 32px rgba(47,214,144,0.55), inset 0 0 16px rgba(47,214,144,0.10); border-top-color: #5fffa8; }
+.event-action.attack.is-firing    { border-top-color: #ff6060; background: rgba(255,54,54,0.14); }
+.event-action.protocol.is-firing  { border-top-color: #ffe06a; background: rgba(255,200,48,0.14); }
+.event-action.sync.is-firing      { border-top-color: #8a9fff; background: rgba(91,112,255,0.14); }
+.event-action.stabilize.is-firing { border-top-color: #5fffa8; background: rgba(47,214,144,0.14); }
 
 .event-question-modal {
   position: fixed;
@@ -6703,10 +6702,11 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
   margin: 0 auto;
   padding: 14px;
   border-radius: 16px;
-  background: rgba(10,10,22,0.96);
+  background: rgba(8,8,20,0.98);
   border: 1px solid rgba(212,175,55,0.26);
   box-shadow: 0 18px 50px rgba(0,0,0,0.52);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(6px);
+  transform: translateZ(0);
 }
 
 .event-question-title {
@@ -6748,7 +6748,7 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
   font-size: 10px;
   line-height: 1.3;
   z-index: 12;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
   box-shadow: 0 10px 28px rgba(0,0,0,0.24);
 }
 
@@ -6772,10 +6772,11 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
   padding: 14px 16px;
   border-radius: 18px;
   border: 1px solid rgba(212,175,55,0.18);
-  background: rgba(6, 6, 14, 0.93);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(6, 6, 16, 0.96);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 4;
+  transform: translateZ(0);
 }
 
 .event-overlay.event-terminal .event-lobby-card {
@@ -8235,13 +8236,13 @@ body.theme-genshin-dark #page-home .home-event-card {
 }
 
 @keyframes resultWinPulse {
-  0%,100% { box-shadow: 0 -12px 60px rgba(0,0,0,0.62), 0 -1px 0 rgba(0,230,255,0.18), 0 -28px 70px rgba(0,180,255,0.08); }
-  50%      { box-shadow: 0 -12px 60px rgba(0,0,0,0.62), 0 -1px 0 rgba(0,230,255,0.34), 0 -42px 100px rgba(0,200,255,0.18); }
+  0%,100% { border-top-color: rgba(0,230,255,0.42); }
+  50%      { border-top-color: rgba(0,230,255,0.76); }
 }
 
 @keyframes resultLosePulse {
-  0%,100% { box-shadow: 0 -12px 60px rgba(0,0,0,0.62), 0 -1px 0 rgba(255,54,54,0.18), 0 -28px 70px rgba(180,20,20,0.10); }
-  50%      { box-shadow: 0 -12px 60px rgba(0,0,0,0.62), 0 -1px 0 rgba(255,54,54,0.36), 0 -42px 100px rgba(200,20,20,0.20); }
+  0%,100% { border-top-color: rgba(255,54,54,0.44); }
+  50%      { border-top-color: rgba(255,54,54,0.80); }
 }
 
 /* ── Result verdict header ─────────────────────────────── */
@@ -11204,8 +11205,8 @@ body.is-architect .profile-card-spark.spark-bl {
 }
 
 @keyframes finalTimerPulse {
-  0%, 100% { box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 24px rgba(255,50,40,0.18); }
-  50%      { box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 38px rgba(255,50,40,0.32); }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.72; }
 }
 
 /* — Phase warning more dramatic — */
@@ -11284,4 +11285,68 @@ body.is-architect .profile-card-spark.spark-bl {
 @media (max-height: 620px) {
   .event-result-verdict { font-size: 19px; }
   .event-result-header { padding: 11px 14px 0; }
+}
+
+/* ── Prize section redesign ──────────────────────────────── */
+.event-lobby-card .event-lobby-reward {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(212,175,55,0.13) 0%, rgba(212,175,55,0.04) 100%);
+  border: 1px solid rgba(212,175,55,0.38);
+  position: relative;
+  overflow: hidden;
+}
+
+.event-lobby-card .event-lobby-reward::before {
+  content: 'ПРИЗ // MISSION REWARD';
+  display: block;
+  font-size: 8px;
+  letter-spacing: 2.2px;
+  font-family: monospace;
+  color: rgba(212,175,55,0.70);
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+
+.event-lobby-card .event-lobby-reward .event-lobby-label {
+  display: none;
+}
+
+.event-lobby-card .event-lobby-reward .event-lobby-value {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  line-height: 1.3 !important;
+  color: #f5e8b8 !important;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 20px rgba(212,175,55,0.28);
+}
+
+/* In result card (terminal state), prize is smaller but still elevated */
+.event-result-card .event-lobby-reward {
+  margin-top: 10px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(212,175,55,0.10), rgba(212,175,55,0.03));
+  border: 1px solid rgba(212,175,55,0.28);
+}
+
+.event-result-card .event-lobby-reward::before {
+  content: 'MISSION REWARD';
+  display: block;
+  font-size: 7px;
+  letter-spacing: 2.0px;
+  font-family: monospace;
+  color: rgba(212,175,55,0.60);
+  margin-bottom: 6px;
+}
+
+.event-result-card .event-lobby-reward .event-lobby-label {
+  display: none;
+}
+
+/* Performance: promote action buttons to own layer */
+.event-action {
+  transform: translateZ(0);
+  will-change: transform;
 }
