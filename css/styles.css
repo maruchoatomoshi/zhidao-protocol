@@ -10684,13 +10684,11 @@ body.is-architect .profile-card-spark.spark-bl {
 }
 
 .event-boss-name {
-  font-size: 14px !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.12em !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
   color: #ffffff !important;
-  text-shadow:
-    0 0 14px rgba(255, 50, 40, 0.45),
-    0 0 4px rgba(0,0,0,0.6) !important;
+  text-shadow: 0 0 4px rgba(0,0,0,0.7) !important;
 }
 
 .event-status-badge {
@@ -11349,4 +11347,101 @@ body.is-architect .profile-card-spark.spark-bl {
 .event-action {
   transform: translateZ(0);
   will-change: transform;
+}
+
+/* ── Android performance overrides ─────────────────────────
+   Many decorative infinite animations + mix-blend-mode + stacked
+   backdrop-filters cause sustained paint/composite jank on Android.
+   These overrides keep the look but cut the most expensive bits. */
+
+/* Drop expensive screen-blend overlay over the boss video/image */
+.event-hero::before {
+  mix-blend-mode: normal !important;
+  opacity: 0.32 !important;
+}
+
+/* Disable always-on decorative infinite animations on the event overlay */
+.event-overlay .event-hero::before,
+.event-overlay .event-hero-glow,
+.event-overlay::before {
+  animation: none !important;
+}
+
+/* Phase 1 scanline overlay: keep static gradient, kill animation */
+.event-overlay.event-state-active.event-phase-1::before {
+  animation: none !important;
+  opacity: 0.10 !important;
+}
+
+/* Phase 2 split overlay: drop animation, lower opacity */
+.event-overlay.event-state-active.event-phase-2::before {
+  animation: none !important;
+  opacity: 0.16 !important;
+}
+
+/* Phase 3 overload pulse: drop animation, lower opacity */
+.event-overlay.event-state-active.event-phase-3::before {
+  animation: none !important;
+  opacity: 0.22 !important;
+}
+
+/* Terminal breathing on result image: simplify */
+.event-overlay.event-state-terminal #eventBossImage {
+  animation: none !important;
+}
+
+/* Failed glow pulse: kill the infinite animation */
+.event-overlay.event-state-failed .event-hero-glow {
+  animation: none !important;
+}
+
+/* Overload shake on the boss media: too jittery on Android */
+.event-overlay.event-overload-high .event-hero-video,
+.event-overlay.event-overload-high #eventBossImage {
+  animation: none !important;
+}
+
+/* Critical HUD blink: keep static red tone */
+.event-overlay.event-overload-critical .event-hud,
+.event-overlay.event-overload-critical .event-final-timer {
+  animation: none !important;
+}
+
+/* Drop final-timer infinite glow animation entirely */
+.event-final-timer {
+  animation: none !important;
+}
+
+/* Drop status LED blink */
+.event-status-badge {
+  animation: none !important;
+}
+
+/* Reduce text-shadow stacking everywhere in the event overlay */
+.event-overlay .event-boss-name,
+.event-overlay .event-result-verdict,
+.event-overlay .event-action-name,
+.event-overlay .event-final-timer,
+.event-overlay .event-phase-warning {
+  text-shadow: 0 0 4px rgba(0,0,0,0.65) !important;
+}
+
+/* Drop heavy box-shadow stacks on event panels (kept for definition only) */
+.event-question-modal {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45) !important;
+}
+.event-lobby-card {
+  box-shadow: 0 -6px 22px rgba(0,0,0,0.45) !important;
+}
+
+/* Result win/lose container border animation -> keep but slow it */
+.event-overlay.event-terminal .event-lobby-card.event-result-win,
+.event-overlay.event-terminal .event-lobby-card.event-result-lose {
+  animation-duration: 6s !important;
+}
+
+/* Disable Genshin/admin extra background sweeps inside the event */
+.event-overlay .architect-event-entry-scan {
+  animation: none !important;
+  opacity: 0.4 !important;
 }
