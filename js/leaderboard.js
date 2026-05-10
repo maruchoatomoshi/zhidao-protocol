@@ -26,7 +26,7 @@ async function loadPoints(telegramId) {
 }
 
 function updatePoints() {
-  const star = ' \u2605';
+  const star = ' ★';
   const myPointsEl = document.getElementById('myPoints');
   const myPointsBigEl = document.getElementById('myPointsBig');
   const casinoPointsEl = document.getElementById('casinoPoints');
@@ -102,14 +102,14 @@ function setProfileText(id, value) {
 function renderProfileDossier(profile = {}) {
   const stats = profile.stats || {};
   const showcase = profile.showcase || null;
-  const place = profile.leaderboard_rank ? '#' + profile.leaderboard_rank : '\u2014';
+  const place = profile.leaderboard_rank ? '#' + profile.leaderboard_rank : '—';
 
   setProfileText('myRankSub', (profile.rank || 'D') + '-RANK');
   setProfileText('profileLeaderboardPlace', place);
   updateProfilePathBadge(profile.theme_path || currentThemePath);
 
-  setProfileText('profileStatusLine', profile.status_line || '\u72b6\u6001\uff1a\u5728\u7ebf // \u6743\u9650\uff1a\u5b66\u751f\u8282\u70b9 // \u540c\u6b65\u7387\uff1a0%');
-  setProfileText('profileTitleBadge', profile.title || '\u534f\u8bae\u6267\u884c\u8005 / \u0418\u0441\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c');
+  setProfileText('profileStatusLine', profile.status_line || '状态：在线 // 权限：学生节点 // 同步率：0%');
+  setProfileText('profileTitleBadge', profile.title || '协议执行者 / Исполнитель');
   setProfileText('profileStatCases', stats.case_opens || 0);
   setProfileText('profileStatPrayers', stats.prayers || 0);
   setProfileText('profileStatCards', stats.cards || 0);
@@ -139,19 +139,19 @@ async function loadProfileDossier() {
 
 function getProfileShowcaseGlyph(kind, code, fallback) {
   if (fallback) return fallback;
-  if (kind === 'card') return code === 'card_moon' ? '\u6708' : '\u5361';
+  if (kind === 'card') return code === 'card_moon' ? '月' : '卡';
   const map = {
-    implant_red_dragon: '\u9f8d',
-    implant_netwatch: '\u885b',
-    implant_qilin: '\u9e92',
-    implant_caishen: '\u8d22',
-    implant_terracota: '\u5175',
-    implant_guanxi: '\u5173',
-    implant_panda: '\u718a',
-    implant_shaolin: '\u6b66',
-    implant_linguasoft: '\u8a00',
+    implant_red_dragon: '龍',
+    implant_netwatch: '衛',
+    implant_qilin: '麒',
+    implant_caishen: '财',
+    implant_terracota: '兵',
+    implant_guanxi: '关',
+    implant_panda: '熊',
+    implant_shaolin: '武',
+    implant_linguasoft: '言',
   };
-  return map[code] || '\u82af';
+  return map[code] || '芯';
 }
 
 function renderProfileShowcaseOptions(options) {
@@ -209,7 +209,7 @@ async function openProfileShowcaseModal() {
         kind: 'card',
         code: item.card_id,
         glyph: getProfileShowcaseGlyph('card', item.card_id),
-        label: `${item.rarity || 4}\u2605 CARD`,
+        label: `${item.rarity || 4}★ CARD`,
         name: item.name || item.card_id,
         detail: item.passive || `durability ${item.durability || 0}`,
       });
@@ -396,14 +396,14 @@ async function loadDiaryStarsLeaderboardRating() {
       const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
       const pathLabel = row.theme_path === 'genshin' ? 'GENSHIN' : row.theme_path === 'cyberpunk' ? 'NETWATCH' : 'SYNC';
       const pathClass = row.theme_path === 'genshin' ? 'genshin' : row.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
-      const status = row.days_rated > 0 ? `${row.days_rated} DAYS // +${row.total_points || 0}\u2605` : 'ОЖИДАЕТ ОЦЕНКИ';
+      const status = row.days_rated > 0 ? `${row.days_rated} DAYS // +${row.total_points || 0}★` : 'ОЖИДАЕТ ОЦЕНКИ';
       const stars = row.total_stars || 0;
       return `<div class="diary-rank-card ${topClass} ${isMe ? 'me' : ''}" style="animation-delay:${i*0.05}s">
         <div class="diary-rank-place">${medal}</div>
         <div class="lb-avatar">${avatarMarkup(row.avatar_url, row.name, row.telegram_id, 'lb-avatar-img')}</div>
         <div class="diary-rank-main">
           <div class="diary-rank-name-row">
-            <span class="diary-rank-name">${escapeHtml(row.name)}${isMe?' \ud83d\udc48':''}</span>
+            <span class="diary-rank-name">${escapeHtml(row.name)}${isMe?' 👈':''}</span>
             <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
           </div>
           <div class="diary-rank-sub">
@@ -423,26 +423,26 @@ async function loadDiaryStarsLeaderboardRating() {
 
 async function loadLeaderboard() {
   const IMPLANT_GLYPHS = {
-    'implant_red_dragon':   ['\u9f8d', '#cc2200', 'RED DRAGON'],
-    'implant_netwatch':     ['\u885b', '#cc2200', 'NETWATCH'],
-    'implant_guanxi':       ['\u7fa9', '#9b59b6', 'GUANXI'],
-    'implant_terracota':    ['\u5175', '#9b59b6', 'TERRACOTA'],
-    'implant_panda':        ['\u718a', '#9b59b6', 'PANDA'],
-    'implant_shaolin':      ['\u6b66', '#9b59b6', 'SHAOLIN'],
-    'implant_linguasoft':   ['\u8a00', '#9b59b6', 'LINGUASOFT'],
-    'implant_caishen':      ['\u8ca1', '#9b59b6', 'CAISHEN'],
-    'implant_qilin':        ['\u9e9f', '#9b59b6', 'QILIN'],
+    'implant_red_dragon':   ['龍', '#cc2200', 'RED DRAGON'],
+    'implant_netwatch':     ['衛', '#cc2200', 'NETWATCH'],
+    'implant_guanxi':       ['義', '#9b59b6', 'GUANXI'],
+    'implant_terracota':    ['兵', '#9b59b6', 'TERRACOTA'],
+    'implant_panda':        ['熊', '#9b59b6', 'PANDA'],
+    'implant_shaolin':      ['武', '#9b59b6', 'SHAOLIN'],
+    'implant_linguasoft':   ['言', '#9b59b6', 'LINGUASOFT'],
+    'implant_caishen':      ['財', '#9b59b6', 'CAISHEN'],
+    'implant_qilin':        ['麟', '#9b59b6', 'QILIN'],
   };
   const CARD_GLYPHS = {
-    'card_zhongli':    ['\u5ca9', '#d4af37', 'ZHONGLI'],
-    'card_star':       ['\u7d2b', '#9b59b6', 'STAR'],
-    'card_pyro':       ['\u7130', '#e74c3c', 'PYRO'],
-    'card_fox':        ['\u72d0', '#e67e22', 'FOX'],
-    'card_fairy':      ['\u6843', '#e91e8c', 'FAIRY'],
-    'card_literature': ['\u6587', '#3498db', 'LITERATURE'],
-    'card_forest':     ['\u6728', '#2ecc71', 'FOREST'],
-    'card_sea':        ['\u6d77', '#1abc9c', 'SEA'],
-    'card_moon':       ['\u6708', '#b0c4de', 'MOON'],
+    'card_zhongli':    ['岩', '#d4af37', 'ZHONGLI'],
+    'card_star':       ['紫', '#9b59b6', 'STAR'],
+    'card_pyro':       ['焰', '#e74c3c', 'PYRO'],
+    'card_fox':        ['狐', '#e67e22', 'FOX'],
+    'card_fairy':      ['桃', '#e91e8c', 'FAIRY'],
+    'card_literature': ['文', '#3498db', 'LITERATURE'],
+    'card_forest':     ['木', '#2ecc71', 'FOREST'],
+    'card_sea':        ['海', '#1abc9c', 'SEA'],
+    'card_moon':       ['月', '#b0c4de', 'MOON'],
   };
   const TOP_COLORS = [
     'linear-gradient(90deg,#d4af37,#f5e070)',
@@ -509,13 +509,13 @@ async function loadLeaderboard() {
       let progressHtml = '';
       let deltaHtml = i === 0 ? '<span>LEADER NODE</span>' : '';
       if (i > 0 && data[i-1]) {
-        const prev = data[i-1].points;
-        const curr = item.points;
+        const prev = data[i-1].rep;
+        const curr = item.rep;
         const delta = Math.max(0, prev - curr);
         const pct = prev > 0 ? Math.round((curr / prev) * 100) : 100;
         const barColor = isLegendary ? 'rgba(200,34,0,0.5)' : i < 3 ? 'rgba(212,175,55,0.4)' : 'rgba(150,150,150,0.2)';
         progressHtml = `<div class="lb-progress" style="width:${pct}%;background:${barColor};max-width:100%;"></div>`;
-        deltaHtml = `<span>${delta} \u2605 TO NEXT</span>`;
+        deltaHtml = `<span>${delta} REP TO NEXT</span>`;
       }
 
       // Разделитель после топ-3
@@ -526,7 +526,7 @@ async function loadLeaderboard() {
         <div class="lb-avatar">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
           <div class="lb-name-row">
-            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${glyphHtml}${isMe?' \ud83d\udc48':''}</div>
+            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${glyphHtml}${isMe?' 👈':''}</div>
             <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
           </div>
           <div class="lb-subline">
@@ -536,12 +536,12 @@ async function loadLeaderboard() {
           </div>
           ${progressHtml}
         </div>
-        <div class="lb-points">${item.points} ★</div>
+        <div class="lb-points">${item.rep} REP</div>
       </div>`;
     });
     container.innerHTML = html;
     const placeEl = document.getElementById('profileLeaderboardPlace');
-    if (placeEl) placeEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '\u2014');
+    if (placeEl) placeEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '—');
   } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
