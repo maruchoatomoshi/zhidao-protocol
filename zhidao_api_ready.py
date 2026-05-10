@@ -2874,6 +2874,65 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
     }
 
 
+@app.post("/api/admin/rep")
+async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    target_id = data.get("telegram_id")
+    reason = str(data.get("reason") or "").strip()
+    try:
+        target_id = int(target_id)
+        delta = int(data.get("delta"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    if delta == 0:
+        raise HTTPException(status_code=400, detail="Delta must not be zero")
+    if abs(delta) > 5000:
+        raise HTTPException(status_code=400, detail="Delta too large")
+    if len(reason) < 3:
+        raise HTTPException(status_code=400, detail="Reason required")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT full_name, points, rep_score FROM users WHERE telegram_id=?", (target_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    previous_rep = row[2] or 0
+    c.execute(
+        "UPDATE users SET rep_score = MAX(0, COALESCE(rep_score, 0) + ?) WHERE telegram_id=?",
+        (delta, target_id),
+    )
+    c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (target_id,))
+    updated = c.fetchone() or (row[1] or 0, previous_rep)
+    new_points = updated[0] or 0
+    new_rep = updated[1] or 0
+    actual_delta = new_rep - previous_rep
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, ?, 'rep_adjust', ?, ?, ?)''',
+        (x_admin_id, target_id, actual_delta, reason, now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "telegram_id": target_id,
+        "full_name": row[0] or str(target_id),
+        "points": new_points,
+        "previous_rep_score": previous_rep,
+        "new_rep_score": new_rep,
+        "delta": actual_delta,
+        "requested_delta": delta,
+    }
+
+
 @app.get("/api/admin/actions")
 async def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:

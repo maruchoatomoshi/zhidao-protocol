@@ -25,10 +25,53 @@ const CONTRACT_STATUS_COLORS = {
   disputed:  '#e74c3c',
 };
 
+let contractsActiveTab = 'open';
+let contractsRefreshTimer = null;
+let contractsOpenLoading = false;
+let contractsMyLoading = false;
+
 // Called by showPage() when navigating to contracts
 function openContractsPage() {
-  loadOpenContracts();
-  showContractsTab('open');
+  const bw = document.getElementById('contractsBlackwallMsg');
+  const main = document.getElementById('contractsMain');
+  if (bw) bw.style.display = 'none';
+  if (main) main.style.display = 'block';
+  startContractsAutoRefresh();
+  showContractsTab(contractsActiveTab || 'open');
+}
+
+function isContractsPageActive() {
+  const page = document.getElementById('page-contracts');
+  return !!page && page.classList.contains('active') && document.visibilityState !== 'hidden';
+}
+
+function startContractsAutoRefresh() {
+  if (contractsRefreshTimer) return;
+  contractsRefreshTimer = window.setInterval(() => {
+    if (!isContractsPageActive()) {
+      stopContractsAutoRefresh();
+      return;
+    }
+    refreshContractsActiveTab({ silent: true });
+  }, 6000);
+}
+
+function stopContractsAutoRefresh() {
+  if (!contractsRefreshTimer) return;
+  window.clearInterval(contractsRefreshTimer);
+  contractsRefreshTimer = null;
+}
+
+function refreshContractsActiveTab(options = {}) {
+  if (contractsActiveTab === 'my') {
+    return loadMyContracts(options);
+  }
+  return loadOpenContracts(options);
+}
+
+function refreshContractsAfterAction() {
+  loadOpenContracts({ silent: true });
+  if (currentUserId) loadMyContracts({ silent: true });
 }
 
 function showContractsTab(tab) {
@@ -37,42 +80,46 @@ function showContractsTab(tab) {
   const btnOpen = document.getElementById('ctab-open');
   const btnMy   = document.getElementById('ctab-my');
   if (!openEl || !myEl) return;
+  contractsActiveTab = tab === 'my' ? 'my' : 'open';
+  startContractsAutoRefresh();
 
-  if (tab === 'open') {
+  if (contractsActiveTab === 'open') {
     openEl.style.display = 'block';
     myEl.style.display = 'none';
-    if (btnOpen) {
-      btnOpen.style.background = 'rgba(230,126,34,0.15)';
-      btnOpen.style.color = '#e67e22';
-      btnOpen.style.border = '1px solid rgba(230,126,34,0.5)';
-    }
-    if (btnMy) {
-      btnMy.style.background = 'transparent';
-      btnMy.style.color = 'var(--text3)';
-      btnMy.style.border = '1px solid var(--border)';
-    }
+    if (btnOpen) btnOpen.classList.add('active');
+    if (btnMy) btnMy.classList.remove('active');
     loadOpenContracts();
   } else {
     openEl.style.display = 'none';
     myEl.style.display = 'block';
-    if (btnMy) {
-      btnMy.style.background = 'rgba(230,126,34,0.15)';
-      btnMy.style.color = '#e67e22';
-      btnMy.style.border = '1px solid rgba(230,126,34,0.5)';
-    }
-    if (btnOpen) {
-      btnOpen.style.background = 'transparent';
-      btnOpen.style.color = 'var(--text3)';
-      btnOpen.style.border = '1px solid var(--border)';
-    }
+    if (btnMy) btnMy.classList.add('active');
+    if (btnOpen) btnOpen.classList.remove('active');
     loadMyContracts();
   }
 }
 
-async function loadOpenContracts() {
+function syncContractsBlackwallVisible(isBlocked, msg) {
+  const bw = document.getElementById('contractsBlackwallMsg');
+  const main = document.getElementById('contractsMain');
+  if (bw) {
+    bw.style.display = isBlocked ? 'block' : 'none';
+    if (isBlocked && msg) {
+      const textEl = bw.querySelector('.contracts-blackwall-text') || bw.querySelector('div:last-child');
+      if (textEl) textEl.textContent = msg;
+    }
+  }
+  if (main) main.style.display = isBlocked ? 'none' : 'block';
+}
+
+async function loadOpenContracts(options = {}) {
   const el = document.getElementById('contractsOpenList');
   if (!el) return;
-  el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  if (contractsOpenLoading) return;
+  contractsOpenLoading = true;
+  const silent = !!options.silent;
+  if (!silent || !el.innerHTML.trim()) {
+    el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  }
   try {
     const r = await fetch(`${API_URL}/api/contracts`, {
       headers: currentUserId ? { 'X-Telegram-Id': String(currentUserId) } : {},
@@ -84,20 +131,30 @@ async function loadOpenContracts() {
     }
     const data = await r.json();
     if (!r.ok) { el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
+    syncContractsBlackwallVisible(false);
     if (!data.length) { el.innerHTML = '<div class="empty-state">Открытых поручений нет</div>'; return; }
     el.innerHTML = data.map(c => renderContractCard(c)).join('');
   } catch (e) {
-    el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+    if (!silent || !el.innerHTML.trim()) {
+      el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+    }
+  } finally {
+    contractsOpenLoading = false;
   }
 }
 
-async function loadMyContracts() {
+async function loadMyContracts(options = {}) {
   const el = document.getElementById('contractsMyList');
   if (!el || !currentUserId) {
     if (el) el.innerHTML = '<div class="empty-state">Войди в систему</div>';
     return;
   }
-  el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  if (contractsMyLoading) return;
+  contractsMyLoading = true;
+  const silent = !!options.silent;
+  if (!silent || !el.innerHTML.trim()) {
+    el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  }
   try {
     const r = await fetch(`${API_URL}/api/contracts/my`, {
       headers: { 'X-Telegram-Id': String(currentUserId) },
@@ -109,18 +166,20 @@ async function loadMyContracts() {
     }
     const data = await r.json();
     if (!r.ok) { el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
+    syncContractsBlackwallVisible(false);
     if (!data.length) { el.innerHTML = '<div class="empty-state">У тебя пока нет контрактов</div>'; return; }
     el.innerHTML = data.map(c => renderContractCard(c, true)).join('');
   } catch (e) {
-    el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+    if (!silent || !el.innerHTML.trim()) {
+      el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+    }
+  } finally {
+    contractsMyLoading = false;
   }
 }
 
 function showContractsBlackwall(msg) {
-  const bw = document.getElementById('contractsBlackwallMsg');
-  const main = document.getElementById('contractsMain');
-  if (bw) { bw.style.display = 'block'; if (msg) bw.querySelector('div:last-child').textContent = msg; }
-  if (main) main.style.display = 'none';
+  syncContractsBlackwallVisible(true, msg);
 }
 
 function renderContractCard(c, showActions) {
@@ -130,71 +189,56 @@ function renderContractCard(c, showActions) {
   const statusColor = CONTRACT_STATUS_COLORS[c.status] || 'var(--text3)';
   const catLabel = CONTRACT_CATEGORY_LABELS[c.category] || c.category;
   const suspHtml = c.is_suspicious
-    ? `<div style="font-size:9px;color:#e74c3c;font-family:monospace;margin-top:4px;">⚠ Подозрительный: ${escapeHtml(c.suspicious_reason || '')}</div>`
+    ? `<div class="contract-warning">⚠ Подозрительный: ${escapeHtml(c.suspicious_reason || '')}</div>`
     : '';
 
   let actionsHtml = '';
   if (showActions || true) {
     if (c.status === 'open' && !isMe && currentUserId) {
-      actionsHtml = `<button onclick="acceptContract(${c.id})"
-        style="width:100%;margin-top:10px;padding:10px;background:rgba(52,152,219,0.15);
-               border:1px solid rgba(52,152,219,0.4);border-radius:10px;
-               color:#3498db;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer;">
+      actionsHtml = `<button class="contract-action-btn accept" onclick="acceptContract(${c.id})">
         Принять поручение
       </button>`;
     }
     if (c.status === 'open' && isMe) {
-      actionsHtml = `<button onclick="cancelContract(${c.id})"
-        style="width:100%;margin-top:10px;padding:9px;background:transparent;
-               border:1px solid var(--border);border-radius:10px;
-               color:var(--text3);font-family:monospace;font-size:10px;cursor:pointer;">
+      actionsHtml = `<button class="contract-action-btn ghost" onclick="cancelContract(${c.id})">
         Отменить (вернуть ★)
       </button>`;
     }
     if (c.status === 'accepted' && isMe) {
       actionsHtml = `
-        <button onclick="completeContract(${c.id})"
-          style="width:100%;margin-top:10px;padding:10px;background:rgba(46,204,113,0.15);
-                 border:1px solid rgba(46,204,113,0.4);border-radius:10px;
-                 color:#2ecc71;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer;">
+        <button class="contract-action-btn complete" onclick="completeContract(${c.id})">
           ✓ Подтвердить выполнение
         </button>
-        <button onclick="disputeContract(${c.id})"
-          style="width:100%;margin-top:6px;padding:9px;background:transparent;
-                 border:1px solid rgba(231,76,60,0.3);border-radius:10px;
-                 color:#e74c3c;font-family:monospace;font-size:10px;cursor:pointer;">
+        <button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
           Открыть спор
         </button>`;
     }
     if (c.status === 'accepted' && isAssignee && !isMe) {
-      actionsHtml = `<button onclick="disputeContract(${c.id})"
-        style="width:100%;margin-top:10px;padding:9px;background:transparent;
-               border:1px solid rgba(231,76,60,0.3);border-radius:10px;
-               color:#e74c3c;font-family:monospace;font-size:10px;cursor:pointer;">
+      actionsHtml = `<button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
         Открыть спор
       </button>`;
     }
   }
 
   const assigneeHtml = c.assignee_name
-    ? `<span style="color:var(--text2);">Исполнитель: ${escapeHtml(c.assignee_name)}</span>`
+    ? `<span class="contract-person">Исполнитель: ${escapeHtml(c.assignee_name)}</span>`
     : '';
 
-  return `<div class="diary-card" style="margin-bottom:10px;">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);word-break:break-word;">${escapeHtml(c.title)}</div>
-        <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-top:2px;">${catLabel}</div>
+  return `<div class="contract-card status-${escapeHtml(c.status || 'unknown')}">
+    <div class="contract-card-head">
+      <div class="contract-card-titlebox">
+        <div class="contract-card-title">${escapeHtml(c.title)}</div>
+        <div class="contract-category">${catLabel}</div>
       </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:15px;font-weight:700;color:var(--gold);">${c.reward_stars}★</div>
-        <div style="font-size:9px;color:var(--text3);font-family:monospace;">→ ${c.payout_stars}★ исп.</div>
+      <div class="contract-reward">
+        <div class="contract-reward-main">${c.reward_stars}★</div>
+        <div class="contract-reward-sub">→ ${c.payout_stars}★ исп.</div>
       </div>
     </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:8px;line-height:1.5;">${escapeHtml(c.description)}</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:10px;font-family:monospace;color:var(--text3);">
-      <span style="color:${statusColor};font-weight:700;">${statusLabel}</span>
-      <span>Заказчик: ${escapeHtml(c.creator_name)}${isMe ? ' (ты)' : ''}</span>
+    <div class="contract-description">${escapeHtml(c.description)}</div>
+    <div class="contract-meta">
+      <span class="contract-status" style="--contract-status-color:${statusColor};">${statusLabel}</span>
+      <span class="contract-person">Заказчик: ${escapeHtml(c.creator_name)}${isMe ? ' (ты)' : ''}</span>
       ${assigneeHtml}
     </div>
     ${suspHtml}
@@ -279,7 +323,8 @@ async function acceptContract(id) {
     });
     const data = await r.json();
     if (!r.ok) { alert(data.detail || 'Ошибка'); return; }
-    loadOpenContracts();
+    showContractsTab('my');
+    refreshContractsAfterAction();
   } catch (e) { alert('Нет соединения'); }
 }
 
@@ -293,7 +338,7 @@ async function completeContract(id) {
     });
     const data = await r.json();
     if (!r.ok) { alert(data.detail || 'Ошибка'); return; }
-    loadMyContracts();
+    refreshContractsAfterAction();
   } catch (e) { alert('Нет соединения'); }
 }
 
@@ -311,8 +356,7 @@ async function cancelContract(id) {
       currentPoints += data.refunded;
       updatePoints();
     }
-    loadOpenContracts();
-    loadMyContracts();
+    refreshContractsAfterAction();
   } catch (e) { alert('Нет соединения'); }
 }
 
@@ -326,6 +370,15 @@ async function disputeContract(id) {
     });
     const data = await r.json();
     if (!r.ok) { alert(data.detail || 'Ошибка'); return; }
-    loadMyContracts();
+    refreshContractsAfterAction();
   } catch (e) { alert('Нет соединения'); }
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    stopContractsAutoRefresh();
+  } else if (isContractsPageActive()) {
+    startContractsAutoRefresh();
+    refreshContractsActiveTab({ silent: true });
+  }
+});

@@ -919,15 +919,19 @@
       </div>
 
       <div class="admin-console-card">
-        <div class="cn-divider">⭐ НАЧИСЛИТЬ / СНЯТЬ БАЛЛЫ</div>
+        <div class="cn-divider">⭐ ★ / REP ОПЕРАЦИИ</div>
         <input class="admin-input" id="awardName" placeholder="Telegram ID или имя из поиска">
-        <input class="admin-input" id="awardPoints" placeholder="Баллы (число)" type="number">
+        <input class="admin-input" id="awardPoints" placeholder="Количество (число)" type="number">
         <input class="admin-input" id="awardReason" placeholder="Причина, например: дневник / штраф / компенсация">
         <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="adminAward()">+ НАЧИСЛИТЬ</button>
-          <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="adminPenalize()">- СНЯТЬ</button>
+          <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="adminAward()">+ ★</button>
+          <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="adminPenalize()">- ★</button>
         </div>
-        <div class="admin-console-note">Операции от 100★ требуют подтверждения. Все действия пишутся в журнал.</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <button class="btn btn-gold" style="flex:1;padding:8px;" onclick="adminAwardRep()">+ REP</button>
+          <button class="btn btn-primary" style="flex:1;padding:8px;" onclick="adminPenalizeRep()">- REP</button>
+        </div>
+        <div class="admin-console-note">★ — кошелёк. REP — публичная репутация. Все действия пишутся в журнал.</div>
       </div>
 
       <div class="cn-divider">⛔ ЗАМОРОЗКА АККАУНТА</div>
@@ -1772,43 +1776,38 @@
     </div>
   </div>
 
-  <div style="padding:0 12px 100px;">
+  <div class="contracts-shell">
 
     <!-- Заблокировано BlackWall -->
-    <div id="contractsBlackwallMsg" style="display:none;text-align:center;padding:40px 20px;">
-      <div style="font-size:32px;margin-bottom:12px;">⛔</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">BlackWall 已激活</div>
-      <div style="font-size:11px;color:var(--text3);font-family:monospace;">Доска поручений временно заблокирована.<br>Ожидайте снятия режима.</div>
+    <div id="contractsBlackwallMsg" class="contracts-blackwall" style="display:none;">
+      <div class="contracts-blackwall-icon">⛔</div>
+      <div class="contracts-blackwall-title">BlackWall 已激活</div>
+      <div class="contracts-blackwall-text">Доска поручений временно заблокирована.<br>Ожидайте снятия режима.</div>
     </div>
 
     <div id="contractsMain">
       <!-- Правила -->
-      <div class="diary-card" style="margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--text2);font-family:monospace;line-height:1.7;">
-          <span style="color:var(--gold);font-weight:700;">МОЖНО</span> — покупать помощь по быту, китайскому, приложению, напоминания, обмен предметами.<br>
-          <span style="color:#e74c3c;font-weight:700;">НЕЛЬЗЯ</span> — нарушения правил, ложные отметки, чужие задания, реальные деньги.<br>
-          <span style="color:var(--text3);">Комиссия Сетевого Дозора: 10%, минимум 2★. Сгорает при завершении.</span>
+      <div class="contracts-rules-card">
+        <div class="contracts-rules-kicker">NETWORK WATCH FEE // 10%</div>
+        <div class="contracts-rules-text">
+          <span class="contracts-rule-ok">МОЖНО</span> — покупать помощь по быту, китайскому, приложению, напоминания, обмен предметами.<br>
+          <span class="contracts-rule-no">НЕЛЬЗЯ</span> — нарушения правил, ложные отметки, чужие задания, реальные деньги.<br>
+          <span class="contracts-rule-muted">Комиссия Сетевого Дозора: 10%, минимум 2★. Сгорает при завершении.</span>
         </div>
       </div>
 
       <!-- Кнопка создать -->
-      <button id="contractsCreateBtn" onclick="openCreateContractModal()"
-        style="width:100%;margin-bottom:12px;padding:13px;background:rgba(230,126,34,0.15);
-               border:1px solid rgba(230,126,34,0.4);border-radius:12px;
-               color:#e67e22;font-family:monospace;font-size:13px;font-weight:700;cursor:pointer;">
-        + Создать поручение
+      <button id="contractsCreateBtn" class="contracts-create-btn" onclick="openCreateContractModal()">
+        <span>+ Создать поручение</span>
+        <b>5–50★</b>
       </button>
 
       <!-- Вкладки -->
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button id="ctab-open" onclick="showContractsTab('open')"
-          style="flex:1;padding:9px;border-radius:10px;border:1px solid rgba(230,126,34,0.5);
-                 background:rgba(230,126,34,0.15);color:#e67e22;font-family:monospace;font-size:11px;font-weight:700;cursor:pointer;">
+      <div class="contracts-tabs">
+        <button id="ctab-open" class="contracts-tab active" onclick="showContractsTab('open')">
           Открытые
         </button>
-        <button id="ctab-my" onclick="showContractsTab('my')"
-          style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);
-                 background:transparent;color:var(--text3);font-family:monospace;font-size:11px;cursor:pointer;">
+        <button id="ctab-my" class="contracts-tab" onclick="showContractsTab('my')">
           Мои
         </button>
       </div>
@@ -1827,40 +1826,28 @@
   </div>
 
   <!-- Модал создания контракта -->
-  <div id="createContractModal" style="display:none;position:fixed;inset:0;z-index:9100;
-    background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center;">
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
-      padding:24px;width:100%;max-width:480px;box-sizing:border-box;max-height:90vh;overflow-y:auto;">
+  <div id="createContractModal" class="contract-modal" style="display:none;">
+    <div class="contract-modal-sheet">
 
-      <button onclick="closeCreateContractModal()"
-        style="position:absolute;top:16px;right:16px;background:transparent;border:none;
-               color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+      <button class="contract-modal-close" onclick="closeCreateContractModal()">✕</button>
 
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;font-family:monospace;">
+      <div class="contract-modal-title">
         НОВОЕ ПОРУЧЕНИЕ
       </div>
 
-      <div style="margin-bottom:12px;">
-        <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:4px;">НАЗВАНИЕ *</div>
-        <input id="contractTitle" type="text" maxlength="80" placeholder="Напр.: Помоги с 5 фразами на китайском"
-          style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--bg3);
-                 border:1px solid var(--border);border-radius:10px;color:var(--text);
-                 font-family:monospace;font-size:12px;">
+      <div class="contract-field">
+        <label for="contractTitle">НАЗВАНИЕ *</label>
+        <input id="contractTitle" type="text" maxlength="80" placeholder="Напр.: Помоги с 5 фразами на китайском">
       </div>
 
-      <div style="margin-bottom:12px;">
-        <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:4px;">ОПИСАНИЕ *</div>
-        <textarea id="contractDesc" maxlength="400" rows="3" placeholder="Подробнее о поручении..."
-          style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--bg3);
-                 border:1px solid var(--border);border-radius:10px;color:var(--text);
-                 font-family:monospace;font-size:12px;resize:none;"></textarea>
+      <div class="contract-field">
+        <label for="contractDesc">ОПИСАНИЕ *</label>
+        <textarea id="contractDesc" maxlength="400" rows="3" placeholder="Подробнее о поручении..."></textarea>
       </div>
 
-      <div style="margin-bottom:12px;">
-        <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:4px;">КАТЕГОРИЯ</div>
-        <select id="contractCategory"
-          style="width:100%;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);
-                 border-radius:10px;color:var(--text);font-family:monospace;font-size:12px;">
+      <div class="contract-field">
+        <label for="contractCategory">КАТЕГОРИЯ</label>
+        <select id="contractCategory">
           <option value="living">🏠 Быт</option>
           <option value="chinese">🀄 Китайский</option>
           <option value="app">📱 Приложение</option>
@@ -1870,33 +1857,20 @@
         </select>
       </div>
 
-      <div style="margin-bottom:16px;">
-        <div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:4px;">
-          НАГРАДА (5–50 ★)
-        </div>
-        <input id="contractReward" type="number" min="5" max="50" value="20"
-          style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--bg3);
-                 border:1px solid var(--border);border-radius:10px;color:var(--text);
-                 font-family:monospace;font-size:14px;font-weight:700;"
-          oninput="updateContractFeePreview()">
-        <div id="contractFeePreview" style="font-size:10px;color:var(--text3);font-family:monospace;margin-top:4px;">
+      <div class="contract-field contract-reward-field">
+        <label for="contractReward">НАГРАДА (5–50 ★)</label>
+        <input id="contractReward" type="number" min="5" max="50" value="20" oninput="updateContractFeePreview()">
+        <div id="contractFeePreview" class="contract-fee-preview">
           Исполнитель получит: 18★ · Комиссия: 2★
         </div>
       </div>
 
-      <div id="contractCreateError" style="display:none;font-size:11px;color:#e74c3c;
-        font-family:monospace;margin-bottom:12px;padding:8px 10px;
-        background:rgba(231,76,60,0.1);border-radius:8px;"></div>
+      <div id="contractCreateError" class="contract-create-error" style="display:none;"></div>
 
-      <button onclick="submitCreateContract()"
-        style="width:100%;padding:14px;background:rgba(230,126,34,0.2);
-               border:1px solid rgba(230,126,34,0.5);border-radius:12px;
-               color:#e67e22;font-family:monospace;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;">
+      <button class="contract-submit-btn" onclick="submitCreateContract()">
         Создать и заморозить ★
       </button>
-      <button onclick="closeCreateContractModal()"
-        style="width:100%;padding:11px;background:transparent;border:1px solid var(--border);
-               border-radius:12px;color:var(--text3);font-family:monospace;font-size:11px;cursor:pointer;">
+      <button class="contract-cancel-btn" onclick="closeCreateContractModal()">
         Отмена
       </button>
     </div>

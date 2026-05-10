@@ -303,6 +303,14 @@ async function adminPenalize() {
   await adminAdjustPointsFromForm(-1);
 }
 
+async function adminAwardRep() {
+  await adminAdjustRepFromForm(1);
+}
+
+async function adminPenalizeRep() {
+  await adminAdjustRepFromForm(-1);
+}
+
 function adminSearchUsersDebounced() {
   clearTimeout(adminSearchTimer);
   adminSearchTimer = setTimeout(adminSearchUsers, 280);
@@ -417,6 +425,7 @@ function adminDossierCheckTypeLabel(type) {
 function adminDossierActionLabel(action) {
   const labels = {
     points_adjust: 'Баллы',
+    rep_adjust: 'Репутация',
     room_update: 'Комната',
     presence_approve: 'Отметка разрешена',
     presence_reject: 'Отгул отклонён',
@@ -473,13 +482,14 @@ function adminRenderDossierActions(rows) {
   }
   return rows.map(row => {
     const delta = Number(row.points_delta || 0);
+    const unit = row.action_type === 'rep_adjust' ? ' REP' : '★';
     const date = row.created_at ? new Date(row.created_at).toLocaleDateString('ru-RU') : '';
     return `<div class="admin-dossier-row">
       <div>
         <strong>${escapeHtml(adminDossierActionLabel(row.action_type))}</strong>
         <span>${escapeHtml(row.reason || '')}${date ? ` · ${escapeHtml(date)}` : ''}</span>
       </div>
-      ${delta ? `<b class="${delta > 0 ? 'plus' : 'minus'}">${delta > 0 ? '+' : ''}${delta}★</b>` : ''}
+      ${delta ? `<b class="${delta > 0 ? 'plus' : 'minus'}">${delta > 0 ? '+' : ''}${delta}${unit}</b>` : ''}
     </div>`;
   }).join('');
 }
@@ -526,6 +536,20 @@ function adminPreparePointAction(delta, reason) {
   if (awardPoints) awardPoints.value = Math.abs(Number(delta || 0));
   if (awardReason) awardReason.value = reason || '';
   adminAdjustPointsFromForm(delta > 0 ? 1 : -1);
+}
+
+function adminPrepareRepAction(delta, reason) {
+  if (!adminSelectedUser) {
+    showToast('Сначала выбери игрока');
+    return;
+  }
+  const awardName = document.getElementById('awardName');
+  const awardPoints = document.getElementById('awardPoints');
+  const awardReason = document.getElementById('awardReason');
+  if (awardName) awardName.value = adminSelectedUser.telegram_id;
+  if (awardPoints) awardPoints.value = Math.abs(Number(delta || 0));
+  if (awardReason) awardReason.value = reason || '';
+  adminAdjustRepFromForm(delta > 0 ? 1 : -1);
 }
 
 async function adminLoadUserDossier(telegramId) {
@@ -635,6 +659,10 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
         <button onclick="adminPreparePointAction(50, 'особый бонус')">+50★</button>
         <button onclick="adminPreparePointAction(-10, 'небольшой штраф')">-10★</button>
         <button onclick="adminPreparePointAction(-20, 'нарушение режима')">-20★</button>
+        <button onclick="adminPrepareRepAction(5, 'полезная помощь')">+5 REP</button>
+        <button onclick="adminPrepareRepAction(10, 'вклад в группу')">+10 REP</button>
+        <button onclick="adminPrepareRepAction(-5, 'нарушение')">-5 REP</button>
+        <button onclick="adminPrepareRepAction(-20, 'серьёзное нарушение')">-20 REP</button>
       </div>
       <div class="admin-dossier-room">
         <div class="admin-room-row">
@@ -751,6 +779,61 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
       currentPoints = data.new_points;
       updatePoints();
     }
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function adminAdjustRepFromForm(direction) {
+  const targetId = adminResolveTargetId();
+  const amount = Math.abs(parseInt(document.getElementById('awardPoints')?.value, 10));
+  const reason = String(document.getElementById('awardReason')?.value || '').trim();
+  if (!targetId || !amount || !reason) {
+    showToast('Выбери пользователя, укажи REP и причину');
+    return;
+  }
+  const delta = amount * direction;
+  const title = delta > 0 ? 'Начислить REP?' : 'Снять REP?';
+  const dangerText = Math.abs(delta) >= 50 ? '\n\n⚠️ Крупное изменение репутации. Проверь цель.' : '';
+  const targetName = adminSelectedUser?.telegram_id === targetId ? adminSelectedUser.full_name : String(targetId);
+  tg.showPopup({
+    title,
+    message: `${targetName}\n${delta > 0 ? '+' : ''}${delta} REP\nПричина: ${reason}${dangerText}`,
+    buttons: [
+      {id: 'confirm', type: delta < 0 ? 'destructive' : 'default', text: delta > 0 ? 'Начислить' : 'Снять'},
+      {type: 'cancel'}
+    ]
+  }, async (buttonId) => {
+    if (buttonId !== 'confirm') return;
+    await adminSubmitRepAdjustment(targetId, delta, reason);
+  });
+}
+
+async function adminSubmitRepAdjustment(targetId, delta, reason) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/rep`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: targetId, delta, reason}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка операции');
+      return;
+    }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    const actualDelta = Number(data.delta || delta);
+    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta} REP\nРепутация: ${data.new_rep_score}`);
+    document.getElementById('awardPoints').value = '';
+    document.getElementById('awardReason').value = '';
+    if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
+      adminSelectedUser.rep_score = data.new_rep_score;
+      adminSelectUser(targetId, data.full_name, data.points, adminSelectedUser);
+      adminLoadUserDossier(targetId);
+    }
+    adminSearchUsers();
+    adminLoadActionLog();
+    if (typeof loadLeaderboard === 'function') loadLeaderboard();
   } catch (e) {
     showToast('Ошибка соединения');
   }
@@ -933,9 +1016,10 @@ async function adminLoadActionLog() {
       const sign = delta > 0 ? '+' : '';
       const cls = delta >= 0 ? 'plus' : 'minus';
       const action = String(log.action_type || '').replace(/_/g, ' ').toUpperCase();
+      const unit = log.action_type === 'rep_adjust' ? ' REP' : '★';
       const date = log.created_at ? new Date(log.created_at).toLocaleString('ru-RU') : '';
       const deltaHtml = delta
-        ? `<div class="admin-log-delta ${cls}">${sign}${delta}★</div>`
+        ? `<div class="admin-log-delta ${cls}">${sign}${delta}${unit}</div>`
         : `<div class="inventory-pill">${escapeHtml(action)}</div>`;
       return `<div class="admin-log-card">
         <div class="admin-log-top">

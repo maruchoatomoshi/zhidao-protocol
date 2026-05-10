@@ -80,6 +80,9 @@ function showPage(name, btn) {
 
   const alreadyActive = _currentPage === name;
   _currentPage = name;
+  if (name !== 'contracts' && typeof stopContractsAutoRefresh === 'function') {
+    stopContractsAutoRefresh();
+  }
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
