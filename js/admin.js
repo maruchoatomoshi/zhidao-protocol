@@ -114,7 +114,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','presence','blackwall'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall','contracts'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -128,6 +128,7 @@ function showAdminSection(name, btn) {
   }
   if (name==='presence') adminLoadPresenceAll();
   if (name==='blackwall' && typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
+  if (name==='contracts') adminLoadContracts();
 }
 
 async function loadAdminLaundry() {
@@ -483,6 +484,36 @@ function adminRenderDossierActions(rows) {
   }).join('');
 }
 
+function adminRenderDossierEconomy(rows) {
+  const ECON_LABELS = {
+    contract_freeze:       '❄ Заморозка',
+    contract_refund:       '↩ Возврат',
+    contract_accept:       '✓ Принял контракт',
+    contract_payout:       '💰 Выплата',
+    contract_fee_burn:     '🔥 Комиссия',
+    contract_dispute:      '⚠ Спор',
+    contract_admin_refund: '↩ Адм. возврат',
+    contract_admin_pay:    '💰 Адм. выплата',
+    contract_admin_split:  '⇄ Адм. раздел',
+    contract_admin_burn:   '🔥 Адм. сжигание',
+  };
+  if (!Array.isArray(rows) || !rows.length) {
+    return '<div class="admin-dossier-empty">Операций по контрактам пока нет</div>';
+  }
+  return rows.map(row => {
+    const amount = Number(row.amount || 0);
+    const date = row.created_at ? new Date(row.created_at).toLocaleDateString('ru-RU') : '';
+    const label = ECON_LABELS[row.operation] || row.operation;
+    return `<div class="admin-dossier-row">
+      <div>
+        <strong>${label}</strong>
+        <span>${escapeHtml(row.note || '')}${date ? ` · ${date}` : ''}</span>
+      </div>
+      ${amount ? `<b class="${amount > 0 ? 'plus' : 'minus'}">${amount > 0 ? '+' : ''}${amount}★</b>` : ''}
+    </div>`;
+  }).join('');
+}
+
 function adminPreparePointAction(delta, reason) {
   if (!adminSelectedUser) {
     showToast('Сначала выбери игрока');
@@ -510,11 +541,13 @@ async function adminLoadUserDossier(telegramId) {
     }
     const user = {
       ...data.user,
+      rep_score: data.user.rep_score || 0,
       dossier: {
         stats: data.stats || {},
         presence: Array.isArray(data.presence) ? data.presence : [],
         diary: Array.isArray(data.diary) ? data.diary : [],
         actions: Array.isArray(data.actions) ? data.actions : [],
+        economy: Array.isArray(data.economy) ? data.economy : [],
       },
     };
     adminSelectUser(user.telegram_id, user.full_name, user.points, user, {skipSearch: true});
@@ -584,13 +617,18 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
           <div class="admin-user-name">${escapeHtml(fullName)} ${adminSelectedUser.is_admin ? '<span class="inventory-pill">ADMIN</span>' : ''}</div>
           <div class="admin-user-meta">Telegram ID ${telegramId}${adminSelectedUser.username ? ` · ${escapeHtml(adminSelectedUser.username)}` : ''}</div>
         </div>
-        <div class="admin-user-points">${points || 0}★</div>
+        <div style="text-align:right;">
+          <div class="admin-user-points">${points || 0}★</div>
+          <div style="font-size:10px;color:var(--text3);font-family:monospace;">${adminSelectedUser.rep_score || 0} REP</div>
+        </div>
       </div>
       <div class="admin-dossier-grid">
-        ${adminRenderDossierStat('Баланс', `${points || 0}★`, 'сейчас')}
+        ${adminRenderDossierStat('★ Баланс', `${points || 0}★`, 'расходный кошелёк')}
+        ${adminRenderDossierStat('REP', adminSelectedUser.rep_score || 0, 'рейтинг протокола')}
         ${adminRenderDossierStat('Комната', room || '—', roommates.length ? `соседей: ${roommates.length}` : 'не задана')}
         ${adminRenderDossierStat('Отметки', stats.presence_confirmed || 0, `${stats.presence_attention || 0} требуют внимания`)}
         ${adminRenderDossierStat('Дневник', `${stats.diary_stars || 0}★`, `${stats.diary_days || 0} дней`)}
+        ${adminRenderDossierStat('Контракты', `${stats.contracts_created || 0} / ${stats.contracts_done || 0}`, `создал / выполнил · споры: ${stats.contracts_disputed || 0}`)}
       </div>
       <div class="admin-dossier-quick">
         <button onclick="adminPreparePointAction(10, 'быстрый бонус')">+10★</button>
@@ -618,6 +656,10 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
         <div class="admin-dossier-panel wide">
           <div class="admin-dossier-panel-title">История действий</div>
           ${adminRenderDossierActions(dossier.actions)}
+        </div>
+        <div class="admin-dossier-panel wide">
+          <div class="admin-dossier-panel-title">Экономика (контракты)</div>
+          ${adminRenderDossierEconomy(dossier.economy)}
         </div>
       </div>`;
     modal.classList.add('show');
@@ -935,6 +977,86 @@ async function setArchitectEventEnabled(enabled) {
   } catch(e) {
     showToast('Ошибка соединения');
   }
+}
+
+// ===== ADMIN CONTRACTS =====
+
+async function adminLoadContracts(status) {
+  const el = document.getElementById('adminContractsList');
+  if (!el || !currentUserId) return;
+  el.innerHTML = '<div style="color:var(--text3);">Загрузка...</div>';
+  try {
+    const url = status && status !== 'suspicious'
+      ? `${API_URL}/api/admin/contracts?status=${encodeURIComponent(status)}`
+      : `${API_URL}/api/admin/contracts`;
+    const r = await fetch(url, { headers: {'x-admin-id': String(currentUserId)} });
+    let data = await r.json();
+    if (!r.ok) { el.innerHTML = `<div style="color:#e74c3c;">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
+    if (status === 'suspicious') data = data.filter(c => c.is_suspicious);
+    if (!data.length) { el.innerHTML = '<div style="color:var(--text3);">Контрактов нет</div>'; return; }
+    el.innerHTML = data.map(c => adminRenderContractCard(c)).join('');
+  } catch (e) { el.innerHTML = '<div style="color:#e74c3c;">Нет соединения</div>'; }
+}
+
+function adminRenderContractCard(c) {
+  const STATUS_COLOR = {open:'#e67e22',accepted:'#3498db',completed:'#2ecc71',cancelled:'var(--text3)',disputed:'#e74c3c'};
+  const STATUS_RU    = {open:'Открыт',accepted:'Принят',completed:'Завершён',cancelled:'Отменён',disputed:'Спор'};
+  const CAT = {living:'🏠',chinese:'🀄',app:'📱',reminder:'🔔',trade:'🔄',other:'📦'};
+  const sc = STATUS_COLOR[c.status] || 'var(--text3)';
+  const sr = STATUS_RU[c.status] || c.status;
+  const suspHtml = c.is_suspicious
+    ? `<div style="font-size:9px;color:#e74c3c;font-family:monospace;margin:3px 0;">⚠ ${escapeHtml(c.suspicious_reason||'подозрительный')}</div>`
+    : '';
+  const resolveHtml = (c.status === 'disputed' || c.status === 'accepted')
+    ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
+        <button onclick="adminResolveContract(${c.id},'refund_creator')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #e67e22;border-radius:6px;color:#e67e22;cursor:pointer;font-family:monospace;">↩ Заказчику</button>
+        ${c.assignee_telegram_id ? `<button onclick="adminResolveContract(${c.id},'pay_assignee')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #2ecc71;border-radius:6px;color:#2ecc71;cursor:pointer;font-family:monospace;">💰 Исполнителю</button>` : ''}
+        ${c.assignee_telegram_id ? `<button onclick="adminResolveContract(${c.id},'split')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #3498db;border-radius:6px;color:#3498db;cursor:pointer;font-family:monospace;">⇄ Раздел</button>` : ''}
+        <button onclick="adminResolveContract(${c.id},'cancel_no_refund')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #e74c3c;border-radius:6px;color:#e74c3c;cursor:pointer;font-family:monospace;">🔥 Сжечь</button>
+      </div>`
+    : '';
+  const removeHtml = `<button onclick="adminResolveContract(${c.id},'remove')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text3);cursor:pointer;font-family:monospace;margin-top:4px;">🗑 Удалить</button>`;
+
+  return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
+      <div style="flex:1;min-width:0;">
+        <span style="font-size:10px;">${CAT[c.category]||'📦'}</span>
+        <strong style="font-size:12px;color:var(--text);">${escapeHtml(c.title)}</strong>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <span style="color:${sc};font-size:10px;font-family:monospace;font-weight:700;">${sr}</span>
+        <div style="font-size:12px;font-weight:700;color:var(--gold);">${c.reward_stars}★</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--text3);font-family:monospace;line-height:1.5;">
+      Заказчик: ${escapeHtml(c.creator_name||'—')} (${c.creator_telegram_id})
+      ${c.assignee_name ? ` · Исполнитель: ${escapeHtml(c.assignee_name)} (${c.assignee_telegram_id})` : ''}
+      · #{${c.id}} · ${c.created_at ? new Date(c.created_at).toLocaleDateString('ru-RU') : ''}
+    </div>
+    ${suspHtml}${resolveHtml}${removeHtml}
+  </div>`;
+}
+
+async function adminResolveContract(id, action) {
+  const labels = {
+    refund_creator: 'вернуть ★ заказчику',
+    pay_assignee:   'выплатить исполнителю',
+    split:          'разделить поровну',
+    cancel_no_refund: 'сжечь без возврата',
+    remove:         'удалить контракт',
+  };
+  if (!confirm(`Действие: ${labels[action] || action}. Продолжить?`)) return;
+  try {
+    const r = await fetch(`${API_URL}/api/admin/contracts/${id}/resolve`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-admin-id': String(currentUserId)},
+      body: JSON.stringify({action}),
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
+    showToast('Решение применено');
+    adminLoadContracts();
+  } catch (e) { showToast('Нет соединения'); }
 }
 
 /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v2.0 (Быстрый старт) --- */

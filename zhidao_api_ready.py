@@ -142,6 +142,17 @@ DIARY_MIN_FILLED_ROWS = 5
 DIARY_AUTO_POINTS_CLEAN = 20
 DIARY_AUTO_POINTS_WARN = 15
 HANZI_RE = re.compile(r'[\u4e00-\u9fff]')
+
+CONTRACT_MIN_REWARD = 5
+CONTRACT_MAX_REWARD = 50
+CONTRACT_FEE_PCT = 0.10
+CONTRACT_FEE_MIN = 2
+CONTRACT_MAX_ACTIVE = 3
+CONTRACT_MAX_COMPLETED_PER_DAY = 5
+CONTRACT_MAX_DAILY_SPEND = 150
+CONTRACT_MAX_DAILY_EARN = 150
+CONTRACT_MIN_COMPLETE_SECONDS = 300
+CONTRACT_CATEGORIES = {'living', 'chinese', 'app', 'reminder', 'trade', 'other'}
 LATIN_RE = re.compile(r'[A-Za-z]')
 PINYIN_RE = re.compile(r"^(?:[A-Za-züÜvV:]+[1-5])+(?:[ '\\-](?:[A-Za-züÜvV:]+[1-5])+)*$")
 ARCHITECT_DEFAULT_HP = 1000
@@ -222,7 +233,8 @@ def init_db():
                  full_name TEXT,
                   avatar_url TEXT DEFAULT NULL,
                   room_number TEXT DEFAULT NULL,
-                  points INTEGER DEFAULT 0)''')
+                  points INTEGER DEFAULT 0,
+                  rep_score INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS schedule
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   day TEXT, time TEXT, subject TEXT, location TEXT)''')
@@ -515,6 +527,8 @@ def migrate_db():
         c.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT NULL")
     if 'room_number' not in user_columns:
         c.execute("ALTER TABLE users ADD COLUMN room_number TEXT DEFAULT NULL")
+    if 'rep_score' not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN rep_score INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(user_status)")
     columns = {row[1] for row in c.fetchall()}
@@ -591,6 +605,33 @@ def migrate_db():
                   created_by INTEGER NOT NULL,
                   created_at TEXT NOT NULL,
                   status TEXT NOT NULL DEFAULT 'active')''')
+    c.execute('''CREATE TABLE IF NOT EXISTS contracts
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  title TEXT NOT NULL,
+                  description TEXT NOT NULL,
+                  category TEXT NOT NULL DEFAULT 'other',
+                  reward_stars INTEGER NOT NULL,
+                  fee_stars INTEGER NOT NULL,
+                  creator_telegram_id INTEGER NOT NULL,
+                  assignee_telegram_id INTEGER DEFAULT NULL,
+                  status TEXT NOT NULL DEFAULT 'open',
+                  is_suspicious INTEGER NOT NULL DEFAULT 0,
+                  suspicious_reason TEXT DEFAULT NULL,
+                  created_at TEXT NOT NULL,
+                  accepted_at TEXT DEFAULT NULL,
+                  completed_at TEXT DEFAULT NULL,
+                  cancelled_at TEXT DEFAULT NULL,
+                  disputed_at TEXT DEFAULT NULL)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS economy_log
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  operation TEXT NOT NULL,
+                  amount INTEGER NOT NULL,
+                  balance_after INTEGER DEFAULT NULL,
+                  reference_id INTEGER DEFAULT NULL,
+                  reference_type TEXT DEFAULT NULL,
+                  note TEXT DEFAULT NULL,
+                  created_at TEXT NOT NULL)''')
     conn.commit()
     conn.close()
 
@@ -1608,11 +1649,60 @@ def fetch_diary_score_state(c, entry_id: int) -> dict:
 def apply_diary_points_delta(c, telegram_id: int, previous_points: int, next_points: int):
     delta = next_points - previous_points
     if delta != 0:
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (delta, telegram_id))
+        c.execute(
+            "UPDATE users SET points = points + ?, rep_score = rep_score + ? WHERE telegram_id=?",
+            (delta, delta, telegram_id),
+        )
 
 
 DIARY_STAR_POINTS = {1: 15, 2: 30, 3: 50}
 DIARY_STAR_BONUS_POINTS = 20
+
+
+def log_economy(c, telegram_id: int, operation: str, amount: int,
+                balance_after=None, reference_id=None, reference_type=None, note=None):
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''INSERT INTO economy_log
+           (telegram_id, operation, amount, balance_after, reference_id, reference_type, note, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+        (telegram_id, operation, amount, balance_after, reference_id, reference_type, note, now_str),
+    )
+
+
+def compute_contract_fee(reward: int) -> int:
+    return max(CONTRACT_FEE_MIN, round(reward * CONTRACT_FEE_PCT))
+
+
+def detect_suspicious(c, creator_id: int, reward: int, title: str, description: str, category: str):
+    reasons = []
+    if len(title.strip()) < 5:
+        reasons.append("короткое название")
+    if len(description.strip()) < 10:
+        reasons.append("короткое описание")
+    if category == 'other' and reward >= 40:
+        reasons.append("категория 'Другое' с высокой наградой")
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    c.execute(
+        '''SELECT COUNT(*) FROM contracts
+           WHERE creator_telegram_id=? AND reward_stars=? AND date(created_at)=?''',
+        (creator_id, CONTRACT_MAX_REWARD, today),
+    )
+    if (c.fetchone()[0] or 0) >= 2:
+        reasons.append("повторные контракты на максимальную сумму")
+    return bool(reasons), (', '.join(reasons) if reasons else None)
+
+
+def get_contract_row(c, contract_id: int):
+    c.execute(
+        '''SELECT id, title, description, category, reward_stars, fee_stars,
+                  creator_telegram_id, assignee_telegram_id, status,
+                  is_suspicious, suspicious_reason,
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at
+           FROM contracts WHERE id=?''',
+        (contract_id,),
+    )
+    return c.fetchone()
 
 
 def compute_diary_star_points(stars: int, bonus: int) -> int:
@@ -1805,7 +1895,7 @@ async def get_user_profile_dossier(telegram_id: int):
     c = conn.cursor()
     c.execute(
         '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
-                  us.profile_showcase_kind, us.profile_showcase_code
+                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -1816,8 +1906,9 @@ async def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score = user_row
     points = points or 0
+    rep_score = rep_score or 0
 
     c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND prize NOT LIKE 'genshin_%'", (telegram_id,))
     case_opens = c.fetchone()[0] or 0
@@ -1967,6 +2058,7 @@ async def get_user_profile_dossier(telegram_id: int):
         "full_name": full_name,
         "avatar_url": avatar_url,
         "points": points,
+        "rep_score": rep_score,
         "theme_path": theme_path,
         "path_label": path_label,
         "rank": rank,
@@ -2313,7 +2405,7 @@ async def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(Non
 async def get_points(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT points, full_name FROM users WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT points, full_name, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
     result = c.fetchone()
     if not result:
         conn.close()
@@ -2324,6 +2416,7 @@ async def get_points(telegram_id: int):
     return {
         "points": result[0] or 0,
         "full_name": result[1],
+        "rep_score": result[2] or 0,
         "double_win": status[0] if status else 0,
         "extra_cases": status[1] if status else 0,
         "immunity": status[2] if status else 0,
@@ -2481,7 +2574,7 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
     c = conn.cursor()
     c.execute(
         '''SELECT u.telegram_id, u.full_name, u.marzban_username, u.points,
-                  u.avatar_url, u.room_number, us.theme_path
+                  u.avatar_url, u.room_number, us.theme_path, u.rep_score
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -2572,6 +2665,30 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
         (telegram_id,),
     )
     presence_counts = {row[0]: row[1] for row in c.fetchall()}
+
+    c.execute(
+        '''SELECT
+             COUNT(CASE WHEN creator_telegram_id=? THEN 1 END),
+             COUNT(CASE WHEN assignee_telegram_id=? AND status='completed' THEN 1 END),
+             COUNT(CASE WHEN (creator_telegram_id=? OR assignee_telegram_id=?) AND status='disputed' THEN 1 END),
+             COALESCE(SUM(CASE WHEN creator_telegram_id=? AND status='completed' THEN reward_stars ELSE 0 END),0),
+             COALESCE(SUM(CASE WHEN assignee_telegram_id=? AND status='completed' THEN (reward_stars-fee_stars) ELSE 0 END),0)
+           FROM contracts
+           WHERE creator_telegram_id=? OR assignee_telegram_id=?''',
+        (telegram_id, telegram_id, telegram_id, telegram_id,
+         telegram_id, telegram_id, telegram_id, telegram_id),
+    )
+    ct = c.fetchone() or (0, 0, 0, 0, 0)
+
+    c.execute(
+        '''SELECT operation, amount, reference_type, note, created_at
+           FROM economy_log
+           WHERE telegram_id=?
+           ORDER BY id DESC LIMIT 10''',
+        (telegram_id,),
+    )
+    econ_rows = c.fetchall()
+
     conn.close()
 
     return {
@@ -2580,6 +2697,7 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
             "full_name": user_row[1] or str(user_row[0]),
             "username": user_row[2] or "",
             "points": user_row[3] or 0,
+            "rep_score": user_row[7] or 0,
             "avatar_url": user_row[4],
             "room_number": room_number,
             "theme_path": user_row[6],
@@ -2599,6 +2717,11 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
             "diary_stars": diary_total[0] or 0,
             "diary_bonus": diary_total[1] or 0,
             "diary_days": diary_total[2] or 0,
+            "contracts_created": ct[0] or 0,
+            "contracts_done": ct[1] or 0,
+            "contracts_disputed": ct[2] or 0,
+            "contracts_spent": ct[3] or 0,
+            "contracts_earned": ct[4] or 0,
         },
         "presence": [
             {
@@ -2633,6 +2756,16 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
                 "created_at": row[6],
             }
             for row in action_rows
+        ],
+        "economy": [
+            {
+                "operation": row[0],
+                "amount": row[1],
+                "reference_type": row[2],
+                "note": row[3] or "",
+                "created_at": row[4],
+            }
+            for row in econ_rows
         ],
     }
 
@@ -3725,7 +3858,7 @@ async def get_leaderboard():
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        f'''SELECT u.full_name, u.points, u.telegram_id, u.avatar_url, us.theme_path,
+        f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
@@ -3750,7 +3883,7 @@ async def get_leaderboard():
                  LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
                  WHERE u.telegram_id IS NOT NULL
                  AND u.telegram_id NOT IN ({placeholders})
-                 ORDER BY u.points DESC LIMIT 10''',
+                 ORDER BY u.rep_score DESC LIMIT 10''',
         [today] + ADMIN_IDS,
     )
     result = c.fetchall()
@@ -3758,7 +3891,7 @@ async def get_leaderboard():
     return [
         {
             "name": r[0] or "Аноним",
-            "points": r[1] or 0,
+            "rep": r[1] or 0,
             "telegram_id": r[2],
             "avatar_url": r[3],
             "theme_path": r[4],
@@ -5229,3 +5362,461 @@ async def get_event_leaderboard(event_id: int):
             for row in rows
         ],
     }
+
+
+# ============================================================
+# ДОСКА ПОРУЧЕНИЙ — CONTRACT BOARD
+# ============================================================
+
+def _contract_to_dict(row, creator_name=None, assignee_name=None, viewer_id=None):
+    reward = row[4]
+    fee = row[5]
+    return {
+        "id": row[0],
+        "title": row[1],
+        "description": row[2],
+        "category": row[3],
+        "reward_stars": reward,
+        "fee_stars": fee,
+        "payout_stars": reward - fee,
+        "creator_telegram_id": row[6],
+        "assignee_telegram_id": row[7],
+        "creator_name": creator_name or "Аноним",
+        "assignee_name": assignee_name,
+        "status": row[8],
+        "is_suspicious": bool(row[9]),
+        "suspicious_reason": row[10],
+        "created_at": row[11],
+        "accepted_at": row[12],
+        "completed_at": row[13],
+        "cancelled_at": row[14],
+        "disputed_at": row[15],
+        "role": ("creator" if viewer_id and row[6] == viewer_id else
+                 "assignee" if viewer_id and row[7] == viewer_id else None),
+    }
+
+
+def _resolve_names(c, creator_id, assignee_id):
+    c.execute("SELECT full_name FROM users WHERE telegram_id=?", (creator_id,))
+    r = c.fetchone()
+    creator_name = r[0] if r else "Аноним"
+    assignee_name = None
+    if assignee_id:
+        c.execute("SELECT full_name FROM users WHERE telegram_id=?", (assignee_id,))
+        r2 = c.fetchone()
+        assignee_name = r2[0] if r2 else "Аноним"
+    return creator_name, assignee_name
+
+
+def _check_blackwall(c, user_id):
+    c.execute("SELECT value FROM settings WHERE key='blackwall'")
+    bw = c.fetchone()
+    if bw and bw[0] == '1' and (user_id is None or user_id not in ADMIN_IDS):
+        raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом BlackWall")
+
+
+@app.get("/api/contracts")
+async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
+    conn = get_conn()
+    c = conn.cursor()
+    _check_blackwall(c, x_telegram_id)
+    c.execute(
+        '''SELECT id, title, description, category, reward_stars, fee_stars,
+                  creator_telegram_id, assignee_telegram_id, status,
+                  is_suspicious, suspicious_reason,
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at
+           FROM contracts
+           WHERE status='open'
+           ORDER BY created_at DESC
+           LIMIT 50''',
+    )
+    rows = c.fetchall()
+    result = []
+    for row in rows:
+        cn, an = _resolve_names(c, row[6], row[7])
+        result.append(_contract_to_dict(row, cn, an, x_telegram_id))
+    conn.close()
+    return result
+
+
+@app.get("/api/contracts/my")
+async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
+    if not x_telegram_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+    conn = get_conn()
+    c = conn.cursor()
+    _check_blackwall(c, x_telegram_id)
+    c.execute(
+        '''SELECT id, title, description, category, reward_stars, fee_stars,
+                  creator_telegram_id, assignee_telegram_id, status,
+                  is_suspicious, suspicious_reason,
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at
+           FROM contracts
+           WHERE creator_telegram_id=? OR assignee_telegram_id=?
+           ORDER BY created_at DESC
+           LIMIT 100''',
+        (x_telegram_id, x_telegram_id),
+    )
+    rows = c.fetchall()
+    result = []
+    for row in rows:
+        cn, an = _resolve_names(c, row[6], row[7])
+        result.append(_contract_to_dict(row, cn, an, x_telegram_id))
+    conn.close()
+    return result
+
+
+@app.post("/api/contracts")
+async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None)):
+    if not x_telegram_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+
+    title = str(data.get("title") or "").strip()
+    description = str(data.get("description") or "").strip()
+    category = str(data.get("category") or "other").strip()
+    try:
+        reward = int(data.get("reward_stars"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Укажи сумму награды")
+
+    if len(title) < 3:
+        raise HTTPException(status_code=400, detail="Название слишком короткое (минимум 3 символа)")
+    if len(description) < 5:
+        raise HTTPException(status_code=400, detail="Описание слишком короткое (минимум 5 символов)")
+    if category not in CONTRACT_CATEGORIES:
+        raise HTTPException(status_code=400, detail="Недопустимая категория")
+    if reward < CONTRACT_MIN_REWARD or reward > CONTRACT_MAX_REWARD:
+        raise HTTPException(status_code=400, detail=f"Награда: от {CONTRACT_MIN_REWARD} до {CONTRACT_MAX_REWARD} ★")
+
+    fee = compute_contract_fee(reward)
+    conn = get_conn()
+    c = conn.cursor()
+    _check_blackwall(c, x_telegram_id)
+
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    if (user[0] or 0) < reward:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Недостаточно ★ для создания контракта")
+
+    c.execute(
+        "SELECT COUNT(*) FROM contracts WHERE creator_telegram_id=? AND status IN ('open','accepted')",
+        (x_telegram_id,),
+    )
+    if (c.fetchone()[0] or 0) >= CONTRACT_MAX_ACTIVE:
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"Максимум {CONTRACT_MAX_ACTIVE} активных контракта одновременно")
+
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    c.execute(
+        "SELECT COALESCE(SUM(reward_stars),0) FROM contracts WHERE creator_telegram_id=? AND date(created_at)=?",
+        (x_telegram_id, today),
+    )
+    if ((c.fetchone()[0] or 0) + reward) > CONTRACT_MAX_DAILY_SPEND:
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"Дневной лимит расходов через контракты: {CONTRACT_MAX_DAILY_SPEND} ★")
+
+    is_susp, susp_reason = detect_suspicious(c, x_telegram_id, reward, title, description, category)
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+
+    c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (reward, x_telegram_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
+    balance_after = c.fetchone()[0] or 0
+
+    c.execute(
+        '''INSERT INTO contracts
+           (title, description, category, reward_stars, fee_stars,
+            creator_telegram_id, status, is_suspicious, suspicious_reason, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)''',
+        (title, description, category, reward, fee, x_telegram_id, int(is_susp), susp_reason, now_str),
+    )
+    contract_id = c.lastrowid
+    log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
+                contract_id, 'contract', f"Заморозка: контракт #{contract_id}")
+    conn.commit()
+    conn.close()
+    return {"success": True, "id": contract_id, "fee_stars": fee, "payout_stars": reward - fee}
+
+
+@app.post("/api/contracts/{contract_id}/accept")
+async def accept_contract(contract_id: int, x_telegram_id: Optional[int] = Header(None)):
+    if not x_telegram_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+    conn = get_conn()
+    c = conn.cursor()
+    _check_blackwall(c, x_telegram_id)
+    row = get_contract_row(c, contract_id)
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Контракт не найден")
+    creator_id, reward, status = row[6], row[4], row[8]
+    if status != 'open':
+        conn.close()
+        raise HTTPException(status_code=400, detail="Контракт недоступен для принятия")
+    if creator_id == x_telegram_id:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Нельзя принять собственный контракт")
+
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    c.execute(
+        "SELECT COUNT(*) FROM contracts WHERE assignee_telegram_id=? AND status='completed' AND date(completed_at)=?",
+        (x_telegram_id, today),
+    )
+    if (c.fetchone()[0] or 0) >= CONTRACT_MAX_COMPLETED_PER_DAY:
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"Дневной лимит выполненных контрактов: {CONTRACT_MAX_COMPLETED_PER_DAY}")
+
+    c.execute(
+        "SELECT COALESCE(SUM(reward_stars-fee_stars),0) FROM contracts WHERE assignee_telegram_id=? AND status='completed' AND date(completed_at)=?",
+        (x_telegram_id, today),
+    )
+    today_earn = c.fetchone()[0] or 0
+    payout = reward - compute_contract_fee(reward)
+    if today_earn + payout > CONTRACT_MAX_DAILY_EARN:
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"Дневной лимит заработка: {CONTRACT_MAX_DAILY_EARN} ★")
+
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        "UPDATE contracts SET status='accepted', assignee_telegram_id=?, accepted_at=? WHERE id=?",
+        (x_telegram_id, now_str, contract_id),
+    )
+    log_economy(c, x_telegram_id, 'contract_accept', 0, None, contract_id, 'contract',
+                f"Принят контракт #{contract_id}")
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.post("/api/contracts/{contract_id}/complete")
+async def complete_contract(contract_id: int,
+                             x_telegram_id: Optional[int] = Header(None),
+                             x_admin_id: Optional[int] = Header(None)):
+    acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
+    if not acting_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+    conn = get_conn()
+    c = conn.cursor()
+    row = get_contract_row(c, contract_id)
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Контракт не найден")
+    creator_id, assignee_id, reward, fee, status, accepted_at = row[6], row[7], row[4], row[5], row[8], row[12]
+    is_susp, susp_reason = bool(row[9]), row[10]
+    if status != 'accepted':
+        conn.close()
+        raise HTTPException(status_code=400, detail="Можно завершить только принятый контракт")
+    if x_admin_id not in ADMIN_IDS and acting_id != creator_id:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Только заказчик или администратор может подтвердить выполнение")
+
+    now = datetime.now(BEIJING_TZ)
+    now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+    if accepted_at:
+        try:
+            accepted_dt = datetime.strptime(accepted_at, '%Y-%m-%d %H:%M:%S')
+            elapsed = (now.replace(tzinfo=None) - accepted_dt).total_seconds()
+            if elapsed < CONTRACT_MIN_COMPLETE_SECONDS:
+                new_reason = ((susp_reason or '') + '; слишком быстрое завершение').lstrip('; ')
+                c.execute("UPDATE contracts SET is_suspicious=1, suspicious_reason=? WHERE id=?",
+                          (new_reason, contract_id))
+        except Exception:
+            pass
+
+    payout = reward - fee
+    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
+    assignee_bal = c.fetchone()[0] or 0
+    c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
+    log_economy(c, assignee_id, 'contract_payout', payout, assignee_bal, contract_id, 'contract',
+                f"Выплата за контракт #{contract_id}")
+    log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
+                f"Комиссия Сетевого Дозора: контракт #{contract_id}")
+    conn.commit()
+    conn.close()
+    return {"success": True, "payout": payout, "fee_burned": fee}
+
+
+@app.post("/api/contracts/{contract_id}/cancel")
+async def cancel_contract(contract_id: int,
+                           x_telegram_id: Optional[int] = Header(None),
+                           x_admin_id: Optional[int] = Header(None)):
+    acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
+    if not acting_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+    conn = get_conn()
+    c = conn.cursor()
+    row = get_contract_row(c, contract_id)
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Контракт не найден")
+    creator_id, reward, status = row[6], row[4], row[8]
+    if status not in ('open', 'accepted', 'disputed'):
+        conn.close()
+        raise HTTPException(status_code=400, detail="Контракт нельзя отменить в текущем статусе")
+    if status == 'open' and acting_id != creator_id and x_admin_id not in ADMIN_IDS:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Только заказчик может отменить открытый контракт")
+    if status in ('accepted', 'disputed') and x_admin_id not in ADMIN_IDS:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Только администратор может отменить принятый контракт")
+
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
+    bal = c.fetchone()[0] or 0
+    c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+    log_economy(c, creator_id, 'contract_refund', reward, bal, contract_id, 'contract',
+                f"Возврат: контракт #{contract_id} отменён")
+    conn.commit()
+    conn.close()
+    return {"success": True, "refunded": reward}
+
+
+@app.post("/api/contracts/{contract_id}/dispute")
+async def dispute_contract(contract_id: int,
+                            x_telegram_id: Optional[int] = Header(None),
+                            x_admin_id: Optional[int] = Header(None)):
+    acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
+    if not acting_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+    conn = get_conn()
+    c = conn.cursor()
+    row = get_contract_row(c, contract_id)
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Контракт не найден")
+    creator_id, assignee_id, status = row[6], row[7], row[8]
+    if status != 'accepted':
+        conn.close()
+        raise HTTPException(status_code=400, detail="Спор можно открыть только для принятого контракта")
+    if acting_id not in (creator_id, assignee_id) and x_admin_id not in ADMIN_IDS:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Только участники контракта могут открыть спор")
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute("UPDATE contracts SET status='disputed', disputed_at=? WHERE id=?", (now_str, contract_id))
+    log_economy(c, acting_id, 'contract_dispute', 0, None, contract_id, 'contract',
+                f"Открыт спор: контракт #{contract_id}")
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.get("/api/admin/contracts")
+async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
+                                status: Optional[str] = None):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn = get_conn()
+    c = conn.cursor()
+    if status:
+        c.execute(
+            '''SELECT c.id, c.title, c.description, c.category, c.reward_stars, c.fee_stars,
+                      c.creator_telegram_id, c.assignee_telegram_id, c.status,
+                      c.is_suspicious, c.suspicious_reason,
+                      c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
+                      u1.full_name, u2.full_name
+               FROM contracts c
+               LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
+               LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
+               WHERE c.status=?
+               ORDER BY c.created_at DESC LIMIT 100''',
+            (status,),
+        )
+    else:
+        c.execute(
+            '''SELECT c.id, c.title, c.description, c.category, c.reward_stars, c.fee_stars,
+                      c.creator_telegram_id, c.assignee_telegram_id, c.status,
+                      c.is_suspicious, c.suspicious_reason,
+                      c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
+                      u1.full_name, u2.full_name
+               FROM contracts c
+               LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
+               LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
+               ORDER BY c.created_at DESC LIMIT 100''',
+        )
+    rows = c.fetchall()
+    conn.close()
+    return [
+        {**_contract_to_dict(row[:16], row[16], row[17]), "creator_name": row[16], "assignee_name": row[17]}
+        for row in rows
+    ]
+
+
+@app.post("/api/admin/contracts/{contract_id}/resolve")
+async def admin_resolve_contract(contract_id: int, data: dict,
+                                  x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    action = str(data.get("action") or "").strip()
+    if action not in ('refund_creator', 'pay_assignee', 'split', 'cancel_no_refund', 'remove'):
+        raise HTTPException(status_code=400, detail="Invalid action")
+    conn = get_conn()
+    c = conn.cursor()
+    row = get_contract_row(c, contract_id)
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Контракт не найден")
+    creator_id, assignee_id, reward, fee, status = row[6], row[7], row[4], row[5], row[8]
+    if status in ('completed', 'cancelled') and action != 'remove':
+        conn.close()
+        raise HTTPException(status_code=400, detail="Контракт уже завершён")
+
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    payout = reward - fee
+
+    if action == 'refund_creator':
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
+        bal = c.fetchone()[0] or 0
+        c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+        log_economy(c, creator_id, 'contract_admin_refund', reward, bal, contract_id, 'contract',
+                    f"Решение админа: возврат заказчику #{contract_id}")
+
+    elif action == 'pay_assignee':
+        if not assignee_id:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Нет исполнителя")
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
+        bal = c.fetchone()[0] or 0
+        c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
+        log_economy(c, assignee_id, 'contract_admin_pay', payout, bal, contract_id, 'contract',
+                    f"Решение админа: выплата исполнителю #{contract_id}")
+        log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
+                    f"Комиссия Сетевого Дозора: #{contract_id}")
+
+    elif action == 'split':
+        if not assignee_id:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Нет исполнителя")
+        half = reward // 2
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (half, creator_id))
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward - half, assignee_id))
+        c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+        log_economy(c, creator_id, 'contract_admin_split', half, None, contract_id, 'contract',
+                    f"Решение админа: раздел #{contract_id}")
+        log_economy(c, assignee_id, 'contract_admin_split', reward - half, None, contract_id, 'contract',
+                    f"Решение админа: раздел #{contract_id}")
+
+    elif action == 'cancel_no_refund':
+        c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+        log_economy(c, creator_id, 'contract_admin_burn', -reward, None, contract_id, 'contract',
+                    f"Решение админа: сгорание без возврата #{contract_id}")
+
+    elif action == 'remove':
+        if status in ('open', 'accepted', 'disputed'):
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
+            log_economy(c, creator_id, 'contract_admin_refund', reward, None, contract_id, 'contract',
+                        f"Возврат при удалении контракта #{contract_id}")
+        c.execute("DELETE FROM contracts WHERE id=?", (contract_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True, "action": action}
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "action": action}
