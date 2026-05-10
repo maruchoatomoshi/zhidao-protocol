@@ -47,6 +47,10 @@ const CASE_ROULETTE_LABELS = {
 let currentRouletteTargetIdx = null;
 
 async function loadImplants(telegramId) {
+  const pageContainer = document.getElementById('myImplantsPage');
+  if (pageContainer) {
+    pageContainer.innerHTML = '<div class="empty-state" style="padding:12px;">Загрузка имплантов...</div>';
+  }
   if (!telegramId) return;
   const IMPLANT_IMGS = {
     'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
@@ -65,7 +69,6 @@ async function loadImplants(telegramId) {
     const data = await r.json();
 
     const homeContainer = document.getElementById('homeImplants');
-    const pageContainer = document.getElementById('myImplantsPage');
 
     if (!data.length) {
       const empty = '<div class="empty-state" style="padding:12px;">Импланты не установлены<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Открывай фиолетовые и чёрные кейсы!</span></div>';

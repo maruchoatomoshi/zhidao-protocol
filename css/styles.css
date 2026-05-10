@@ -7956,6 +7956,12 @@ body.theme-genshin-dark .empty-state {
     rgba(255,255,255,0.025);
 }
 
+#implants-catalog img[style*="width:160px"],
+#implants-catalog img[style*="width:180px"] {
+  width: min(230px, 74vw) !important;
+  height: min(230px, 74vw) !important;
+}
+
 #implants-catalog [style*="border-top:1px solid rgba(255,255,255"],
 #cards-tab [style*="border-top:1px solid rgba(255,255,255"] {
   border-top-color: color-mix(in srgb, var(--border) 80%, var(--gold-border)) !important;

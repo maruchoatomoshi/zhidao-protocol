@@ -91,7 +91,6 @@ function showPage(name, btn) {
   if (!alreadyActive) {
     const clearMap = {
       shop:     ['shopStoreContent'],
-      implants: ['myImplantsPage'],
       rating:   ['leaderboardContent'],
     };
     (clearMap[name] || []).forEach(id => {
@@ -106,7 +105,7 @@ function showPage(name, btn) {
   // Pages that always refresh (live data)
   if (name === 'schedule') { loadAnnouncements(); loadSchedule(); }
   // Pages that load only once per visit
-  if (name === 'implants' && !alreadyActive) loadImplants(currentUserId);
+  if (name === 'implants') loadImplants(currentUserId);
   if (name === 'shop' && !alreadyActive) loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'diary') loadDiaryPage();
