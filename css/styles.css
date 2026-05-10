@@ -7710,6 +7710,70 @@ body.theme-genshin-light .inv-btn-gift {
   color: #7a5010;
 }
 
+/* Unified case edge glow: rarity changes the prize, not the frame color. */
+body:not(.theme-admin) .case-card.gold,
+body:not(.theme-admin) .case-card.purple,
+body:not(.theme-admin) .case-card.black {
+  border-color: rgba(180,20,20,0.34) !important;
+}
+body:not(.theme-admin) .case-card.gold::before,
+body:not(.theme-admin) .case-card.purple::before,
+body:not(.theme-admin) .case-card.black::before {
+  background: linear-gradient(90deg, transparent, rgba(180,20,20,0.76), transparent) !important;
+}
+body:not(.theme-admin) .roulette-item-gold,
+body:not(.theme-admin) .roulette-item-purple,
+body:not(.theme-admin) .roulette-item-black {
+  border-color: rgba(180,20,20,0.38) !important;
+}
+body:not(.theme-admin) .roulette-track-gold,
+body:not(.theme-admin) .roulette-track-purple,
+body:not(.theme-admin) .roulette-track-black {
+  border-color: rgba(180,20,20,0.66) !important;
+  box-shadow: 0 0 18px rgba(180,20,20,0.16), inset 0 0 18px rgba(180,20,20,0.08) !important;
+  animation: none !important;
+}
+body:not(.theme-admin) .roulette-item.winner,
+body:not(.theme-admin) .roulette-item.winner-purple,
+body:not(.theme-admin) .roulette-item.winner-black {
+  border-color: rgba(255,55,55,0.82) !important;
+  box-shadow: 0 0 24px rgba(180,20,20,0.36), inset 0 0 14px rgba(180,20,20,0.12) !important;
+}
+body:not(.theme-admin) .roulette-item.opened,
+body:not(.theme-admin) .roulette-item.opened-purple,
+body:not(.theme-admin) .roulette-item.opened-black {
+  border-color: rgba(255,55,55,0.78) !important;
+  box-shadow: 0 0 24px rgba(180,20,20,0.28) !important;
+}
+body.theme-admin .case-card.gold,
+body.theme-admin .case-card.purple,
+body.theme-admin .case-card.black {
+  border-color: rgba(0,212,255,0.34) !important;
+}
+body.theme-admin .case-card.gold::before,
+body.theme-admin .case-card.purple::before,
+body.theme-admin .case-card.black::before {
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.82), transparent) !important;
+}
+body.theme-admin .roulette-item-gold,
+body.theme-admin .roulette-item-purple,
+body.theme-admin .roulette-item-black {
+  border-color: rgba(0,212,255,0.38) !important;
+}
+body.theme-admin .roulette-track-gold,
+body.theme-admin .roulette-track-purple,
+body.theme-admin .roulette-track-black {
+  border-color: rgba(0,212,255,0.68) !important;
+  box-shadow: 0 0 18px rgba(0,212,255,0.18), inset 0 0 18px rgba(0,212,255,0.08) !important;
+  animation: none !important;
+}
+body.theme-admin .roulette-item.winner,
+body.theme-admin .roulette-item.winner-purple,
+body.theme-admin .roulette-item.winner-black {
+  border-color: rgba(0,212,255,0.86) !important;
+  box-shadow: 0 0 24px rgba(0,212,255,0.34), inset 0 0 14px rgba(0,212,255,0.12) !important;
+}
+
 body.theme-nw-light .empty-state,
 body.theme-genshin-light .empty-state {
   color: var(--text3);
