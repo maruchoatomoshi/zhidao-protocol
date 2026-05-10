@@ -222,7 +222,8 @@ def init_db():
                  full_name TEXT,
                   avatar_url TEXT DEFAULT NULL,
                   room_number TEXT DEFAULT NULL,
-                  points INTEGER DEFAULT 0)''')
+                  points INTEGER DEFAULT 0,
+                  rep_score INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS schedule
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   day TEXT, time TEXT, subject TEXT, location TEXT)''')
@@ -515,6 +516,8 @@ def migrate_db():
         c.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT NULL")
     if 'room_number' not in user_columns:
         c.execute("ALTER TABLE users ADD COLUMN room_number TEXT DEFAULT NULL")
+    if 'rep_score' not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN rep_score INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(user_status)")
     columns = {row[1] for row in c.fetchall()}
@@ -1608,7 +1611,10 @@ def fetch_diary_score_state(c, entry_id: int) -> dict:
 def apply_diary_points_delta(c, telegram_id: int, previous_points: int, next_points: int):
     delta = next_points - previous_points
     if delta != 0:
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (delta, telegram_id))
+        c.execute(
+            "UPDATE users SET points = points + ?, rep_score = rep_score + ? WHERE telegram_id=?",
+            (delta, delta, telegram_id),
+        )
 
 
 DIARY_STAR_POINTS = {1: 15, 2: 30, 3: 50}
@@ -1805,7 +1811,7 @@ async def get_user_profile_dossier(telegram_id: int):
     c = conn.cursor()
     c.execute(
         '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
-                  us.profile_showcase_kind, us.profile_showcase_code
+                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -1816,8 +1822,9 @@ async def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score = user_row
     points = points or 0
+    rep_score = rep_score or 0
 
     c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND prize NOT LIKE 'genshin_%'", (telegram_id,))
     case_opens = c.fetchone()[0] or 0
@@ -1967,6 +1974,7 @@ async def get_user_profile_dossier(telegram_id: int):
         "full_name": full_name,
         "avatar_url": avatar_url,
         "points": points,
+        "rep_score": rep_score,
         "theme_path": theme_path,
         "path_label": path_label,
         "rank": rank,
@@ -2313,7 +2321,7 @@ async def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(Non
 async def get_points(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT points, full_name FROM users WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT points, full_name, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
     result = c.fetchone()
     if not result:
         conn.close()
@@ -2324,6 +2332,7 @@ async def get_points(telegram_id: int):
     return {
         "points": result[0] or 0,
         "full_name": result[1],
+        "rep_score": result[2] or 0,
         "double_win": status[0] if status else 0,
         "extra_cases": status[1] if status else 0,
         "immunity": status[2] if status else 0,
@@ -3725,7 +3734,7 @@ async def get_leaderboard():
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        f'''SELECT u.full_name, u.points, u.telegram_id, u.avatar_url, us.theme_path,
+        f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
@@ -3750,7 +3759,7 @@ async def get_leaderboard():
                  LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
                  WHERE u.telegram_id IS NOT NULL
                  AND u.telegram_id NOT IN ({placeholders})
-                 ORDER BY u.points DESC LIMIT 10''',
+                 ORDER BY u.rep_score DESC LIMIT 10''',
         [today] + ADMIN_IDS,
     )
     result = c.fetchall()
@@ -3758,7 +3767,7 @@ async def get_leaderboard():
     return [
         {
             "name": r[0] or "Аноним",
-            "points": r[1] or 0,
+            "rep": r[1] or 0,
             "telegram_id": r[2],
             "avatar_url": r[3],
             "theme_path": r[4],

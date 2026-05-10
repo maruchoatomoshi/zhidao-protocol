@@ -509,13 +509,13 @@ async function loadLeaderboard() {
       let progressHtml = '';
       let deltaHtml = i === 0 ? '<span>LEADER NODE</span>' : '';
       if (i > 0 && data[i-1]) {
-        const prev = data[i-1].points;
-        const curr = item.points;
+        const prev = data[i-1].rep;
+        const curr = item.rep;
         const delta = Math.max(0, prev - curr);
         const pct = prev > 0 ? Math.round((curr / prev) * 100) : 100;
         const barColor = isLegendary ? 'rgba(200,34,0,0.5)' : i < 3 ? 'rgba(212,175,55,0.4)' : 'rgba(150,150,150,0.2)';
         progressHtml = `<div class="lb-progress" style="width:${pct}%;background:${barColor};max-width:100%;"></div>`;
-        deltaHtml = `<span>${delta} \u2605 TO NEXT</span>`;
+        deltaHtml = `<span>${delta} REP TO NEXT</span>`;
       }
 
       // Разделитель после топ-3
@@ -536,7 +536,7 @@ async function loadLeaderboard() {
           </div>
           ${progressHtml}
         </div>
-        <div class="lb-points">${item.points} ★</div>
+        <div class="lb-points">${item.rep} REP</div>
       </div>`;
     });
     container.innerHTML = html;
