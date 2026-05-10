@@ -838,6 +838,7 @@
       <button class="admin-sec-btn" onclick="showAdminSection('presence',this)">📡 Перекличка</button>
       <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">🧺 Стирка</button>
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">🌑 BlackWall</button>
+      <button class="admin-sec-btn" onclick="showAdminSection('contracts',this)">📋 Контракты</button>
       <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()">⚡ Architect</button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
@@ -1024,6 +1025,26 @@
         <button class="admin-danger-btn" onclick="resetShop()">[ СБРОС МАГАЗИНА ]</button>
       </div>
     </div>
+
+    <!-- ===== Контракты (Admin) ===== -->
+    <div id="admin-contracts" class="admin-section" style="display:none;padding:0 12px;">
+      <div class="admin-console-card">
+        <div class="admin-console-kicker">УПРАВЛЕНИЕ КОНТРАКТАМИ</div>
+        <div class="admin-console-title">Доска поручений</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;">
+          <button class="admin-console-refresh" onclick="adminLoadContracts()">Все</button>
+          <button class="admin-console-refresh" onclick="adminLoadContracts('open')">Открытые</button>
+          <button class="admin-console-refresh" onclick="adminLoadContracts('accepted')">Принятые</button>
+          <button class="admin-console-refresh" onclick="adminLoadContracts('disputed')">⚠ Споры</button>
+          <button class="admin-console-refresh" onclick="adminLoadContracts('suspicious')">🔍 Подозр.</button>
+          <button class="admin-console-refresh" onclick="adminLoadContracts('completed')">Завершённые</button>
+        </div>
+        <div id="adminContractsList" style="font-size:12px;color:var(--text3);font-family:monospace;">
+          Нажми фильтр для загрузки
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 

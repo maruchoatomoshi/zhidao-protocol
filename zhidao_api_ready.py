@@ -2574,7 +2574,7 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
     c = conn.cursor()
     c.execute(
         '''SELECT u.telegram_id, u.full_name, u.marzban_username, u.points,
-                  u.avatar_url, u.room_number, us.theme_path
+                  u.avatar_url, u.room_number, us.theme_path, u.rep_score
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -2665,6 +2665,30 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
         (telegram_id,),
     )
     presence_counts = {row[0]: row[1] for row in c.fetchall()}
+
+    c.execute(
+        '''SELECT
+             COUNT(CASE WHEN creator_telegram_id=? THEN 1 END),
+             COUNT(CASE WHEN assignee_telegram_id=? AND status='completed' THEN 1 END),
+             COUNT(CASE WHEN (creator_telegram_id=? OR assignee_telegram_id=?) AND status='disputed' THEN 1 END),
+             COALESCE(SUM(CASE WHEN creator_telegram_id=? AND status='completed' THEN reward_stars ELSE 0 END),0),
+             COALESCE(SUM(CASE WHEN assignee_telegram_id=? AND status='completed' THEN (reward_stars-fee_stars) ELSE 0 END),0)
+           FROM contracts
+           WHERE creator_telegram_id=? OR assignee_telegram_id=?''',
+        (telegram_id, telegram_id, telegram_id, telegram_id,
+         telegram_id, telegram_id, telegram_id, telegram_id),
+    )
+    ct = c.fetchone() or (0, 0, 0, 0, 0)
+
+    c.execute(
+        '''SELECT operation, amount, reference_type, note, created_at
+           FROM economy_log
+           WHERE telegram_id=?
+           ORDER BY id DESC LIMIT 10''',
+        (telegram_id,),
+    )
+    econ_rows = c.fetchall()
+
     conn.close()
 
     return {
@@ -2673,6 +2697,7 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
             "full_name": user_row[1] or str(user_row[0]),
             "username": user_row[2] or "",
             "points": user_row[3] or 0,
+            "rep_score": user_row[7] or 0,
             "avatar_url": user_row[4],
             "room_number": room_number,
             "theme_path": user_row[6],
@@ -2692,6 +2717,11 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
             "diary_stars": diary_total[0] or 0,
             "diary_bonus": diary_total[1] or 0,
             "diary_days": diary_total[2] or 0,
+            "contracts_created": ct[0] or 0,
+            "contracts_done": ct[1] or 0,
+            "contracts_disputed": ct[2] or 0,
+            "contracts_spent": ct[3] or 0,
+            "contracts_earned": ct[4] or 0,
         },
         "presence": [
             {
@@ -2726,6 +2756,16 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
                 "created_at": row[6],
             }
             for row in action_rows
+        ],
+        "economy": [
+            {
+                "operation": row[0],
+                "amount": row[1],
+                "reference_type": row[2],
+                "note": row[3] or "",
+                "created_at": row[4],
+            }
+            for row in econ_rows
         ],
     }
 
