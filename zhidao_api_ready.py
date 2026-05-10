@@ -1653,6 +1653,9 @@ def apply_diary_points_delta(c, telegram_id: int, previous_points: int, next_poi
             "UPDATE users SET points = points + ?, rep_score = rep_score + ? WHERE telegram_id=?",
             (delta, delta, telegram_id),
         )
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        balance_after = c.fetchone()[0] or 0
+        log_economy(c, telegram_id, 'diary_reward', delta, balance_after, None, 'diary', 'Оценка дневника')
 
 
 DIARY_STAR_POINTS = {1: 15, 2: 30, 3: 50}
@@ -2684,7 +2687,7 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
         '''SELECT operation, amount, reference_type, note, created_at
            FROM economy_log
            WHERE telegram_id=?
-           ORDER BY id DESC LIMIT 10''',
+           ORDER BY id DESC LIMIT 24''',
         (telegram_id,),
     )
     econ_rows = c.fetchall()
@@ -2860,6 +2863,7 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
            VALUES (?, ?, 'points_adjust', ?, ?, ?)''',
         (x_admin_id, target_id, actual_delta, reason, now_iso()),
     )
+    log_economy(c, target_id, 'admin_points', actual_delta, new_points, x_admin_id, 'admin', reason)
     conn.commit()
     conn.close()
 
@@ -2918,6 +2922,7 @@ async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None))
            VALUES (?, ?, 'rep_adjust', ?, ?, ?)''',
         (x_admin_id, target_id, actual_delta, reason, now_iso()),
     )
+    log_economy(c, target_id, 'admin_rep', actual_delta, new_rep, x_admin_id, 'rep', reason)
     conn.commit()
     conn.close()
 
@@ -3393,6 +3398,7 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
                VALUES (?, ?, 'presence_penalty', ?, ?, ?)''',
             (x_admin_id, telegram_id, actual_delta, f"{check_type} {check_date}", now),
         )
+        log_economy(c, telegram_id, 'presence_penalty', actual_delta, new_points, None, 'presence', f"{check_type} {check_date}")
         penalized.append({
             "telegram_id": telegram_id,
             "full_name": full_name or str(telegram_id),
@@ -4089,6 +4095,16 @@ async def open_case(data: dict):
     c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
+    log_economy(
+        c,
+        telegram_id,
+        'case_open',
+        -50 + int(prize.get("points", 0) or 0),
+        new_points,
+        None,
+        prize.get("case_type") or "case",
+        prize.get("name") or prize.get("code"),
+    )
     conn.commit()
     conn.close()
 
@@ -4258,6 +4274,7 @@ async def disassemble_implant(implant_id: int, data: dict):
     c.execute("UPDATE users SET points = points + 100 WHERE telegram_id=?", (telegram_id,))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
+    log_economy(c, telegram_id, 'implant_disassemble', 100, new_points, implant_id, 'implant', implant_type)
     conn.commit()
     conn.close()
     return {"success": True, "refund": 100, "new_points": new_points}
@@ -4379,6 +4396,7 @@ async def buy_item(data: dict):
                  ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, today))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
+    log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
     conn.commit()
     conn.close()
     return {"success": True, "item": name, "new_points": new_points}
@@ -4418,6 +4436,9 @@ async def gift_item(data: dict):
         raise HTTPException(status_code=400, detail="Not enough points for tax")
     c.execute("UPDATE users SET points = points - 20 WHERE telegram_id=?", (from_id,))
     c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, status='active' WHERE id=?", (to_id, from_id, purchase_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
+    new_points = c.fetchone()[0] or 0
+    log_economy(c, from_id, 'gift_tax', -20, new_points, purchase_id, 'shop_gift', purchase[0])
     conn.commit()
     conn.close()
     return {"success": True}
@@ -4441,6 +4462,7 @@ async def sell_item(data: dict):
     c.execute("UPDATE shop_purchases SET status='sold' WHERE id=?", (purchase_id,))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
+    log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
     conn.commit()
     conn.close()
     return {"success": True, "refund": refund, "new_points": new_points}
@@ -4846,6 +4868,16 @@ async def open_genshin_case(data: dict):
     c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize_code, now_str))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
+    log_economy(
+        c,
+        telegram_id,
+        'prayer_open',
+        new_points - (points or 0),
+        new_points,
+        None,
+        pool_name,
+        result.get("name") or prize_code,
+    )
     conn.commit()
     conn.close()
     result["new_points"] = new_points
@@ -4874,6 +4906,7 @@ async def disassemble_card(card_id: int, data: dict):
     c.execute("UPDATE users SET points = points + 50 WHERE telegram_id=?", (telegram_id,))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
+    log_economy(c, telegram_id, 'card_disassemble', 50, new_points, card_id, 'card', card_type)
     conn.commit()
     conn.close()
     return {"success": True, "refund": 50, "new_points": new_points}

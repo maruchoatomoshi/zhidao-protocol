@@ -495,33 +495,52 @@ function adminRenderDossierActions(rows) {
 }
 
 function adminRenderDossierEconomy(rows) {
-  const ECON_LABELS = {
-    contract_freeze:       '❄ Заморозка',
-    contract_refund:       '↩ Возврат',
-    contract_accept:       '✓ Принял контракт',
-    contract_payout:       '💰 Выплата',
-    contract_fee_burn:     '🔥 Комиссия',
-    contract_dispute:      '⚠ Спор',
-    contract_admin_refund: '↩ Адм. возврат',
-    contract_admin_pay:    '💰 Адм. выплата',
-    contract_admin_split:  '⇄ Адм. раздел',
-    contract_admin_burn:   '🔥 Адм. сжигание',
+  const ECON_META = {
+    shop_purchase:         {label:'Покупка в магазине', icon:'🛒', tone:'spend'},
+    shop_refund:           {label:'Продажа / возврат', icon:'↩', tone:'gain'},
+    gift_tax:              {label:'Налог на подарок', icon:'🎁', tone:'spend'},
+    case_open:             {label:'Открытие кейса', icon:'📦', tone:'case'},
+    prayer_open:           {label:'Молитва', icon:'✦', tone:'case'},
+    card_disassemble:      {label:'Разбор карточки', icon:'🃏', tone:'gain'},
+    implant_disassemble:   {label:'Разбор импланта', icon:'植', tone:'gain'},
+    diary_reward:          {label:'Дневник', icon:'日', tone:'gain'},
+    admin_points:          {label:'Админ: звёзды', icon:'★', tone:'admin'},
+    admin_rep:             {label:'Админ: REP', icon:'REP', tone:'rep'},
+    presence_penalty:      {label:'Штраф отметки', icon:'!', tone:'danger'},
+    contract_freeze:       {label:'Поручение: резерв', icon:'契', tone:'contract'},
+    contract_refund:       {label:'Поручение: возврат', icon:'↩', tone:'gain'},
+    contract_accept:       {label:'Поручение принято', icon:'✓', tone:'contract'},
+    contract_payout:       {label:'Поручение: выплата', icon:'★', tone:'gain'},
+    contract_fee_burn:     {label:'Комиссия Дозора', icon:'税', tone:'spend'},
+    contract_dispute:      {label:'Спор по поручению', icon:'⚠', tone:'danger'},
+    contract_admin_refund: {label:'Админ: возврат', icon:'↩', tone:'admin'},
+    contract_admin_pay:    {label:'Админ: выплата', icon:'★', tone:'admin'},
+    contract_admin_split:  {label:'Админ: раздел', icon:'⇄', tone:'admin'},
+    contract_admin_burn:   {label:'Админ: сжигание', icon:'火', tone:'danger'},
   };
   if (!Array.isArray(rows) || !rows.length) {
-    return '<div class="admin-dossier-empty">Операций по контрактам пока нет</div>';
+    return '<div class="admin-dossier-empty">Экономических операций пока нет</div>';
   }
-  return rows.map(row => {
+  return `<div class="economy-journal">${rows.map(row => {
     const amount = Number(row.amount || 0);
-    const date = row.created_at ? new Date(row.created_at).toLocaleDateString('ru-RU') : '';
-    const label = ECON_LABELS[row.operation] || row.operation;
-    return `<div class="admin-dossier-row">
-      <div>
-        <strong>${label}</strong>
-        <span>${escapeHtml(row.note || '')}${date ? ` · ${date}` : ''}</span>
+    const meta = ECON_META[row.operation] || {label: row.operation || 'Операция', icon:'◇', tone:'neutral'};
+    const isRep = row.reference_type === 'rep' || String(row.operation || '').includes('rep');
+    const unit = isRep ? ' REP' : '★';
+    const date = row.created_at ? new Date(row.created_at).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '';
+    const amountClass = amount > 0 ? 'plus' : amount < 0 ? 'minus' : 'zero';
+    const amountText = amount ? `${amount > 0 ? '+' : ''}${amount}${unit}` : '0';
+    return `<div class="economy-log-card ${escapeHtml(meta.tone)}">
+      <div class="economy-log-icon">${escapeHtml(meta.icon)}</div>
+      <div class="economy-log-main">
+        <div class="economy-log-topline">
+          <strong>${escapeHtml(meta.label)}</strong>
+          <span>${escapeHtml(date)}</span>
+        </div>
+        <div class="economy-log-note">${escapeHtml(row.note || 'Без комментария')}</div>
       </div>
-      ${amount ? `<b class="${amount > 0 ? 'plus' : 'minus'}">${amount > 0 ? '+' : ''}${amount}★</b>` : ''}
+      <b class="economy-log-amount ${amountClass}">${escapeHtml(amountText)}</b>
     </div>`;
-  }).join('');
+  }).join('')}</div>`;
 }
 
 function adminPreparePointAction(delta, reason) {
@@ -686,7 +705,7 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
           ${adminRenderDossierActions(dossier.actions)}
         </div>
         <div class="admin-dossier-panel wide">
-          <div class="admin-dossier-panel-title">Экономика (контракты)</div>
+          <div class="admin-dossier-panel-title">Экономический журнал</div>
           ${adminRenderDossierEconomy(dossier.economy)}
         </div>
       </div>`;

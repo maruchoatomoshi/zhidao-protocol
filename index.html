@@ -286,6 +286,7 @@
     <button class="subtab active" onclick="switchShopTab('store',this)">商店 МАГАЗИН</button>
     <button class="subtab" onclick="switchShopTab('inventory',this)">背包 ИНВЕНТАРЬ</button>
     <button class="subtab" onclick="switchShopTab('folk',this)">🏮 НАРОДНЫЙ</button>
+    <button class="subtab shop-contracts-tab" onclick="showPage('contracts', document.getElementById('nav-shop-btn'))">📋 ДОСКА</button>
   </div>
   <div id="shopStoreContent"></div>
   <div id="shopInventoryContent" style="display:none;"></div>
@@ -576,11 +577,6 @@
       <i class="ti ti-wash more-item-icon" style="color:#60b4d4;"></i>
       <div class="more-item-name">СТИРКА</div>
       <div class="more-item-cn">洗衣 xǐ yī</div>
-    </div>
-    <div class="more-item" onclick="showPage('contracts', document.getElementById('nav-more-btn'))">
-      <i class="ti ti-file-text more-item-icon" style="color:#e67e22;"></i>
-      <div class="more-item-name">ДОСКА</div>
-      <div class="more-item-cn">契约板 qì yuē bǎn</div>
     </div>
     <div class="more-item" onclick="openMore('achievements')">
       <i class="ti ti-medal more-item-icon" style="color:var(--gold);"></i>
@@ -1772,7 +1768,7 @@
         <div class="page-title">ДОСКА ПОРУЧЕНИЙ <span class="page-title-cn">契约板</span></div>
         <div class="page-sub">> qì yuē bǎn // помогай и зарабатывай ★</div>
       </div>
-      <button class="diary-back-btn" onclick="showPage('more', document.getElementById('nav-more-btn'))">[ НАЗАД ]</button>
+      <button class="diary-back-btn" onclick="showPage('shop', document.getElementById('nav-shop-btn'))">[ НАЗАД ]</button>
     </div>
   </div>
 
@@ -2085,7 +2081,7 @@
     <i class="ti ti-trophy"></i>
     <span class="nav-cn">排名</span>
   </button>
-  <button class="nav-item" onclick="showPage('shop',this)">
+  <button class="nav-item" id="nav-shop-btn" onclick="showPage('shop',this)">
     <i class="ti ti-building-store"></i>
     <span class="nav-cn">商店</span>
   </button>
