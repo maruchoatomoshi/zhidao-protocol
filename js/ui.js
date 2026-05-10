@@ -108,6 +108,7 @@ function showPage(name, btn) {
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'diary') loadDiaryPage();
   if (name === 'diary-stars') initDiaryStarsPage();
+  if (name === 'contracts') { if (typeof openContractsPage === 'function') openContractsPage(); }
   if (name === 'casino') {
     fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
       if (settings.blackwall && !isAdmin) {
