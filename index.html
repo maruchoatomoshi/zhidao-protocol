@@ -1808,6 +1808,16 @@
         </button>
       </div>
 
+      <div class="contracts-filter-row" aria-label="Фильтр поручений по категориям">
+        <button class="contracts-filter-chip active" data-category="all" onclick="setContractsCategoryFilter('all')">Все</button>
+        <button class="contracts-filter-chip" data-category="living" onclick="setContractsCategoryFilter('living')">🏠 Быт</button>
+        <button class="contracts-filter-chip" data-category="chinese" onclick="setContractsCategoryFilter('chinese')">🀄 Китайский</button>
+        <button class="contracts-filter-chip" data-category="app" onclick="setContractsCategoryFilter('app')">📱 Приложение</button>
+        <button class="contracts-filter-chip" data-category="reminder" onclick="setContractsCategoryFilter('reminder')">🔔 Напоминание</button>
+        <button class="contracts-filter-chip" data-category="trade" onclick="setContractsCategoryFilter('trade')">🔄 Обмен</button>
+        <button class="contracts-filter-chip" data-category="other" onclick="setContractsCategoryFilter('other')">📦 Другое</button>
+      </div>
+
       <!-- Список открытых -->
       <div id="contracts-tab-open">
         <div id="contractsOpenList" class="empty-state">Загрузка...</div>

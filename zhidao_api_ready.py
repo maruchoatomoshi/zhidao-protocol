@@ -5460,7 +5460,9 @@ async def get_event_leaderboard(event_id: int):
 # ДОСКА ПОРУЧЕНИЙ — CONTRACT BOARD
 # ============================================================
 
-def _contract_to_dict(row, creator_name=None, assignee_name=None, viewer_id=None):
+def _contract_to_dict(row, creator_name=None, assignee_name=None,
+                      creator_avatar_url=None, assignee_avatar_url=None,
+                      viewer_id=None):
     reward = row[4]
     fee = row[5]
     return {
@@ -5475,6 +5477,8 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None, viewer_id=None
         "assignee_telegram_id": row[7],
         "creator_name": creator_name or "Аноним",
         "assignee_name": assignee_name,
+        "creator_avatar_url": creator_avatar_url,
+        "assignee_avatar_url": assignee_avatar_url,
         "status": row[8],
         "is_suspicious": bool(row[9]),
         "suspicious_reason": row[10],
@@ -5489,15 +5493,18 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None, viewer_id=None
 
 
 def _resolve_names(c, creator_id, assignee_id):
-    c.execute("SELECT full_name FROM users WHERE telegram_id=?", (creator_id,))
+    c.execute("SELECT full_name, avatar_url FROM users WHERE telegram_id=?", (creator_id,))
     r = c.fetchone()
     creator_name = r[0] if r else "Аноним"
+    creator_avatar_url = r[1] if r else None
     assignee_name = None
+    assignee_avatar_url = None
     if assignee_id:
-        c.execute("SELECT full_name FROM users WHERE telegram_id=?", (assignee_id,))
+        c.execute("SELECT full_name, avatar_url FROM users WHERE telegram_id=?", (assignee_id,))
         r2 = c.fetchone()
         assignee_name = r2[0] if r2 else "Аноним"
-    return creator_name, assignee_name
+        assignee_avatar_url = r2[1] if r2 else None
+    return creator_name, assignee_name, creator_avatar_url, assignee_avatar_url
 
 
 def _check_blackwall(c, user_id):
@@ -5525,8 +5532,8 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
     rows = c.fetchall()
     result = []
     for row in rows:
-        cn, an = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row, cn, an, x_telegram_id))
+        cn, an, ca, aa = _resolve_names(c, row[6], row[7])
+        result.append(_contract_to_dict(row, cn, an, ca, aa, x_telegram_id))
     conn.close()
     return result
 
@@ -5552,8 +5559,8 @@ async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     rows = c.fetchall()
     result = []
     for row in rows:
-        cn, an = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row, cn, an, x_telegram_id))
+        cn, an, ca, aa = _resolve_names(c, row[6], row[7])
+        result.append(_contract_to_dict(row, cn, an, ca, aa, x_telegram_id))
     conn.close()
     return result
 
@@ -5810,7 +5817,7 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
-                      u1.full_name, u2.full_name
+                      u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
                LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
@@ -5824,7 +5831,7 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
-                      u1.full_name, u2.full_name
+                      u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
                LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
@@ -5833,7 +5840,9 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
     rows = c.fetchall()
     conn.close()
     return [
-        {**_contract_to_dict(row[:16], row[16], row[17]), "creator_name": row[16], "assignee_name": row[17]}
+        {**_contract_to_dict(row[:16], row[16], row[17], row[18], row[19]),
+         "creator_name": row[16], "assignee_name": row[17],
+         "creator_avatar_url": row[18], "assignee_avatar_url": row[19]}
         for row in rows
     ]
 

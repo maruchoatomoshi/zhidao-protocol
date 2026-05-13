@@ -29,6 +29,9 @@ let contractsActiveTab = 'open';
 let contractsRefreshTimer = null;
 let contractsOpenLoading = false;
 let contractsMyLoading = false;
+let contractsCategoryFilter = 'all';
+let contractsOpenCache = [];
+let contractsMyCache = [];
 
 // Called by showPage() when navigating to contracts
 function openContractsPage() {
@@ -74,6 +77,81 @@ function refreshContractsAfterAction() {
   if (currentUserId) loadMyContracts({ silent: true });
 }
 
+function setContractsCategoryFilter(category) {
+  contractsCategoryFilter = CONTRACT_CATEGORY_LABELS[category] ? category : 'all';
+  syncContractsCategoryFilterUI();
+  renderContractsFromCache();
+}
+
+function syncContractsCategoryFilterUI() {
+  document.querySelectorAll('.contracts-filter-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.category === contractsCategoryFilter);
+  });
+}
+
+function filterContractsByCategory(list) {
+  if (contractsCategoryFilter === 'all') return list || [];
+  return (list || []).filter(c => c.category === contractsCategoryFilter);
+}
+
+function renderContractsEmpty(message, hint) {
+  return `<div class="contracts-empty">
+    <div class="contracts-empty-icon">契</div>
+    <div class="contracts-empty-title">${escapeHtml(message)}</div>
+    ${hint ? `<div class="contracts-empty-hint">${escapeHtml(hint)}</div>` : ''}
+  </div>`;
+}
+
+function renderContractsList(list, options = {}) {
+  const filtered = filterContractsByCategory(list);
+  if (!filtered.length) {
+    const hasFilter = contractsCategoryFilter !== 'all';
+    return renderContractsEmpty(
+      hasFilter ? 'В этой категории пока пусто' : (options.emptyTitle || 'Поручений пока нет'),
+      hasFilter ? 'Смени фильтр или создай новое поручение.' : (options.emptyHint || 'Можно создать первое поручение и предложить награду в ★.')
+    );
+  }
+  return filtered.map(c => renderContractCard(c, !!options.showActions)).join('');
+}
+
+function renderMyContractsList(list) {
+  const filtered = filterContractsByCategory(list);
+  if (!filtered.length) {
+    const hasFilter = contractsCategoryFilter !== 'all';
+    return renderContractsEmpty(
+      hasFilter ? 'Нет твоих поручений в этой категории' : 'У тебя пока нет контрактов',
+      hasFilter ? 'Выбери другую категорию или открой общий список.' : 'Создай поручение или прими задачу другого участника.'
+    );
+  }
+  const asCreator = filtered.filter(c => c.creator_telegram_id === currentUserId);
+  const asAssignee = filtered.filter(c => c.assignee_telegram_id === currentUserId);
+  let html = '';
+  if (asCreator.length) {
+    html += `<div class="contracts-section-label">Я заказчик</div>` + asCreator.map(c => renderContractCard(c, true)).join('');
+  }
+  if (asAssignee.length) {
+    html += `<div class="contracts-section-label">Я исполнитель</div>` + asAssignee.map(c => renderContractCard(c, true)).join('');
+  }
+  return html || renderContractsEmpty('Контрактов не найдено', 'Смени фильтр или обнови список.');
+}
+
+function renderContractsFromCache() {
+  syncContractsCategoryFilterUI();
+  const openEl = document.getElementById('contractsOpenList');
+  const myEl = document.getElementById('contractsMyList');
+  if (openEl && contractsActiveTab === 'open') {
+    openEl.classList.remove('empty-state');
+    openEl.innerHTML = renderContractsList(contractsOpenCache, {
+      emptyTitle: 'Открытых поручений нет',
+      emptyHint: 'Пока никто не оставил задачу на Доске.',
+    });
+  }
+  if (myEl && contractsActiveTab === 'my') {
+    myEl.classList.remove('empty-state');
+    myEl.innerHTML = renderMyContractsList(contractsMyCache);
+  }
+}
+
 function showContractsTab(tab) {
   const openEl = document.getElementById('contracts-tab-open');
   const myEl   = document.getElementById('contracts-tab-my');
@@ -88,12 +166,14 @@ function showContractsTab(tab) {
     myEl.style.display = 'none';
     if (btnOpen) btnOpen.classList.add('active');
     if (btnMy) btnMy.classList.remove('active');
+    syncContractsCategoryFilterUI();
     loadOpenContracts();
   } else {
     openEl.style.display = 'none';
     myEl.style.display = 'block';
     if (btnMy) btnMy.classList.add('active');
     if (btnOpen) btnOpen.classList.remove('active');
+    syncContractsCategoryFilterUI();
     loadMyContracts();
   }
 }
@@ -132,8 +212,12 @@ async function loadOpenContracts(options = {}) {
     const data = await r.json();
     if (!r.ok) { el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
     syncContractsBlackwallVisible(false);
-    if (!data.length) { el.innerHTML = '<div class="empty-state">Открытых поручений нет</div>'; return; }
-    el.innerHTML = data.map(c => renderContractCard(c)).join('');
+    contractsOpenCache = Array.isArray(data) ? data : [];
+    el.classList.remove('empty-state');
+    el.innerHTML = renderContractsList(contractsOpenCache, {
+      emptyTitle: 'Открытых поручений нет',
+      emptyHint: 'Пока никто не оставил задачу на Доске.',
+    });
   } catch (e) {
     if (!silent || !el.innerHTML.trim()) {
       el.innerHTML = '<div class="empty-state">Нет соединения</div>';
@@ -167,17 +251,9 @@ async function loadMyContracts(options = {}) {
     const data = await r.json();
     if (!r.ok) { el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
     syncContractsBlackwallVisible(false);
-    if (!data.length) { el.innerHTML = '<div class="empty-state">У тебя пока нет контрактов</div>'; return; }
-    const asCreator = data.filter(c => c.creator_telegram_id === currentUserId);
-    const asAssignee = data.filter(c => c.assignee_telegram_id === currentUserId);
-    let html = '';
-    if (asCreator.length) {
-      html += `<div class="contracts-section-label">Я заказчик</div>` + asCreator.map(c => renderContractCard(c, true)).join('');
-    }
-    if (asAssignee.length) {
-      html += `<div class="contracts-section-label">Я исполнитель</div>` + asAssignee.map(c => renderContractCard(c, true)).join('');
-    }
-    el.innerHTML = html;
+    contractsMyCache = Array.isArray(data) ? data : [];
+    el.classList.remove('empty-state');
+    el.innerHTML = renderMyContractsList(contractsMyCache);
   } catch (e) {
     if (!silent || !el.innerHTML.trim()) {
       el.innerHTML = '<div class="empty-state">Нет соединения</div>';
@@ -233,10 +309,13 @@ function renderContractCard(c, showActions) {
 
   const creatorName = c.creator_name || '?';
   const avatarInitials = creatorName.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const creatorAvatarHtml = c.creator_avatar_url
+    ? `<img src="${escapeHtml(c.creator_avatar_url)}" alt="">`
+    : `<span>${escapeHtml(avatarInitials || '?')}</span>`;
 
   return `<div class="contract-card status-${escapeHtml(c.status || 'unknown')}">
     <div class="contract-card-head">
-      <div class="contract-creator-avatar">${avatarInitials}</div>
+      <div class="contract-creator-avatar${c.creator_avatar_url ? ' has-image' : ''}">${creatorAvatarHtml}</div>
       <div class="contract-card-titlebox">
         <div class="contract-card-title">${escapeHtml(c.title)}</div>
         <div class="contract-category-badge">${catLabel}</div>
