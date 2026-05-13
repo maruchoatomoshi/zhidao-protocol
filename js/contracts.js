@@ -202,31 +202,29 @@ function renderContractCard(c, showActions) {
     : '';
 
   let actionsHtml = '';
-  if (showActions || true) {
-    if (c.status === 'open' && !isMe && currentUserId) {
-      actionsHtml = `<button class="contract-action-btn accept" onclick="acceptContract(${c.id})">
-        Принять поручение
-      </button>`;
-    }
-    if (c.status === 'open' && isMe) {
-      actionsHtml = `<button class="contract-action-btn ghost" onclick="cancelContract(${c.id})">
-        Отменить (вернуть ★)
-      </button>`;
-    }
-    if (c.status === 'accepted' && isMe) {
-      actionsHtml = `
-        <button class="contract-action-btn complete" onclick="completeContract(${c.id})">
-          ✓ Подтвердить выполнение
-        </button>
-        <button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
-          Открыть спор
-        </button>`;
-    }
-    if (c.status === 'accepted' && isAssignee && !isMe) {
-      actionsHtml = `<button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
+  if (c.status === 'open' && !isMe && currentUserId) {
+    actionsHtml = `<button class="contract-action-btn accept" onclick="acceptContract(${c.id})">
+      Принять поручение
+    </button>`;
+  }
+  if (c.status === 'open' && isMe) {
+    actionsHtml = `<button class="contract-action-btn ghost" onclick="cancelContract(${c.id})">
+      Отменить (вернуть ★)
+    </button>`;
+  }
+  if (c.status === 'accepted' && isMe) {
+    actionsHtml = `
+      <button class="contract-action-btn complete" onclick="completeContract(${c.id})">
+        ✓ Подтвердить выполнение
+      </button>
+      <button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
         Открыть спор
       </button>`;
-    }
+  }
+  if (c.status === 'accepted' && isAssignee && !isMe) {
+    actionsHtml = `<button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
+      Открыть спор
+    </button>`;
   }
 
   const assigneeHtml = c.assignee_name
@@ -272,7 +270,19 @@ function openCreateContractModal() {
 
 function closeCreateContractModal() {
   const modal = document.getElementById('createContractModal');
-  if (modal) modal.style.display = 'none';
+  if (!modal) return;
+  modal.style.display = 'none';
+  const titleEl = document.getElementById('contractTitle');
+  const descEl  = document.getElementById('contractDesc');
+  const catEl   = document.getElementById('contractCategory');
+  const rewEl   = document.getElementById('contractReward');
+  const errEl   = document.getElementById('contractCreateError');
+  if (titleEl) titleEl.value = '';
+  if (descEl)  descEl.value  = '';
+  if (catEl)   catEl.value   = 'other';
+  if (rewEl)   rewEl.value   = '20';
+  if (errEl)   errEl.style.display = 'none';
+  updateContractFeePreview();
 }
 
 function updateContractFeePreview() {
@@ -316,7 +326,6 @@ async function submitCreateContract() {
     const data = await r.json();
     if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
     closeCreateContractModal();
-    // Update local balance display
     currentPoints = Math.max(0, currentPoints - reward);
     updatePoints();
     showContractsTab('my');
@@ -335,56 +344,94 @@ async function acceptContract(id) {
       headers: { 'X-Telegram-Id': String(currentUserId) },
     });
     const data = await r.json();
-    if (!r.ok) { alert(data.detail || 'Ошибка'); return; }
+    if (!r.ok) {
+      tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось принять', buttons: [{ type: 'ok' }] });
+      return;
+    }
     showContractsTab('my');
     refreshContractsAfterAction();
-  } catch (e) { alert('Нет соединения'); }
+  } catch (e) {
+    tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
+  }
 }
 
 async function completeContract(id) {
   if (!currentUserId) return;
-  if (!confirm('Подтвердить выполнение поручения? Исполнитель получит ★.')) return;
-  try {
-    const r = await fetch(`${API_URL}/api/contracts/${id}/complete`, {
-      method: 'POST',
-      headers: { 'X-Telegram-Id': String(currentUserId) },
-    });
-    const data = await r.json();
-    if (!r.ok) { alert(data.detail || 'Ошибка'); return; }
-    refreshContractsAfterAction();
-  } catch (e) { alert('Нет соединения'); }
+  tg.showPopup({
+    title: 'Подтвердить выполнение?',
+    message: 'Исполнитель получит ★ на баланс.',
+    buttons: [{ id: 'ok', type: 'default', text: '✓ Подтвердить' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await fetch(`${API_URL}/api/contracts/${id}/complete`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось завершить', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      refreshContractsAfterAction();
+    } catch (e) {
+      tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
+    }
+  });
 }
 
 async function cancelContract(id) {
   if (!currentUserId) return;
-  if (!confirm('Отменить поручение? Звёзды вернутся на твой баланс.')) return;
-  try {
-    const r = await fetch(`${API_URL}/api/contracts/${id}/cancel`, {
-      method: 'POST',
-      headers: { 'X-Telegram-Id': String(currentUserId) },
-    });
-    const data = await r.json();
-    if (!r.ok) { alert(data.detail || 'Ошибка'); return; }
-    if (data.refunded) {
-      currentPoints += data.refunded;
-      updatePoints();
+  tg.showPopup({
+    title: 'Отменить поручение?',
+    message: 'Замороженные ★ вернутся на твой баланс.',
+    buttons: [{ id: 'ok', type: 'destructive', text: 'Отменить' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await fetch(`${API_URL}/api/contracts/${id}/cancel`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось отменить', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      if (data.refunded) {
+        currentPoints += data.refunded;
+        updatePoints();
+      }
+      refreshContractsAfterAction();
+    } catch (e) {
+      tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
     }
-    refreshContractsAfterAction();
-  } catch (e) { alert('Нет соединения'); }
+  });
 }
 
 async function disputeContract(id) {
   if (!currentUserId) return;
-  if (!confirm('Открыть спор? Администратор примет решение.')) return;
-  try {
-    const r = await fetch(`${API_URL}/api/contracts/${id}/dispute`, {
-      method: 'POST',
-      headers: { 'X-Telegram-Id': String(currentUserId) },
-    });
-    const data = await r.json();
-    if (!r.ok) { alert(data.detail || 'Ошибка'); return; }
-    refreshContractsAfterAction();
-  } catch (e) { alert('Нет соединения'); }
+  tg.showPopup({
+    title: 'Открыть спор?',
+    message: 'Администратор рассмотрит ситуацию и вынесет решение.',
+    buttons: [{ id: 'ok', type: 'default', text: '⚠ Открыть спор' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await fetch(`${API_URL}/api/contracts/${id}/dispute`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось открыть спор', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      refreshContractsAfterAction();
+    } catch (e) {
+      tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
+    }
+  });
 }
 
 document.addEventListener('visibilitychange', () => {
