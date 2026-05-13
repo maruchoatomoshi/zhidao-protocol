@@ -31,3 +31,60 @@
   --card-radius: 10px;
   --scan-opacity: 0.025;
 }
+
+/* ===== NETWATCH LIGHT ===== */
+body.theme-nw-light {
+  --red: #993333;
+  --red-dim: rgba(180,20,20,0.08);
+  --red-border: rgba(180,20,20,0.22);
+  --gold: #7a5010;
+  --gold-dim: rgba(150,100,20,0.1);
+  --gold-border: rgba(150,100,20,0.25);
+  --bg: #f4f1ed;
+  --bg2: rgba(0,0,0,0.03);
+  --bg3: rgba(0,0,0,0.05);
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a1a;
+  --text2: #333333;
+  --text3: #5a5a5a;
+  --scan-opacity: 0.01;
+}
+
+/* ===== GENSHIN LIGHT ===== */
+body.theme-genshin-light {
+  --red: #4b5366;
+  --red-dim: rgba(75,83,102,0.08);
+  --red-border: rgba(75,83,102,0.2);
+  --gold: #8a6820;
+  --gold-dim: rgba(219,177,101,0.12);
+  --gold-border: rgba(219,177,101,0.3);
+  --bg: #ece5d8;
+  --bg2: rgba(255,255,255,0.6);
+  --bg3: rgba(255,255,255,0.8);
+  --border: rgba(219,177,101,0.2);
+  --text: #3d4555;
+  --text2: #454d5e;
+  --text3: #6b7280;
+  --font-ui: Georgia, serif;
+  --btn-radius: 20px;
+  --card-radius: 12px;
+  --scan-opacity: 0.005;
+}
+body.theme-genshin-light .bottom-nav {
+  background: rgba(236,229,216,0.97);
+  border-top-color: rgba(219,177,101,0.25);
+}
+body.theme-genshin-light .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(219,177,101,0.5), transparent);
+}
+body.theme-genshin-light .btn-primary {
+  border-radius: 20px;
+  font-family: Georgia, serif;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+body.theme-genshin-light .page-title {
+  font-family: Georgia, serif;
+}
+
+TEST_MARKER_END_OF_3000_CHARS
