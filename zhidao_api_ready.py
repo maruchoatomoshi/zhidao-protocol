@@ -145,6 +145,7 @@ HANZI_RE = re.compile(r'[\u4e00-\u9fff]')
 
 CONTRACT_MIN_REWARD = 5
 CONTRACT_MAX_REWARD = 50
+CONTRACT_ADMIN_MAX_REWARD = 100
 CONTRACT_FEE_PCT = 0.10
 CONTRACT_FEE_MIN = 2
 CONTRACT_MAX_ACTIVE = 3
@@ -5475,6 +5476,7 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
         "payout_stars": reward - fee,
         "creator_telegram_id": row[6],
         "assignee_telegram_id": row[7],
+        "creator_is_admin": row[6] in ADMIN_IDS,
         "creator_name": creator_name or "Аноним",
         "assignee_name": assignee_name,
         "creator_avatar_url": creator_avatar_url,
@@ -5584,8 +5586,10 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
         raise HTTPException(status_code=400, detail="Описание слишком короткое (минимум 5 символов)")
     if category not in CONTRACT_CATEGORIES:
         raise HTTPException(status_code=400, detail="Недопустимая категория")
-    if reward < CONTRACT_MIN_REWARD or reward > CONTRACT_MAX_REWARD:
-        raise HTTPException(status_code=400, detail=f"Награда: от {CONTRACT_MIN_REWARD} до {CONTRACT_MAX_REWARD} ★")
+    creator_is_admin = x_telegram_id in ADMIN_IDS
+    max_reward = CONTRACT_ADMIN_MAX_REWARD if creator_is_admin else CONTRACT_MAX_REWARD
+    if reward < CONTRACT_MIN_REWARD or reward > max_reward:
+        raise HTTPException(status_code=400, detail=f"Награда: от {CONTRACT_MIN_REWARD} до {max_reward} ★")
 
     fee = compute_contract_fee(reward)
     conn = get_conn()

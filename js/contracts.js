@@ -9,6 +9,10 @@ const CONTRACT_CATEGORY_LABELS = {
   other:    '📦 Другое',
 };
 
+const CONTRACT_MIN_REWARD = 5;
+const CONTRACT_MAX_REWARD = 50;
+const CONTRACT_ADMIN_MAX_REWARD = 100;
+
 const CONTRACT_STATUS_LABELS = {
   open:      'Открыт',
   accepted:  'Принят',
@@ -33,8 +37,28 @@ let contractsCategoryFilter = 'all';
 let contractsOpenCache = [];
 let contractsMyCache = [];
 
+function getContractMaxReward() {
+  return isAdmin ? CONTRACT_ADMIN_MAX_REWARD : CONTRACT_MAX_REWARD;
+}
+
+function isAdminContractCreator(contract) {
+  const creatorId = Number(contract?.creator_telegram_id || 0);
+  return Boolean(contract?.creator_is_admin) || ADMIN_IDS.includes(creatorId);
+}
+
+function syncContractRewardLimits() {
+  const maxReward = getContractMaxReward();
+  const label = document.getElementById('contractRewardLabel');
+  const input = document.getElementById('contractReward');
+  const badge = document.getElementById('contractsRewardLimitBadge');
+  if (label) label.textContent = `НАГРАДА (${CONTRACT_MIN_REWARD}–${maxReward} ★)`;
+  if (badge) badge.textContent = `${CONTRACT_MIN_REWARD}–${maxReward}★`;
+  if (input) input.max = String(maxReward);
+}
+
 // Called by showPage() when navigating to contracts
 function openContractsPage() {
+  syncContractRewardLimits();
   const bw = document.getElementById('contractsBlackwallMsg');
   const main = document.getElementById('contractsMain');
   if (bw) bw.style.display = 'none';
@@ -273,6 +297,7 @@ function renderContractCard(c, showActions) {
   const statusLabel = CONTRACT_STATUS_LABELS[c.status] || c.status;
   const statusColor = CONTRACT_STATUS_COLORS[c.status] || 'var(--text3)';
   const catLabel = CONTRACT_CATEGORY_LABELS[c.category] || c.category;
+  const isAdminContract = isAdminContractCreator(c);
   const suspHtml = c.is_suspicious
     ? `<div class="contract-warning">⚠ Подозрительный: ${escapeHtml(c.suspicious_reason || '')}</div>`
     : '';
@@ -313,12 +338,19 @@ function renderContractCard(c, showActions) {
     ? `<img src="${escapeHtml(c.creator_avatar_url)}" alt="">`
     : `<span>${escapeHtml(avatarInitials || '?')}</span>`;
 
-  return `<div class="contract-card status-${escapeHtml(c.status || 'unknown')}">
+  const adminBadgeHtml = isAdminContract
+    ? '<span class="contract-admin-badge">ADMIN ORDER</span>'
+    : '';
+
+  return `<div class="contract-card status-${escapeHtml(c.status || 'unknown')}${isAdminContract ? ' admin-contract' : ''}">
     <div class="contract-card-head">
       <div class="contract-creator-avatar${c.creator_avatar_url ? ' has-image' : ''}">${creatorAvatarHtml}</div>
       <div class="contract-card-titlebox">
         <div class="contract-card-title">${escapeHtml(c.title)}</div>
-        <div class="contract-category-badge">${catLabel}</div>
+        <div class="contract-card-badges">
+          ${adminBadgeHtml}
+          <span class="contract-category-badge">${catLabel}</span>
+        </div>
       </div>
       <div class="contract-reward">
         <div class="contract-reward-main">${c.reward_stars}★</div>
@@ -341,6 +373,7 @@ function renderContractCard(c, showActions) {
 function openCreateContractModal() {
   const modal = document.getElementById('createContractModal');
   if (!modal) return;
+  syncContractRewardLimits();
   modal.style.display = 'flex';
   const errEl = document.getElementById('contractCreateError');
   if (errEl) errEl.style.display = 'none';
@@ -369,13 +402,14 @@ function updateContractFeePreview() {
   const previewEl = document.getElementById('contractFeePreview');
   if (!rewardEl || !previewEl) return;
   const reward = parseInt(rewardEl.value) || 0;
+  const maxReward = getContractMaxReward();
   const fee = Math.max(2, Math.round(reward * 0.1));
   const payout = reward - fee;
-  if (reward >= 5 && reward <= 50) {
+  if (reward >= CONTRACT_MIN_REWARD && reward <= maxReward) {
     previewEl.textContent = `Исполнитель получит: ${payout}★ · Комиссия Сетевого Дозора: ${fee}★`;
     previewEl.style.color = 'var(--text3)';
   } else {
-    previewEl.textContent = 'Награда должна быть от 5 до 50 ★';
+    previewEl.textContent = `Награда должна быть от ${CONTRACT_MIN_REWARD} до ${maxReward} ★`;
     previewEl.style.color = '#e74c3c';
   }
 }
@@ -394,7 +428,8 @@ async function submitCreateContract() {
   if (!currentUserId) { showErr('Войди в систему'); return; }
   if (title.length < 3) { showErr('Название слишком короткое'); return; }
   if (desc.length < 5)  { showErr('Описание слишком короткое'); return; }
-  if (reward < 5 || reward > 50) { showErr('Награда: от 5 до 50 ★'); return; }
+  const maxReward = getContractMaxReward();
+  if (reward < CONTRACT_MIN_REWARD || reward > maxReward) { showErr(`Награда: от ${CONTRACT_MIN_REWARD} до ${maxReward} ★`); return; }
 
   try {
     const r = await fetch(`${API_URL}/api/contracts`, {

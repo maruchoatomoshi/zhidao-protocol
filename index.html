@@ -1795,7 +1795,7 @@
       <!-- Кнопка создать -->
       <button id="contractsCreateBtn" class="contracts-create-btn" onclick="openCreateContractModal()">
         <span>+ Создать поручение</span>
-        <b>5–50★</b>
+        <b id="contractsRewardLimitBadge">5–50★</b>
       </button>
 
       <!-- Вкладки -->
@@ -1864,7 +1864,7 @@
       </div>
 
       <div class="contract-field contract-reward-field">
-        <label for="contractReward">НАГРАДА (5–50 ★)</label>
+        <label for="contractReward" id="contractRewardLabel">НАГРАДА (5–50 ★)</label>
         <input id="contractReward" type="number" min="5" max="50" value="20" oninput="updateContractFeePreview()">
         <div id="contractFeePreview" class="contract-fee-preview">
           Исполнитель получит: 18★ · Комиссия: 2★
