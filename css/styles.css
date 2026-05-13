@@ -1,0 +1,33 @@
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --red: #cc2200;
+  --red-dim: rgba(180,20,20,0.15);
+  --red-border: rgba(180,20,20,0.35);
+  --gold: #d4af37;
+  --gold-dim: rgba(212,175,55,0.1);
+  --gold-border: rgba(212,175,55,0.25);
+  --bg: #050510;
+  --bg2: rgba(255,255,255,0.03);
+  --bg3: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.07);
+  --text: #ffffff;
+  --text2: #cccccc;
+  --text3: #888888;
+  --purple: #9b59b6;
+  --purple-dim: rgba(155,89,182,0.15);
+  --purple-border: rgba(155,89,182,0.3);
+  --nav-h: 68px;
+  --app-height: 100dvh;
+  --app-width: 100vw;
+  --tg-viewport-height: 100dvh;
+  --tg-safe-top: env(safe-area-inset-top, 0px);
+  --tg-safe-right: env(safe-area-inset-right, 0px);
+  --tg-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tg-safe-left: env(safe-area-inset-left, 0px);
+  --font-ui: -apple-system, sans-serif;
+  --btn-radius: 8px;
+  --card-radius: 10px;
+  --scan-opacity: 0.025;
+}
