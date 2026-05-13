@@ -3193,6 +3193,123 @@ body.is-admin .more-item.admin-only-item::before {
   color: #e74c3c;
   text-shadow: 0 0 10px rgba(231,76,60,0.24);
 }
+
+.admin-contract-monitor-actions {
+  margin: 10px 0 4px;
+}
+
+.contract-monitor-panel {
+  margin: 10px 0 12px;
+  padding: 12px;
+  border: 1px solid rgba(96,180,212,0.22);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(96,180,212,0.10), transparent 42%),
+    rgba(255,255,255,0.035);
+}
+
+.contract-monitor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.contract-monitor-title {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.contract-monitor-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.contract-monitor-stat {
+  padding: 9px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 11px;
+  background: rgba(0,0,0,0.12);
+}
+
+.contract-monitor-stat span,
+.contract-monitor-stat em,
+.contract-monitor-row span {
+  display: block;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.contract-monitor-stat strong {
+  display: block;
+  margin: 3px 0;
+  color: var(--gold);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.contract-monitor-note {
+  margin-bottom: 10px;
+  color: var(--text2);
+  font-family: monospace;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.contract-monitor-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.contract-monitor-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+  padding: 9px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 11px;
+  background: rgba(0,0,0,0.10);
+}
+
+.contract-monitor-row.risk {
+  border-color: rgba(231,76,60,0.26);
+  background: rgba(231,76,60,0.06);
+}
+
+.contract-monitor-row strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text);
+  font-size: 11px;
+}
+
+.contract-monitor-row b {
+  color: var(--gold);
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.contract-monitor-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.contract-monitor-flags span {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(231,76,60,0.12);
+  color: #e74c3c;
+}
 .admin-console-note {
   color: var(--text3);
   font-family: monospace;

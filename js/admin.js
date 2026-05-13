@@ -499,6 +499,7 @@ function adminRenderDossierEconomy(rows) {
     shop_purchase:         {label:'Покупка в магазине', icon:'🛒', tone:'spend'},
     shop_refund:           {label:'Продажа / возврат', icon:'↩', tone:'gain'},
     gift_tax:              {label:'Налог на подарок', icon:'🎁', tone:'spend'},
+    gift_receive:          {label:'Получен подарок', icon:'🎁', tone:'gain'},
     case_open:             {label:'Открытие кейса', icon:'📦', tone:'case'},
     prayer_open:           {label:'Молитва', icon:'✦', tone:'case'},
     card_disassemble:      {label:'Разбор карточки', icon:'🃏', tone:'gain'},
@@ -1112,6 +1113,121 @@ async function adminLoadContracts(status) {
     }
     el.innerHTML = data.map(c => adminRenderContractCard(c)).join('');
   } catch (e) { el.innerHTML = '<div style="color:#e74c3c;">Нет соединения</div>'; }
+}
+
+async function adminLoadContractMonitor() {
+  const el = document.getElementById('adminContractMonitor');
+  if (!el || !currentUserId) return;
+  el.style.display = 'block';
+  el.innerHTML = '<div class="empty-state">Сканирую экономические связи...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/contracts/monitor`, {
+      headers: {'x-admin-id': String(currentUserId)},
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка мониторинга')}</div>`;
+      return;
+    }
+    el.innerHTML = adminRenderContractMonitor(data);
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+  }
+}
+
+function adminRenderContractMonitor(data) {
+  const summary = data.summary || {};
+  const status = summary.status_counts || {};
+  const contractPairs = Array.isArray(data.contract_pairs) ? data.contract_pairs : [];
+  const giftPairs = Array.isArray(data.gift_pairs) ? data.gift_pairs : [];
+  const gifts = Array.isArray(data.recent_gifts) ? data.recent_gifts : [];
+
+  const riskCount = contractPairs.filter(p => (p.flags || []).length).length
+    + giftPairs.filter(p => (p.flags || []).length).length
+    + Number(summary.cross_pairs || 0);
+
+  const cards = [
+    ['Оборот', `${Number(summary.total_turnover || 0)}★`, `${Number(summary.total_contracts || 0)} контрактов`],
+    ['Комиссии', `${Number(summary.fee_burned || 0)}★`, 'сгорело в системе'],
+    ['Споры', `${Number(status.disputed || 0)}`, 'активные конфликты'],
+    ['Риски', `${riskCount}`, 'пары/связки'],
+  ].map(([label, value, hint]) => `
+    <div class="contract-monitor-stat">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <em>${escapeHtml(hint)}</em>
+    </div>
+  `).join('');
+
+  const contractPairHtml = contractPairs.length
+    ? contractPairs.slice(0, 8).map(p => adminRenderMonitorPair({
+        title: `${p.creator_name} → ${p.assignee_name}`,
+        meta: `${p.count} контрактов · оборот ${p.reward_total}★ · выплачено ${p.payout_total}★ · комиссия ${p.fee_total}★`,
+        flags: p.flags,
+      })).join('')
+    : '<div class="empty-state">Контрактных связок пока нет</div>';
+
+  const giftPairHtml = giftPairs.length
+    ? giftPairs.slice(0, 8).map(p => adminRenderMonitorPair({
+        title: `${p.from_name} → ${p.to_name}`,
+        meta: `${p.count} подарков · стоимость предметов ${p.item_value}★`,
+        flags: p.flags,
+      })).join('')
+    : '<div class="empty-state">Подарков пока нет</div>';
+
+  const giftHtml = gifts.length
+    ? gifts.slice(0, 8).map(g => `
+        <div class="contract-monitor-row">
+          <div>
+            <strong>${escapeHtml(g.from_name)} → ${escapeHtml(g.to_name)}</strong>
+            <span>${escapeHtml(g.item_name || g.item_code)} · ${Number(g.item_price || 0)}★</span>
+          </div>
+          <b>🎁</b>
+        </div>
+      `).join('')
+    : '<div class="empty-state">Истории подарков пока нет</div>';
+
+  return `
+    <div class="contract-monitor-panel">
+      <div class="contract-monitor-head">
+        <div>
+          <div class="admin-console-kicker">ECONOMY SURVEILLANCE</div>
+          <div class="contract-monitor-title">Мониторинг контрактов и подарков</div>
+        </div>
+        <button class="admin-console-refresh" onclick="adminLoadContractMonitor()">Обновить</button>
+      </div>
+      <div class="contract-monitor-stats">${cards}</div>
+      <div class="contract-monitor-note">
+        Подарки не дают прямой перевод ★, но могут использоваться как обходной канал через предметы. Смотри повторяющиеся пары и пересечение “контракты + подарки”.
+      </div>
+      <div class="contract-monitor-grid">
+        <div>
+          <div class="admin-contracts-section-title danger">КОНТРАКТНЫЕ СВЯЗКИ</div>
+          ${contractPairHtml}
+        </div>
+        <div>
+          <div class="admin-contracts-section-title danger">ПОДАРКИ / ПРЕДМЕТЫ</div>
+          ${giftPairHtml}
+        </div>
+      </div>
+      <div class="admin-contracts-section-title">ПОСЛЕДНИЕ ПОДАРКИ</div>
+      ${giftHtml}
+    </div>
+  `;
+}
+
+function adminRenderMonitorPair({title, meta, flags}) {
+  const flagHtml = Array.isArray(flags) && flags.length
+    ? `<div class="contract-monitor-flags">${flags.map(f => `<span>${escapeHtml(f)}</span>`).join('')}</div>`
+    : '';
+  return `<div class="contract-monitor-row ${flagHtml ? 'risk' : ''}">
+    <div>
+      <strong>${escapeHtml(title)}</strong>
+      <span>${escapeHtml(meta)}</span>
+      ${flagHtml}
+    </div>
+    <b>${flagHtml ? '!' : 'OK'}</b>
+  </div>`;
 }
 
 function adminRenderContractCard(c) {

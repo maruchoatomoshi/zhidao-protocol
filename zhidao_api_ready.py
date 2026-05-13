@@ -286,6 +286,7 @@ def init_db():
                   purchased_at TEXT DEFAULT CURRENT_TIMESTAMP,
                   status TEXT DEFAULT 'active',
                   given_to INTEGER DEFAULT NULL,
+                  gifted_at TEXT DEFAULT NULL,
                   expires_at TEXT DEFAULT NULL)''')
     c.execute('''CREATE TABLE IF NOT EXISTS shop_daily_counts
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -530,6 +531,11 @@ def migrate_db():
         c.execute("ALTER TABLE users ADD COLUMN room_number TEXT DEFAULT NULL")
     if 'rep_score' not in user_columns:
         c.execute("ALTER TABLE users ADD COLUMN rep_score INTEGER DEFAULT 0")
+
+    c.execute("PRAGMA table_info(shop_purchases)")
+    shop_purchase_columns = {row[1] for row in c.fetchall()}
+    if 'gifted_at' not in shop_purchase_columns:
+        c.execute("ALTER TABLE shop_purchases ADD COLUMN gifted_at TEXT DEFAULT NULL")
 
     c.execute("PRAGMA table_info(user_status)")
     columns = {row[1] for row in c.fetchall()}
@@ -4436,10 +4442,12 @@ async def gift_item(data: dict):
         conn.close()
         raise HTTPException(status_code=400, detail="Not enough points for tax")
     c.execute("UPDATE users SET points = points - 20 WHERE telegram_id=?", (from_id,))
-    c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, status='active' WHERE id=?", (to_id, from_id, purchase_id))
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, gifted_at=?, status='active' WHERE id=?", (to_id, from_id, now_str, purchase_id))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
     new_points = c.fetchone()[0] or 0
     log_economy(c, from_id, 'gift_tax', -20, new_points, purchase_id, 'shop_gift', purchase[0])
+    log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
     conn.commit()
     conn.close()
     return {"success": True}
@@ -5849,6 +5857,155 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
          "creator_avatar_url": row[18], "assignee_avatar_url": row[19]}
         for row in rows
     ]
+
+
+@app.get("/api/admin/contracts/monitor")
+async def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn = get_conn()
+    c = conn.cursor()
+
+    c.execute(
+        '''SELECT status, COUNT(*), COALESCE(SUM(reward_stars),0),
+                  COALESCE(SUM(CASE WHEN status='completed' THEN fee_stars ELSE 0 END),0)
+           FROM contracts
+           GROUP BY status'''
+    )
+    status_rows = c.fetchall()
+    status_counts = {row[0]: row[1] for row in status_rows}
+    reward_by_status = {row[0]: row[2] for row in status_rows}
+    fee_burned = sum(row[3] or 0 for row in status_rows)
+
+    c.execute("SELECT COUNT(*), COALESCE(SUM(reward_stars),0) FROM contracts")
+    total_count, total_turnover = c.fetchone()
+    c.execute("SELECT COUNT(*) FROM contracts WHERE is_suspicious=1")
+    suspicious_count = c.fetchone()[0] or 0
+
+    c.execute(
+        '''SELECT c.creator_telegram_id, c.assignee_telegram_id,
+                  COALESCE(u1.full_name, c.creator_telegram_id),
+                  COALESCE(u2.full_name, c.assignee_telegram_id),
+                  COUNT(*) AS contract_count,
+                  COALESCE(SUM(c.reward_stars),0) AS reward_total,
+                  COALESCE(SUM(CASE WHEN c.status='completed' THEN c.reward_stars-c.fee_stars ELSE 0 END),0) AS payout_total,
+                  COALESCE(SUM(CASE WHEN c.status='completed' THEN c.fee_stars ELSE 0 END),0) AS fee_total,
+                  COALESCE(SUM(CASE WHEN c.is_suspicious=1 THEN 1 ELSE 0 END),0) AS suspicious_total,
+                  COALESCE(SUM(CASE WHEN c.status='disputed' THEN 1 ELSE 0 END),0) AS disputed_total,
+                  MAX(c.created_at) AS last_at
+           FROM contracts c
+           LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
+           LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
+           WHERE c.assignee_telegram_id IS NOT NULL
+           GROUP BY c.creator_telegram_id, c.assignee_telegram_id
+           ORDER BY reward_total DESC, contract_count DESC
+           LIMIT 30'''
+    )
+    contract_pairs = []
+    for row in c.fetchall():
+        flags = []
+        if (row[4] or 0) >= 3:
+            flags.append("частые контракты")
+        if (row[5] or 0) >= 100:
+            flags.append("крупный оборот")
+        if (row[8] or 0) > 0:
+            flags.append("подозрительные")
+        if (row[9] or 0) > 0:
+            flags.append("есть спор")
+        contract_pairs.append({
+            "creator_id": row[0],
+            "assignee_id": row[1],
+            "creator_name": str(row[2]),
+            "assignee_name": str(row[3]),
+            "count": row[4] or 0,
+            "reward_total": row[5] or 0,
+            "payout_total": row[6] or 0,
+            "fee_total": row[7] or 0,
+            "suspicious": row[8] or 0,
+            "disputed": row[9] or 0,
+            "last_at": row[10],
+            "flags": flags,
+        })
+
+    c.execute(
+        '''SELECT sp.given_to, sp.telegram_id,
+                  COALESCE(uf.full_name, sp.given_to),
+                  COALESCE(ut.full_name, sp.telegram_id),
+                  COUNT(*) AS gift_count,
+                  COALESCE(SUM(si.price),0) AS item_value,
+                  MAX(COALESCE(sp.gifted_at, sp.purchased_at)) AS last_at
+           FROM shop_purchases sp
+           LEFT JOIN shop_items si ON si.code=sp.item_code
+           LEFT JOIN users uf ON uf.telegram_id=sp.given_to
+           LEFT JOIN users ut ON ut.telegram_id=sp.telegram_id
+           WHERE sp.given_to IS NOT NULL
+           GROUP BY sp.given_to, sp.telegram_id
+           ORDER BY item_value DESC, gift_count DESC
+           LIMIT 30'''
+    )
+    gift_pairs = []
+    for row in c.fetchall():
+        flags = []
+        if (row[4] or 0) >= 2:
+            flags.append("повторные подарки")
+        if (row[5] or 0) >= 100:
+            flags.append("ценные предметы")
+        gift_pairs.append({
+            "from_id": row[0],
+            "to_id": row[1],
+            "from_name": str(row[2]),
+            "to_name": str(row[3]),
+            "count": row[4] or 0,
+            "item_value": row[5] or 0,
+            "last_at": row[6],
+            "flags": flags,
+        })
+
+    c.execute(
+        '''SELECT sp.id, sp.given_to, sp.telegram_id,
+                  COALESCE(uf.full_name, sp.given_to),
+                  COALESCE(ut.full_name, sp.telegram_id),
+                  sp.item_code, COALESCE(si.name, sp.item_code), COALESCE(si.price,0),
+                  COALESCE(sp.gifted_at, sp.purchased_at)
+           FROM shop_purchases sp
+           LEFT JOIN shop_items si ON si.code=sp.item_code
+           LEFT JOIN users uf ON uf.telegram_id=sp.given_to
+           LEFT JOIN users ut ON ut.telegram_id=sp.telegram_id
+           WHERE sp.given_to IS NOT NULL
+           ORDER BY COALESCE(sp.gifted_at, sp.purchased_at) DESC
+           LIMIT 50'''
+    )
+    recent_gifts = [{
+        "id": row[0],
+        "from_id": row[1],
+        "to_id": row[2],
+        "from_name": str(row[3]),
+        "to_name": str(row[4]),
+        "item_code": row[5],
+        "item_name": row[6],
+        "item_price": row[7] or 0,
+        "gifted_at": row[8],
+    } for row in c.fetchall()]
+
+    contract_pair_keys = {tuple(sorted((p["creator_id"], p["assignee_id"]))) for p in contract_pairs}
+    gift_pair_keys = {tuple(sorted((p["from_id"], p["to_id"]))) for p in gift_pairs}
+
+    conn.close()
+    return {
+        "summary": {
+            "total_contracts": total_count or 0,
+            "total_turnover": total_turnover or 0,
+            "fee_burned": fee_burned,
+            "suspicious": suspicious_count,
+            "status_counts": status_counts,
+            "reward_by_status": reward_by_status,
+            "gift_pairs": len(gift_pairs),
+            "cross_pairs": len(contract_pair_keys & gift_pair_keys),
+        },
+        "contract_pairs": contract_pairs,
+        "gift_pairs": gift_pairs,
+        "recent_gifts": recent_gifts,
+    }
 
 
 @app.post("/api/admin/contracts/{contract_id}/resolve")
