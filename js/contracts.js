@@ -168,7 +168,16 @@ async function loadMyContracts(options = {}) {
     if (!r.ok) { el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
     syncContractsBlackwallVisible(false);
     if (!data.length) { el.innerHTML = '<div class="empty-state">У тебя пока нет контрактов</div>'; return; }
-    el.innerHTML = data.map(c => renderContractCard(c, true)).join('');
+    const asCreator = data.filter(c => c.creator_telegram_id === currentUserId);
+    const asAssignee = data.filter(c => c.assignee_telegram_id === currentUserId);
+    let html = '';
+    if (asCreator.length) {
+      html += `<div class="contracts-section-label">Я заказчик</div>` + asCreator.map(c => renderContractCard(c, true)).join('');
+    }
+    if (asAssignee.length) {
+      html += `<div class="contracts-section-label">Я исполнитель</div>` + asAssignee.map(c => renderContractCard(c, true)).join('');
+    }
+    el.innerHTML = html;
   } catch (e) {
     if (!silent || !el.innerHTML.trim()) {
       el.innerHTML = '<div class="empty-state">Нет соединения</div>';
@@ -221,24 +230,28 @@ function renderContractCard(c, showActions) {
   }
 
   const assigneeHtml = c.assignee_name
-    ? `<span class="contract-person">Исполнитель: ${escapeHtml(c.assignee_name)}</span>`
+    ? `<span class="contract-person">исп.: ${escapeHtml(c.assignee_name)}</span>`
     : '';
+
+  const creatorName = c.creator_name || '?';
+  const avatarInitials = creatorName.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
   return `<div class="contract-card status-${escapeHtml(c.status || 'unknown')}">
     <div class="contract-card-head">
+      <div class="contract-creator-avatar">${avatarInitials}</div>
       <div class="contract-card-titlebox">
         <div class="contract-card-title">${escapeHtml(c.title)}</div>
-        <div class="contract-category">${catLabel}</div>
+        <div class="contract-category-badge">${catLabel}</div>
       </div>
       <div class="contract-reward">
         <div class="contract-reward-main">${c.reward_stars}★</div>
-        <div class="contract-reward-sub">→ ${c.payout_stars}★ исп.</div>
+        <div class="contract-reward-sub">${c.payout_stars}★ исп.</div>
       </div>
     </div>
     <div class="contract-description">${escapeHtml(c.description)}</div>
     <div class="contract-meta">
       <span class="contract-status" style="--contract-status-color:${statusColor};">${statusLabel}</span>
-      <span class="contract-person">Заказчик: ${escapeHtml(c.creator_name)}${isMe ? ' (ты)' : ''}</span>
+      <span class="contract-person">${escapeHtml(creatorName)}${isMe ? ' · ты' : ''}</span>
       ${assigneeHtml}
     </div>
     ${suspHtml}
