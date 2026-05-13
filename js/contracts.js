@@ -90,7 +90,7 @@ function stopContractsAutoRefresh() {
 }
 
 function refreshContractsActiveTab(options = {}) {
-  if (contractsActiveTab === 'my') {
+  if (contractsActiveTab === 'my' || contractsActiveTab === 'disputed') {
     return loadMyContracts(options);
   }
   return loadOpenContracts(options);
@@ -159,10 +159,23 @@ function renderMyContractsList(list) {
   return html || renderContractsEmpty('Контрактов не найдено', 'Смени фильтр или обнови список.');
 }
 
+function renderDisputedContractsList(list) {
+  const disputed = filterContractsByCategory(list).filter(c => c.status === 'disputed');
+  if (!disputed.length) {
+    return renderContractsEmpty(
+      contractsCategoryFilter !== 'all' ? 'Споров в этой категории нет' : 'Спорных поручений нет',
+      'Если по поручению открыли спор, он появится здесь вместе со статусом.'
+    );
+  }
+  return `<div class="contracts-section-label dispute">Требуется решение администратора</div>`
+    + disputed.map(c => renderContractCard(c, true)).join('');
+}
+
 function renderContractsFromCache() {
   syncContractsCategoryFilterUI();
   const openEl = document.getElementById('contractsOpenList');
   const myEl = document.getElementById('contractsMyList');
+  const disputedEl = document.getElementById('contractsDisputedList');
   if (openEl && contractsActiveTab === 'open') {
     openEl.classList.remove('empty-state');
     openEl.innerHTML = renderContractsList(contractsOpenCache, {
@@ -174,29 +187,48 @@ function renderContractsFromCache() {
     myEl.classList.remove('empty-state');
     myEl.innerHTML = renderMyContractsList(contractsMyCache);
   }
+  if (disputedEl && contractsActiveTab === 'disputed') {
+    disputedEl.classList.remove('empty-state');
+    disputedEl.innerHTML = renderDisputedContractsList(contractsMyCache);
+  }
 }
 
 function showContractsTab(tab) {
   const openEl = document.getElementById('contracts-tab-open');
   const myEl   = document.getElementById('contracts-tab-my');
+  const disputedEl = document.getElementById('contracts-tab-disputed');
   const btnOpen = document.getElementById('ctab-open');
   const btnMy   = document.getElementById('ctab-my');
-  if (!openEl || !myEl) return;
-  contractsActiveTab = tab === 'my' ? 'my' : 'open';
+  const btnDisputed = document.getElementById('ctab-disputed');
+  if (!openEl || !myEl || !disputedEl) return;
+  contractsActiveTab = ['my', 'disputed'].includes(tab) ? tab : 'open';
   startContractsAutoRefresh();
 
   if (contractsActiveTab === 'open') {
     openEl.style.display = 'block';
     myEl.style.display = 'none';
+    disputedEl.style.display = 'none';
     if (btnOpen) btnOpen.classList.add('active');
     if (btnMy) btnMy.classList.remove('active');
+    if (btnDisputed) btnDisputed.classList.remove('active');
     syncContractsCategoryFilterUI();
     loadOpenContracts();
-  } else {
+  } else if (contractsActiveTab === 'my') {
     openEl.style.display = 'none';
     myEl.style.display = 'block';
+    disputedEl.style.display = 'none';
     if (btnMy) btnMy.classList.add('active');
     if (btnOpen) btnOpen.classList.remove('active');
+    if (btnDisputed) btnDisputed.classList.remove('active');
+    syncContractsCategoryFilterUI();
+    loadMyContracts();
+  } else {
+    openEl.style.display = 'none';
+    myEl.style.display = 'none';
+    disputedEl.style.display = 'block';
+    if (btnDisputed) btnDisputed.classList.add('active');
+    if (btnOpen) btnOpen.classList.remove('active');
+    if (btnMy) btnMy.classList.remove('active');
     syncContractsCategoryFilterUI();
     loadMyContracts();
   }
@@ -253,15 +285,17 @@ async function loadOpenContracts(options = {}) {
 
 async function loadMyContracts(options = {}) {
   const el = document.getElementById('contractsMyList');
-  if (!el || !currentUserId) {
-    if (el) el.innerHTML = '<div class="empty-state">Войди в систему</div>';
+  const disputedEl = document.getElementById('contractsDisputedList');
+  const targetEl = contractsActiveTab === 'disputed' ? disputedEl : el;
+  if (!targetEl || !currentUserId) {
+    if (targetEl) targetEl.innerHTML = '<div class="empty-state">Войди в систему</div>';
     return;
   }
   if (contractsMyLoading) return;
   contractsMyLoading = true;
   const silent = !!options.silent;
-  if (!silent || !el.innerHTML.trim()) {
-    el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  if (!silent || !targetEl.innerHTML.trim()) {
+    targetEl.innerHTML = '<div class="empty-state">Загрузка...</div>';
   }
   try {
     const r = await fetch(`${API_URL}/api/contracts/my`, {
@@ -273,14 +307,16 @@ async function loadMyContracts(options = {}) {
       return;
     }
     const data = await r.json();
-    if (!r.ok) { el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
+    if (!r.ok) { targetEl.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
     syncContractsBlackwallVisible(false);
     contractsMyCache = Array.isArray(data) ? data : [];
-    el.classList.remove('empty-state');
-    el.innerHTML = renderMyContractsList(contractsMyCache);
+    targetEl.classList.remove('empty-state');
+    targetEl.innerHTML = contractsActiveTab === 'disputed'
+      ? renderDisputedContractsList(contractsMyCache)
+      : renderMyContractsList(contractsMyCache);
   } catch (e) {
-    if (!silent || !el.innerHTML.trim()) {
-      el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+    if (!silent || !targetEl.innerHTML.trim()) {
+      targetEl.innerHTML = '<div class="empty-state">Нет соединения</div>';
     }
   } finally {
     contractsMyLoading = false;

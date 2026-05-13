@@ -1806,6 +1806,9 @@
         <button id="ctab-my" class="contracts-tab" onclick="showContractsTab('my')">
           Мои
         </button>
+        <button id="ctab-disputed" class="contracts-tab" onclick="showContractsTab('disputed')">
+          Споры
+        </button>
       </div>
 
       <div class="contracts-filter-row" aria-label="Фильтр поручений по категориям">
@@ -1826,6 +1829,11 @@
       <!-- Мои контракты -->
       <div id="contracts-tab-my" style="display:none;">
         <div id="contractsMyList" class="empty-state">Загрузка...</div>
+      </div>
+
+      <!-- Мои спорные контракты -->
+      <div id="contracts-tab-disputed" style="display:none;">
+        <div id="contractsDisputedList" class="empty-state">Загрузка...</div>
       </div>
     </div>
 

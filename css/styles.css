@@ -3179,6 +3179,20 @@ body.is-admin .more-item.admin-only-item::before {
 .admin-log-delta.minus { color: #ff5a5a; }
 .admin-log-text { color: var(--text); font-size: 11px; line-height: 1.35; }
 .admin-log-meta { color: var(--text3); font-family: monospace; font-size: 8px; }
+
+.admin-contracts-section-title {
+  margin: 12px 0 8px;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+}
+
+.admin-contracts-section-title.danger {
+  color: #e74c3c;
+  text-shadow: 0 0 10px rgba(231,76,60,0.24);
+}
 .admin-console-note {
   color: var(--text3);
   font-family: monospace;
@@ -11731,7 +11745,7 @@ body.is-architect .profile-card-spark.spark-bl {
 
 .contracts-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-bottom: 10px;
   padding: 4px;
@@ -11756,6 +11770,12 @@ body.is-architect .profile-card-spark.spark-bl {
   border-color: var(--contract-accent-border);
   background: var(--contract-accent-soft);
   color: var(--contract-accent);
+}
+
+#ctab-disputed.active {
+  border-color: rgba(231,76,60,0.45);
+  background: rgba(231,76,60,0.12);
+  color: #e74c3c;
 }
 
 .contracts-filter-row {
@@ -11923,6 +11943,11 @@ body.is-architect .profile-card-spark.spark-bl {
   letter-spacing: 1.6px;
   text-transform: uppercase;
   opacity: 0.7;
+}
+
+.contracts-section-label.dispute {
+  color: #e74c3c;
+  opacity: 0.92;
 }
 
 .contracts-empty {

@@ -1084,7 +1084,10 @@ async function setArchitectEventEnabled(enabled) {
 
 // ===== ADMIN CONTRACTS =====
 
+let adminContractsActiveFilter = '';
+
 async function adminLoadContracts(status) {
+  adminContractsActiveFilter = status || '';
   const el = document.getElementById('adminContractsList');
   if (!el || !currentUserId) return;
   el.innerHTML = '<div style="color:var(--text3);">Загрузка...</div>';
@@ -1097,6 +1100,16 @@ async function adminLoadContracts(status) {
     if (!r.ok) { el.innerHTML = `<div style="color:#e74c3c;">${escapeHtml(data.detail || 'Ошибка')}</div>`; return; }
     if (status === 'suspicious') data = data.filter(c => c.is_suspicious);
     if (!data.length) { el.innerHTML = '<div style="color:var(--text3);">Контрактов нет</div>'; return; }
+    if (!status) {
+      const disputed = data.filter(c => c.status === 'disputed');
+      const rest = data.filter(c => c.status !== 'disputed');
+      el.innerHTML = `
+        ${disputed.length ? `<div class="admin-contracts-section-title danger">СПОРНЫЕ · требуют решения</div>${disputed.map(c => adminRenderContractCard(c)).join('')}` : ''}
+        <div class="admin-contracts-section-title">ВСЕ КОНТРАКТЫ</div>
+        ${rest.length ? rest.map(c => adminRenderContractCard(c)).join('') : '<div style="color:var(--text3);">Других контрактов нет</div>'}
+      `;
+      return;
+    }
     el.innerHTML = data.map(c => adminRenderContractCard(c)).join('');
   } catch (e) { el.innerHTML = '<div style="color:#e74c3c;">Нет соединения</div>'; }
 }
@@ -1158,7 +1171,7 @@ async function adminResolveContract(id, action) {
     const data = await r.json();
     if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
     showToast('Решение применено');
-    adminLoadContracts();
+    adminLoadContracts(adminContractsActiveFilter);
   } catch (e) { showToast('Нет соединения'); }
 }
 
