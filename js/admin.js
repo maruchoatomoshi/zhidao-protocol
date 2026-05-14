@@ -160,28 +160,9 @@ async function adminFreeze(freeze) {
       body: JSON.stringify({telegram_id: telegramId, frozen: freeze})
     });
     if (r.ok) {
-      if (freeze) {
-        // Отправляем уведомление через бота
-        await fetch(`https://api.telegram.org/bot8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc/sendMessage`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            chat_id: telegramId,
-            text: '⛔ NETWATCH 网络保安\n\n系统检测到异常活动\nСистема обнаружила подозрительную активность с вашей стороны.\n\nВаш аккаунт временно заморожен.\nМагазин и кейсы недоступны.\n\n— NetWatch Protocol v1.4 —'
-          })
-        });
-        showToast('⛔ Аккаунт заморожен!\nИгрок получил уведомление от NetWatch.');
-      } else {
-        await fetch(`https://api.telegram.org/bot8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc/sendMessage`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            chat_id: telegramId,
-            text: '✅ NETWATCH 网络保安\n\n访问已恢复\nДоступ восстановлен.\n\nВаш аккаунт разморожен.\nМагазин и кейсы снова доступны.\n\n— NetWatch Protocol v1.4 —'
-          })
-        });
-        showToast('✅ Аккаунт разморожен!\nИгрок получил уведомление.');
-      }
+      const data = await r.json().catch(() => ({}));
+      const notifyText = data.notified ? 'Игрок получил уведомление от NetWatch.' : 'Уведомление не отправлено, проверь BOT_TOKEN на API.';
+      showToast(`${freeze ? '⛔ Аккаунт заморожен!' : '✅ Аккаунт разморожен!'}\n${notifyText}`);
       document.getElementById('freezeId').value = '';
     } else {
       showToast('Ошибка! Проверь ID');

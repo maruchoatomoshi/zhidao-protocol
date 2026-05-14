@@ -1,5 +1,6 @@
 ﻿import random
 import json
+import os
 import re
 import sqlite3
 from datetime import datetime, timedelta
@@ -20,10 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MARZBAN_URL = "http://127.0.0.1:8000"
-MARZBAN_USER = "marucho"
-MARZBAN_PASS = "sqU5QN0jgus!"
-BOT_TOKEN = "8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc"
+MARZBAN_URL = os.getenv("MARZBAN_URL", "http://127.0.0.1:8000")
+MARZBAN_USER = os.getenv("MARZBAN_USER", "")
+MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
 ARCHITECT_IDS = [389741116]
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
@@ -130,12 +132,14 @@ EXPECTED_STUDENT_NAMES = [
 ]
 
 RAID_ENTRY_COST = 50
-RAID_SUCCESS_REWARD = 150
+RAID_SUCCESS_REWARD = 100
 RAID_SUCCESS_CHANCE = 0.4
 RAID_DAILY_LIMIT = 3
+RAID_USER_DAILY_LIMIT = 2
 RAID_MIN_PLAYERS = 3
 SHOP_EXTRA_RAID_CODE = "extra_raid_attempt"
 SHOP_EXTRA_RAID_PRICE = 80
+SHOP_GIFT_DAILY_LIMIT = 5
 DIARY_WORD_LIMIT = 15
 DIARY_MIN_STORY_HANZI = 20
 DIARY_MIN_FILLED_ROWS = 5
@@ -905,6 +909,9 @@ def get_presence_message_text(check_type: str, attempt_no: int = 1):
 
 
 async def send_telegram_message(chat_id: int, text: str, reply_markup: Optional[dict] = None):
+    if not BOT_TOKEN:
+        return False, {"detail": "BOT_TOKEN is not configured"}
+
     payload = {"chat_id": chat_id, "text": text}
     if reply_markup:
         payload["reply_markup"] = reply_markup
@@ -1446,6 +1453,18 @@ def get_extra_raids(c, telegram_id: int) -> int:
     return row[0] if row else 0
 
 
+def user_raid_attempt_count(c, today: str, telegram_id: int) -> int:
+    c.execute(
+        '''SELECT COUNT(DISTINCT rp.raid_id)
+           FROM raid_participants rp
+           JOIN raids r ON r.id = rp.raid_id
+           WHERE rp.telegram_id=? AND r.date=?''',
+        (telegram_id, today),
+    )
+    row = c.fetchone()
+    return row[0] if row and row[0] is not None else 0
+
+
 def public_finished_raid_count(c, today: str) -> int:
     placeholders = ','.join('?' * len(ADMIN_IDS))
     c.execute(
@@ -1841,6 +1860,26 @@ async def get_user_data(marzban_username):
             f"{MARZBAN_URL}/api/user/{marzban_username}",
             headers={"Authorization": f"Bearer {token}"},
         ) as r:
+            return await r.json()
+
+
+@app.get("/api/weather/beijing")
+async def get_beijing_weather():
+    if not WEATHER_API_KEY:
+        raise HTTPException(status_code=503, detail="Weather API key is not configured")
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://api.openweathermap.org/data/2.5/weather",
+            params={
+                "id": "1816670",
+                "appid": WEATHER_API_KEY,
+                "units": "metric",
+                "lang": "ru",
+            },
+        ) as r:
+            if r.status >= 400:
+                raise HTTPException(status_code=502, detail="Weather provider unavailable")
             return await r.json()
 
 
@@ -4429,6 +4468,7 @@ async def gift_item(data: dict):
     purchase_id = data.get("purchase_id")
     from_id = data.get("from_id")
     to_id = data.get("to_id")
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT item_code FROM shop_purchases WHERE id=? AND telegram_id=? AND status='active'", (purchase_id, from_id))
@@ -4436,6 +4476,16 @@ async def gift_item(data: dict):
     if not purchase:
         conn.close()
         raise HTTPException(status_code=404, detail="Purchase not found")
+    if from_id not in ADMIN_IDS:
+        c.execute(
+            """SELECT COUNT(*) FROM shop_purchases
+               WHERE given_to=? AND date(gifted_at)=?""",
+            (from_id, today),
+        )
+        gifts_today = c.fetchone()[0] or 0
+        if gifts_today >= SHOP_GIFT_DAILY_LIMIT:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Daily gift limit reached")
     c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
     user = c.fetchone()
     if not user or (user[0] or 0) < 20:
@@ -4516,7 +4566,23 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
     )
     conn.commit()
     conn.close()
-    return {"success": True}
+    text = (
+        "⛔ NETWATCH 网络保安\n\n"
+        "系统检测到异常活动\n"
+        "Система обнаружила подозрительную активность с вашей стороны.\n\n"
+        "Ваш аккаунт временно заморожен.\n"
+        "Магазин и кейсы недоступны.\n\n"
+        "— NetWatch Protocol v1.4 —"
+        if frozen else
+        "✅ NETWATCH 网络保安\n\n"
+        "访问已恢复\n"
+        "Доступ восстановлен.\n\n"
+        "Ваш аккаунт разморожен.\n"
+        "Магазин и кейсы снова доступны.\n\n"
+        "— NetWatch Protocol v1.4 —"
+    )
+    notified, notify_detail = await send_telegram_message(int(telegram_id), text)
+    return {"success": True, "notified": notified, "notify_detail": notify_detail if not notified else None}
 
 
 @app.post("/api/admin/reset_shop")
@@ -4550,14 +4616,9 @@ async def send_question(data: dict):
     result = c.fetchone()
     conn.close()
     name = result[0] if result else str(telegram_id)
-    token = "8383270927:AAGC4sgTk6O6nzU1P2vA88s59kZmduJRIbc"
     secret_admins = [389741116, 491711713, 1190015933]
-    async with aiohttp.ClientSession() as session:
-        for admin_id in secret_admins:
-            await session.post(
-                f"https://api.telegram.org/bot{token}/sendMessage",
-                json={"chat_id": admin_id, "text": f"🤫 Анонимный вопрос\n👤 От: {name}\n\n{question}"},
-            )
+    for admin_id in secret_admins:
+        await send_telegram_message(admin_id, f"🤫 Анонимный вопрос\n👤 От: {name}\n\n{question}")
     return {"success": True}
 
 
@@ -4621,7 +4682,11 @@ async def get_raid_status(telegram_id: int = 0):
     c = conn.cursor()
     finished_today = public_finished_raid_count(c, today)
     extra_raids = 0 if telegram_id in ADMIN_IDS else (get_extra_raids(c, telegram_id) if telegram_id else 0)
-    remaining_today = 999 if telegram_id in ADMIN_IDS else max(0, RAID_DAILY_LIMIT - finished_today) + extra_raids
+    user_attempts = 0 if telegram_id in ADMIN_IDS else (user_raid_attempt_count(c, today, telegram_id) if telegram_id else 0)
+    base_remaining = max(0, RAID_USER_DAILY_LIMIT - user_attempts)
+    if finished_today >= RAID_DAILY_LIMIT:
+        base_remaining = 0
+    remaining_today = 999 if telegram_id in ADMIN_IDS else base_remaining + extra_raids
     raid = latest_visible_raid(c, today, telegram_id)
     if not raid:
         conn.close()
@@ -4631,7 +4696,7 @@ async def get_raid_status(telegram_id: int = 0):
             "count": 0,
             "finished_today": finished_today,
             "remaining_today": remaining_today,
-            "limit_today": RAID_DAILY_LIMIT,
+            "limit_today": RAID_USER_DAILY_LIMIT,
             "required_players": RAID_MIN_PLAYERS,
         }
 
@@ -4647,7 +4712,7 @@ async def get_raid_status(telegram_id: int = 0):
         "count": len(participants),
         "finished_today": finished_today,
         "remaining_today": remaining_today,
-        "limit_today": RAID_DAILY_LIMIT,
+        "limit_today": RAID_USER_DAILY_LIMIT,
         "required_players": RAID_MIN_PLAYERS,
     }
 
@@ -4671,8 +4736,12 @@ async def join_raid(data: dict):
 
     finished_count = public_finished_raid_count(c, today)
     extra_raids = 0 if telegram_id in ADMIN_IDS else get_extra_raids(c, telegram_id)
+    user_attempts = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
     consumed_extra_attempt = False
-    if telegram_id not in ADMIN_IDS and finished_count >= RAID_DAILY_LIMIT:
+    needs_extra_attempt = telegram_id not in ADMIN_IDS and (
+        finished_count >= RAID_DAILY_LIMIT or user_attempts >= RAID_USER_DAILY_LIMIT
+    )
+    if needs_extra_attempt:
         if extra_raids <= 0:
             conn.close()
             raise HTTPException(status_code=400, detail="Daily raid limit reached")
@@ -4698,6 +4767,9 @@ async def join_raid(data: dict):
         raise HTTPException(status_code=409, detail="Already joined")
 
     c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (RAID_ENTRY_COST, telegram_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+    raid_entry_balance = c.fetchone()[0] or 0
+    log_economy(c, telegram_id, 'raid_entry', -RAID_ENTRY_COST, raid_entry_balance, raid_id, 'raid', f"Raid {today}")
     c.execute("SELECT COUNT(*) FROM raid_participants WHERE raid_id=?", (raid_id,))
     count = c.fetchone()[0]
 
@@ -4712,12 +4784,19 @@ async def join_raid(data: dict):
         if result == 'success':
             for tid in all_participants:
                 c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (RAID_SUCCESS_REWARD, tid))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
+                raid_reward_balance = c.fetchone()[0] or 0
+                log_economy(c, tid, 'raid_reward', RAID_SUCCESS_REWARD, raid_reward_balance, raid_id, 'raid', f"Raid {today}")
 
     conn.commit()
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
     finished_today = public_finished_raid_count(c, today)
-    remaining = 999 if telegram_id in ADMIN_IDS else max(0, RAID_DAILY_LIMIT - finished_today) + get_extra_raids(c, telegram_id)
+    attempts_today = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
+    base_remaining = max(0, RAID_USER_DAILY_LIMIT - attempts_today)
+    if finished_today >= RAID_DAILY_LIMIT:
+        base_remaining = 0
+    remaining = 999 if telegram_id in ADMIN_IDS else base_remaining + get_extra_raids(c, telegram_id)
     conn.close()
     return {
         "joined": True,
@@ -4727,7 +4806,7 @@ async def join_raid(data: dict):
         "participants_count": count,
         "new_points": new_points,
         "remaining_today": remaining,
-        "limit_today": RAID_DAILY_LIMIT,
+        "limit_today": RAID_USER_DAILY_LIMIT,
         "required_players": RAID_MIN_PLAYERS,
         "consumed_extra_attempt": consumed_extra_attempt,
         "points_change": (RAID_SUCCESS_REWARD - RAID_ENTRY_COST) if (launched and result == 'success') else -RAID_ENTRY_COST,

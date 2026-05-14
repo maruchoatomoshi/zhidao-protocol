@@ -7170,7 +7170,11 @@ body.tg-ios .bottom-nav {
 
 body.tg-ios .event-overlay,
 body.tg-ios .raid-overlay,
-body.tg-ios .question-modal {
+body.tg-ios .question-modal,
+body.tg-ios .contract-modal,
+body.tg-ios .profile-showcase-modal,
+body.tg-ios .admin-dossier-modal,
+body.tg-ios #diaryStarsPopup {
   height: var(--app-height, 100dvh);
   min-height: var(--app-height, 100dvh);
   overflow: hidden;
@@ -7183,6 +7187,12 @@ body.tg-ios .question-modal {
     calc(20px + var(--tg-safe-right))
     calc(20px + var(--tg-safe-bottom))
     calc(20px + var(--tg-safe-left));
+}
+
+body.tg-ios .question-box {
+  max-height: calc(var(--app-height, 100dvh) - 40px - var(--tg-safe-top) - var(--tg-safe-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.tg-ios .raid-content {
@@ -7282,11 +7292,69 @@ body.tg-ios .event-question-modal {
   left: calc(12px + var(--tg-safe-left));
   right: calc(12px + var(--tg-safe-right));
   bottom: calc(176px + var(--tg-safe-bottom));
-  max-height: min(52dvh, 420px);
+  max-height: max(220px, min(calc(var(--app-height, 100dvh) - 238px - var(--tg-safe-top) - var(--tg-safe-bottom)), 420px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   transform: translateZ(0);
+}
+
+body.tg-ios input,
+body.tg-ios textarea,
+body.tg-ios select {
+  font-size: 16px;
+}
+
+body.tg-ios .profile-showcase-modal {
+  padding:
+    calc(16px + var(--tg-safe-top))
+    calc(12px + var(--tg-safe-right))
+    calc(18px + var(--tg-safe-bottom))
+    calc(12px + var(--tg-safe-left));
+}
+
+body.tg-ios .profile-showcase-panel {
+  max-height: calc(var(--app-height, 100dvh) - 34px - var(--tg-safe-top) - var(--tg-safe-bottom));
+}
+
+body.tg-ios .admin-dossier-modal {
+  padding:
+    calc(18px + var(--tg-safe-top))
+    calc(12px + var(--tg-safe-right))
+    calc(18px + var(--tg-safe-bottom))
+    calc(12px + var(--tg-safe-left));
+}
+
+body.tg-ios .admin-dossier-sheet {
+  max-height: calc(var(--app-height, 100dvh) - 36px - var(--tg-safe-top) - var(--tg-safe-bottom));
+}
+
+body.tg-ios .contract-modal {
+  padding:
+    calc(12px + var(--tg-safe-top))
+    var(--tg-safe-right)
+    0
+    var(--tg-safe-left);
+}
+
+body.tg-ios .contract-modal-sheet {
+  max-height: calc(var(--app-height, 100dvh) - 12px - var(--tg-safe-top));
+  padding-bottom: calc(24px + var(--tg-safe-bottom));
+}
+
+body.tg-ios #diaryStarsPopup {
+  padding:
+    calc(12px + var(--tg-safe-top))
+    var(--tg-safe-right)
+    0
+    var(--tg-safe-left);
+}
+
+body.tg-ios #diaryStarsPopup > div {
+  max-height: calc(var(--app-height, 100dvh) - 12px - var(--tg-safe-top));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(24px + var(--tg-safe-bottom)) !important;
 }
 
 body.tg-ios .event-lobby-card {

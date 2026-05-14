@@ -516,7 +516,8 @@ function contactAdmin() { tg.openTelegramLink('https://t.me/christianpastor'); }
 
 async function loadWeather() {
   try {
-    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?id=1816670&appid=${WEATHER_KEY}&units=metric&lang=ru`);
+    const r = await fetch(`${API_URL}/api/weather/beijing`);
+    if (!r.ok) throw new Error('Weather unavailable');
     const data = await r.json();
     document.getElementById('weatherTemp').innerHTML = `${Math.round(data.main.temp)}<span>°C</span>`;
     document.getElementById('weatherDesc').textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);

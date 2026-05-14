@@ -1,4 +1,5 @@
 import asyncio
+import os
 import re
 import sqlite3
 import aiohttp
@@ -20,12 +21,12 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 import pytz
 
-BOT_TOKEN = "PASTE_BOT_TOKEN_HERE"
-MARZBAN_URL = "http://127.0.0.1:8000"
-MARZBAN_USER = "marucho"
-MARZBAN_PASS = "PASTE_MARZBAN_PASSWORD_HERE"
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+MARZBAN_URL = os.getenv("MARZBAN_URL", "http://127.0.0.1:8000")
+MARZBAN_USER = os.getenv("MARZBAN_USER", "")
+MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
 ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
-WEATHER_API_KEY = "PASTE_WEATHER_API_KEY_HERE"
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 BEIJING_CITY_ID = "1816670"
 MINI_APP_URL = "https://maruchoatomoshi.github.io/zhidao-protocol"
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
@@ -1218,7 +1219,17 @@ async def gift_item_cmd(message: types.Message):
                 except Exception:
                     pass
             else:
-                await message.answer("❌ Ошибка. Предмет не найден или уже использован.")
+                try:
+                    data = await r.json()
+                except Exception:
+                    data = {}
+                detail = data.get("detail")
+                if detail == "Daily gift limit reached":
+                    await message.answer("❌ Лимит подарков на сегодня исчерпан. Можно отправить до 5 подарков в день.")
+                elif detail == "Not enough points for tax":
+                    await message.answer("❌ Недостаточно звёзд для налога на подарок. Нужно 20★.")
+                else:
+                    await message.answer("❌ Ошибка. Предмет не найден или уже использован.")
 
 
 @dp.message(Command("вопрос"))

@@ -358,7 +358,7 @@ function useItem(id, name) {
     } catch(e) { showToast('Ошибка соединения'); }
   });
 }
-function giftItem(id, name) { tg.showPopup({title:`Подарить ${name}?`,message:'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов',buttons:[{type:'ok'}]}); }
+function giftItem(id, name) { tg.showPopup({title:`Подарить ${name}?`,message:'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов. Лимит: 5 подарков в день.',buttons:[{type:'ok'}]}); }
 
 async function sellItem(id, name, price) {
   const refund = Math.floor(price / 2);
