@@ -35,7 +35,7 @@ Suggested backend call:
 Payload:
 ```json
 {
-  "telegram_id": 123456789,
+  "telegram_id": "USER_ID_HERE",
   "entry_date": "2026-07-05",
   "lesson_score": "5/5",
   "diary_score": "4/5"
@@ -54,7 +54,7 @@ Suggested backend call:
 Payload:
 ```json
 {
-  "telegram_id": 123456789,
+  "telegram_id": "USER_ID_HERE",
   "entry_date": "2026-07-05",
   "locked": true
 }
@@ -71,7 +71,7 @@ Suggested backend call:
 Payload:
 ```json
 {
-  "telegram_id": 123456789,
+  "telegram_id": "USER_ID_HERE",
   "entry_date": "2026-07-05",
   "locked": false
 }

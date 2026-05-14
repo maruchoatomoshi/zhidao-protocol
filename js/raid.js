@@ -183,7 +183,7 @@ function prepareRaidVisual() {
 
 async function playRaidIntro(token) {
     const steps = [
-        { percent: 8, state: 'LINK', hint: 'Нейролинк инициирован', status: 'Поднимаем скрытый канал МЮ...' },
+        { percent: 8, state: 'LINK', hint: 'Нейролинк инициирован', status: 'Поднимаем скрытый канал цели...' },
         { percent: 24, state: 'SCAN', hint: 'Разведка маршрута', status: 'Сканируем коридоры, расписание и окна риска...' },
         { percent: 41, state: 'MASK', hint: 'Маскировка сигнала', status: 'Глушим следы отряда в локальной сети...' },
         { percent: 63, state: 'ROUTE', hint: 'Маршрут отхода', status: 'Собираем точки входа и запасной выход...' },
@@ -375,7 +375,7 @@ async function joinRaid() {
             }
 
             if (data.launched && data.result === 'success') {
-                setRaidProgressVisual(100, 'VICTORY', 'Альфабосс пробит. Награда зачислена.', 'success');
+                setRaidProgressVisual(100, 'VICTORY', 'Альфа-цель пробита. Награда зачислена.', 'success');
                 setRaidResultPanel('success', 'РЕЙД УСПЕШЕН', 'Команда вышла чисто. Награда начислена.');
                 launchConfetti(80);
             } else if (data.launched && data.result === 'defended') {

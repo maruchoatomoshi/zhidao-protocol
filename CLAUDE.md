@@ -1,4 +1,4 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 Context and working rules for Claude / Claude Code in the `ZHIDAO Protocol` repository.
 
@@ -24,8 +24,8 @@ grep -n "/api/diary/stars" /root/zhidao_api.py
 python3 -m py_compile /root/zhidao_api.py
 systemctl status zhidao_api.service --no-pager
 journalctl -u zhidao_api.service -n 120 --no-pager
-curl -k "https://127.0.0.1:8443/api/diary/stars/overview?entry_date=2026-04-29" -H "X-Admin-Id: 389741116"
-curl -k "https://127.0.0.1:8443/api/diary/stars/leaderboard" -H "X-Admin-Id: 389741116"
+curl -k "https://127.0.0.1:8443/api/diary/stars/overview?entry_date=2026-04-29" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
+curl -k "https://127.0.0.1:8443/api/diary/stars/leaderboard" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
 ```
 
 Frontend diagnostics:
@@ -282,8 +282,8 @@ After backend changes:
 - For diary stars:
 
 ```bash
-curl -k "https://127.0.0.1:8443/api/diary/stars/overview?entry_date=2026-04-29" -H "X-Admin-Id: 389741116"
-curl -k "https://127.0.0.1:8443/api/diary/stars/leaderboard" -H "X-Admin-Id: 389741116"
+curl -k "https://127.0.0.1:8443/api/diary/stars/overview?entry_date=2026-04-29" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
+curl -k "https://127.0.0.1:8443/api/diary/stars/leaderboard" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
 ```
 
 ## Git Workflow

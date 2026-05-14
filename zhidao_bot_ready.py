@@ -25,14 +25,12 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 MARZBAN_URL = os.getenv("MARZBAN_URL", "http://127.0.0.1:8000")
 MARZBAN_USER = os.getenv("MARZBAN_USER", "")
 MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
-ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 BEIJING_CITY_ID = "1816670"
-MINI_APP_URL = "https://maruchoatomoshi.github.io/zhidao-protocol"
+MINI_APP_URL = os.getenv("MINI_APP_URL", "https://example.com/zhidao-protocol")
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
-API_URL = "https://127.0.0.1:8443"
-PRESENCE_ADMIN_ID = ADMIN_IDS[0]
+API_URL = os.getenv("API_URL", "https://127.0.0.1:8443")
 PRESENCE_PENALTY_POINTS = 50
 PRESENCE_RETRY_STATUSES = {"pending", "leave_rejected"}
 PRESENCE_STATUS_LABELS = {
@@ -67,6 +65,25 @@ dp = Dispatcher(storage=MemoryStorage())
 scheduler = AsyncIOScheduler(timezone=BEIJING_TZ)
 
 reminders_enabled = False
+
+
+def parse_int_list_env(name: str) -> list[int]:
+    raw = os.getenv(name, "")
+    result = []
+    for part in raw.replace(";", ",").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            result.append(int(part))
+        except ValueError:
+            continue
+    return result
+
+
+ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
+PRESENCE_ADMIN_ID = ADMIN_IDS[0]
+ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "admin")
 pending_codes = {}
 
 
@@ -160,7 +177,7 @@ def is_cyrillic_full_name(value):
 
 
 def validate_expected_student_name(full_name, telegram_id):
-    if telegram_id in ADMIN_IDS or full_name == "舒珩 佟佳":
+    if telegram_id in ADMIN_IDS:
         return True, full_name, ""
 
     if not is_cyrillic_full_name(full_name):
@@ -730,7 +747,7 @@ async def start(message: types.Message, state: FSMContext):
                 parse_mode="Markdown",
             )
         else:
-            await message.answer("❌ Неверный код. Обратитесь к администратору: @christianpastor")
+            await message.answer(f"❌ Неверный код. Обратитесь к администратору: @{ADMIN_CONTACT_USERNAME}")
     else:
         await message.answer(
             "👋 Добро пожаловать в ZHIDAO Protocol!\n\n"
@@ -780,7 +797,7 @@ async def process_name(message: types.Message, state: FSMContext):
             reply_markup=get_mini_app_keyboard(),
         )
     else:
-        await message.answer("❌ Ошибка получения конфига. Обратитесь к администратору: @christianpastor")
+        await message.answer(f"❌ Ошибка получения конфига. Обратитесь к администратору: @{ADMIN_CONTACT_USERNAME}")
 
 
 @dp.message(Command("help", "помощь"))
@@ -1208,7 +1225,7 @@ async def gift_item_cmd(message: types.Message):
     to_id, to_name, _ = recipient
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            "https://hk.marucho.icu:8443/api/shop/gift",
+            f"{API_URL}/api/shop/gift",
             json={"purchase_id": purchase_id, "from_id": message.from_user.id, "to_id": to_id},
             ssl=False,
         ) as r:
@@ -1259,7 +1276,7 @@ async def netwatch_strike_cmd(message: types.Message):
         return
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            "https://hk.marucho.icu:8443/api/netwatch/strike",
+            f"{API_URL}/api/netwatch/strike",
             json={"telegram_id": message.from_user.id, "target_name": args[1], "points": points},
             ssl=False,
         ) as r:
@@ -1283,7 +1300,7 @@ async def netwatch_blackwall_cmd(message: types.Message):
         return
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            "https://hk.marucho.icu:8443/api/netwatch/blackwall",
+            f"{API_URL}/api/netwatch/blackwall",
             json={"telegram_id": message.from_user.id, "target_name": args[1]},
             ssl=False,
         ) as r:

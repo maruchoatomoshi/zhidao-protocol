@@ -26,9 +26,56 @@ MARZBAN_USER = os.getenv("MARZBAN_USER", "")
 MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
-ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731]
-ARCHITECT_IDS = [389741116]
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
+
+
+def parse_int_list_env(name: str) -> list[int]:
+    raw = os.getenv(name, "")
+    result = []
+    for part in raw.replace(";", ",").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            result.append(int(part))
+        except ValueError:
+            continue
+    return result
+
+
+def parse_text_list_env(name: str) -> list[str]:
+    raw = os.getenv(name, "")
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+    except json.JSONDecodeError:
+        pass
+    return [line.strip() for line in raw.replace(";", "\n").splitlines() if line.strip()]
+
+
+def load_expected_student_names() -> list[str]:
+    names = parse_text_list_env("EXPECTED_STUDENT_NAMES")
+    if names:
+        return names
+
+    path = os.getenv("EXPECTED_STUDENTS_FILE", "").strip()
+    if path:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return [line.strip() for line in f if line.strip()]
+        except OSError:
+            return []
+
+    return []
+
+
+ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
+ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS") or [-1]
+INTRO_CYBERPUNK_ADMIN_IDS = set(parse_int_list_env("INTRO_CYBERPUNK_ADMIN_IDS"))
+INTRO_GENSHIN_ADMIN_IDS = set(parse_int_list_env("INTRO_GENSHIN_ADMIN_IDS"))
 
 PRESENCE_CHECK_TYPES = {"morning", "evening"}
 PRESENCE_STATUSES = {
@@ -46,90 +93,7 @@ PRESENCE_SAFE_STATUSES = {"confirmed", "free_time", "admin_approved", "skipped"}
 PRESENCE_ATTEMPT_LIMIT = 3
 PRESENCE_PENALTY_POINTS = 50
 
-EXPECTED_STUDENT_NAMES = [
-    "Айвазов Арсен",
-    "Албу Александр",
-    "Анисимова Кристина",
-    "Афанасьева Ирина",
-    "Ахметова Карина",
-    "Башилова Василиса",
-    "Болотникова Евгения",
-    "Бородин Станислав",
-    "Будаева Елизавета",
-    "Бурлакова Елизавета",
-    "Васильчиков Николай",
-    "Гильмутдинова Варвара",
-    "Гончаров Тимофей",
-    "Горьковенко Алена",
-    "Гостев Семен",
-    "Гусаров Сергей",
-    "Дюзйол Алина",
-    "Евстигнеева Настя",
-    "Евтухова Мария",
-    "Еремин Арсений",
-    "Живаева Тамара",
-    "Зеленова Ангелина",
-    "Казенова Полина",
-    "Каминская Кристина",
-    "Каминский Олег",
-    "Кисимов Федор",
-    "Клочай Алина",
-    "Козлова Александра",
-    "Королева Алина",
-    "Котлячков Никита",
-    "Краснов Алексей",
-    "Кудашова Анастасия",
-    "Кулаков Владимир",
-    "Кулаков Георгий",
-    "Кулешова Виктория",
-    "Кулешова Анастасия",
-    "Куприна Елизавета",
-    "Лавринов Тимур",
-    "Лайков Артем",
-    "Лебедев Матвей",
-    "Левицкая Анастасия",
-    "Любимова Валерия",
-    "Макарова Мария",
-    "Малютин Георгий",
-    "Метелев Алексей",
-    "Минаева Алиса",
-    "Мироненко Андрей",
-    "Мироненко Владимир",
-    "Мокрецова Мария",
-    "Немтырев Геннадий",
-    "Нуштаев Михаил",
-    "Островкин Илья",
-    "Павлов Григорий",
-    "Павлов Георгий",
-    "Пан Юлия",
-    "Пинчук Андрей",
-    "Рванцева Дарья",
-    "Резанова Екатерина",
-    "Рыжкова Арина",
-    "Рычкин Мирослав",
-    "Савкова Анна",
-    "Семенов Артем",
-    "Скрипин Захар",
-    "Смирнова Александра",
-    "Соколов Александр",
-    "Спирин Дмитрий",
-    "Сурина Ксения",
-    "Терехова Стефания",
-    "Уланов Матвей",
-    "Уткина Алиса",
-    "Федосова Александра",
-    "Фоменко Виктория",
-    "Хмелева Виктория",
-    "Холоша Ксения",
-    "Хорбенко Маргарита",
-    "Чумаков Александр",
-    "Шакиров Мухамедали",
-    "Шакирова Олия",
-    "Шарина Мария",
-    "Шелякина Ульяна",
-    "Шелякина Полина",
-    "Языкова Вера",
-]
+EXPECTED_STUDENT_NAMES = load_expected_student_names()
 
 RAID_ENTRY_COST = 50
 RAID_SUCCESS_REWARD = 100
@@ -2096,12 +2060,19 @@ async def get_user_profile_dossier(telegram_id: int):
         title = "协议执行者 / Исполнитель протокола"
 
     path_label = "网络守卫" if theme_path == "cyberpunk" else "祈愿者" if theme_path == "genshin" else "未同步"
-    if telegram_id == 389741116:
+    if telegram_id in ARCHITECT_IDS:
         permission_label = "架构师"
     elif telegram_id in ADMIN_IDS:
         permission_label = "系统架构师"
     else:
         permission_label = "学生节点"
+
+    admin_intro_variant = None
+    if telegram_id in INTRO_CYBERPUNK_ADMIN_IDS:
+        admin_intro_variant = "cyberpunk"
+    elif telegram_id in INTRO_GENSHIN_ADMIN_IDS:
+        admin_intro_variant = "genshin"
+
     return {
         "telegram_id": telegram_id,
         "full_name": full_name,
@@ -2109,6 +2080,7 @@ async def get_user_profile_dossier(telegram_id: int):
         "points": points,
         "rep_score": rep_score,
         "theme_path": theme_path,
+        "admin_intro_variant": admin_intro_variant,
         "path_label": path_label,
         "rank": rank,
         "sync_rate": sync_rate,
@@ -4616,8 +4588,9 @@ async def send_question(data: dict):
     result = c.fetchone()
     conn.close()
     name = result[0] if result else str(telegram_id)
-    secret_admins = [389741116, 491711713, 1190015933]
-    for admin_id in secret_admins:
+    for admin_id in ADMIN_IDS:
+        if admin_id <= 0:
+            continue
         await send_telegram_message(admin_id, f"🤫 Анонимный вопрос\n👤 От: {name}\n\n{question}")
     return {"success": True}
 

@@ -15,7 +15,8 @@ const API_URL = 'https://hk.marucho.icu:8443';
 const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark', 'admin', 'architect'];
 const WEATHER_KEY = '';
 const EXCHANGE_KEY = '';
-const ADMIN_IDS = [389741116, 244487659, 1190015933, 491711713, 463135292, 8222459731];
+const ADMIN_IDS = [];
+window.ADMIN_CONTACT_URL = '';
 
 window.APP_LAUNCH_LOCK_ENABLED = false;
 window.APP_LAUNCH_TARGET_AT = '2026-07-04T09:00:00+08:00';

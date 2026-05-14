@@ -254,38 +254,12 @@ const ADMIN_INTRO_ASSETS = {
   genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_intro.mp4',
 };
 
-// Known IDs are used first. Name matching covers admins whose IDs are not in code yet.
-const ADMIN_INTRO_GROUPS = {
-  cyberpunk: {
-    ids: [244487659, 463135292, 8222459731],
-    names: ['михаил', 'мю', '舒珩', '佟佳', 'тяньхао', 'илья', 'островкин'],
-    caption: 'NETWATCH ADMIN ACCESS',
-  },
-  genshin: {
-    ids: [491711713, 1190015933],
-    names: ['юлия', 'юля', 'елизавета', 'лиза'],
-    caption: 'GENSHIN ADMIN ACCESS',
-  },
-};
-
 let adminIntroPlaying = false;
 let adminIntroDoneCallback = null;
 
 function resolveAdminIntroVariant(profile = {}) {
   if (!isAdmin || !currentUserId) return null;
-  const id = Number(currentUserId);
-  const rawName = [
-    profile.full_name,
-    profile.username,
-    tg.initDataUnsafe?.user?.first_name,
-    tg.initDataUnsafe?.user?.last_name,
-  ].filter(Boolean).join(' ').toLowerCase();
-
-  for (const [variant, cfg] of Object.entries(ADMIN_INTRO_GROUPS)) {
-    if ((cfg.ids || []).includes(id)) return variant;
-    if ((cfg.names || []).some(name => rawName.includes(name))) return variant;
-  }
-  return null;
+  return ADMIN_INTRO_ASSETS[profile.admin_intro_variant] ? profile.admin_intro_variant : null;
 }
 
 function playAdminIntroIfNeeded(profile = {}, done) {
@@ -512,7 +486,14 @@ function showHelp() {
   tg.showPopup({ title: '📖 Инструкция', message: '1. Нажми "КОНФИГ"\n2. Нажми "СКОПИРОВАТЬ"\n3. Открой Happ → + → вставь ссылку\n4. Подключись!', buttons: [{type:'ok'}] });
 }
 
-function contactAdmin() { tg.openTelegramLink('https://t.me/christianpastor'); }
+function contactAdmin() {
+  const url = window.ADMIN_CONTACT_URL || '';
+  if (!url) {
+    showToast('Контакт администратора настраивается на сервере', 'info');
+    return;
+  }
+  tg.openTelegramLink(url);
+}
 
 async function loadWeather() {
   try {

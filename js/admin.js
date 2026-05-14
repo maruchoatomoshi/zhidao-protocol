@@ -1278,17 +1278,16 @@ async function adminResolveContract(id, action) {
 const RAID_CONFIG = {
     minPlayers: 3,
     maxPlayers: 15,
-    adminIds: [389741116, 244487659, 1190015933, 491711713],
     cyberpunk: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
-        title: '// MU NIGHT RAID // TARGET: МЮ',
+        title: '// NIGHT RAID // TARGET: ALPHA',
         kicker: 'MU RAID // 夜间行动',
         chips: ['Stealth', 'Team Sync', 'Risk 40%'],
         placeholderColor: '#ff003c'
     },
     genshin: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme.png?raw=true',
-        title: '璃月试炼 // МИКЕЛАНДЖЕЛО',
+        title: '璃月试炼 // ALPHA TRIAL',
         kicker: 'LIYUE TRIAL // 璃月试炼',
         chips: ['契约', '共鸣', '胜算 40%'],
         placeholderColor: '#dbb165'
