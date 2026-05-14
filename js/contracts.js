@@ -377,6 +377,13 @@ function renderContractCard(c, showActions) {
   const adminBadgeHtml = isAdminContract
     ? '<span class="contract-admin-badge">ADMIN ORDER</span>'
     : '';
+  const flowSteps = ['open', 'accepted', 'completed'];
+  const flowIndex = c.status === 'disputed'
+    ? 1
+    : (c.status === 'cancelled' ? -1 : flowSteps.indexOf(c.status));
+  const flowHtml = `<div class="contract-flow contract-flow-${escapeHtml(c.status || 'unknown')}">
+    ${flowSteps.map((step, idx) => `<span class="${idx <= flowIndex ? 'done' : ''}" data-step="${idx + 1}"></span>`).join('')}
+  </div>`;
 
   return `<div class="contract-card status-${escapeHtml(c.status || 'unknown')}${isAdminContract ? ' admin-contract' : ''}">
     <div class="contract-card-head">
@@ -399,6 +406,7 @@ function renderContractCard(c, showActions) {
       <span class="contract-person">${escapeHtml(creatorName)}${isMe ? ' · ты' : ''}</span>
       ${assigneeHtml}
     </div>
+    ${flowHtml}
     ${suspHtml}
     ${actionsHtml}
   </div>`;

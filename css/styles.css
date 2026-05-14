@@ -12311,6 +12311,46 @@ body.is-architect .profile-card-spark.spark-bl {
   background: linear-gradient(180deg, #60b4d4, #d4af37 72%, transparent);
 }
 
+.contract-flow {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0 2px;
+}
+
+.contract-flow::before {
+  content: '';
+  position: absolute;
+  left: 11%;
+  right: 11%;
+  top: 50%;
+  height: 1px;
+  background: var(--contract-card-border);
+  transform: translateY(-50%);
+}
+
+.contract-flow span {
+  position: relative;
+  z-index: 1;
+  height: 7px;
+  border: 1px solid var(--contract-card-border);
+  border-radius: 999px;
+  background: var(--contract-muted-bg);
+}
+
+.contract-flow span.done {
+  border-color: var(--contract-accent-border);
+  background: linear-gradient(90deg, var(--contract-accent), color-mix(in srgb, var(--contract-accent) 42%, transparent));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--contract-accent) 18%, transparent);
+}
+
+.contract-flow-accepted span.done { border-color: rgba(52,152,219,0.42); background: linear-gradient(90deg, #3498db, rgba(52,152,219,0.28)); }
+.contract-flow-completed span.done { border-color: rgba(46,204,113,0.42); background: linear-gradient(90deg, #2ecc71, rgba(46,204,113,0.26)); }
+.contract-flow-disputed span.done { border-color: rgba(231,76,60,0.42); background: linear-gradient(90deg, #e74c3c, rgba(231,76,60,0.25)); }
+.contract-flow-cancelled span { opacity: 0.5; }
+
 .contract-meta {
   display: flex;
   gap: 7px;
@@ -12381,8 +12421,8 @@ body.is-architect .profile-card-spark.spark-bl {
   z-index: 9100;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0,0,0,0.86);
-  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.90);
+  backdrop-filter: blur(16px);
 }
 
 .contract-modal-sheet {
@@ -12397,8 +12437,8 @@ body.is-architect .profile-card-spark.spark-bl {
   border-radius: 18px 18px 0 0;
   background:
     radial-gradient(circle at 100% 0%, var(--contract-accent-soft), transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--bg) 94%, #141421), color-mix(in srgb, var(--bg) 98%, #05050b));
-  box-shadow: 0 -18px 50px rgba(0,0,0,0.46);
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 88%, #141421), color-mix(in srgb, var(--bg) 96%, #05050b));
+  box-shadow: 0 -18px 58px rgba(0,0,0,0.58);
 }
 
 .contract-modal-close {
@@ -12540,6 +12580,77 @@ body.is-architect #page-contracts {
   --contract-accent: #d4af37;
   --contract-accent-soft: rgba(212,175,55,0.12);
   --contract-accent-border: rgba(212,175,55,0.34);
+}
+
+body.theme-nw-light .contracts-tabs,
+body.theme-genshin-light .contracts-tabs {
+  background: rgba(255,255,255,0.62);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.38);
+}
+
+body.theme-nw-light .contracts-rules-text,
+body.theme-nw-light .contract-description,
+body.theme-genshin-light .contracts-rules-text,
+body.theme-genshin-light .contract-description {
+  color: #33281d;
+}
+
+body.theme-nw-light .contract-card-title,
+body.theme-nw-light .contracts-empty-title,
+body.theme-genshin-light .contract-card-title,
+body.theme-genshin-light .contracts-empty-title {
+  color: #181612;
+}
+
+body.theme-nw-light .contract-person,
+body.theme-nw-light .contract-reward-sub,
+body.theme-nw-light .contracts-empty-hint,
+body.theme-nw-light .contracts-rule-muted,
+body.theme-genshin-light .contract-person,
+body.theme-genshin-light .contract-reward-sub,
+body.theme-genshin-light .contracts-empty-hint,
+body.theme-genshin-light .contracts-rule-muted {
+  color: #5d5345;
+}
+
+body.theme-nw-light .contracts-filter-chip,
+body.theme-nw-light .contract-category-badge,
+body.theme-genshin-light .contracts-filter-chip,
+body.theme-genshin-light .contract-category-badge {
+  background: rgba(255,255,255,0.72);
+  color: #504637;
+}
+
+body.theme-nw-light .contract-reward,
+body.theme-genshin-light .contract-reward {
+  background: rgba(255,255,255,0.72);
+}
+
+body.theme-nw-light .contract-modal,
+body.theme-genshin-light .contract-modal {
+  background: rgba(22,18,12,0.66);
+}
+
+body.theme-nw-light .contract-modal-sheet,
+body.theme-genshin-light .contract-modal-sheet {
+  background:
+    radial-gradient(circle at 100% 0%, var(--contract-accent-soft), transparent 42%),
+    linear-gradient(180deg, rgba(255,252,244,0.98), rgba(246,239,224,0.98));
+}
+
+body.theme-nw-light .contract-field input,
+body.theme-nw-light .contract-field textarea,
+body.theme-nw-light .contract-field select,
+body.theme-genshin-light .contract-field input,
+body.theme-genshin-light .contract-field textarea,
+body.theme-genshin-light .contract-field select {
+  background: rgba(255,255,255,0.88);
+  color: #16120c;
+}
+
+body.theme-nw-light .contract-submit-btn,
+body.theme-genshin-light .contract-submit-btn {
+  background: color-mix(in srgb, var(--contract-accent) 13%, #fff);
 }
 
 @media (max-width: 380px) {
