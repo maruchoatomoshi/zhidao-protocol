@@ -11,22 +11,20 @@
 </head>
 <body>
 
-<!-- BLACKWALL BOOT SEQUENCE — первый элемент body, виден до первой отрисовки -->
-<div id="blackwall-boot">
+<!-- BLACKWALL BOOT SEQUENCE — показывается только после подтверждения Architect через API -->
+<div id="blackwall-boot" style="display:none;">
   <div class="boot-scanline"></div>
   <div class="boot-terminal">
     <div class="boot-line" id="bootLines"></div>
     <span class="boot-cursor" id="bootCursor"></span>
   </div>
 </div>
-<!-- Синхронный скрипт: скрывает оверлей ДО первого пейнта если не архитектор -->
+<!-- Синхронный скрипт: не доверяем stale localStorage до проверки API -->
 <script>
 (function() {
   var el = document.getElementById('blackwall-boot');
   if (!el) return;
-  if (!localStorage.getItem('zhidao_architect') || sessionStorage.getItem('bw_boot_done')) {
-    el.style.display = 'none';
-  }
+  el.style.display = 'none';
 })();
 </script>
 

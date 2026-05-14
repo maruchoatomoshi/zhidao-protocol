@@ -406,7 +406,7 @@ function startBlackwallBoot(cb) {
     _bootCbs.forEach(f => f()); _bootCbs = []; return;
   }
 
-  // Overlay is already visible (CSS default + inline script logic)
+  linesEl.innerHTML = '';
   overlay.style.display = 'flex';
 
   const LINES = [
