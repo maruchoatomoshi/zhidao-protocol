@@ -30,6 +30,14 @@
 })();
 </script>
 
+<!-- Эксклюзивные видео-заставки админов -->
+<div id="adminIntroOverlay" class="admin-intro-overlay" style="display:none;" onclick="skipAdminIntro()">
+  <video id="adminIntroVideo" class="admin-intro-video" muted playsinline preload="metadata"></video>
+  <div class="admin-intro-vignette"></div>
+  <button class="admin-intro-skip" onclick="event.stopPropagation(); skipAdminIntro();">ПРОПУСТИТЬ</button>
+  <div class="admin-intro-caption" id="adminIntroCaption">ADMIN ACCESS</div>
+</div>
+
 <!-- Фоновые иероглифы -->
 <div class="bg-kanji" style="font-size:160px;top:-20px;right:-20px;color:rgba(180,20,20,0.03);font-family:serif;--kanji-duration:18s;animation-delay:-3s;">道</div>
 <div class="bg-kanji" style="font-size:100px;bottom:80px;left:-15px;color:rgba(180,20,20,0.025);font-family:serif;--kanji-duration:22s;animation-delay:-9s;">龙</div>

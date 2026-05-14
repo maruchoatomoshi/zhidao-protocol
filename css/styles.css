@@ -11871,6 +11871,98 @@ body.is-architect .profile-card-spark.spark-bl {
   background: rgba(0,0,0,0.12);
 }
 
+.admin-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #020205;
+  animation: adminIntroIn 0.28s ease-out both;
+}
+
+.admin-intro-overlay.closing {
+  animation: adminIntroOut 0.42s ease-in both;
+}
+
+.admin-intro-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #020205;
+}
+
+.admin-intro-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, transparent 34%, rgba(0,0,0,0.22) 62%, rgba(0,0,0,0.72) 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.26), transparent 24%, rgba(0,0,0,0.42));
+}
+
+.admin-intro-overlay.cyberpunk .admin-intro-vignette {
+  box-shadow: inset 0 0 90px rgba(232,34,0,0.22), inset 0 0 120px rgba(96,180,212,0.08);
+}
+
+.admin-intro-overlay.genshin .admin-intro-vignette {
+  box-shadow: inset 0 0 90px rgba(212,175,55,0.22), inset 0 0 120px rgba(110,150,230,0.10);
+}
+
+.admin-intro-skip {
+  position: absolute;
+  right: max(14px, var(--tg-safe-right));
+  bottom: calc(18px + var(--tg-safe-bottom));
+  z-index: 2;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.36);
+  color: rgba(255,255,255,0.78);
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  backdrop-filter: blur(10px);
+}
+
+.admin-intro-caption {
+  position: absolute;
+  left: max(14px, var(--tg-safe-left));
+  bottom: calc(20px + var(--tg-safe-bottom));
+  z-index: 2;
+  color: rgba(255,255,255,0.84);
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 0 18px rgba(255,255,255,0.24);
+}
+
+.admin-intro-overlay.cyberpunk .admin-intro-caption {
+  color: #8fe9ff;
+  text-shadow: 0 0 18px rgba(96,180,212,0.55);
+}
+
+.admin-intro-overlay.genshin .admin-intro-caption {
+  color: #f4d98a;
+  text-shadow: 0 0 18px rgba(212,175,55,0.52);
+}
+
+@keyframes adminIntroIn {
+  from { opacity: 0; filter: brightness(0.7); }
+  to { opacity: 1; filter: brightness(1); }
+}
+
+@keyframes adminIntroOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.015); }
+}
+
 .contracts-tab {
   min-height: 36px;
   border: 1px solid transparent;

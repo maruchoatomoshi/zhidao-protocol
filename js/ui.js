@@ -188,10 +188,13 @@ async function loadUserData(telegramId) {
         if (badge) badge.textContent = '架构师 // ARCHITECT';
         const kicker = document.getElementById('profileKicker');
         if (kicker) kicker.textContent = 'ARCHITECT // PROTOCOL';
-        startBlackwallBoot(() => {
+        const afterIntro = () => {
           const nameEl = document.getElementById('profileDisplayName');
           cipherDecode(nameEl);
-        });
+        };
+        if (!playAdminIntroIfNeeded(data, afterIntro)) {
+          startBlackwallBoot(afterIntro);
+        }
         setupProfileTilt();
       } else {
         // Clear flag — not architect (covers account change / stale localStorage)
@@ -204,6 +207,9 @@ async function loadUserData(telegramId) {
           _bootRunning = false;
           _bootCbs = [];
         }
+      }
+      if (isAdmin && !isArchitect) {
+        playAdminIntroIfNeeded(data);
       }
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
@@ -239,6 +245,115 @@ async function loadUserData(telegramId) {
     document.getElementById('status').textContent = '● ОФЛАЙН';
     document.getElementById('username').textContent = 'Ошибка связи';
   }
+}
+
+// ── ADMIN EXCLUSIVE INTRO VIDEOS ─────────────────────────────
+
+const ADMIN_INTRO_ASSETS = {
+  cyberpunk: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/cyberpunktheme_intro.mp4',
+  genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_intro.mp4',
+};
+
+// Known IDs are used first. Name matching covers admins whose IDs are not in code yet.
+const ADMIN_INTRO_GROUPS = {
+  cyberpunk: {
+    ids: [8222459731],
+    names: ['михаил', 'мю', '舒珩', '佟佳', 'тяньхао', 'илья', 'островкин'],
+    caption: 'NETWATCH ADMIN ACCESS',
+  },
+  genshin: {
+    ids: [],
+    names: ['юлия', 'юля', 'елизавета', 'лиза'],
+    caption: 'GENSHIN ADMIN ACCESS',
+  },
+};
+
+let adminIntroPlaying = false;
+let adminIntroDoneCallback = null;
+
+function resolveAdminIntroVariant(profile = {}) {
+  if (!isAdmin || !currentUserId) return null;
+  const id = Number(currentUserId);
+  const rawName = [
+    profile.full_name,
+    profile.username,
+    tg.initDataUnsafe?.user?.first_name,
+    tg.initDataUnsafe?.user?.last_name,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  for (const [variant, cfg] of Object.entries(ADMIN_INTRO_GROUPS)) {
+    if ((cfg.ids || []).includes(id)) return variant;
+    if ((cfg.names || []).some(name => rawName.includes(name))) return variant;
+  }
+  return null;
+}
+
+function playAdminIntroIfNeeded(profile = {}, done) {
+  const variant = resolveAdminIntroVariant(profile);
+  if (!variant) return false;
+  const sessionKey = `zhidao_admin_intro_${variant}_done`;
+  if (sessionStorage.getItem(sessionKey)) return false;
+
+  const overlay = document.getElementById('adminIntroOverlay');
+  const video = document.getElementById('adminIntroVideo');
+  const caption = document.getElementById('adminIntroCaption');
+  if (!overlay || !video) return false;
+
+  adminIntroPlaying = true;
+  adminIntroDoneCallback = typeof done === 'function' ? done : null;
+  sessionStorage.setItem(sessionKey, '1');
+
+  const cfg = ADMIN_INTRO_GROUPS[variant] || {};
+  if (caption) caption.textContent = cfg.caption || 'ADMIN ACCESS';
+  overlay.classList.toggle('genshin', variant === 'genshin');
+  overlay.classList.toggle('cyberpunk', variant === 'cyberpunk');
+  overlay.style.display = 'flex';
+  overlay.classList.remove('closing');
+
+  video.pause();
+  video.src = ADMIN_INTRO_ASSETS[variant];
+  video.currentTime = 0;
+  video.onended = finishAdminIntro;
+  video.onerror = finishAdminIntro;
+
+  const playPromise = video.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {
+      setTimeout(finishAdminIntro, 1200);
+    });
+  }
+  return true;
+}
+
+function finishAdminIntro() {
+  if (!adminIntroPlaying) return;
+  adminIntroPlaying = false;
+  const overlay = document.getElementById('adminIntroOverlay');
+  const video = document.getElementById('adminIntroVideo');
+  if (video) {
+    video.onended = null;
+    video.onerror = null;
+    video.pause();
+  }
+  if (overlay) {
+    overlay.classList.add('closing');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      overlay.classList.remove('closing');
+      if (video) video.removeAttribute('src');
+      const cb = adminIntroDoneCallback;
+      adminIntroDoneCallback = null;
+      if (cb) cb();
+    }, 420);
+  } else if (adminIntroDoneCallback) {
+    const cb = adminIntroDoneCallback;
+    adminIntroDoneCallback = null;
+    cb();
+  }
+}
+
+function skipAdminIntro() {
+  finishAdminIntro();
 }
 
 // ── ARCHITECT WOW ANIMATIONS ─────────────────────────────────
