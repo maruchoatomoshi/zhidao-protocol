@@ -257,12 +257,12 @@ const ADMIN_INTRO_ASSETS = {
 // Known IDs are used first. Name matching covers admins whose IDs are not in code yet.
 const ADMIN_INTRO_GROUPS = {
   cyberpunk: {
-    ids: [8222459731],
+    ids: [244487659, 463135292, 8222459731],
     names: ['михаил', 'мю', '舒珩', '佟佳', 'тяньхао', 'илья', 'островкин'],
     caption: 'NETWATCH ADMIN ACCESS',
   },
   genshin: {
-    ids: [],
+    ids: [491711713, 1190015933],
     names: ['юлия', 'юля', 'елизавета', 'лиза'],
     caption: 'GENSHIN ADMIN ACCESS',
   },
