@@ -3031,26 +3031,28 @@ body.is-admin .more-item.admin-only-item::before {
 
 /* ===== ADMIN NAV GRID ===== */
 .admin-nav-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
   gap: 5px;
   padding: 6px 12px 10px;
 }
 .admin-sec-btn {
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   align-items: center;
   justify-content: center;
   gap: 4px;
   padding: 9px 4px 8px;
+  min-width: 0;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg2);
   cursor: pointer;
   transition: all var(--transition-fast) var(--ease-standard);
 }
-.admin-nav-icon { font-size: 17px; line-height: 1; }
+.admin-nav-icon { font-size: 18px; line-height: 1; display: block; }
 .admin-nav-label {
+  display: block;
   font-size: 7.5px;
   color: var(--text3);
   font-family: monospace;
@@ -3060,6 +3062,29 @@ body.is-admin .more-item.admin-only-item::before {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+
+/* Secondary admin action button (toggles, non-filter) */
+.admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 9px;
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all var(--transition-fast) var(--ease-standard);
+}
+.admin-action-btn:hover {
+  border-color: var(--gold-border);
+  color: var(--gold);
+  background: var(--gold-dim);
 }
 .admin-sec-btn:hover { border-color: color-mix(in srgb, var(--border) 160%, transparent); background: var(--bg3); }
 .admin-sec-btn.active {
