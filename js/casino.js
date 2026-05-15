@@ -231,7 +231,7 @@ async function runLegendaryImplantAction(actionCode) {
   const targetActions = new Set(['intercept', 'formatting', 'veil_breach']);
   let payload = { telegram_id: currentUserId };
   if (targetActions.has(actionCode)) {
-    const targetName = prompt('Введите имя игрока');
+    const targetName = await askLegendaryTargetName();
     if (!targetName) return;
     payload.target_name = targetName.trim();
   }
@@ -271,6 +271,57 @@ async function runLegendaryImplantAction(actionCode) {
   } catch(e) {
     showToast('Ошибка соединения');
   }
+}
+
+function ensureLegendaryTargetModal() {
+  let modal = document.getElementById('legendaryTargetModal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'legendaryTargetModal';
+  modal.className = 'legendary-target-modal';
+  modal.style.display = 'none';
+  modal.innerHTML = `
+    <div class="legendary-target-sheet">
+      <button class="legendary-target-close" type="button" data-role="cancel">✕</button>
+      <div class="legendary-target-kicker">LEGENDARY PROTOCOL</div>
+      <div class="legendary-target-title">Выбор цели</div>
+      <label class="legendary-target-label" for="legendaryTargetInput">Имя игрока</label>
+      <input id="legendaryTargetInput" class="legendary-target-input" type="text" autocomplete="off" placeholder="Введите имя игрока">
+      <div class="legendary-target-actions">
+        <button class="legendary-target-btn cancel" type="button" data-role="cancel">Отмена</button>
+        <button class="legendary-target-btn confirm" type="button" data-role="confirm">Подтвердить</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function askLegendaryTargetName() {
+  const modal = ensureLegendaryTargetModal();
+  const input = modal.querySelector('#legendaryTargetInput');
+  const confirmBtn = modal.querySelector('[data-role="confirm"]');
+  const cancelBtns = modal.querySelectorAll('[data-role="cancel"]');
+  modal.style.display = 'flex';
+  input.value = '';
+  setTimeout(() => input.focus(), 0);
+  return new Promise(resolve => {
+    const close = (value) => {
+      modal.style.display = 'none';
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtns.forEach(btn => btn.removeEventListener('click', onCancel));
+      input.removeEventListener('keydown', onKeydown);
+      resolve(value);
+    };
+    const onConfirm = () => close(input.value.trim());
+    const onCancel = () => close('');
+    const onKeydown = (event) => {
+      if (event.key === 'Enter') onConfirm();
+      if (event.key === 'Escape') onCancel();
+    };
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtns.forEach(btn => btn.addEventListener('click', onCancel));
+    input.addEventListener('keydown', onKeydown);
+  });
 }
 
 function gsGetThemeBg(c) {

@@ -2410,6 +2410,98 @@ body.is-admin .profile-card-kicker {
   opacity: 0.55;
   filter: grayscale(0.3);
 }
+.legendary-target-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(3, 2, 7, 0.72);
+  backdrop-filter: blur(12px);
+}
+.legendary-target-sheet {
+  position: relative;
+  width: min(360px, 100%);
+  padding: 18px;
+  border: 1px solid rgba(180,20,20,0.3);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(180,20,20,0.22), transparent 44%),
+    color-mix(in srgb, var(--bg2) 94%, #12040a);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.42);
+}
+.legendary-target-close {
+  position: absolute;
+  top: 10px;
+  right: 11px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-size: 16px;
+}
+.legendary-target-kicker {
+  color: #f07a68;
+  font-size: 8px;
+  font-family: monospace;
+  letter-spacing: 2px;
+}
+.legendary-target-title {
+  margin-top: 5px;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+}
+.legendary-target-label {
+  display: block;
+  margin-top: 15px;
+  color: var(--text3);
+  font-size: 9px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.legendary-target-input {
+  width: 100%;
+  margin-top: 7px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(180,20,20,0.26);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.22);
+  color: var(--text);
+  outline: none;
+}
+.legendary-target-input:focus {
+  border-color: rgba(220,70,60,0.6);
+  box-shadow: 0 0 0 2px rgba(180,20,20,0.16);
+}
+.legendary-target-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.legendary-target-btn {
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 700;
+}
+.legendary-target-btn.cancel {
+  border-color: var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text2);
+}
+.legendary-target-btn.confirm {
+  border-color: rgba(180,20,20,0.32);
+  background: rgba(180,20,20,0.18);
+  color: #f07a68;
+}
 .inventory-dur { display: flex; gap: 3px; justify-content: flex-end; }
 .inventory-dur .dur-dot,
 .inventory-dur-dot {
