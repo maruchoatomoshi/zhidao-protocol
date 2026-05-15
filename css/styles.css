@@ -197,7 +197,7 @@ body.theme-admin .profile-card-kicker { color: rgba(100,120,255,0.7); }
 body.theme-admin .subtab.active { color: #6478ff; }
 body.theme-admin .date-btn.active { color: #6478ff; }
 
-/* Разные #cc4444 метки */
+/* Разные var(--red) метки */
 body.theme-admin .shop-item-limit.limit-soldout { color: #8090ff; }
 body.theme-admin .prize-result-points.negative { color: #ff7f7f; }
 body.theme-admin .inv-btn-sell { background: rgba(100,120,255,0.1); color: #8090ff; }
@@ -820,7 +820,7 @@ body.theme-genshin-dark .lb-points
 .btn-primary {
   background: var(--red-dim);
   border: 1px solid var(--red-border);
-  color: #cc4444;
+  color: var(--red);
   padding: 11px;
   font-size: 10px;
   width: 100%;
@@ -895,7 +895,7 @@ body.theme-genshin-dark .lb-points
 
 /* Нейролинк карточка */
 .neuro-card { margin: 4px 12px; }
-.neuro-status { font-size: 8px; color: #cc4444; font-family: monospace; }
+.neuro-status { font-size: 8px; color: var(--red); font-family: monospace; }
 .neuro-name { font-size: 14px; font-weight: 700; color: var(--text); margin-top: 2px; }
 .neuro-sub { font-size: 9px; color: #888; font-family: monospace; }
 .traffic-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 8px; overflow: hidden; }
@@ -1327,7 +1327,7 @@ body.is-admin .profile-card-kicker {
 .profile-status-line {
   margin-top: 10px;
   padding: 5px 8px;
-  border: 1px solid rgba(212,175,55,0.10);
+  border: 1px solid var(--gold-dim);
   border-radius: 8px;
   background: rgba(0,0,0,0.12);
   color: rgba(212,175,55,0.7);
@@ -1351,7 +1351,7 @@ body.is-admin .profile-card-kicker {
   border: 1px solid rgba(212,175,55,0.20);
   border-radius: 11px;
   background:
-    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.10), transparent 52%),
+    radial-gradient(circle at 0% 50%, var(--gold-dim), transparent 52%),
     rgba(255,255,255,0.028);
 }
 .profile-showcase-icon {
@@ -1479,7 +1479,7 @@ body.is-admin .profile-card-kicker {
 }
 .profile-mini-btn {
   border: 1px solid rgba(212,175,55,0.24);
-  background: rgba(212,175,55,0.10);
+  background: var(--gold-dim);
   color: var(--gold);
   border-radius: 999px;
   padding: 5px 9px;
@@ -1502,7 +1502,7 @@ body.is-admin .profile-card-kicker {
   justify-content: center;
   padding: 16px 12px calc(18px + env(safe-area-inset-bottom, 0px));
   background:
-    radial-gradient(circle at 50% 18%, rgba(212,175,55,0.10), transparent 34%),
+    radial-gradient(circle at 50% 18%, var(--gold-dim), transparent 34%),
     rgba(0,0,0,0.72);
   backdrop-filter: blur(12px);
 }
@@ -1513,7 +1513,7 @@ body.is-admin .profile-card-kicker {
   border: 1px solid rgba(212,175,55,0.22);
   border-radius: 18px;
   background:
-    radial-gradient(circle at 0% 0%, rgba(212,175,55,0.10), transparent 38%),
+    radial-gradient(circle at 0% 0%, var(--gold-dim), transparent 38%),
     linear-gradient(145deg, rgba(12,10,16,0.96), rgba(20,12,15,0.94));
   box-shadow: 0 18px 60px rgba(0,0,0,0.55);
 }
@@ -1886,7 +1886,7 @@ body.is-admin .profile-card-kicker {
   background: rgba(180,20,20,0.1);
   border: 1px solid var(--red-border);
   border-radius: 6px; margin: 8px 12px;
-  padding: 8px 12px; font-size: 10px; color: #cc4444;
+  padding: 8px 12px; font-size: 10px; color: var(--red);
   font-family: monospace; display: none;
 }
 .shop-subtabs {
@@ -1911,7 +1911,7 @@ body.is-admin .profile-card-kicker {
   font-size: 9px; font-weight: 600; cursor: pointer;
   font-family: monospace; letter-spacing: 1px;
 }
-.subtab.active { background: var(--red-dim); border-color: var(--red-border); color: #cc4444; }
+.subtab.active { background: var(--red-dim); border-color: var(--red-border); color: var(--red); }
 .shop-cat {
   font-size: 11px; color: rgba(220,100,100,0.9);
   letter-spacing: 1px; font-family: monospace;
@@ -1957,7 +1957,7 @@ body.is-admin .profile-card-kicker {
 }
 
 /* Limit indicator variants */
-.shop-item-limit.limit-soldout { color: #cc4444; font-weight: 600; }
+.shop-item-limit.limit-soldout { color: var(--red); font-weight: 600; }
 .shop-item-limit.limit-low {
   color: #e8932a;
   font-weight: 700;
@@ -2420,7 +2420,7 @@ body.is-admin .profile-card-kicker {
 .inv-btn { flex:1; padding: 7px 6px; border-radius: var(--radius-md); font-size: 9px; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: monospace; }
 .inv-btn-use { flex: 0 0 100%; background: rgba(46,204,113,0.15); color: #2ecc71; border-color: rgba(46,204,113,0.18); }
 .inv-btn-gift { background: rgba(212,175,55,0.08); color: var(--gold); opacity: 0.72; }
-.inv-btn-sell { background: rgba(180,20,20,0.10); color: #cc4444; border-color: rgba(180,20,20,0.18); }
+.inv-btn-sell { background: rgba(180,20,20,0.10); color: var(--red); border-color: rgba(180,20,20,0.18); }
 .inv-btn-legendary {
   background: rgba(180,20,20,0.14);
   border-color: rgba(180,20,20,0.34);
@@ -2677,7 +2677,7 @@ body.is-admin .profile-card-kicker {
 }
 .casino-attempts.exhausted .cas-attempt-pip {
   border-color: rgba(180,20,20,0.45);
-  background: rgba(180,20,20,0.15);
+  background: var(--red-dim);
   box-shadow: none;
 }
 .casino-attempts.low .cas-attempt-pip.filled {
@@ -2768,7 +2768,7 @@ body.is-admin .profile-card-kicker {
 .roulette-item-gold {
   border-color: rgba(212,175,55,0.22);
   background:
-    radial-gradient(circle at 50% 10%, rgba(212,175,55,0.10), transparent 48%),
+    radial-gradient(circle at 50% 10%, var(--gold-dim), transparent 48%),
     linear-gradient(145deg, #0a0a1a, #0f0f22);
 }
 .roulette-item-purple {
@@ -2837,7 +2837,7 @@ body.is-admin .profile-card-kicker {
 .prize-result-desc { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
 .prize-result-points { font-size: 18px; font-weight: 800; }
 .prize-result-points.positive { color: #2ecc71; }
-.prize-result-points.negative { color: #cc4444; }
+.prize-result-points.negative { color: var(--red); }
 .prize-result-points.special { color: var(--purple); }
 .casino-subtabs { display: flex; gap: 6px; padding: 8px 12px 4px; }
 
@@ -2906,7 +2906,7 @@ body.is-admin .more-item.admin-only-item::before {
   font-size: 10px; cursor: pointer; font-family: monospace;
   white-space: nowrap;
 }
-.date-btn.active { background: var(--red-dim); border-color: var(--red-border); color: #cc4444; }
+.date-btn.active { background: var(--red-dim); border-color: var(--red-border); color: var(--red); }
 .laundry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 12px; }
 .laundry-slot {
   background: var(--bg2); border: 1px solid rgba(46,204,113,0.2);
@@ -2956,7 +2956,7 @@ body.is-admin .more-item.admin-only-item::before {
 .team-badge {
   display: inline-block;
   background: var(--red-dim); border: 1px solid var(--red-border);
-  color: #cc4444; font-size: 8px; padding: 1px 6px;
+  color: var(--red); font-size: 8px; padding: 1px 6px;
   border-radius: 3px; letter-spacing: 1px; font-family: monospace;
   margin-bottom: 3px;
 }
@@ -2966,7 +2966,7 @@ body.is-admin .more-item.admin-only-item::before {
 .team-btn {
   display: inline-flex; align-items: center; gap: 4px;
   background: var(--red-dim); border: 1px solid var(--red-border);
-  color: #cc4444; font-size: 9px; padding: 4px 10px;
+  color: var(--red); font-size: 9px; padding: 4px 10px;
   border-radius: 4px; cursor: pointer; margin-top: 8px;
   font-family: monospace; letter-spacing: 1px; text-decoration: none;
 }
@@ -3023,7 +3023,7 @@ body.is-admin .more-item.admin-only-item::before {
 .admin-sec-btn.active {
   background: var(--red-dim);
   border-color: var(--red-border);
-  color: #cc4444;
+  color: var(--red);
 }
 .admin-console-card {
   margin-bottom: 12px;
@@ -3374,7 +3374,7 @@ body.is-admin .more-item.admin-only-item::before {
   border-radius: 13px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--bg2) 86%, transparent), color-mix(in srgb, var(--bg) 72%, transparent)),
-    radial-gradient(circle at 0 0, rgba(212,175,55,0.10), transparent 42%);
+    radial-gradient(circle at 0 0, var(--gold-dim), transparent 42%);
 }
 .economy-log-card::before {
   content: "";
@@ -3691,7 +3691,7 @@ body.is-admin .more-item.admin-only-item::before {
 .admin-presence-btn.danger {
   border-color: var(--red-border);
   background: var(--red-dim);
-  color: #cc4444;
+  color: var(--red);
 }
 .admin-presence-status {
   display: grid;
@@ -3837,7 +3837,7 @@ body.is-admin .more-item.admin-only-item::before {
 .admin-laundry-tab.active {
   background: var(--red-dim);
   border-color: var(--red-border);
-  color: #cc4444;
+  color: var(--red);
 }
 
 /* Admin slot list */
@@ -3883,7 +3883,7 @@ body.is-admin .more-item.admin-only-item::before {
   flex-shrink: 0;
   transition: all 0.15s;
 }
-.admin-slot-del:hover { border-color: rgba(200,50,50,0.55); color: #cc4444; }
+.admin-slot-del:hover { border-color: rgba(200,50,50,0.55); color: var(--red); }
 
 /* BlackWall card */
 .admin-blackwall-card {
@@ -3934,7 +3934,7 @@ body.is-admin .more-item.admin-only-item::before {
 .admin-bw-btn.bw-on {
   background: rgba(180,20,20,0.1);
   border-color: rgba(180,20,20,0.32);
-  color: #cc4444;
+  color: var(--red);
 }
 .admin-bw-btn.bw-on:hover { background: rgba(180,20,20,0.18); }
 .admin-bw-btn.bw-off {
@@ -5068,7 +5068,7 @@ body.is-admin .more-item.admin-only-item::before {
     border-radius: 12px;
     border: 1px solid rgba(212,175,55,0.14);
     background:
-      radial-gradient(circle at top, rgba(212,175,55,0.10), transparent 62%),
+      radial-gradient(circle at top, var(--gold-dim), transparent 62%),
       rgba(255,255,255,0.035);
 }
 
@@ -5602,7 +5602,7 @@ body.theme-genshin #raid-action-btn {
 }
 
 .diary-star.active {
-    background: linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.1));
+    background: linear-gradient(135deg, var(--gold-border), var(--gold-dim));
     color: var(--gold);
     border-color: rgba(212,175,55,0.45);
     box-shadow: 0 0 16px rgba(212,175,55,0.24);
@@ -5847,7 +5847,7 @@ body.theme-nw-light .neuro-status { color: #993333; }
 /* ── Навигация NW Light ──────────────────────────────────── */
 body.theme-nw-light .bottom-nav {
   background: rgba(244,241,237,0.97);
-  border-top-color: rgba(180,20,20,0.15);
+  border-top-color: var(--red-dim);
 }
 body.theme-nw-light .bottom-nav::before {
   background: linear-gradient(90deg, transparent, rgba(180,20,20,0.3), transparent);
@@ -7402,7 +7402,7 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
 }
 
 .event-lobby-btn.start {
-  background: linear-gradient(135deg, #8a6820, #d4af37);
+  background: linear-gradient(135deg, #8a6820, var(--gold));
   color: #161616;
 }
 .event-option-btn {
@@ -7736,7 +7736,7 @@ body.tg-ios .event-overlay.event-terminal .event-lobby-card.event-result-card {
   margin: 10px 0 0;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(212,175,55,0.10);
+  background: var(--gold-dim);
   border: 1px solid rgba(212,175,55,0.24);
   color: #f0dca8 !important;
   -webkit-text-fill-color: #f0dca8;
@@ -8031,7 +8031,7 @@ body.theme-nw-light .alpha-boss-block {
 }
 body.theme-nw-light .alpha-boss-raid-btn {
   background: rgba(180,20,20,0.08);
-  border-top-color: rgba(180,20,20,0.15);
+  border-top-color: var(--red-dim);
   color: #a83030;
 }
 body.theme-genshin-light .alpha-boss-block {
@@ -9280,7 +9280,7 @@ body.theme-genshin-dark .profile-card-home .profile-avatar-wrap::before {
   top: -10px; left: 50%;
   transform: translateX(-50%);
   font-size: 12px;
-  color: #d4af37;
+  color: var(--gold);
   text-shadow: 0 0 6px rgba(255,220,120,0.9);
   pointer-events: none;
   animation: gsAvatarStar 3s ease-in-out infinite;
@@ -10840,7 +10840,7 @@ body.theme-architect::before {
   margin-top: 14px;
   border: 1px solid rgba(212,175,55,0.24);
   border-radius: 14px;
-  background: rgba(212,175,55,0.10);
+  background: var(--gold-dim);
   color: #f0d896;
   font-weight: 900;
   letter-spacing: 0.8px;
@@ -11464,7 +11464,7 @@ body.is-architect .profile-card-spark.spark-bl {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #d4af37;
+  background: var(--gold);
   box-shadow: 0 0 8px rgba(212, 175, 55, 0.7);
   animation: architectStatusBlink 1.4s ease-in-out infinite;
 }
@@ -11711,7 +11711,7 @@ body.is-architect .profile-card-spark.spark-bl {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #d4af37;
+  background: var(--gold);
   box-shadow: 0 0 7px rgba(212, 175, 55, 0.7);
   animation: architectStatusBlink 1.4s ease-in-out infinite;
 }
@@ -11988,7 +11988,7 @@ body.is-architect .profile-card-spark.spark-bl {
   margin-top: 10px;
   padding: 11px 14px;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(212,175,55,0.10), rgba(212,175,55,0.03));
+  background: linear-gradient(135deg, var(--gold-dim), rgba(212,175,55,0.03));
   border: 1px solid rgba(212,175,55,0.28);
 }
 
@@ -12593,7 +12593,7 @@ body.is-architect .profile-card-spark.spark-bl {
   border-color: rgba(96, 180, 212, 0.42);
   background:
     radial-gradient(circle at 0% 0%, rgba(96,180,212,0.16), transparent 42%),
-    radial-gradient(circle at 100% 0%, rgba(212,175,55,0.10), transparent 38%),
+    radial-gradient(circle at 100% 0%, var(--gold-dim), transparent 38%),
     var(--contract-card-bg);
   box-shadow:
     0 0 0 1px rgba(96,180,212,0.08),
@@ -12603,7 +12603,7 @@ body.is-architect .profile-card-spark.spark-bl {
 
 .contract-card.admin-contract::before {
   width: 4px;
-  background: linear-gradient(180deg, #60b4d4, #d4af37 72%, transparent);
+  background: linear-gradient(180deg, #60b4d4, var(--gold) 72%, transparent);
 }
 
 .startup-cover {
