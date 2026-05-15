@@ -11,6 +11,7 @@ if (user) {
 }
 
 loadSavedTheme();
+loadLiteMode();
 loadWeather();
 loadYuanRate();
 loadSchedule();
@@ -59,4 +60,5 @@ document.addEventListener('click', function(e) {
 });
 
 window.addEventListener('load', buildMatrixRain);
-window.addEventListener('resize', buildMatrixRain);
+let _matrixRainTimer;
+window.addEventListener('resize', () => { clearTimeout(_matrixRainTimer); _matrixRainTimer = setTimeout(buildMatrixRain, 200); });

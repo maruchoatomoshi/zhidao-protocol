@@ -934,6 +934,7 @@ function resetCasino() {
 }
 
 function launchConfetti(count) {
+  if (document.body.classList.contains('lite-mode')) count = Math.min(count, 20);
   const container = document.getElementById('confettiContainer');
   const colors = ['#f5d05a','#d4af37','#fff','#cc2200','#9b59b6','#ff4444'];
   for (let i = 0; i < count; i++) {

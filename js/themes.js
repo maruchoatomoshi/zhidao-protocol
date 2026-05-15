@@ -147,3 +147,34 @@ function loadSavedTheme() {
     }
   } catch(e) { setTheme(''); }
 }
+
+function toggleLiteMode() {
+  const active = document.body.classList.toggle('lite-mode');
+  try {
+    localStorage.setItem('zhidao_lite', active ? '1' : '');
+    if (window.Telegram?.WebApp?.CloudStorage) tg.CloudStorage.setItem('zhidao_lite', active ? '1' : '', () => {});
+  } catch(e) {}
+  const btn = document.getElementById('lite-mode-btn');
+  if (btn) btn.textContent = active ? '⚡ ВКЛ' : '⚡ ВЫКЛ';
+  const label = document.getElementById('lite-mode-label');
+  if (label) label.style.opacity = active ? '1' : '0.5';
+}
+
+function loadLiteMode() {
+  function apply(val) {
+    if (val === '1') {
+      document.body.classList.add('lite-mode');
+      const btn = document.getElementById('lite-mode-btn');
+      if (btn) btn.textContent = '⚡ ВКЛ';
+      const label = document.getElementById('lite-mode-label');
+      if (label) label.style.opacity = '1';
+    }
+  }
+  try {
+    if (window.Telegram?.WebApp?.CloudStorage) {
+      tg.CloudStorage.getItem('zhidao_lite', (err, val) => apply(val || localStorage.getItem('zhidao_lite') || ''));
+    } else {
+      apply(localStorage.getItem('zhidao_lite') || '');
+    }
+  } catch(e) {}
+}
