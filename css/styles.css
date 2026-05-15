@@ -654,7 +654,7 @@ body::before {
   font-size: 7px;
   font-family: monospace;
   letter-spacing: 0.5px;
-  transition: all 0.2s;
+  transition: all var(--transition-normal) var(--ease-standard);
   text-transform: uppercase;
   position: relative;
   flex: 1;
@@ -670,7 +670,7 @@ body::before {
 .nav-item .ti {
   font-size: 28px !important;
   line-height: 1;
-  transition: all 0.2s;
+  transition: all var(--transition-normal) var(--ease-standard);
   display: block;
 }
 .nav-item.active .ti {
@@ -809,13 +809,13 @@ body.theme-genshin-dark .lb-points
 /* ===== КНОПКИ ===== */
 .btn {
   border: none;
-  border-radius: 8px;
+  border-radius: var(--btn-radius);
   font-weight: 700;
   cursor: pointer;
   font-family: monospace;
   letter-spacing: 1px;
   text-transform: uppercase;
-  transition: all 0.2s;
+  transition: all var(--transition-normal) var(--ease-standard);
 }
 .btn-primary {
   background: var(--red-dim);
@@ -846,7 +846,7 @@ body.theme-genshin-dark .lb-points
 .btn-sm {
   padding: 5px 10px;
   font-size: 8px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
 }
 
 /* ===== ГЛАВНАЯ ===== */
@@ -1905,7 +1905,7 @@ body.is-admin .profile-card-kicker {
   background: rgba(212,175,55,0.06);
 }
 .subtab {
-  flex: 1; padding: 6px; border-radius: 6px;
+  flex: 1; padding: 6px; border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent; color: var(--text3);
   font-size: 9px; font-weight: 600; cursor: pointer;
@@ -1940,13 +1940,13 @@ body.is-admin .profile-card-kicker {
   margin-left: auto; flex-shrink: 0;
   background: var(--gold-dim); border: 1px solid var(--gold-border);
   color: var(--gold); font-size: 9px; padding: 5px 8px;
-  border-radius: 5px; font-weight: 700; cursor: pointer;
+  border-radius: var(--radius-sm); font-weight: 700; cursor: pointer;
   font-family: monospace; white-space: nowrap;
 }
 .shop-item-buy:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* === SHOP POLISH === */
-.shop-item { transition: background 0.2s ease, transform 0.2s ease, opacity 0.25s ease; }
+.shop-item { transition: background var(--transition-normal) var(--ease-standard), transform var(--transition-normal) var(--ease-standard), opacity var(--transition-slow) var(--ease-standard); }
 .shop-item.sold-out {
   opacity: 0.55;
   background: rgba(180,20,20,0.025);
@@ -2417,7 +2417,7 @@ body.is-admin .profile-card-kicker {
   text-transform: uppercase;
 }
 .inventory-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.inv-btn { flex:1; padding: 7px 6px; border-radius: 10px; font-size: 9px; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: monospace; }
+.inv-btn { flex:1; padding: 7px 6px; border-radius: var(--radius-md); font-size: 9px; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: monospace; }
 .inv-btn-use { flex: 0 0 100%; background: rgba(46,204,113,0.15); color: #2ecc71; border-color: rgba(46,204,113,0.18); }
 .inv-btn-gift { background: rgba(212,175,55,0.08); color: var(--gold); opacity: 0.72; }
 .inv-btn-sell { background: rgba(180,20,20,0.10); color: #cc4444; border-color: rgba(180,20,20,0.18); }
@@ -2900,7 +2900,7 @@ body.is-admin .more-item.admin-only-item::before {
 .date-scroll { display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; }
 .date-scroll::-webkit-scrollbar { display: none; }
 .date-btn {
-  flex-shrink: 0; padding: 6px 12px; border-radius: 6px;
+  flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent; color: var(--text2);
   font-size: 10px; cursor: pointer; font-family: monospace;
@@ -2910,8 +2910,8 @@ body.is-admin .more-item.admin-only-item::before {
 .laundry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 12px; }
 .laundry-slot {
   background: var(--bg2); border: 1px solid rgba(46,204,113,0.2);
-  border-radius: 8px; padding: 12px; text-align: center; cursor: pointer;
-  transition: all 0.2s;
+  border-radius: var(--radius-md); padding: 12px; text-align: center; cursor: pointer;
+  transition: all var(--transition-normal) var(--ease-standard);
 }
 .laundry-slot.booked { border-color: var(--red-border); opacity: 0.5; cursor: default; }
 .laundry-slot.my-booking { background: rgba(212,175,55,0.05); border-color: var(--gold-border); }
@@ -8371,11 +8371,11 @@ body.theme-genshin-dark .rules-row {
 .btn-primary,
 .btn-gold {
   transition:
-    transform 0.15s ease,
-    opacity 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease,
-    box-shadow 0.15s ease;
+    transform var(--transition-fast) var(--ease-standard),
+    opacity var(--transition-fast) var(--ease-standard),
+    border-color var(--transition-fast) var(--ease-standard),
+    background var(--transition-fast) var(--ease-standard),
+    box-shadow var(--transition-fast) var(--ease-standard);
 }
 
 .shop-item-buy:active,
