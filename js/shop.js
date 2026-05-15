@@ -305,6 +305,11 @@ async function buyItem(code, name, price) {
   });
 }
 
+const SHOP_CATEGORY_LABEL = {
+  living: '🏠 БЫТ', chinese: '🀄 КИТ. КУЛЬТУРА', app: '📱 СЕРВИС',
+  reminder: '🔔 НАПОМИНАНИЕ', trade: '🔄 ОБМЕН', privilege: '⚡ ПРИВИЛЕГИЯ', other: '📦 ПРОЧЕЕ',
+};
+
 async function loadInventory() {
   try {
     const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
@@ -313,17 +318,19 @@ async function loadInventory() {
     const digital = ['extra_case','extra_cases','additional_case','case_extra','extra_raid_attempt','double_win','title_player','immunity','raid_insurance','raid_beacon','raid_overclock'];
     const physical = data.filter(item => !digital.includes(item.code));
     if (!physical.length) { container.innerHTML = '<div class="empty-state">Инвентарь пуст<br>Купи что-нибудь в магазине!</div>'; return; }
-    container.innerHTML = physical.map(item =>
-      `<div class="inventory-item">
+    const sellRate = typeof hasPandaImplant !== 'undefined' && hasPandaImplant ? 0.6 : 0.5;
+    container.innerHTML = physical.map(item => {
+      const catLabel = SHOP_CATEGORY_LABEL[item.category] || '📦 ' + (item.category || 'ITEM').toUpperCase();
+      const sellValue = Math.floor(item.price * sellRate);
+      const descHtml = item.description ? `<div class="inventory-desc">${item.description}</div>` : '';
+      return `<div class="inventory-item">
         <div class="inventory-header">
           <div class="inventory-icon">${item.icon}</div>
           <div class="inventory-info">
-            <div class="inventory-kicker">STORE ITEM</div>
+            <div class="inventory-kicker">${catLabel}</div>
             <div class="inventory-name">${item.name}</div>
-            <div class="inventory-date">Получен: ${new Date(item.purchased_at).toLocaleDateString('ru-RU')} · ID: ${item.id}</div>
-          </div>
-          <div class="inventory-side">
-            <div class="inventory-pill">${item.category || 'ITEM'}</div>
+            ${descHtml}
+            <div class="inventory-date">Куплено: ${new Date(item.purchased_at).toLocaleDateString('ru-RU')} · продажа ${sellValue}★</div>
           </div>
         </div>
         <div class="inventory-actions">
@@ -331,8 +338,8 @@ async function loadInventory() {
           <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id},'${item.name}')">🎁 Подарить</button>
           <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id},'${item.name}',${item.price})">💰 Продать</button>
         </div>
-      </div>`
-    ).join('');
+      </div>`;
+    }).join('');
   } catch(e) { document.getElementById('shopInventoryContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 

@@ -4964,14 +4964,14 @@ async def get_inventory(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""SELECT sp.id, sp.item_code, si.name, si.icon, si.price,
-                        si.category, sp.purchased_at, sp.status, sp.given_to
+                        si.category, sp.purchased_at, sp.status, sp.given_to, si.description
                  FROM shop_purchases sp
                  JOIN shop_items si ON sp.item_code = si.code
                  WHERE sp.telegram_id=? AND sp.status='active'
                  ORDER BY sp.purchased_at DESC""", (telegram_id,))
     rows = c.fetchall()
     conn.close()
-    return [{"id": r[0], "code": r[1], "name": r[2], "icon": r[3], "price": r[4], "category": r[5], "purchased_at": r[6], "status": r[7], "given_to": r[8]} for r in rows]
+    return [{"id": r[0], "code": r[1], "name": r[2], "icon": r[3], "price": r[4], "category": r[5], "purchased_at": r[6], "status": r[7], "given_to": r[8], "description": r[9]} for r in rows]
 
 
 @app.post("/api/shop/gift")
