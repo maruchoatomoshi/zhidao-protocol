@@ -137,7 +137,7 @@ async function loadImplants(telegramId) {
         </div>
         <div>
           <div class="implant-cn">${displayName}</div>
-          <div class="implant-py">${displayDesc}</div>
+          <div class="implant-py">${displayDesc.split(' · ')[0]}</div>
         </div>
         <div class="implant-dur">${dots}</div>
       </div>`;
@@ -191,13 +191,12 @@ async function loadImplants(telegramId) {
             ${img ? `<img src="${img}" alt="${displayName}">` : displayIcon}
           </div>
           <div class="inventory-info">
-            <div class="inventory-kicker">IMPLANT ${duplicateBadge}</div>
+            <div class="inventory-kicker">${isLeg ? 'LEGENDARY IMPLANT' : 'RARE IMPLANT'} ${duplicateBadge}</div>
             <div class="inventory-name">${displayName}</div>
             ${renderImplantPassives(displayDesc)}
             <div class="inventory-date">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
           </div>
           <div class="inventory-side">
-            <div class="inventory-pill">ЗАРЯДЫ</div>
             <div class="inventory-dur">${dots}</div>
           </div>
         </div>
