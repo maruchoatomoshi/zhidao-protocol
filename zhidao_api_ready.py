@@ -537,6 +537,8 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN profile_showcase_code TEXT DEFAULT NULL")
     if 'netwatch_locked_until' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN netwatch_locked_until TEXT DEFAULT NULL")
+    if 'terracota_armor' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN terracota_armor INTEGER DEFAULT 0")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -1754,10 +1756,29 @@ def try_block_penalty_with_terracota(c, telegram_id: int, use_key: str) -> bool:
     if has_used_implant_today(c, telegram_id, "implant_terracota", "penalty"):
         return False
     mark_implant_used_today(c, telegram_id, "implant_terracota", "penalty")
+    # After blocking, activate armor — next penalty is reduced by 5★
+    c.execute(
+        """INSERT INTO user_status (telegram_id, terracota_armor) VALUES (?, 1)
+           ON CONFLICT(telegram_id) DO UPDATE SET terracota_armor=1""",
+        (telegram_id,),
+    )
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     balance_after = (c.fetchone() or [0])[0] or 0
     log_economy(c, telegram_id, "implant_terracota_block", 0, balance_after, None, "implant", use_key)
     return True
+
+
+def consume_terracota_armor(c, telegram_id: int) -> int:
+    """Returns 5 if armor was active (and consumes it), else 0."""
+    c.execute("SELECT terracota_armor FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    if not row or not row[0]:
+        return 0
+    c.execute(
+        "UPDATE user_status SET terracota_armor=0 WHERE telegram_id=?",
+        (telegram_id,),
+    )
+    return 5
 
 
 LEGENDARY_ACTION_COOLDOWNS = {
@@ -3060,6 +3081,9 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
     previous_points = row[1] or 0
     blocked_by_implant = delta < 0 and try_block_penalty_with_terracota(c, target_id, f"admin_points: {reason}")
     if not blocked_by_implant:
+        if delta < 0:
+            armor_reduction = consume_terracota_armor(c, target_id)
+            delta = min(0, delta + armor_reduction)
         c.execute(
             "UPDATE users SET points = MAX(0, COALESCE(points, 0) + ?) WHERE telegram_id=?",
             (delta, target_id),
@@ -3382,6 +3406,27 @@ async def confirm_presence(data: dict):
                     c, telegram_id, "implant_shaolin_bonus", 20, balance_after,
                     None, "implant", f"{check_type} {check_date}",
                 )
+        # Perfect day bonus: +10★ when evening confirmed and morning was already confirmed
+        if (
+            check_type == "evening"
+            and has_active_implant(c, telegram_id, "implant_shaolin")
+            and not has_used_implant_today(c, telegram_id, "implant_shaolin", f"perfect_day:{check_date}")
+        ):
+            c.execute(
+                """SELECT 1 FROM daily_checks
+                   WHERE telegram_id=? AND check_date=? AND check_type='morning'
+                     AND status IN ('confirmed','free_time')""",
+                (telegram_id, check_date),
+            )
+            if c.fetchone():
+                mark_implant_used_today(c, telegram_id, "implant_shaolin", f"perfect_day:{check_date}")
+                c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                balance_after = c.fetchone()[0] or 0
+                log_economy(
+                    c, telegram_id, "implant_shaolin_perfect_day", 10, balance_after,
+                    None, "implant", check_date,
+                )
     elif action == "request_leave":
         row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_requested", note)
     elif action == "free_time":
@@ -3632,12 +3677,13 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
                 "blocked_by_implant": "implant_terracota",
             })
             continue
+        effective_penalty = max(0, penalty - consume_terracota_armor(c, telegram_id))
         c.execute(
             """UPDATE users
                SET points = MAX(0, COALESCE(points, 0) - ?),
                    rep_score = MAX(0, COALESCE(rep_score, 0) - ?)
                WHERE telegram_id=?""",
-            (penalty, penalty, telegram_id),
+            (effective_penalty, effective_penalty, telegram_id),
         )
         c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
         updated_user = c.fetchone() or (0, 0)
@@ -3886,6 +3932,35 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
         balance_after = c.fetchone()[0] or 0
         log_economy(c, telegram_id, "implant_linguasoft_bonus", 30, balance_after, None, "implant", entry_date)
         linguasoft_bonus = 30
+    # Streak bonus: +20★ for 3 consecutive 3★ diary entries
+    if (
+        next_stars == 3
+        and has_active_implant(c, telegram_id, "implant_linguasoft")
+        and not has_used_implant_today(c, telegram_id, "implant_linguasoft", f"streak3:{entry_date}")
+    ):
+        c.execute(
+            """SELECT COUNT(*) FROM diary_stars
+               WHERE telegram_id=? AND stars=3 AND entry_date < ?
+               ORDER BY entry_date DESC
+               LIMIT 2""",
+            (telegram_id, entry_date),
+        )
+        # count the two most recent entries before this one
+        c.execute(
+            """SELECT stars FROM diary_stars
+               WHERE telegram_id=? AND entry_date < ?
+               ORDER BY entry_date DESC
+               LIMIT 2""",
+            (telegram_id, entry_date),
+        )
+        prev_two = [r[0] for r in c.fetchall()]
+        if len(prev_two) == 2 and all(s == 3 for s in prev_two):
+            mark_implant_used_today(c, telegram_id, "implant_linguasoft", f"streak3:{entry_date}")
+            c.execute("UPDATE users SET points = points + 20 WHERE telegram_id=?", (telegram_id,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+            balance_after = c.fetchone()[0] or 0
+            log_economy(c, telegram_id, "implant_linguasoft_streak", 20, balance_after, None, "implant", entry_date)
+            linguasoft_bonus += 20
     conn.commit()
     conn.close()
     return {
@@ -4507,10 +4582,10 @@ async def get_implants(telegram_id: int):
     conn.close()
     implant_info = {
         "implant_guanxi": {"name": "Гуаньси 关系", "icon": "🤝", "desc": "Скидка 10% в магазине"},
-        "implant_terracota": {"name": "Терракота 兵马俑", "icon": "🗿", "desc": "Блок 1 штрафа в день"},
-        "implant_panda": {"name": "Панда 🐼", "icon": "🐼", "desc": "Кэшбек +10★ с покупки"},
-        "implant_shaolin": {"name": "Шаолинь 少林", "icon": "🥋", "desc": "+20★ за перекличку вовремя"},
-        "implant_linguasoft": {"name": "Linguasoft 口才", "icon": "🎙", "desc": "+30★ за 3★ в дневнике"},
+        "implant_terracota": {"name": "Терракота 兵马俑", "icon": "🗿", "desc": "Блок 1 штрафа в день · после блока следующий штраф −5★"},
+        "implant_panda": {"name": "Панда 🐼", "icon": "🐼", "desc": "Кэшбек +10★ с покупки · продажа за 60% вместо 50%"},
+        "implant_shaolin": {"name": "Шаолинь 少林", "icon": "🥋", "desc": "+20★ за перекличку вовремя · идеальный день (утро+вечер) ещё +10★"},
+        "implant_linguasoft": {"name": "Linguasoft 口才", "icon": "🎙", "desc": "+30★ за 3★ в дневнике · серия из 3 дневников на 3★ ещё +20★"},
         "implant_caishen": {"name": "Цайшэнь 财神", "icon": "💰", "desc": "+15★ каждые 24 часа"},
         "implant_qilin": {"name": "Цилинь 麒麟", "icon": "🐉", "desc": "+10★ за каждого владельца Цилиня"},
         "implant_red_dragon": {"name": "Красный Дракон 红龙", "icon": "🐉", "desc": "+20% баллов · перехват · сбросить импульс"},
@@ -4952,7 +5027,8 @@ async def sell_item(data: dict):
     if not purchase:
         conn.close()
         raise HTTPException(status_code=404, detail="Not found")
-    refund = purchase[1] // 2
+    sell_rate = 0.6 if has_active_implant(c, telegram_id, "implant_panda") else 0.5
+    refund = int(purchase[1] * sell_rate)
     c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, telegram_id))
     c.execute("UPDATE shop_purchases SET status='sold' WHERE id=?", (purchase_id,))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
@@ -4960,7 +5036,7 @@ async def sell_item(data: dict):
     log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
     conn.commit()
     conn.close()
-    return {"success": True, "refund": refund, "new_points": new_points}
+    return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
 
 
 @app.post("/api/shop/use/{purchase_id}")
