@@ -30,6 +30,17 @@
   --btn-radius: 8px;
   --card-radius: 10px;
   --scan-opacity: 0.025;
+  /* Design tokens */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+  --transition-fast: 120ms;
+  --transition-normal: 200ms;
+  --transition-slow: 350ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ===== NETWATCH LIGHT ===== */
@@ -89,9 +100,9 @@ body.theme-genshin-light .page-title {
 
 /* ===== GENSHIN DARK ===== */
 body.theme-genshin-dark {
-  --red: rgba(219,177,101,0.8);
-  --red-dim: rgba(219,177,101,0.08);
-  --red-border: rgba(219,177,101,0.2);
+  --red: #c87941;
+  --red-dim: rgba(200,121,65,0.1);
+  --red-border: rgba(200,121,65,0.25);
   --gold: rgba(219,177,101,0.9);
   --gold-dim: rgba(219,177,101,0.1);
   --gold-border: rgba(219,177,101,0.25);
@@ -231,6 +242,90 @@ body.is-admin.theme-admin .profile-admin-badge {
   display: none;
 }
 body.is-admin #theme-btn-admin {
+  display: block;
+}
+
+/* ===== ADMIN LIGHT THEME ===== */
+body.theme-admin-light {
+  --accent:       #4456e0;
+  --accent2:      #0099cc;
+  --accent-warn:  #cc7700;
+  --red:          #4456e0;
+  --red-dim:      rgba(68,86,224,0.1);
+  --red-border:   rgba(68,86,224,0.28);
+  --gold:         #0099cc;
+  --gold-dim:     rgba(0,153,204,0.1);
+  --gold-border:  rgba(0,153,204,0.25);
+  --bg:           #eef0fa;
+  --bg2:          rgba(255,255,255,0.75);
+  --bg3:          rgba(255,255,255,0.95);
+  --border:       rgba(68,86,224,0.15);
+  --text:         #1a1f40;
+  --text2:        #3a4070;
+  --text3:        #6a72a0;
+  --scan-opacity: 0.01;
+}
+body.theme-admin-light .bottom-nav {
+  background: rgba(238,240,250,0.97);
+  border-top-color: rgba(68,86,224,0.2);
+}
+body.theme-admin-light .bottom-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(68,86,224,0.4), transparent);
+}
+body.theme-admin-light .page-title {
+  color: #1a1f40;
+  text-shadow: none;
+}
+body.theme-admin-light .nav-item.active { color: #4456e0; }
+body.theme-admin-light .nav-item.active::before {
+  background: linear-gradient(90deg, transparent, rgba(68,86,224,0.7), transparent);
+}
+body.theme-admin-light .nav-item.active .ti {
+  color: #4456e0;
+  filter: drop-shadow(0 0 6px rgba(68,86,224,0.4));
+}
+body.theme-admin-light .btn-primary { color: #4456e0; }
+body.theme-admin-light .card-label { color: rgba(68,86,200,0.85); }
+body.theme-admin-light .neuro-status { color: #4456e0; }
+body.theme-admin-light .profile-card-kicker { color: rgba(68,86,200,0.7); }
+body.theme-admin-light .subtab.active { color: #4456e0; }
+body.theme-admin-light .date-btn.active { color: #4456e0; }
+body.theme-admin-light .inv-btn-sell { background: rgba(68,86,224,0.08); color: #4456e0; }
+body.theme-admin-light .profile-badge-path {
+  background: rgba(68,86,224,0.1);
+  border-color: rgba(68,86,224,0.25);
+  color: rgba(50,70,200,0.9);
+}
+body.theme-admin-light .profile-badge-rank {
+  background: rgba(0,153,204,0.1);
+  border-color: rgba(0,153,204,0.3);
+  color: #0099cc;
+}
+body.is-admin.theme-admin-light .profile-card-home {
+  border-color: rgba(68,86,224,0.4);
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(68,86,224,0.08), transparent 48%),
+    radial-gradient(ellipse at 100% 100%, rgba(0,153,204,0.05), transparent 52%),
+    linear-gradient(155deg, rgba(255,255,255,0.7), rgba(238,240,250,0.9));
+  box-shadow: 0 0 28px rgba(68,86,224,0.1), inset 0 0 20px rgba(68,86,224,0.04);
+}
+body.is-admin.theme-admin-light .profile-card-home::before,
+body.is-admin.theme-admin-light .profile-card-home::after {
+  border-color: rgba(68,86,224,0.45);
+}
+body.is-admin.theme-admin-light .profile-scan-line {
+  background: linear-gradient(90deg, transparent, rgba(68,86,224,0.5) 40%, rgba(100,120,255,0.8) 50%, rgba(68,86,224,0.5) 60%, transparent);
+}
+body.is-admin.theme-admin-light .profile-admin-badge {
+  background: rgba(68,86,200,0.88);
+  color: #fff;
+}
+
+/* Карточка темы admin-light скрыта для обычных пользователей */
+#theme-btn-admin-light {
+  display: none;
+}
+body.is-admin #theme-btn-admin-light {
   display: block;
 }
 

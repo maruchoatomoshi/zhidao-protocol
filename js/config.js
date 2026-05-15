@@ -12,7 +12,7 @@ try { tg.setHeaderColor('#050510'); } catch(e) {}
 try { tg.setBackgroundColor('#050510'); } catch(e) {}
 
 const API_URL = 'https://hk.marucho.icu:8443';
-const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark', 'admin', 'architect'];
+const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark', 'admin', 'admin-light', 'architect'];
 const WEATHER_KEY = '';
 const EXCHANGE_KEY = '';
 const ADMIN_IDS = [];
