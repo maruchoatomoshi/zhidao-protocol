@@ -995,6 +995,23 @@
             <div class="empty-state">Статус ещё не загружен</div>
           </div>
         </div>
+
+        <div class="admin-presence-card manual">
+          <div class="admin-presence-icon">点</div>
+          <div class="admin-presence-main">
+            <div class="admin-presence-kicker">РУЧНАЯ // 临时点名</div>
+            <div class="admin-presence-title">Вне расписания</div>
+            <div class="admin-presence-desc">Перед выездом, сбором или любой внеплановой проверкой.</div>
+          </div>
+          <div class="admin-presence-actions">
+            <button class="admin-presence-btn primary" onclick="adminDispatchPresence('manual')">Запустить</button>
+            <button class="admin-presence-btn" onclick="adminLoadPresence('manual')">Статус</button>
+            <button class="admin-presence-btn danger" onclick="adminCancelPresence('manual')">Отменить</button>
+          </div>
+          <div id="adminPresenceManual" class="admin-presence-status">
+            <div class="empty-state">Статус ещё не загружен</div>
+          </div>
+        </div>
       </div>
     </div>
     <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">

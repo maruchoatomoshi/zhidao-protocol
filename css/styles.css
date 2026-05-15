@@ -7181,6 +7181,16 @@ body.tg-ios #diaryStarsPopup {
   transform: translateZ(0);
 }
 
+.admin-presence-card.manual::before {
+  background: linear-gradient(180deg, rgba(96,180,212,0.9), transparent);
+}
+
+.admin-presence-card.manual .admin-presence-icon {
+  color: #60b4d4;
+  border-color: rgba(96,180,212,0.28);
+  background: rgba(96,180,212,0.08);
+}
+
 body.tg-ios .question-modal {
   padding:
     calc(20px + var(--tg-safe-top))

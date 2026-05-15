@@ -865,11 +865,15 @@ const ADMIN_PRESENCE_ORDER = [
 ];
 
 function adminPresenceTarget(checkType) {
-  return document.getElementById(checkType === 'morning' ? 'adminPresenceMorning' : 'adminPresenceEvening');
+  if (checkType === 'morning') return document.getElementById('adminPresenceMorning');
+  if (checkType === 'manual') return document.getElementById('adminPresenceManual');
+  return document.getElementById('adminPresenceEvening');
 }
 
 function adminPresenceLabel(checkType) {
-  return checkType === 'morning' ? 'утренняя отметка' : 'вечерняя отметка';
+  if (checkType === 'morning') return 'утренняя отметка';
+  if (checkType === 'manual') return 'ручная перекличка';
+  return 'вечерняя отметка';
 }
 
 function adminRenderPresenceOverview(checkType, data) {
@@ -929,6 +933,7 @@ async function adminLoadPresence(checkType) {
 function adminLoadPresenceAll() {
   adminLoadPresence('morning');
   adminLoadPresence('evening');
+  adminLoadPresence('manual');
 }
 
 async function adminDispatchPresence(checkType) {

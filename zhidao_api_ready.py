@@ -77,7 +77,7 @@ ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS") or [-1]
 INTRO_CYBERPUNK_ADMIN_IDS = set(parse_int_list_env("INTRO_CYBERPUNK_ADMIN_IDS"))
 INTRO_GENSHIN_ADMIN_IDS = set(parse_int_list_env("INTRO_GENSHIN_ADMIN_IDS"))
 
-PRESENCE_CHECK_TYPES = {"morning", "evening"}
+PRESENCE_CHECK_TYPES = {"morning", "evening", "manual"}
 PRESENCE_STATUSES = {
     "pending",
     "confirmed",
@@ -846,6 +846,13 @@ def get_presence_keyboard_markup(check_type: str):
                 {"text": "🙋 Нужна помощь", "callback_data": "presence:morning:request_leave"},
             ]]
         }
+    if check_type == "manual":
+        return {
+            "inline_keyboard": [[
+                {"text": "✅ Я на месте", "callback_data": "presence:manual:confirm"},
+                {"text": "🙋 Нужен отгул", "callback_data": "presence:manual:request_leave"},
+            ]]
+        }
 
     return {
         "inline_keyboard": [
@@ -863,6 +870,12 @@ def get_presence_message_text(check_type: str, attempt_no: int = 1):
         return (
             "🌅 Утренняя отметка\n\n"
             f"Попытка {attempt_no}/3. Нажми кнопку, чтобы подтвердить подъём."
+        )
+    if check_type == "manual":
+        return (
+            "📡 Ручная перекличка\n\n"
+            f"Попытка {attempt_no}/3. Подтверди, что ты на месте.\n"
+            "Если у тебя есть разрешение от админа, запроси отгул."
         )
 
     return (

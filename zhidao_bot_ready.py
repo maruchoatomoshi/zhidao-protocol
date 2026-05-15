@@ -58,6 +58,7 @@ PRESENCE_STATUS_ORDER = [
 PRESENCE_TYPE_LABELS = {
     "morning": "утренняя отметка",
     "evening": "вечерняя отметка",
+    "manual": "ручная перекличка",
 }
 
 bot = Bot(token=BOT_TOKEN)
@@ -471,6 +472,13 @@ def get_presence_keyboard(check_type):
                 ]
             ]
         )
+    if check_type == "manual":
+        return InlineKeyboardMarkup(
+            inline_keyboard=[[
+                InlineKeyboardButton(text="✅ Я на месте", callback_data="presence:manual:confirm"),
+                InlineKeyboardButton(text="🙋 Нужен отгул", callback_data="presence:manual:request_leave"),
+            ]]
+        )
 
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -517,6 +525,12 @@ def get_presence_message(check_type, attempt_no=1):
         return (
             "🌅 Утренняя отметка\n\n"
             f"Попытка {attempt_no}/3. Нажми кнопку, чтобы подтвердить подъём."
+        )
+    if check_type == "manual":
+        return (
+            "📡 Ручная перекличка\n\n"
+            f"Попытка {attempt_no}/3. Подтверди, что ты на месте.\n"
+            "Если у тебя есть разрешение от админа, запроси отгул."
         )
 
     return (
