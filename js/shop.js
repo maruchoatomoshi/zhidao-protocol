@@ -322,21 +322,25 @@ async function loadInventory() {
     container.innerHTML = physical.map(item => {
       const catLabel = SHOP_CATEGORY_LABEL[item.category] || '📦 ' + (item.category || 'ITEM').toUpperCase();
       const sellValue = Math.floor(item.price * sellRate);
+      const tier = item.price >= 500 ? 'LEGEND' : item.price >= 180 ? 'RARE' : 'ITEM';
       const descHtml = item.description ? `<div class="inventory-desc">${item.description}</div>` : '';
-      return `<div class="inventory-item">
+      return `<div class="inventory-item inventory-item-shop">
         <div class="inventory-header">
           <div class="inventory-icon">${item.icon}</div>
           <div class="inventory-info">
-            <div class="inventory-kicker">${catLabel}</div>
+            <div class="inventory-kicker">${tier} · ${catLabel}</div>
             <div class="inventory-name">${item.name}</div>
             ${descHtml}
             <div class="inventory-date">Куплено: ${new Date(item.purchased_at).toLocaleDateString('ru-RU')} · продажа ${sellValue}★</div>
           </div>
+          <div class="inventory-side">
+            <div class="inventory-pill">${item.price}★</div>
+          </div>
         </div>
         <div class="inventory-actions">
-          <button class="inv-btn inv-btn-use" onclick="useItem(${item.id},'${item.name}')">✅ Использовать</button>
-          <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id},'${item.name}')">🎁 Подарить</button>
-          <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id},'${item.name}',${item.price})">💰 Продать</button>
+          <button class="inv-btn inv-btn-use" onclick="useItem(${item.id},'${shopJsArg(item.name)}')">✅ Использовать</button>
+          <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id},'${shopJsArg(item.name)}')">🎁 Подарить</button>
+          <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id},'${shopJsArg(item.name)}',${item.price})">💰 Продать</button>
         </div>
       </div>`;
     }).join('');

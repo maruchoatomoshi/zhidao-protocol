@@ -2621,6 +2621,37 @@ body.is-admin .profile-card-kicker {
 .inventory-item-legendary { border-color: rgba(180,20,20,0.38); }
 .inventory-item-card { border-color: color-mix(in srgb, var(--gold) 22%, var(--border)); }
 
+/* ===== CARD RARITY VARIANTS ===== */
+
+/* Shop card: gold left glow */
+.inventory-item-shop::before {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--gold) 18%, transparent), transparent 40%),
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--red) 9%, transparent), transparent 34%);
+}
+
+/* Genshin card pool borders */
+.inventory-card-gold   { border-color: rgba(192,160,64,0.40); }
+.inventory-card-purple { border-color: rgba(155,89,182,0.38); }
+.inventory-card-blue   { border-color: rgba(74,122,204,0.34); }
+.inventory-card-dup    { border-color: var(--gold-border); }
+
+/* Genshin card icon rarity */
+.inventory-icon-gold   { border-color: rgba(192,160,64,0.55) !important; box-shadow: inset 0 0 16px rgba(255,200,0,0.07), 0 0 10px rgba(192,160,64,0.13); }
+.inventory-icon-purple { border-color: rgba(155,89,182,0.50) !important; box-shadow: inset 0 0 16px rgba(155,89,182,0.07), 0 0 10px rgba(155,89,182,0.13); }
+.inventory-icon-blue   { border-color: rgba(74,122,204,0.44) !important; box-shadow: inset 0 0 16px rgba(74,122,204,0.06), 0 0 10px rgba(74,122,204,0.11); }
+
+/* Genshin card gradient by pool */
+.inventory-card-gold::before   { background: linear-gradient(90deg, color-mix(in srgb, #c0a040 18%, transparent), transparent 38%), radial-gradient(circle at 92% 8%, color-mix(in srgb, #ffd700 12%, transparent), transparent 34%); }
+.inventory-card-purple::before { background: linear-gradient(90deg, color-mix(in srgb, #9b59b6 16%, transparent), transparent 38%), radial-gradient(circle at 92% 8%, color-mix(in srgb, #c39ef5 10%, transparent), transparent 34%); }
+.inventory-card-blue::before   { background: linear-gradient(90deg, color-mix(in srgb, #4b8fcf 16%, transparent), transparent 38%), radial-gradient(circle at 92% 8%, color-mix(in srgb, #4a9af5 10%, transparent), transparent 34%); }
+
+/* Kicker + date color per pool */
+.inventory-card-gold   .inventory-kicker, .inventory-card-gold   .inventory-date { color: #c0a040; }
+.inventory-card-purple .inventory-kicker, .inventory-card-purple .inventory-date { color: #c39ef5; }
+.inventory-card-blue   .inventory-kicker, .inventory-card-blue   .inventory-date { color: #4a9af5; }
+.inventory-card-dup    .inventory-kicker, .inventory-card-dup    .inventory-date { color: var(--gold); }
+
 /* ===== КЕЙСЫ ===== */
 .casino-balance {
   display: flex; justify-content: space-between; align-items: center;

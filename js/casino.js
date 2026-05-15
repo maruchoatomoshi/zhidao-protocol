@@ -604,7 +604,9 @@ async function loadCards(telegramId) {
       const isDup = cardCounts[card.card_id] > 1;
       const isSecond = seen[card.card_id] > 1;
       const rarity = card.rarity || 4;
-      const rarityColor = rarity === 5 ? '#ffd700' : rarity === 4 ? '#9b59b6' : '#4b8fcf';
+      const cfg = GS_CARD_CONFIGS[card.card_id] || {};
+      const pool = cfg.pool || (rarity === 5 ? 'gold' : 'blue');
+      const rarityColor = cfg.starsColor || (rarity === 5 ? '#c0a040' : rarity >= 4 ? '#9b59b6' : '#4b8fcf');
       const stars = '★'.repeat(rarity);
       const emoji = GENSHIN_EMOJIS[card.card_id] || '✨';
       const imgSrc = GENSHIN_IMGS[card.card_id];
@@ -618,14 +620,15 @@ async function loadCards(telegramId) {
       const disassembleBtn = isSecond
         ? `<button class="inv-btn inv-btn-gift" onclick="disassembleCard(${card.id})">✦ [ РАЗОБРАТЬ +50 ✦ ]</button>`
         : '';
-      return `<div class="inventory-item inventory-item-card" style="border-color:${isDup ? 'rgba(219,177,101,0.3)' : `${rarityColor}44`};">
+      const cardClass = isDup ? 'inventory-card-dup' : `inventory-card-${pool}`;
+      return `<div class="inventory-item inventory-item-card ${cardClass}">
         <div class="inventory-header">
-          <div class="inventory-icon" style="border-color:${rarityColor}55;">${cardVisual}</div>
+          <div class="inventory-icon inventory-icon-${pool}">${cardVisual}</div>
           <div class="inventory-info">
             <div class="inventory-kicker">GENSHIN CARD ${isDup ? '<span class="inventory-pill">ДУБЛЬ</span>' : ''}</div>
             <div class="inventory-name">${card.name}</div>
-            <div class="inventory-date" style="color:${rarityColor};">${stars}</div>
-            <div class="inventory-desc">${cardPassive}</div>
+            <div class="inventory-date">${stars}</div>
+            ${cardPassive ? `<div class="inventory-desc">${cardPassive}</div>` : ''}
           </div>
           <div class="inventory-side">
             <div class="inventory-pill">${rarity}★</div>
