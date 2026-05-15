@@ -309,6 +309,7 @@ body.is-architect .profile-card-home::after {
   border-color: rgba(232,34,0,0.75);
 }
 body.is-architect .profile-scan-line {
+  display: block;
   animation: architectScanLine 4s ease-in-out infinite;
 }
 body.is-architect .profile-card-kicker {
@@ -1041,7 +1042,10 @@ body.theme-genshin-dark .lb-points
   opacity: 0.28;
 }
 
-body.is-admin .profile-holo-ring {
+.profile-holo-ring { display: none; }
+body.is-admin .profile-holo-ring,
+body.is-architect .profile-holo-ring {
+  display: block;
   opacity: 0.64;
   filter: drop-shadow(0 0 10px rgba(220, 30, 48, 0.24));
   animation-duration: 5.8s;
@@ -1075,6 +1079,7 @@ body.is-admin .profile-holo-ring {
 
 /* Scan line */
 .profile-scan-line {
+  display: none;
   position: absolute;
   left: 0; right: 0;
   height: 1px;
@@ -1123,6 +1128,7 @@ body.is-admin .profile-card-home::after {
   border-color: rgba(200,30,30,0.7);
 }
 body.is-admin .profile-scan-line {
+  display: block;
   background: linear-gradient(90deg, transparent, rgba(220,40,40,0.6) 40%, rgba(255,60,60,0.9) 50%, rgba(220,40,40,0.6) 60%, transparent);
 }
 body.is-admin .profile-card-kicker {
