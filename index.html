@@ -854,18 +854,19 @@
       <div>
         <div class="admin-panel-kicker">// NETWATCH PROTOCOL //</div>
         <div class="admin-panel-title">Панель управления</div>
+        <div class="admin-panel-status" id="adminPanelStatus"></div>
       </div>
       <div class="admin-panel-badge">👑 ADMIN</div>
     </div>
-    <div class="admin-section-btns">
-      <button class="admin-sec-btn active" onclick="showAdminSection('schedule',this)">📅 Расписание</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('announce',this)">📣 Объявления</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('users',this)">👥 Игроки</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('presence',this)">📡 Перекличка</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)">🧺 Стирка</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)">🌑 BlackWall</button>
-      <button class="admin-sec-btn" onclick="showAdminSection('contracts',this)">📋 Контракты</button>
-      <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()">⚡ Architect</button>
+    <div class="admin-nav-grid">
+      <button class="admin-sec-btn active" onclick="showAdminSection('schedule',this)"><span class="admin-nav-icon">📅</span><span class="admin-nav-label">Расписание</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('announce',this)"><span class="admin-nav-icon">📣</span><span class="admin-nav-label">Объявления</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('users',this)"><span class="admin-nav-icon">👥</span><span class="admin-nav-label">Игроки</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('presence',this)"><span class="admin-nav-icon">📡</span><span class="admin-nav-label">Перекличка</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)"><span class="admin-nav-icon">🧺</span><span class="admin-nav-label">Стирка</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)"><span class="admin-nav-icon">🌑</span><span class="admin-nav-label">BlackWall</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('contracts',this)"><span class="admin-nav-icon">📋</span><span class="admin-nav-label">Контракты</span></button>
+      <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()"><span class="admin-nav-icon">⚡</span><span class="admin-nav-label">Architect</span></button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
       <div class="admin-console-card">
@@ -1082,13 +1083,13 @@
           <button class="admin-console-refresh" onclick="adminLoadContractMonitor()">📡 Мониторинг экономики</button>
         </div>
         <div id="adminContractMonitor" class="admin-contract-monitor" style="display:none;"></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;">
-          <button class="admin-console-refresh" onclick="adminLoadContracts()">Все</button>
-          <button class="admin-console-refresh" onclick="adminLoadContracts('open')">Открытые</button>
-          <button class="admin-console-refresh" onclick="adminLoadContracts('accepted')">Принятые</button>
-          <button class="admin-console-refresh" onclick="adminLoadContracts('disputed')">⚠ Споры</button>
-          <button class="admin-console-refresh" onclick="adminLoadContracts('suspicious')">🔍 Подозр.</button>
-          <button class="admin-console-refresh" onclick="adminLoadContracts('completed')">Завершённые</button>
+        <div class="admin-filter-wrap">
+          <button class="admin-filter-btn active" onclick="adminLoadContracts(undefined, this)">Все</button>
+          <button class="admin-filter-btn" onclick="adminLoadContracts('open', this)">Открытые</button>
+          <button class="admin-filter-btn" onclick="adminLoadContracts('accepted', this)">Принятые</button>
+          <button class="admin-filter-btn" onclick="adminLoadContracts('disputed', this)">⚠ Споры</button>
+          <button class="admin-filter-btn" onclick="adminLoadContracts('suspicious', this)">🔍 Подозр.</button>
+          <button class="admin-filter-btn" onclick="adminLoadContracts('completed', this)">Завершённые</button>
         </div>
         <div id="adminContractsList" style="font-size:12px;color:var(--text3);font-family:monospace;">
           Нажми фильтр для загрузки

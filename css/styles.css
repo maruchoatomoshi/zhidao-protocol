@@ -3021,50 +3021,75 @@ body.is-admin .more-item.admin-only-item::before {
 /* ===== АДМИН ===== */
 .admin-section { display: none; }
 .admin-input {
-  width: 100%; background: rgba(0,0,0,0.3);
+  width: 100%; background: rgba(0,0,0,0.28);
   border: 1px solid var(--border); color: var(--text);
-  border-radius: 6px; padding: 8px 10px; font-size: 12px;
-  margin-bottom: 6px; font-family: -apple-system, sans-serif;
+  border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12px;
+  margin-bottom: 6px; font-family: monospace;
+  transition: border-color var(--transition-fast) var(--ease-standard);
 }
-.admin-section-btns {
-  display: flex;
-  flex-wrap: nowrap;
+.admin-input:focus { outline: none; border-color: color-mix(in srgb, var(--red) 40%, transparent); }
+
+/* ===== ADMIN NAV GRID ===== */
+.admin-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 5px;
-  padding: 8px 12px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  padding: 6px 12px 10px;
 }
-.admin-section-btns::-webkit-scrollbar { display: none; }
 .admin-sec-btn {
-  padding: 7px 11px;
-  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 4px 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text3);
-  font-size: 9px;
+  background: var(--bg2);
   cursor: pointer;
-  font-family: monospace;
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: 0.5px;
-  transition: all 0.15s;
+  transition: all var(--transition-fast) var(--ease-standard);
 }
-.admin-sec-btn:hover { color: var(--text2); border-color: rgba(255,255,255,0.15); }
+.admin-nav-icon { font-size: 17px; line-height: 1; }
+.admin-nav-label {
+  font-size: 7.5px;
+  color: var(--text3);
+  font-family: monospace;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.admin-sec-btn:hover { border-color: color-mix(in srgb, var(--border) 160%, transparent); background: var(--bg3); }
 .admin-sec-btn.active {
   background: var(--red-dim);
   border-color: var(--red-border);
-  color: var(--red);
 }
+.admin-sec-btn.active .admin-nav-label { color: var(--red); }
+
+/* Admin filter chips (contracts, etc.) */
+.admin-filter-wrap { display: flex; gap: 5px; flex-wrap: wrap; margin: 8px 0; }
+.admin-filter-btn {
+  padding: 5px 10px; border-radius: var(--radius-pill);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text3); font-size: 9px; font-family: monospace;
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--transition-fast) var(--ease-standard);
+}
+.admin-filter-btn:hover { border-color: var(--red-border); color: var(--text2); }
+.admin-filter-btn.active { background: var(--red-dim); border-color: var(--red-border); color: var(--red); }
+
 .admin-console-card {
   margin-bottom: 12px;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
-  border-radius: 14px;
+  border-left: 2px solid var(--red-border);
+  border-radius: var(--radius-lg);
   background:
     linear-gradient(145deg, color-mix(in srgb, var(--bg2) 90%, transparent), color-mix(in srgb, var(--bg3) 66%, transparent)),
     var(--bg2);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.16);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
 }
 .admin-console-head {
   display: flex;
@@ -3825,17 +3850,25 @@ body.is-admin .more-item.admin-only-item::before {
   color: var(--text);
   letter-spacing: -0.3px;
 }
+.admin-panel-status {
+  font-family: monospace;
+  font-size: 9px;
+  color: var(--text3);
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
 .admin-panel-badge {
   font-family: monospace;
   font-size: 9px;
   font-weight: 800;
-  color: var(--gold);
-  background: var(--gold-dim);
-  border: 1px solid var(--gold-border);
-  border-radius: 8px;
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid var(--red-border);
+  border-radius: var(--radius-sm);
   padding: 5px 10px;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   flex-shrink: 0;
+  align-self: flex-start;
 }
 
 /* Admin 2-col form grid */

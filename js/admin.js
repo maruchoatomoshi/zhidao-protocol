@@ -119,6 +119,13 @@ function showAdminSection(name, btn) {
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  const statusEl = document.getElementById('adminPanelStatus');
+  if (statusEl) {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('ru-RU', { weekday:'short', day:'numeric', month:'short' });
+    const timeStr = now.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+    statusEl.textContent = `${dateStr} · ${timeStr} · SYS:${name.toUpperCase()}`;
+  }
   const el = document.getElementById('admin-'+name);
   if(el) el.style.display = 'block';
   if (name==='laundry') adminLoadLaundrySlots();
@@ -1077,8 +1084,12 @@ async function setArchitectEventEnabled(enabled) {
 
 let adminContractsActiveFilter = '';
 
-async function adminLoadContracts(status) {
+async function adminLoadContracts(status, btn) {
   adminContractsActiveFilter = status || '';
+  if (btn) {
+    document.querySelectorAll('.admin-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
   const el = document.getElementById('adminContractsList');
   if (!el || !currentUserId) return;
   el.innerHTML = '<div style="color:var(--text3);">Загрузка...</div>';
