@@ -361,16 +361,26 @@ function useItem(id, name) {
 function giftItem(id, name) { tg.showPopup({title:`Подарить ${name}?`,message:'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов. Лимит: 5 подарков в день.',buttons:[{type:'ok'}]}); }
 
 async function sellItem(id, name, price) {
-  const refund = Math.floor(price / 2);
+  const pandaActive = typeof hasPandaImplant !== 'undefined' && hasPandaImplant;
+  const rate = pandaActive ? 0.6 : 0.5;
+  const refund = Math.floor(price * rate);
+  const rateLabel = pandaActive ? '60% · Панда 🐼' : '50%';
   tg.showPopup({
     title:`Продать ${name}?`,
-    message:`Ты получишь ${refund} ★ (50% от стоимости ${price} ★)`,
+    message:`Ты получишь ${refund} ★ (${rateLabel} от стоимости ${price} ★)`,
     buttons:[{id:'confirm',type:'destructive',text:`💰 Продать за ${refund} ★`},{type:'cancel'}]
   }, async (btnId) => {
     if (btnId !== 'confirm') return;
     try {
       const r = await fetch(`${API_URL}/api/shop/sell`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({purchase_id:id,telegram_id:currentUserId})});
-      if (r.ok) { const data=await r.json(); currentPoints=data.new_points; updatePoints(); showToast(`✅ Продано! +${data.refund} ★`); loadInventory(); }
+      if (r.ok) {
+        const data = await r.json();
+        currentPoints = data.new_points;
+        updatePoints();
+        const pandaNote = data.sell_rate === 0.6 ? ' · Панда 🐼' : '';
+        showToast(`✅ Продано! +${data.refund} ★${pandaNote}`);
+        loadInventory();
+      }
     } catch(e) { showToast('Ошибка'); }
   });
 }

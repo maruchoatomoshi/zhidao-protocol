@@ -2293,6 +2293,7 @@ body.is-admin .profile-card-kicker {
 .inventory-name { font-size: 12px; font-weight: 800; color: var(--text); line-height: 1.25; }
 .inventory-date { font-size: 9px; color: var(--text3); font-family: monospace; margin-top: 3px; line-height: 1.35; }
 .inventory-desc { font-size: 10px; color: var(--text2); margin-top: 4px; line-height: 1.35; }
+.inventory-desc-secondary { font-size: 9px; color: var(--text3); margin-top: 3px; font-family: monospace; letter-spacing: 0.2px; }
 .inventory-side {
   display: flex;
   flex-direction: column;

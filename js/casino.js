@@ -54,6 +54,7 @@ const LEGENDARY_IMPLANT_INFO = {
   },
 };
 let legendaryImplantStatus = {};
+let hasPandaImplant = false;
 const CASE_IMAGES = {
   gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
   purple: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png',
@@ -66,6 +67,14 @@ const CASE_ROULETTE_LABELS = {
   black: 'BLACK // 0.1%',
 };
 let currentRouletteTargetIdx = null;
+
+function renderImplantPassives(desc) {
+  if (!desc) return '';
+  const parts = desc.split(' · ');
+  if (parts.length === 1) return `<div class="inventory-desc">${parts[0]}</div>`;
+  return `<div class="inventory-desc">${parts[0]}</div>
+    <div class="inventory-desc-secondary">+ ${parts.slice(1).join(' · ')}</div>`;
+}
 
 async function loadImplants(telegramId) {
   const pageContainer = document.getElementById('myImplantsPage');
@@ -103,6 +112,8 @@ async function loadImplants(telegramId) {
       if (pageContainer) pageContainer.innerHTML = empty;
       return;
     }
+
+    hasPandaImplant = data.some(imp => imp.implant_id === 'implant_panda' && imp.durability > 0);
 
     // Считаем дубли
     const implantCounts = {};
@@ -182,7 +193,7 @@ async function loadImplants(telegramId) {
           <div class="inventory-info">
             <div class="inventory-kicker">IMPLANT ${duplicateBadge}</div>
             <div class="inventory-name">${displayName}</div>
-            <div class="inventory-desc">${displayDesc}</div>
+            ${renderImplantPassives(displayDesc)}
             <div class="inventory-date">Получен: ${new Date(imp.obtained_at).toLocaleDateString('ru-RU')}</div>
           </div>
           <div class="inventory-side">
