@@ -2315,11 +2315,11 @@ body.is-admin .profile-card-kicker {
   padding: 3px 7px;
   text-transform: uppercase;
 }
-.inventory-actions { display: flex; gap: 6px; margin-top: 8px; }
+.inventory-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .inv-btn { flex:1; padding: 7px 6px; border-radius: 10px; font-size: 9px; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: monospace; }
-.inv-btn-use { background: rgba(46,204,113,0.15); color: #2ecc71; }
-.inv-btn-gift { background: rgba(212,175,55,0.1); color: var(--gold); }
-.inv-btn-sell { background: rgba(180,20,20,0.12); color: #cc4444; }
+.inv-btn-use { flex: 0 0 100%; background: rgba(46,204,113,0.15); color: #2ecc71; border-color: rgba(46,204,113,0.18); }
+.inv-btn-gift { background: rgba(212,175,55,0.08); color: var(--gold); opacity: 0.72; }
+.inv-btn-sell { background: rgba(180,20,20,0.10); color: #cc4444; border-color: rgba(180,20,20,0.18); }
 .inv-btn-legendary {
   background: rgba(180,20,20,0.14);
   border-color: rgba(180,20,20,0.34);
