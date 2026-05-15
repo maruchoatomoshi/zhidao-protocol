@@ -904,8 +904,12 @@ function adminRenderPresenceOverview(checkType, data) {
       </div>`
     : '<div class="empty-state">Нет активных тревог или ожиданий</div>';
 
+  const rawDate = String(data.check_date || 'сегодня');
+  const displayDate = checkType === 'manual' && rawDate.includes('__')
+    ? rawDate.replace('__', ' · ').replace(/(\d{2})(\d{2})(\d{2})\d*$/, '$1:$2:$3')
+    : rawDate;
   container.innerHTML = `
-    <div class="admin-presence-date">Дата: ${escapeHtml(data.check_date || 'сегодня')}</div>
+    <div class="admin-presence-date">${checkType === 'manual' ? 'Сессия' : 'Дата'}: ${escapeHtml(displayDate)}</div>
     <div class="admin-presence-chips">${statusGrid}</div>
     ${attentionList}
   `;

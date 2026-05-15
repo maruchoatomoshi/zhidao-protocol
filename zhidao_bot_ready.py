@@ -290,13 +290,14 @@ async def presence_attempt(check_type, telegram_id):
     )
 
 
-async def presence_confirm(telegram_id, check_type, action, note=""):
+async def presence_confirm(telegram_id, check_type, action, note="", check_date=None):
     return await api_request(
         "POST",
         "/api/presence/confirm",
         {
             "telegram_id": telegram_id,
             "check_type": check_type,
+            "check_date": check_date,
             "action": action,
             "note": note,
         },
@@ -343,13 +344,14 @@ async def presence_cancel(check_type, admin_id, reason="manual cancel from bot")
     )
 
 
-async def presence_approve(telegram_id, check_type, admin_id, reason="admin_approved"):
+async def presence_approve(telegram_id, check_type, admin_id, reason="admin_approved", check_date=None):
     return await api_request(
         "POST",
         "/api/presence/admin/approve",
         {
             "telegram_id": telegram_id,
             "check_type": check_type,
+            "check_date": check_date,
             "admin_id": admin_id,
             "reason": reason,
         },
@@ -357,13 +359,14 @@ async def presence_approve(telegram_id, check_type, admin_id, reason="admin_appr
     )
 
 
-async def presence_reject(telegram_id, check_type, admin_id, reason="leave rejected"):
+async def presence_reject(telegram_id, check_type, admin_id, reason="leave rejected", check_date=None):
     return await api_request(
         "POST",
         "/api/presence/admin/reject",
         {
             "telegram_id": telegram_id,
             "check_type": check_type,
+            "check_date": check_date,
             "admin_id": admin_id,
             "reason": reason,
         },
@@ -462,7 +465,7 @@ def get_mini_app_keyboard():
     )
 
 
-def get_presence_keyboard(check_type):
+def get_presence_keyboard(check_type, check_date=None):
     if check_type == "morning":
         return InlineKeyboardMarkup(
             inline_keyboard=[
@@ -473,10 +476,12 @@ def get_presence_keyboard(check_type):
             ]
         )
     if check_type == "manual":
+        session = check_date or ""
+        suffix = f":{session}" if session else ""
         return InlineKeyboardMarkup(
             inline_keyboard=[[
-                InlineKeyboardButton(text="✅ Я на месте", callback_data="presence:manual:confirm"),
-                InlineKeyboardButton(text="🙋 Нужен отгул", callback_data="presence:manual:request_leave"),
+                InlineKeyboardButton(text="✅ Я на месте", callback_data=f"presence:manual{suffix}:confirm"),
+                InlineKeyboardButton(text="🙋 Нужен отгул", callback_data=f"presence:manual{suffix}:request_leave"),
             ]]
         )
 
@@ -495,17 +500,18 @@ def get_checkin_keyboard():
     return get_presence_keyboard("evening")
 
 
-def get_presence_admin_keyboard(check_type, telegram_id):
+def get_presence_admin_keyboard(check_type, telegram_id, check_date=None):
+    date_suffix = f":{check_date}" if check_date else ""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text="✅ Разрешить",
-                    callback_data=f"presence_admin:approve:{check_type}:{telegram_id}",
+                    callback_data=f"presence_admin:approve:{check_type}:{telegram_id}{date_suffix}",
                 ),
                 InlineKeyboardButton(
                     text="❌ Отклонить",
-                    callback_data=f"presence_admin:reject:{check_type}:{telegram_id}",
+                    callback_data=f"presence_admin:reject:{check_type}:{telegram_id}{date_suffix}",
                 ),
             ]
         ]
@@ -560,7 +566,7 @@ async def send_presence_attempt(check_type, attempt_no=1, create_check=False):
             await bot.send_message(
                 tg_id,
                 get_presence_message(check_type, attempt_no),
-                reply_markup=get_presence_keyboard(check_type),
+                reply_markup=get_presence_keyboard(check_type, overview.get("check_date")),
             )
             sent += 1
 
@@ -658,27 +664,31 @@ async def send_goodnight():
 @dp.callback_query(lambda c: c.data and c.data.startswith("presence:"))
 async def presence_child_callback(callback: types.CallbackQuery):
     parts = callback.data.split(":")
-    if len(parts) != 3:
+    if len(parts) not in (3, 4):
         await callback.answer("Некорректная кнопка", show_alert=True)
         return
 
-    _, check_type, action = parts
+    if len(parts) == 4:
+        _, check_type, check_date, action = parts
+    else:
+        _, check_type, action = parts
+        check_date = None
     user_id = callback.from_user.id
 
     try:
         if action == "confirm":
-            await presence_confirm(user_id, check_type, "confirm")
+            await presence_confirm(user_id, check_type, "confirm", check_date=check_date)
             text = "✅ Отметка принята. Спасибо!"
         elif action == "free_time":
-            await presence_confirm(user_id, check_type, "free_time")
+            await presence_confirm(user_id, check_type, "free_time", check_date=check_date)
             text = "🕐 Активное «Свободное время» принято. Админы увидят статус."
         elif action == "request_leave":
-            await presence_confirm(user_id, check_type, "request_leave", "Запрос через Telegram bot")
+            await presence_confirm(user_id, check_type, "request_leave", "Запрос через Telegram bot", check_date=check_date)
             text = "🙋 Запрос отправлен админам. Дождись подтверждения."
             name = callback.from_user.full_name or callback.from_user.first_name or str(user_id)
             await notify_admins(
                 f"🙋 Запрос отгула ({check_type})\n\n{name} / {user_id} просит разрешение.",
-                reply_markup=get_presence_admin_keyboard(check_type, user_id),
+                reply_markup=get_presence_admin_keyboard(check_type, user_id, check_date),
             )
         else:
             await callback.answer("Неизвестное действие", show_alert=True)
@@ -697,23 +707,27 @@ async def presence_admin_callback(callback: types.CallbackQuery):
         return
 
     parts = callback.data.split(":")
-    if len(parts) != 4:
+    if len(parts) not in (4, 5):
         await callback.answer("Некорректная кнопка", show_alert=True)
         return
 
-    _, action, check_type, tg_id_raw = parts
+    if len(parts) == 5:
+        _, action, check_type, tg_id_raw, check_date = parts
+    else:
+        _, action, check_type, tg_id_raw = parts
+        check_date = None
     tg_id = int(tg_id_raw)
 
     try:
         if action == "approve":
-            await presence_approve(tg_id, check_type, callback.from_user.id, "admin_approved from bot")
+            await presence_approve(tg_id, check_type, callback.from_user.id, "admin_approved from bot", check_date)
             await callback.message.edit_text(f"✅ Разрешение выдано: {tg_id} ({check_type})")
             try:
                 await bot.send_message(tg_id, "✅ Админ разрешил отгул. Статус отмечен.")
             except Exception:
                 pass
         elif action == "reject":
-            await presence_reject(tg_id, check_type, callback.from_user.id, "rejected from bot")
+            await presence_reject(tg_id, check_type, callback.from_user.id, "rejected from bot", check_date)
             await callback.message.edit_text(f"❌ Отгул отклонён: {tg_id} ({check_type})")
             try:
                 await bot.send_message(

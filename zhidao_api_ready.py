@@ -755,6 +755,24 @@ def normalize_presence_date(value: Optional[str] = None) -> str:
     return str(value or datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')).strip()
 
 
+def new_manual_presence_session() -> str:
+    return datetime.now(BEIJING_TZ).strftime('%Y-%m-%d__%H%M%S%f')
+
+
+def latest_manual_presence_session(c) -> Optional[str]:
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    c.execute(
+        '''SELECT check_date
+           FROM daily_checks
+           WHERE check_type='manual' AND check_date LIKE ?
+           ORDER BY check_date DESC
+           LIMIT 1''',
+        (f"{today}__%",),
+    )
+    row = c.fetchone()
+    return row[0] if row else None
+
+
 def serialize_presence_row(row):
     return {
         "id": row[0],
@@ -838,7 +856,7 @@ def apply_presence_status(c, check_type: str, check_date: str, telegram_id: int,
     return fetch_presence_row(c, check_type, check_date, telegram_id)
 
 
-def get_presence_keyboard_markup(check_type: str):
+def get_presence_keyboard_markup(check_type: str, check_date: Optional[str] = None):
     if check_type == "morning":
         return {
             "inline_keyboard": [[
@@ -847,10 +865,11 @@ def get_presence_keyboard_markup(check_type: str):
             ]]
         }
     if check_type == "manual":
+        session = check_date or normalize_presence_date()
         return {
             "inline_keyboard": [[
-                {"text": "✅ Я на месте", "callback_data": "presence:manual:confirm"},
-                {"text": "🙋 Нужен отгул", "callback_data": "presence:manual:request_leave"},
+                {"text": "✅ Я на месте", "callback_data": f"presence:manual:{session}:confirm"},
+                {"text": "🙋 Нужен отгул", "callback_data": f"presence:manual:{session}:request_leave"},
             ]]
         }
 
@@ -3013,7 +3032,7 @@ async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(No
         raise HTTPException(status_code=403, detail="Forbidden")
 
     check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
+    check_date = new_manual_presence_session() if check_type == "manual" and not data.get("check_date") else normalize_presence_date(data.get("check_date"))
     target_ids = data.get("telegram_ids")
     note = str(data.get("note") or "").strip()
 
@@ -3059,7 +3078,7 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
         raise HTTPException(status_code=403, detail="Forbidden")
 
     check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
+    check_date = new_manual_presence_session() if check_type == "manual" and not data.get("check_date") else normalize_presence_date(data.get("check_date"))
     attempt_no = int(data.get("attempt_no") or 1)
     note = str(data.get("note") or f"admin dispatch attempt {attempt_no}").strip()
     target_ids = data.get("telegram_ids")
@@ -3111,7 +3130,7 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
 
     sent = []
     failed = []
-    markup = get_presence_keyboard_markup(check_type)
+    markup = get_presence_keyboard_markup(check_type, check_date)
     text = get_presence_message_text(check_type, attempt_no)
     for telegram_id in eligible:
         ok, response = await send_telegram_message(telegram_id, text, markup)
@@ -3172,7 +3191,6 @@ async def confirm_presence(data: dict):
         raise HTTPException(status_code=400, detail="Invalid telegram_id")
 
     check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
     action = str(data.get("action") or "confirm").strip().lower()
     note = str(data.get("note") or "").strip()
 
@@ -3352,12 +3370,16 @@ async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(N
         raise HTTPException(status_code=403, detail="Forbidden")
 
     check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
     reason = str(data.get("reason") or "manual cancel").strip()
     now = now_iso()
 
     conn = get_conn()
     c = conn.cursor()
+    check_date = str(data.get("check_date") or "").strip()
+    if not check_date and check_type == "manual":
+        check_date = latest_manual_presence_session(c) or normalize_presence_date()
+    else:
+        check_date = normalize_presence_date(check_date)
     c.execute(
         '''UPDATE daily_checks
            SET status='skipped',
@@ -3448,9 +3470,12 @@ async def presence_admin_overview(check_type: str, check_date: Optional[str] = N
         raise HTTPException(status_code=403, detail="Forbidden")
 
     check_type = normalize_presence_check_type(check_type)
-    check_date = normalize_presence_date(check_date)
     conn = get_conn()
     c = conn.cursor()
+    if not check_date and check_type == "manual":
+        check_date = latest_manual_presence_session(c) or normalize_presence_date()
+    else:
+        check_date = normalize_presence_date(check_date)
     c.execute(
         '''SELECT dc.id, dc.check_type, dc.check_date, dc.telegram_id, u.full_name,
                   dc.status, dc.attempts_sent, dc.first_sent_at, dc.last_attempt_at,
