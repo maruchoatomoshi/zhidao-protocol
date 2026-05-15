@@ -12,7 +12,7 @@ const PURPLE_PRIZES = [
   { code:'implant_terracota', icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',                    name:'Терракота 兵马俑',   desc:'Имплант: блок 1 штрафа в день',    points:0, rarity:'rare' },
   { code:'implant_panda',     icon:'🐼', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',      name:'Панда 🐼',           desc:'Кэшбек +10★ с покупки',            points:0, rarity:'rare' },
   { code:'implant_shaolin',   icon:'🥋', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',    name:'Шаолинь 少林',       desc:'+20★ за перекличку вовремя',       points:0, rarity:'rare' },
-  { code:'implant_linguasoft',icon:'🎙', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true', name:'Linguasoft 口才',    desc:'+30★ за оценку 5/5 в дневнике',   points:0, rarity:'rare' },
+  { code:'implant_linguasoft',icon:'🎙', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true', name:'Linguasoft 口才',    desc:'+30★ за 3★ в дневнике',            points:0, rarity:'rare' },
   { code:'implant_caishen',   icon:'💰', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',            name:'Цайшэнь 财神',       desc:'+15★ каждые 24 часа',              points:0, rarity:'rare' },
   { code:'implant_qilin',     icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',      name:'Цилинь 麒麟',        desc:'+10★ за каждого владельца Цилиня', points:0, rarity:'rare' },
 ];
@@ -27,12 +27,33 @@ const IMPLANT_DISPLAY_INFO = {
   implant_terracota: { name: '\u0422\u0435\u0440\u0440\u0430\u043a\u043e\u0442\u0430 \u5175\u9a6c\u4fd1', desc: '\u0411\u043b\u043e\u043a 1 \u0448\u0442\u0440\u0430\u0444\u0430 \u0432 \u0434\u0435\u043d\u044c', icon: '\ud83d\uddff' },
   implant_panda: { name: '\u041f\u0430\u043d\u0434\u0430 \ud83d\udc3c', desc: '\u041a\u044d\u0448\u0431\u0435\u043a +10\u2605 \u0441 \u043f\u043e\u043a\u0443\u043f\u043a\u0438', icon: '\ud83d\udc3c' },
   implant_shaolin: { name: '\u0428\u0430\u043e\u043b\u0438\u043d\u044c \u5c11\u6797', desc: '+20\u2605 \u0437\u0430 \u043f\u0435\u0440\u0435\u043a\u043b\u0438\u0447\u043a\u0443 \u0432\u043e\u0432\u0440\u0435\u043c\u044f', icon: '\ud83e\udd4b' },
-  implant_linguasoft: { name: 'Linguasoft \u53e3\u624d', desc: '+30\u2605 \u0437\u0430 \u043e\u0446\u0435\u043d\u043a\u0443 5/5 \u0432 \u0434\u043d\u0435\u0432\u043d\u0438\u043a\u0435', icon: '\ud83c\udf99' },
+  implant_linguasoft: { name: 'Linguasoft \u53e3\u624d', desc: '+30\u2605 \u0437\u0430 3\u2605 \u0432 \u0434\u043d\u0435\u0432\u043d\u0438\u043a\u0435', icon: '\ud83c\udf99' },
   implant_caishen: { name: '\u0426\u0430\u0439\u0448\u044d\u043d\u044c \u8d22\u795e', desc: '+15\u2605 \u043a\u0430\u0436\u0434\u044b\u0435 24 \u0447\u0430\u0441\u0430', icon: '\ud83d\udcb0' },
   implant_qilin: { name: '\u0426\u0438\u043b\u0438\u043d\u044c \u9e92\u9e9f', desc: '+10\u2605 \u0437\u0430 \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 \u0426\u0438\u043b\u0438\u043d\u044f', icon: '\ud83d\udc09' },
-  implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u0431\u0430\u043b\u043b\u043e\u0432 \u00b7 \u0433\u0440\u0430\u0431\u0451\u0436 \u00b7 \u043f\u0435\u0440\u0435\u0434\u0430\u0442\u044c \u0448\u0442\u0440\u0430\u0444', icon: '\ud83d\udc09' },
+  implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u0431\u0430\u043b\u043b\u043e\u0432 \u00b7 \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442 \u00b7 \u0441\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0438\u043c\u043f\u0443\u043b\u044c\u0441', icon: '\ud83d\udc09' },
   implant_netwatch: { name: '\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0414\u043e\u0437\u043e\u0440 \u7f51\u7edc\u5b88\u536b', desc: 'NetWatch: \u0443\u0434\u0430\u0440, Blackwall \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0441\u0435\u0442\u0438', icon: '\ud83d\udd34' },
 };
+const LEGENDARY_IMPLANT_INFO = {
+  implant_red_dragon: {
+    title: 'ПРОТОКОЛ КРАСНЫЙ ДРАКОН',
+    glyph: '龍',
+    passive: 'Воскресная зарплата удваивается автоматически.',
+    actions: [
+      { code: 'intercept', label: 'ПЕРЕХВАТ', hint: 'Забрать 10★ у цели' },
+      { code: 'impulse_reset', label: 'СБРОСИТЬ ИМПУЛЬС', hint: 'Отменить игровой штраф до 20★' },
+    ],
+  },
+  implant_netwatch: {
+    title: 'ПРОТОКОЛ NETWATCH',
+    glyph: '衛',
+    passive: 'Каждое утро узел получает +25★ восполнения памяти.',
+    actions: [
+      { code: 'formatting', label: 'ФОРМАТИРОВАНИЕ', hint: 'Цель -15★, побочный урон -5★' },
+      { code: 'veil_breach', label: 'ВЗЛОМ ЗАСЛОНА', hint: 'Блок магазина и кейсов на 12 часов' },
+    ],
+  },
+};
+let legendaryImplantStatus = {};
 const CASE_IMAGES = {
   gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
   purple: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png',
@@ -67,6 +88,12 @@ async function loadImplants(telegramId) {
     const r = await fetch(`${API_URL}/api/casino/implants/${telegramId}`);
     if (!r.ok) return;
     const data = await r.json();
+    try {
+      const statusR = await fetch(`${API_URL}/api/implants/legendary/status/${telegramId}`);
+      legendaryImplantStatus = statusR.ok ? await statusR.json() : {};
+    } catch(e) {
+      legendaryImplantStatus = {};
+    }
 
     const homeContainer = document.getElementById('homeImplants');
 
@@ -113,7 +140,7 @@ async function loadImplants(telegramId) {
       const displayDesc = display.desc || imp.desc || '';
       const displayIcon = display.icon || imp.icon || '';
       const img = IMPLANT_IMGS[imp.implant_id];
-      const isLeg = imp.implant_id === 'implant_red_dragon';
+      const isLeg = Boolean(LEGENDARY_IMPLANT_INFO[imp.implant_id]);
       const isDuplicate = implantCounts[imp.implant_id] > 1;
       seenTypes[imp.implant_id] = (seenTypes[imp.implant_id] || 0) + 1;
       const isSecond = seenTypes[imp.implant_id] > 1;
@@ -129,6 +156,22 @@ async function loadImplants(telegramId) {
 
       const disassembleBtn = isSecond
         ? `<button class="inv-btn inv-btn-gift" onclick="disassembleImplant(${imp.id})">⚙️ [ РАЗОБРАТЬ +100 ★ ]</button>`
+        : '';
+      const legendaryInfo = LEGENDARY_IMPLANT_INFO[imp.implant_id];
+      const legendaryBtn = legendaryInfo && !isSecond
+        ? `<button class="inv-btn inv-btn-legendary" onclick="toggleLegendaryImplantMenu(${imp.id})">⚡ [ ПРОТОКОЛ ]</button>`
+        : '';
+      const legendaryPanel = legendaryInfo && !isSecond
+        ? `<div class="legendary-implant-panel" id="legendaryImplantPanel${imp.id}" style="display:none;">
+            <div class="legendary-implant-head">
+              <span>${legendaryInfo.glyph}</span>
+              <strong>${legendaryInfo.title}</strong>
+            </div>
+            <div class="legendary-implant-line"><b>Пассивный эффект</b><span>${legendaryInfo.passive}</span></div>
+            <div class="legendary-implant-actions">
+              ${legendaryInfo.actions.map(action => renderLegendaryActionButton(action)).join('')}
+            </div>
+          </div>`
         : '';
 
       return `<div class="inventory-item inventory-item-asset ${isLeg ? 'inventory-item-legendary' : ''}">
@@ -147,12 +190,87 @@ async function loadImplants(telegramId) {
             <div class="inventory-dur">${dots}</div>
           </div>
         </div>
-        ${disassembleBtn ? `<div class="inventory-actions">${disassembleBtn}</div>` : ''}
+        ${(disassembleBtn || legendaryBtn) ? `<div class="inventory-actions">${legendaryBtn}${disassembleBtn}</div>` : ''}
+        ${legendaryPanel}
       </div>`;
     }).join('');
     if (pageContainer) pageContainer.innerHTML = pageHtml;
 
   } catch(e) {}
+}
+
+function toggleLegendaryImplantMenu(implantId) {
+  const panel = document.getElementById(`legendaryImplantPanel${implantId}`);
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+}
+
+function renderLegendaryActionButton(action) {
+  const status = legendaryImplantStatus[action.code] || {};
+  const cooldown = getLegendaryCooldownLabel(status.cooldown_until);
+  const disabled = Boolean(cooldown);
+  return `<button class="legendary-action-btn ${disabled ? 'disabled' : ''}" ${disabled ? 'disabled' : ''} onclick="runLegendaryImplantAction('${action.code}')">
+    <strong>${action.label}</strong>
+    <span>${cooldown || action.hint}</span>
+  </button>`;
+}
+
+function getLegendaryCooldownLabel(value) {
+  if (!value) return '';
+  const until = new Date(String(value).replace(' ', 'T') + '+08:00');
+  const diffMs = until.getTime() - Date.now();
+  if (!Number.isFinite(diffMs) || diffMs <= 0) return '';
+  const hours = Math.ceil(diffMs / 3600000);
+  if (hours >= 24) return `Перезарядка: ${Math.ceil(hours / 24)} дн.`;
+  return `Перезарядка: ${hours} ч.`;
+}
+
+async function runLegendaryImplantAction(actionCode) {
+  if (!currentUserId) return;
+  const targetActions = new Set(['intercept', 'formatting', 'veil_breach']);
+  let payload = { telegram_id: currentUserId };
+  if (targetActions.has(actionCode)) {
+    const targetName = prompt('Введите имя игрока');
+    if (!targetName) return;
+    payload.target_name = targetName.trim();
+  }
+  const endpointMap = {
+    intercept: '/api/implants/red-dragon/intercept',
+    impulse_reset: '/api/implants/red-dragon/impulse-reset',
+    formatting: '/api/implants/netwatch/formatting',
+    veil_breach: '/api/implants/netwatch/veil-breach',
+  };
+  try {
+    const r = await fetch(`${API_URL}${endpointMap[actionCode]}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      const messages = {
+        'Target balance below 80': 'Нельзя выбрать игрока с балансом ниже 80★',
+        'Target protected for 3 days': 'Эту цель уже перехватывали недавно',
+        'Target protected for 14 days': 'Эта цель недавно уже была под Заслоном',
+        'No eligible game penalty': 'Нет подходящего игрового штрафа для сброса',
+        'Admins are protected': 'Администраторы защищены от этой команды',
+      };
+      showToast(messages[data.detail] || data.detail || 'Команда не выполнена');
+      return;
+    }
+    const successText = {
+      intercept: `Перехват выполнен: ${data.target} -10★`,
+      impulse_reset: `Импульс сброшен: +${data.refunded}★`,
+      formatting: `Форматирование: ${data.target} -15★${data.secondary_target ? `, ${data.secondary_target} -5★` : ''}`,
+      veil_breach: `Взлом Заслона активирован для ${data.target}`,
+    };
+    showToast(successText[actionCode] || 'Команда выполнена');
+    if (typeof loadPoints === 'function') loadPoints(currentUserId);
+    loadImplants(currentUserId);
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
 }
 
 function gsGetThemeBg(c) {

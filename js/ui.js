@@ -237,13 +237,16 @@ async function loadUserData(telegramId) {
       document.getElementById('trafficValue').textContent = data.has_vpn === false ? '— GB' : usedGB + ' GB';
       const percent = Math.min((used / (10*1024*1024*1024)) * 100, 100);
       setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
+      if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
     } else {
       document.getElementById('status').textContent = '● НЕ НАЙДЕН';
       document.getElementById('username').textContent = 'Нет подписки';
+      hideStartupCover();
     }
   } catch(e) {
     document.getElementById('status').textContent = '● ОФЛАЙН';
     document.getElementById('username').textContent = 'Ошибка связи';
+    hideStartupCover();
   }
 }
 
@@ -252,6 +255,11 @@ async function loadUserData(telegramId) {
 const ADMIN_INTRO_ASSETS = {
   cyberpunk: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/cyberpunktheme_intro.mp4',
   genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_intro.mp4',
+};
+
+const ADMIN_INTRO_CAPTIONS = {
+  cyberpunk: 'NETWATCH ADMIN ACCESS',
+  genshin: 'GENSHIN ADMIN ACCESS',
 };
 
 let adminIntroPlaying = false;
@@ -277,12 +285,12 @@ function playAdminIntroIfNeeded(profile = {}, done) {
   adminIntroDoneCallback = typeof done === 'function' ? done : null;
   sessionStorage.setItem(sessionKey, '1');
 
-  const cfg = ADMIN_INTRO_GROUPS[variant] || {};
-  if (caption) caption.textContent = cfg.caption || 'ADMIN ACCESS';
+  if (caption) caption.textContent = ADMIN_INTRO_CAPTIONS[variant] || 'ADMIN ACCESS';
   overlay.classList.toggle('genshin', variant === 'genshin');
   overlay.classList.toggle('cyberpunk', variant === 'cyberpunk');
   overlay.style.display = 'flex';
   overlay.classList.remove('closing');
+  hideStartupCover();
 
   video.pause();
   video.src = ADMIN_INTRO_ASSETS[variant];
@@ -328,6 +336,13 @@ function finishAdminIntro() {
 
 function skipAdminIntro() {
   finishAdminIntro();
+}
+
+function hideStartupCover() {
+  const cover = document.getElementById('startupCover');
+  if (!cover || cover.classList.contains('hidden')) return;
+  cover.classList.add('hidden');
+  setTimeout(() => cover.remove(), 240);
 }
 
 // ── ARCHITECT WOW ANIMATIONS ─────────────────────────────────
@@ -382,6 +397,7 @@ function startBlackwallBoot(cb) {
 
   linesEl.innerHTML = '';
   overlay.style.display = 'flex';
+  hideStartupCover();
 
   const LINES = [
     { text: '> ZHIDAO PROTOCOL v2.7.0', delay: 0 },

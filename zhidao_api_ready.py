@@ -263,6 +263,7 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS user_status
                  (telegram_id INTEGER PRIMARY KEY,
                   frozen INTEGER DEFAULT 0,
+                  netwatch_locked_until TEXT DEFAULT NULL,
                   immunity INTEGER DEFAULT 0,
                   immunity_reason TEXT DEFAULT NULL,
                   extra_cases INTEGER DEFAULT 0,
@@ -278,6 +279,25 @@ def init_db():
                   implant_id TEXT,
                   durability INTEGER DEFAULT 3,
                   obtained_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS implant_daily_uses
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  implant_id TEXT NOT NULL,
+                  use_date TEXT NOT NULL,
+                  use_key TEXT DEFAULT '',
+                  used_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(telegram_id, implant_id, use_date, use_key))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS legendary_implant_actions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  actor_telegram_id INTEGER NOT NULL,
+                  target_telegram_id INTEGER DEFAULT NULL,
+                  secondary_telegram_id INTEGER DEFAULT NULL,
+                  implant_id TEXT NOT NULL,
+                  action_code TEXT NOT NULL,
+                  points_delta INTEGER DEFAULT 0,
+                  secondary_delta INTEGER DEFAULT 0,
+                  detail TEXT DEFAULT '',
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
     c.execute('''CREATE TABLE IF NOT EXISTS user_cards
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER,
@@ -515,6 +535,8 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN profile_showcase_kind TEXT DEFAULT NULL")
     if 'profile_showcase_code' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN profile_showcase_code TEXT DEFAULT NULL")
+    if 'netwatch_locked_until' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN netwatch_locked_until TEXT DEFAULT NULL")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -1693,6 +1715,142 @@ def log_economy(c, telegram_id: int, operation: str, amount: int,
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
         (telegram_id, operation, amount, balance_after, reference_id, reference_type, note, now_str),
     )
+
+
+def has_active_implant(c, telegram_id: int, implant_id: str) -> bool:
+    c.execute(
+        '''SELECT 1 FROM user_implants
+           WHERE telegram_id=? AND implant_id=? AND durability > 0
+           LIMIT 1''',
+        (telegram_id, implant_id),
+    )
+    return bool(c.fetchone())
+
+
+def has_used_implant_today(c, telegram_id: int, implant_id: str, use_key: str = "", use_date: Optional[str] = None) -> bool:
+    today = use_date or datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    c.execute(
+        '''SELECT 1 FROM implant_daily_uses
+           WHERE telegram_id=? AND implant_id=? AND use_date=? AND use_key=?
+           LIMIT 1''',
+        (telegram_id, implant_id, today, use_key),
+    )
+    return bool(c.fetchone())
+
+
+def mark_implant_used_today(c, telegram_id: int, implant_id: str, use_key: str = "", use_date: Optional[str] = None):
+    today = use_date or datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    c.execute(
+        '''INSERT OR IGNORE INTO implant_daily_uses
+           (telegram_id, implant_id, use_date, use_key, used_at)
+           VALUES (?, ?, ?, ?, ?)''',
+        (telegram_id, implant_id, today, use_key, now_iso()),
+    )
+
+
+def try_block_penalty_with_terracota(c, telegram_id: int, use_key: str) -> bool:
+    if not has_active_implant(c, telegram_id, "implant_terracota"):
+        return False
+    if has_used_implant_today(c, telegram_id, "implant_terracota", "penalty"):
+        return False
+    mark_implant_used_today(c, telegram_id, "implant_terracota", "penalty")
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+    balance_after = (c.fetchone() or [0])[0] or 0
+    log_economy(c, telegram_id, "implant_terracota_block", 0, balance_after, None, "implant", use_key)
+    return True
+
+
+LEGENDARY_ACTION_COOLDOWNS = {
+    "intercept": timedelta(hours=24),
+    "impulse_reset": timedelta(days=7),
+    "formatting": timedelta(hours=72),
+    "veil_breach": timedelta(days=7),
+}
+
+
+def parse_db_datetime(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return BEIJING_TZ.localize(datetime.strptime(value, '%Y-%m-%d %H:%M:%S'))
+    except (TypeError, ValueError):
+        return None
+
+
+def legendary_cooldown_until(c, actor_id: int, action_code: str) -> Optional[datetime]:
+    cooldown = LEGENDARY_ACTION_COOLDOWNS.get(action_code)
+    if not cooldown:
+        return None
+    c.execute(
+        '''SELECT created_at FROM legendary_implant_actions
+           WHERE actor_telegram_id=? AND action_code=?
+           ORDER BY created_at DESC LIMIT 1''',
+        (actor_id, action_code),
+    )
+    row = c.fetchone()
+    last_used = parse_db_datetime(row[0]) if row else None
+    return (last_used + cooldown) if last_used else None
+
+
+def ensure_legendary_action_ready(c, actor_id: int, implant_id: str, action_code: str):
+    if not has_active_implant(c, actor_id, implant_id):
+        raise HTTPException(status_code=403, detail="Required legendary implant not found")
+    cooldown_until = legendary_cooldown_until(c, actor_id, action_code)
+    now = datetime.now(BEIJING_TZ)
+    if cooldown_until and cooldown_until > now:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Cooldown until {cooldown_until.strftime('%Y-%m-%d %H:%M:%S')}",
+        )
+
+
+def find_action_target(c, actor_id: int, target_id: Optional[int], target_name: Optional[str]):
+    if target_id:
+        c.execute("SELECT telegram_id, full_name, COALESCE(points, 0) FROM users WHERE telegram_id=?", (target_id,))
+    else:
+        query = str(target_name or '').strip()
+        if not query:
+            raise HTTPException(status_code=400, detail="Target required")
+        c.execute(
+            '''SELECT telegram_id, full_name, COALESCE(points, 0)
+               FROM users
+               WHERE full_name LIKE ?
+               ORDER BY CASE WHEN full_name=? THEN 0 ELSE 1 END, full_name
+               LIMIT 1''',
+            (f"%{query}%", query),
+        )
+    row = c.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Target not found")
+    telegram_id, full_name, points = row
+    if telegram_id == actor_id:
+        raise HTTPException(status_code=400, detail="Cannot target yourself")
+    if telegram_id in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Admins are protected")
+    return telegram_id, full_name or str(telegram_id), points or 0
+
+
+def log_legendary_action(c, actor_id: int, target_id: Optional[int], secondary_id: Optional[int],
+                         implant_id: str, action_code: str, points_delta: int = 0,
+                         secondary_delta: int = 0, detail: str = ""):
+    c.execute(
+        '''INSERT INTO legendary_implant_actions
+           (actor_telegram_id, target_telegram_id, secondary_telegram_id, implant_id,
+            action_code, points_delta, secondary_delta, detail, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (actor_id, target_id, secondary_id, implant_id, action_code,
+         points_delta, secondary_delta, detail, now_iso()),
+    )
+
+
+def user_netwatch_locked(c, telegram_id: int) -> bool:
+    c.execute("SELECT frozen, netwatch_locked_until FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    if not row:
+        return False
+    frozen, locked_until = row
+    until = parse_db_datetime(locked_until)
+    return bool(frozen) or bool(until and until > datetime.now(BEIJING_TZ))
 
 
 def compute_contract_fee(reward: int) -> int:
@@ -2900,10 +3058,12 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
         raise HTTPException(status_code=404, detail="User not found")
 
     previous_points = row[1] or 0
-    c.execute(
-        "UPDATE users SET points = MAX(0, COALESCE(points, 0) + ?) WHERE telegram_id=?",
-        (delta, target_id),
-    )
+    blocked_by_implant = delta < 0 and try_block_penalty_with_terracota(c, target_id, f"admin_points: {reason}")
+    if not blocked_by_implant:
+        c.execute(
+            "UPDATE users SET points = MAX(0, COALESCE(points, 0) + ?) WHERE telegram_id=?",
+            (delta, target_id),
+        )
     c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
     new_points = c.fetchone()[0] or 0
     actual_delta = new_points - previous_points
@@ -2925,6 +3085,7 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
         "new_points": new_points,
         "delta": actual_delta,
         "requested_delta": delta,
+        "blocked_by_implant": "implant_terracota" if blocked_by_implant else None,
     }
 
 
@@ -3191,6 +3352,7 @@ async def confirm_presence(data: dict):
         raise HTTPException(status_code=400, detail="Invalid telegram_id")
 
     check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
     action = str(data.get("action") or "confirm").strip().lower()
     note = str(data.get("note") or "").strip()
 
@@ -3201,8 +3363,25 @@ async def confirm_presence(data: dict):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
+    previous_row = fetch_presence_row(c, check_type, check_date, telegram_id)
     if action == "confirm":
         row = apply_presence_status(c, check_type, check_date, telegram_id, "confirmed", note)
+        shaolin_reward = (
+            check_type in {"morning", "evening"}
+            and (not previous_row or previous_row["status"] not in PRESENCE_SAFE_STATUSES)
+            and has_active_implant(c, telegram_id, "implant_shaolin")
+        )
+        if shaolin_reward:
+            use_key = f"{check_type}:{check_date}"
+            if not has_used_implant_today(c, telegram_id, "implant_shaolin", use_key):
+                mark_implant_used_today(c, telegram_id, "implant_shaolin", use_key)
+                c.execute("UPDATE users SET points = points + 20 WHERE telegram_id=?", (telegram_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                balance_after = c.fetchone()[0] or 0
+                log_economy(
+                    c, telegram_id, "implant_shaolin_bonus", 20, balance_after,
+                    None, "implant", f"{check_type} {check_date}",
+                )
     elif action == "request_leave":
         row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_requested", note)
     elif action == "free_time":
@@ -3416,7 +3595,7 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        '''SELECT dc.telegram_id, u.full_name, COALESCE(u.points, 0)
+        '''SELECT dc.telegram_id, u.full_name, COALESCE(u.points, 0), COALESCE(u.rep_score, 0)
            FROM daily_checks dc
            JOIN users u ON u.telegram_id = dc.telegram_id
            WHERE dc.check_type=?
@@ -3428,13 +3607,42 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
     targets = c.fetchall()
     penalized = []
     now = now_iso()
-    for telegram_id, full_name, previous_points in targets:
+    for telegram_id, full_name, previous_points, previous_rep in targets:
+        if (
+            try_block_penalty_with_terracota(c, telegram_id, f"presence: {check_type} {check_date}")
+        ):
+            c.execute(
+                '''UPDATE daily_checks
+                   SET status='penalized',
+                       penalized_at=?,
+                       penalty_points=0,
+                       note=TRIM(COALESCE(note, '') || ' // terracota blocked penalty'),
+                       updated_at=?
+                   WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                (now, now, check_type, check_date, telegram_id),
+            )
+            penalized.append({
+                "telegram_id": telegram_id,
+                "full_name": full_name or str(telegram_id),
+                "previous_points": previous_points or 0,
+                "new_points": previous_points or 0,
+                "new_rep_score": previous_rep or 0,
+                "delta": 0,
+                "rep_delta": 0,
+                "blocked_by_implant": "implant_terracota",
+            })
+            continue
         c.execute(
-            "UPDATE users SET points = MAX(0, COALESCE(points, 0) - ?) WHERE telegram_id=?",
-            (penalty, telegram_id),
+            """UPDATE users
+               SET points = MAX(0, COALESCE(points, 0) - ?),
+                   rep_score = MAX(0, COALESCE(rep_score, 0) - ?)
+               WHERE telegram_id=?""",
+            (penalty, penalty, telegram_id),
         )
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-        new_points = c.fetchone()[0] or 0
+        c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
+        updated_user = c.fetchone() or (0, 0)
+        new_points = updated_user[0] or 0
+        new_rep = updated_user[1] or 0
         actual_delta = new_points - (previous_points or 0)
         c.execute(
             '''UPDATE daily_checks
@@ -3451,13 +3659,17 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
                VALUES (?, ?, 'presence_penalty', ?, ?, ?)''',
             (x_admin_id, telegram_id, actual_delta, f"{check_type} {check_date}", now),
         )
+        actual_rep_delta = new_rep - previous_rep
         log_economy(c, telegram_id, 'presence_penalty', actual_delta, new_points, None, 'presence', f"{check_type} {check_date}")
+        log_economy(c, telegram_id, 'presence_rep_penalty', actual_rep_delta, new_rep, None, 'rep', f"{check_type} {check_date}")
         penalized.append({
             "telegram_id": telegram_id,
             "full_name": full_name or str(telegram_id),
             "previous_points": previous_points or 0,
             "new_points": new_points,
+            "new_rep_score": new_rep,
             "delta": actual_delta,
+            "rep_delta": actual_rep_delta,
         })
     conn.commit()
     conn.close()
@@ -3661,6 +3873,19 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
         (telegram_id, entry_date, next_stars, next_bonus, x_admin_id, now_str),
     )
     apply_diary_points_delta(c, telegram_id, previous_points, next_points)
+    linguasoft_bonus = 0
+    if (
+        next_stars == 3
+        and previous_stars < 3
+        and has_active_implant(c, telegram_id, "implant_linguasoft")
+        and not has_used_implant_today(c, telegram_id, "implant_linguasoft", "diary_top_score", entry_date)
+    ):
+        mark_implant_used_today(c, telegram_id, "implant_linguasoft", "diary_top_score", entry_date)
+        c.execute("UPDATE users SET points = points + 30 WHERE telegram_id=?", (telegram_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        balance_after = c.fetchone()[0] or 0
+        log_economy(c, telegram_id, "implant_linguasoft_bonus", 30, balance_after, None, "implant", entry_date)
+        linguasoft_bonus = 30
     conn.commit()
     conn.close()
     return {
@@ -3671,6 +3896,7 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
         "bonus": bool(next_bonus),
         "points_awarded": next_points,
         "points_delta": next_points - previous_points,
+        "implant_bonus": linguasoft_bonus,
     }
 
 
@@ -4184,9 +4410,7 @@ async def get_casino_status(telegram_id: int):
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT frozen FROM user_status WHERE telegram_id=?", (telegram_id,))
-    status = c.fetchone()
-    is_frozen = bool(status and status[0] == 1)
+    is_frozen = user_netwatch_locked(c, telegram_id)
     c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND date=?", (telegram_id, today))
     used = c.fetchone()[0]
     c.execute("SELECT extra_cases FROM user_status WHERE telegram_id=?", (telegram_id,))
@@ -4286,11 +4510,11 @@ async def get_implants(telegram_id: int):
         "implant_terracota": {"name": "Терракота 兵马俑", "icon": "🗿", "desc": "Блок 1 штрафа в день"},
         "implant_panda": {"name": "Панда 🐼", "icon": "🐼", "desc": "Кэшбек +10★ с покупки"},
         "implant_shaolin": {"name": "Шаолинь 少林", "icon": "🥋", "desc": "+20★ за перекличку вовремя"},
-        "implant_linguasoft": {"name": "Linguasoft 口才", "icon": "🎙", "desc": "+30★ за оценку 5/5 в дневнике"},
+        "implant_linguasoft": {"name": "Linguasoft 口才", "icon": "🎙", "desc": "+30★ за 3★ в дневнике"},
         "implant_caishen": {"name": "Цайшэнь 财神", "icon": "💰", "desc": "+15★ каждые 24 часа"},
         "implant_qilin": {"name": "Цилинь 麒麟", "icon": "🐉", "desc": "+10★ за каждого владельца Цилиня"},
-        "implant_red_dragon": {"name": "Красный Дракон 红龙", "icon": "🐉", "desc": "+20% баллов · грабёж · передать штраф"},
-        "implant_netwatch": {"name": "Сетевой Дозор 网络守卫", "icon": "🔴", "desc": "NetWatch: удар, Blackwall и контроль сети"},
+        "implant_red_dragon": {"name": "Красный Дракон 红龙", "icon": "🐉", "desc": "+20% баллов · перехват · сбросить импульс"},
+        "implant_netwatch": {"name": "Сетевой Дозор 网络守卫", "icon": "🔴", "desc": "Форматирование · Взлом Заслона · контроль сети"},
     }
     result = []
     for row in rows:
@@ -4305,6 +4529,193 @@ async def get_implants(telegram_id: int):
             "obtained_at": row[3],
         })
     return result
+
+
+@app.get("/api/implants/legendary/status/{telegram_id}")
+async def get_legendary_implant_status(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    result = {}
+    for action_code, implant_id in {
+        "intercept": "implant_red_dragon",
+        "impulse_reset": "implant_red_dragon",
+        "formatting": "implant_netwatch",
+        "veil_breach": "implant_netwatch",
+    }.items():
+        cooldown_until = legendary_cooldown_until(c, telegram_id, action_code)
+        result[action_code] = {
+            "available": has_active_implant(c, telegram_id, implant_id),
+            "cooldown_until": cooldown_until.strftime('%Y-%m-%d %H:%M:%S') if cooldown_until else None,
+        }
+    conn.close()
+    return result
+
+
+@app.post("/api/implants/red-dragon/intercept")
+async def red_dragon_intercept(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_id = data.get("target_telegram_id")
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    conn = get_conn()
+    c = conn.cursor()
+    ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "intercept")
+    target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
+    if target_points < 80:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Target balance below 80")
+    cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''SELECT 1 FROM legendary_implant_actions
+           WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='intercept'
+             AND created_at>=? LIMIT 1''',
+        (actor_id, target_id, cutoff),
+    )
+    if c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=429, detail="Target protected for 3 days")
+    c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (target_id,))
+    c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+    target_balance = c.fetchone()[0] or 0
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+    actor_balance = c.fetchone()[0] or 0
+    log_economy(c, target_id, "red_dragon_intercept_loss", -10, target_balance, actor_id, "implant", "Перехват")
+    log_economy(c, actor_id, "red_dragon_intercept_gain", 10, actor_balance, target_id, "implant", "Перехват")
+    log_legendary_action(c, actor_id, target_id, None, "implant_red_dragon", "intercept", 10, 0, target_name)
+    conn.commit()
+    conn.close()
+    await send_telegram_message(target_id, "🐉 Красный Дракон активировал «Перехват».\nС вашего баланса снято 10★.")
+    return {"success": True, "target": target_name, "stolen": 10, "new_points": actor_balance}
+
+
+@app.post("/api/implants/red-dragon/impulse-reset")
+async def red_dragon_impulse_reset(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    conn = get_conn()
+    c = conn.cursor()
+    ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "impulse_reset")
+    c.execute(
+        '''SELECT id, operation, amount, note
+           FROM economy_log
+           WHERE telegram_id=? AND amount < 0 AND amount >= -20
+             AND reference_type IN ('event', 'casino_game')
+             AND NOT EXISTS (
+               SELECT 1 FROM economy_log resets
+               WHERE resets.operation='red_dragon_impulse_reset'
+                 AND resets.reference_id=economy_log.id
+             )
+           ORDER BY created_at DESC LIMIT 1''',
+        (actor_id,),
+    )
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="No eligible game penalty")
+    penalty_id, operation, amount, note = row
+    refund = abs(amount)
+    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, actor_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+    balance = c.fetchone()[0] or 0
+    log_economy(c, actor_id, "red_dragon_impulse_reset", refund, balance, penalty_id, "implant", note or operation)
+    log_legendary_action(c, actor_id, actor_id, None, "implant_red_dragon", "impulse_reset", refund, 0, note or operation)
+    conn.commit()
+    conn.close()
+    return {"success": True, "refunded": refund, "new_points": balance}
+
+
+@app.post("/api/implants/netwatch/formatting")
+async def netwatch_formatting(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_id = data.get("target_telegram_id")
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    conn = get_conn()
+    c = conn.cursor()
+    ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "formatting")
+    target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
+    if target_points < 80:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Target balance below 80")
+    c.execute(
+        '''SELECT telegram_id, full_name, COALESCE(points, 0)
+           FROM users
+           WHERE telegram_id NOT IN (?, ?)
+             AND telegram_id NOT IN ({})
+             AND COALESCE(points, 0) >= 80
+           ORDER BY RANDOM()
+           LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
+        [actor_id, target_id] + ADMIN_IDS,
+    )
+    secondary = c.fetchone()
+    secondary_id = secondary[0] if secondary else None
+    secondary_name = secondary[1] if secondary else None
+    c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (target_id,))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+    target_balance = c.fetchone()[0] or 0
+    log_economy(c, target_id, "netwatch_formatting", -15, target_balance, actor_id, "implant", "Форматирование")
+    secondary_delta = 0
+    if secondary_id:
+        c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
+        secondary_balance = c.fetchone()[0] or 0
+        log_economy(c, secondary_id, "netwatch_formatting_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
+        secondary_delta = -5
+    log_legendary_action(c, actor_id, target_id, secondary_id, "implant_netwatch", "formatting", -15, secondary_delta, target_name)
+    conn.commit()
+    conn.close()
+    await send_telegram_message(target_id, "🔴 NetWatch выполнил «Форматирование».\nС вашего баланса снято 15★.")
+    if secondary_id:
+        await send_telegram_message(secondary_id, "🔴 Побочный импульс NetWatch.\nС вашего баланса снято 5★.")
+    return {
+        "success": True,
+        "target": target_name,
+        "damage": 15,
+        "secondary_target": secondary_name,
+        "secondary_damage": 5 if secondary_id else 0,
+    }
+
+
+@app.post("/api/implants/netwatch/veil-breach")
+async def netwatch_veil_breach(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_id = data.get("target_telegram_id")
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    conn = get_conn()
+    c = conn.cursor()
+    ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "veil_breach")
+    target_id, target_name, _ = find_action_target(c, actor_id, target_id, target_name)
+    cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''SELECT 1 FROM legendary_implant_actions
+           WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='veil_breach'
+             AND created_at>=? LIMIT 1''',
+        (actor_id, target_id, cutoff),
+    )
+    if c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=429, detail="Target protected for 14 days")
+    locked_until = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
+           ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
+        (target_id, locked_until),
+    )
+    log_legendary_action(c, actor_id, target_id, None, "implant_netwatch", "veil_breach", 0, 0, target_name)
+    conn.commit()
+    conn.close()
+    await send_telegram_message(
+        target_id,
+        "🔴 NetWatch активировал «Взлом Заслона».\n"
+        "Магазин и кейсы временно недоступны на 12 часов.",
+    )
+    return {"success": True, "target": target_name, "locked_until": locked_until}
 
 
 @app.post("/api/casino/implants/disassemble/{implant_id}")
@@ -4363,13 +4774,13 @@ async def get_shop(telegram_id: int = 0):
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT frozen FROM user_status WHERE telegram_id=?", (telegram_id,))
-    status = c.fetchone()
-    is_frozen = status and status[0] == 1
+    is_frozen = user_netwatch_locked(c, telegram_id)
     c.execute("SELECT code, name, description, icon, price, daily_limit, category FROM shop_items WHERE active=1")
     items = c.fetchall()
     result = []
+    has_guanxi = has_active_implant(c, telegram_id, "implant_guanxi") if telegram_id else False
     for code, name, description, icon, price, daily_limit, category in items:
+        effective_price = max(0, int(price * 0.9)) if has_guanxi else price
         c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (code, today))
         row = c.fetchone()
         sold_today = row[0] if row else 0
@@ -4383,7 +4794,9 @@ async def get_shop(telegram_id: int = 0):
             "name": name,
             "description": description,
             "icon": icon,
-            "price": price,
+            "price": effective_price,
+            "base_price": price,
+            "discounted": bool(has_guanxi and effective_price != price),
             "daily_limit": daily_limit,
             "sold_today": sold_today,
             "available": available and not is_frozen,
@@ -4404,9 +4817,7 @@ async def buy_item(data: dict):
 
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT frozen FROM user_status WHERE telegram_id=?", (telegram_id,))
-    status = c.fetchone()
-    if status and status[0] == 1:
+    if user_netwatch_locked(c, telegram_id):
         conn.close()
         raise HTTPException(status_code=403, detail="Account frozen")
 
@@ -4416,6 +4827,9 @@ async def buy_item(data: dict):
         conn.close()
         raise HTTPException(status_code=404, detail="Item not found")
     name, price, daily_limit, category = item
+    base_price = price
+    if has_active_implant(c, telegram_id, "implant_guanxi"):
+        price = max(0, int(price * 0.9))
 
     if daily_limit != -1:
         c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (item_code, today))
@@ -4453,9 +4867,21 @@ async def buy_item(data: dict):
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
     log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
+    if has_active_implant(c, telegram_id, "implant_panda"):
+        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        new_points = c.fetchone()[0] or 0
+        log_economy(c, telegram_id, 'implant_panda_cashback', 10, new_points, None, 'implant', name)
     conn.commit()
     conn.close()
-    return {"success": True, "item": name, "new_points": new_points}
+    return {
+        "success": True,
+        "item": name,
+        "new_points": new_points,
+        "price_paid": price,
+        "base_price": base_price,
+        "guanxi_discount": base_price - price,
+    }
 
 
 @app.get("/api/shop/inventory/{telegram_id}")

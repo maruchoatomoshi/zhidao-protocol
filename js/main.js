@@ -6,6 +6,8 @@ if (user) {
   loadPoints(user.id);
   startGlobalAlertPolling();
   if (typeof syncAdminUiVisibility === 'function') syncAdminUiVisibility();
+} else if (typeof hideStartupCover === 'function') {
+  hideStartupCover();
 }
 
 loadSavedTheme();

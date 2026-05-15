@@ -7,9 +7,10 @@
 <!-- ZHIDAO Protocol // version 2.6.6 // build 2026-03-28 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260508b">
+<link rel="stylesheet" href="./css/styles.css?v=20260515a">
 </head>
 <body>
+<div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
 
 <!-- BLACKWALL BOOT SEQUENCE — показывается только после подтверждения Architect через API -->
 <div id="blackwall-boot" style="display:none;">
@@ -30,7 +31,7 @@
 
 <!-- Эксклюзивные видео-заставки админов -->
 <div id="adminIntroOverlay" class="admin-intro-overlay" style="display:none;" onclick="skipAdminIntro()">
-  <video id="adminIntroVideo" class="admin-intro-video" muted playsinline preload="metadata"></video>
+  <video id="adminIntroVideo" class="admin-intro-video" muted playsinline preload="auto"></video>
   <div class="admin-intro-vignette"></div>
   <button class="admin-intro-skip" onclick="event.stopPropagation(); skipAdminIntro();">ПРОПУСТИТЬ</button>
   <div class="admin-intro-caption" id="adminIntroCaption">ADMIN ACCESS</div>
@@ -418,7 +419,7 @@
           🗿 Терракота 兵马俑 — блок 1 штрафа в день<br>
           🐼 Панда — кэшбек +10★ с покупки<br>
           🥋 Шаолинь 少林 — +20★ за перекличку вовремя<br>
-          🎙 Linguasoft 口才 — +30★ за оценку 5/5 в дневнике<br>
+          🎙 Linguasoft 口才 — +30★ за 3★ в дневнике<br>
           💰 Цайшэнь 财神 — +15★ каждые 24 часа<br>
           🐉 Цилинь 麒麟 — +10★ за каждого владельца Цилиня
         </div></div>
@@ -427,8 +428,8 @@
         <div class="rules-icon"><img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png" style="width:32px;height:32px;object-fit:contain;"></div>
         <div><div class="rules-title">传奇 Легендарный — 0.1%</div>
         <div class="rules-desc">
-          🐉 Красный Дракон 红龙 — +20% баллов, грабёж, передать штраф<br>
-          🔴 Сетевой Дозор 网络守卫 — NetWatch: удар, BlackWall и контроль сети
+          🐉 Красный Дракон 红龙 — +20% баллов, перехват, сбросить импульс<br>
+          🔴 Сетевой Дозор 网络守卫 — Форматирование, Взлом Заслона и контроль сети
         </div></div>
       </div>
       <div class="rules-row">
@@ -1243,7 +1244,7 @@
         
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-message-language" style="font-size:28px;min-width:30px;text-align:center;color:#9b59b6;"></i>
-          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Лингво-резонанс</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+30★ когда вожатый ставит оценку 5/5 за дневник</div></div>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Лингво-резонанс</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+30★ когда вожатый ставит 3★ за дневник</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
           <i class="ti ti-battery-charging" style="font-size:28px;min-width:30px;text-align:center;color:#4ecdc4;"></i>
@@ -2240,7 +2241,7 @@
 <script src="./js/config.js"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js"></script>
-<script src="./js/ui.js"></script>
+<script src="./js/ui.js?v=20260515a"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js"></script>
 <script src="./js/blackwall.js"></script>
@@ -2258,7 +2259,7 @@
 <script src="./js/raid.js"></script>
 <script src="./js/events.js"></script>
 <script src="./js/architect-event.js?v=20260508a"></script>
-<script src="./js/main.js"></script>
+<script src="./js/main.js?v=20260515a"></script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
 <div id="overlay-path-choice" style="
