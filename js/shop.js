@@ -360,8 +360,15 @@ function useItem(id, name) {
         body: JSON.stringify({telegram_id: currentUserId})
       });
       if (r.ok) {
+        const data = await r.json();
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        showToast(`✅ ${name} использован!\nПокажи это сообщение вожатому.`);
+        if (data.new_path) {
+          if (typeof applyThemePath === 'function') applyThemePath(data.new_path);
+          const pathLabel = data.new_path === 'genshin' ? 'Геншин ✦' : 'Киберпанк 🏮';
+          showToast(`✅ Путь сменён → ${pathLabel}`);
+        } else {
+          showToast(`✅ ${name} использован!\nПокажи это сообщение вожатому.`);
+        }
         loadInventory();
       } else {
         showToast('Ошибка использования');

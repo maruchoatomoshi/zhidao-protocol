@@ -5058,10 +5058,23 @@ async def use_shop_item(purchase_id: int, data: dict):
     if not row or row[0] != telegram_id:
         conn.close()
         raise HTTPException(status_code=404, detail="Not found")
+    item_code = row[1]
     c.execute("UPDATE shop_purchases SET status='used' WHERE id=?", (purchase_id,))
+
+    extra = {}
+    if item_code == 'path_switch':
+        c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
+        path_row = c.fetchone()
+        current_path = path_row[0] if path_row else 'cyberpunk'
+        new_path = 'genshin' if current_path != 'genshin' else 'cyberpunk'
+        c.execute("""INSERT INTO user_status (telegram_id, theme_path) VALUES (?,?)
+                     ON CONFLICT(telegram_id) DO UPDATE SET theme_path=excluded.theme_path""",
+                  (telegram_id, new_path))
+        extra = {"new_path": new_path}
+
     conn.commit()
     conn.close()
-    return {"success": True}
+    return {"success": True, **extra}
 
 @app.post("/api/admin/freeze")
 async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):

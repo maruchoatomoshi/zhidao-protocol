@@ -7,7 +7,7 @@ function applyThemePath(path) {
 
   if (path === 'cyberpunk') {
     nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
-    gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    if (!isAdmin) gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     const t = localStorage.getItem('zhidao_theme') || '';
     if (t.startsWith('genshin')) setTheme('');
     // Показываем импланты, скрываем карточки
@@ -20,7 +20,7 @@ function applyThemePath(path) {
     const genshinTabBtn = document.getElementById('genshinTabBtn'); if (genshinTabBtn) genshinTabBtn.style.display = 'none';
     const playBtn = document.getElementById('casinoPlayBtn'); if (playBtn) playBtn.textContent = '🎰 ИГРАТЬ';
   } else if (path === 'genshin') {
-    nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    if (!isAdmin) nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
     const t = localStorage.getItem('zhidao_theme') || '';
     if (!t.startsWith('genshin')) setTheme('genshin-light');
