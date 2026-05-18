@@ -55,6 +55,8 @@ const LEGENDARY_IMPLANT_INFO = {
 };
 let legendaryImplantStatus = {};
 let hasPandaImplant = false;
+let scanAttempts = 0;
+let protocolFragments = 0;
 const CASE_IMAGES = {
   gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
   purple: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png',
@@ -422,7 +424,7 @@ function gsBuildCard(cardId, cardInfo) {
 async function openGenshinCase() {
   if (gsAnimating) return;
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
-  if (currentPoints < 80) { showToast('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.'); return; }
+  if (!isAdmin && scanAttempts <= 0) { showToast('Нет попыток сканирования. Зарабатывай на переличках и дневнике!'); return; }
   // Проверяем заморозку
   try {
     const fr = await fetch(`${API_URL}/api/shop?telegram_id=${currentUserId}`);
@@ -450,16 +452,15 @@ async function openGenshinCase() {
     const data = await r.json();
     if (!r.ok) {
       if (data.detail==='Only for girls') showToast('Молитвы доступны только девочкам 🌸');
-      else if (data.detail==='Not enough points') showToast('Недостаточно ✦! Нужен запас минимум 80 ✦. Списывается 50 ✦.');
-      else if (data.detail==='Daily limit reached') showToast('Лимит молитв на сегодня исчерпан');
+      else if (data.detail==='No scan attempts') showToast('Нет попыток сканирования. Зарабатывай на перекличках и дневнике!');
       else showToast('Ошибка: ' + (data.detail||''));
-      gsAnimating = false; btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
-      currentPoints = data.new_points || currentPoints;
-      updatePoints();
+      gsAnimating = false; btn.disabled=false; btn.textContent='✦ Молитва ✦';
       return;
     }
 
     currentPoints = data.new_points; updatePoints();
+    if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; protocolFragments = data.protocol_fragments || protocolFragments; }
+    loadCasinoStatus();
     curGsCardId = data.card_id || null;
     const cfg = GS_CARD_CONFIGS[data.card_id] || GS_PRIZE_CONFIGS[data.type] || GS_PRIZE_CONFIGS.points;
 
@@ -488,7 +489,7 @@ async function openGenshinCase() {
         document.getElementById('gsTapHint').style.display = 'block';
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
         gsAnimating = false;
-        btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
+        btn.disabled=false; btn.textContent='✦ Молитва ✦';
       }, 700);
     }, cfg.revealDelay);
 
@@ -502,7 +503,7 @@ async function openGenshinCase() {
 
   } catch(e) {
     showToast('Ошибка соединения');
-    gsAnimating=false; btn.disabled=false; btn.textContent='✦ Молитва — 50 ✦ · порог 80 ✦';
+    gsAnimating=false; btn.disabled=false; btn.textContent='✦ Молитва ✦';
   }
 }
 
@@ -730,7 +731,7 @@ function initRoulette(caseType = null, targetIdx = null) {
 async function openCase() {
   if (isSpinning) return;
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
-  if (currentPoints < 80) { showToast('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.'); return; }
+  if (!isAdmin && scanAttempts <= 0) { showToast('Нет попыток сканирования. Зарабатывай на перекличках и дневнике!'); return; }
 
   // Lock immediately — before any async work
   isSpinning = true;
@@ -755,14 +756,14 @@ async function openCase() {
     });
     if (!r.ok) {
       const err = await r.json();
-      if (err.detail==='Daily limit reached') showToast('Лимит 3 кейса в день! Купи доп кейс в магазине 😄');
-      else if (err.detail==='Not enough points') showToast('Недостаточно баллов! Нужен запас минимум 80 ★. Списывается 50 ★.');
-      else showToast('Ошибка!');
+      if (err.detail==='No scan attempts') showToast('Нет попыток сканирования. Зарабатывай на перекличках и дневнике!');
+      else showToast('Ошибка: ' + (err.detail || ''));
       isSpinning = false;
       document.getElementById('openCaseBtn').disabled = false;
       return;
     }
     const data = await r.json();
+    if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; protocolFragments = data.protocol_fragments || protocolFragments; }
     const caseType = data.prize.case_type || 'gold';
     const targetIdx = 38 + Math.floor(Math.random() * 4);
     initRoulette(caseType, targetIdx);
@@ -1052,9 +1053,18 @@ async function loadCasinoHistory() {
 async function loadCasinoStatus() {
   if (!currentUserId) return;
   try {
-    const r = await fetch(`${API_URL}/api/casino/status/${currentUserId}`);
-    if (!r.ok) return;
-    const data = await r.json();
+    const [statusRes, scansRes] = await Promise.all([
+      fetch(`${API_URL}/api/casino/status/${currentUserId}`),
+      fetch(`${API_URL}/api/user/scans/${currentUserId}`),
+    ]);
+    const data = statusRes.ok ? await statusRes.json() : {};
+    if (scansRes.ok) {
+      const sc = await scansRes.json();
+      scanAttempts = sc.scan_attempts || 0;
+      protocolFragments = sc.protocol_fragments || 0;
+      data.scan_attempts = scanAttempts;
+      data.protocol_fragments = protocolFragments;
+    }
     renderCasinoAttempts(data);
     updateCasinoButtonState(data);
   } catch(e) {}
@@ -1063,54 +1073,54 @@ async function loadCasinoStatus() {
 function renderCasinoAttempts(data) {
   const pips = document.getElementById('casinoAttemptsPips');
   if (!pips) return;
-  const limit = data.daily_limit || 3;
-  const remaining = data.remaining_today != null ? data.remaining_today : limit;
+  const scans = data.scan_attempts != null ? data.scan_attempts : scanAttempts;
+  const limit = 7;
 
-  if (limit >= 999) {
+  if (data.frozen && !isAdmin) {
+    pips.innerHTML = `<span class="cas-attempt-pip spent" style="opacity:0.4;">⛔</span>`;
+    return;
+  }
+  if (isAdmin) {
     pips.innerHTML = `<span class="cas-attempt-pip filled" style="color:var(--gold);">∞</span>`;
     return;
   }
 
   let html = '';
   for (let i = 0; i < limit; i++) {
-    const filled = i < remaining;
-    html += `<span class="cas-attempt-pip ${filled ? 'filled' : 'spent'}"></span>`;
+    html += `<span class="cas-attempt-pip ${i < scans ? 'filled' : 'spent'}"></span>`;
   }
   pips.innerHTML = html;
 
   const wrap = document.getElementById('casinoAttempts');
   if (wrap) {
-    wrap.classList.toggle('exhausted', remaining <= 0);
-    wrap.classList.toggle('low', remaining > 0 && remaining <= 1);
+    wrap.classList.toggle('exhausted', scans <= 0);
+    wrap.classList.toggle('low', scans > 0 && scans <= 1);
   }
 }
 
 function updateCasinoButtonState(data) {
   const btn = document.getElementById('openCaseBtn');
   if (!btn) return;
-  const remaining = data.remaining_today != null ? data.remaining_today : 999;
+  const scans = data.scan_attempts != null ? data.scan_attempts : scanAttempts;
   if (data.frozen && !isAdmin) {
     btn.disabled = true;
     btn.classList.add('case-btn-disabled');
     btn.textContent = '⛔ АККАУНТ ЗАМОРОЖЕН';
     return;
   }
-  if (remaining <= 0) {
+  if (!isAdmin && scans <= 0) {
     btn.disabled = true;
     btn.classList.add('case-btn-disabled');
-    btn.textContent = '[ Попытки исчерпаны // Приходите завтра ]';
-    return;
-  }
-  if (currentPoints < 80) {
-    const need = 80 - currentPoints;
-    btn.disabled = true;
-    btn.classList.add('case-btn-disabled');
-    btn.textContent = `🔒 НУЖНО ЕЩЁ ${need} ★ (порог 80 ★)`;
+    btn.textContent = '[ Сканирований нет // Зарабатывай на перекличках ]';
     return;
   }
   btn.disabled = false;
   btn.classList.remove('case-btn-disabled');
-  btn.textContent = `🏮 [ 开箱 // КЕЙС — 50 ★ · ${remaining}/${data.daily_limit} ] 🏮`;
+  if (isAdmin) {
+    btn.textContent = '🏮 [ 开箱 // КЕЙС ] 🏮';
+  } else {
+    btn.textContent = `🏮 [ 开箱 // СКАН · ${scans}/7 ] 🏮`;
+  }
 }
 
 // ===== ПОГОДА =====

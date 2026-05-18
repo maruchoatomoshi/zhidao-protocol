@@ -539,6 +539,10 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN netwatch_locked_until TEXT DEFAULT NULL")
     if 'terracota_armor' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN terracota_armor INTEGER DEFAULT 0")
+    if 'scan_attempts' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN scan_attempts INTEGER DEFAULT 0")
+    if 'protocol_fragments' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN protocol_fragments INTEGER DEFAULT 0")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -3427,6 +3431,12 @@ async def confirm_presence(data: dict):
                     c, telegram_id, "implant_shaolin_perfect_day", 10, balance_after,
                     None, "implant", check_date,
                 )
+        # Scan attempt award: +1 per new morning/evening confirmation (cap 7)
+        is_new_confirm = not previous_row or previous_row["status"] not in PRESENCE_SAFE_STATUSES
+        if check_type in {"morning", "evening"} and is_new_confirm:
+            c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                         ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
+                      (telegram_id,))
     elif action == "request_leave":
         row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_requested", note)
     elif action == "free_time":
@@ -3961,6 +3971,11 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
             balance_after = c.fetchone()[0] or 0
             log_economy(c, telegram_id, "implant_linguasoft_streak", 20, balance_after, None, "implant", entry_date)
             linguasoft_bonus += 20
+    # Scan attempt award: +1 when diary reaches 3★ for the first time
+    if next_stars == 3 and previous_stars < 3:
+        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                     ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
+                  (telegram_id,))
     conn.commit()
     conn.close()
     return {
@@ -4368,6 +4383,18 @@ async def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)
         conn.close()
         return {"success": False, "detail": "Already earned"}
 
+@app.get("/api/user/scans/{telegram_id}")
+async def get_user_scans(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    conn.close()
+    return {
+        "scan_attempts": row[0] if row else 0,
+        "protocol_fragments": row[1] if row else 0,
+    }
+
 @app.post("/api/casino/open")
 async def open_case(data: dict):
     telegram_id = data.get("telegram_id")
@@ -4376,48 +4403,39 @@ async def open_case(data: dict):
 
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    result = c.fetchone()
-    if not result or (result[0] or 0) < 50:
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
         conn.close()
-        raise HTTPException(status_code=400, detail="Not enough points")
+        raise HTTPException(status_code=404, detail="User not found")
 
     now_beijing = datetime.now(BEIJING_TZ)
     today = now_beijing.strftime('%Y-%m-%d')
 
     if telegram_id not in ADMIN_IDS:
-        c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND date=?", (telegram_id, today))
-        count = c.fetchone()[0]
-        c.execute("SELECT extra_cases FROM user_status WHERE telegram_id=?", (telegram_id,))
-        status = c.fetchone()
-        extra = status[0] if status else 0
-        if count >= 3 and extra <= 0:
+        c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
+        row = c.fetchone()
+        attempts = row[0] if row else 0
+        if attempts <= 0:
             conn.close()
-            raise HTTPException(status_code=400, detail="Daily limit reached")
-        if count >= 3 and extra > 0:
-            c.execute("""INSERT INTO user_status (telegram_id, extra_cases) VALUES (?,0)
-                         ON CONFLICT(telegram_id) DO UPDATE SET extra_cases=extra_cases-1""", (telegram_id,))
+            raise HTTPException(status_code=400, detail="No scan attempts remaining")
 
     case_type = random.choices(['gold', 'purple', 'black'], weights=[789, 210, 1], k=1)[0]
     if case_type == 'gold':
         prizes = [
-            {"code": "empty", "name": "Пустая миска риса", "points": 0, "weight": 20, "icon": "🍚", "case_type": "gold"},
-            {"code": "small", "name": "+30 баллов", "points": 30, "weight": 35, "icon": "⭐️", "case_type": "gold"},
-            {"code": "medium", "name": "+60 баллов", "points": 60, "weight": 25, "icon": "💫", "case_type": "gold"},
-            {"code": "walk", "name": "+30 мин свободы", "points": 0, "weight": 10, "icon": "🕐", "case_type": "gold"},
-            {"code": "laundry", "name": "Вне очереди!", "points": 0, "weight": 6, "icon": "🧺", "case_type": "gold"},
-            {"code": "skip", "name": "Иммунитет!", "points": 0, "weight": 3, "icon": "🛡", "case_type": "gold"},
-            {"code": "jackpot", "name": "ДЖЕКПОТ! +250!", "points": 250, "weight": 1, "icon": "👑", "case_type": "gold"},
+            {"code": "empty",   "name": "Пустая миска риса", "points": 0, "weight": 40, "icon": "🍚", "case_type": "gold"},
+            {"code": "walk",    "name": "+30 мин свободы",    "points": 0, "weight": 20, "icon": "🕐", "case_type": "gold"},
+            {"code": "laundry", "name": "Вне очереди!",       "points": 0, "weight": 12, "icon": "🧺", "case_type": "gold"},
+            {"code": "skip",    "name": "Иммунитет!",         "points": 0, "weight": 6,  "icon": "🛡", "case_type": "gold"},
         ]
     elif case_type == 'purple':
         prizes = [
-            {"code": "implant_guanxi", "name": "Имплант Гуаньси 关系", "points": 0, "weight": 68, "icon": "🤝", "case_type": "purple"},
-            {"code": "implant_terracota", "name": "Имплант Терракота 兵马俑", "points": 0, "weight": 70, "icon": "🗿", "case_type": "purple"},
-            {"code": "implant_panda", "name": "Имплант Панда 🐼", "points": 0, "weight": 64, "icon": "🐼", "case_type": "purple"},
-            {"code": "implant_shaolin", "name": "Имплант Шаолинь 少林", "points": 0, "weight": 62, "icon": "🥋", "case_type": "purple"},
-            {"code": "implant_linguasoft", "name": "Имплант Linguasoft 口才", "points": 0, "weight": 60, "icon": "🎙", "case_type": "purple"},
-            {"code": "implant_caishen", "name": "Имплант Цайшэнь 财神", "points": 0, "weight": 75, "icon": "💰", "case_type": "purple"},
-            {"code": "implant_qilin", "name": "Имплант Цилинь 麒麟", "points": 0, "weight": 85, "icon": "🐉", "case_type": "purple"},
+            {"code": "implant_guanxi",     "name": "Имплант Гуаньси 关系",      "points": 0, "weight": 68, "icon": "🤝", "case_type": "purple"},
+            {"code": "implant_terracota",  "name": "Имплант Терракота 兵马俑",  "points": 0, "weight": 70, "icon": "🗿", "case_type": "purple"},
+            {"code": "implant_panda",      "name": "Имплант Панда 🐼",          "points": 0, "weight": 64, "icon": "🐼", "case_type": "purple"},
+            {"code": "implant_shaolin",    "name": "Имплант Шаолинь 少林",      "points": 0, "weight": 62, "icon": "🥋", "case_type": "purple"},
+            {"code": "implant_linguasoft", "name": "Имплант Linguasoft 口才",   "points": 0, "weight": 60, "icon": "🎙", "case_type": "purple"},
+            {"code": "implant_caishen",    "name": "Имплант Цайшэнь 财神",      "points": 0, "weight": 75, "icon": "💰", "case_type": "purple"},
+            {"code": "implant_qilin",      "name": "Имплант Цилинь 麒麟",       "points": 0, "weight": 85, "icon": "🐉", "case_type": "purple"},
         ]
     else:
         prizes = [
@@ -4425,17 +4443,18 @@ async def open_case(data: dict):
         ]
 
     prize = dict(random.choices(prizes, weights=[p["weight"] for p in prizes], k=1)[0])
-    if prize["points"] > 0:
-        c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
-        dw = c.fetchone()
-        if dw and dw[0] == 1:
-            prize["points"] *= 2
-            prize["name"] += " x2! 🃏"
-            c.execute("""INSERT INTO user_status (telegram_id, double_win) VALUES (?,0)
-                         ON CONFLICT(telegram_id) DO UPDATE SET double_win=0""", (telegram_id,))
-
-    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (-50 + prize["points"], telegram_id))
     now_str = now_beijing.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Spend one scan attempt, earn one protocol fragment
+    if telegram_id not in ADMIN_IDS:
+        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
+                     ON CONFLICT(telegram_id) DO UPDATE SET
+                       scan_attempts = MAX(0, scan_attempts - 1),
+                       protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
+    else:
+        c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,1)
+                     ON CONFLICT(telegram_id) DO UPDATE SET
+                       protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
 
     if prize["code"] == "skip":
         c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
@@ -4452,32 +4471,17 @@ async def open_case(data: dict):
     c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
-    log_economy(
-        c,
-        telegram_id,
-        'case_open',
-        -50 + int(prize.get("points", 0) or 0),
-        new_points,
-        None,
-        prize.get("case_type") or "case",
-        prize.get("name") or prize.get("code"),
-    )
+    c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+    scan_row = c.fetchone()
+    log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
     conn.commit()
     conn.close()
-
-    if telegram_id not in ADMIN_IDS:
-        conn2 = get_conn()
-        c2 = conn2.cursor()
-        c2.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND date=?", (telegram_id, today))
-        used = c2.fetchone()[0]
-        c2.execute("SELECT extra_cases FROM user_status WHERE telegram_id=?", (telegram_id,))
-        ex = c2.fetchone()
-        extra2 = ex[0] if ex else 0
-        conn2.close()
-        remaining = max(0, 3 + extra2 - used)
-    else:
-        remaining = 999
-    return {"prize": prize, "new_points": new_points, "remaining_today": remaining}
+    return {
+        "prize": prize,
+        "new_points": new_points,
+        "scan_attempts": scan_row[0] if scan_row else 0,
+        "protocol_fragments": scan_row[1] if scan_row else 0,
+    }
 
 
 @app.get("/api/casino/status/{telegram_id}")
@@ -5413,28 +5417,27 @@ async def open_genshin_case(data: dict):
     if not user:
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
-    points = user[0]
-    if (points or 0) < 50:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Not enough points")
+    points = user[0] or 0
 
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    c.execute("SELECT COUNT(*) FROM casino_log WHERE telegram_id=? AND date=? AND prize LIKE 'genshin_%'", (telegram_id, today))
-    today_count = c.fetchone()[0]
-    c.execute("SELECT extra_cases FROM user_status WHERE telegram_id=?", (telegram_id,))
-    status = c.fetchone()
-    extra = status[0] if status else 0
-    if today_count >= 3 and extra <= 0 and telegram_id not in ADMIN_IDS:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Daily limit reached")
-    if today_count >= 3 and extra > 0 and telegram_id not in ADMIN_IDS:
-        c.execute("""INSERT INTO user_status (telegram_id, extra_cases) VALUES (?,0)
-                     ON CONFLICT(telegram_id) DO UPDATE SET extra_cases=extra_cases-1""", (telegram_id,))
+    if telegram_id not in ADMIN_IDS:
+        c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
+        status_row = c.fetchone()
+        scan_attempts = status_row[0] if status_row else 0
+        if scan_attempts <= 0:
+            conn.close()
+            raise HTTPException(status_code=400, detail="No scan attempts")
+        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
+                     ON CONFLICT(telegram_id) DO UPDATE SET
+                       scan_attempts=MAX(0, scan_attempts-1),
+                       protocol_fragments=protocol_fragments+1""", (telegram_id,))
+    else:
+        c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+        status_row = c.fetchone()
 
     pool_name = random.choices(['blue', 'purple', 'gold'], weights=[790, 200, 10])[0]
     pool = GENSHIN_POOL[pool_name]
     item = random.choices(pool['items'], weights=[it['weight'] for it in pool['items']])[0]
-    c.execute("UPDATE users SET points = points - 50 WHERE telegram_id=?", (telegram_id,))
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
     result = {}
 
@@ -5443,14 +5446,13 @@ async def open_genshin_case(data: dict):
         info = CARD_INFO[card_id]
         c.execute("SELECT COUNT(*) FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0", (telegram_id, card_id))
         already_has = c.fetchone()[0]
-        if already_has > 0 and card_id == 'card_moon':
-            c.execute("UPDATE users SET points = points + 50 WHERE telegram_id=?", (telegram_id,))
+        if already_has > 0:
             prize_code = f"genshin_duplicate_{card_id}"
-            result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": True, "bonus": "+50★ (Жемчужина)"}
+            result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": True, "bonus": None}
         else:
             c.execute("INSERT INTO user_cards (telegram_id, card_id, obtained_at, durability) VALUES (?,?,?,3)", (telegram_id, card_id, now_str))
             prize_code = f"genshin_{card_id}"
-            result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": already_has > 0, "bonus": None}
+            result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": False, "bonus": None}
     elif item['type'] == 'points':
         amount = item['amount']
         c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
@@ -5461,7 +5463,7 @@ async def open_genshin_case(data: dict):
         prize_code = "genshin_immunity"
         result = {"type": "immunity", "pool": pool_name, "name": "Иммунитет", "rarity": 0}
     else:
-        expires = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d') + ' 22:00:00'
+        expires = today + ' 22:00:00'
         c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
         prize_code = "genshin_walk"
         result = {"type": "walk", "pool": pool_name, "name": "+30 мин свободы", "rarity": 0}
@@ -5469,19 +5471,14 @@ async def open_genshin_case(data: dict):
     c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize_code, now_str))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     new_points = c.fetchone()[0]
-    log_economy(
-        c,
-        telegram_id,
-        'prayer_open',
-        new_points - (points or 0),
-        new_points,
-        None,
-        pool_name,
-        result.get("name") or prize_code,
-    )
+    c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+    sc_row = c.fetchone()
+    log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
     conn.commit()
     conn.close()
     result["new_points"] = new_points
+    result["scan_attempts"] = sc_row[0] if sc_row else 0
+    result["protocol_fragments"] = sc_row[1] if sc_row else 0
     return result
 
 
