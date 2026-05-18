@@ -4422,10 +4422,13 @@ async def open_case(data: dict):
     case_type = random.choices(['gold', 'purple', 'black'], weights=[789, 210, 1], k=1)[0]
     if case_type == 'gold':
         prizes = [
-            {"code": "empty",   "name": "Пустая миска риса", "points": 0, "weight": 40, "icon": "🍚", "case_type": "gold"},
-            {"code": "walk",    "name": "+30 мин свободы",    "points": 0, "weight": 20, "icon": "🕐", "case_type": "gold"},
-            {"code": "laundry", "name": "Вне очереди!",       "points": 0, "weight": 12, "icon": "🧺", "case_type": "gold"},
-            {"code": "skip",    "name": "Иммунитет!",         "points": 0, "weight": 6,  "icon": "🛡", "case_type": "gold"},
+            {"code": "empty",   "name": "Пустая миска риса", "points": 0,   "weight": 40, "icon": "🍚", "case_type": "gold"},
+            {"code": "small",   "name": "+30 баллов",         "points": 30,  "weight": 30, "icon": "⭐", "case_type": "gold"},
+            {"code": "medium",  "name": "+60 баллов",         "points": 60,  "weight": 15, "icon": "💫", "case_type": "gold"},
+            {"code": "walk",    "name": "+30 мин свободы",    "points": 0,   "weight": 20, "icon": "🕐", "case_type": "gold"},
+            {"code": "laundry", "name": "Вне очереди!",       "points": 0,   "weight": 12, "icon": "🧺", "case_type": "gold"},
+            {"code": "skip",    "name": "Иммунитет!",         "points": 0,   "weight": 6,  "icon": "🛡", "case_type": "gold"},
+            {"code": "jackpot", "name": "ДЖЕКПОТ! +250★",     "points": 250, "weight": 1,  "icon": "👑", "case_type": "gold"},
         ]
     elif case_type == 'purple':
         prizes = [
@@ -4467,6 +4470,8 @@ async def open_case(data: dict):
         c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_laundry', now_str, 'active'))
     elif prize["code"].startswith("implant_"):
         c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
+    if prize.get("points", 0) > 0:
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (prize["points"], telegram_id))
 
     c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
