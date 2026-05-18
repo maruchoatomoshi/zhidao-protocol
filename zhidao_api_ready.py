@@ -4933,8 +4933,8 @@ async def buy_item(data: dict):
         c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
                      ON CONFLICT(telegram_id) DO UPDATE SET immunity=1""", (telegram_id,))
     elif item_code == 'extra_case':
-        c.execute("""INSERT INTO user_status (telegram_id, extra_cases) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET extra_cases=extra_cases+1""", (telegram_id,))
+        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                     ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""", (telegram_id,))
     elif item_code == SHOP_EXTRA_RAID_CODE:
         c.execute("""INSERT INTO user_status (telegram_id, extra_raids) VALUES (?,1)
                      ON CONFLICT(telegram_id) DO UPDATE SET extra_raids=extra_raids+1""", (telegram_id,))
@@ -5497,6 +5497,68 @@ async def open_genshin_case(data: dict):
     result["new_points"] = new_points
     result["scan_attempts"] = sc_row[0] if sc_row else 0
     result["protocol_fragments"] = sc_row[1] if sc_row else 0
+    return result
+
+
+FRAGMENT_IMPLANT_POOL = [
+    'implant_guanxi', 'implant_terracota', 'implant_panda',
+    'implant_shaolin', 'implant_linguasoft', 'implant_caishen', 'implant_qilin',
+]
+FRAGMENT_CARD_POOL = [
+    'card_fairy', 'card_literature', 'card_forest', 'card_sea', 'card_moon',
+    'card_pyro', 'card_fox',
+]
+FRAGMENT_COST = 10
+
+@app.post("/api/fragments/exchange")
+async def exchange_fragments(data: dict):
+    telegram_id = data.get("telegram_id")
+    exchange_type = data.get("type")  # "implant" or "card"
+    if not telegram_id or exchange_type not in ("implant", "card"):
+        raise HTTPException(status_code=400, detail="Missing data")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    fragments = row[0] if row else 0
+    if fragments < FRAGMENT_COST:
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"Not enough fragments ({fragments}/{FRAGMENT_COST})")
+
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    _implant_names = {
+        'implant_guanxi': 'Гуаньси 关系', 'implant_terracota': 'Терракота 兵马俑',
+        'implant_panda': 'Панда 🐼', 'implant_shaolin': 'Шаолинь 少林',
+        'implant_linguasoft': 'Linguasoft 口才', 'implant_caishen': 'Цайшэнь 财神',
+        'implant_qilin': 'Цилинь 麒麟',
+    }
+    if exchange_type == "implant":
+        item_id = random.choice(FRAGMENT_IMPLANT_POOL)
+        c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)",
+                  (telegram_id, item_id, now_str))
+        result = {"type": "implant", "id": item_id, "name": _implant_names.get(item_id, item_id)}
+    else:
+        item_id = random.choice(FRAGMENT_CARD_POOL)
+        info = CARD_INFO.get(item_id, {"name": item_id, "rarity": 4, "passive": ""})
+        c.execute("INSERT INTO user_cards (telegram_id, card_id, obtained_at, durability) VALUES (?,?,?,3)",
+                  (telegram_id, item_id, now_str))
+        result = {"type": "card", "card_id": item_id, "name": info["name"],
+                  "rarity": info.get("rarity", 4), "passive": info.get("passive", "")}
+
+    c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,?)
+                 ON CONFLICT(telegram_id) DO UPDATE SET protocol_fragments=protocol_fragments-?""",
+              (telegram_id, FRAGMENT_COST, FRAGMENT_COST))
+    c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+    new_frags = c.fetchone()[0]
+    conn.commit()
+    conn.close()
+    result["protocol_fragments"] = new_frags
     return result
 
 
