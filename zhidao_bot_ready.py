@@ -31,6 +31,7 @@ MINI_APP_URL = os.getenv("MINI_APP_URL", "https://example.com/zhidao-protocol")
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
 API_URL = os.getenv("API_URL", "https://127.0.0.1:8443")
+API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
 PRESENCE_PENALTY_POINTS = 50
 PRESENCE_RETRY_STATUSES = {"pending", "leave_rejected"}
 PRESENCE_STATUS_LABELS = {
@@ -248,8 +249,17 @@ def is_admin(user_id):
     return user_id in ADMIN_IDS
 
 
+def internal_api_headers(extra=None):
+    headers = dict(extra or {})
+    if API_INTERNAL_TOKEN:
+        headers["x-internal-token"] = API_INTERNAL_TOKEN
+    return headers
+
+
 async def api_request(method, path, json_data=None, params=None, admin=False):
     headers = {}
+    if API_INTERNAL_TOKEN:
+        headers["x-internal-token"] = API_INTERNAL_TOKEN
     if admin:
         headers["x-admin-id"] = str(PRESENCE_ADMIN_ID)
 
@@ -1255,6 +1265,7 @@ async def gift_item_cmd(message: types.Message):
         async with session.post(
             f"{API_URL}/api/shop/gift",
             json={"purchase_id": purchase_id, "from_id": message.from_user.id, "to_id": to_id},
+            headers=internal_api_headers(),
             ssl=False,
         ) as r:
             if r.status == 200:
@@ -1306,6 +1317,7 @@ async def netwatch_strike_cmd(message: types.Message):
         async with session.post(
             f"{API_URL}/api/netwatch/strike",
             json={"telegram_id": message.from_user.id, "target_name": args[1], "points": points},
+            headers=internal_api_headers(),
             ssl=False,
         ) as r:
             if r.status == 200:
@@ -1330,6 +1342,7 @@ async def netwatch_blackwall_cmd(message: types.Message):
         async with session.post(
             f"{API_URL}/api/netwatch/blackwall",
             json={"telegram_id": message.from_user.id, "target_name": args[1]},
+            headers=internal_api_headers(),
             ssl=False,
         ) as r:
             if r.status == 200:

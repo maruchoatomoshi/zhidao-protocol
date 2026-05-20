@@ -1,3 +1,40 @@
+function getTelegramInitData() {
+  try {
+    return window.Telegram?.WebApp?.initData || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function isApiRequest(input) {
+  const url = typeof input === 'string' ? input : input?.url;
+  return Boolean(url && (url.startsWith(API_URL) || url.startsWith('/api/')));
+}
+
+function withTelegramAuthHeaders(input, options = {}) {
+  if (!isApiRequest(input)) return options;
+
+  const initData = getTelegramInitData();
+  if (!initData) return options;
+
+  const headers = new Headers(options.headers || {});
+  if (!headers.has('X-Telegram-Init-Data')) {
+    headers.set('X-Telegram-Init-Data', initData);
+  }
+
+  return { ...options, headers };
+}
+
+(function installTelegramAuthFetchLayer() {
+  if (window.__telegramAuthFetchInstalled) return;
+  window.__telegramAuthFetchInstalled = true;
+
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function telegramAuthFetch(input, options = {}) {
+    return nativeFetch(input, withTelegramAuthHeaders(input, options));
+  };
+})();
+
 async function apiFetch(path, options = {}) {
   return fetch(`${API_URL}${path}`, options);
 }

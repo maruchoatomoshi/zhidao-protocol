@@ -1,15 +1,19 @@
 ﻿import random
 import json
+import hashlib
+import hmac
 import os
 import re
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Optional
+from urllib.parse import parse_qsl
 
 import aiohttp
 import pytz
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -26,6 +30,8 @@ MARZBAN_USER = os.getenv("MARZBAN_USER", "")
 MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
+TELEGRAM_AUTH_REQUIRED = os.getenv("TELEGRAM_AUTH_REQUIRED", "0").strip().lower() in {"1", "true", "yes", "on"}
+API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
 
@@ -76,6 +82,152 @@ ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
 ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS") or [-1]
 INTRO_CYBERPUNK_ADMIN_IDS = set(parse_int_list_env("INTRO_CYBERPUNK_ADMIN_IDS"))
 INTRO_GENSHIN_ADMIN_IDS = set(parse_int_list_env("INTRO_GENSHIN_ADMIN_IDS"))
+
+
+def verify_telegram_init_data(init_data: str) -> Optional[dict]:
+    if not init_data or not BOT_TOKEN:
+        return None
+
+    parsed = dict(parse_qsl(init_data, keep_blank_values=True))
+    received_hash = parsed.pop("hash", "")
+    if not received_hash:
+        return None
+
+    data_check_string = "\n".join(f"{key}={parsed[key]}" for key in sorted(parsed))
+    secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode("utf-8"), hashlib.sha256).digest()
+    calculated_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(calculated_hash, received_hash):
+        return None
+
+    try:
+        user = json.loads(parsed.get("user", "{}"))
+    except json.JSONDecodeError:
+        user = {}
+    user_id = user.get("id")
+    if not user_id:
+        return None
+
+    return {"telegram_id": int(user_id), "user": user, "auth_date": parsed.get("auth_date")}
+
+
+def request_has_internal_token(request: Request) -> bool:
+    return bool(API_INTERNAL_TOKEN and request.headers.get("x-internal-token") == API_INTERNAL_TOKEN)
+
+
+def is_sensitive_api_request(request: Request) -> bool:
+    path = request.url.path
+    if request.method == "OPTIONS":
+        return False
+    if path.startswith((
+        "/api/admin",
+        "/api/presence/admin",
+        "/api/diary/admin",
+    )):
+        return True
+    if request.headers.get("x-admin-id"):
+        return True
+    if TELEGRAM_AUTH_REQUIRED and request.method in {"POST", "PUT", "PATCH", "DELETE"} and path.startswith("/api/"):
+        return True
+    return False
+
+
+def is_verified_admin_request(request: Request, verified_id: Optional[int]) -> bool:
+    header_value = request.headers.get("x-admin-id")
+    if not header_value or not verified_id:
+        return False
+    try:
+        header_id = int(header_value)
+    except ValueError:
+        return False
+    return header_id == verified_id and verified_id in ADMIN_IDS
+
+
+def extract_path_telegram_id(path: str) -> Optional[int]:
+    protected_patterns = [
+        r"^/api/points/(\d+)$",
+        r"^/api/profile/(\d+)$",
+        r"^/api/user/(\d+)$",
+        r"^/api/achievements/(\d+)$",
+        r"^/api/casino/status/(\d+)$",
+        r"^/api/casino/history/(\d+)$",
+        r"^/api/casino/inventory/(\d+)$",
+        r"^/api/casino/implants/(\d+)$",
+        r"^/api/implants/legendary/status/(\d+)$",
+        r"^/api/shop/inventory/(\d+)$",
+        r"^/api/cards/(\d+)$",
+        r"^/api/diary/(\d+)(?:/[^/]+)?$",
+    ]
+    for pattern in protected_patterns:
+        match = re.match(pattern, path)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+async def enforce_verified_user_identity(request: Request, verified_id: Optional[int], is_admin_request: bool):
+    if not verified_id or is_admin_request:
+        return None
+
+    candidate_ids = []
+    path_id = extract_path_telegram_id(request.url.path)
+    if path_id:
+        candidate_ids.append(path_id)
+
+    query_id = request.query_params.get("telegram_id")
+    if query_id:
+        try:
+            candidate_ids.append(int(query_id))
+        except ValueError:
+            return JSONResponse({"detail": "Invalid telegram_id"}, status_code=400)
+
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            try:
+                body = await request.json()
+            except Exception:
+                body = None
+            if isinstance(body, dict) and body.get("telegram_id") is not None:
+                try:
+                    candidate_ids.append(int(body.get("telegram_id")))
+                except (TypeError, ValueError):
+                    return JSONResponse({"detail": "Invalid telegram_id"}, status_code=400)
+
+    for candidate_id in candidate_ids:
+        if candidate_id != verified_id:
+            return JSONResponse({"detail": "Telegram identity mismatch"}, status_code=403)
+    return None
+
+
+@app.middleware("http")
+async def telegram_auth_middleware(request: Request, call_next):
+    if request_has_internal_token(request):
+        return await call_next(request)
+
+    init_data = request.headers.get("x-telegram-init-data", "")
+    verified = verify_telegram_init_data(init_data)
+    verified_id = verified["telegram_id"] if verified else None
+    if verified:
+        request.state.telegram_id = verified_id
+        request.state.telegram_user = verified["user"]
+
+        for header_name in ("x-admin-id", "x-telegram-id"):
+            header_value = request.headers.get(header_name)
+            if header_value and str(header_value) != str(verified_id):
+                return JSONResponse({"detail": "Telegram identity mismatch"}, status_code=403)
+    elif is_sensitive_api_request(request):
+        return JSONResponse({"detail": "Telegram auth required"}, status_code=401)
+
+    identity_error = await enforce_verified_user_identity(
+        request,
+        verified_id,
+        is_verified_admin_request(request, verified_id),
+    )
+    if identity_error:
+        return identity_error
+
+    return await call_next(request)
+
 
 PRESENCE_CHECK_TYPES = {"morning", "evening", "manual"}
 PRESENCE_STATUSES = {
