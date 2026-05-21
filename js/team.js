@@ -97,10 +97,8 @@ function _buildTeamCard(member) {
 
 function renderTeamCards() {
   const html = TEAM_DATA.map(_buildTeamCard).join('');
-  const a = document.getElementById('teamCardsContainer');
-  const b = document.getElementById('teamCardsContainerFull');
-  if (a) a.innerHTML = html;
-  if (b) b.innerHTML = html;
+  const el = document.getElementById('teamCardsContainerFull');
+  if (el) el.innerHTML = html;
 }
 
 window.addEventListener('DOMContentLoaded', () => setTimeout(renderTeamCards, 300));
