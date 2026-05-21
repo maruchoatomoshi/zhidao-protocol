@@ -178,6 +178,9 @@
   <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
 </div>
 
+<div class="cn-divider" style="margin-top:12px;">🛡️ СЕТЕВЫЕ ОПЕРАТОРЫ КОНТУРА 🛡️</div>
+<div id="teamCardsContainer" style="padding:0 12px 4px;"></div>
+
 <div class="home-event-card" id="homeArchitectEventCard" onclick="openEventOverlay()" style="
   margin:8px 12px 12px;
   padding:14px 16px;
@@ -802,46 +805,8 @@
   </div>
 
   <div id="more-team" style="display:none;">
-    <div class="cn-divider">👥 团队 КОМАНДА</div>
-    <div class="team-card">
-      <div class="team-avatar-placeholder">👑</div>
-      <div>
-        <div class="team-badge">АЛЬФАБОСС</div>
-        <div class="team-name">Руководитель группы</div>
-        <div class="team-role">Руководитель группы</div>
-        <div class="team-desc">Отвечает за всё. Главный по всем вопросам — учёба, организация, дисциплина и общее руководство поездкой.</div>
-      </div>
-    </div>
-    <div class="team-card">
-      <div class="team-avatar-placeholder">祝</div>
-      <div>
-        <div class="team-badge">АЛЬФА-ВОЖАТАЯ</div>
-        <div class="team-name">Старший вожатый</div>
-        <div class="team-role">Вожатый</div>
-        <div class="team-desc">В нашем сердечке. Поправляйтесь скорее!</div>
-        <button type="button" onclick="contactAdmin()" class="team-btn">✉ НАПИСАТЬ</button>
-      </div>
-    </div>
-    <div class="team-card">
-      <div class="team-avatar-placeholder">心</div>
-      <div>
-        <div class="team-badge">СИГМА-ВОЖАТАЯ</div>
-        <div class="team-name">Вожатый поддержки</div>
-        <div class="team-role">Вожатый</div>
-        <div class="team-desc">Отвечает за духовную составляющую группы и поддерживает баланс инь и ян.</div>
-        <button type="button" onclick="contactAdmin()" class="team-btn">✉ НАПИСАТЬ</button>
-      </div>
-    </div>
-    <div class="team-card">
-      <div class="team-avatar-placeholder">道</div>
-      <div>
-        <div class="team-badge">СИГМА-ВОЖАТЫЙ</div>
-        <div class="team-name">Системный администратор</div>
-        <div class="team-role">Архитектор</div>
-        <div class="team-desc">Отвечает за связь, покупки и досуг. Архитектор системы как тот чел из фильма Matrix.</div>
-        <button type="button" onclick="contactAdmin()" class="team-btn">✉ НАПИСАТЬ</button>
-      </div>
-    </div>
+    <div class="cn-divider">🛡️ 管理团队 ОПЕРАТОРЫ КОНТУРА</div>
+    <div id="teamCardsContainerFull" style="padding:0 12px 4px;"></div>
     <div class="cn-divider">🤫 匿名问题 АНОНИМНЫЙ ВОПРОС</div>
     <div class="card"><div class="card-inner">
       <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Спамеры и шутники вычисляются по ID.</div>
