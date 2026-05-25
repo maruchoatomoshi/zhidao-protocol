@@ -792,6 +792,28 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
   }
 }
 
+async function adminGrantFragments() {
+  if (!isArchitect) return;
+  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
+  const amount = parseInt(document.getElementById('fragmentAmount')?.value, 10);
+  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
+  if (!targetId || !amount || amount < 1) {
+    showToast('Укажи Telegram ID и количество'); return;
+  }
+  try {
+    const r = await fetch(`${API_URL}/api/admin/fragments`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
+      body: JSON.stringify({telegram_id: targetId, amount}),
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    showToast(`✅ Выдано ${amount} фрагментов\nИтого у игрока: ${data.protocol_fragments}`);
+    document.getElementById('fragmentAmount').value = '';
+  } catch(e) { showToast('Ошибка соединения'); }
+}
+
 async function adminAdjustRepFromForm(direction) {
   const targetId = adminResolveTargetId();
   const amount = Math.abs(parseInt(document.getElementById('awardPoints')?.value, 10));

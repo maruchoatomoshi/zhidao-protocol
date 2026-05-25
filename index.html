@@ -923,6 +923,14 @@
         <div class="admin-console-note">★ — кошелёк. REP — публичная репутация. Все действия пишутся в журнал.</div>
       </div>
 
+      <div class="admin-console-card architect-only-block" style="display:none;">
+        <div class="cn-divider">🔬 ФРАГМЕНТЫ ПРОТОКОЛА</div>
+        <input class="admin-input" id="fragmentTargetId" placeholder="Telegram ID игрока">
+        <input class="admin-input" id="fragmentAmount" placeholder="Количество фрагментов" type="number" min="1">
+        <button class="btn btn-gold" style="width:100%;padding:8px;font-size:10px;letter-spacing:1px;" onclick="adminGrantFragments()">🔬 ВЫДАТЬ ФРАГМЕНТЫ</button>
+        <div class="admin-console-note">Только для Архитектора. Фрагменты суммируются, лимита нет.</div>
+      </div>
+
       <div class="cn-divider">⛔ ЗАМОРОЗКА АККАУНТА</div>
       <div style="font-size:10px;color:var(--text2);margin-bottom:8px;line-height:1.6;">
         Замороженный игрок не может открывать кейсы и покупать в магазине. Получает уведомление от NetWatch.

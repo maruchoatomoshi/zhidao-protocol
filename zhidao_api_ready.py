@@ -5652,6 +5652,30 @@ async def open_genshin_case(data: dict):
     return result
 
 
+@app.post("/api/admin/fragments")
+async def admin_grant_fragments(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ARCHITECT_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden: Architect only")
+    telegram_id = data.get("telegram_id")
+    amount = int(data.get("amount") or 0)
+    if not telegram_id or amount < 1:
+        raise HTTPException(status_code=400, detail="Missing data")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,?)
+                 ON CONFLICT(telegram_id) DO UPDATE SET protocol_fragments=COALESCE(protocol_fragments,0)+?""",
+              (telegram_id, amount, amount))
+    c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+    new_val = c.fetchone()[0]
+    conn.commit()
+    conn.close()
+    return {"success": True, "telegram_id": telegram_id, "amount": amount, "protocol_fragments": new_val}
+
+
 FRAGMENT_IMPLANT_POOL = [
     'implant_guanxi', 'implant_terracota', 'implant_panda',
     'implant_shaolin', 'implant_linguasoft', 'implant_caishen', 'implant_qilin',

@@ -182,6 +182,9 @@ async function loadUserData(telegramId) {
       isAdmin = !!data.is_admin;
       isArchitect = !!data.is_architect;
       document.body.classList.toggle('is-architect', isArchitect);
+      document.querySelectorAll('.architect-only-block').forEach(el => {
+        el.style.display = isArchitect ? '' : 'none';
+      });
       if (isArchitect) {
         localStorage.setItem('zhidao_architect', '1');
         const badge = document.querySelector('.profile-admin-badge');
