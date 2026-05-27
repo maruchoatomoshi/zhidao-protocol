@@ -84,6 +84,7 @@ def parse_int_list_env(name: str) -> list[int]:
 
 
 ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
+REGISTRATION_BYPASS_IDS = set(parse_int_list_env("REGISTRATION_BYPASS_IDS"))
 PRESENCE_ADMIN_ID = ADMIN_IDS[0]
 ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "admin")
 pending_codes = {}
@@ -179,7 +180,7 @@ def is_cyrillic_full_name(value):
 
 
 def validate_expected_student_name(full_name, telegram_id):
-    if telegram_id in ADMIN_IDS:
+    if telegram_id in ADMIN_IDS or telegram_id in REGISTRATION_BYPASS_IDS:
         return True, full_name, ""
 
     if not is_cyrillic_full_name(full_name):
