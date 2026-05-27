@@ -255,6 +255,23 @@ RAID_USER_DAILY_LIMIT = 2
 RAID_MIN_PLAYERS = 3
 SHOP_EXTRA_RAID_CODE = "extra_raid_attempt"
 SHOP_EXTRA_RAID_PRICE = 80
+SHOP_ITEM_SEEDS = [
+    ("immunity", "Иммунитет", "Блокирует один штраф", "🛡", 150, -1, "privilege"),
+    ("laundry_vip", "Стирка VIP", "Приоритет на стирку", "🧺", 80, -1, "privilege"),
+    ("dj", "DJ-сет", "Право выбрать музыку", "🎵", 100, -1, "social"),
+    ("solo_seat", "Место соло", "Отдельное место по согласованию", "🪑", 120, -1, "privilege"),
+    ("amnesty", "Амнистия", "Снять один штраф по согласованию", "🤝", 80, -1, "privilege"),
+    ("kfc", "KFC", "Награда из специального меню", "🍗", 300, -1, "food"),
+    ("bubbletea", "Bubble Tea", "Награда из специального меню", "🧋", 250, -1, "food"),
+    ("snack", "Снэк", "Награда из специального меню", "🍦", 200, -1, "food"),
+    ("no_report", "Без доклада", "Пропуск одного доклада по согласованию", "📄", 400, -1, "vip"),
+    ("poizon", "Poizon", "Премиальная награда", "👕", 600, -1, "vip"),
+    ("extra_case", "Дополнительный кейс", "Открыть ещё один кейс сверх дневного лимита", "📦", 180, -1, "privilege"),
+    ("double_win", "Двойной выигрыш", "Удвоить следующий денежный выигрыш", "🎴", 130, -1, "privilege"),
+    ("title_player", "Титул дня", "Особый титул профиля на день", "👑", 150, -1, "vip"),
+    (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня", "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
+    ("path_switch", "Смена пути 转换", "Переключиться между NetWatch и Genshin", "🔁", 500, -1, "vip"),
+]
 SHOP_GIFT_DAILY_LIMIT = 5
 DIARY_WORD_LIMIT = 15
 DIARY_MIN_STORY_HANZI = 20
@@ -806,27 +823,21 @@ def ensure_seed_data():
                  updated_at=CURRENT_TIMESTAMP''',
             (full_name, normalized_name),
         )
-    c.execute(
-        '''INSERT INTO shop_items
-           (code, name, description, icon, price, daily_limit, category, active)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-           ON CONFLICT(code) DO UPDATE SET
-             name=excluded.name,
-             description=excluded.description,
-             icon=excluded.icon,
-             price=excluded.price,
-             category=excluded.category,
-             active=1''',
-        (
-            SHOP_EXTRA_RAID_CODE,
-            'Доп. рейд-попытка',
-            '+1 рейд сегодня',
-            '⚔️',
-            SHOP_EXTRA_RAID_PRICE,
-            -1,
-            'privilege',
-        ),
-    )
+    for item in SHOP_ITEM_SEEDS:
+        c.execute(
+            '''INSERT INTO shop_items
+               (code, name, description, icon, price, daily_limit, category, active)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+               ON CONFLICT(code) DO UPDATE SET
+                 name=excluded.name,
+                 description=excluded.description,
+                 icon=excluded.icon,
+                 price=excluded.price,
+                 daily_limit=excluded.daily_limit,
+                 category=excluded.category,
+                 active=1''',
+            item,
+        )
     c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='architect'")
     architect_count = c.fetchone()[0]
     if architect_count == 0:
