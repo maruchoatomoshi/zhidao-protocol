@@ -124,10 +124,13 @@ def is_sensitive_api_request(request: Request) -> bool:
         "/api/diary/admin",
     )):
         return True
-    if request.headers.get("x-admin-id"):
+    if request.headers.get("x-admin-id") or request.headers.get("x-telegram-id"):
         return True
-    if TELEGRAM_AUTH_REQUIRED and request.method in {"POST", "PUT", "PATCH", "DELETE"} and path.startswith("/api/"):
-        return True
+    if TELEGRAM_AUTH_REQUIRED:
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"} and path.startswith("/api/"):
+            return True
+        if request.method == "GET" and is_private_identity_read(request):
+            return True
     return False
 
 
@@ -147,6 +150,7 @@ def extract_path_telegram_id(path: str) -> Optional[int]:
         r"^/api/points/(\d+)$",
         r"^/api/profile/(\d+)$",
         r"^/api/user/(\d+)$",
+        r"^/api/user/scans/(\d+)$",
         r"^/api/achievements/(\d+)$",
         r"^/api/casino/status/(\d+)$",
         r"^/api/casino/history/(\d+)$",
@@ -162,6 +166,19 @@ def extract_path_telegram_id(path: str) -> Optional[int]:
         if match:
             return int(match.group(1))
     return None
+
+
+def is_private_identity_read(request: Request) -> bool:
+    path = request.url.path
+    if extract_path_telegram_id(path) is not None:
+        return True
+    if path == "/api/contracts/my":
+        return True
+    if path in {"/api/shop", "/api/raid/status"}:
+        return request.query_params.get("telegram_id") not in (None, "", "0")
+    if re.match(r"^/api/events/\d+/question$", path):
+        return bool(request.query_params.get("telegram_id"))
+    return False
 
 
 def auth_error_response(request: Request, detail: str, status_code: int) -> JSONResponse:
@@ -195,11 +212,13 @@ async def enforce_verified_user_identity(request: Request, verified_id: Optional
                 body = await request.json()
             except Exception:
                 body = None
-            if isinstance(body, dict) and body.get("telegram_id") is not None:
-                try:
-                    candidate_ids.append(int(body.get("telegram_id")))
-                except (TypeError, ValueError):
-                    return auth_error_response(request, "Invalid telegram_id", 400)
+            if isinstance(body, dict):
+                for key in ("telegram_id", "from_id", "actor_id", "creator_id", "admin_id", "user_id"):
+                    if body.get(key) is not None:
+                        try:
+                            candidate_ids.append(int(body.get(key)))
+                        except (TypeError, ValueError):
+                            return auth_error_response(request, f"Invalid {key}", 400)
 
     for candidate_id in candidate_ids:
         if candidate_id != verified_id:
@@ -846,6 +865,8 @@ def ensure_seed_data():
                  active=1''',
             item,
         )
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('blackwall', '0')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('architect_event', '0')")
     c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='architect'")
     architect_count = c.fetchone()[0]
     if architect_count == 0:

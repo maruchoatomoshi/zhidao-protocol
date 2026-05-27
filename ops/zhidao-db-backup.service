@@ -1,0 +1,10 @@
+[Unit]
+Description=ZHIDAO database external backup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/zhidao/backup.env
+ExecStart=/usr/local/sbin/backup_zhidao_db.sh
+User=root
