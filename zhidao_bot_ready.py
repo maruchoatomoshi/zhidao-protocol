@@ -459,8 +459,11 @@ async def get_user_link(marzban_username):
             headers={"Authorization": f"Bearer {token}"},
         ) as r:
             data = await r.json()
-            links = data.get("links", [])
-            return links[0] if links else None
+            links = data.get("links") or []
+            if links:
+                return links[0]
+            subscription_url = data.get("subscription_url") or data.get("subscriptionUrl")
+            return str(subscription_url).strip() if subscription_url else None
 
 
 def get_mini_app_keyboard():

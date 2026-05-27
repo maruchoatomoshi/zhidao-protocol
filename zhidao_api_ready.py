@@ -2234,6 +2234,14 @@ async def get_user_data(marzban_username):
             return await r.json()
 
 
+def get_marzban_access_link(data: dict) -> Optional[str]:
+    links = data.get("links") or []
+    if links:
+        return links[0]
+    subscription_url = data.get("subscription_url") or data.get("subscriptionUrl")
+    return str(subscription_url).strip() if subscription_url else None
+
+
 @app.get("/api/weather/beijing")
 async def get_beijing_weather():
     if not WEATHER_API_KEY:
@@ -2609,13 +2617,13 @@ async def get_user(telegram_id: int):
         }
 
     data = await get_user_data(marzban_user)
-    links = data.get("links", [])
+    link = get_marzban_access_link(data)
     return {
         "username": marzban_user,
         "full_name": full_name or marzban_user,
         "avatar_url": avatar_url,
         "status": data.get("status"),
-        "link": links[0] if links else None,
+        "link": link,
         "used_traffic": data.get("used_traffic", 0),
         "expire": data.get("expire"),
         "is_admin": telegram_id in ADMIN_IDS,
