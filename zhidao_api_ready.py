@@ -164,6 +164,14 @@ def extract_path_telegram_id(path: str) -> Optional[int]:
     return None
 
 
+def auth_error_response(request: Request, detail: str, status_code: int) -> JSONResponse:
+    response = JSONResponse({"detail": detail}, status_code=status_code)
+    if request.headers.get("origin"):
+        # Auth middleware can return before CORSMiddleware decorates the response.
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+
 async def enforce_verified_user_identity(request: Request, verified_id: Optional[int], is_admin_request: bool):
     if not verified_id or is_admin_request:
         return None
@@ -178,7 +186,7 @@ async def enforce_verified_user_identity(request: Request, verified_id: Optional
         try:
             candidate_ids.append(int(query_id))
         except ValueError:
-            return JSONResponse({"detail": "Invalid telegram_id"}, status_code=400)
+            return auth_error_response(request, "Invalid telegram_id", 400)
 
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
         content_type = request.headers.get("content-type", "")
@@ -191,11 +199,11 @@ async def enforce_verified_user_identity(request: Request, verified_id: Optional
                 try:
                     candidate_ids.append(int(body.get("telegram_id")))
                 except (TypeError, ValueError):
-                    return JSONResponse({"detail": "Invalid telegram_id"}, status_code=400)
+                    return auth_error_response(request, "Invalid telegram_id", 400)
 
     for candidate_id in candidate_ids:
         if candidate_id != verified_id:
-            return JSONResponse({"detail": "Telegram identity mismatch"}, status_code=403)
+            return auth_error_response(request, "Telegram identity mismatch", 403)
     return None
 
 
@@ -214,9 +222,9 @@ async def telegram_auth_middleware(request: Request, call_next):
         for header_name in ("x-admin-id", "x-telegram-id"):
             header_value = request.headers.get(header_name)
             if header_value and str(header_value) != str(verified_id):
-                return JSONResponse({"detail": "Telegram identity mismatch"}, status_code=403)
+                return auth_error_response(request, "Telegram identity mismatch", 403)
     elif is_sensitive_api_request(request):
-        return JSONResponse({"detail": "Telegram auth required"}, status_code=401)
+        return auth_error_response(request, "Telegram auth required", 401)
 
     identity_error = await enforce_verified_user_identity(
         request,

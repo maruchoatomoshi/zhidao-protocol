@@ -56,6 +56,8 @@ async function chooseThemePath(path) {
       if (overlay) overlay.style.display = 'none';
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
       applyThemePath(path);
+    } else if (r.status === 401) {
+      showToast('Открой приложение заново через Telegram.');
     } else {
       showToast('Ошибка. Попробуй ещё раз.');
     }
