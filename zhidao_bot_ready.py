@@ -3,6 +3,7 @@ import os
 import re
 import sqlite3
 import aiohttp
+from datetime import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -92,6 +93,7 @@ pending_codes = {}
 
 class Form(StatesGroup):
     waiting_name = State()
+    waiting_bug_report = State()
 
 
 def init_db():
@@ -122,6 +124,16 @@ def init_db():
                   status TEXT DEFAULT 'pending',
                   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                   updated_at TEXT DEFAULT CURRENT_TIMESTAMP)"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS bug_reports
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  full_name TEXT DEFAULT '',
+                  username TEXT DEFAULT '',
+                  text TEXT NOT NULL,
+                  status TEXT DEFAULT 'open',
+                  created_at TEXT NOT NULL)"""
     )
     conn.commit()
     conn.close()
@@ -540,6 +552,79 @@ async def notify_admins(text, reply_markup=None):
             pass
 
 
+def save_bug_report(message: types.Message, text: str) -> int:
+    full_name_parts = [
+        message.from_user.first_name or "",
+        message.from_user.last_name or "",
+    ]
+    fallback_name = " ".join(part for part in full_name_parts if part).strip()
+    conn = sqlite3.connect("/root/zhidao.db")
+    c = conn.cursor()
+    c.execute(
+        "SELECT full_name FROM users WHERE telegram_id=?",
+        (message.from_user.id,),
+    )
+    row = c.fetchone()
+    full_name = (row[0] if row and row[0] else fallback_name) or str(message.from_user.id)
+    username = message.from_user.username or ""
+    now_str = datetime.now(BEIJING_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    c.execute(
+        """INSERT INTO bug_reports
+           (telegram_id, full_name, username, text, status, created_at)
+           VALUES (?, ?, ?, ?, 'open', ?)""",
+        (message.from_user.id, full_name, username, text.strip(), now_str),
+    )
+    report_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return int(report_id)
+
+
+def get_recent_bug_reports(limit: int = 10):
+    conn = sqlite3.connect("/root/zhidao.db")
+    c = conn.cursor()
+    c.execute(
+        """SELECT id, telegram_id, full_name, username, text, status, created_at
+           FROM bug_reports
+           ORDER BY id DESC
+           LIMIT ?""",
+        (limit,),
+    )
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+
+async def submit_bug_report(message: types.Message, text: str):
+    report_text = text.strip()
+    if len(report_text) < 5:
+        await message.answer(
+            "Опиши проблему чуть подробнее: что нажал, что ожидал увидеть и что произошло."
+        )
+        return
+    if len(report_text) > 2000:
+        report_text = report_text[:2000] + "\n\n[обрезано ботом: сообщение было длиннее 2000 символов]"
+
+    report_id = save_bug_report(message, report_text)
+    username = f"@{message.from_user.username}" if message.from_user.username else "без username"
+    await notify_admins(
+        "🐞 BUG REPORT #{report_id}\n"
+        "От: {name}\n"
+        "TG: {tg_id} ({username})\n\n"
+        "{text}".format(
+            report_id=report_id,
+            name=message.from_user.full_name,
+            tg_id=message.from_user.id,
+            username=username,
+            text=report_text,
+        )
+    )
+    await message.answer(
+        f"✅ Баг-репорт #{report_id} отправлен.\n"
+        "Если можешь, пришли админам скриншот или напиши, на каком экране это произошло."
+    )
+
+
 def get_presence_message(check_type, attempt_no=1):
     if check_type == "morning":
         return (
@@ -849,7 +934,8 @@ async def help_cmd(message: types.Message):
         "1️⃣ Скачайте Happ\n"
         "2️⃣ Напишите /start ВАШ_КОД\n"
         "3️⃣ Скопируйте конфиг от бота и добавьте в Happ\n"
-        "4️⃣ Откройте Mini App кнопкой ниже",
+        "4️⃣ Откройте Mini App кнопкой ниже\n\n"
+        "Если нашли ошибку: /bug описание проблемы",
         reply_markup=get_mini_app_keyboard(),
     )
 
@@ -857,6 +943,55 @@ async def help_cmd(message: types.Message):
 @dp.message(Command("myid", "мойid"))
 async def myid(message: types.Message):
     await message.answer(f"Ваш Telegram ID: `{message.from_user.id}`", parse_mode="Markdown")
+
+
+@dp.message(Command("bug", "ошибка", "баг"))
+async def bug_report_cmd(message: types.Message, state: FSMContext):
+    args = message.text.split(maxsplit=1)
+    if len(args) > 1 and args[1].strip():
+        await submit_bug_report(message, args[1])
+        return
+    await state.set_state(Form.waiting_bug_report)
+    await message.answer(
+        "🐞 Опиши проблему одним сообщением.\n\n"
+        "Лучший формат:\n"
+        "1. Где был баг: экран / кнопка\n"
+        "2. Что нажал\n"
+        "3. Что ожидал\n"
+        "4. Что произошло вместо этого\n\n"
+        "Можно также написать сразу: /bug текст проблемы"
+    )
+
+
+@dp.message(Form.waiting_bug_report)
+async def process_bug_report(message: types.Message, state: FSMContext):
+    await submit_bug_report(message, message.text or "")
+    await state.clear()
+
+
+@dp.message(Command("bugs", "buglist", "bugslist", "reports", "баги", "ошибки"))
+async def bug_reports_list(message: types.Message):
+    if not is_admin(message.from_user.id):
+        await message.answer("❌ У вас нет прав администратора.")
+        return
+
+    reports = get_recent_bug_reports(10)
+    if not reports:
+        await message.answer("Баг-репортов пока нет.")
+        return
+
+    lines = ["🐞 Последние баг-репорты:"]
+    for report_id, tg_id, full_name, username, text, status, created_at in reports:
+        clean_text = re.sub(r"\s+", " ", text).strip()
+        if len(clean_text) > 180:
+            clean_text = clean_text[:180] + "..."
+        username_text = f"@{username}" if username else "без username"
+        lines.append(
+            f"\n#{report_id} · {status} · {created_at}\n"
+            f"{full_name} | TG {tg_id} | {username_text}\n"
+            f"{clean_text}"
+        )
+    await message.answer("\n".join(lines))
 
 
 @dp.message(Command("weather", "погода"))
@@ -968,6 +1103,7 @@ async def admin_help(message: types.Message):
         "/adduser КОД [USERNAME] — добавить пользователя, VPN можно позже\n"
         "/listusers — список пользователей\n"
         "/broadcast ТЕКСТ — рассылка всем\n"
+        "/bugs — последние баг-репорты\n"
         "/разбудить ИМЯ — будильник\n"
         "/перекличка — запустить вечернюю отметку\n"
         "/подъем — запустить утреннюю отметку\n"
