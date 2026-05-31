@@ -85,6 +85,8 @@ def parse_int_list_env(name: str) -> list[int]:
 
 
 ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
+ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS")
+BUG_REPORT_RECIPIENT_IDS = parse_int_list_env("BUG_REPORT_RECIPIENT_IDS") or ARCHITECT_IDS or [ADMIN_IDS[0]]
 REGISTRATION_BYPASS_IDS = set(parse_int_list_env("REGISTRATION_BYPASS_IDS"))
 PRESENCE_ADMIN_ID = ADMIN_IDS[0]
 ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "admin")
@@ -491,6 +493,23 @@ def get_mini_app_keyboard():
     )
 
 
+def get_main_reply_keyboard(user_id: int | None = None):
+    is_admin_user = bool(user_id and is_admin(user_id))
+    keyboard = [
+        [KeyboardButton(text="🚀 Открыть ZHIDAO Protocol", web_app=WebAppInfo(url=MINI_APP_URL))],
+        [KeyboardButton(text="/bug"), KeyboardButton(text="/help"), KeyboardButton(text="/myid")],
+        [KeyboardButton(text="/баллы"), KeyboardButton(text="/погода")],
+    ]
+    if is_admin_user:
+        keyboard.append([KeyboardButton(text="/admin"), KeyboardButton(text="/bugs")])
+    return ReplyKeyboardMarkup(
+        keyboard=keyboard,
+        resize_keyboard=True,
+        is_persistent=True,
+        input_field_placeholder="Выберите команду или напишите сообщение",
+    )
+
+
 def get_presence_keyboard(check_type, check_date=None):
     if check_type == "morning":
         return InlineKeyboardMarkup(
@@ -552,6 +571,14 @@ async def notify_admins(text, reply_markup=None):
             pass
 
 
+async def notify_bug_recipients(text):
+    for admin_id in BUG_REPORT_RECIPIENT_IDS:
+        try:
+            await bot.send_message(admin_id, text)
+        except Exception:
+            pass
+
+
 def save_bug_report(message: types.Message, text: str) -> int:
     full_name_parts = [
         message.from_user.first_name or "",
@@ -607,7 +634,7 @@ async def submit_bug_report(message: types.Message, text: str):
 
     report_id = save_bug_report(message, report_text)
     username = f"@{message.from_user.username}" if message.from_user.username else "без username"
-    await notify_admins(
+    await notify_bug_recipients(
         "🐞 BUG REPORT #{report_id}\n"
         "От: {name}\n"
         "TG: {tg_id} ({username})\n\n"
@@ -621,7 +648,8 @@ async def submit_bug_report(message: types.Message, text: str):
     )
     await message.answer(
         f"✅ Баг-репорт #{report_id} отправлен.\n"
-        "Если можешь, пришли админам скриншот или напиши, на каком экране это произошло."
+        "Если можешь, пришли скриншот или напиши, на каком экране это произошло.",
+        reply_markup=get_main_reply_keyboard(message.from_user.id),
     )
 
 
@@ -874,12 +902,15 @@ async def start(message: types.Message, state: FSMContext):
                 parse_mode="Markdown",
             )
         else:
-            await message.answer(f"❌ Неверный код. Обратитесь к администратору: @{ADMIN_CONTACT_USERNAME}")
+            await message.answer(
+                f"❌ Неверный код. Обратитесь к администратору: @{ADMIN_CONTACT_USERNAME}",
+                reply_markup=get_main_reply_keyboard(message.from_user.id),
+            )
     else:
         await message.answer(
             "👋 Добро пожаловать в ZHIDAO Protocol!\n\n"
             "Введите ваш код активации:\n/start ВАШ_КОД",
-            reply_markup=get_mini_app_keyboard(),
+            reply_markup=get_main_reply_keyboard(message.from_user.id),
         )
 
 
@@ -914,17 +945,20 @@ async def process_name(message: types.Message, state: FSMContext):
             f"`{link}`\n\n"
             f"📖 Скопируйте ссылку и добавьте в Happ",
             parse_mode="Markdown",
-            reply_markup=get_mini_app_keyboard(),
+            reply_markup=get_main_reply_keyboard(user_id),
         )
     elif not marzban_user:
         await message.answer(
             f"✅ Отлично, {full_name}!\n\n"
             "Профиль ZHIDAO Protocol активирован.\n"
             "VPN-конфиг к этому аккаунту пока не привязан, но Mini App уже доступен.",
-            reply_markup=get_mini_app_keyboard(),
+            reply_markup=get_main_reply_keyboard(user_id),
         )
     else:
-        await message.answer(f"❌ Ошибка получения конфига. Обратитесь к администратору: @{ADMIN_CONTACT_USERNAME}")
+        await message.answer(
+            f"❌ Ошибка получения конфига. Обратитесь к администратору: @{ADMIN_CONTACT_USERNAME}",
+            reply_markup=get_main_reply_keyboard(user_id),
+        )
 
 
 @dp.message(Command("help", "помощь"))
@@ -936,13 +970,17 @@ async def help_cmd(message: types.Message):
         "3️⃣ Скопируйте конфиг от бота и добавьте в Happ\n"
         "4️⃣ Откройте Mini App кнопкой ниже\n\n"
         "Если нашли ошибку: /bug описание проблемы",
-        reply_markup=get_mini_app_keyboard(),
+        reply_markup=get_main_reply_keyboard(message.from_user.id),
     )
 
 
 @dp.message(Command("myid", "мойid"))
 async def myid(message: types.Message):
-    await message.answer(f"Ваш Telegram ID: `{message.from_user.id}`", parse_mode="Markdown")
+    await message.answer(
+        f"Ваш Telegram ID: `{message.from_user.id}`",
+        parse_mode="Markdown",
+        reply_markup=get_main_reply_keyboard(message.from_user.id),
+    )
 
 
 @dp.message(Command("bug", "ошибка", "баг"))
@@ -959,7 +997,8 @@ async def bug_report_cmd(message: types.Message, state: FSMContext):
         "2. Что нажал\n"
         "3. Что ожидал\n"
         "4. Что произошло вместо этого\n\n"
-        "Можно также написать сразу: /bug текст проблемы"
+        "Можно также написать сразу: /bug текст проблемы",
+        reply_markup=get_main_reply_keyboard(message.from_user.id),
     )
 
 
@@ -977,7 +1016,10 @@ async def bug_reports_list(message: types.Message):
 
     reports = get_recent_bug_reports(10)
     if not reports:
-        await message.answer("Баг-репортов пока нет.")
+        await message.answer(
+            "Баг-репортов пока нет.",
+            reply_markup=get_main_reply_keyboard(message.from_user.id),
+        )
         return
 
     lines = ["🐞 Последние баг-репорты:"]
@@ -991,7 +1033,7 @@ async def bug_reports_list(message: types.Message):
             f"{full_name} | TG {tg_id} | {username_text}\n"
             f"{clean_text}"
         )
-    await message.answer("\n".join(lines))
+    await message.answer("\n".join(lines), reply_markup=get_main_reply_keyboard(message.from_user.id))
 
 
 @dp.message(Command("weather", "погода"))
@@ -1095,7 +1137,10 @@ async def toggle_reminders(message: types.Message):
 @dp.message(Command("admin"))
 async def admin_help(message: types.Message):
     if not is_admin(message.from_user.id):
-        await message.answer("❌ У вас нет прав администратора.")
+        await message.answer(
+            "❌ У вас нет прав администратора.",
+            reply_markup=get_main_reply_keyboard(message.from_user.id),
+        )
         return
     status = "✅ вкл" if reminders_enabled else "❌ выкл"
     await message.answer(
@@ -1113,7 +1158,8 @@ async def admin_help(message: types.Message):
         "/penalize ИМЯ БАЛЛЫ ПРИЧИНА — снять баллы\n"
         "/зп СУММА — воскресная зарплата\n"
         f"/напоминания вкл|выкл — сейчас {status}\n"
-        "/admin — это меню"
+        "/admin — это меню",
+        reply_markup=get_main_reply_keyboard(message.from_user.id),
     )
 
 
