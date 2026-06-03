@@ -89,7 +89,8 @@
   };
 
   function playSiteIntroIfNeeded() {
-    if (sessionStorage.getItem('zhidao_demo_site_intro_done')) return;
+    const forceIntro = params.has('intro');
+    if (!forceIntro && sessionStorage.getItem('zhidao_demo_site_intro_done')) return;
     const overlay = document.getElementById('siteIntroOverlay');
     const video = document.getElementById('siteIntroVideo');
     if (!overlay || !video) return;
