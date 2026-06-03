@@ -22,6 +22,9 @@
     if (tg && tg.initDataUnsafe) tg.initDataUnsafe.user = DEMO_USER;
   } catch (e) {}
 
+  const SITE_INTRO_SRC = './cyberpunktheme_intro.mp4';
+  let siteIntroPlaying = false;
+
   function demoPopup(title = 'Демо-режим', message = 'Эта функция откроется после запуска поездки.') {
     try {
       tg.showPopup({
@@ -60,6 +63,52 @@
     banner.innerHTML = `<b>DEMO ACCESS</b><span>витрина без записи в систему</span>`;
     document.body.prepend(banner);
     document.body.classList.add('demo-mode');
+  }
+
+  function finishSiteIntro() {
+    if (!siteIntroPlaying) return;
+    siteIntroPlaying = false;
+    const overlay = document.getElementById('siteIntroOverlay');
+    const video = document.getElementById('siteIntroVideo');
+    if (video) {
+      video.onended = null;
+      video.onerror = null;
+      video.pause();
+    }
+    if (!overlay) return;
+    overlay.classList.add('closing');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      overlay.classList.remove('closing');
+      if (video) video.removeAttribute('src');
+    }, 420);
+  }
+
+  window.skipSiteIntro = function skipSiteIntro() {
+    finishSiteIntro();
+  };
+
+  function playSiteIntroIfNeeded() {
+    if (sessionStorage.getItem('zhidao_demo_site_intro_done')) return;
+    const overlay = document.getElementById('siteIntroOverlay');
+    const video = document.getElementById('siteIntroVideo');
+    if (!overlay || !video) return;
+
+    sessionStorage.setItem('zhidao_demo_site_intro_done', '1');
+    siteIntroPlaying = true;
+    overlay.style.display = 'flex';
+    overlay.classList.remove('closing');
+    video.pause();
+    video.src = SITE_INTRO_SRC;
+    video.currentTime = 0;
+    video.onended = finishSiteIntro;
+    video.onerror = finishSiteIntro;
+
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => setTimeout(finishSiteIntro, 1400));
+    }
+    setTimeout(finishSiteIntro, 9000);
   }
 
   function installDemoSpoilerLocks() {
@@ -429,5 +478,6 @@
       installCatalogLocks();
       installDemoSpoilerLocks();
     }, 900);
+    setTimeout(playSiteIntroIfNeeded, 120);
   });
 })();

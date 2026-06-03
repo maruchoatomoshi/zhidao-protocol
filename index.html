@@ -17,7 +17,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260604b">
+<link rel="stylesheet" href="./css/styles.css?v=20260604c">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -45,6 +45,14 @@
   <div class="admin-intro-vignette"></div>
   <button class="admin-intro-skip" onclick="event.stopPropagation(); skipAdminIntro();">ПРОПУСТИТЬ</button>
   <div class="admin-intro-caption" id="adminIntroCaption">ADMIN ACCESS</div>
+</div>
+
+<!-- Демо-заставка сайта -->
+<div id="siteIntroOverlay" class="site-intro-overlay cyberpunk" style="display:none;" onclick="skipSiteIntro()">
+  <video id="siteIntroVideo" class="site-intro-video" muted playsinline preload="auto"></video>
+  <div class="site-intro-vignette"></div>
+  <button class="site-intro-skip" onclick="event.stopPropagation(); skipSiteIntro();">ПРОПУСТИТЬ</button>
+  <div class="site-intro-caption">ZHIDAO PROTOCOL // DEMO ACCESS</div>
 </div>
 
 <!-- Фоновые иероглифы -->
@@ -2322,7 +2330,7 @@
 <script src="./js/raid.js"></script>
 <script src="./js/events.js"></script>
 <script src="./js/architect-event.js?v=20260508a"></script>
-<script src="./js/demo.js?v=20260604c"></script>
+<script src="./js/demo.js?v=20260604d"></script>
 <script src="./js/main.js?v=20260515a"></script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->

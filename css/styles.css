@@ -12393,11 +12393,27 @@ body.is-architect .profile-card-spark.spark-bl {
   animation: adminIntroIn 0.28s ease-out both;
 }
 
+.site-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #020205;
+  animation: adminIntroIn 0.28s ease-out both;
+}
+
 .admin-intro-overlay.closing {
   animation: adminIntroOut 0.42s ease-in both;
 }
 
-.admin-intro-video {
+.site-intro-overlay.closing {
+  animation: adminIntroOut 0.42s ease-in both;
+}
+
+.admin-intro-video,
+.site-intro-video {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -12407,7 +12423,8 @@ body.is-architect .profile-card-spark.spark-bl {
   background: #020205;
 }
 
-.admin-intro-vignette {
+.admin-intro-vignette,
+.site-intro-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -12420,11 +12437,18 @@ body.is-architect .profile-card-spark.spark-bl {
   box-shadow: inset 0 0 90px rgba(232,34,0,0.22), inset 0 0 120px rgba(96,180,212,0.08);
 }
 
+.site-intro-overlay.cyberpunk .site-intro-vignette {
+  box-shadow:
+    inset 0 0 110px rgba(232,34,0,0.26),
+    inset 0 0 150px rgba(96,180,212,0.12);
+}
+
 .admin-intro-overlay.genshin .admin-intro-vignette {
   box-shadow: inset 0 0 90px rgba(212,175,55,0.22), inset 0 0 120px rgba(110,150,230,0.10);
 }
 
-.admin-intro-skip {
+.admin-intro-skip,
+.site-intro-skip {
   position: absolute;
   right: max(14px, var(--tg-safe-right));
   bottom: calc(18px + var(--tg-safe-bottom));
@@ -12441,7 +12465,8 @@ body.is-architect .profile-card-spark.spark-bl {
   backdrop-filter: blur(10px);
 }
 
-.admin-intro-caption {
+.admin-intro-caption,
+.site-intro-caption {
   position: absolute;
   left: max(14px, var(--tg-safe-left));
   bottom: calc(20px + var(--tg-safe-bottom));
@@ -12457,6 +12482,13 @@ body.is-architect .profile-card-spark.spark-bl {
 .admin-intro-overlay.cyberpunk .admin-intro-caption {
   color: #8fe9ff;
   text-shadow: 0 0 18px rgba(96,180,212,0.55);
+}
+
+.site-intro-overlay.cyberpunk .site-intro-caption {
+  color: #8fe9ff;
+  text-shadow:
+    0 0 18px rgba(96,180,212,0.62),
+    0 0 30px rgba(232,34,0,0.26);
 }
 
 .admin-intro-overlay.genshin .admin-intro-caption {
