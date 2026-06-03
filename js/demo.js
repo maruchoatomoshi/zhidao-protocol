@@ -1,6 +1,6 @@
 (function initDemoMode() {
   const params = new URLSearchParams(window.location.search || '');
-  isDemoMode = params.has('demo');
+  isDemoMode = params.has('demo') || !!window.ZHIDAO_FORCE_DEMO;
   window.DEMO_MODE = isDemoMode;
   if (!isDemoMode) return;
 

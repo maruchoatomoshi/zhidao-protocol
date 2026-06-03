@@ -13236,6 +13236,7 @@ body.lite-mode .profile-scan-line { display: none; }
 body.lite-mode #matrixRain { display: none; }
 
 /* ===== DEMO MODE ===== */
+html.demo-mode,
 body.demo-mode {
   --demo-accent: #d4af37;
 }
@@ -13268,20 +13269,35 @@ body.demo-mode {
 }
 
 body.demo-mode #implants-catalog,
+html.demo-mode #implants-catalog,
 body.demo-mode #fragment-exchange-implant-block,
+html.demo-mode #fragment-exchange-implant-block,
 body.demo-mode #fragment-exchange-card-block,
+html.demo-mode #fragment-exchange-card-block,
 body.demo-mode #casinoPlayContent,
+html.demo-mode #casinoPlayContent,
 body.demo-mode #casinoInventoryContent,
+html.demo-mode #casinoInventoryContent,
 body.demo-mode #casinoHistoryContent,
+html.demo-mode #casinoHistoryContent,
 body.demo-mode #casinoRulesContent,
+html.demo-mode #casinoRulesContent,
 body.demo-mode #genshinRulesContent,
+html.demo-mode #genshinRulesContent,
 body.demo-mode #casinoGenshinContent,
+html.demo-mode #casinoGenshinContent,
 body.demo-mode .casino-subtabs,
+html.demo-mode .casino-subtabs,
 body.demo-mode #more-team,
+html.demo-mode #more-team,
 body.demo-mode .profile-showcase-modal,
+html.demo-mode .profile-showcase-modal,
 body.demo-mode .nav-item[onclick="showPage('casino',this)"],
+html.demo-mode .nav-item[onclick="showPage('casino',this)"],
 body.demo-mode .more-item[onclick="openMore('team')"],
-body.demo-mode .profile-card-actions .profile-mini-btn {
+html.demo-mode .more-item[onclick="openMore('team')"],
+body.demo-mode .profile-card-actions .profile-mini-btn,
+html.demo-mode .profile-card-actions .profile-mini-btn {
   display: none !important;
 }
 
