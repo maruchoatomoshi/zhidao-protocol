@@ -44,6 +44,14 @@
     </div>`;
   }
 
+  function demoLockedCard(title = 'Откроется в Пекине', body = 'Раздел скрыт в демо-версии, чтобы не раскрывать игровые механики до поездки.') {
+    return `<div class="demo-catalog-lock demo-section-lock">
+      <div class="demo-lock-kicker">BEIJING ACCESS ONLY</div>
+      <div class="demo-lock-title">${escapeHtml(title)}</div>
+      <div class="demo-lock-copy">${escapeHtml(body)}</div>
+    </div>`;
+  }
+
   function installDemoBanner() {
     if (document.getElementById('demoModeBanner')) return;
     const banner = document.createElement('div');
@@ -52,6 +60,34 @@
     banner.innerHTML = `<b>DEMO ACCESS</b><span>витрина без записи в систему</span>`;
     document.body.prepend(banner);
     document.body.classList.add('demo-mode');
+  }
+
+  function installDemoSpoilerLocks() {
+    document.body.classList.add('demo-mode');
+
+    const teamItem = document.querySelector(".more-item[onclick=\"openMore('team')\"]");
+    if (teamItem) teamItem.style.display = 'none';
+
+    const teamSection = document.getElementById('more-team');
+    if (teamSection) teamSection.style.display = 'none';
+
+    const casinoNav = document.querySelector(".nav-item[onclick=\"showPage('casino',this)\"]");
+    if (casinoNav) casinoNav.style.display = 'none';
+
+    const showcaseBtn = document.querySelector('.profile-card-actions .profile-mini-btn');
+    if (showcaseBtn) showcaseBtn.style.display = 'none';
+
+    const showcaseText = document.getElementById('profileShowcaseText');
+    if (showcaseText) showcaseText.textContent = 'SHOWCASE: LOCKED // Beijing launch';
+
+    const casinoPage = document.getElementById('page-casino');
+    if (casinoPage && !document.getElementById('demoCasinoLock')) {
+      const header = casinoPage.querySelector('.page-header');
+      const lock = document.createElement('div');
+      lock.id = 'demoCasinoLock';
+      lock.innerHTML = demoLockedCard('Кейсы откроются в Пекине', 'Система призов, шансов и редких предметов скрыта в демо. На подготовительном курсе показываем только общий интерфейс.');
+      if (header) header.insertAdjacentElement('afterend', lock);
+    }
   }
 
   function installCatalogLocks() {
@@ -63,14 +99,15 @@
         lock.id = 'demoImplantCatalogLock';
         lock.className = 'demo-catalog-lock';
         lock.innerHTML = `<div class="demo-lock-kicker">CATALOG SEALED</div>
-          <div class="demo-lock-title">Каталог имплантов скрыт</div>
-          <div class="demo-lock-copy">Полный список имплантов и пассивок откроется только участникам после запуска поездки.</div>`;
+          <div class="demo-lock-title">Импланты откроются в Пекине</div>
+          <div class="demo-lock-copy">Каталог, пассивки и редкие эффекты скрыты в демо-версии.</div>`;
         catalog.parentElement.insertBefore(lock, catalog);
       }
     }
 
     const cardsTab = document.getElementById('cards-tab');
     const exchange = document.getElementById('fragment-exchange-card-block');
+    if (exchange) exchange.style.display = 'none';
     if (cardsTab && exchange && !document.getElementById('demoCardCatalogLock')) {
       let node = exchange.nextElementSibling;
       while (node) {
@@ -81,8 +118,8 @@
       lock.id = 'demoCardCatalogLock';
       lock.className = 'demo-catalog-lock';
       lock.innerHTML = `<div class="demo-lock-kicker">CARD ARCHIVE LOCKED</div>
-        <div class="demo-lock-title">Каталог карточек скрыт</div>
-        <div class="demo-lock-copy">Карточки можно увидеть как пример владения, но полный архив не раскрывается в демо.</div>`;
+        <div class="demo-lock-title">Карточки откроются в Пекине</div>
+        <div class="demo-lock-copy">Архив карточек, редкости и пассивки скрыты до официального запуска.</div>`;
       exchange.insertAdjacentElement('afterend', lock);
     }
   }
@@ -123,16 +160,16 @@
       title: 'Кандидат протокола / Preview',
       status_line: '状态：DEMO // доступ: витрина // запись: отключена',
       showcase: {
-        kind: 'implant',
-        name: 'Linguasoft 口才',
-        glyph: '言',
-        detail: 'пример активного предмета',
+        kind: 'locked',
+        name: 'Beijing launch',
+        glyph: '禁',
+        detail: 'showcase hidden',
       },
       stats: {
-        case_opens: 4,
-        prayers: 2,
-        cards: 1,
-        implants: 2,
+        case_opens: 0,
+        prayers: 0,
+        cards: 0,
+        implants: 0,
         diaries: 3,
         raids: 1,
       },
@@ -181,10 +218,10 @@
     const container = document.getElementById('leaderboardContent');
     if (!container) return;
     const rows = [
-      ['🥇', 'Альфа протокола', 420, 'GENSHIN', 'genshin', 'top1'],
-      ['🥈', 'Оператор Дозора', 390, 'NETWATCH', 'netwatch', 'top2'],
-      ['🥉', 'Страж дневника', 350, 'GENSHIN', 'genshin', 'top3'],
-      ['#7', 'Демо-участник', 180, 'NETWATCH', 'netwatch', 'me'],
+      ['#1', 'Участник №1', 420, 'PATH HIDDEN', 'netwatch', 'top1'],
+      ['#2', 'Участник №2', 390, 'PATH HIDDEN', 'netwatch', 'top2'],
+      ['#3', 'Участник №3', 350, 'PATH HIDDEN', 'netwatch', 'top3'],
+      ['#7', 'Демо-профиль', 180, 'PREVIEW', 'netwatch', 'me'],
     ];
     container.innerHTML = `<div class="demo-note">Демо-рейтинг показывает пример интерфейса. Реальные места появятся после поездки.</div>
       ${rows.map(([rank, name, rep, pathLabel, pathClass, cls]) => `<div class="lb-item ${cls}">
@@ -202,10 +239,10 @@
     const container = document.getElementById('shopStoreContent');
     if (!container) return;
     const items = [
-      ['Иммунитет', 'Блокирует один штраф', '🛡', 150],
-      ['Доп. кейс', '+1 попытка кейса', '📦', 80],
-      ['Смена пути 转换', 'Переключиться между NetWatch и Genshin', '🔁', 500],
-      ['Bubble Tea', 'маленькая приятность', '🥤', 120],
+      ['Базовый товар', 'Пример карточки товара без раскрытия реального каталога', '◇', 120],
+      ['Сервисный бонус', 'Пример цифрового предмета. Покупки отключены.', '◇', 150],
+      ['Смена пути 转换', 'Пример настройки профиля. Использование отключено.', '◇', 500],
+      ['Пекинский слот', 'Реальные товары появятся после запуска.', '◇', 200],
     ];
     document.getElementById('shopPoints').textContent = currentPoints + ' ★';
     container.innerHTML = `<div class="demo-note">Магазин открыт как витрина. Покупки в демо не списывают звёзды.</div>
@@ -225,15 +262,13 @@
   window.loadInventory = async function loadDemoInventory() {
     const container = document.getElementById('shopInventoryContent');
     if (!container) return;
-    container.innerHTML = `${demoCard('Смена пути 转换', 'Пример предмета из магазина. В демо использование заблокировано.', '🔁')}
-      ${demoCard('Иммунитет', 'Пример защитного предмета.', '🛡')}`;
+    container.innerHTML = demoLockedCard('Инвентарь откроется в Пекине', 'В демо не показываем реальные предметы, подарки и накопленные игровые ресурсы.');
   };
 
   window.loadImplants = async function loadDemoImplants() {
     const home = document.getElementById('homeImplants');
     const page = document.getElementById('myImplantsPage');
-    const html = `${demoCard('Linguasoft 口才', '+30★ за сильный дневник. Пример установленного импланта.', '言')}
-      ${demoCard('Панда 🐼', 'Кэшбек и улучшенная продажа предметов. Пример установленного импланта.', '熊')}`;
+    const html = demoLockedCard('Импланты откроются в Пекине', 'Установленные импланты, пассивки и легендарные действия скрыты в демо.');
     if (home) home.innerHTML = html;
     if (page) page.innerHTML = html;
     installCatalogLocks();
@@ -242,8 +277,12 @@
   window.loadCards = async function loadDemoCards() {
     const container = document.getElementById('myCardsContent');
     if (!container) return;
-    container.innerHTML = demoCard('九尾狐灵 Лиса-Оборотень', 'Пример карточки. Полный каталог скрыт до запуска.', '狐');
+    container.innerHTML = demoLockedCard('Карточки откроются в Пекине', 'Коллекция, редкости и эффекты скрыты до официального запуска.');
     installCatalogLocks();
+  };
+
+  window.openProfileShowcaseModal = function openDemoProfileShowcaseModal() {
+    demoBlockedAction('Витрина профиля');
   };
 
   window.openContractsPage = function openDemoContractsPage() {
@@ -341,19 +380,54 @@
   window.joinRaid = async function demoJoinRaid() { demoBlockedAction('Рейд'); };
   window.exchangeFragments = async function demoExchangeFragments() { demoBlockedAction('Обмен фрагментов'); };
   window.loadCasinoStatus = async function loadDemoCasinoStatus() {
-    scanAttempts = 2;
-    protocolFragments = 6;
-    if (typeof updateFragmentCounters === 'function') updateFragmentCounters(protocolFragments);
-    if (typeof updateCaseButton === 'function') updateCaseButton({ scan_attempts: scanAttempts, protocol_fragments: protocolFragments });
+    installDemoSpoilerLocks();
   };
   window.chooseThemePath = async function demoChooseThemePath(path) {
     demoBlockedAction('Выбор пути');
     if (typeof applyThemePath === 'function') applyThemePath(path || 'cyberpunk');
   };
 
+  if (typeof showPage === 'function') {
+    const realShowPage = showPage;
+    window.showPage = function showDemoPage(name, btn) {
+      if (name === 'casino') {
+        realShowPage(name, btn);
+        setTimeout(installDemoSpoilerLocks, 0);
+        return;
+      }
+      realShowPage(name, btn);
+      setTimeout(() => {
+        installCatalogLocks();
+        installDemoSpoilerLocks();
+      }, 0);
+    };
+  }
+
+  if (typeof openMore === 'function') {
+    const realOpenMore = openMore;
+    window.openMore = function openDemoMore(section) {
+      if (section === 'team') {
+        demoBlockedAction('Команда');
+        installDemoSpoilerLocks();
+        return;
+      }
+      realOpenMore(section);
+      setTimeout(installDemoSpoilerLocks, 0);
+    };
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     installDemoBanner();
     installCatalogLocks();
+    installDemoSpoilerLocks();
     if (typeof applyThemePath === 'function') applyThemePath('cyberpunk');
+    setTimeout(() => {
+      installCatalogLocks();
+      installDemoSpoilerLocks();
+    }, 250);
+    setTimeout(() => {
+      installCatalogLocks();
+      installDemoSpoilerLocks();
+    }, 900);
   });
 })();

@@ -13267,6 +13267,24 @@ body.demo-mode {
   text-transform: none;
 }
 
+body.demo-mode #implants-catalog,
+body.demo-mode #fragment-exchange-implant-block,
+body.demo-mode #fragment-exchange-card-block,
+body.demo-mode #casinoPlayContent,
+body.demo-mode #casinoInventoryContent,
+body.demo-mode #casinoHistoryContent,
+body.demo-mode #casinoRulesContent,
+body.demo-mode #genshinRulesContent,
+body.demo-mode #casinoGenshinContent,
+body.demo-mode .casino-subtabs,
+body.demo-mode #more-team,
+body.demo-mode .profile-showcase-modal,
+body.demo-mode .nav-item[onclick="showPage('casino',this)"],
+body.demo-mode .more-item[onclick="openMore('team')"],
+body.demo-mode .profile-card-actions .profile-mini-btn {
+  display: none !important;
+}
+
 .demo-note,
 .demo-catalog-lock,
 .demo-card {
