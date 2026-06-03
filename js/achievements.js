@@ -19,15 +19,23 @@ const ACHIEVEMENT_ICONS = {
 
 async function loadAchievements() {
   if (!currentUserId) return;
+  const container = document.getElementById('achievementsContent');
+  if (!container) return;
   try {
     const r = await fetch(`${API_URL}/api/achievements/${currentUserId}`);
     const data = await r.json();
-    const container = document.getElementById('achievementsContent');
+    if (!Array.isArray(data) || !data.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:16px;">
+        Каталог достижений пока не загружен<br>
+        <span style="font-size:10px;font-family:monospace;color:var(--text3);">После обновления API раздел появится автоматически</span>
+      </div>`;
+      return;
+    }
     const earned = data.filter(a => a.earned).length;
     let html = `<div class="achievement-count">// Получено: <b style="color:var(--gold)">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
     data.forEach(a => {
       const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
-      html += `<div class="achievement-card ${a.earned?'':'locked'}" onclick="showAchievementInfo('${a.name}','${a.description}',${a.earned})">
+      html += `<div class="achievement-card ${a.earned?'':'locked'}" onclick='showAchievementInfo(${JSON.stringify(a.name)},${JSON.stringify(a.description)},${Boolean(a.earned)})'>
         ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
         <div class="achievement-svg">${svgIcon}</div>
         <div class="achievement-name">${a.name}</div>
@@ -35,7 +43,7 @@ async function loadAchievements() {
     });
     html += '</div>';
     container.innerHTML = html;
-  } catch(e) { document.getElementById('achievementsContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+  } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
 function showAchievementInfo(name, description, earned) {

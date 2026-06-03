@@ -718,6 +718,65 @@ body.theme-genshin-light .announcement-date
 body.theme-genshin-dark .lb-name,
 body.theme-genshin-dark .lb-points
 { color: #e8e0d0 !important; }
+
+body.theme-nw-light .lb-item,
+body.theme-genshin-light .lb-item,
+body.theme-nw-light .diary-rank-card,
+body.theme-genshin-light .diary-rank-card {
+  border-color: rgba(80, 58, 35, 0.16);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(184, 109, 31, 0.08), transparent 42%),
+    linear-gradient(90deg, rgba(255,255,255,0.84), rgba(246,240,226,0.74));
+  box-shadow: 0 10px 22px rgba(70,45,20,0.08);
+}
+
+body.theme-genshin-light .lb-item,
+body.theme-genshin-light .diary-rank-card {
+  border-color: rgba(149, 117, 70, 0.22);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(184, 134, 59, 0.12), transparent 42%),
+    linear-gradient(90deg, rgba(255,250,238,0.90), rgba(238,230,210,0.78));
+}
+
+body.theme-nw-light .lb-item.top1,
+body.theme-genshin-light .lb-item.top1,
+body.theme-nw-light .diary-rank-card.top1,
+body.theme-genshin-light .diary-rank-card.top1 {
+  border-color: rgba(184, 134, 59, 0.52);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.22), transparent 46%),
+    linear-gradient(90deg, rgba(255,244,204,0.96), rgba(255,255,255,0.74));
+}
+
+body.theme-nw-light .lb-item.top2,
+body.theme-genshin-light .lb-item.top2,
+body.theme-nw-light .diary-rank-card.top2,
+body.theme-genshin-light .diary-rank-card.top2 {
+  border-color: rgba(120, 128, 140, 0.36);
+  background: linear-gradient(90deg, rgba(226,231,236,0.92), rgba(255,255,255,0.70));
+}
+
+body.theme-nw-light .lb-item.top3,
+body.theme-genshin-light .lb-item.top3,
+body.theme-nw-light .diary-rank-card.top3,
+body.theme-genshin-light .diary-rank-card.top3 {
+  border-color: rgba(184,115,51,0.38);
+  background: linear-gradient(90deg, rgba(239,215,190,0.92), rgba(255,255,255,0.70));
+}
+
+body.theme-nw-light .lb-subline,
+body.theme-genshin-light .lb-subline,
+body.theme-nw-light .diary-rank-sub,
+body.theme-genshin-light .diary-rank-sub {
+  color: #4f493f;
+}
+
+body.theme-nw-light .lb-path-badge,
+body.theme-genshin-light .lb-path-badge {
+  background: rgba(255,255,255,0.78);
+  color: #5d4320;
+  border-color: rgba(120, 90, 40, 0.28);
+}
 .page { display: none; padding: 0 0 10px; position: relative; z-index: 1; }
 .page.active { display: block; }
 
@@ -13049,6 +13108,103 @@ body.theme-genshin-light .contract-field select {
 body.theme-nw-light .contract-submit-btn,
 body.theme-genshin-light .contract-submit-btn {
   background: color-mix(in srgb, var(--contract-accent) 13%, #fff);
+}
+
+body.theme-nw-light .contracts-tab,
+body.theme-genshin-light .contracts-tab {
+  color: #5d5345;
+}
+
+body.theme-nw-light .contracts-tab.active,
+body.theme-genshin-light .contracts-tab.active {
+  color: var(--contract-accent);
+  background: color-mix(in srgb, var(--contract-accent) 14%, #fff);
+}
+
+body.theme-nw-light .contracts-filter-chip.active,
+body.theme-genshin-light .contracts-filter-chip.active {
+  color: var(--contract-accent);
+  background: color-mix(in srgb, var(--contract-accent) 12%, #fff);
+}
+
+body.theme-nw-light .contract-status,
+body.theme-genshin-light .contract-status {
+  background: rgba(255,255,255,0.78);
+  opacity: 1;
+}
+
+body.theme-nw-light .contract-flow::before,
+body.theme-genshin-light .contract-flow::before {
+  background: rgba(80, 58, 35, 0.18);
+}
+
+body.theme-nw-light .contract-flow span,
+body.theme-genshin-light .contract-flow span {
+  background: rgba(255,255,255,0.78);
+}
+
+body.theme-nw-light .contract-card.status-accepted,
+body.theme-genshin-light .contract-card.status-accepted {
+  background: linear-gradient(135deg, rgba(52,152,219,0.13), rgba(255,255,255,0.78));
+  border-color: rgba(52,152,219,0.28);
+}
+
+body.theme-nw-light .contract-card.status-completed,
+body.theme-genshin-light .contract-card.status-completed {
+  background: linear-gradient(135deg, rgba(46,204,113,0.13), rgba(255,255,255,0.78));
+  border-color: rgba(46,204,113,0.28);
+}
+
+body.theme-nw-light .contract-card.status-disputed,
+body.theme-genshin-light .contract-card.status-disputed {
+  background: linear-gradient(135deg, rgba(231,76,60,0.13), rgba(255,255,255,0.78));
+  border-color: rgba(231,76,60,0.30);
+}
+
+body.theme-nw-light .contract-modal-title,
+body.theme-genshin-light .contract-modal-title,
+body.theme-nw-light .contract-field label,
+body.theme-genshin-light .contract-field label {
+  color: #241c12;
+}
+
+body.theme-nw-light .contract-fee-preview,
+body.theme-genshin-light .contract-fee-preview {
+  color: #5d5345;
+}
+
+body.theme-genshin-light #page-shop .shop-subtabs .subtab,
+body.theme-genshin-dark #page-shop .shop-subtabs .subtab {
+  min-height: 42px;
+  padding: 10px 12px;
+  font-size: 11px;
+}
+
+body.theme-genshin-light #page-shop .shop-subtabs,
+body.theme-genshin-dark #page-shop .shop-subtabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body.theme-nw-light .admin-contract-monitor,
+body.theme-genshin-light .admin-contract-monitor,
+body.theme-nw-light .contract-monitor-panel,
+body.theme-genshin-light .contract-monitor-panel,
+body.theme-nw-light .contract-monitor-row,
+body.theme-genshin-light .contract-monitor-row,
+body.theme-nw-light .contract-monitor-stat,
+body.theme-genshin-light .contract-monitor-stat {
+  color: #1f1a14;
+}
+
+body.theme-nw-light .contract-monitor-row span,
+body.theme-genshin-light .contract-monitor-row span,
+body.theme-nw-light .contract-monitor-stat span,
+body.theme-genshin-light .contract-monitor-stat span,
+body.theme-nw-light .contract-monitor-stat em,
+body.theme-genshin-light .contract-monitor-stat em,
+body.theme-nw-light .contract-monitor-note,
+body.theme-genshin-light .contract-monitor-note {
+  color: #5d5345;
 }
 
 @media (max-width: 380px) {

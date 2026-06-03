@@ -299,6 +299,23 @@ SHOP_ITEM_SEEDS = [
     (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня", "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
     ("path_switch", "Смена пути 转换", "Переключиться между NetWatch и Genshin", "🔁", 500, -1, "vip"),
 ]
+
+ACHIEVEMENT_SEEDS = [
+    ("early_bird", "Ранний подъём", "Подтвердить утреннюю отметку без напоминаний и опозданий.", "🌅", 0),
+    ("iron_mode", "Железный режим", "Пройти день без штрафов, пропусков и тревожных статусов.", "🎯", 0),
+    ("legend", "Легенда протокола", "Войти в топ рейтинга протокола и удержать высокий REP.", "⭐", 0),
+    ("curious", "Исследователь", "Задать полезный вопрос или активно разобраться в механике приложения.", "🔎", 0),
+    ("polyglot", "Полиглот", "Показать сильный прогресс в китайском языке.", "你好", 0),
+    ("explorer", "Проводник", "Помочь группе с маршрутом, бытовым вопросом или ориентированием.", "🧭", 0),
+    ("brave", "Смелый ход", "Взять сложную задачу, поручение или ответственность и довести до результата.", "🛡", 0),
+    ("exemplary", "Образцовый участник", "Стабильно соблюдать правила и помогать поддерживать порядок.", "✅", 0),
+    ("helper", "Помощник группы", "Помочь другому участнику без принуждения и выгоды.", "🤝", 0),
+    ("dragon", "Драконий след", "Получить редкий имплант, карту или отличиться в особом событии.", "🐉", 0),
+    ("night_watch", "Ночной дозор", "Ответственно закрыть вечернюю отметку или помочь проверить группу.", "🦉", 0),
+    ("master", "Мастер системы", "Уверенно пользоваться ключевыми разделами ZHIDAO Protocol.", "⚙", 0),
+    ("gambler", "Игрок вероятности", "Открыть кейсы или молитвы и пережить результат достойно.", "♦", 0),
+    ("lucky", "Счастливый сигнал", "Получить редкий удачный исход в системе.", "✦", 0),
+]
 SHOP_GIFT_DAILY_LIMIT = 5
 DIARY_WORD_LIMIT = 15
 DIARY_MIN_STORY_HANZI = 20
@@ -903,6 +920,18 @@ def ensure_seed_data():
                  category=excluded.category,
                  active=1''',
             item,
+        )
+    for achievement in ACHIEVEMENT_SEEDS:
+        c.execute(
+            '''INSERT INTO achievements
+               (code, name, description, icon, secret)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(code) DO UPDATE SET
+                 name=excluded.name,
+                 description=excluded.description,
+                 icon=excluded.icon,
+                 secret=excluded.secret''',
+            achievement,
         )
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('blackwall', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('architect_event', '0')")
