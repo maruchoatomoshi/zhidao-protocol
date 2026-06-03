@@ -486,12 +486,12 @@
         <div>
           <div class="rules-title" style="font-size:13px;">фиолетовый свиток <span style="color:var(--text2);">— 20%</span></div>
           <div class="rules-desc">
-            焰莲使者 Страж Огня — Феникс: +50★ после штрафа<br>
-            九尾狐灵 Лиса-Оборотень — Обман: перекрутить приз<br>
-            桃花仙子 Небесная Фея — Благословение: +30★ отряду<br>
-            文曲星君 Звезда Литературы — Мудрость: +25★ за отчёт<br>
-            木灵仙君 Дух Леса — Урожай: +10★ за день вовремя<br>
-            海灵仙后 Дух Морей — Волна: каждые 3 молитвы +30★<br>
+            焰莲使者 Страж Огня — Феникс: до +25★ после первого штрафа дня<br>
+            九尾狐灵 Лиса-Оборотень — Обман: раз в день +30★ превращаются в +60★<br>
+            桃花仙子 Небесная Фея — Цветение: +10★ за первую отметку<br>
+            文曲星君 Звезда Литературы — Мудрость: +15★ за дневник на 3★<br>
+            木灵仙君 Дух Леса — Урожай: +8★ за утреннюю отметку<br>
+            海灵仙后 Дух Морей — Волна: каждая 3-я молитва +20★<br>
             嫦娥仙子 Богиня Луны — Жемчужина: дубль даёт +50★
           </div>
         </div>
@@ -501,8 +501,8 @@
         <div>
           <div class="rules-title" style="font-size:13px;">золотой свиток <span style="color:var(--text2);">— 1%</span></div>
           <div class="rules-desc">
-            岩王帝君 Архонт Земли — Контракт: блок штрафа + -5% магазин<br>
-            紫微星君 Императорская Звезда — Звёздный суд: передать штраф другому
+            岩王帝君 Архонт Земли — Каменный контракт: -5% к цене магазина<br>
+            紫微星君 Императорская Звезда — Звёздный суд: первый штраф дня -15★
           </div>
         </div>
       </div>
@@ -511,7 +511,7 @@
         <div>
           <div class="rules-title">Дубликаты</div>
           <div class="rules-desc">
-            Повторная карточка добавляется как второй экземпляр.<br>
+            Повторная карточка не добавляется как второй экземпляр.<br>
             嫦娥仙子 Богиня Луны — дубль сразу даёт +50★ вместо карточки.<br>
             Лишние карточки разбираются за 50★ в разделе Карточки.
           </div>
@@ -1513,7 +1513,7 @@
           <div style="font-size:9px;color:rgba(192,160,64,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-shield-star" style="font-size:24px;color:#c0a040;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Контракт Ли Юэ</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Блок штрафа + -5% в магазине одновременно, раз в день</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Каменный контракт</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Постоянная скидка -5% в магазине. Работает вместе с Гуаньси.</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1546,7 +1546,7 @@
           <div style="font-size:9px;color:rgba(155,89,182,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-gavel" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Звёздный суд 星判</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день передать половину своего штрафа другому игроку</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Звёздный суд 星判</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Первый штраф дня автоматически уменьшается на 15★</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1573,13 +1573,13 @@
         </div>
         <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
           <div style="font-size:9px;color:rgba(155,89,182,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хитрейший дух Тейвата, способный видеть сквозь иллюзии. Носитель получает право раз обмануть судьбу — перекрутить неудачный приз.</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хитрейший дух Тейвата, способный видеть сквозь иллюзии. Носитель получает право раз в день обмануть судьбу и усилить слабую молитву.</div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
           <div style="font-size:9px;color:rgba(155,89,182,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-refresh" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Лисий обман 狐惑</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день перекрутить неудачный приз заново</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Обман судьбы 狐惑</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день молитва +30★ превращается в +60★</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1609,7 +1609,7 @@
           <div style="font-size:9px;color:rgba(200,80,40,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-flame" style="font-size:24px;color:#e05030;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Феникс 凤凰</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">После первого штрафа за день автоматически восстанавливает +50★</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Феникс 凤凰</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">После первого штрафа за день автоматически возвращает до 25★</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1633,13 +1633,13 @@
         </div>
         <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
           <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хранительница персиковых садов небесного дворца. Её благословение распространяется на весь отряд — ибо настоящая фея дарит счастье всем вокруг.</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">Хранительница персиковых садов небесного дворца. Её благословение помогает держать ритм дня и награждает первые честные отметки.</div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
           <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-hearts" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Небесное благословение 天赐</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">На перекличке каждый участник отряда получает +30★</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Цветение 天赐</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за первую утреннюю или вечернюю отметку дня</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1669,7 +1669,7 @@
           <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-pencil" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Мудрость Звезды 文星</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+25★ за каждый сданный вечерний отчёт</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Мудрость Звезды 文星</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+15★ за дневник, который получил 3★</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1699,7 +1699,7 @@
           <div style="font-size:9px;color:rgba(74,150,74,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-plant" style="font-size:24px;color:#4a9640;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Утренний урожай 晨收</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за каждый день подряд встаёшь вовремя. Серия обнуляется при пропуске.</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Утренний урожай 晨收</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+8★ за своевременную утреннюю отметку</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1729,7 +1729,7 @@
           <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-waves" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Морская волна 海浪</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждые 3 молитвы подряд в один день дают бонус +30★</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Морская волна 海浪</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждая 3-я молитва за день даёт бонус +20★</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1761,7 +1761,7 @@
           <div style="font-size:9px;color:rgba(74,122,204,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-moon-stars" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Жемчужина 珍珠</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждый дубль этой карточки даёт +50★ автоматически вместо разборки</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Лунная жемчужина 珍珠</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждый дубль этой карточки даёт +50★ автоматически вместо разборки</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
