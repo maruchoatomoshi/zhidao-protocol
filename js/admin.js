@@ -194,13 +194,19 @@ async function adminLoadLaundrySlots() {
     const data = r.ok ? await r.json() : [];
     if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
     container.innerHTML = data.map(slot => {
-      const taken = !!slot.taken_by;
+      const bookings = slot.bookings || [];
+      const capacity = slot.capacity || 1;
+      const taken = bookings.length >= capacity;
+      const bookingList = bookings.length
+        ? bookings.map(b => `<div class="admin-slot-status">${b.name} · TG ${b.telegram_id} <button class="admin-slot-del" style="padding:2px 6px;margin-left:6px;" onclick="adminCancelLaundryBooking(${slot.id},${b.telegram_id})">×</button></div>`).join('')
+        : '<div class="admin-slot-status">Свободно</div>';
       return `<div class="admin-slot-item ${taken ? 'taken' : 'free'}">
     <div class="admin-slot-icon">${taken ? '✓' : '○'}</div>
     <div class="admin-slot-info">
       <div class="admin-slot-time">${slot.day} · ${slot.time}</div>
       ${slot.note ? `<div class="admin-slot-note">${slot.note}</div>` : ''}
-      <div class="admin-slot-status">${taken ? slot.taken_by.name : 'Свободно'}</div>
+      <div class="admin-slot-note">${bookings.length}/${capacity} мест</div>
+      ${bookingList}
     </div>
     <button class="admin-slot-del" onclick="adminDeleteLaundrySlot(${slot.id})"><i class="ti ti-trash"></i></button>
   </div>`;
@@ -236,38 +242,62 @@ async function adminDeleteLaundrySlot(id) {
   });
 }
 
+async function adminCancelLaundryBooking(slotId, telegramId) {
+  try {
+    await fetch(`${API_URL}/api/laundry/schedule/${slotId}/admin-cancel`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
+      body: JSON.stringify({telegram_id: telegramId})
+    });
+    adminLoadLaundrySlots();
+    if (typeof loadLaundrySchedule === 'function') loadLaundrySchedule();
+  } catch(e) { showToast('Ошибка'); }
+}
+
 async function adminLoadWaterSlots() {
   const container = document.getElementById('adminWaterList');
   try {
     const r = await fetch(`${API_URL}/api/water/schedule`);
     const data = r.ok ? await r.json() : [];
     if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
-    container.innerHTML = data.map(slot => `
-  <div class="admin-slot-item free">
+    container.innerHTML = data.map(slot => {
+      const bookings = slot.bookings || [];
+      const capacity = slot.capacity || 1;
+      const full = bookings.length >= capacity;
+      const scheduleText = [slot.day, slot.time].filter(Boolean).join(' · ');
+      const bookingList = bookings.length
+        ? bookings.map(b => `<div class="admin-slot-status">${b.name} · TG ${b.telegram_id} <button class="admin-slot-del" style="padding:2px 6px;margin-left:6px;" onclick="adminCancelWaterBooking(${slot.id},${b.telegram_id})">×</button></div>`).join('')
+        : '<div class="admin-slot-status">Свободно</div>';
+      return `
+  <div class="admin-slot-item ${full ? 'taken' : 'free'}">
     <div class="admin-slot-icon">💧</div>
     <div class="admin-slot-info">
-      <div class="admin-slot-time">${slot.day} · ${slot.time}</div>
+      <div class="admin-slot-time">${slot.floor ? `Этаж ${slot.floor}` : 'Вода'}${scheduleText ? ` · ${scheduleText}` : ''}</div>
       ${slot.note ? `<div class="admin-slot-note">${slot.note}</div>` : ''}
-      <div class="admin-slot-status">Свободно</div>
+      <div class="admin-slot-note">${bookings.length}/${capacity} мест</div>
+      ${bookingList}
     </div>
     <button class="admin-slot-del" onclick="adminDeleteWaterSlot(${slot.id})"><i class="ti ti-trash"></i></button>
-  </div>`).join('');
+  </div>`;
+    }).join('');
   } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка</div>'; }
 }
 
 async function adminAddWaterSlot() {
   const day = document.getElementById('wDay').value.trim();
   const time = document.getElementById('wTime').value.trim();
+  const floor = document.getElementById('wFloor') ? document.getElementById('wFloor').value.trim() : '';
   const note = document.getElementById('wNote').value.trim();
-  if (!day || !time) { showToast('Заполни день и время'); return; }
+  if (!floor) { showToast('Укажи этаж'); return; }
   try {
     const r = await fetch(`${API_URL}/api/water/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({day, time, note, capacity: parseInt(document.getElementById('wCapacity').value)||1})
+      body: JSON.stringify({day, time, floor, note, capacity: parseInt(document.getElementById('wCapacity').value)||1})
     });
     if (r.ok) {
       document.getElementById('wDay').value='';
       document.getElementById('wTime').value='';
+      if (document.getElementById('wFloor')) document.getElementById('wFloor').value='';
       document.getElementById('wNote').value='';
       try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
       adminLoadWaterSlots();
@@ -281,6 +311,18 @@ async function adminDeleteWaterSlot(id) {
     await fetch(`${API_URL}/api/water/schedule/${id}`,{method:'DELETE',headers:{'x-admin-id':currentUserId}});
     adminLoadWaterSlots();
   });
+}
+
+async function adminCancelWaterBooking(slotId, telegramId) {
+  try {
+    await fetch(`${API_URL}/api/water/schedule/${slotId}/admin-cancel`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
+      body: JSON.stringify({telegram_id: telegramId})
+    });
+    adminLoadWaterSlots();
+    if (typeof loadWaterSchedule === 'function') loadWaterSchedule();
+  } catch(e) { showToast('Ошибка'); }
 }
 
 async function adminAward() {

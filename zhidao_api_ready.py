@@ -526,12 +526,26 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS laundry_schedule
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   day TEXT, time TEXT, note TEXT,
+                  capacity INTEGER DEFAULT 1,
                   taken_by INTEGER DEFAULT NULL,
                   created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS laundry_bookings
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  slot_id INTEGER NOT NULL,
+                  telegram_id INTEGER NOT NULL,
+                  booked_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(slot_id, telegram_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS water_schedule
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  day TEXT, time TEXT, note TEXT,
+                  day TEXT, time TEXT, floor TEXT DEFAULT '', note TEXT,
+                  capacity INTEGER DEFAULT 1,
                   created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS water_bookings
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  slot_id INTEGER NOT NULL,
+                  telegram_id INTEGER NOT NULL,
+                  booked_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(slot_id, telegram_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS diary_entries
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER NOT NULL,
@@ -749,6 +763,31 @@ def migrate_db():
         c.execute("ALTER TABLE diary_scores ADD COLUMN awarded_diary_points INTEGER DEFAULT 0")
     if 'validation_warnings' not in diary_score_columns:
         c.execute("ALTER TABLE diary_scores ADD COLUMN validation_warnings TEXT DEFAULT '[]'")
+    c.execute('''CREATE TABLE IF NOT EXISTS laundry_bookings
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  slot_id INTEGER NOT NULL,
+                  telegram_id INTEGER NOT NULL,
+                  booked_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(slot_id, telegram_id))''')
+    c.execute("PRAGMA table_info(laundry_schedule)")
+    laundry_schedule_columns = {row[1] for row in c.fetchall()}
+    if 'capacity' not in laundry_schedule_columns:
+        c.execute("ALTER TABLE laundry_schedule ADD COLUMN capacity INTEGER DEFAULT 1")
+    c.execute('''INSERT OR IGNORE INTO laundry_bookings (slot_id, telegram_id)
+                 SELECT id, taken_by FROM laundry_schedule
+                 WHERE taken_by IS NOT NULL''')
+    c.execute('''CREATE TABLE IF NOT EXISTS water_bookings
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  slot_id INTEGER NOT NULL,
+                  telegram_id INTEGER NOT NULL,
+                  booked_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(slot_id, telegram_id))''')
+    c.execute("PRAGMA table_info(water_schedule)")
+    water_schedule_columns = {row[1] for row in c.fetchall()}
+    if 'floor' not in water_schedule_columns:
+        c.execute("ALTER TABLE water_schedule ADD COLUMN floor TEXT DEFAULT ''")
+    if 'capacity' not in water_schedule_columns:
+        c.execute("ALTER TABLE water_schedule ADD COLUMN capacity INTEGER DEFAULT 1")
     c.execute("PRAGMA table_info(events)")
     event_columns = {row[1] for row in c.fetchall()}
     if event_columns:
@@ -5818,16 +5857,32 @@ async def disassemble_card(card_id: int, data: dict):
 async def get_laundry_schedule():
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, day, time, note, taken_by FROM laundry_schedule ORDER BY id")
+    c.execute("SELECT id, day, time, note, COALESCE(capacity, 1) FROM laundry_schedule ORDER BY id")
     rows = c.fetchall()
     result = []
     for row in rows:
-        taken = None
-        if row[4]:
-            c.execute("SELECT full_name FROM users WHERE telegram_id=?", (row[4],))
-            u = c.fetchone()
-            taken = {"telegram_id": row[4], "name": u[0] if u else "Неизвестно"}
-        result.append({"id": row[0], "day": row[1], "time": row[2], "note": row[3], "taken_by": taken})
+        c.execute(
+            '''SELECT lb.telegram_id, COALESCE(u.full_name, lb.telegram_id), lb.booked_at
+               FROM laundry_bookings lb
+               LEFT JOIN users u ON u.telegram_id=lb.telegram_id
+               WHERE lb.slot_id=?
+               ORDER BY lb.booked_at, lb.id''',
+            (row[0],),
+        )
+        bookings = [
+            {"telegram_id": b[0], "name": b[1], "booked_at": b[2]}
+            for b in c.fetchall()
+        ]
+        result.append({
+            "id": row[0],
+            "day": row[1],
+            "time": row[2],
+            "note": row[3],
+            "capacity": max(int(row[4] or 1), 1),
+            "booked": len(bookings),
+            "bookings": bookings,
+            "taken_by": bookings[0] if bookings else None,
+        })
     conn.close()
     return result
 
@@ -5838,7 +5893,11 @@ async def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
     c = conn.cursor()
-    c.execute("INSERT INTO laundry_schedule (day, time, note) VALUES (?,?,?)", (data.get("day"), data.get("time"), data.get("note", "")))
+    capacity = max(int(data.get("capacity") or 1), 1)
+    c.execute(
+        "INSERT INTO laundry_schedule (day, time, note, capacity) VALUES (?,?,?,?)",
+        (data.get("day"), data.get("time"), data.get("note", ""), capacity),
+    )
     conn.commit()
     conn.close()
     return {"success": True}
@@ -5850,6 +5909,7 @@ async def delete_laundry_slot(slot_id: int, x_admin_id: int = Header(None)):
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
     c = conn.cursor()
+    c.execute("DELETE FROM laundry_bookings WHERE slot_id=?", (slot_id,))
     c.execute("DELETE FROM laundry_schedule WHERE id=?", (slot_id,))
     conn.commit()
     conn.close()
@@ -5858,22 +5918,27 @@ async def delete_laundry_slot(slot_id: int, x_admin_id: int = Header(None)):
 
 @app.post("/api/laundry/schedule/{slot_id}/book")
 async def book_laundry_slot(slot_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
+    telegram_id = int(data.get("telegram_id") or 0)
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="Missing telegram_id")
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT taken_by FROM laundry_schedule WHERE id=?", (slot_id,))
+    c.execute("SELECT COALESCE(capacity, 1) FROM laundry_schedule WHERE id=?", (slot_id,))
     slot = c.fetchone()
     if not slot:
         conn.close()
         raise HTTPException(status_code=404, detail="Not found")
-    if slot[0]:
+    capacity = max(int(slot[0] or 1), 1)
+    c.execute("SELECT COUNT(*) FROM laundry_bookings WHERE slot_id=?", (slot_id,))
+    if c.fetchone()[0] >= capacity:
         conn.close()
-        raise HTTPException(status_code=400, detail="Already booked")
-    c.execute("SELECT id FROM laundry_schedule WHERE taken_by=?", (telegram_id,))
-    if c.fetchone():
-        conn.close()
-        raise HTTPException(status_code=400, detail="Already booked")
-    c.execute("UPDATE laundry_schedule SET taken_by=? WHERE id=?", (telegram_id, slot_id))
+        raise HTTPException(status_code=400, detail="Slot full")
+    c.execute("DELETE FROM laundry_bookings WHERE telegram_id=?", (telegram_id,))
+    c.execute(
+        "INSERT OR IGNORE INTO laundry_bookings (slot_id, telegram_id) VALUES (?,?)",
+        (slot_id, telegram_id),
+    )
+    c.execute("UPDATE laundry_schedule SET taken_by=NULL")
     conn.commit()
     conn.close()
     return {"success": True}
@@ -5881,9 +5946,28 @@ async def book_laundry_slot(slot_id: int, data: dict):
 
 @app.post("/api/laundry/schedule/{slot_id}/cancel")
 async def cancel_laundry_slot(slot_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
+    telegram_id = int(data.get("telegram_id") or 0)
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="Missing telegram_id")
     conn = get_conn()
     c = conn.cursor()
+    c.execute("DELETE FROM laundry_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
+    c.execute("UPDATE laundry_schedule SET taken_by=NULL WHERE id=? AND taken_by=?", (slot_id, telegram_id))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.post("/api/laundry/schedule/{slot_id}/admin-cancel")
+async def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Not admin")
+    telegram_id = int(data.get("telegram_id") or 0)
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="Missing telegram_id")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM laundry_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
     c.execute("UPDATE laundry_schedule SET taken_by=NULL WHERE id=? AND taken_by=?", (slot_id, telegram_id))
     conn.commit()
     conn.close()
@@ -5894,10 +5978,34 @@ async def cancel_laundry_slot(slot_id: int, data: dict):
 async def get_water_schedule():
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, day, time, note FROM water_schedule ORDER BY id")
+    c.execute("SELECT id, day, time, COALESCE(floor, ''), note, COALESCE(capacity, 1) FROM water_schedule ORDER BY id")
     rows = c.fetchall()
+    result = []
+    for row in rows:
+        c.execute(
+            '''SELECT wb.telegram_id, COALESCE(u.full_name, wb.telegram_id), wb.booked_at
+               FROM water_bookings wb
+               LEFT JOIN users u ON u.telegram_id=wb.telegram_id
+               WHERE wb.slot_id=?
+               ORDER BY wb.booked_at, wb.id''',
+            (row[0],),
+        )
+        bookings = [
+            {"telegram_id": b[0], "name": b[1], "booked_at": b[2]}
+            for b in c.fetchall()
+        ]
+        result.append({
+            "id": row[0],
+            "day": row[1],
+            "time": row[2],
+            "floor": row[3],
+            "note": row[4],
+            "capacity": max(int(row[5] or 1), 1),
+            "booked": len(bookings),
+            "bookings": bookings,
+        })
     conn.close()
-    return [{"id": r[0], "day": r[1], "time": r[2], "note": r[3]} for r in rows]
+    return result
 
 
 @app.post("/api/water/schedule")
@@ -5906,7 +6014,17 @@ async def add_water_slot(data: dict, x_admin_id: int = Header(None)):
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
     c = conn.cursor()
-    c.execute("INSERT INTO water_schedule (day, time, note) VALUES (?,?,?)", (data.get("day"), data.get("time"), data.get("note", "")))
+    capacity = max(int(data.get("capacity") or 1), 1)
+    c.execute(
+        "INSERT INTO water_schedule (day, time, floor, note, capacity) VALUES (?,?,?,?,?)",
+        (
+            data.get("day"),
+            data.get("time"),
+            data.get("floor", ""),
+            data.get("note", ""),
+            capacity,
+        ),
+    )
     conn.commit()
     conn.close()
     return {"success": True}
@@ -5918,7 +6036,63 @@ async def delete_water_slot(slot_id: int, x_admin_id: int = Header(None)):
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
     c = conn.cursor()
+    c.execute("DELETE FROM water_bookings WHERE slot_id=?", (slot_id,))
     c.execute("DELETE FROM water_schedule WHERE id=?", (slot_id,))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.post("/api/water/schedule/{slot_id}/book")
+async def book_water_slot(slot_id: int, data: dict):
+    telegram_id = int(data.get("telegram_id") or 0)
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="Missing telegram_id")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT COALESCE(capacity, 1) FROM water_schedule WHERE id=?", (slot_id,))
+    slot = c.fetchone()
+    if not slot:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Not found")
+    capacity = max(int(slot[0] or 1), 1)
+    c.execute("SELECT COUNT(*) FROM water_bookings WHERE slot_id=?", (slot_id,))
+    if c.fetchone()[0] >= capacity:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Slot full")
+    c.execute("DELETE FROM water_bookings WHERE telegram_id=?", (telegram_id,))
+    c.execute(
+        "INSERT OR IGNORE INTO water_bookings (slot_id, telegram_id) VALUES (?,?)",
+        (slot_id, telegram_id),
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.post("/api/water/schedule/{slot_id}/cancel")
+async def cancel_water_slot(slot_id: int, data: dict):
+    telegram_id = int(data.get("telegram_id") or 0)
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="Missing telegram_id")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM water_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.post("/api/water/schedule/{slot_id}/admin-cancel")
+async def admin_cancel_water_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Not admin")
+    telegram_id = int(data.get("telegram_id") or 0)
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="Missing telegram_id")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("DELETE FROM water_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
     conn.commit()
     conn.close()
     return {"success": True}
