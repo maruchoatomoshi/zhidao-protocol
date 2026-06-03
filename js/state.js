@@ -1,5 +1,6 @@
 let currentUserId = null;
 let currentThemePath = null; // "cyberpunk" | "genshin" | null
+let isDemoMode = false;
 let currentPoints = 0;
 let currentAvatarUrl = null;
 let userConfig = null;

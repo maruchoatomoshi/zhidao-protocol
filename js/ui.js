@@ -105,7 +105,11 @@ function showPage(name, btn) {
   // Pages that always refresh (live data)
   if (name === 'schedule') { loadAnnouncements(); loadSchedule(); }
   // Pages that load only once per visit
-  if (name === 'implants') { loadImplants(currentUserId); if (typeof loadCasinoStatus === 'function') loadCasinoStatus(); }
+  if (name === 'implants') {
+    loadImplants(currentUserId);
+    if (typeof loadCasinoStatus === 'function') loadCasinoStatus();
+    if (isDemoMode && typeof installDemoCatalogLocks === 'function') installDemoCatalogLocks();
+  }
   if (name === 'shop' && !alreadyActive) loadShop();
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'diary') loadDiaryPage();
