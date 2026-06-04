@@ -1,67 +1,61 @@
 /**
- * ZHIDAO Protocol — Операторы Управления Контуро
+ * ZHIDAO Protocol — Операторы Управления Контуром
  */
 
 const TEAM_DATA = [
+  {
+    id: "mju",
+    name: "Михаил Юрьевич",
+    codename: "МЮ",
+    role: "АЛЬФА СТАИ",
+    short: "Хранитель и босс. Отвечает за дисциплину, сборы, правила и стабильность группы. Его задача — не дать поездке уйти в хаос",
+    status: "ACTIVE_NODE",
+    statusText: "BIG BROTHER CONTROL // АЛЬФАБОСС",
+    color: "#ff003c",
+    avatar: "👑"
+  },
   {
     id: "architect",
     name: "Марк Альбертович",
     codename: "Архитектор",
     role: "Главный проектировщик системы",
-    short: "Создатель ZHIDAO Protocol. Проектирует систему, события и скрытые уровни поездки. Отвечает за интерфейс между реальностью и протоколом.",
+    short: "Архитектор системы, как тот чел из фильма Matrix",
     status: "HOST",
-    statusText: "ONLINE // РУТ-ДОСТУП",
+    statusText: "ERROR // ERROR",
     color: "#00ff66",
-    avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png",
-    tgLink: "https://t.me/ТВОЙ_ЮЗЕРНЕЙМ"   // ← замени на свой
+    avatar: "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/file_000000004784720a8c151f4c50a357d9.png?raw=true"
   },
-  {
-    id: "mju",
-    name: "Михаил Юрьевич",
-    codename: "МЮ",
-    role: "Главный куратор порядка",
-    short: "Главный куратор порядка. Отвечает за дисциплину, сборы, правила и стабильность группы. Его задача — не дать поездке уйти в хаос.",
-    status: "ACTIVE_NODE",
-    statusText: "FIELD CONTROL // ОПЕРАТИВНИК",
-    color: "#ff003c",
-    avatar: "👑"
-    // tgLink намеренно не указан
-  },
-  {
     id: "liza",
     name: "Елизавета Сергеевна",
-    codename: "Лиза",
-    role: "Коммуникационный узел",
-    short: "Коммуникационный узел ZHIDAO Protocol. Помогает детям понимать правила, ориентироваться в поездке и чувствовать, что система создана для них.",
+    codename: "Инь-янь",
+    role: "СИГМА ВОЖАТАЯ",
+    short: ". Помогает понимать правила, ориентироваться в поездке и чувствовать комфорт",
     status: "ACTIVE_NODE",
-    statusText: "METERED PROXY // СВЯЗЬ",
+    statusText: "EQUILIBRIUM SUPPORT // РАВНОВЕСИЕ",
     color: "#00f0ff",
-    avatar: "💬",
-    tgLink: "https://t.me/ЮЗЕРНЕЙМ_ЛИЗЫ"   // ← замени
+    avatar: "💬"
   },
   {
     id: "yulia",
     name: "Юлия Витальевна",
     codename: "Юля",
-    role: "Стабилизатор системы",
-    short: "Стабилизатор системы. Помогает удерживать баланс между правилами и реальностью. Удалённый надзор за стабильностью структуры из глубокой сети.",
+    role: "АЛЬФА ВОЖАТАЯ",
+    short: "В нашем сердечке. Поправляйтесь скорее!",
     status: "DEEP_WEB",
     statusText: "REMOTE ORBIT // НЕВИДИМЫЙ ОПЕРАТОР",
     color: "#fa00ff",
-    avatar: "🛡️",
-    tgLink: "https://t.me/ЮЗЕРНЕЙМ_ЮЛИ"    // ← замени
+    avatar: "🛡️"
   },
   {
     id: "tianhao",
     name: "Сунь Тяньхао",
-    codename: "Тяньхао",
-    role: "Проводник внешнего контура",
-    short: "Локальный проводник внешнего контура. Связывает группу с реальным Китаем: языком, городом, маршрутами и местной китайской логикой.",
+    codename: "孙舒珩",
+    role: "СИГМА ВОЖАТЫЙ",
+    short: "Китайский товарищ. Связывает группу с реальным Китаем: языком, городом, маршрутами и местной китайской логикой",
     status: "FIELD_PROXY",
     statusText: "PEK-NODE DISPATCH // ЛОКАЛ",
     color: "#ffaa00",
-    avatar: "🏮",
-    tgLink: "https://t.me/ЮЗЕРНЕЙМ_ТЯНЬХАО" // ← замени
+    avatar: "🏮"
   }
 ];
 
