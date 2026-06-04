@@ -570,7 +570,26 @@ body::before {
   overflow: hidden;
 }
 
-/* Data stream rows — architect green */
+/* Vertical falling hieroglyphs — all users (default themes) */
+.matrix-kanji {
+  position: absolute;
+  top: -120%;
+  white-space: pre;
+  font-size: 14px;
+  font-family: monospace;
+  line-height: 1.6;
+  color: rgba(180, 0, 30, 0.55);
+  text-shadow: 0 0 8px rgba(220, 0, 40, 0.30);
+  will-change: transform;
+  animation: matrixFall var(--dur, 10s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes matrixFall {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(240vh); }
+}
+
+/* Horizontal data stream rows — architect green only */
 .matrix-col {
   position: absolute;
   left: -10%;

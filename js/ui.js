@@ -216,6 +216,11 @@ async function loadUserData(telegramId) {
           _bootCbs = [];
         }
       }
+      if (!isArchitect && document.body.classList.contains('theme-architect')) {
+        if (typeof setTheme === 'function') setTheme('');
+        try { tg.CloudStorage.setItem('zhidao_theme', ''); } catch(e) {}
+        localStorage.setItem('zhidao_theme', '');
+      }
       if (isAdmin && !isArchitect) {
         playAdminIntroIfNeeded(data);
       }
@@ -581,41 +586,58 @@ function buildMatrixRain() {
   if (!root) return;
   root.innerHTML = '';
 
-  const hex = () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase();
-  const id  = () => Math.random().toString(36).slice(2, 7).toUpperCase();
-  const coord = () => (Math.random() * 180 - 90).toFixed(4);
-  const prefixes = ['SYS', 'NET', 'ARCH', 'SYNC', 'CORE', 'NODE', 'PKT', 'MEM', 'AUTH', 'EXEC', 'INIT', 'LINK'];
-  const rowCount = Math.max(12, Math.floor(window.innerHeight / 52));
+  const isArchitectTheme = document.body.classList.contains('theme-architect');
 
-  for (let i = 0; i < rowCount; i++) {
-    const row = document.createElement('div');
-    row.className = 'matrix-col';
+  if (isArchitectTheme) {
+    // Horizontal green data streams — architect only
+    const hex = () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase();
+    const id  = () => Math.random().toString(36).slice(2, 7).toUpperCase();
+    const coord = () => (Math.random() * 180 - 90).toFixed(4);
+    const prefixes = ['SYS', 'NET', 'ARCH', 'SYNC', 'CORE', 'NODE', 'PKT', 'MEM', 'AUTH', 'EXEC', 'INIT', 'LINK'];
+    const rowCount = Math.max(12, Math.floor(window.innerHeight / 52));
 
-    const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
-    const chunks = Math.floor(6 + Math.random() * 10);
-    const parts = [`${pfx}:${id()}`];
-    for (let j = 0; j < chunks; j++) {
-      const r = Math.random();
-      if (r < 0.4)      parts.push(`0x${hex()}${hex()}`);
-      else if (r < 0.65) parts.push(`[${coord()},${coord()}]`);
-      else if (r < 0.82) parts.push(id());
-      else               parts.push(`${Math.floor(Math.random()*9999).toString().padStart(4,'0')}`);
+    for (let i = 0; i < rowCount; i++) {
+      const row = document.createElement('div');
+      row.className = 'matrix-col';
+      const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
+      const chunks = Math.floor(6 + Math.random() * 10);
+      const parts = [`${pfx}:${id()}`];
+      for (let j = 0; j < chunks; j++) {
+        const r = Math.random();
+        if (r < 0.4)       parts.push(`0x${hex()}${hex()}`);
+        else if (r < 0.65) parts.push(`[${coord()},${coord()}]`);
+        else if (r < 0.82) parts.push(id());
+        else               parts.push(`${Math.floor(Math.random()*9999).toString().padStart(4,'0')}`);
+      }
+      row.textContent = parts.join('  ');
+      row.style.top = `${(i / rowCount) * 100}%`;
+      row.style.opacity = `${0.22 + Math.random() * 0.30}`;
+      row.style.fontSize = `${9 + Math.random() * 3}px`;
+      const colors = [
+        `rgba(0,255,136,${0.30 + Math.random()*0.25})`,
+        `rgba(0,229,255,${0.22 + Math.random()*0.22})`,
+        `rgba(57,255,20,${0.20 + Math.random()*0.18})`,
+      ];
+      row.style.color = colors[Math.floor(Math.random() * colors.length)];
+      row.style.setProperty('--dur', `${5 + Math.random() * 7}s`);
+      row.style.setProperty('--delay', `${-Math.random() * 10}s`);
+      root.appendChild(row);
     }
-    row.textContent = parts.join('  ');
-
-    row.style.top = `${(i / rowCount) * 100}%`;
-    row.style.opacity = `${0.22 + Math.random() * 0.30}`;
-    row.style.fontSize = `${9 + Math.random() * 3}px`;
-    const colors = [
-      `rgba(0,255,136,${0.30 + Math.random()*0.25})`,
-      `rgba(0,229,255,${0.22 + Math.random()*0.22})`,
-      `rgba(57,255,20,${0.20 + Math.random()*0.18})`,
-    ];
-    row.style.color = colors[Math.floor(Math.random() * colors.length)];
-    row.style.setProperty('--dur', `${14 + Math.random() * 14}s`);
-    row.style.setProperty('--delay', `${-Math.random() * 20}s`);
-
-    root.appendChild(row);
+  } else {
+    // Vertical falling hieroglyphs — all users (default)
+    const KANJI = '智道龙福网络协议数据流天命链接黑墙信义勇力守节命运界限虚空核心阵列节点密钥层';
+    const colCount = Math.max(8, Math.floor(window.innerWidth / 28));
+    for (let i = 0; i < colCount; i++) {
+      const col = document.createElement('div');
+      col.className = 'matrix-kanji';
+      const len = 8 + Math.floor(Math.random() * 12);
+      col.textContent = Array.from({length: len}, () => KANJI[Math.floor(Math.random() * KANJI.length)]).join('\n');
+      col.style.left = `${(i / colCount) * 100 + Math.random() * (100 / colCount)}%`;
+      col.style.setProperty('--dur', `${6 + Math.random() * 10}s`);
+      col.style.setProperty('--delay', `${-Math.random() * 14}s`);
+      col.style.opacity = `${0.12 + Math.random() * 0.18}`;
+      root.appendChild(col);
+    }
   }
 }
 

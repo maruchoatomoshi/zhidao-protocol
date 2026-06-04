@@ -135,6 +135,7 @@ function setTheme(theme) {
   if (el('implants-page-title')) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
   if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
   syncAdminThemeMode(theme);
+  if (typeof buildMatrixRain === 'function') buildMatrixRain();
   try { try{tg.HapticFeedback.impactOccurred('light');}catch(e){} } catch(e) {}
 }
 
