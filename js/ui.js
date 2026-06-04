@@ -173,6 +173,7 @@ function openMore(section) {
     if (section === 'achievements') loadAchievements();
     if (section === 'news') loadAnnouncements();
     if (section === 'laundry') { initLaundry(); }
+    if (section === 'team' && typeof renderTeamCards === 'function') renderTeamCards();
   }
 }
 
