@@ -60,7 +60,7 @@ const TEAM_DATA = [
     status: "FIELD_PROXY",
     statusText: "PEK-NODE DISPATCH // ЛОКАЛ",
     color: "#ffaa00",
-    avatar: "🏮"
+    avatar: "🏮",
     tgLink: "https://t.me/+8617614130674"
   }
 ];
