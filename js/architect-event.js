@@ -37,6 +37,7 @@ let architectFinalTimerHandle = null;
 let architectQuestionAutoCloseTimer = null;
 let architectResultRevealTimer = null;
 let architectResultRevealEventKey = null;
+let architectActionResultTimer = null;
 const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
 const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
 
@@ -401,6 +402,60 @@ function triggerArchitectActionFx(actionType, isCorrect = true) {
     }
     architectActionFxTimer = null;
   }, 760);
+}
+
+function renderArchitectActionResult(actionType, data) {
+  const host = document.getElementById('eventExplanation');
+  if (!host || !data) return;
+
+  if (architectActionResultTimer) {
+    clearTimeout(architectActionResultTimer);
+    architectActionResultTimer = null;
+  }
+
+  const isCorrect = data.is_correct !== false;
+  const damage = Number(data.damage_dealt || 0);
+  const support = Number(data.support_value || 0);
+  const hp = Number(data.current_hp || 0);
+  const phase = Number(data.phase || 1);
+  const pressure = Number(data.overload_pressure || 0);
+
+  let title = 'ДЕЙСТВИЕ ПРИНЯТО';
+  let value = '';
+  if (!isCorrect) {
+    title = 'ОШИБКА ПРОТОКОЛА';
+    value = 'урон не прошёл';
+  } else if (actionType === 'attack' || actionType === 'protocol') {
+    title = actionType === 'protocol' ? 'ПРОТОКОЛ ПРОБИТ' : 'АТАКА ПРОШЛА';
+    value = `-${damage} HP`;
+  } else if (actionType === 'stabilize') {
+    title = 'СТАБИЛИЗАЦИЯ';
+    value = `+${support} SUPPORT`;
+  } else if (actionType === 'sync') {
+    title = 'СИНХРОНИЗАЦИЯ';
+    value = `+${support} SUPPORT`;
+  }
+
+  host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
+  host.style.display = 'block';
+  host.innerHTML = `
+    <div class="event-action-result-title">${escapeHtml(title)}</div>
+    <div class="event-action-result-value">${escapeHtml(value)}</div>
+    <div class="event-action-result-meta">
+      <span>HP: ${hp}</span>
+      <span>PHASE: ${phase}</span>
+      <span>OVR: ${pressure}</span>
+    </div>
+  `;
+
+  architectActionResultTimer = setTimeout(() => {
+    if (host.classList.contains('event-action-result')) {
+      host.style.display = 'none';
+      host.textContent = '';
+      host.className = 'event-explanation';
+    }
+    architectActionResultTimer = null;
+  }, 4200);
 }
 
 function normalizeArchitectDeadline(value) {
@@ -1321,6 +1376,7 @@ async function submitArchitectAnswer(answerOption) {
     }
 
     triggerArchitectActionFx(actionType, data.is_correct !== false);
+    renderArchitectActionResult(actionType, data);
     pendingEventActionType = null;
 
     if (data.is_correct === false && data.question_explanation) {
