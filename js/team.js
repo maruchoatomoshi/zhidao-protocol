@@ -12,7 +12,8 @@ const TEAM_DATA = [
     status: "HOST",
     statusText: "ONLINE // РУТ-ДОСТУП",
     color: "#00ff66",
-    avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png"
+    avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png",
+    tgLink: "https://t.me/ТВОЙ_ЮЗЕРНЕЙМ"   // ← замени на свой
   },
   {
     id: "mju",
@@ -24,6 +25,7 @@ const TEAM_DATA = [
     statusText: "FIELD CONTROL // ОПЕРАТИВНИК",
     color: "#ff003c",
     avatar: "👑"
+    // tgLink намеренно не указан
   },
   {
     id: "liza",
@@ -34,7 +36,8 @@ const TEAM_DATA = [
     status: "ACTIVE_NODE",
     statusText: "METERED PROXY // СВЯЗЬ",
     color: "#00f0ff",
-    avatar: "💬"
+    avatar: "💬",
+    tgLink: "https://t.me/ЮЗЕРНЕЙМ_ЛИЗЫ"   // ← замени
   },
   {
     id: "yulia",
@@ -45,7 +48,8 @@ const TEAM_DATA = [
     status: "DEEP_WEB",
     statusText: "REMOTE ORBIT // НЕВИДИМЫЙ ОПЕРАТОР",
     color: "#fa00ff",
-    avatar: "🛡️"
+    avatar: "🛡️",
+    tgLink: "https://t.me/ЮЗЕРНЕЙМ_ЮЛИ"    // ← замени
   },
   {
     id: "tianhao",
@@ -56,7 +60,8 @@ const TEAM_DATA = [
     status: "FIELD_PROXY",
     statusText: "PEK-NODE DISPATCH // ЛОКАЛ",
     color: "#ffaa00",
-    avatar: "🏮"
+    avatar: "🏮",
+    tgLink: "https://t.me/ЮЗЕРНЕЙМ_ТЯНЬХАО" // ← замени
   }
 ];
 
@@ -91,6 +96,11 @@ function _buildTeamCard(member) {
           </div>
         </div>
         <div style="margin-top:8px;font-size:11px;color:#bbb;line-height:1.5;">${member.short}</div>
+        ${member.tgLink ? `
+        <button onclick="try{tg.openLink('${member.tgLink}')}catch(e){window.open('${member.tgLink}')}"
+          style="margin-top:10px;width:100%;padding:7px;background:rgba(255,255,255,0.04);border:1px solid ${member.color}44;border-radius:8px;color:${member.color};font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer;">
+          联系 // НАПИСАТЬ
+        </button>` : ''}
       </div>
     </div>`;
 }
