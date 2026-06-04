@@ -13462,3 +13462,96 @@ body.lite-mode .inventory-item::before { display: none; }
 body.lite-mode .profile-card::before,
 body.lite-mode .profile-card-home::before,
 body.lite-mode .profile-card-home::after { display: none; }
+
+/* ===== EVENT CREATE MODAL ===== */
+.event-create-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+}
+.event-create-modal-inner {
+  width: 100%;
+  background: #0a0e14;
+  border-top: 1px solid rgba(0,255,136,0.25);
+  border-radius: 18px 18px 0 0;
+  padding: 24px 18px 32px;
+}
+.event-create-modal-title {
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 800;
+  color: #00ff88;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.event-create-modal-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 16px;
+}
+.event-create-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.event-create-preset {
+  background: rgba(0,255,136,0.08);
+  border: 1px solid rgba(0,255,136,0.25);
+  border-radius: 20px;
+  color: #00ff88;
+  font-size: 12px;
+  padding: 6px 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.event-create-preset:active { background: rgba(0,255,136,0.2); }
+.event-create-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(0,255,136,0.3);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  padding: 11px 14px;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 16px;
+}
+.event-create-input:focus { border-color: #00ff88; }
+.event-create-input::placeholder { color: rgba(255,255,255,0.3); }
+.event-create-actions {
+  display: flex;
+  gap: 10px;
+}
+.event-create-cancel {
+  flex: 1;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.event-create-confirm {
+  flex: 2;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(0,255,136,0.18), rgba(0,229,255,0.12));
+  border: 1px solid rgba(0,255,136,0.4);
+  border-radius: 10px;
+  color: #00ff88;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.event-create-confirm:active { background: rgba(0,255,136,0.28); }

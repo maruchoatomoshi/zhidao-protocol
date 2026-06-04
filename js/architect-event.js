@@ -1039,39 +1039,31 @@ async function leaveArchitectTeam() {
   }
 }
 
-async function createArchitectEvent() {
+function createArchitectEvent() {
   if (!currentUserId || !isAdmin) return;
+  const modal = document.getElementById('eventCreateModal');
+  const input = document.getElementById('eventCreatePrizeInput');
+  if (!modal) return;
+  if (input) input.value = '';
+  modal.style.display = 'flex';
+  setTimeout(() => { if (input) input.focus(); }, 120);
+}
 
-  tg.showPopup({
-    title: '⚡ НОВЫЙ ИВЕНТ',
-    message: 'Укажи приз для команды',
-    buttons: [
-      { id: 'confirm', type: 'default', text: 'Создать' },
-      { type: 'cancel' }
-    ]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    tg.showPopup({
-      title: '🏆 ПРИЗ',
-      message: 'Введи текст приза (например: Поход в ТЦ)',
-      buttons: [
-        { id: 'ptc', type: 'default', text: 'Поход в ТЦ' },
-        { id: 'cinema', type: 'default', text: 'Кино' },
-        { id: 'custom', type: 'default', text: 'Свой приз...' },
-        { type: 'cancel' }
-      ]
-    }, async (prizeId) => {
-      if (!prizeId || prizeId === 'cancel') return;
-      let rewardText = prizeId === 'ptc' ? 'Поход в ТЦ'
-        : prizeId === 'cinema' ? 'Поход в кино'
-        : null;
-      if (!rewardText) {
-        rewardText = window.prompt('Введи приз:', 'Приз не указан');
-        if (!rewardText) return;
-      }
-      await _doCreateArchitectEvent(rewardText.trim() || 'Приз не указан');
-    });
-  });
+function setCreateEventPreset(text) {
+  const input = document.getElementById('eventCreatePrizeInput');
+  if (input) { input.value = text; input.focus(); }
+}
+
+function closeCreateEventModal() {
+  const modal = document.getElementById('eventCreateModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function submitCreateArchitectEvent() {
+  const input = document.getElementById('eventCreatePrizeInput');
+  const rewardText = (input ? input.value : '').trim() || 'Приз не указан';
+  closeCreateEventModal();
+  await _doCreateArchitectEvent(rewardText);
 }
 
 async function _doCreateArchitectEvent(rewardText) {

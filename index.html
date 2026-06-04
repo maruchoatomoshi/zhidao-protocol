@@ -2535,6 +2535,23 @@
       <div class="event-question-title" id="eventQuestionPrompt">Вопрос появится здесь</div>
       <div class="event-options" id="eventOptions"></div>
     </div>
+
+    <div class="event-create-modal" id="eventCreateModal" style="display:none;">
+      <div class="event-create-modal-inner">
+        <div class="event-create-modal-title">⚡ НОВЫЙ ПРОТОКОЛ</div>
+        <div class="event-create-modal-sub">Укажи приз для команды</div>
+        <div class="event-create-presets">
+          <button class="event-create-preset" onclick="setCreateEventPreset('Поход в ТЦ')">🛍 Поход в ТЦ</button>
+          <button class="event-create-preset" onclick="setCreateEventPreset('Поход в кино')">🎬 Кино</button>
+          <button class="event-create-preset" onclick="setCreateEventPreset('Квест-комната')">🔐 Квест</button>
+        </div>
+        <input class="event-create-input" id="eventCreatePrizeInput" type="text" placeholder="Или введи свой приз..." maxlength="60">
+        <div class="event-create-actions">
+          <button class="event-create-cancel" onclick="closeCreateEventModal()">Отмена</button>
+          <button class="event-create-confirm" onclick="submitCreateArchitectEvent()">ЗАПУСТИТЬ</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
