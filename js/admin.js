@@ -834,6 +834,24 @@ async function adminSubmitPointAdjustment(targetId, delta, reason) {
   }
 }
 
+async function adminGrantScanAttempt() {
+  if (!isArchitect) return;
+  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
+  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
+  if (!targetId) { showToast('Укажи Telegram ID'); return; }
+  try {
+    const r = await fetch(`${API_URL}/api/admin/scan-attempt`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
+      body: JSON.stringify({telegram_id: targetId}),
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    showToast(`📡 +1 попытка сканирования\nИтого: ${data.scan_attempts}/7`);
+  } catch(e) { showToast('Ошибка соединения'); }
+}
+
 async function adminGrantFragments() {
   if (!isArchitect) return;
   const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
@@ -1073,43 +1091,54 @@ async function adminCancelPresence(checkType) {
   });
 }
 
+let _actionLogCache = [];
+
+function _renderActionLog(logs) {
+  const container = document.getElementById('adminActionLog');
+  if (!container) return;
+  if (!logs.length) { container.innerHTML = '<div class="empty-state">Операций пока нет</div>'; return; }
+  container.innerHTML = logs.map(log => {
+    const delta = Number(log.points_delta || 0);
+    const sign = delta > 0 ? '+' : '';
+    const cls = delta >= 0 ? 'plus' : 'minus';
+    const action = String(log.action_type || '').replace(/_/g, ' ').toUpperCase();
+    const unit = log.action_type === 'rep_adjust' ? ' REP' : '★';
+    const date = log.created_at ? new Date(log.created_at).toLocaleString('ru-RU') : '';
+    const deltaHtml = delta
+      ? `<div class="admin-log-delta ${cls}">${sign}${delta}${unit}</div>`
+      : `<div class="inventory-pill">${escapeHtml(action)}</div>`;
+    return `<div class="admin-log-card">
+      <div class="admin-log-top">
+        <div class="admin-log-text">${escapeHtml(log.target_name || log.target_id)} · ${escapeHtml(log.reason || '')}</div>
+        ${deltaHtml}
+      </div>
+      <div class="admin-log-meta">ADMIN ${escapeHtml(log.admin_name || log.admin_id)} · ${date}</div>
+    </div>`;
+  }).join('');
+}
+
+function adminFilterActionLog() {
+  const q = String(document.getElementById('actionLogFilter')?.value || '').trim().toLowerCase();
+  if (!q) { _renderActionLog(_actionLogCache); return; }
+  _renderActionLog(_actionLogCache.filter(log =>
+    (log.target_name || '').toLowerCase().includes(q) ||
+    String(log.target_id || '').includes(q)
+  ));
+}
+
 async function adminLoadActionLog() {
   if (!isAdmin || !currentUserId) return;
   const container = document.getElementById('adminActionLog');
   if (!container) return;
   container.innerHTML = '<div class="empty-state">Загрузка журнала...</div>';
   try {
-    const r = await fetch(`${API_URL}/api/admin/actions?limit=30`, {
+    const r = await fetch(`${API_URL}/api/admin/actions?limit=50`, {
       headers: {'x-admin-id': currentUserId},
     });
     const data = await r.json();
-    if (!r.ok) {
-      container.innerHTML = '<div class="empty-state">Нет доступа к журналу</div>';
-      return;
-    }
-    const logs = Array.isArray(data.logs) ? data.logs : [];
-    if (!logs.length) {
-      container.innerHTML = '<div class="empty-state">Операций пока нет</div>';
-      return;
-    }
-    container.innerHTML = logs.map(log => {
-      const delta = Number(log.points_delta || 0);
-      const sign = delta > 0 ? '+' : '';
-      const cls = delta >= 0 ? 'plus' : 'minus';
-      const action = String(log.action_type || '').replace(/_/g, ' ').toUpperCase();
-      const unit = log.action_type === 'rep_adjust' ? ' REP' : '★';
-      const date = log.created_at ? new Date(log.created_at).toLocaleString('ru-RU') : '';
-      const deltaHtml = delta
-        ? `<div class="admin-log-delta ${cls}">${sign}${delta}${unit}</div>`
-        : `<div class="inventory-pill">${escapeHtml(action)}</div>`;
-      return `<div class="admin-log-card">
-        <div class="admin-log-top">
-          <div class="admin-log-text">${escapeHtml(log.target_name || log.target_id)} · ${escapeHtml(log.reason || '')}</div>
-          ${deltaHtml}
-        </div>
-        <div class="admin-log-meta">ADMIN ${escapeHtml(log.admin_name || log.admin_id)} · ${date}</div>
-      </div>`;
-    }).join('');
+    if (!r.ok) { container.innerHTML = '<div class="empty-state">Нет доступа к журналу</div>'; return; }
+    _actionLogCache = Array.isArray(data.logs) ? data.logs : [];
+    adminFilterActionLog();
   } catch (e) {
     container.innerHTML = '<div class="empty-state">Ошибка загрузки журнала</div>';
   }

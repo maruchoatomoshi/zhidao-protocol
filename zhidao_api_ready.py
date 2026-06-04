@@ -5939,6 +5939,29 @@ async def admin_grant_fragments(data: dict, x_admin_id: Optional[int] = Header(N
     return {"success": True, "telegram_id": telegram_id, "amount": amount, "protocol_fragments": new_val}
 
 
+@app.post("/api/admin/scan-attempt")
+async def admin_grant_scan_attempt(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ARCHITECT_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden: Architect only")
+    telegram_id = data.get("telegram_id")
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="Missing telegram_id")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                 ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
+              (telegram_id,))
+    c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
+    new_val = c.fetchone()[0]
+    conn.commit()
+    conn.close()
+    return {"success": True, "telegram_id": telegram_id, "scan_attempts": new_val}
+
+
 FRAGMENT_IMPLANT_POOL = [
     'implant_guanxi', 'implant_terracota', 'implant_panda',
     'implant_shaolin', 'implant_linguasoft', 'implant_caishen', 'implant_qilin',
