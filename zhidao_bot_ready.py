@@ -496,9 +496,9 @@ def get_mini_app_keyboard():
 def get_main_reply_keyboard(user_id: int | None = None):
     is_admin_user = bool(user_id and is_admin(user_id))
     keyboard = [
-        [KeyboardButton(text="🚀 Открыть ZHIDAO Protocol", web_app=WebAppInfo(url=MINI_APP_URL))],
-        [KeyboardButton(text="/bug"), KeyboardButton(text="/help"), KeyboardButton(text="/myid")],
-        [KeyboardButton(text="/баллы"), KeyboardButton(text="/погода")],
+        [KeyboardButton(text="/баллы"), KeyboardButton(text="/напоминания")],
+        [KeyboardButton(text="/bug"), KeyboardButton(text="/вопрос")],
+        [KeyboardButton(text="/help")],
     ]
     if is_admin_user:
         keyboard.append([KeyboardButton(text="/admin"), KeyboardButton(text="/bugs")])
