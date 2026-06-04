@@ -13,6 +13,7 @@ const TEAM_DATA = [
     statusText: "BIG BROTHER CONTROL // АЛЬФАБОСС",
     color: "#ff003c",
     avatar: "👑"
+    // tgLink намеренно не указан
   },
   {
     id: "architect",
@@ -23,17 +24,20 @@ const TEAM_DATA = [
     status: "HOST",
     statusText: "ERROR // ERROR",
     color: "#00ff66",
-    avatar: "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/file_000000004784720a8c151f4c50a357d9.png?raw=true"
+    avatar: "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/file_000000004784720a8c151f4c50a357d9.png?raw=true",
+    tgLink: "https://t.me/christianpastor"
   },
+  {
     id: "liza",
     name: "Елизавета Сергеевна",
     codename: "Инь-янь",
     role: "СИГМА ВОЖАТАЯ",
-    short: ". Помогает понимать правила, ориентироваться в поездке и чувствовать комфорт",
+    short: "Помогает понимать правила, ориентироваться в поездке и чувствовать комфорт",
     status: "ACTIVE_NODE",
     statusText: "EQUILIBRIUM SUPPORT // РАВНОВЕСИЕ",
     color: "#00f0ff",
-    avatar: "💬"
+    avatar: "💬",
+    tgLink: "https://t.me/naoayako"
   },
   {
     id: "yulia",
@@ -44,7 +48,8 @@ const TEAM_DATA = [
     status: "DEEP_WEB",
     statusText: "REMOTE ORBIT // НЕВИДИМЫЙ ОПЕРАТОР",
     color: "#fa00ff",
-    avatar: "🛡️"
+    avatar: "🛡️",
+    tgLink: "https://t.me/Trufanova_Yulia"
   },
   {
     id: "tianhao",
@@ -56,6 +61,7 @@ const TEAM_DATA = [
     statusText: "PEK-NODE DISPATCH // ЛОКАЛ",
     color: "#ffaa00",
     avatar: "🏮"
+    // tgLink: "https://t.me/..."  // добавь когда найдёшь юзернейм Тяньхао
   }
 ];
 
