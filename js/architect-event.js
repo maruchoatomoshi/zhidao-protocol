@@ -1042,11 +1042,28 @@ async function leaveArchitectTeam() {
 function createArchitectEvent() {
   if (!currentUserId || !isAdmin) return;
   const modal = document.getElementById('eventCreateModal');
-  const input = document.getElementById('eventCreatePrizeInput');
-  if (!modal) return;
-  if (input) input.value = '';
-  modal.style.display = 'flex';
-  setTimeout(() => { if (input) input.focus(); }, 120);
+  if (modal) {
+    const input = document.getElementById('eventCreatePrizeInput');
+    if (input) input.value = '';
+    modal.style.display = 'flex';
+    setTimeout(() => { if (input) input.focus(); }, 120);
+    return;
+  }
+  // Fallback: tg.showPopup if modal not in DOM (old HTML cached)
+  tg.showPopup({
+    title: '🏆 ПРИЗ ИВЕНТА',
+    message: 'Выбери или введи приз',
+    buttons: [
+      { id: 'ptc',    type: 'default', text: '🛍 Поход в ТЦ' },
+      { id: 'cinema', type: 'default', text: '🎬 Кино' },
+      { id: 'quest',  type: 'default', text: '🔐 Квест' },
+      { type: 'cancel' }
+    ]
+  }, async (prizeId) => {
+    if (!prizeId || prizeId === 'cancel') return;
+    const map = { ptc: 'Поход в ТЦ', cinema: 'Поход в кино', quest: 'Квест-комната' };
+    await _doCreateArchitectEvent(map[prizeId] || 'Приз не указан');
+  });
 }
 
 function setCreateEventPreset(text) {
