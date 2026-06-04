@@ -844,16 +844,26 @@ function renderArchitectResultPanel(eventData, leaderboard = null) {
   }
 
   const mvpId = Number(rows[0].telegram_id);
-  teamListEl.innerHTML = rows.map((row) => {
+  const maxDamage = Math.max(1, Number(rows[0].total_damage || 1));
+  teamListEl.innerHTML = rows.map((row, idx) => {
     const telegramId = Number(row.telegram_id);
     const name = escapeHtml(names.get(telegramId) || `ID ${telegramId}`);
     const damage = Number(row.total_damage || 0);
     const support = Number(row.total_support || 0);
-    const mvp = telegramId === mvpId ? '<span class="event-result-mvp">MVP</span>' : '';
+    const isMvp = telegramId === mvpId && damage > 0;
+    const pct = Math.round((damage / maxDamage) * 100);
+    const medals = ['🥇','🥈','🥉'];
+    const medal = medals[idx] || '';
     return `
-      <div class="event-result-row">
-        <span>${mvp}${name}</span>
-        <strong>${damage} dmg / ${support} sup</strong>
+      <div class="event-result-row" style="flex-direction:column;align-items:stretch;gap:3px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:700;font-size:12px;">${medal} ${isMvp ? '<span class="event-result-mvp">MVP</span> ' : ''}${name}</span>
+          <span style="font-family:monospace;font-size:11px;color:var(--gold);">${damage} DMG</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${isMvp ? 'linear-gradient(90deg,#ffd700,#ff8c00)' : 'rgba(255,255,255,0.35)'};border-radius:2px;transition:width .6s;"></div>
+        </div>
+        ${support > 0 ? `<div style="font-size:9px;color:var(--text3);font-family:monospace;">SUP ${support}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -1032,11 +1042,39 @@ async function leaveArchitectTeam() {
 async function createArchitectEvent() {
   if (!currentUserId || !isAdmin) return;
 
-  const rewardInput = window.prompt('Приз для команды', 'Поход в ТЦ');
-  if (rewardInput === null) return;
+  tg.showPopup({
+    title: '⚡ НОВЫЙ ИВЕНТ',
+    message: 'Укажи приз для команды',
+    buttons: [
+      { id: 'confirm', type: 'default', text: 'Создать' },
+      { type: 'cancel' }
+    ]
+  }, async (btnId) => {
+    if (btnId !== 'confirm') return;
+    tg.showPopup({
+      title: '🏆 ПРИЗ',
+      message: 'Введи текст приза (например: Поход в ТЦ)',
+      buttons: [
+        { id: 'ptc', type: 'default', text: 'Поход в ТЦ' },
+        { id: 'cinema', type: 'default', text: 'Кино' },
+        { id: 'custom', type: 'default', text: 'Свой приз...' },
+        { type: 'cancel' }
+      ]
+    }, async (prizeId) => {
+      if (!prizeId || prizeId === 'cancel') return;
+      let rewardText = prizeId === 'ptc' ? 'Поход в ТЦ'
+        : prizeId === 'cinema' ? 'Поход в кино'
+        : null;
+      if (!rewardText) {
+        rewardText = window.prompt('Введи приз:', 'Приз не указан');
+        if (!rewardText) return;
+      }
+      await _doCreateArchitectEvent(rewardText.trim() || 'Приз не указан');
+    });
+  });
+}
 
-  const rewardText = rewardInput.trim() || 'Приз не указан';
-
+async function _doCreateArchitectEvent(rewardText) {
   try {
     const res = await fetch(`${API_URL}/api/events/architect/create`, {
       method: 'POST',

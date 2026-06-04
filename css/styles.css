@@ -9230,8 +9230,16 @@ body.tg-ios .event-overlay.event-terminal .event-log {
 }
 
 .event-overlay.event-state-terminal #eventBossImage {
+  display: block !important;
   filter: saturate(1.12) contrast(1.08) brightness(0.96);
   animation: architectTerminalBreath 4.8s ease-in-out infinite;
+}
+.event-overlay.event-state-finished #eventBossImage,
+.event-overlay.event-state-failed #eventBossImage {
+  display: block !important;
+  width: 100%;
+  max-height: 55vh;
+  object-fit: contain;
 }
 
 .event-overlay.event-state-finished .event-hero-glow {
