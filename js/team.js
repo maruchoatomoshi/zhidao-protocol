@@ -61,7 +61,7 @@ const TEAM_DATA = [
     statusText: "PEK-NODE DISPATCH // ЛОКАЛ",
     color: "#ffaa00",
     avatar: "🏮"
-    // tgLink: "https://t.me/..."  // добавь когда найдёшь юзернейм Тяньхао
+    tgLink: "https://t.me/+8617614130674"
   }
 ];
 
