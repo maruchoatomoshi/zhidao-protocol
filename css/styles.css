@@ -13574,3 +13574,52 @@ body.lite-mode .profile-card-home::after { display: none; }
   cursor: pointer;
 }
 .event-create-confirm:active { background: rgba(0,255,136,0.28); }
+
+/* ===== EVENT STANDBY SCREEN ===== */
+.event-standby-screen {
+  padding: 24px 18px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.event-standby-kicker {
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+}
+.event-standby-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 1px;
+  text-shadow: 0 0 24px rgba(200,0,30,0.45);
+}
+.event-standby-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.38);
+  line-height: 1.5;
+  max-width: 240px;
+}
+.event-standby-create-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(220,0,40,0.22), rgba(180,0,30,0.12));
+  border: 1px solid rgba(220,0,40,0.45);
+  border-radius: 12px;
+  color: #ff3355;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s;
+}
+.event-standby-create-btn:active {
+  background: rgba(220,0,40,0.35);
+}

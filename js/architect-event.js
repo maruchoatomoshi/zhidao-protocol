@@ -658,24 +658,16 @@ function renderArchitectLobby(eventData, errorText = '') {
   }
 
   if (!eventData) {
-    if (overlay) {
-      overlay.classList.remove('event-terminal');
-    }
+    if (overlay) overlay.classList.remove('event-terminal');
     lobbyCard.classList.remove('event-result-card', 'event-result-win', 'event-result-lose');
-
     lobbyCard.style.display = 'block';
-    if (kickerEl) kickerEl.textContent = 'КОМАНДА';
-    if (labelEls[0]) labelEls[0].textContent = 'ПРИЗ';
-    if (labelEls[1]) labelEls[1].textContent = 'СОСТАВ КОМАНДЫ';
-    statusEl.textContent = errorText || 'Ивент не создан';
-    rewardEl.textContent = '—';
-    teamCountEl.textContent = '0 / 0';
-    teamListEl.innerHTML = '<div class="event-team-empty">Нет активного ивента</div>';
-
-    createBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-    joinBtn.style.display = 'none';
-    leaveBtn.style.display = 'none';
-    startBtn.style.display = 'none';
+    lobbyCard.innerHTML = `
+      <div class="event-standby-screen">
+        <div class="event-standby-kicker">⬡ ARCHITECT PROTOCOL // STANDBY</div>
+        <div class="event-standby-title">${errorText || 'СИСТЕМА ГОТОВА'}</div>
+        <div class="event-standby-sub">Ивент не активен. Дождитесь запуска Архитектора.</div>
+        ${isAdmin ? `<button class="event-standby-create-btn" onclick="createArchitectEvent()">⚡ ИНИЦИИРОВАТЬ ПРОТОКОЛ</button>` : ''}
+      </div>`;
     updateArchitectBattleVisibility(null);
     return;
   }
@@ -905,14 +897,12 @@ function updateArchitectBattleVisibility(eventData) {
 
   const isActive = !!eventData && eventData.state === 'ACTIVE';
   const isTerminal = !!eventData && (eventData.state === 'FAILED' || eventData.state === 'FINISHED');
+  const hasEvent = !!eventData;
 
   actions.style.display = isActive ? 'grid' : 'none';
-  if (hud) {
-    hud.style.display = isTerminal ? 'none' : 'flex';
-  }
-  if (!isActive) {
-  closeArchitectQuestion();
-}
+  if (hud) hud.style.display = (hasEvent && !isTerminal) ? 'flex' : 'none';
+  if (log) log.style.display = hasEvent ? 'block' : 'none';
+  if (!isActive) closeArchitectQuestion();
 
   if (!eventData) {
     hpText.textContent = '-- / ----';
