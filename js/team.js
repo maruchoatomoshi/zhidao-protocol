@@ -1,5 +1,5 @@
 /**
- * ZHIDAO Protocol — Операторы Управления Контуром
+ * ZHIDAO Protocol — Операторы Управления Контуро
  */
 
 const TEAM_DATA = [
