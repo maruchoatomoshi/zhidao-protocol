@@ -578,33 +578,43 @@ async function submitQuestion() {
 function buildMatrixRain() {
   const root = document.getElementById('matrixRain');
   if (!root) return;
-
   root.innerHTML = '';
 
-  const glyphs = ['智','道','龙','福','网','络','协','议','数','据','流','天','命','链','接','红','黑','墙','信','義','勇','中'];
-  const columns = Math.max(10, Math.floor(window.innerWidth / 38));
+  const hex = () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase();
+  const id  = () => Math.random().toString(36).slice(2, 7).toUpperCase();
+  const coord = () => (Math.random() * 180 - 90).toFixed(4);
+  const prefixes = ['SYS', 'NET', 'ARCH', 'SYNC', 'CORE', 'NODE', 'PKT', 'MEM', 'AUTH', 'EXEC', 'INIT', 'LINK'];
+  const rowCount = Math.max(12, Math.floor(window.innerHeight / 52));
 
-  for (let i = 0; i < columns; i++) {
-    const col = document.createElement('div');
-    col.className = 'matrix-col';
+  for (let i = 0; i < rowCount; i++) {
+    const row = document.createElement('div');
+    row.className = 'matrix-col';
 
-    const length = 5 + Math.floor(Math.random() * 8);
-    const chars = [];
-
-    for (let j = 0; j < length; j++) {
-      chars.push(glyphs[Math.floor(Math.random() * glyphs.length)]);
+    const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const chunks = Math.floor(6 + Math.random() * 10);
+    const parts = [`${pfx}:${id()}`];
+    for (let j = 0; j < chunks; j++) {
+      const r = Math.random();
+      if (r < 0.4)      parts.push(`0x${hex()}${hex()}`);
+      else if (r < 0.65) parts.push(`[${coord()},${coord()}]`);
+      else if (r < 0.82) parts.push(id());
+      else               parts.push(`${Math.floor(Math.random()*9999).toString().padStart(4,'0')}`);
     }
+    row.textContent = parts.join('  ');
 
-    col.innerHTML = chars.join('<br>');
-    col.style.left = `${Math.random() * 100}%`;
-    col.style.setProperty('--dur', `${10 + Math.random() * 10}s`);
-    col.style.setProperty('--delay', `${-Math.random() * 18}s`);
-    col.style.setProperty('--drift', `${-12 + Math.random() * 24}px`);
-    col.style.setProperty('--blur', `${Math.random() * 0.6}px`);
-    col.style.fontSize = `${12 + Math.random() * 10}px`;
-    col.style.opacity = `${0.35 + Math.random() * 0.35}`;
+    row.style.top = `${(i / rowCount) * 100}%`;
+    row.style.opacity = `${0.22 + Math.random() * 0.30}`;
+    row.style.fontSize = `${9 + Math.random() * 3}px`;
+    const colors = [
+      `rgba(0,255,136,${0.30 + Math.random()*0.25})`,
+      `rgba(0,229,255,${0.22 + Math.random()*0.22})`,
+      `rgba(57,255,20,${0.20 + Math.random()*0.18})`,
+    ];
+    row.style.color = colors[Math.floor(Math.random() * colors.length)];
+    row.style.setProperty('--dur', `${14 + Math.random() * 14}s`);
+    row.style.setProperty('--delay', `${-Math.random() * 20}s`);
 
-    root.appendChild(col);
+    root.appendChild(row);
   }
 }
 
