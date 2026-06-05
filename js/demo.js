@@ -4,6 +4,12 @@
   window.DEMO_MODE = isDemoMode;
   if (!isDemoMode) return;
 
+  const demoThemeParam = String(params.get('theme') || params.get('demoTheme') || '').toLowerCase();
+  const isGenshinDemo = params.has('genshin') || ['genshin', 'genshin-light', 'genshin-dark'].includes(demoThemeParam);
+  const demoThemePath = isGenshinDemo ? 'genshin' : 'cyberpunk';
+  const demoVisualTheme = isGenshinDemo ? 'genshin-light' : '';
+  window.DEMO_THEME = isGenshinDemo ? 'genshin' : 'cyberpunk';
+
   const DEMO_ID = 900000001;
   const DEMO_USER = {
     id: DEMO_ID,
@@ -14,7 +20,7 @@
 
   currentUserId = DEMO_ID;
   currentPoints = 1280;
-  currentThemePath = 'cyberpunk';
+  currentThemePath = demoThemePath;
   isAdmin = false;
   isArchitect = false;
 
@@ -22,8 +28,15 @@
     if (tg && tg.initDataUnsafe) tg.initDataUnsafe.user = DEMO_USER;
   } catch (e) {}
 
-  const SITE_INTRO_SRC = './cyberpunktheme_intro.mp4';
+  const SITE_INTRO_SRC = isGenshinDemo ? './genshin_intro.mp4' : './cyberpunktheme_intro.mp4';
   let siteIntroPlaying = false;
+
+  function applyDemoTheme() {
+    try {
+      if (demoVisualTheme && typeof setTheme === 'function') setTheme(demoVisualTheme);
+      if (typeof applyThemePath === 'function') applyThemePath(demoThemePath);
+    } catch (e) {}
+  }
 
   function demoPopup(title = 'Демо-режим', message = 'Эта функция откроется после запуска поездки.') {
     try {
@@ -138,6 +151,41 @@
       lock.innerHTML = demoLockedCard('Кейсы откроются в Пекине', 'Система призов, шансов и редких предметов скрыта в демо. На подготовительном курсе показываем только общий интерфейс.');
       if (header) header.insertAdjacentElement('afterend', lock);
     }
+
+    installDemoRatingLock();
+    installDemoRaidLock();
+  }
+
+  function installDemoRatingLock() {
+    const diaryBtn = document.getElementById('tab-rating-diary-btn');
+    if (diaryBtn) diaryBtn.style.display = 'none';
+
+    const diaryTab = document.getElementById('rating-diary-tab');
+    if (diaryTab) diaryTab.style.display = 'none';
+
+    const mainTab = document.getElementById('rating-main-tab');
+    if (mainTab) mainTab.style.display = 'block';
+
+    const mainBtn = document.getElementById('tab-rating-main-btn');
+    if (mainBtn) mainBtn.classList.add('active');
+
+    const diaryContainer = document.getElementById('diaryStarsLeaderboardRating');
+    if (diaryContainer) diaryContainer.innerHTML = '';
+  }
+
+  function installDemoRaidLock() {
+    const overlay = document.getElementById('raid-overlay');
+    if (overlay) overlay.classList.remove('active');
+
+    const raid = document.getElementById('raidBlock');
+    if (!raid || raid.dataset.demoLocked === '1') return;
+
+    raid.dataset.demoLocked = '1';
+    raid.classList.add('demo-raid-locked');
+    raid.onclick = null;
+    raid.innerHTML = `<div class="demo-lock-kicker">RAID SEALED</div>
+      <div class="demo-lock-title">Рейд Альфабосса закрыт в демо</div>
+      <div class="demo-lock-copy">Рейдовые ставки, награды и боевые механики откроются после запуска поездки.</div>`;
   }
 
   function installCatalogLocks() {
@@ -204,7 +252,7 @@
     if (typeof renderProfileDossier !== 'function') return;
     renderProfileDossier({
       full_name: 'Демо-участник',
-      theme_path: 'cyberpunk',
+      theme_path: demoThemePath,
       rank: 'B',
       leaderboard_rank: 7,
       title: 'Кандидат протокола / Preview',
@@ -236,7 +284,7 @@
   window.loadPoints = async function loadDemoPoints() {
     currentPoints = 1280;
     updatePoints();
-    if (typeof applyThemePath === 'function') applyThemePath('cyberpunk');
+    applyDemoTheme();
     renderDemoProfileDossier();
   };
 
@@ -428,14 +476,37 @@
   window.cancelContract = async function demoCancelContract() { demoBlockedAction('Отмена поручения'); };
   window.disputeContract = async function demoDisputeContract() { demoBlockedAction('Спор'); };
   window.joinRaid = async function demoJoinRaid() { demoBlockedAction('Рейд'); };
+  window.showRaid = function demoShowRaid() {
+    installDemoRaidLock();
+    demoBlockedAction('Рейд Альфабосса');
+  };
+  window.loadRaidStatus = async function loadDemoRaidStatus() {
+    installDemoRaidLock();
+  };
+  window.loadDiaryStarsLeaderboardRating = async function loadDemoDiaryStarsLeaderboardRating() {
+    installDemoRatingLock();
+  };
   window.exchangeFragments = async function demoExchangeFragments() { demoBlockedAction('Обмен фрагментов'); };
   window.loadCasinoStatus = async function loadDemoCasinoStatus() {
     installDemoSpoilerLocks();
   };
   window.chooseThemePath = async function demoChooseThemePath(path) {
     demoBlockedAction('Выбор пути');
-    if (typeof applyThemePath === 'function') applyThemePath(path || 'cyberpunk');
+    if (typeof applyThemePath === 'function') applyThemePath(path || demoThemePath);
   };
+
+  if (typeof switchRatingTab === 'function') {
+    const realSwitchRatingTab = switchRatingTab;
+    window.switchRatingTab = function switchDemoRatingTab(tab, btn) {
+      if (tab === 'diary') {
+        installDemoRatingLock();
+        demoBlockedAction('Рейтинг дневника');
+        const mainBtn = document.getElementById('tab-rating-main-btn');
+        return realSwitchRatingTab('main', mainBtn || btn);
+      }
+      return realSwitchRatingTab(tab, btn);
+    };
+  }
 
   if (typeof showPage === 'function') {
     const realShowPage = showPage;
@@ -470,7 +541,7 @@
     installDemoBanner();
     installCatalogLocks();
     installDemoSpoilerLocks();
-    if (typeof applyThemePath === 'function') applyThemePath('cyberpunk');
+    applyDemoTheme();
     setTimeout(() => {
       installCatalogLocks();
       installDemoSpoilerLocks();

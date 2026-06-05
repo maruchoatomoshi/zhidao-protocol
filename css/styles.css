@@ -13350,6 +13350,13 @@ body.demo-mode {
   --demo-accent: #d4af37;
 }
 
+body.demo-mode.theme-genshin-light,
+html.demo-mode.theme-genshin-light,
+body.demo-mode.theme-genshin-dark,
+html.demo-mode.theme-genshin-dark {
+  --demo-accent: #caa45d;
+}
+
 .demo-mode-banner {
   position: sticky;
   top: 0;
@@ -13407,6 +13414,13 @@ body.demo-mode .more-item[onclick="openMore('team')"],
 html.demo-mode .more-item[onclick="openMore('team')"],
 body.demo-mode .profile-card-actions .profile-mini-btn,
 html.demo-mode .profile-card-actions .profile-mini-btn {
+  display: none !important;
+}
+
+body.demo-mode #tab-rating-diary-btn,
+html.demo-mode #tab-rating-diary-btn,
+body.demo-mode #rating-diary-tab,
+html.demo-mode #rating-diary-tab {
   display: none !important;
 }
 
@@ -13472,6 +13486,16 @@ html.demo-mode .profile-card-actions .profile-mini-btn {
   padding: 18px 14px;
   text-align: center;
   overflow: hidden;
+}
+
+.demo-raid-locked {
+  cursor: default !important;
+  border-style: dashed !important;
+  border-color: rgba(212,175,55,0.34) !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212,175,55,0.12), transparent 55%),
+    rgba(10,10,16,0.72) !important;
+  box-shadow: 0 16px 38px rgba(0,0,0,0.20) !important;
 }
 
 .demo-lock-kicker {
