@@ -7417,6 +7417,19 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
 /* No ::after — replaced by spans */
 .event-action::after { content: none; }
 
+/* SYNC gets an AUTO indicator — no question, instant */
+.event-action.sync::after {
+  content: '⚡ АВТО';
+  position: absolute;
+  top: 9px; right: 10px;
+  font-size: 7px;
+  font-family: monospace;
+  color: rgba(91, 112, 255, 0.8);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
 /* Chinese character decoration */
 .event-action-kanji {
   position: absolute;
@@ -11696,6 +11709,15 @@ body.is-architect .profile-card-spark.spark-bl {
 }
 .event-overlay.event-terminal .event-lobby-card.result-banner-reveal {
   animation: architectResultBannerReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes verdictExpand {
+  from { letter-spacing: -2px; opacity: 0; }
+  30%  { opacity: 1; }
+  to   { letter-spacing: 3px; opacity: 1; }
+}
+.event-overlay.event-terminal .event-lobby-card.result-banner-reveal .event-result-verdict {
+  animation: verdictExpand 0.85s 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ── MVP badge on profile card ──────────────────────────────── */

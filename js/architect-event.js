@@ -31,6 +31,7 @@ let architectMusicPendingTrack = '';
 let architectMusicRetryTimer = null;
 let architectMusicRetryAttempts = 0;
 let architectLastRenderedPhase = null;
+let architectLastLogCount = 0;
 let architectActionFxTimer = null;
 let architectPhaseFxTimer = null;
 let architectFinalTimerHandle = null;
@@ -536,6 +537,7 @@ function updateArchitectPhaseFxState(eventData) {
 
   if (!eventData) {
     architectLastRenderedPhase = null;
+    architectLastLogCount = 0;
     updateArchitectFinalTimer(null);
     if (warning) warning.style.display = 'none';
     return;
@@ -1024,11 +1026,26 @@ function updateArchitectBattleVisibility(eventData) {
 
   const logs = Array.isArray(eventData.logs) ? eventData.logs : [];
   if (!logs.length) {
-    log.innerHTML = '<div class="event-log-empty">Лог ивента появится здесь</div>';
+    if (architectLastLogCount !== 0) {
+      log.innerHTML = '<div class="event-log-empty">Лог ивента появится здесь</div>';
+      architectLastLogCount = 0;
+    }
   } else {
-    log.innerHTML = logs.map(item => {
-      return `<div class="event-log-line">${escapeHtml(item.message || '')}</div>`;
-    }).join('');
+    if (architectLastLogCount === 0) {
+      log.innerHTML = logs.map(item =>
+        `<div class="event-log-line">${escapeHtml(item.message || '')}</div>`
+      ).join('');
+      architectLastLogCount = logs.length;
+    } else if (logs.length > architectLastLogCount) {
+      const newItems = logs.slice(architectLastLogCount);
+      newItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'event-log-line';
+        div.textContent = item.message || '';
+        log.appendChild(div);
+      });
+      architectLastLogCount = logs.length;
+    }
     log.scrollTop = log.scrollHeight;
   }
 }
