@@ -4310,9 +4310,10 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
     if not telegram_id or not entry_date:
         raise HTTPException(status_code=400, detail="Missing data")
 
+    is_reset = bool(data.get("reset", False))
     incoming_stars = data.get("stars")
     incoming_bonus = bool(data.get("bonus", False))
-    if incoming_stars is not None:
+    if not is_reset and incoming_stars is not None:
         try:
             incoming_stars = int(incoming_stars)
         except (TypeError, ValueError):
@@ -4332,8 +4333,12 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
     previous_stars = previous[0] if previous else 0
     previous_bonus = previous[1] if previous else 0
 
-    next_stars = previous_stars if incoming_stars is None else incoming_stars
-    next_bonus = 1 if incoming_bonus else previous_bonus
+    if is_reset:
+        next_stars = 0
+        next_bonus = 0
+    else:
+        next_stars = previous_stars if incoming_stars is None else incoming_stars
+        next_bonus = 1 if incoming_bonus else previous_bonus
     previous_points = compute_diary_star_points(previous_stars, previous_bonus)
     next_points = compute_diary_star_points(next_stars, next_bonus)
 

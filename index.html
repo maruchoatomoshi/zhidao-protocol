@@ -1855,7 +1855,8 @@
         padding:24px;width:100%;max-width:480px;box-sizing:border-box;">
         <button onclick="closeDiaryStarsPopup()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">✕</button>
         <div id="diaryStarsPopupName" style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;"></div>
-        <div id="diaryStarsPopupDate" style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:20px;"></div>
+        <div id="diaryStarsPopupDate" style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:4px;"></div>
+        <div id="diaryStarsPopupCurrent" style="font-size:11px;color:var(--gold);font-family:monospace;margin-bottom:16px;min-height:16px;"></div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
           <button onclick="submitDiaryStars(1)" style="
@@ -1888,11 +1889,18 @@
           ✨ +БОНУС ЗА КРЕАТИВ (+20★)
         </button>
 
+        <button id="diaryStarsResetBtn" onclick="submitDiaryStars('reset')" style="
+          width:100%;background:rgba(204,68,68,0.08);border:1px solid rgba(204,68,68,0.25);
+          border-radius:12px;padding:12px;cursor:pointer;color:#cc4444;
+          font-family:monospace;font-size:11px;margin-bottom:8px;display:none;">
+          🗑 СБРОСИТЬ ОЦЕНКУ
+        </button>
+
         <button onclick="closeDiaryStarsPopup()" style="
           width:100%;background:transparent;border:1px solid var(--border);
           border-radius:12px;padding:12px;cursor:pointer;color:var(--text3);
           font-family:monospace;font-size:11px;">
-          ОТМЕНА
+          ЗАКРЫТЬ
         </button>
       </div>
     </div>

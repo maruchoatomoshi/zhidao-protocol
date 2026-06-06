@@ -100,7 +100,7 @@ function renderDiaryStarsList(entries, date) {
 
     const safeName = escapeHtml(entry.full_name);
     const onclickAttr = canRate
-      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}')"`
+      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}', ${stars}, ${bonus ? 1 : 0})"`
       : '';
     return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
       ${onclickAttr}>
@@ -121,11 +121,20 @@ function renderDiaryStarsList(entries, date) {
     : '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет записей за этот день</div>';
 }
 
-function openDiaryStarsPopup(telegramId, name, date) {
+function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus) {
   if (!isAdmin) return;
   diaryStarsCurrentStudent = { telegramId, name, date };
   document.getElementById('diaryStarsPopupName').textContent = name;
   document.getElementById('diaryStarsPopupDate').textContent = date;
+  const currentEl = document.getElementById('diaryStarsPopupCurrent');
+  const resetBtn = document.getElementById('diaryStarsResetBtn');
+  const hasRating = currentStars > 0 || currentBonus;
+  if (currentEl) {
+    const starsStr = currentStars ? '⭐'.repeat(currentStars) : '';
+    const bonusStr = currentBonus ? ' +✨бонус' : '';
+    currentEl.textContent = hasRating ? `Текущая оценка: ${starsStr}${bonusStr}` : 'Оценки нет';
+  }
+  if (resetBtn) resetBtn.style.display = hasRating ? 'block' : 'none';
   const popup = document.getElementById('diaryStarsPopup');
   popup.style.display = 'flex';
 }
@@ -143,11 +152,13 @@ async function submitDiaryStars(value) {
   const buttons = popup ? popup.querySelectorAll('button') : [];
 
   const isBonus = value === 'bonus';
+  const isReset = value === 'reset';
   const payload = {
     telegram_id: telegramId,
     entry_date: date,
-    stars: isBonus ? null : value,
-    bonus: isBonus
+    stars: isBonus || isReset ? null : value,
+    bonus: isBonus,
+    reset: isReset
   };
 
   try {
