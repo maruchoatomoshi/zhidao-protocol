@@ -22,6 +22,7 @@ const ARCHITECT_PHASE_MUSIC = {
   2: 'architect_phase2_music.mp3',
   3: 'architect_phase3_music.mp3'
 };
+const ARCHITECT_LOBBY_MUSIC = ''; // Set to filename when lobby track is added
 
 const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
 const ARCHITECT_MUSIC_FADE_MS = 1400;
@@ -58,7 +59,7 @@ function getArchitectPhaseImage(eventData) {
 function getArchitectPhaseVideo(eventData) {
   if (!eventData) return '';
   const state = String(eventData.state || '').toUpperCase();
-  if (state === 'FINISHED' || state === 'FAILED') return '';
+  if (state === 'FINISHED' || state === 'FAILED' || state === 'REGISTRATION') return '';
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_VIDEOS[2] || '';
   if (phase >= 3) return ARCHITECT_PHASE_VIDEOS[3] || '';
@@ -66,8 +67,9 @@ function getArchitectPhaseVideo(eventData) {
 }
 
 function getArchitectPhaseMusic(eventData) {
-  if (!eventData) return '';
-  if (String(eventData.state || '').toUpperCase() !== 'ACTIVE') return '';
+  const state = eventData ? String(eventData.state || '').toUpperCase() : '';
+  if (state === 'REGISTRATION' || (!eventData && ARCHITECT_LOBBY_MUSIC)) return ARCHITECT_LOBBY_MUSIC;
+  if (!eventData || state !== 'ACTIVE') return '';
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_MUSIC[2] || '';
   if (phase >= 3) return ARCHITECT_PHASE_MUSIC[3] || '';
@@ -963,8 +965,8 @@ function updateArchitectBattleVisibility(eventData) {
   const hasEvent = !!eventData;
 
   actions.style.display = isActive ? 'grid' : 'none';
-  if (hud) hud.style.display = (hasEvent && !isTerminal) ? 'flex' : 'none';
-  if (log) log.style.display = hasEvent ? 'block' : 'none';
+  if (hud) hud.style.display = isActive ? 'flex' : 'none';
+  if (log) log.style.display = isActive ? 'block' : 'none';
   if (bossImage) bossImage.style.display = 'block';
   const bossVideo = document.getElementById('eventBossVideo');
   if (bossVideo && !hasEvent) { bossVideo.pause(); bossVideo.style.display = 'none'; }

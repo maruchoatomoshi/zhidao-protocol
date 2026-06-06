@@ -11772,6 +11772,106 @@ body.is-architect .profile-card-spark.spark-bl {
   opacity: 0.6;
 }
 
+/* ── Lobby card redesign ────────────────────────────────────── */
+
+/* Compact bottom sheet — give image breathing room */
+.event-overlay.event-state-lobby .event-lobby-card {
+  max-height: 42vh;
+  padding: 12px 14px 14px;
+  border-color: rgba(212,175,55,0.22) !important;
+  background: rgba(5,5,14,0.97) !important;
+}
+
+/* Compact header: kicker left, count right, smaller status text */
+.event-overlay.event-state-lobby .event-lobby-head {
+  align-items: center;
+  gap: 8px;
+}
+
+.event-overlay.event-state-lobby .event-lobby-kicker {
+  font-size: 8px !important;
+  letter-spacing: 2px !important;
+  opacity: 0.7;
+}
+
+.event-overlay.event-state-lobby .event-lobby-status {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  margin-top: 2px !important;
+}
+
+/* Prize: no label, value big and gold */
+.event-overlay.event-state-lobby .event-lobby-reward {
+  margin-top: 8px !important;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(212,175,55,0.06);
+  border: 1px solid rgba(212,175,55,0.18);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.event-overlay.event-state-lobby .event-lobby-reward::before {
+  content: '🎯';
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+.event-overlay.event-state-lobby .event-lobby-reward .event-lobby-label {
+  display: none !important;
+}
+.event-overlay.event-state-lobby .event-lobby-reward .event-lobby-value {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #f0d887 !important;
+  text-shadow: 0 0 12px rgba(212,175,55,0.3);
+}
+
+/* Members: hide label, compact horizontal chips */
+.event-overlay.event-state-lobby .event-lobby-members {
+  margin-top: 8px !important;
+}
+.event-overlay.event-state-lobby .event-lobby-members .event-lobby-label {
+  display: none !important;
+}
+.event-overlay.event-state-lobby .event-team-list {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  max-height: 52px !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin-top: 0 !important;
+}
+.event-overlay.event-state-lobby .event-team-member {
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  border-color: rgba(0,220,255,0.22) !important;
+  background: rgba(0,220,255,0.07) !important;
+  color: rgba(180,240,255,0.9) !important;
+}
+.event-overlay.event-state-lobby .event-team-member::before {
+  content: '' !important;
+  display: none !important;
+}
+.event-overlay.event-state-lobby .event-team-empty {
+  font-size: 10px !important;
+  padding: 2px 0 !important;
+  color: rgba(255,255,255,0.32) !important;
+}
+
+/* Buttons: row, compact, join full-width when alone */
+.event-overlay.event-state-lobby .event-lobby-actions {
+  margin-top: 10px !important;
+  gap: 7px !important;
+}
+.event-overlay.event-state-lobby .event-lobby-btn {
+  padding: 10px 14px !important;
+  font-size: 11px !important;
+  letter-spacing: 1.8px !important;
+}
+
 /* Result banner: hidden state (shown in DOM but invisible) */
 .event-overlay.event-terminal .event-lobby-card.result-banner-hidden {
   opacity: 0;
