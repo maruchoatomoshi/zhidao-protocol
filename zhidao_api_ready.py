@@ -2065,6 +2065,38 @@ def apply_card_pyro_rebirth(c, telegram_id: int, use_key: str, max_bonus: int = 
     return bonus
 
 
+def grant_card_points_once(c, telegram_id: int, card_id: str, use_key: str, amount: int,
+                           operation: str, note: str = "", use_date: Optional[str] = None,
+                           reference_id: Optional[int] = None,
+                           reference_type: str = "card") -> int:
+    if amount <= 0 or not has_active_card(c, telegram_id, card_id):
+        return 0
+    if has_used_card_today(c, telegram_id, card_id, use_key, use_date):
+        return 0
+    mark_card_used_today(c, telegram_id, card_id, use_key, use_date)
+    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+    balance_after = (c.fetchone() or [0])[0] or 0
+    log_economy(c, telegram_id, operation, amount, balance_after, reference_id, reference_type, note)
+    return amount
+
+
+def grant_card_scan_once(c, telegram_id: int, card_id: str, use_key: str,
+                         operation: str, note: str = "", use_date: Optional[str] = None) -> int:
+    if not has_active_card(c, telegram_id, card_id):
+        return 0
+    if has_used_card_today(c, telegram_id, card_id, use_key, use_date):
+        return 0
+    mark_card_used_today(c, telegram_id, card_id, use_key, use_date)
+    c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                 ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
+              (telegram_id,))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+    balance_after = (c.fetchone() or [0])[0] or 0
+    log_economy(c, telegram_id, operation, 0, balance_after, None, "card", note)
+    return 1
+
+
 def try_block_penalty_with_terracota(c, telegram_id: int, use_key: str) -> bool:
     if not has_active_implant(c, telegram_id, "implant_terracota"):
         return False
@@ -3773,6 +3805,18 @@ async def confirm_presence(data: dict):
                     c, telegram_id, "card_fairy_blessing", 10, balance_after,
                     None, "card", f"{check_type} {check_date}",
                 )
+        if check_type == "evening" and is_new_confirm:
+            c.execute(
+                """SELECT 1 FROM daily_checks
+                   WHERE telegram_id=? AND check_date=? AND check_type='morning'
+                     AND status IN ('confirmed','free_time','admin_approved')""",
+                (telegram_id, check_date),
+            )
+            if c.fetchone():
+                grant_card_points_once(
+                    c, telegram_id, "card_fairy", f"perfect_day:{check_date}", 10,
+                    "card_fairy_perfect_day", f"утро+вечер {check_date}", check_date,
+                )
         if check_type == "morning" and is_new_confirm:
             if has_active_card(c, telegram_id, "card_forest") and not has_used_card_today(c, telegram_id, "card_forest", "morning_harvest", check_date):
                 mark_card_used_today(c, telegram_id, "card_forest", "morning_harvest", check_date)
@@ -3783,6 +3827,17 @@ async def confirm_presence(data: dict):
                     c, telegram_id, "card_forest_harvest", 8, balance_after,
                     None, "card", check_date,
                 )
+        if check_type == "manual" and is_new_confirm:
+            today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+            grant_card_points_once(
+                c, telegram_id, "card_forest", "manual_anchor", 6,
+                "card_forest_anchor", f"ручная перекличка {check_date}", today,
+            )
+        if check_type == "evening" and is_new_confirm:
+            grant_card_scan_once(
+                c, telegram_id, "card_moon", f"evening_scan:{check_date}",
+                "card_moon_lunar_path", f"вечерняя отметка {check_date}", check_date,
+            )
         if check_type in {"morning", "evening"} and is_new_confirm:
             c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
                          ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
@@ -4320,6 +4375,17 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
         balance_after = c.fetchone()[0] or 0
         log_economy(c, telegram_id, "card_literature_wisdom", 15, balance_after, None, "card", entry_date)
         literature_bonus = 15
+    if next_bonus and not previous_bonus:
+        literature_bonus += grant_card_points_once(
+            c, telegram_id, "card_literature", f"bonus_line:{entry_date}", 10,
+            "card_literature_bonus_line", f"бонус дневника {entry_date}", entry_date,
+        )
+    star_diary_bonus = 0
+    if next_stars == 3 and previous_stars < 3:
+        star_diary_bonus = grant_card_points_once(
+            c, telegram_id, "card_star", f"diary_constellation:{entry_date}", 10,
+            "card_star_constellation", f"дневник 3★ {entry_date}", entry_date,
+        )
     # Streak bonus: +20★ for 3 consecutive 3★ diary entries
     if (
         next_stars == 3
@@ -4365,7 +4431,7 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
         "points_awarded": next_points,
         "points_delta": next_points - previous_points,
         "implant_bonus": linguasoft_bonus,
-        "card_bonus": literature_bonus,
+        "card_bonus": literature_bonus + star_diary_bonus,
     }
 
 
@@ -5242,8 +5308,13 @@ async def get_shop(telegram_id: int = 0):
     items = c.fetchall()
     result = []
     has_guanxi = has_active_implant(c, telegram_id, "implant_guanxi") if telegram_id else False
+    has_zhongli = has_active_card(c, telegram_id, "card_zhongli") if telegram_id else False
     for code, name, description, icon, price, daily_limit, category in items:
-        effective_price = max(0, int(price * 0.9)) if has_guanxi else price
+        effective_price = price
+        if has_guanxi:
+            effective_price = max(0, int(effective_price * 0.9))
+        if has_zhongli:
+            effective_price = max(0, int(effective_price * 0.95))
         c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (code, today))
         row = c.fetchone()
         sold_today = row[0] if row else 0
@@ -5259,7 +5330,11 @@ async def get_shop(telegram_id: int = 0):
             "icon": icon,
             "price": effective_price,
             "base_price": price,
-            "discounted": bool(has_guanxi and effective_price != price),
+            "discounted": bool(effective_price != price),
+            "discount_sources": {
+                "guanxi": has_guanxi,
+                "zhongli": has_zhongli,
+            },
             "daily_limit": daily_limit,
             "sold_today": sold_today,
             "available": available and not is_frozen,
@@ -5338,6 +5413,10 @@ async def buy_item(data: dict):
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
         new_points = c.fetchone()[0] or 0
         log_economy(c, telegram_id, 'implant_panda_cashback', 10, new_points, None, 'implant', name)
+    zhongli_scan_bonus = grant_card_scan_once(
+        c, telegram_id, "card_zhongli", "shop_resonance",
+        "card_zhongli_shop_resonance", name, today,
+    )
     conn.commit()
     conn.close()
     return {
@@ -5348,6 +5427,7 @@ async def buy_item(data: dict):
         "base_price": base_price,
         "guanxi_discount": base_price - price,
         "zhongli_discount": price_after_guanxi - price,
+        "zhongli_scan_bonus": zhongli_scan_bonus,
     }
 
 
@@ -5391,15 +5471,24 @@ async def gift_item(data: dict):
             raise HTTPException(status_code=400, detail="Daily gift limit reached")
     c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
     user = c.fetchone()
-    if not user or (user[0] or 0) < 20:
+    fox_gift_trick = (
+        has_active_card(c, from_id, "card_fox")
+        and not has_used_card_today(c, from_id, "card_fox", "gift_tax_trick", today)
+    )
+    gift_tax = 15 if fox_gift_trick else 20
+    if not user or (user[0] or 0) < gift_tax:
         conn.close()
         raise HTTPException(status_code=400, detail="Not enough points for tax")
-    c.execute("UPDATE users SET points = points - 20 WHERE telegram_id=?", (from_id,))
+    if fox_gift_trick:
+        mark_card_used_today(c, from_id, "card_fox", "gift_tax_trick", today)
+    c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (gift_tax, from_id))
     now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
     c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, gifted_at=?, status='active' WHERE id=?", (to_id, from_id, now_str, purchase_id))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
     new_points = c.fetchone()[0] or 0
-    log_economy(c, from_id, 'gift_tax', -20, new_points, purchase_id, 'shop_gift', purchase[0])
+    log_economy(c, from_id, 'gift_tax', -gift_tax, new_points, purchase_id, 'shop_gift', purchase[0])
+    if gift_tax < 20:
+        log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
     log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
     conn.commit()
     conn.close()
@@ -5693,6 +5782,7 @@ async def join_raid(data: dict):
 
     launched = False
     result = None
+    card_raid_bonus = 0
     if count >= RAID_MIN_PLAYERS or (telegram_id in ADMIN_IDS and count >= 1):
         launched = True
         result = 'success' if random.random() < RAID_SUCCESS_CHANCE else 'defended'
@@ -5705,6 +5795,24 @@ async def join_raid(data: dict):
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
                 raid_reward_balance = c.fetchone()[0] or 0
                 log_economy(c, tid, 'raid_reward', RAID_SUCCESS_REWARD, raid_reward_balance, raid_id, 'raid', f"Raid {today}")
+                bonus = grant_card_points_once(
+                    c, tid, "card_star", "raid_victory", 10,
+                    "card_star_raid_victory", f"Raid {today}", today, raid_id, "raid",
+                )
+                if tid == telegram_id:
+                    card_raid_bonus += bonus
+        else:
+            for tid in all_participants:
+                pyro_refund = grant_card_points_once(
+                    c, tid, "card_pyro", "raid_ember", 10,
+                    "card_pyro_raid_ember", f"Raid {today}", today, raid_id, "raid",
+                )
+                star_refund = grant_card_points_once(
+                    c, tid, "card_star", "raid_judgement", 15,
+                    "card_star_raid_judgement", f"Raid {today}", today, raid_id, "raid",
+                )
+                if tid == telegram_id:
+                    card_raid_bonus += pyro_refund + star_refund
 
     conn.commit()
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
@@ -5727,7 +5835,8 @@ async def join_raid(data: dict):
         "limit_today": RAID_USER_DAILY_LIMIT,
         "required_players": RAID_MIN_PLAYERS,
         "consumed_extra_attempt": consumed_extra_attempt,
-        "points_change": (RAID_SUCCESS_REWARD - RAID_ENTRY_COST) if (launched and result == 'success') else -RAID_ENTRY_COST,
+        "card_raid_bonus": card_raid_bonus,
+        "points_change": ((RAID_SUCCESS_REWARD - RAID_ENTRY_COST) if (launched and result == 'success') else -RAID_ENTRY_COST) + card_raid_bonus,
         "message": (
             f"🏆 РЕЙД УСПЕШЕН! +{RAID_SUCCESS_REWARD}★ каждому!" if (launched and result == 'success') else
             "🛡 АЛЬФАБОСС ЗАЩИТИЛСЯ! Ставки сгорели 🔥" if (launched and result == 'defended') else
@@ -5737,15 +5846,15 @@ async def join_raid(data: dict):
 
 
 CARD_INFO = {
-    'card_zhongli': {"name": "岩王帝君 Архонт Земли", "rarity": 5, "passive": "Каменный контракт — -5% к цене магазина"},
-    'card_pyro': {"name": "焰莲使者 Страж Огня", "rarity": 4, "passive": "Феникс — после первого штрафа дня возвращает до 25★"},
-    'card_fox': {"name": "九尾狐灵 Лиса-Оборотень", "rarity": 4, "passive": "Обман судьбы — раз в день +30★ в молитве превращаются в +60★"},
-    'card_fairy': {"name": "桃花仙子 Небесная Фея", "rarity": 4, "passive": "Цветение — +10★ за первую утреннюю или вечернюю отметку дня"},
-    'card_literature': {"name": "文曲星君 Звезда Литературы", "rarity": 4, "passive": "Мудрость — +15★ за дневник на 3★"},
-    'card_forest': {"name": "木灵仙君 Дух Леса", "rarity": 4, "passive": "Урожай — +8★ за своевременную утреннюю отметку"},
-    'card_sea': {"name": "海灵仙后 Дух Морей", "rarity": 4, "passive": "Волна — каждая 3-я молитва за день приносит +20★"},
-    'card_star': {"name": "紫微星君 Императорская Звезда", "rarity": 5, "passive": "Звёздный суд — первый штраф дня уменьшается на 15★"},
-    'card_moon': {"name": "嫦娥仙子 Богиня Луны", "rarity": 4, "passive": "Лунная жемчужина — дубль этой карточки сразу даёт +50★"},
+    'card_zhongli': {"name": "岩王帝君 Архонт Земли", "rarity": 5, "passive": "Каменный контракт — -5% к магазину · 1 раз/день -1★ комиссии контракта · 1 раз/день покупка даёт +1 скан"},
+    'card_pyro': {"name": "焰莲使者 Страж Огня", "rarity": 4, "passive": "Феникс — первый штраф дня возвращает до 25★ · первый провал рейда возвращает 10★"},
+    'card_fox': {"name": "九尾狐灵 Лиса-Оборотень", "rarity": 4, "passive": "Обман судьбы — раз в день +30★ в молитве превращаются в +60★ · первый подарок дня платит налог 15★ вместо 20★"},
+    'card_fairy': {"name": "桃花仙子 Небесная Фея", "rarity": 4, "passive": "Цветение — +10★ за первую утреннюю/вечернюю отметку · ещё +10★ за полный день утро+вечер"},
+    'card_literature': {"name": "文曲星君 Звезда Литературы", "rarity": 4, "passive": "Мудрость — +15★ за дневник на 3★ · +10★ за бонусную строку дневника"},
+    'card_forest': {"name": "木灵仙君 Дух Леса", "rarity": 4, "passive": "Урожай — +8★ за утреннюю отметку · +6★ за первую ручную перекличку дня"},
+    'card_sea': {"name": "海灵仙后 Дух Морей", "rarity": 4, "passive": "Волна — каждая 3-я молитва дня приносит +20★ · первый выполненный контракт дня даёт +5★"},
+    'card_star': {"name": "紫微星君 Императорская Звезда", "rarity": 5, "passive": "Звёздный суд — первый штраф дня уменьшается на 15★ · 3★ дневник даёт +10★ · победа в рейде +10★ · провал рейда возвращает 15★"},
+    'card_moon': {"name": "嫦娥仙子 Богиня Луны", "rarity": 4, "passive": "Лунная жемчужина — дубль этой карточки сразу даёт +50★ · вечерняя отметка даёт +1 скан"},
 }
 
 GENSHIN_POOL = {
@@ -6890,6 +6999,15 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
     conn = get_conn()
     c = conn.cursor()
     _check_blackwall(c, x_telegram_id)
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    zhongli_fee_reduction = 0
+    if (
+        has_active_card(c, x_telegram_id, "card_zhongli")
+        and not has_used_card_today(c, x_telegram_id, "card_zhongli", "contract_seal", today)
+    ):
+        zhongli_fee_reduction = 1
+        fee = max(1, fee - zhongli_fee_reduction)
+        mark_card_used_today(c, x_telegram_id, "card_zhongli", "contract_seal", today)
 
     c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
     user = c.fetchone()
@@ -6908,7 +7026,6 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
         conn.close()
         raise HTTPException(status_code=400, detail=f"Максимум {CONTRACT_MAX_ACTIVE} активных контракта одновременно")
 
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     c.execute(
         "SELECT COALESCE(SUM(reward_stars),0) FROM contracts WHERE creator_telegram_id=? AND date(created_at)=?",
         (x_telegram_id, today),
@@ -6934,6 +7051,9 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
     contract_id = c.lastrowid
     log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
                 contract_id, 'contract', f"Заморозка: контракт #{contract_id}")
+    if zhongli_fee_reduction:
+        log_economy(c, x_telegram_id, 'card_zhongli_contract_seal', 0, balance_after,
+                    contract_id, 'card', f"Комиссия снижена на {zhongli_fee_reduction}★")
     conn.commit()
     conn.close()
     return {"success": True, "id": contract_id, "fee_stars": fee, "payout_stars": reward - fee}
@@ -7028,14 +7148,19 @@ async def complete_contract(contract_id: int,
     c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
     assignee_bal = c.fetchone()[0] or 0
-    c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
     log_economy(c, assignee_id, 'contract_payout', payout, assignee_bal, contract_id, 'contract',
                 f"Выплата за контракт #{contract_id}")
+    sea_bonus = grant_card_points_once(
+        c, assignee_id, "card_sea", "contract_current", 5,
+        "card_sea_current", f"контракт #{contract_id}", now.strftime('%Y-%m-%d'),
+        contract_id, "contract",
+    )
+    c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
     log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
                 f"Комиссия Сетевого Дозора: контракт #{contract_id}")
     conn.commit()
     conn.close()
-    return {"success": True, "payout": payout, "fee_burned": fee}
+    return {"success": True, "payout": payout, "fee_burned": fee, "card_sea_bonus": sea_bonus}
 
 
 @app.post("/api/contracts/{contract_id}/cancel")
