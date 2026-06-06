@@ -34,10 +34,21 @@ function setRaidResultPanel(mode = '', title = '', text = '') {
     }
     panel.style.display = 'block';
     panel.className = `raid-result-panel ${mode}`;
+    const icon = mode === 'success' ? '✓' : mode === 'danger' ? '✗' : '●';
     panel.innerHTML = `
+        <div class="raid-result-icon">${icon}</div>
         <div class="raid-result-title">${escapeHtml(title)}</div>
         <div class="raid-result-text">${escapeHtml(text)}</div>
     `;
+    if (mode === 'danger') {
+        const content = document.querySelector('.raid-content');
+        if (content) {
+            content.classList.remove('raid-shake');
+            void content.offsetWidth;
+            content.classList.add('raid-shake');
+            setTimeout(() => content.classList.remove('raid-shake'), 550);
+        }
+    }
 }
 
 function updateRaidRoster(participants = [], currentUserIdValue = currentUserId) {
@@ -195,7 +206,7 @@ async function playRaidIntro(token) {
         if (token !== raidIntroToken) return false;
         setRaidProgressVisual(step.percent, step.state, step.hint, step.percent >= 100 ? 'success' : 'pending');
         setRaidStatusText(step.status, step.percent >= 100 ? '#2ecc71' : 'var(--text2)');
-        await sleep(step.percent >= 100 ? 650 : 850);
+        await sleep(step.percent >= 100 ? 580 : 720);
     }
 
     return token === raidIntroToken;

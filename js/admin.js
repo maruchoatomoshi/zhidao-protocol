@@ -1396,14 +1396,14 @@ const RAID_CONFIG = {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
         title: '// NIGHT RAID // TARGET: ALPHA',
         kicker: 'MU RAID // 夜间行动',
-        chips: ['Stealth', 'Team Sync', 'Risk 40%'],
+        chips: ['Stealth', 'Analyse', 'Risk: Variable'],
         placeholderColor: '#ff003c'
     },
     genshin: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme.png?raw=true',
         title: '璃月试炼 // ALPHA TRIAL',
         kicker: 'LIYUE TRIAL // 璃月试炼',
-        chips: ['契约', '共鸣', '胜算 40%'],
+        chips: ['契约', '分析', '胜算 可变'],
         placeholderColor: '#dbb165'
     }
 };
