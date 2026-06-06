@@ -965,12 +965,13 @@ function updateArchitectBattleVisibility(eventData) {
   actions.style.display = isActive ? 'grid' : 'none';
   if (hud) hud.style.display = (hasEvent && !isTerminal) ? 'flex' : 'none';
   if (log) log.style.display = hasEvent ? 'block' : 'none';
-  if (bossImage) bossImage.style.display = hasEvent ? 'block' : 'none';
+  if (bossImage) bossImage.style.display = 'block';
   const bossVideo = document.getElementById('eventBossVideo');
-  if (bossVideo) bossVideo.style.display = hasEvent ? 'block' : 'none';
+  if (bossVideo && !hasEvent) { bossVideo.pause(); bossVideo.style.display = 'none'; }
   if (!isActive) closeArchitectQuestion();
 
   if (!eventData) {
+    applyArchitectMedia(null);
     hpText.textContent = '-- / ----';
     hpFill.style.width = '0%';
     phaseText.textContent = 'NO SIGNAL';
