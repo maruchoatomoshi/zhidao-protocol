@@ -120,9 +120,14 @@ function renderProfileDossier(profile = {}) {
 
   const showcaseBox = document.getElementById('profileShowcase');
   const showcaseIcon = showcaseBox ? showcaseBox.querySelector('.profile-showcase-icon') : null;
-  if (showcaseIcon) showcaseIcon.textContent = showcase && showcase.glyph ? showcase.glyph : '?';
+  if (showcaseIcon) {
+    showcaseIcon.textContent = showcase && showcase.glyph ? showcase.glyph : '?';
+    showcaseIcon.dataset.kind = showcase ? (showcase.kind || '') : '';
+    showcaseIcon.dataset.source = showcase ? (showcase.source || 'auto') : '';
+  }
   if (showcase) {
-    setProfileText('profileShowcaseText', `${showcase.kind || 'item'}: ${showcase.name || showcase.code || 'AUTO'} // ${showcase.detail || 'active'}`);
+    const sourceTag = showcase.source === 'manual' ? ' · ★' : '';
+    setProfileText('profileShowcaseText', `${showcase.name || showcase.code || '—'} · ${showcase.detail || 'active'}${sourceTag}`);
   } else {
     setProfileText('profileShowcaseText', 'SHOWCASE: AUTO // no active item');
   }

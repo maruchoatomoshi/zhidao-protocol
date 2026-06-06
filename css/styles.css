@@ -1414,6 +1414,7 @@ body.is-admin .profile-card-kicker {
     rgba(255,255,255,0.028);
 }
 .profile-showcase-icon {
+  position: relative;
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
@@ -1427,6 +1428,29 @@ body.is-admin .profile-card-kicker {
   font-size: 18px;
   font-family: serif;
   font-weight: 900;
+  transition: border-color 0.3s, background 0.3s, color 0.3s, box-shadow 0.3s;
+}
+.profile-showcase-icon[data-kind="implant"] {
+  border-color: rgba(255, 80, 80, 0.35);
+  background: rgba(255, 54, 54, 0.09);
+  color: #ff8080;
+  box-shadow: 0 0 10px rgba(255, 54, 54, 0.12) inset;
+}
+.profile-showcase-icon[data-kind="card"] {
+  border-color: rgba(212,175,55,0.40);
+  background: rgba(212,175,55,0.11);
+  color: var(--gold);
+  box-shadow: 0 0 10px rgba(212,175,55,0.14) inset;
+}
+.profile-showcase-icon[data-source="manual"]::after {
+  content: '★';
+  position: absolute;
+  bottom: -1px;
+  right: 1px;
+  font-size: 6px;
+  color: rgba(212,175,55,0.7);
+  line-height: 1;
+  pointer-events: none;
 }
 .profile-showcase-copy {
   min-width: 0;

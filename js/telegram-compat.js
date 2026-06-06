@@ -52,10 +52,12 @@
     const bottom = Math.max(Number(safe.bottom) || 0, Number(contentSafe.bottom) || 0);
     const left = Math.max(Number(safe.left) || 0, Number(contentSafe.left) || 0);
 
-    document.documentElement.style.setProperty("--tg-safe-top", px(top));
-    document.documentElement.style.setProperty("--tg-safe-right", px(right));
-    document.documentElement.style.setProperty("--tg-safe-bottom", px(bottom));
-    document.documentElement.style.setProperty("--tg-safe-left", px(left));
+    // When TG API gives 0 for bottom/top, fall back to native CSS env() so the
+    // home bar / notch are always protected on older Telegram versions.
+    document.documentElement.style.setProperty("--tg-safe-top", top > 0 ? px(top) : "env(safe-area-inset-top, 0px)");
+    document.documentElement.style.setProperty("--tg-safe-right", right > 0 ? px(right) : "env(safe-area-inset-right, 0px)");
+    document.documentElement.style.setProperty("--tg-safe-bottom", bottom > 0 ? px(bottom) : "env(safe-area-inset-bottom, 0px)");
+    document.documentElement.style.setProperty("--tg-safe-left", left > 0 ? px(left) : "env(safe-area-inset-left, 0px)");
   }
 
   function initTelegramCompat() {
