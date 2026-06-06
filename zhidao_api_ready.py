@@ -2657,6 +2657,8 @@ async def get_user_profile_dossier(telegram_id: int):
         "title": title,
         "leaderboard_rank": leaderboard_rank,
         "showcase": showcase,
+        "is_admin": telegram_id in ADMIN_IDS,
+        "is_architect": telegram_id in ARCHITECT_IDS,
         "stats": {
             "case_opens": case_opens,
             "prayers": prayers,

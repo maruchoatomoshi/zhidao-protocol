@@ -222,6 +222,8 @@ async function loadUserData(telegramId) {
         localStorage.setItem('zhidao_theme', '');
       }
       if (isAdmin && !isArchitect) {
+        const badge = document.querySelector('.profile-admin-badge');
+        if (badge) badge.textContent = '系统架构师';
         playAdminIntroIfNeeded(data);
       }
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
