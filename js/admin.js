@@ -1326,35 +1326,35 @@ function adminRenderMonitorPair({title, meta, flags}) {
 
 function adminRenderContractCard(c) {
   const STATUS_COLOR = {open:'#e67e22',accepted:'#3498db',completed:'#2ecc71',cancelled:'var(--text3)',disputed:'#e74c3c'};
-  const STATUS_RU    = {open:'Открыт',accepted:'Принят',completed:'Завершён',cancelled:'Отменён',disputed:'Спор'};
+  const STATUS_RU    = {open:'Ждёт исполнителя',accepted:'В работе',completed:'Завершён',cancelled:'Отменён',disputed:'Спор'};
   const CAT = {living:'🏠',chinese:'🀄',app:'📱',reminder:'🔔',trade:'🔄',other:'📦'};
   const sc = STATUS_COLOR[c.status] || 'var(--text3)';
   const sr = STATUS_RU[c.status] || c.status;
   const suspHtml = c.is_suspicious
-    ? `<div style="font-size:9px;color:#e74c3c;font-family:monospace;margin:3px 0;">⚠ ${escapeHtml(c.suspicious_reason||'подозрительный')}</div>`
+    ? `<div class="admin-contract-warning">⚠ ${escapeHtml(c.suspicious_reason||'подозрительный')}</div>`
     : '';
   const resolveHtml = (c.status === 'disputed' || c.status === 'accepted')
-    ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
-        <button onclick="adminResolveContract(${c.id},'refund_creator')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #e67e22;border-radius:6px;color:#e67e22;cursor:pointer;font-family:monospace;">↩ Заказчику</button>
-        ${c.assignee_telegram_id ? `<button onclick="adminResolveContract(${c.id},'pay_assignee')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #2ecc71;border-radius:6px;color:#2ecc71;cursor:pointer;font-family:monospace;">💰 Исполнителю</button>` : ''}
-        ${c.assignee_telegram_id ? `<button onclick="adminResolveContract(${c.id},'split')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #3498db;border-radius:6px;color:#3498db;cursor:pointer;font-family:monospace;">⇄ Раздел</button>` : ''}
-        <button onclick="adminResolveContract(${c.id},'cancel_no_refund')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid #e74c3c;border-radius:6px;color:#e74c3c;cursor:pointer;font-family:monospace;">🔥 Сжечь</button>
+    ? `<div class="admin-contract-actions">
+        <button class="admin-contract-action refund" onclick="adminResolveContract(${c.id},'refund_creator')">↩ Заказчику</button>
+        ${c.assignee_telegram_id ? `<button class="admin-contract-action pay" onclick="adminResolveContract(${c.id},'pay_assignee')">💰 Исполнителю</button>` : ''}
+        ${c.assignee_telegram_id ? `<button class="admin-contract-action split" onclick="adminResolveContract(${c.id},'split')">⇄ Раздел</button>` : ''}
+        <button class="admin-contract-action burn" onclick="adminResolveContract(${c.id},'cancel_no_refund')">🔥 Сжечь</button>
       </div>`
     : '';
-  const removeHtml = `<button onclick="adminResolveContract(${c.id},'remove')" style="font-size:9px;padding:3px 7px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text3);cursor:pointer;font-family:monospace;margin-top:4px;">🗑 Удалить</button>`;
+  const removeHtml = `<button class="admin-contract-action remove" onclick="adminResolveContract(${c.id},'remove')">🗑 Удалить</button>`;
 
-  return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
-      <div style="flex:1;min-width:0;">
-        <span style="font-size:10px;">${CAT[c.category]||'📦'}</span>
-        <strong style="font-size:12px;color:var(--text);">${escapeHtml(c.title)}</strong>
+  return `<div class="admin-contract-card status-${escapeHtml(c.status || 'unknown')}${c.is_suspicious ? ' suspicious' : ''}">
+    <div class="admin-contract-head">
+      <div class="admin-contract-titlebox">
+        <span class="admin-contract-category">${CAT[c.category]||'📦'}</span>
+        <strong>${escapeHtml(c.title)}</strong>
       </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <span style="color:${sc};font-size:10px;font-family:monospace;font-weight:700;">${sr}</span>
-        <div style="font-size:12px;font-weight:700;color:var(--gold);">${c.reward_stars}★</div>
+      <div class="admin-contract-side">
+        <span class="admin-contract-status" style="--admin-contract-status:${sc};">${sr}</span>
+        <div class="admin-contract-reward">${c.reward_stars}★</div>
       </div>
     </div>
-    <div style="font-size:10px;color:var(--text3);font-family:monospace;line-height:1.5;">
+    <div class="admin-contract-meta">
       Заказчик: ${escapeHtml(c.creator_name||'—')} (${c.creator_telegram_id})
       ${c.assignee_name ? ` · Исполнитель: ${escapeHtml(c.assignee_name)} (${c.assignee_telegram_id})` : ''}
       · #{${c.id}} · ${c.created_at ? new Date(c.created_at).toLocaleDateString('ru-RU') : ''}

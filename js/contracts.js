@@ -14,11 +14,19 @@ const CONTRACT_MAX_REWARD = 50;
 const CONTRACT_ADMIN_MAX_REWARD = 100;
 
 const CONTRACT_STATUS_LABELS = {
-  open:      'Открыт',
-  accepted:  'Принят',
-  completed: 'Выполнен',
+  open:      'Ждёт исполнителя',
+  accepted:  'В работе',
+  completed: 'Завершено',
   cancelled: 'Отменён',
   disputed:  'Спор',
+};
+
+const CONTRACT_STATUS_HINTS = {
+  open:      'Можно принять поручение',
+  accepted:  'Исполнитель взял задачу',
+  completed: 'Награда выплачена',
+  cancelled: 'Поручение закрыто',
+  disputed:  'Нужна помощь администратора',
 };
 
 const CONTRACT_STATUS_COLORS = {
@@ -330,7 +338,8 @@ function showContractsBlackwall(msg) {
 function renderContractCard(c, showActions) {
   const isMe = currentUserId && c.creator_telegram_id === currentUserId;
   const isAssignee = currentUserId && c.assignee_telegram_id === currentUserId;
-  const statusLabel = CONTRACT_STATUS_LABELS[c.status] || c.status;
+  const statusLabel = getContractStatusLabel(c, isMe, isAssignee);
+  const statusHint = getContractStatusHint(c, isMe, isAssignee);
   const statusColor = CONTRACT_STATUS_COLORS[c.status] || 'var(--text3)';
   const catLabel = CONTRACT_CATEGORY_LABELS[c.category] || c.category;
   const isAdminContract = isAdminContractCreator(c);
@@ -381,8 +390,13 @@ function renderContractCard(c, showActions) {
   const flowIndex = c.status === 'disputed'
     ? 1
     : (c.status === 'cancelled' ? -1 : flowSteps.indexOf(c.status));
-  const flowHtml = `<div class="contract-flow contract-flow-${escapeHtml(c.status || 'unknown')}">
-    ${flowSteps.map((step, idx) => `<span class="${idx <= flowIndex ? 'done' : ''}" data-step="${idx + 1}"></span>`).join('')}
+  const flowHtml = `<div class="contract-flow-block">
+    <div class="contract-flow contract-flow-${escapeHtml(c.status || 'unknown')}">
+      ${flowSteps.map((step, idx) => `<span class="${idx <= flowIndex ? 'done' : ''}" data-step="${idx + 1}"></span>`).join('')}
+    </div>
+    <div class="contract-flow-labels">
+      <span>Создано</span><span>Принято</span><span>Готово</span>
+    </div>
   </div>`;
 
   return `<div class="contract-card status-${escapeHtml(c.status || 'unknown')}${isAdminContract ? ' admin-contract' : ''}">
@@ -403,6 +417,7 @@ function renderContractCard(c, showActions) {
     <div class="contract-description">${escapeHtml(c.description)}</div>
     <div class="contract-meta">
       <span class="contract-status" style="--contract-status-color:${statusColor};">${statusLabel}</span>
+      <span class="contract-status-hint">${escapeHtml(statusHint)}</span>
       <span class="contract-person">${escapeHtml(creatorName)}${isMe ? ' · ты' : ''}</span>
       ${assigneeHtml}
     </div>
@@ -410,6 +425,20 @@ function renderContractCard(c, showActions) {
     ${suspHtml}
     ${actionsHtml}
   </div>`;
+}
+
+function getContractStatusLabel(contract, isCreator, isAssignee) {
+  if (contract.status === 'accepted' && isCreator) return 'Ждёт подтверждения';
+  if (contract.status === 'accepted' && isAssignee) return 'Ты выполняешь';
+  return CONTRACT_STATUS_LABELS[contract.status] || contract.status || 'Статус неизвестен';
+}
+
+function getContractStatusHint(contract, isCreator, isAssignee) {
+  if (contract.status === 'open' && isCreator) return 'Ты создал поручение, ждём исполнителя';
+  if (contract.status === 'open') return 'Можно принять и выполнить';
+  if (contract.status === 'accepted' && isCreator) return 'Проверь результат и подтверди';
+  if (contract.status === 'accepted' && isAssignee) return 'Выполни задачу и жди подтверждения';
+  return CONTRACT_STATUS_HINTS[contract.status] || '';
 }
 
 // ===== CREATE MODAL =====
