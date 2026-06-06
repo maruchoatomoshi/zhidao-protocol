@@ -4311,6 +4311,7 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
         raise HTTPException(status_code=400, detail="Missing data")
 
     is_reset = bool(data.get("reset", False))
+    is_remove_bonus = bool(data.get("remove_bonus", False))
     incoming_stars = data.get("stars")
     incoming_bonus = bool(data.get("bonus", False))
     if not is_reset and incoming_stars is not None:
@@ -4335,6 +4336,9 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
 
     if is_reset:
         next_stars = 0
+        next_bonus = 0
+    elif is_remove_bonus:
+        next_stars = previous_stars
         next_bonus = 0
     else:
         next_stars = previous_stars if incoming_stars is None else incoming_stars

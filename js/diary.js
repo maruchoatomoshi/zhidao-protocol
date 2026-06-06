@@ -123,20 +123,89 @@ function renderDiaryStarsList(entries, date) {
 
 function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus) {
   if (!isAdmin) return;
-  diaryStarsCurrentStudent = { telegramId, name, date };
+  diaryStarsCurrentStudent = { telegramId, name, date, currentStars: currentStars || 0, currentBonus: !!currentBonus };
   document.getElementById('diaryStarsPopupName').textContent = name;
   document.getElementById('diaryStarsPopupDate').textContent = date;
+
+  const hasStars = currentStars > 0;
+  const hasBonus = !!currentBonus;
+  const hasRating = hasStars || hasBonus;
+
   const currentEl = document.getElementById('diaryStarsPopupCurrent');
-  const resetBtn = document.getElementById('diaryStarsResetBtn');
-  const hasRating = currentStars > 0 || currentBonus;
   if (currentEl) {
-    const starsStr = currentStars ? '⭐'.repeat(currentStars) : '';
-    const bonusStr = currentBonus ? ' +✨бонус' : '';
-    currentEl.textContent = hasRating ? `Текущая оценка: ${starsStr}${bonusStr}` : 'Оценки нет';
+    const starsStr = hasStars ? '⭐'.repeat(currentStars) : '';
+    const bonusStr = hasBonus ? ' +✨бонус' : '';
+    currentEl.textContent = hasRating ? `Сейчас: ${starsStr}${bonusStr}` : 'Оценки нет';
   }
+
+  const bonusBtn = document.getElementById('diaryBonusBtn');
+  if (bonusBtn) {
+    bonusBtn.textContent = hasBonus
+      ? '✕ УБРАТЬ БОНУС (-20★)'
+      : '✨ +БОНУС ЗА КРЕАТИВ (+20★)';
+    bonusBtn.style.color = hasBonus ? '#cc4444' : '#2ecc71';
+    bonusBtn.style.borderColor = hasBonus ? 'rgba(204,68,68,0.3)' : 'rgba(46,204,113,0.3)';
+    bonusBtn.style.background = hasBonus ? 'rgba(204,68,68,0.08)' : 'rgba(46,204,113,0.1)';
+  }
+
+  const resetBtn = document.getElementById('diaryStarsResetBtn');
   if (resetBtn) resetBtn.style.display = hasRating ? 'block' : 'none';
+
+  document.getElementById('diaryStarsSelection').style.display = 'block';
+  document.getElementById('diaryStarsConfirm').style.display = 'none';
+
   const popup = document.getElementById('diaryStarsPopup');
   popup.style.display = 'flex';
+}
+
+function selectDiaryStarsAction(value) {
+  if (!diaryStarsCurrentStudent) return;
+  diaryStarsCurrentStudent.pendingAction = value;
+
+  const STAR_POINTS = { 1: 15, 2: 30, 3: 50 };
+  const { name, currentBonus } = diaryStarsCurrentStudent;
+  let title = '', sub = '';
+
+  if (value === 'reset') {
+    title = '🗑 Сбросить оценку?';
+    sub = 'Все баллы за дневник вернутся назад';
+    document.getElementById('diaryStarsConfirmBtn').textContent = 'ДА, СБРОСИТЬ';
+    document.getElementById('diaryStarsConfirmBtn').style.color = '#cc4444';
+    document.getElementById('diaryStarsConfirmBtn').style.borderColor = 'rgba(204,68,68,0.4)';
+    document.getElementById('diaryStarsConfirmBtn').style.background = 'rgba(204,68,68,0.08)';
+  } else if (value === 'bonus') {
+    if (currentBonus) {
+      title = '✕ Убрать бонус?';
+      sub = `-20★ у ${name}`;
+    } else {
+      title = '✨ Добавить бонус?';
+      sub = `+20★ для ${name}`;
+    }
+    document.getElementById('diaryStarsConfirmBtn').textContent = 'ДА, ВЫСТАВИТЬ';
+    document.getElementById('diaryStarsConfirmBtn').style.color = 'var(--gold)';
+    document.getElementById('diaryStarsConfirmBtn').style.borderColor = 'rgba(212,175,55,0.4)';
+    document.getElementById('diaryStarsConfirmBtn').style.background = 'rgba(212,175,55,0.15)';
+  } else {
+    const pts = STAR_POINTS[value] || 0;
+    title = `${'⭐'.repeat(value)} Выставить ${value}★?`;
+    sub = `+${pts}★ для ${name}`;
+    document.getElementById('diaryStarsConfirmBtn').textContent = 'ДА, ВЫСТАВИТЬ';
+    document.getElementById('diaryStarsConfirmBtn').style.color = 'var(--gold)';
+    document.getElementById('diaryStarsConfirmBtn').style.borderColor = 'rgba(212,175,55,0.4)';
+    document.getElementById('diaryStarsConfirmBtn').style.background = 'rgba(212,175,55,0.15)';
+  }
+
+  document.getElementById('diaryStarsConfirmText').textContent = title;
+  document.getElementById('diaryStarsConfirmSub').textContent = sub;
+  document.getElementById('diaryStarsSelection').style.display = 'none';
+  document.getElementById('diaryStarsConfirm').style.display = 'block';
+}
+
+function cancelDiaryStarsAction() {
+  if (!diaryStarsCurrentStudent) return;
+  diaryStarsCurrentStudent.pendingAction = null;
+  document.getElementById('diaryStarsSelection').style.display = 'block';
+  document.getElementById('diaryStarsConfirm').style.display = 'none';
 }
 
 function closeDiaryStarsPopup() {
@@ -145,24 +214,28 @@ function closeDiaryStarsPopup() {
   diaryStarsCurrentStudent = null;
 }
 
-async function submitDiaryStars(value) {
+async function submitDiaryStars() {
   if (!diaryStarsCurrentStudent || !isAdmin) return;
-  const { telegramId, name, date } = diaryStarsCurrentStudent;
-  const popup = document.getElementById('diaryStarsPopup');
-  const buttons = popup ? popup.querySelectorAll('button') : [];
+  const { telegramId, name, date, pendingAction, currentBonus } = diaryStarsCurrentStudent;
+  if (!pendingAction) return;
 
-  const isBonus = value === 'bonus';
-  const isReset = value === 'reset';
+  const isBonus = pendingAction === 'bonus';
+  const isReset = pendingAction === 'reset';
+  const isRemoveBonus = isBonus && currentBonus;
+
   const payload = {
     telegram_id: telegramId,
     entry_date: date,
-    stars: isBonus || isReset ? null : value,
-    bonus: isBonus,
-    reset: isReset
+    stars: (isBonus || isReset) ? null : pendingAction,
+    bonus: isBonus && !isRemoveBonus,
+    reset: isReset,
+    remove_bonus: isRemoveBonus
   };
 
+  const confirmBtn = document.getElementById('diaryStarsConfirmBtn');
+  if (confirmBtn) confirmBtn.disabled = true;
+
   try {
-    buttons.forEach(btn => { btn.disabled = true; });
     const r = await fetch(`${API_URL}/api/diary/stars/rate`, {
       method: 'POST',
       headers: diaryHeaders(),
@@ -172,20 +245,20 @@ async function submitDiaryStars(value) {
       const data = await r.json();
       closeDiaryStarsPopup();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      showToast(`✅ ${name}: ${data.points_delta >= 0 ? '+' : ''}${data.points_delta}★`);
+      const delta = data.points_delta;
+      showToast(`✅ ${name}: ${delta >= 0 ? '+' : ''}${delta}★`);
       loadDiaryStarsList();
     } else {
-      let errorText = 'Ошибка при начислении.';
-      try {
-        const data = await r.json();
-        if (data.detail) errorText = data.detail;
-      } catch(e) {}
+      let errorText = 'Ошибка при начислении';
+      try { const d = await r.json(); if (d.detail) errorText = d.detail; } catch(e) {}
       showToast(errorText);
+      cancelDiaryStarsAction();
     }
   } catch(e) {
-    showToast('Нет соединения.');
+    showToast('Нет соединения');
+    cancelDiaryStarsAction();
   } finally {
-    buttons.forEach(btn => { btn.disabled = false; });
+    if (confirmBtn) confirmBtn.disabled = false;
   }
 }
 
