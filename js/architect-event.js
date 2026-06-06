@@ -22,7 +22,7 @@ const ARCHITECT_PHASE_MUSIC = {
   2: 'architect_phase2_music.mp3',
   3: 'architect_phase3_music.mp3'
 };
-const ARCHITECT_LOBBY_MUSIC = ''; // Set to filename when lobby track is added
+const ARCHITECT_LOBBY_MUSIC = 'architector_ivent_lobby_theme.mp3';
 
 const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
 const ARCHITECT_MUSIC_FADE_MS = 1400;
