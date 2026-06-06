@@ -489,12 +489,12 @@
         <div>
           <div class="rules-title" style="font-size:13px;">фиолетовый свиток <span style="color:var(--text2);">— 20%</span></div>
           <div class="rules-desc">
-            焰莲使者 Страж Огня — Феникс: до +25★ после первого штрафа дня<br>
-            九尾狐灵 Лиса-Оборотень — Обман: раз в день +30★ превращаются в +60★<br>
-            桃花仙子 Небесная Фея — Цветение: +10★ за первую отметку<br>
-            文曲星君 Звезда Литературы — Мудрость: +15★ за дневник на 3★<br>
-            木灵仙君 Дух Леса — Урожай: +8★ за утреннюю отметку<br>
-            海灵仙后 Дух Морей — Волна: каждая 3-я молитва +20★<br>
+            焰莲使者 Страж Огня — Феникс: до +25★ после первого штрафа дня; провал рейда возвращает 10★<br>
+            九尾狐灵 Лиса-Оборотень — Обман: раз в день +30★ превращаются в +60★; первый подарок дня — налог 15★ вместо 20★<br>
+            桃花仙子 Небесная Фея — Цветение: +10★ за первую отметку; +10★ за полный день утро+вечер<br>
+            文曲星君 Звезда Литературы — Мудрость: +15★ за дневник на 3★; +10★ за бонусную строку<br>
+            木灵仙君 Дух Леса — Урожай: +8★ за утреннюю отметку; +6★ за первую ручную перекличку<br>
+            海灵仙后 Дух Морей — Волна: каждая 3-я молитва +20★; первый выполненный контракт +5★<br>
             嫦娥仙子 Богиня Луны — Жемчужина: дубль даёт +50★
           </div>
         </div>
@@ -504,8 +504,8 @@
         <div>
           <div class="rules-title" style="font-size:13px;">золотой свиток <span style="color:var(--text2);">— 1%</span></div>
           <div class="rules-desc">
-            岩王帝君 Архонт Земли — Каменный контракт: -5% к цене магазина<br>
-            紫微星君 Императорская Звезда — Звёздный суд: первый штраф дня -15★
+            岩王帝君 Архонт Земли — Каменный контракт: -5% к цене магазина; -1★ комиссии контракта раз в день; первая покупка +1 скан<br>
+            紫微星君 Императорская Звезда — Звёздный суд: первый штраф дня -15★; дневник 3★ даёт +10★; победа в рейде +10★; провал рейда +15★
           </div>
         </div>
       </div>
@@ -1523,7 +1523,11 @@
           <div style="font-size:9px;color:rgba(192,160,64,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-shield-star" style="font-size:24px;color:#c0a040;min-width:28px;text-align:center;"></i>
-            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Каменный контракт</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Постоянная скидка -5% в магазине. Работает вместе с Гуаньси.</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Каменный контракт</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Постоянная скидка -5% в магазине, работает вместе с Гуаньси</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-file-invoice" style="font-size:24px;color:#c0a040;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Контракт 合同</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">-1★ к комиссии контракта раз в день; первая покупка дня даёт +1 скан</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1531,7 +1535,7 @@
           </div>
         </div>
         <div style="margin-top:12px;padding:10px;background:rgba(192,160,64,0.08);border:1px solid rgba(192,160,64,0.25);border-radius:8px;font-size:10px;color:rgba(192,160,64,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
-          ⚠️ ШАНС ВЫПАДЕНИЯ: 1% // ЗОЛОТОЙ КЕЙС
+          ⚠️ ШАНС ВЫПАДЕНИЯ: 1%
         </div>
       </div>
     </div>
@@ -1558,13 +1562,17 @@
             <i class="ti ti-gavel" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Звёздный суд 星判</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Первый штраф дня автоматически уменьшается на 15★</div></div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-book" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Небесный приговор 天断</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Дневник на 3★ даёт +10★; победа в рейде +10★; провал рейда возвращает 15★</div></div>
+          </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
           </div>
         </div>
         <div style="margin-top:12px;padding:10px;background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.25);border-radius:8px;font-size:10px;color:rgba(155,89,182,0.8);font-family:monospace;text-align:center;">
-          ⚠️ ШАНС ВЫПАДЕНИЯ: 1% // ЗОЛОТОЙ КЕЙС
+          ⚠️ ШАНС ВЫПАДЕНИЯ: 1%
         </div>
       </div>
     </div>
@@ -1590,6 +1598,10 @@
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-refresh" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Обман судьбы 狐惑</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в день молитва +30★ превращается в +60★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-gift" style="font-size:24px;color:#9b59b6;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Лисья хитрость 狐计</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Первый подарок дня платит налог 15★ вместо 20★</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1621,6 +1633,10 @@
             <i class="ti ti-flame" style="font-size:24px;color:#e05030;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Феникс 凤凰</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">После первого штрафа за день автоматически возвращает до 25★</div></div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-shield" style="font-size:24px;color:#e05030;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Огненная защита 火盾</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Первый провал рейда возвращает 10★</div></div>
+          </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
@@ -1650,6 +1666,10 @@
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-hearts" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Цветение 天赐</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за первую утреннюю или вечернюю отметку дня</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-sun-moon" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Полный день 全日</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Ещё +10★ за полный день утро+вечер</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
@@ -1681,6 +1701,10 @@
             <i class="ti ti-pencil" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Мудрость Звезды 文星</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+15★ за дневник, который получил 3★</div></div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-writing" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Бонусная строка 附诗</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+10★ за бонусную строку дневника</div></div>
+          </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
@@ -1711,6 +1735,10 @@
             <i class="ti ti-plant" style="font-size:24px;color:#4a9640;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Утренний урожай 晨收</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+8★ за своевременную утреннюю отметку</div></div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-users" style="font-size:24px;color:#4a9640;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Лесная перекличка 林点</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+6★ за первую ручную перекличку дня</div></div>
+          </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Прочность</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">3 заряда</div></div>
@@ -1740,6 +1768,10 @@
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
             <i class="ti ti-waves" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
             <div><div style="font-size:13px;font-weight:700;color:var(--text);">Морская волна 海浪</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Каждая 3-я молитва за день даёт бонус +20★</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <i class="ti ti-clipboard-check" style="font-size:24px;color:#4a7acc;min-width:28px;text-align:center;"></i>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);">Морской контракт 海约</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Первый выполненный контракт дня даёт +5★</div></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
             <i class="ti ti-battery-charging" style="font-size:24px;color:#4ecdc4;min-width:28px;text-align:center;"></i>
