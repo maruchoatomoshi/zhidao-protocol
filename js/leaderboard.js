@@ -38,6 +38,7 @@ function updatePoints() {
 }
 
 function updateRatingPoints() {
+  if (currentUserId) loadPoints(currentUserId);
 }
 
 // ===== КОНФИГ =====
