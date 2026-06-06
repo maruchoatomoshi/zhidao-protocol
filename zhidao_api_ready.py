@@ -397,7 +397,10 @@ ARCHITECT_QUESTION_SEEDS = {
 
 
 def get_conn():
-    return sqlite3.connect('/root/zhidao.db')
+    conn = sqlite3.connect('/root/zhidao.db', timeout=10)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    return conn
 
 
 def normalize_expected_student_name(value: str) -> str:

@@ -233,7 +233,8 @@ async function submitDiaryStars() {
   };
 
   const confirmBtn = document.getElementById('diaryStarsConfirmBtn');
-  if (confirmBtn) confirmBtn.disabled = true;
+  const originalText = confirmBtn ? confirmBtn.textContent : '';
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '...'; }
 
   try {
     const r = await fetch(`${API_URL}/api/diary/stars/rate`, {
@@ -258,7 +259,7 @@ async function submitDiaryStars() {
     showToast('Нет соединения');
     cancelDiaryStarsAction();
   } finally {
-    if (confirmBtn) confirmBtn.disabled = false;
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = originalText; }
   }
 }
 
