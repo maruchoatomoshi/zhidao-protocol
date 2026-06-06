@@ -6794,6 +6794,37 @@ async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header
     return get_event_snapshot(event_id)
 
 
+@app.post("/api/events/{event_id}/reset")
+async def reset_event(event_id: int, x_admin_id: int = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    conn = get_conn()
+    c = conn.cursor()
+    event_row = fetch_event_row(c, event_id)
+    if not event_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    max_hp = event_row["max_hp"] or ARCHITECT_DEFAULT_HP
+    c.execute(
+        """UPDATE events
+           SET state='REGISTRATION', phase=1, current_hp=?,
+               phase_started_at=NULL, started_at=NULL, ended_at=NULL,
+               final_phase_deadline=NULL, vulnerability_until=NULL,
+               overload_pressure=0, mvp_user_id=NULL
+           WHERE id=?""",
+        (max_hp, event_id),
+    )
+    # Clear logs and action history for a clean test run
+    c.execute("DELETE FROM event_logs WHERE event_id=?", (event_id,))
+    c.execute("DELETE FROM event_actions WHERE event_id=?", (event_id,))
+    add_event_log(c, event_id, "system", "Ивент сброшен администратором. Регистрация открыта.")
+    conn.commit()
+    conn.close()
+    return get_event_snapshot(event_id)
+
+
 @app.get("/api/events/{event_id}/question")
 async def get_event_question(event_id: int, telegram_id: int, action_type: str):
     snapshot = get_event_snapshot(event_id)
