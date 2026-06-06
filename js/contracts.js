@@ -55,6 +55,49 @@ async function contractFetch(url, options = {}, timeoutMs = 12000) {
   }
 }
 
+function getCurrentContractUserName() {
+  return (document.getElementById('username')?.textContent || tg?.initDataUnsafe?.user?.first_name || 'Игрок').trim();
+}
+
+function updateContractInCaches(id, patch = {}) {
+  let updatedContract = null;
+  const updateOne = (contract) => {
+    if (!contract || Number(contract.id) !== Number(id)) return contract;
+    updatedContract = { ...contract, ...patch };
+    return updatedContract;
+  };
+  contractsOpenCache = contractsOpenCache.map(updateOne).filter(c => c.status === 'open');
+  contractsMyCache = contractsMyCache.map(updateOne);
+  if (updatedContract && !contractsMyCache.some(c => Number(c.id) === Number(id))) {
+    contractsMyCache.unshift(updatedContract);
+  }
+  renderContractsFromCache();
+  return updatedContract;
+}
+
+function removeContractFromCaches(id) {
+  contractsOpenCache = contractsOpenCache.filter(c => Number(c.id) !== Number(id));
+  contractsMyCache = contractsMyCache.filter(c => Number(c.id) !== Number(id));
+  renderContractsFromCache();
+}
+
+function switchContractsTabLocal(tab) {
+  contractsActiveTab = ['my', 'disputed'].includes(tab) ? tab : 'open';
+  const openEl = document.getElementById('contracts-tab-open');
+  const myEl = document.getElementById('contracts-tab-my');
+  const disputedEl = document.getElementById('contracts-tab-disputed');
+  const btnOpen = document.getElementById('ctab-open');
+  const btnMy = document.getElementById('ctab-my');
+  const btnDisputed = document.getElementById('ctab-disputed');
+  if (openEl) openEl.style.display = contractsActiveTab === 'open' ? 'block' : 'none';
+  if (myEl) myEl.style.display = contractsActiveTab === 'my' ? 'block' : 'none';
+  if (disputedEl) disputedEl.style.display = contractsActiveTab === 'disputed' ? 'block' : 'none';
+  if (btnOpen) btnOpen.classList.toggle('active', contractsActiveTab === 'open');
+  if (btnMy) btnMy.classList.toggle('active', contractsActiveTab === 'my');
+  if (btnDisputed) btnDisputed.classList.toggle('active', contractsActiveTab === 'disputed');
+  renderContractsFromCache();
+}
+
 function getContractMaxReward() {
   return isAdmin ? CONTRACT_ADMIN_MAX_REWARD : CONTRACT_MAX_REWARD;
 }
@@ -388,7 +431,9 @@ function renderContractCard(c, showActions) {
     : '';
 
   const creatorName = c.creator_name || '?';
-  const avatarInitials = creatorName.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const avatarInitials = c.is_anonymous
+    ? '隐'
+    : creatorName.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   const creatorAvatarHtml = c.creator_avatar_url
     ? `<img src="${escapeHtml(c.creator_avatar_url)}" alt="">`
     : `<span>${escapeHtml(avatarInitials || '?')}</span>`;
@@ -471,11 +516,13 @@ function closeCreateContractModal() {
   const descEl  = document.getElementById('contractDesc');
   const catEl   = document.getElementById('contractCategory');
   const rewEl   = document.getElementById('contractReward');
+  const anonEl  = document.getElementById('contractAnonymous');
   const errEl   = document.getElementById('contractCreateError');
   if (titleEl) titleEl.value = '';
   if (descEl)  descEl.value  = '';
   if (catEl)   catEl.value   = 'other';
   if (rewEl)   rewEl.value   = '20';
+  if (anonEl)  anonEl.checked = false;
   if (errEl)   errEl.style.display = 'none';
   updateContractFeePreview();
 }
@@ -502,6 +549,7 @@ async function submitCreateContract() {
   const desc     = (document.getElementById('contractDesc')?.value || '').trim();
   const category = document.getElementById('contractCategory')?.value || 'other';
   const reward   = parseInt(document.getElementById('contractReward')?.value) || 0;
+  const isAnonymous = !!document.getElementById('contractAnonymous')?.checked;
   const errEl    = document.getElementById('contractCreateError');
 
   const showErr = (msg) => {
@@ -518,14 +566,38 @@ async function submitCreateContract() {
     const r = await contractFetch(`${API_URL}/api/contracts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Telegram-Id': String(currentUserId) },
-      body: JSON.stringify({ title, description: desc, category, reward_stars: reward }),
+      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous }),
     });
     const data = await r.json();
     if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
     closeCreateContractModal();
     currentPoints = Math.max(0, currentPoints - reward);
     updatePoints();
-    showContractsTab('my');
+    const localContract = {
+      id: data.id,
+      title,
+      description: desc,
+      category,
+      reward_stars: reward,
+      fee_stars: data.fee_stars,
+      payout_stars: data.payout_stars,
+      creator_telegram_id: currentUserId,
+      assignee_telegram_id: null,
+      creator_is_admin: !!isAdmin,
+      creator_name: getCurrentContractUserName(),
+      assignee_name: null,
+      creator_avatar_url: null,
+      assignee_avatar_url: null,
+      is_anonymous: isAnonymous,
+      status: 'open',
+      is_suspicious: false,
+      suspicious_reason: null,
+      created_at: new Date().toISOString(),
+      role: 'creator',
+    };
+    contractsMyCache.unshift(localContract);
+    contractsOpenCache.unshift(localContract);
+    switchContractsTabLocal('my');
   } catch (e) {
     showErr('Нет соединения');
   }
@@ -545,8 +617,14 @@ async function acceptContract(id) {
       tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось принять', buttons: [{ type: 'ok' }] });
       return;
     }
-    showContractsTab('my');
-    refreshContractsAfterAction();
+    updateContractInCaches(id, {
+      status: 'accepted',
+      assignee_telegram_id: currentUserId,
+      assignee_name: getCurrentContractUserName(),
+      accepted_at: new Date().toISOString(),
+      role: 'assignee',
+    });
+    switchContractsTabLocal('my');
   } catch (e) {
     tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
   }
@@ -570,7 +648,7 @@ async function completeContract(id) {
         tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось завершить', buttons: [{ type: 'ok' }] });
         return;
       }
-      refreshContractsAfterAction();
+      updateContractInCaches(id, { status: 'completed', completed_at: new Date().toISOString() });
     } catch (e) {
       tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
     }
@@ -599,7 +677,7 @@ async function cancelContract(id) {
         currentPoints += data.refunded;
         updatePoints();
       }
-      refreshContractsAfterAction();
+      removeContractFromCaches(id);
     } catch (e) {
       tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
     }
@@ -624,7 +702,8 @@ async function disputeContract(id) {
         tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось открыть спор', buttons: [{ type: 'ok' }] });
         return;
       }
-      refreshContractsAfterAction();
+      updateContractInCaches(id, { status: 'disputed', disputed_at: new Date().toISOString() });
+      switchContractsTabLocal('disputed');
     } catch (e) {
       tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
     }

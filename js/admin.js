@@ -1348,6 +1348,7 @@ function adminRenderContractCard(c) {
       <div class="admin-contract-titlebox">
         <span class="admin-contract-category">${CAT[c.category]||'📦'}</span>
         <strong>${escapeHtml(c.title)}</strong>
+        ${c.is_anonymous ? '<span class="admin-contract-anon">анонимно для детей</span>' : ''}
       </div>
       <div class="admin-contract-side">
         <span class="admin-contract-status" style="--admin-contract-status:${sc};">${sr}</span>

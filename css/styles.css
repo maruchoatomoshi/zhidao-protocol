@@ -3659,6 +3659,18 @@ body.is-admin .more-item.admin-only-item::before {
   overflow-wrap: anywhere;
 }
 
+.admin-contract-anon {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid rgba(230,126,34,0.36);
+  border-radius: 999px;
+  color: #e67e22;
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .admin-contract-category {
   flex: 0 0 auto;
   font-size: 11px;
@@ -13072,6 +13084,43 @@ body.is-architect .profile-card-spark.spark-bl {
   opacity: 0.92;
 }
 
+.contract-privacy-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0 12px;
+  padding: 10px 11px;
+  border: 1px solid var(--contract-card-border);
+  border-radius: 12px;
+  background: var(--contract-muted-bg);
+  cursor: pointer;
+}
+
+.contract-privacy-toggle input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--contract-accent);
+}
+
+.contract-privacy-toggle span {
+  display: grid;
+  gap: 3px;
+}
+
+.contract-privacy-toggle b {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.contract-privacy-toggle small {
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
 .contract-warning {
   margin-top: 7px;
   color: var(--contract-danger);
@@ -13378,9 +13427,22 @@ body.theme-genshin-light .contract-status {
 body.theme-nw-light .contract-status-hint,
 body.theme-genshin-light .contract-status-hint,
 body.theme-nw-light .contract-flow-labels,
-body.theme-genshin-light .contract-flow-labels {
+body.theme-genshin-light .contract-flow-labels,
+body.theme-nw-light .contract-privacy-toggle small,
+body.theme-genshin-light .contract-privacy-toggle small {
   color: #5d5345;
   opacity: 1;
+}
+
+body.theme-nw-light .contract-privacy-toggle,
+body.theme-genshin-light .contract-privacy-toggle {
+  background: rgba(255,255,255,0.74);
+  border-color: rgba(80,58,35,0.16);
+}
+
+body.theme-nw-light .contract-privacy-toggle b,
+body.theme-genshin-light .contract-privacy-toggle b {
+  color: #181612;
 }
 
 body.theme-nw-light .contract-flow::before,

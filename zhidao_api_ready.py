@@ -872,11 +872,16 @@ def migrate_db():
                   status TEXT NOT NULL DEFAULT 'open',
                   is_suspicious INTEGER NOT NULL DEFAULT 0,
                   suspicious_reason TEXT DEFAULT NULL,
+                  is_anonymous INTEGER NOT NULL DEFAULT 0,
                   created_at TEXT NOT NULL,
                   accepted_at TEXT DEFAULT NULL,
                   completed_at TEXT DEFAULT NULL,
                   cancelled_at TEXT DEFAULT NULL,
                   disputed_at TEXT DEFAULT NULL)''')
+    c.execute("PRAGMA table_info(contracts)")
+    contract_columns = {row[1] for row in c.fetchall()}
+    if 'is_anonymous' not in contract_columns:
+        c.execute("ALTER TABLE contracts ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0")
     c.execute('''CREATE TABLE IF NOT EXISTS economy_log
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER NOT NULL,
@@ -6746,9 +6751,12 @@ def _safe_contract_avatar_url(avatar_url):
 
 def _contract_to_dict(row, creator_name=None, assignee_name=None,
                       creator_avatar_url=None, assignee_avatar_url=None,
-                      viewer_id=None):
+                      viewer_id=None, is_anonymous=False, public_view=False):
     reward = row[4]
     fee = row[5]
+    hide_creator = bool(public_view and is_anonymous and viewer_id != row[6])
+    public_creator_name = "Анонимный заказчик" if hide_creator else (creator_name or "Аноним")
+    public_creator_avatar = None if hide_creator else _safe_contract_avatar_url(creator_avatar_url)
     return {
         "id": row[0],
         "title": row[1],
@@ -6757,13 +6765,14 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
         "reward_stars": reward,
         "fee_stars": fee,
         "payout_stars": reward - fee,
-        "creator_telegram_id": row[6],
+        "creator_telegram_id": None if hide_creator else row[6],
         "assignee_telegram_id": row[7],
-        "creator_is_admin": row[6] in ADMIN_IDS,
-        "creator_name": creator_name or "Аноним",
+        "creator_is_admin": False if hide_creator else row[6] in ADMIN_IDS,
+        "creator_name": public_creator_name,
         "assignee_name": assignee_name,
-        "creator_avatar_url": _safe_contract_avatar_url(creator_avatar_url),
+        "creator_avatar_url": public_creator_avatar,
         "assignee_avatar_url": _safe_contract_avatar_url(assignee_avatar_url),
+        "is_anonymous": bool(is_anonymous),
         "status": row[8],
         "is_suspicious": bool(row[9]),
         "suspicious_reason": row[10],
@@ -6808,7 +6817,8 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
         '''SELECT id, title, description, category, reward_stars, fee_stars,
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
-                  created_at, accepted_at, completed_at, cancelled_at, disputed_at
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                  is_anonymous
            FROM contracts
            WHERE status='open'
            ORDER BY created_at DESC
@@ -6818,7 +6828,7 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row, cn, an, ca, aa, x_telegram_id))
+        result.append(_contract_to_dict(row[:16], cn, an, ca, aa, x_telegram_id, bool(row[16]), True))
     conn.close()
     return result
 
@@ -6834,7 +6844,8 @@ async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
         '''SELECT id, title, description, category, reward_stars, fee_stars,
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
-                  created_at, accepted_at, completed_at, cancelled_at, disputed_at
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                  is_anonymous
            FROM contracts
            WHERE creator_telegram_id=? OR assignee_telegram_id=?
            ORDER BY created_at DESC
@@ -6845,7 +6856,7 @@ async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row, cn, an, ca, aa, x_telegram_id))
+        result.append(_contract_to_dict(row[:16], cn, an, ca, aa, x_telegram_id, bool(row[16]), False))
     conn.close()
     return result
 
@@ -6858,6 +6869,7 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
     title = str(data.get("title") or "").strip()
     description = str(data.get("description") or "").strip()
     category = str(data.get("category") or "other").strip()
+    is_anonymous = bool(data.get("is_anonymous"))
     try:
         reward = int(data.get("reward_stars"))
     except (TypeError, ValueError):
@@ -6915,9 +6927,9 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
     c.execute(
         '''INSERT INTO contracts
            (title, description, category, reward_stars, fee_stars,
-            creator_telegram_id, status, is_suspicious, suspicious_reason, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)''',
-        (title, description, category, reward, fee, x_telegram_id, int(is_susp), susp_reason, now_str),
+            creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)''',
+        (title, description, category, reward, fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str),
     )
     contract_id = c.lastrowid
     log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
@@ -7104,7 +7116,7 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
-                      u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url
+                      u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
                LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
@@ -7118,7 +7130,7 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
-                      u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url
+                      u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
                LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
@@ -7127,9 +7139,11 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
     rows = c.fetchall()
     conn.close()
     return [
-        {**_contract_to_dict(row[:16], row[16], row[17], row[18], row[19]),
+        {**_contract_to_dict(row[:16], row[16], row[17], row[18], row[19], None, bool(row[20]), False),
          "creator_name": row[16], "assignee_name": row[17],
-         "creator_avatar_url": row[18], "assignee_avatar_url": row[19]}
+         "creator_avatar_url": _safe_contract_avatar_url(row[18]),
+         "assignee_avatar_url": _safe_contract_avatar_url(row[19]),
+         "is_anonymous": bool(row[20])}
         for row in rows
     ]
 
