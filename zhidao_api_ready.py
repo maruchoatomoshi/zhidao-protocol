@@ -362,6 +362,54 @@ EVENT_MODIFIER_ROLE_MAP = {
     "card_moon": ("card", "defense"),
 }
 
+RAID_QUESTION_SEEDS = [
+    {
+        "prompt": "Сигнал перехвачен. Расшифруй: 出口 (chūkǒu) — что это?",
+        "option_a": "Вход", "option_b": "Выход", "option_c": "Склад",
+        "correct_option": "b", "explanation": "出口 — выход, точка эвакуации отряда.",
+    },
+    {
+        "prompt": "Бот-охранник задаёт вопрос: 你叫什么名字？ Что он спрашивает?",
+        "option_a": "Твой возраст", "option_b": "Твоё имя", "option_c": "Пароль доступа",
+        "correct_option": "b", "explanation": "你叫什么名字？ — как тебя зовут?",
+    },
+    {
+        "prompt": "Перехвачена команда цели: 现在几点？ Что запрашивает система?",
+        "option_a": "Местоположение", "option_b": "Уровень угрозы", "option_c": "Текущее время",
+        "correct_option": "c", "explanation": "现在几点？ — который сейчас час?",
+    },
+    {
+        "prompt": "Агент передаёт счёт ресурсов: 我有五十分。 Сколько единиц?",
+        "option_a": "15", "option_b": "50", "option_c": "500",
+        "correct_option": "b", "explanation": "五十 (wǔshí) — пятьдесят.",
+    },
+    {
+        "prompt": "Цель ведёт переговоры в кафе. Слышно: 你吃什么？ О чём речь?",
+        "option_a": "Что ты пьёшь", "option_b": "Сколько платишь", "option_c": "Что ты будешь есть",
+        "correct_option": "c", "explanation": "你吃什么？ — что ты будешь есть?",
+    },
+    {
+        "prompt": "Тревожный сигнал системы: 危险！ Что это значит?",
+        "option_a": "Опасность", "option_b": "Безопасно", "option_c": "Продолжать",
+        "correct_option": "a", "explanation": "危险 (wēixiǎn) — опасность.",
+    },
+    {
+        "prompt": "Навигатор передаёт: 左转。 Куда повернуть?",
+        "option_a": "Направо", "option_b": "Назад", "option_c": "Налево",
+        "correct_option": "c", "explanation": "左 (zuǒ) — лево. 左转 — повернуть налево.",
+    },
+    {
+        "prompt": "Агент легендируется: 我是学生。 Кем он представляется?",
+        "option_a": "Врачом", "option_b": "Студентом", "option_c": "Охранником",
+        "correct_option": "b", "explanation": "学生 (xuésheng) — студент / ученик.",
+    },
+    {
+        "prompt": "Шифрованный запрос ресурсов: 这是多少钱？ Что запрашивают?",
+        "option_a": "Где находится объект?", "option_b": "Когда начало операции?", "option_c": "Сколько это стоит?",
+        "correct_option": "c", "explanation": "这是多少钱？ — сколько это стоит?",
+    },
+]
+
 ARCHITECT_QUESTION_SEEDS = {
     "attack": [
         {"prompt": "Как переводится 买东西?", "option_a": "Покупать вещи", "option_b": "Идти домой", "option_c": "Пить воду", "correct_option": "a", "explanation": "买东西 — покупать вещи."},
@@ -944,6 +992,27 @@ def ensure_seed_data():
         )
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('blackwall', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('architect_event', '0')")
+    # Raid schema migrations (idempotent)
+    try:
+        c.execute("ALTER TABLE raids ADD COLUMN correct_count INTEGER DEFAULT 0")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE raid_participants ADD COLUMN answer_correct INTEGER DEFAULT 0")
+    except Exception:
+        pass
+    # Seed raid questions
+    c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='raid'")
+    if c.fetchone()[0] == 0:
+        created_at = datetime.utcnow().isoformat()
+        for q in RAID_QUESTION_SEEDS:
+            c.execute(
+                '''INSERT INTO event_questions
+                   (event_code, action_type, difficulty, prompt, option_a, option_b, option_c, correct_option, explanation, created_at)
+                   VALUES (?, 'scan', 1, ?, ?, ?, ?, ?, ?, ?)''',
+                ('raid', q["prompt"], q["option_a"], q["option_b"], q["option_c"],
+                 q["correct_option"], q.get("explanation"), created_at),
+            )
     c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='architect'")
     architect_count = c.fetchone()[0]
     if architect_count == 0:
@@ -5789,6 +5858,23 @@ async def join_raid(data: dict):
         conn.close()
         raise HTTPException(status_code=409, detail="Already joined")
 
+    # Verify answer if provided
+    answer = str(data.get("answer") or "").strip().lower()
+    question_id = data.get("question_id")
+    answer_correct = 0
+    if answer in ("a", "b", "c") and question_id:
+        c.execute(
+            "SELECT correct_option FROM event_questions WHERE id=? AND event_code='raid'",
+            (int(question_id),),
+        )
+        q_row = c.fetchone()
+        if q_row and q_row[0] == answer:
+            answer_correct = 1
+    c.execute(
+        "UPDATE raid_participants SET answer_correct=? WHERE raid_id=? AND telegram_id=?",
+        (answer_correct, raid_id, telegram_id),
+    )
+
     c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (RAID_ENTRY_COST, telegram_id))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     raid_entry_balance = c.fetchone()[0] or 0
@@ -5801,7 +5887,11 @@ async def join_raid(data: dict):
     card_raid_bonus = 0
     if count >= RAID_MIN_PLAYERS or (telegram_id in ADMIN_IDS and count >= 1):
         launched = True
-        result = 'success' if random.random() < RAID_SUCCESS_CHANCE else 'defended'
+        c.execute("SELECT COALESCE(SUM(answer_correct),0) FROM raid_participants WHERE raid_id=?", (raid_id,))
+        correct_count = c.fetchone()[0] or 0
+        _chance_map = {0: 0.15, 1: 0.35, 2: 0.60, 3: 0.82}
+        win_chance = _chance_map.get(int(correct_count), RAID_SUCCESS_CHANCE)
+        result = 'success' if random.random() < win_chance else 'defended'
         c.execute("UPDATE raids SET status='finished', result=? WHERE id=?", (result, raid_id))
         c.execute("SELECT telegram_id FROM raid_participants WHERE raid_id=?", (raid_id,))
         all_participants = [r[0] for r in c.fetchall()]
@@ -5852,12 +5942,36 @@ async def join_raid(data: dict):
         "required_players": RAID_MIN_PLAYERS,
         "consumed_extra_attempt": consumed_extra_attempt,
         "card_raid_bonus": card_raid_bonus,
+        "answer_correct": answer_correct,
         "points_change": ((RAID_SUCCESS_REWARD - RAID_ENTRY_COST) if (launched and result == 'success') else -RAID_ENTRY_COST) + card_raid_bonus,
         "message": (
             f"🏆 РЕЙД УСПЕШЕН! +{RAID_SUCCESS_REWARD}★ каждому!" if (launched and result == 'success') else
             "🛡 АЛЬФАБОСС ЗАЩИТИЛСЯ! Ставки сгорели 🔥" if (launched and result == 'defended') else
             f"⚔️ Ты в отряде! Бойцов: {count}/{RAID_MIN_PLAYERS}"
         ),
+    }
+
+
+@app.get("/api/raid/question")
+def get_raid_question():
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT id, prompt, option_a, option_b, option_c
+           FROM event_questions
+           WHERE event_code='raid'
+           ORDER BY RANDOM() LIMIT 1'''
+    )
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="No raid questions available")
+    return {
+        "id": row[0],
+        "prompt": row[1],
+        "option_a": row[2],
+        "option_b": row[3],
+        "option_c": row[4],
     }
 
 

@@ -340,6 +340,125 @@ function getRaidErrorMessage(detail) {
     return 'Не удалось присоединиться к рейду.';
 }
 
+let raidSelectedAnswer = null;
+let raidCurrentQuestion = null;
+
+async function fetchRaidQuestion() {
+    try {
+        const r = await fetch(`${API_URL}/api/raid/question`);
+        if (!r.ok) return null;
+        return await r.json();
+    } catch(e) { return null; }
+}
+
+function showRaidQuestion(question) {
+    raidCurrentQuestion = question;
+    raidSelectedAnswer = null;
+
+    const block = document.getElementById('raid-question-block');
+    const prompt = document.getElementById('raid-q-prompt');
+    const opts = document.getElementById('raid-q-options');
+    const btn = document.getElementById('raid-q-submit');
+    if (!block || !prompt || !opts || !btn) return;
+
+    prompt.textContent = question.prompt;
+    opts.innerHTML = ['a', 'b', 'c'].map(opt => `
+        <button class="raid-q-option" data-opt="${opt}" onclick="selectRaidAnswer('${opt}')">
+            <span class="raid-q-opt-key">${opt.toUpperCase()}</span>
+            <span>${escapeHtml(question['option_' + opt])}</span>
+        </button>
+    `).join('');
+    btn.disabled = true;
+    block.style.display = 'block';
+    setRaidButtonState('Подключиться к нейролинку', true);
+}
+
+function selectRaidAnswer(opt) {
+    raidSelectedAnswer = opt;
+    document.querySelectorAll('.raid-q-option').forEach(el => {
+        el.classList.toggle('selected', el.dataset.opt === opt);
+    });
+    const btn = document.getElementById('raid-q-submit');
+    if (btn) btn.disabled = false;
+    try { tg.HapticFeedback.selectionChanged(); } catch(e) {}
+}
+
+async function submitRaidAnswer() {
+    if (!raidSelectedAnswer || !currentUserId || isJoiningRaid) return;
+    const block = document.getElementById('raid-question-block');
+    const btn = document.getElementById('raid-q-submit');
+    if (btn) btn.disabled = true;
+    isJoiningRaid = true;
+    setRaidProgressVisual(92, 'BREACH', 'Анализ передан. Подключаемся к контуру...', 'pending');
+    setRaidButtonState('Синхронизация...', true, '#e67e22', '#fff');
+    if (block) block.style.display = 'none';
+    await _executeRaidJoin(raidSelectedAnswer, raidCurrentQuestion && raidCurrentQuestion.id);
+}
+
+async function _executeRaidJoin(answer, questionId) {
+    try {
+        const payload = {telegram_id: currentUserId};
+        if (answer) payload.answer = answer;
+        if (questionId) payload.question_id = questionId;
+        const r = await fetch(`${API_URL}/api/raid/join`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await r.json();
+
+        if (!r.ok) {
+            showToast(getRaidErrorMessage(data.detail));
+            return;
+        }
+
+        if (typeof data.new_points === 'number') {
+            currentPoints = data.new_points;
+            updatePoints();
+        }
+
+        const correct = data.answer_correct;
+        if (answer) {
+            setRaidStatusText(
+                correct ? '✓ Анализ точный — уязвимость обнаружена.' : '✗ Анализ промахнулся. Продолжаем операцию.',
+                correct ? '#2ecc71' : '#e67e22'
+            );
+            await sleep(900);
+        }
+
+        if (data.launched && data.result === 'success') {
+            setRaidProgressVisual(100, 'VICTORY', 'Альфа-цель пробита. Награда зачислена.', 'success');
+            setRaidResultPanel('success', 'РЕЙД УСПЕШЕН', 'Команда вышла чисто. +100★ каждому участнику.');
+            launchConfetti(80);
+        } else if (data.launched && data.result === 'defended') {
+            setRaidProgressVisual(100, 'FAIL', 'Контур сорван. Операция провалена.', 'danger');
+            setRaidResultPanel('danger', 'РЕЙД СОРВАН', 'Система обнаружила отряд. Ставка сгорела.');
+        } else {
+            setRaidProgressVisual(
+                Math.min(((data.count || 1) / RAID_CONFIG.minPlayers) * 100, 100),
+                'LINKED',
+                `Бойцов в контуре: ${data.count || 1}/${RAID_CONFIG.minPlayers}`,
+                'pending'
+            );
+        }
+
+        try {
+            tg.HapticFeedback.notificationOccurred(
+                data.launched && data.result === 'defended' ? 'error' : 'success'
+            );
+        } catch(e) {}
+
+        showToast(data.message || 'Рейд обновлён.');
+        loadLeaderboard();
+        loadPoints(currentUserId);
+    } catch(e) {
+        showToast('Ошибка соединения с рейдом.');
+    } finally {
+        isJoiningRaid = false;
+        loadRaidStatus();
+    }
+}
+
 async function joinRaid() {
     if (isJoiningRaid) return;
     if (!currentUserId) { showToast('Откройте приложение через Telegram бота'); return; }
@@ -347,63 +466,20 @@ async function joinRaid() {
 
     tg.showPopup({
         title: '⚔️ Вступить в рейд?',
-        message: 'Ты ставишь 50★. Если отряд соберётся и операция пройдёт успешно, каждый участник получит +100★. При провале ставка сгорает.',
+        message: 'Ты ставишь 50★. Если отряд из 3+ человек соберётся — начнётся операция. Правильный анализ цели повышает шансы всей команды на победу.',
         buttons: [{id:'confirm', type:'default', text:'⚔️ В РЕЙД'}, {type:'cancel'}]
     }, async (btnId) => {
         if (btnId !== 'confirm') return;
 
-        isJoiningRaid = true;
-        setRaidProgressVisual(92, 'BREACH', 'Подключаем тебя к скрытому контуру...', 'pending');
-        setRaidButtonState('Синхронизация...', true, '#e67e22', '#fff');
-
-        try {
-            const r = await fetch(`${API_URL}/api/raid/join`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({telegram_id: currentUserId})
-            });
-            const data = await r.json();
-
-            if (!r.ok) {
-                showToast(getRaidErrorMessage(data.detail));
-                return;
-            }
-
-            if (typeof data.new_points === 'number') {
-                currentPoints = data.new_points;
-                updatePoints();
-            }
-
-            if (data.launched && data.result === 'success') {
-                setRaidProgressVisual(100, 'VICTORY', 'Альфа-цель пробита. Награда зачислена.', 'success');
-                setRaidResultPanel('success', 'РЕЙД УСПЕШЕН', 'Команда вышла чисто. Награда начислена.');
-                launchConfetti(80);
-            } else if (data.launched && data.result === 'defended') {
-                setRaidProgressVisual(100, 'FAIL', 'Контур сорван. Операция провалена.', 'danger');
-                setRaidResultPanel('danger', 'РЕЙД СОРВАН', 'Система заметила отряд. Ставка сгорела.');
-            } else {
-                setRaidProgressVisual(
-                    Math.min(((data.count || 1) / RAID_CONFIG.minPlayers) * 100, 100),
-                    'LINKED',
-                    `Бойцов в контуре: ${data.count || 1}/${RAID_CONFIG.minPlayers}`,
-                    'pending'
-                );
-            }
-
-            try {
-                tg.HapticFeedback.notificationOccurred(
-                    data.launched && data.result === 'defended' ? 'error' : 'success'
-                );
-            } catch(e) {}
-
-            showToast(data.message || 'Рейд обновлён.');
-            loadLeaderboard();
-            loadPoints(currentUserId);
-        } catch(e) {
-            showToast('Ошибка соединения с рейдом.');
-        } finally {
-            isJoiningRaid = false;
-            loadRaidStatus();
+        setRaidButtonState('Получение задания...', true);
+        const question = await fetchRaidQuestion();
+        if (question) {
+            showRaidQuestion(question);
+        } else {
+            isJoiningRaid = true;
+            setRaidProgressVisual(92, 'BREACH', 'Подключаем тебя к скрытому контуру...', 'pending');
+            setRaidButtonState('Синхронизация...', true, '#e67e22', '#fff');
+            await _executeRaidJoin(null, null);
         }
     });
 }

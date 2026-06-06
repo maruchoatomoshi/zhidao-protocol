@@ -10527,6 +10527,124 @@ body.is-architect::after {
     line-height: 1.5;
 }
 
+.raid-question-block {
+    margin: 0 0 10px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,255,136,0.20);
+    background: rgba(0,20,10,0.75);
+    animation: fadeIn 0.22s ease-out;
+}
+.raid-q-kicker {
+    font-family: monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: rgba(0,255,136,0.6);
+    margin-bottom: 8px;
+}
+.raid-q-prompt {
+    font-family: monospace;
+    font-size: 11px;
+    color: #d0ffe8;
+    line-height: 1.65;
+    margin-bottom: 10px;
+}
+.raid-q-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+.raid-q-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: rgba(0,255,136,0.04);
+    border: 1px solid rgba(0,255,136,0.14);
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text);
+    text-align: left;
+    width: 100%;
+    transition: border-color 0.15s, background 0.15s;
+}
+.raid-q-option.selected {
+    border-color: rgba(0,255,136,0.65);
+    background: rgba(0,255,136,0.10);
+    color: #d0ffe8;
+}
+.raid-q-opt-key {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,255,136,0.12);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(0,255,136,0.9);
+    flex-shrink: 0;
+}
+.raid-q-option.selected .raid-q-opt-key {
+    background: rgba(0,255,136,0.85);
+    color: #001a0a;
+}
+.raid-q-submit {
+    width: 100%;
+    padding: 9px;
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.30);
+    border-radius: 6px;
+    color: rgba(0,255,136,0.85);
+    font-family: monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.raid-q-submit:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+}
+.raid-q-submit:not(:disabled):active {
+    background: rgba(0,255,136,0.20);
+}
+
+/* Genshin theme question block */
+body.theme-genshin .raid-question-block {
+    background: rgba(240,235,220,0.80);
+    border-color: rgba(120,90,50,0.25);
+}
+body.theme-genshin .raid-q-kicker { color: rgba(120,80,30,0.7); }
+body.theme-genshin .raid-q-prompt { color: #3a2a10; }
+body.theme-genshin .raid-q-option {
+    background: rgba(180,140,80,0.08);
+    border-color: rgba(120,90,50,0.20);
+    color: #3a2a10;
+}
+body.theme-genshin .raid-q-option.selected {
+    border-color: rgba(120,80,30,0.60);
+    background: rgba(180,140,80,0.18);
+    color: #2a1a00;
+}
+body.theme-genshin .raid-q-opt-key {
+    background: rgba(180,140,80,0.18);
+    color: rgba(120,80,30,0.9);
+}
+body.theme-genshin .raid-q-option.selected .raid-q-opt-key {
+    background: rgba(160,110,40,0.80);
+    color: #fff8ea;
+}
+body.theme-genshin .raid-q-submit {
+    background: rgba(180,140,80,0.12);
+    border-color: rgba(120,80,30,0.35);
+    color: rgba(100,60,10,0.9);
+}
+
 .raid-roster-box {
     margin: 0 0 12px;
     padding: 10px;
