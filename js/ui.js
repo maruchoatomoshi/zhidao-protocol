@@ -413,7 +413,7 @@ function startBlackwallBoot(cb) {
   hideStartupCover();
 
   const LINES = [
-    { text: '> ZHIDAO PROTOCOL v2.7.0', delay: 0 },
+    { text: '> ZHIDAO PROTOCOL v2.9.0', delay: 0 },
     { text: '> INITIALIZING BLACKWALL...', delay: 260 },
     { text: '> ARCHITECT ACCESS CONFIRMED', delay: 280 },
     { text: '> CLEARANCE LEVEL: OMEGA', delay: 240 },

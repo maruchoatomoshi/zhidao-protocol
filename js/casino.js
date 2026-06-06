@@ -1163,7 +1163,7 @@ async function exchangeFragments(type) {
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
       showToast(`✅ Получен: ${data.name}\nОсталось фрагментов: ${data.protocol_fragments}`);
       if (type === 'implant') loadImplants(currentUserId);
-      else if (typeof loadGenshinCards === 'function') loadGenshinCards();
+      else loadCards(currentUserId);
     } catch(e) { showToast('Ошибка соединения'); }
   });
 }
