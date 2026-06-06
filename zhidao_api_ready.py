@@ -398,8 +398,6 @@ ARCHITECT_QUESTION_SEEDS = {
 
 def get_conn():
     conn = sqlite3.connect('/root/zhidao.db', timeout=10)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
     return conn
 
 
@@ -410,6 +408,9 @@ def normalize_expected_student_name(value: str) -> str:
 
 def init_db():
     conn = get_conn()
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA cache_size=-8000")
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (code TEXT PRIMARY KEY,
@@ -4304,7 +4305,7 @@ async def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int]
 
 
 @app.post("/api/diary/stars/rate")
-async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None)):
+def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None)):
     if not is_diary_staff(x_admin_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
