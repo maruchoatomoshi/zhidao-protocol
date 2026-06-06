@@ -11719,6 +11719,59 @@ body.is-architect .profile-card-spark.spark-bl {
   animation: architectResultImageReveal 1.8s ease-out forwards !important;
 }
 
+/* ── Lobby image glitch ──────────────────────────────────────── */
+
+/* Main image animation: gentle float with two glitch bursts per cycle */
+@keyframes lobbyBossFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25%       { transform: translateY(-7px) scale(1.006); }
+  50%       { transform: translateY(0) scale(1); }
+  75%       { transform: translateY(-4px) scale(1.003); }
+}
+
+@keyframes lobbyBossGlitch {
+  /* Clean phase */
+  0%, 78%, 86%, 94%, 100% {
+    filter: saturate(1.1) contrast(1.08) brightness(0.9);
+    clip-path: none;
+    transform: translate(0);
+  }
+  /* Burst 1: RGB split */
+  79%   { filter: saturate(3.5) contrast(1.6) hue-rotate(18deg) brightness(1.5); transform: translate(-6px, 0); clip-path: inset(27% 0 43% 0); }
+  79.5% { filter: saturate(3.5) contrast(1.6) hue-rotate(-18deg) brightness(1.5); transform: translate(6px, 0);  clip-path: inset(58% 0 12% 0); }
+  80%   { filter: saturate(0.2) contrast(2.2) brightness(2.2); transform: translate(-2px, 1px); clip-path: inset(0 0 0 0); }
+  80.5% { filter: saturate(1.1) contrast(1.08) brightness(0.9); transform: translate(0); clip-path: none; }
+  /* Brief flicker */
+  83%   { filter: saturate(1.1) contrast(1.08) brightness(0.9); }
+  83.3% { filter: saturate(0.1) brightness(2.5) contrast(1.8); }
+  83.6% { filter: saturate(1.1) contrast(1.08) brightness(0.9); }
+  /* Burst 2: horizontal tear */
+  87%   { transform: translate(10px, 0); filter: saturate(2.5) hue-rotate(22deg); clip-path: inset(18% 0 52% 0); }
+  87.5% { transform: translate(-10px, 0); filter: saturate(2.5) hue-rotate(-22deg); clip-path: inset(54% 0 16% 0); }
+  88%   { transform: translate(4px, 0); filter: saturate(1.5) brightness(1.4); clip-path: inset(35% 0 35% 0); }
+  88.5% { transform: translate(0); filter: saturate(1.1) contrast(1.08) brightness(0.9); clip-path: none; }
+}
+
+/* Scan-line intensification overlay during lobby */
+@keyframes lobbyScanFlicker {
+  0%, 78.9%, 80.6%, 86.9%, 88.6%, 100% { opacity: 0; }
+  79%, 80.5% { opacity: 1; }
+  87%, 88.5% { opacity: 0.7; }
+}
+
+.event-overlay.event-state-lobby #eventBossImage {
+  animation:
+    lobbyBossFloat  9s ease-in-out infinite,
+    lobbyBossGlitch 14s linear infinite;
+  will-change: transform, filter;
+}
+
+/* Scan line flash on top of image during glitch — uses hero::after which already sweeps */
+.event-overlay.event-state-lobby .event-hero::after {
+  animation: eventScanSweep 5.5s linear infinite, lobbyScanFlicker 14s linear infinite;
+  opacity: 0.6;
+}
+
 /* Result banner: hidden state (shown in DOM but invisible) */
 .event-overlay.event-terminal .event-lobby-card.result-banner-hidden {
   opacity: 0;

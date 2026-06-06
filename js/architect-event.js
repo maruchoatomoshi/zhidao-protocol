@@ -1,3 +1,5 @@
+const ARCHITECT_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lobby.png';
+
 const ARCHITECT_PHASE_IMAGES = {
   1: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png',
   2: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase2.png',
@@ -43,8 +45,9 @@ const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
 const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
 
 function getArchitectPhaseImage(eventData) {
-  if (!eventData) return ARCHITECT_PHASE_IMAGES[1];
+  if (!eventData) return ARCHITECT_LOBBY_IMAGE;
   const state = String(eventData.state || '').toUpperCase();
+  if (state === 'REGISTRATION') return ARCHITECT_LOBBY_IMAGE;
   if (ARCHITECT_TERMINAL_IMAGES[state]) return ARCHITECT_TERMINAL_IMAGES[state];
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_IMAGES[2];
@@ -523,6 +526,7 @@ function updateArchitectPhaseFxState(eventData) {
   if (!overlay) return;
 
   overlay.classList.remove(
+    'event-state-lobby',
     'event-state-active',
     'event-state-registration',
     'event-state-terminal',
@@ -536,6 +540,7 @@ function updateArchitectPhaseFxState(eventData) {
   );
 
   if (!eventData) {
+    overlay.classList.add('event-state-lobby');
     architectLastRenderedPhase = null;
     architectLastLogCount = 0;
     updateArchitectFinalTimer(null);
@@ -549,6 +554,7 @@ function updateArchitectPhaseFxState(eventData) {
   const phase = Math.max(1, Math.min(3, Number(eventData.phase || 1)));
   const overload = Number(eventData.overload_pressure || 0);
 
+  overlay.classList.toggle('event-state-lobby', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-active', isActive);
   overlay.classList.toggle('event-state-registration', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-terminal', isTerminal);
