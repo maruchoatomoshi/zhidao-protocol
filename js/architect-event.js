@@ -1228,6 +1228,9 @@ let isArchitectQuestionLoading = false;
 async function requestArchitectQuestion(actionType) {
   if (!currentArchitectEventId || !currentUserId) return;
 
+  // Immediate haptic so the button always feels responsive
+  try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
+
   const box = document.getElementById('eventQuestionBox');
   if (
     box &&
@@ -1248,6 +1251,10 @@ async function requestArchitectQuestion(actionType) {
   }
 
   if (isArchitectQuestionLoading) return;
+
+  // Show loading state on the button immediately
+  const btn = document.querySelector(`.event-action.${actionType}`);
+  if (btn) btn.classList.add('is-requesting');
 
   try {
     isArchitectQuestionLoading = true;
@@ -1283,6 +1290,7 @@ async function requestArchitectQuestion(actionType) {
     showToast('Ошибка соединения');
   } finally {
     isArchitectQuestionLoading = false;
+    if (btn) btn.classList.remove('is-requesting');
   }
 }
 
@@ -1374,8 +1382,15 @@ function closeArchitectQuestion() {
 async function submitArchitectAnswer(answerOption) {
   if (!currentArchitectEventId || !currentUserId || !pendingEventActionType) return;
 
+  // Capture and clear pending state immediately — prevents stale state if this
+  // function is re-entered or if an error/timer fires mid-flight.
+  const actionType = pendingEventActionType;
+  const questionId = pendingEventQuestionId;
+  pendingEventActionType = null;
+  pendingEventQuestionId = null;
+  pendingEventQuestion = null;
+
   try {
-    const actionType = pendingEventActionType;
     const payload = {
       event_id: currentArchitectEventId,
       telegram_id: currentUserId,
@@ -1384,7 +1399,7 @@ async function submitArchitectAnswer(answerOption) {
     };
 
     if (actionType !== 'sync') {
-      payload.question_id = pendingEventQuestionId;
+      payload.question_id = questionId;
       payload.answer_option = answerOption;
     }
 
@@ -1403,7 +1418,6 @@ async function submitArchitectAnswer(answerOption) {
 
     triggerArchitectActionFx(actionType, data.is_correct !== false);
     renderArchitectActionResult(actionType, data);
-    pendingEventActionType = null;
 
     if (data.is_correct === false && data.question_explanation) {
       setEventExplanation(`Неверно. ${data.question_explanation}`);
@@ -1421,8 +1435,6 @@ async function submitArchitectAnswer(answerOption) {
         : '';
       setEventExplanation('');
       renderArchitectAnswerFeedback(answerOption, data.is_correct !== false, explanation);
-      pendingEventQuestionId = null;
-      pendingEventQuestion = null;
     }
 
     await loadCurrentArchitectEvent();

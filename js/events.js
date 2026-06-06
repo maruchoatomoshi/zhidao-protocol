@@ -67,6 +67,10 @@ function openEventOverlay() {
   } else {
     architectMusicUnlocked = true;
   }
+  // Start lobby music synchronously in gesture context — iOS blocks autoplay on async calls
+  if (typeof switchArchitectMusic === 'function' && typeof ARCHITECT_LOBBY_MUSIC !== 'undefined') {
+    switchArchitectMusic(ARCHITECT_LOBBY_MUSIC);
+  }
   openArchitectEventEntryBanner();
 
   const log = document.getElementById('eventLog');
@@ -103,6 +107,14 @@ function closeEventOverlay() {
     stopArchitectMusicOnClose();
   } else {
     stopArchitectMusic(true);
+  }
+
+  // Clear question auto-close timer so it can't fire and corrupt state on re-entry
+  if (typeof clearArchitectQuestionAutoClose === 'function') {
+    clearArchitectQuestionAutoClose();
+  }
+  if (typeof closeArchitectQuestion === 'function') {
+    closeArchitectQuestion();
   }
 
   // Cancel pending result banner reveal timer

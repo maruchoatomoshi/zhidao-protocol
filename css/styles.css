@@ -7502,6 +7502,16 @@ body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
   animation: architectButtonFire 0.52s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
+.event-action.is-requesting {
+  opacity: 0.65;
+  animation: architectBtnRequestPulse 0.55s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes architectBtnRequestPulse {
+  from { opacity: 0.65; }
+  to   { opacity: 0.95; }
+}
+
 .event-action.attack.is-firing    { border-top-color: #ff6060; background: rgba(255,54,54,0.14); }
 .event-action.protocol.is-firing  { border-top-color: #ffe06a; background: rgba(255,200,48,0.14); }
 .event-action.sync.is-firing      { border-top-color: #8a9fff; background: rgba(91,112,255,0.14); }
