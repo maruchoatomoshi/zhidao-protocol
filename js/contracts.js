@@ -45,6 +45,16 @@ let contractsCategoryFilter = 'all';
 let contractsOpenCache = [];
 let contractsMyCache = [];
 
+async function contractFetch(url, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 function getContractMaxReward() {
   return isAdmin ? CONTRACT_ADMIN_MAX_REWARD : CONTRACT_MAX_REWARD;
 }
@@ -265,7 +275,7 @@ async function loadOpenContracts(options = {}) {
     el.innerHTML = '<div class="empty-state">Загрузка...</div>';
   }
   try {
-    const r = await fetch(`${API_URL}/api/contracts`, {
+    const r = await contractFetch(`${API_URL}/api/contracts`, {
       headers: currentUserId ? { 'X-Telegram-Id': String(currentUserId) } : {},
     });
     if (r.status === 403) {
@@ -306,7 +316,7 @@ async function loadMyContracts(options = {}) {
     targetEl.innerHTML = '<div class="empty-state">Загрузка...</div>';
   }
   try {
-    const r = await fetch(`${API_URL}/api/contracts/my`, {
+    const r = await contractFetch(`${API_URL}/api/contracts/my`, {
       headers: { 'X-Telegram-Id': String(currentUserId) },
     });
     if (r.status === 403) {
@@ -505,7 +515,7 @@ async function submitCreateContract() {
   if (reward < CONTRACT_MIN_REWARD || reward > maxReward) { showErr(`Награда: от ${CONTRACT_MIN_REWARD} до ${maxReward} ★`); return; }
 
   try {
-    const r = await fetch(`${API_URL}/api/contracts`, {
+    const r = await contractFetch(`${API_URL}/api/contracts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Telegram-Id': String(currentUserId) },
       body: JSON.stringify({ title, description: desc, category, reward_stars: reward }),
@@ -526,7 +536,7 @@ async function submitCreateContract() {
 async function acceptContract(id) {
   if (!currentUserId) return;
   try {
-    const r = await fetch(`${API_URL}/api/contracts/${id}/accept`, {
+    const r = await contractFetch(`${API_URL}/api/contracts/${id}/accept`, {
       method: 'POST',
       headers: { 'X-Telegram-Id': String(currentUserId) },
     });
@@ -551,7 +561,7 @@ async function completeContract(id) {
   }, async (btn) => {
     if (btn !== 'ok') return;
     try {
-      const r = await fetch(`${API_URL}/api/contracts/${id}/complete`, {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/complete`, {
         method: 'POST',
         headers: { 'X-Telegram-Id': String(currentUserId) },
       });
@@ -576,7 +586,7 @@ async function cancelContract(id) {
   }, async (btn) => {
     if (btn !== 'ok') return;
     try {
-      const r = await fetch(`${API_URL}/api/contracts/${id}/cancel`, {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/cancel`, {
         method: 'POST',
         headers: { 'X-Telegram-Id': String(currentUserId) },
       });
@@ -605,7 +615,7 @@ async function disputeContract(id) {
   }, async (btn) => {
     if (btn !== 'ok') return;
     try {
-      const r = await fetch(`${API_URL}/api/contracts/${id}/dispute`, {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/dispute`, {
         method: 'POST',
         headers: { 'X-Telegram-Id': String(currentUserId) },
       });

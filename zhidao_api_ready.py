@@ -6735,6 +6735,15 @@ async def get_event_leaderboard(event_id: int):
 # ДОСКА ПОРУЧЕНИЙ — CONTRACT BOARD
 # ============================================================
 
+def _safe_contract_avatar_url(avatar_url):
+    if not avatar_url:
+        return None
+    avatar_url = str(avatar_url)
+    if avatar_url.startswith("data:image/"):
+        return None
+    return avatar_url
+
+
 def _contract_to_dict(row, creator_name=None, assignee_name=None,
                       creator_avatar_url=None, assignee_avatar_url=None,
                       viewer_id=None):
@@ -6753,8 +6762,8 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
         "creator_is_admin": row[6] in ADMIN_IDS,
         "creator_name": creator_name or "Аноним",
         "assignee_name": assignee_name,
-        "creator_avatar_url": creator_avatar_url,
-        "assignee_avatar_url": assignee_avatar_url,
+        "creator_avatar_url": _safe_contract_avatar_url(creator_avatar_url),
+        "assignee_avatar_url": _safe_contract_avatar_url(assignee_avatar_url),
         "status": row[8],
         "is_suspicious": bool(row[9]),
         "suspicious_reason": row[10],
