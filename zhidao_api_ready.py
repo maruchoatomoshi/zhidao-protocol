@@ -337,15 +337,17 @@ CONTRACT_MIN_COMPLETE_SECONDS = 300
 CONTRACT_CATEGORIES = {'living', 'chinese', 'app', 'reminder', 'trade', 'other'}
 LATIN_RE = re.compile(r'[A-Za-z]')
 PINYIN_RE = re.compile(r"^(?:[A-Za-züÜvV:]+[1-5])+(?:[ '\\-](?:[A-Za-züÜvV:]+[1-5])+)*$")
-ARCHITECT_DEFAULT_HP = 1000
+ARCHITECT_DEFAULT_HP = 1200
 ARCHITECT_PHASE2_THRESHOLD = 0.7
 ARCHITECT_PHASE3_THRESHOLD = 0.3
 ARCHITECT_FINAL_PHASE_SECONDS = 180
-ARCHITECT_SYNC_WINDOW_COUNT = 3
-ARCHITECT_SYNC_WINDOW_SECONDS = 10
-ARCHITECT_VULNERABILITY_SECONDS = 8
+ARCHITECT_SYNC_WINDOW_COUNT = 2
+ARCHITECT_SYNC_WINDOW_SECONDS = 40
+ARCHITECT_VULNERABILITY_SECONDS = 20
 ARCHITECT_OVERLOAD_PENALTY_THRESHOLD = 10
 ARCHITECT_OVERLOAD_PENALTY_MULTIPLIER = 0.5
+ARCHITECT_BOSS_COUNTER_EVERY = 8
+ARCHITECT_BOSS_COUNTER_PRESSURE = 4
 
 EVENT_MODIFIER_ROLE_MAP = {
     "implant_red_dragon": ("implant", "assault"),
@@ -1660,15 +1662,17 @@ def choose_architect_question(c, action_type: str):
 def get_architect_base_value(phase: int, action_type: str, is_correct: bool) -> int:
     if action_type == "sync":
         return 0
-    if not is_correct:
-        return 0
 
     phase_values = {
         1: {"attack": 20, "protocol": 10, "stabilize": 10},
         2: {"attack": 8, "protocol": 28, "stabilize": 12},
         3: {"attack": 18, "protocol": 22, "stabilize": 18},
     }
-    return phase_values.get(phase, {}).get(action_type, 0)
+    full = phase_values.get(phase, {}).get(action_type, 0)
+    if not is_correct:
+        # Wrong answer: 25% partial hit (sloppy execution, not a full miss)
+        return max(0, round(full * 0.25))
+    return full
 
 
 def get_current_phase_active_field(phase: int) -> Optional[str]:
@@ -1700,7 +1704,7 @@ def maybe_trigger_sync_window(c, event_row: dict):
         open_vulnerability_window(c, event_row)
 
 
-def compute_event_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool):
+def compute_event_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool, telegram_id: int = 0):
     phase = event_row["phase"]
     role = participant.get("modifier_role")
     base_value = get_architect_base_value(phase, action_type, is_correct)
@@ -1709,6 +1713,14 @@ def compute_event_action_result(c, event_row: dict, participant: dict, action_ty
     final_value = base_value
     active_note = None
     pressure_delta = 0
+
+    # Phase-specific overload config
+    _overload_cfg = {
+        1: {"atk_delta": 0, "stab_delta": 0,  "threshold": 9999, "multiplier": 1.0},
+        2: {"atk_delta": 2, "stab_delta": -4,  "threshold": 15,   "multiplier": 0.75},
+        3: {"atk_delta": 5, "stab_delta": -8,  "threshold": ARCHITECT_OVERLOAD_PENALTY_THRESHOLD, "multiplier": ARCHITECT_OVERLOAD_PENALTY_MULTIPLIER},
+    }
+    oc = _overload_cfg.get(phase, _overload_cfg[1])
 
     if action_type == "sync":
         sync_value = 1
@@ -1736,9 +1748,9 @@ def compute_event_action_result(c, event_row: dict, participant: dict, action_ty
         }
 
     if action_type in ("attack", "protocol"):
-        pressure_delta = 5 if phase == 3 else 0
+        pressure_delta = oc["atk_delta"]
     elif action_type == "stabilize":
-        pressure_delta = -8 if phase == 3 else 0
+        pressure_delta = oc["stab_delta"]
 
     if role == "assault" and action_type == "attack" and final_value > 0:
         bonus = max(1, round(final_value * 0.2))
@@ -1777,13 +1789,26 @@ def compute_event_action_result(c, event_row: dict, participant: dict, action_ty
         final_value += bonus
         modifier_value += bonus
 
-    penalty_active = event_row["overload_pressure"] >= ARCHITECT_OVERLOAD_PENALTY_THRESHOLD
+    # Combo bonus: +15% if last attack/protocol action was same type by a different player
+    if action_type in ("attack", "protocol") and final_value > 0 and telegram_id:
+        c.execute(
+            """SELECT action_type, telegram_id FROM event_actions
+               WHERE event_id=? AND action_type IN ('attack','protocol')
+               ORDER BY id DESC LIMIT 1""",
+            (event_row["id"],),
+        )
+        last_atk = c.fetchone()
+        if last_atk and last_atk[0] == action_type and int(last_atk[1]) != int(telegram_id):
+            combo_bonus = max(1, round(final_value * 0.15))
+            final_value += combo_bonus
+            modifier_value += combo_bonus
+            active_note = (active_note or '') + f" COMBO +{combo_bonus}"
+
+    penalty_active = event_row["overload_pressure"] >= oc["threshold"]
     if penalty_active and action_type in ("attack", "protocol") and final_value > 0:
-        penalty_multiplier = ARCHITECT_OVERLOAD_PENALTY_MULTIPLIER
-        if role == "defense":
-            penalty_multiplier = 0.9
-        reduced = max(0, final_value - round(final_value * penalty_multiplier))
-        final_value = max(0, round(final_value * penalty_multiplier))
+        mult = max(oc["multiplier"], 0.9) if role == "defense" else oc["multiplier"]
+        reduced = max(0, final_value - round(final_value * mult))
+        final_value = max(0, round(final_value * mult))
         modifier_value -= reduced
 
     if action_type == "stabilize" and support_value == 0:
@@ -1797,6 +1822,8 @@ def compute_event_action_result(c, event_row: dict, participant: dict, action_ty
         "pressure_delta": pressure_delta,
         "active_note": active_note,
         "penalty_active": penalty_active,
+        "overload_threshold": oc["threshold"],
+        "overload_pct_str": f"{round((1 - oc['multiplier']) * 100)}%",
     }
 
 
@@ -6868,6 +6895,7 @@ async def resolve_event_action(data: dict):
         action_type,
         bool(is_correct),
         use_active_modifier,
+        telegram_id=int(telegram_id),
     )
 
     c.execute(
@@ -6898,11 +6926,16 @@ async def resolve_event_action(data: dict):
         action_name = "Protocol" if action_type == "protocol" else "атака"
         if is_correct:
             if result.get("penalty_active"):
-                add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА: {actor_name} нанёс(ла) {result['final_value']} урона (−50% из-за перегрузки)")
+                pct = result.get("overload_pct_str", "50%")
+                add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА: {actor_name} нанёс(ла) {result['final_value']} урона (−{pct} из-за перегрузки)")
             else:
                 add_event_log(c, int(event_id), "action", f"{actor_name} активировал(а) {action_name} и нанёс(ла) {result['final_value']} урона")
         else:
-            add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} и не пробил(а) протокол")
+            partial = result['final_value']
+            if partial > 0:
+                add_event_log(c, int(event_id), "action", f"{actor_name} сбойнул(а) в {action_name} — частичный удар {partial} урона")
+            else:
+                add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} — протокол не пробит")
     elif action_type == "stabilize":
         c.execute(
             "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
@@ -6921,13 +6954,24 @@ async def resolve_event_action(data: dict):
         maybe_trigger_sync_window(c, event_row)
 
     if action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
+        ovl_threshold = result["overload_threshold"]
+        pct_str = result.get("overload_pct_str", "50%")
         old_pressure = event_row["overload_pressure"]
         event_row["overload_pressure"] = max(0, old_pressure + result["pressure_delta"])
         c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
-        if old_pressure < ARCHITECT_OVERLOAD_PENALTY_THRESHOLD <= event_row["overload_pressure"]:
-            add_event_log(c, int(event_id), "system", "⚠ ПЕРЕГРУЗКА АКТИВНА — урон от атак снижен на 50%")
-        elif old_pressure >= ARCHITECT_OVERLOAD_PENALTY_THRESHOLD > event_row["overload_pressure"]:
+        if old_pressure < ovl_threshold <= event_row["overload_pressure"]:
+            add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА АКТИВНА — урон от атак снижен на {pct_str}")
+        elif old_pressure >= ovl_threshold > event_row["overload_pressure"]:
             add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
+
+    # Boss counter-attack: every N total actions adds pressure
+    c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
+    total_actions_count = c.fetchone()[0]
+    if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
+        new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
+        c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
+        event_row["overload_pressure"] = new_pressure
+        add_event_log(c, int(event_id), "boss", f"АРХИТЕКТОР УСИЛИВАЕТ ДАВЛЕНИЕ (+{ARCHITECT_BOSS_COUNTER_PRESSURE} перегрузки)")
 
     if result["active_note"]:
         add_event_log(c, int(event_id), "modifier", result["active_note"])
