@@ -867,8 +867,9 @@ function renderArchitectResultPanel(eventData, leaderboard = null) {
   const totalDamage = Number(eventData.total_damage || 0);
   const totalActions = Number(eventData.total_actions || 0);
   const state = String(eventData.state || '').toUpperCase();
-  const resultLabel = state === 'FINISHED' ? 'Награда разблокирована' : 'Протокол не пробит';
-  const resultTone = state === 'FINISHED' ? 'WIN' : 'FAIL';
+  const isWin = state === 'FINISHED';
+  const resultLabel = isWin ? 'Награда разблокирована' : 'Протокол не пробит';
+  const resultTone = isWin ? 'WIN' : 'FAIL';
 
   rewardEl.innerHTML = `
     <span class="event-result-reward-main">${escapeHtml(rewardText)}</span>
@@ -888,42 +889,65 @@ function renderArchitectResultPanel(eventData, leaderboard = null) {
     return Number(b.total_support || 0) - Number(a.total_support || 0);
   });
 
+  // No participation data — fall back to team roster
   if (!rows.length) {
     const members = Array.isArray(eventData.team_members) ? eventData.team_members : [];
     teamListEl.innerHTML = members.length
-      ? members.map((member, index) => {
-          const name = escapeHtml(member.full_name || 'Аноним');
-          const tag = index === 0 ? '<span class="event-result-mvp">MVP?</span>' : '';
-          return `<div class="event-result-row"><span>${tag}${name}</span><strong>—</strong></div>`;
-        }).join('')
+      ? `<div class="event-finale-empty">Статистика боя недоступна</div>` +
+        members.map((member) => `<div class="event-finale-row event-finale-row-empty">
+          <span class="event-finale-row-name">${escapeHtml(member.full_name || 'Аноним')}</span>
+          <span class="event-finale-row-stat">—</span>
+        </div>`).join('')
       : '<div class="event-team-empty">Команда не найдена</div>';
     return;
   }
 
-  const mvpId = Number(rows[0].telegram_id);
-  const maxDamage = Math.max(1, Number(rows[0].total_damage || 1));
-  teamListEl.innerHTML = rows.map((row, idx) => {
+  const mvp = rows[0];
+  const mvpId = Number(mvp.telegram_id);
+  const mvpDamage = Number(mvp.total_damage || 0);
+  const mvpSupport = Number(mvp.total_support || 0);
+  const mvpName = escapeHtml(names.get(mvpId) || `ID ${mvpId}`);
+  const maxDamage = Math.max(1, mvpDamage);
+  const hasMvp = mvpDamage > 0 || mvpSupport > 0;
+
+  const mvpCard = hasMvp ? `
+    <div class="event-finale-mvp ${isWin ? 'is-win' : 'is-fail'}">
+      <div class="event-finale-mvp-crown">${isWin ? '♛' : '☠'}</div>
+      <div class="event-finale-mvp-label">MVP // ОПЕРАТОР МИССИИ</div>
+      <div class="event-finale-mvp-name">${mvpName}</div>
+      <div class="event-finale-mvp-stats">
+        <div class="event-finale-mvp-stat"><span>${mvpDamage}</span><label>DMG</label></div>
+        <div class="event-finale-mvp-stat"><span>${mvpSupport}</span><label>SUP</label></div>
+      </div>
+    </div>
+  ` : '';
+
+  const board = rows.map((row, idx) => {
     const telegramId = Number(row.telegram_id);
     const name = escapeHtml(names.get(telegramId) || `ID ${telegramId}`);
     const damage = Number(row.total_damage || 0);
     const support = Number(row.total_support || 0);
-    const isMvp = telegramId === mvpId && damage > 0;
+    const isMvpRow = telegramId === mvpId && hasMvp;
     const pct = Math.round((damage / maxDamage) * 100);
-    const medals = ['🥇','🥈','🥉'];
-    const medal = medals[idx] || '';
+    const place = String(idx + 1).padStart(2, '0');
     return `
-      <div class="event-result-row" style="flex-direction:column;align-items:stretch;gap:3px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:700;font-size:12px;">${medal} ${isMvp ? '<span class="event-result-mvp">MVP</span> ' : ''}${name}</span>
-          <span style="font-family:monospace;font-size:11px;color:var(--gold);">${damage} DMG</span>
+      <div class="event-finale-row${isMvpRow ? ' is-mvp' : ''}">
+        <div class="event-finale-row-head">
+          <span class="event-finale-row-place">#${place}</span>
+          <span class="event-finale-row-name">${name}</span>
+          <span class="event-finale-row-stat">${damage} <small>DMG</small></span>
         </div>
-        <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${isMvp ? 'linear-gradient(90deg,#ffd700,#ff8c00)' : 'rgba(255,255,255,0.35)'};border-radius:2px;transition:width .6s;"></div>
-        </div>
-        ${support > 0 ? `<div style="font-size:9px;color:var(--text3);font-family:monospace;">SUP ${support}</div>` : ''}
+        <div class="event-finale-row-bar"><div style="width:${pct}%;"></div></div>
+        ${support > 0 ? `<div class="event-finale-row-sub">+${support} SUPPORT</div>` : ''}
       </div>
     `;
   }).join('');
+
+  teamListEl.innerHTML = `
+    ${mvpCard}
+    <div class="event-finale-board-label">ОПЕРАТИВНАЯ СВОДКА</div>
+    <div class="event-finale-board">${board}</div>
+  `;
 }
 
 async function loadArchitectResultStats(eventData) {

@@ -14475,3 +14475,217 @@ body.lite-mode .profile-card-home::after { display: none; }
 .event-standby-create-btn:active {
   background: rgba(220,0,40,0.35);
 }
+
+/* ── Architect finale (WIN / LOSE) ───────────────────────────────── */
+.event-finale-mvp {
+  position: relative;
+  margin: 10px 0 14px;
+  padding: 18px 14px 14px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(20,16,8,0.92), rgba(8,8,12,0.92));
+  border: 1px solid rgba(212,175,55,0.35);
+  border-radius: 0;
+  overflow: hidden;
+}
+.event-finale-mvp::before,
+.event-finale-mvp::after {
+  content: "";
+  position: absolute; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,0.6), transparent);
+}
+.event-finale-mvp::before { top: 0; }
+.event-finale-mvp::after  { bottom: 0; }
+.event-finale-mvp.is-fail {
+  background: linear-gradient(180deg, rgba(28,8,8,0.92), rgba(8,8,12,0.92));
+  border-color: rgba(220,38,38,0.45);
+}
+.event-finale-mvp.is-fail::before,
+.event-finale-mvp.is-fail::after {
+  background: linear-gradient(90deg, transparent, rgba(220,38,38,0.6), transparent);
+}
+
+.event-finale-mvp-crown {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--gold, #d4af37);
+  text-shadow: 0 0 14px rgba(212,175,55,0.5);
+  margin-bottom: 4px;
+  animation: finaleMvpCrown 2.4s ease-in-out infinite;
+}
+.event-finale-mvp.is-fail .event-finale-mvp-crown {
+  color: #ff6464;
+  text-shadow: 0 0 14px rgba(220,38,38,0.55);
+}
+@keyframes finaleMvpCrown {
+  0%, 100% { transform: translateY(0); filter: brightness(1); }
+  50%      { transform: translateY(-2px); filter: brightness(1.25); }
+}
+
+.event-finale-mvp-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(212,175,55,0.7);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.event-finale-mvp.is-fail .event-finale-mvp-label { color: rgba(220,38,38,0.7); }
+
+.event-finale-mvp-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.event-finale-mvp-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-width: 240px;
+  margin: 0 auto;
+}
+.event-finale-mvp-stat {
+  padding: 8px 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.35);
+}
+.event-finale-mvp-stat span {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold, #d4af37);
+}
+.event-finale-mvp.is-fail .event-finale-mvp-stat span { color: #ff8a8a; }
+.event-finale-mvp-stat label {
+  display: block;
+  margin-top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+}
+
+.event-finale-board-label {
+  margin: 8px 0 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+
+.event-finale-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-finale-row {
+  padding: 7px 8px;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid rgba(255,255,255,0.1);
+}
+.event-finale-row.is-mvp {
+  background: rgba(212,175,55,0.07);
+  border-left-color: var(--gold, #d4af37);
+}
+.event-finale-row-empty {
+  opacity: 0.55;
+}
+
+.event-finale-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+.event-finale-row-place {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  min-width: 22px;
+}
+.event-finale-row.is-mvp .event-finale-row-place { color: var(--gold, #d4af37); }
+.event-finale-row-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-finale-row-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold, #d4af37);
+}
+.event-finale-row-stat small {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.4);
+  margin-left: 2px;
+}
+
+.event-finale-row-bar {
+  height: 3px;
+  margin-top: 5px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.event-finale-row-bar > div {
+  height: 100%;
+  width: 0;
+  background: rgba(255,255,255,0.3);
+  transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.event-finale-row.is-mvp .event-finale-row-bar > div {
+  background: linear-gradient(90deg, #ffd700, #ff8c00);
+  box-shadow: 0 0 8px rgba(212,175,55,0.35);
+}
+
+.event-finale-row-sub {
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: rgba(120,200,255,0.7);
+}
+
+.event-finale-empty {
+  margin: 10px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+}
+
+/* Bigger verdict at top of result card */
+.event-result-card .event-result-verdict {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  letter-spacing: 4px !important;
+  text-align: center !important;
+  padding: 8px 0 6px !important;
+}
+.event-result-card.event-result-win .event-result-verdict {
+  color: var(--gold, #d4af37) !important;
+  text-shadow: 0 0 18px rgba(212,175,55,0.55), 0 0 2px rgba(255,255,255,0.4) !important;
+  animation: finaleVerdictPulse 2.2s ease-in-out infinite;
+}
+.event-result-card.event-result-lose .event-result-verdict {
+  color: #ff5555 !important;
+  text-shadow: 0 0 18px rgba(220,38,38,0.55), 0 0 2px rgba(255,255,255,0.4) !important;
+  animation: finaleVerdictPulse 2.2s ease-in-out infinite;
+}
+@keyframes finaleVerdictPulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.25); }
+}
