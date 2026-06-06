@@ -5425,8 +5425,9 @@ async def buy_item(data: dict):
         "new_points": new_points,
         "price_paid": price,
         "base_price": base_price,
-        "guanxi_discount": base_price - price,
+        "guanxi_discount": base_price - price_after_guanxi,
         "zhongli_discount": price_after_guanxi - price,
+        "total_discount": base_price - price,
         "zhongli_scan_bonus": zhongli_scan_bonus,
     }
 
