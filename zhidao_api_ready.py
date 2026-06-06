@@ -344,8 +344,8 @@ ARCHITECT_FINAL_PHASE_SECONDS = 180
 ARCHITECT_SYNC_WINDOW_COUNT = 3
 ARCHITECT_SYNC_WINDOW_SECONDS = 10
 ARCHITECT_VULNERABILITY_SECONDS = 8
-ARCHITECT_OVERLOAD_PENALTY_THRESHOLD = 20
-ARCHITECT_OVERLOAD_PENALTY_MULTIPLIER = 0.8
+ARCHITECT_OVERLOAD_PENALTY_THRESHOLD = 10
+ARCHITECT_OVERLOAD_PENALTY_MULTIPLIER = 0.5
 
 EVENT_MODIFIER_ROLE_MAP = {
     "implant_red_dragon": ("implant", "assault"),
@@ -1736,9 +1736,9 @@ def compute_event_action_result(c, event_row: dict, participant: dict, action_ty
         }
 
     if action_type in ("attack", "protocol"):
-        pressure_delta = 3 if phase == 3 else 0
+        pressure_delta = 5 if phase == 3 else 0
     elif action_type == "stabilize":
-        pressure_delta = -5 if phase == 3 else 0
+        pressure_delta = -8 if phase == 3 else 0
 
     if role == "assault" and action_type == "attack" and final_value > 0:
         bonus = max(1, round(final_value * 0.2))
@@ -6897,7 +6897,10 @@ async def resolve_event_action(data: dict):
         )
         action_name = "Protocol" if action_type == "protocol" else "атака"
         if is_correct:
-            add_event_log(c, int(event_id), "action", f"{actor_name} активировал(а) {action_name} и нанёс(ла) {result['final_value']} урона")
+            if result.get("penalty_active"):
+                add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА: {actor_name} нанёс(ла) {result['final_value']} урона (−50% из-за перегрузки)")
+            else:
+                add_event_log(c, int(event_id), "action", f"{actor_name} активировал(а) {action_name} и нанёс(ла) {result['final_value']} урона")
         else:
             add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} и не пробил(а) протокол")
     elif action_type == "stabilize":
@@ -6922,7 +6925,9 @@ async def resolve_event_action(data: dict):
         event_row["overload_pressure"] = max(0, old_pressure + result["pressure_delta"])
         c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
         if old_pressure < ARCHITECT_OVERLOAD_PENALTY_THRESHOLD <= event_row["overload_pressure"]:
-            add_event_log(c, int(event_id), "system", "System Overload Detected")
+            add_event_log(c, int(event_id), "system", "⚠ ПЕРЕГРУЗКА АКТИВНА — урон от атак снижен на 50%")
+        elif old_pressure >= ARCHITECT_OVERLOAD_PENALTY_THRESHOLD > event_row["overload_pressure"]:
+            add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
 
     if result["active_note"]:
         add_event_log(c, int(event_id), "modifier", result["active_note"])
