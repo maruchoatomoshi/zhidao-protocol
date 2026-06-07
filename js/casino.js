@@ -643,7 +643,7 @@ async function loadCards(telegramId) {
 }
 
 async function disassembleCard(id) {
-  tg.showPopup({
+  safeShowPopup({
     title: '✦ Разобрать карточку?',
     message: 'Ты получишь +50 ✦ за дубль. Карточка будет уничтожена.',
     buttons: [{id:'confirm', type:'default', text:'✦ Разобрать +50 ✦'}, {type:'cancel'}]
@@ -957,7 +957,7 @@ function launchConfetti(count) {
 }
 
 async function disassembleImplant(id) {
-  tg.showPopup({
+  safeShowPopup({
     title: '⚙️ Разобрать имплант?',
     message: 'Ты получишь +100 ★ за разборку дубля. Имплант будет уничтожен.',
     buttons: [{id:'confirm', type:'default', text:'⚙️ Разобрать +100 ★'}, {type:'cancel'}]
@@ -1017,7 +1017,7 @@ async function loadCasinoInventory() {
 }
 
 async function useCasinoPrize(id, name) {
-  tg.showPopup({
+  safeShowPopup({
     title:`Использовать ${name}?`, message:'Покажи этот экран вожатому для подтверждения.',
     buttons:[{id:'confirm',type:'default',text:'✅ Показать вожатому'},{type:'cancel'}]
   }, async (btnId) => {
@@ -1142,7 +1142,7 @@ function updateFragmentCounters(frags) {
 async function exchangeFragments(type) {
   if (!currentUserId) return;
   const label = type === 'implant' ? 'случайный имплант' : 'случайную карточку';
-  tg.showPopup({
+  safeShowPopup({
     title: 'Обмен фрагментов',
     message: `Потратить 10 фрагментов протокола и получить ${label}?`,
     buttons: [{id:'confirm', type:'default', text:'🔬 Обменять'}, {type:'cancel'}]

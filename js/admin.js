@@ -235,7 +235,7 @@ async function adminAddLaundrySlot() {
 }
 
 async function adminDeleteLaundrySlot(id) {
-  tg.showPopup({title:'Удалить слот?',message:'Запись будет удалена.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
+  safeShowPopup({title:'Удалить слот?',message:'Запись будет удалена.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
     if(b!=='ok')return;
     await fetch(`${API_URL}/api/laundry/schedule/${id}`,{method:'DELETE',headers:{'x-admin-id':currentUserId}});
     adminLoadLaundrySlots();
@@ -306,7 +306,7 @@ async function adminAddWaterSlot() {
 }
 
 async function adminDeleteWaterSlot(id) {
-  tg.showPopup({title:'Удалить слот?',message:'Слот будет удалён.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
+  safeShowPopup({title:'Удалить слот?',message:'Слот будет удалён.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
     if(b!=='ok')return;
     await fetch(`${API_URL}/api/water/schedule/${id}`,{method:'DELETE',headers:{'x-admin-id':currentUserId}});
     adminLoadWaterSlots();
@@ -788,7 +788,7 @@ async function adminAdjustPointsFromForm(direction) {
   const title = delta > 0 ? 'Начислить баллы?' : 'Снять баллы?';
   const dangerText = Math.abs(delta) >= 100 ? '\n\n⚠️ Крупная операция. Проверь сумму и цель.' : '';
   const targetName = adminSelectedUser?.telegram_id === targetId ? adminSelectedUser.full_name : String(targetId);
-  tg.showPopup({
+  safeShowPopup({
     title,
     message: `${targetName}\n${delta > 0 ? '+' : ''}${delta}★\nПричина: ${reason}${dangerText}`,
     buttons: [
@@ -886,7 +886,7 @@ async function adminAdjustRepFromForm(direction) {
   const title = delta > 0 ? 'Начислить REP?' : 'Снять REP?';
   const dangerText = Math.abs(delta) >= 50 ? '\n\n⚠️ Крупное изменение репутации. Проверь цель.' : '';
   const targetName = adminSelectedUser?.telegram_id === targetId ? adminSelectedUser.full_name : String(targetId);
-  tg.showPopup({
+  safeShowPopup({
     title,
     message: `${targetName}\n${delta > 0 ? '+' : ''}${delta} REP\nПричина: ${reason}${dangerText}`,
     buttons: [
@@ -1032,7 +1032,7 @@ function adminLoadPresenceAll() {
 async function adminDispatchPresence(checkType) {
   if (!isAdmin || !currentUserId) return;
   const label = adminPresenceLabel(checkType);
-  tg.showPopup({
+  safeShowPopup({
     title: 'Запустить отметку?',
     message: `${label} будет отправлена детям прямо сейчас через Telegram-бота.`,
     buttons: [
@@ -1063,7 +1063,7 @@ async function adminDispatchPresence(checkType) {
 async function adminCancelPresence(checkType) {
   if (!isAdmin || !currentUserId) return;
   const label = adminPresenceLabel(checkType);
-  tg.showPopup({
+  safeShowPopup({
     title: 'Отменить отметку?',
     message: `${label} будет помечена как отменённая для тех, кто ещё не подтвердил.`,
     buttons: [

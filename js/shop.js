@@ -271,7 +271,7 @@ async function loadShop() {
 
 async function buyItem(code, name, price) {
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
-  tg.showPopup({
+  safeShowPopup({
     title: `Купить ${name}?`,
     message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
     buttons: [{id:'confirm',type:'default',text:'✅ Купить'},{type:'cancel'}]
@@ -348,7 +348,7 @@ async function loadInventory() {
 }
 
 function useItem(id, name) {
-  tg.showPopup({
+  safeShowPopup({
     title: `Использовать ${name}?`,
     message: 'Покажи этот экран вожатому. После подтверждения товар спишется.',
     buttons: [{id:'confirm', type:'default', text:'✅ Использовать'}, {type:'cancel'}]
@@ -376,14 +376,14 @@ function useItem(id, name) {
     } catch(e) { showToast('Ошибка соединения'); }
   });
 }
-function giftItem(id, name) { tg.showPopup({title:`Подарить ${name}?`,message:'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов. Лимит: 5 подарков в день.',buttons:[{type:'ok'}]}); }
+function giftItem(id, name) { safeShowPopup({title:`Подарить ${name}?`,message:'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов. Лимит: 5 подарков в день.',buttons:[{type:'ok'}]}); }
 
 async function sellItem(id, name, price) {
   const pandaActive = typeof hasPandaImplant !== 'undefined' && hasPandaImplant;
   const rate = pandaActive ? 0.6 : 0.5;
   const refund = Math.floor(price * rate);
   const rateLabel = pandaActive ? '60% · Панда 🐼' : '50%';
-  tg.showPopup({
+  safeShowPopup({
     title:`Продать ${name}?`,
     message:`Ты получишь ${refund} ★ (${rateLabel} от стоимости ${price} ★)`,
     buttons:[{id:'confirm',type:'destructive',text:`💰 Продать за ${refund} ★`},{type:'cancel'}]

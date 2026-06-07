@@ -698,3 +698,36 @@ function showToast(msg, type) {
   const toasts = container.querySelectorAll('.toast:not(.hiding)');
   if (toasts.length > 4) toasts[0]._dismiss && toasts[0]._dismiss();
 }
+
+// Telegram's native popup bridge can get stuck "open" if showPopup is invoked
+// again before the previous one's callback fires (repeated admin/economy actions
+// trigger this after a few uses and require a page reload). Guard against overlap
+// and always release the lock, even if the bridge never calls back.
+let _tgPopupOpen = false;
+let _tgPopupReleaseTimer = null;
+
+function safeShowPopup(options, callback) {
+  if (_tgPopupOpen) {
+    showToast('Подожди закрытия предыдущего окна');
+    return;
+  }
+  _tgPopupOpen = true;
+  clearTimeout(_tgPopupReleaseTimer);
+  _tgPopupReleaseTimer = setTimeout(() => { _tgPopupOpen = false; }, 8000);
+
+  const release = () => {
+    _tgPopupOpen = false;
+    clearTimeout(_tgPopupReleaseTimer);
+    _tgPopupReleaseTimer = null;
+  };
+
+  try {
+    tg.showPopup(options, (buttonId) => {
+      release();
+      if (typeof callback === 'function') callback(buttonId);
+    });
+  } catch (e) {
+    release();
+    if (typeof callback === 'function') callback('cancel');
+  }
+}

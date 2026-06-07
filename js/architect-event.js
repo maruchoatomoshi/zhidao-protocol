@@ -41,6 +41,7 @@ let architectFinalTimerHandle = null;
 let architectQuestionAutoCloseTimer = null;
 let architectResultRevealTimer = null;
 let architectResultRevealEventKey = null;
+let architectVideoStartTimer = null;
 let architectActionResultTimer = null;
 const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
 const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
@@ -606,33 +607,56 @@ function applyArchitectMedia(eventData) {
   const videoSrc = getArchitectPhaseVideo(eventData);
   const imageSrc = getArchitectPhaseImage(eventData);
 
+  if (bossImage) {
+    bossImage.src = imageSrc;
+    // Keep the static image visible until the video actually starts playing —
+    // hiding it immediately caused a black-screen flash while the video decoder spins up.
+    if (!videoSrc) bossImage.style.display = 'block';
+  }
+
   if (bossVideo) {
     bossVideo.loop = true;
     bossVideo.muted = true;
     bossVideo.playsInline = true;
     if (videoSrc) {
-      if (bossVideo.dataset.currentSrc !== videoSrc) {
-        bossVideo.src = videoSrc;
-        bossVideo.dataset.currentSrc = videoSrc;
-        bossVideo.load();
-      }
-      bossVideo.style.display = 'block';
-      const maybePromise = bossVideo.play();
-      if (maybePromise && typeof maybePromise.catch === 'function') {
-        maybePromise.catch(() => {});
+      const isNewSrc = bossVideo.dataset.currentSrc !== videoSrc;
+      if (isNewSrc) {
+        bossVideo.pause();
+        bossVideo.style.display = 'none';
+        clearTimeout(architectVideoStartTimer);
+        // Stagger the heavy video load/play so it doesn't compete with the
+        // entry-banner sting and lobby/phase music starting almost simultaneously —
+        // that pile-up of media inits is what crashed the WebView to a black screen.
+        architectVideoStartTimer = setTimeout(() => {
+          bossVideo.src = videoSrc;
+          bossVideo.dataset.currentSrc = videoSrc;
+          bossVideo.load();
+          const maybePromise = bossVideo.play();
+          if (maybePromise && typeof maybePromise.catch === 'function') {
+            maybePromise.catch(() => {});
+          }
+          bossVideo.addEventListener('playing', function onPlaying() {
+            bossVideo.removeEventListener('playing', onPlaying);
+            bossVideo.style.display = 'block';
+            if (bossImage) bossImage.style.display = 'none';
+          });
+        }, 450);
+      } else {
+        bossVideo.style.display = 'block';
+        if (bossImage) bossImage.style.display = 'none';
+        const maybePromise = bossVideo.play();
+        if (maybePromise && typeof maybePromise.catch === 'function') {
+          maybePromise.catch(() => {});
+        }
       }
     } else {
+      clearTimeout(architectVideoStartTimer);
       bossVideo.pause();
       bossVideo.removeAttribute('src');
       bossVideo.dataset.currentSrc = '';
       bossVideo.style.display = 'none';
       bossVideo.load();
     }
-  }
-
-  if (bossImage) {
-    bossImage.src = imageSrc;
-    bossImage.style.display = videoSrc ? 'none' : 'block';
   }
 
   if (hudAvatar) {

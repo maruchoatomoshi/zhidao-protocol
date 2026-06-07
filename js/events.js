@@ -98,6 +98,11 @@ function closeEventOverlay() {
     updateArchitectPhaseFxState(null);
   }
 
+  if (typeof architectVideoStartTimer !== 'undefined' && architectVideoStartTimer) {
+    clearTimeout(architectVideoStartTimer);
+    architectVideoStartTimer = null;
+  }
+
   const bossVideo = document.getElementById('eventBossVideo');
   if (bossVideo) {
     bossVideo.pause();
