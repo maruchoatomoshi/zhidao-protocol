@@ -16,7 +16,7 @@ const ACHIEVEMENT_IMAGES = {
 };
 
 function achIcon(filename) {
-  return `<div class="achievement-icon-wrap"><img src="${filename}" alt=""></div>`;
+  return `<div class="achievement-icon-wrap achievement-icon-bg" style="background-image:url('${filename}')"></div>`;
 }
 
 const ACHIEVEMENT_ICONS = {};
@@ -51,7 +51,7 @@ async function loadAchievements() {
       const badge = a.earned
         ? `<div class="achievement-earned-badge" title="Получено">${ACHIEVEMENT_BADGE_DONE}</div>`
         : `<div class="achievement-locked-badge" title="Закрыто">${ACHIEVEMENT_BADGE_LOCK}</div>`;
-      html += `<div class="achievement-card ${a.earned?'':'locked'}" onclick='showAchievementInfo(${JSON.stringify(a.code)},${JSON.stringify(a.name)},${JSON.stringify(a.description)},${Boolean(a.earned)})'>
+      html += `<div class="achievement-card ${a.earned?'':'locked'}" oncontextmenu="return false" onclick='showAchievementInfo(${JSON.stringify(a.code)},${JSON.stringify(a.name)},${JSON.stringify(a.description)},${Boolean(a.earned)})'>
         ${badge}
         <div class="achievement-svg">${svgIcon}</div>
         <div class="achievement-name">${a.name}</div>
@@ -70,9 +70,7 @@ function ensureAchievementModal() {
   modal.className = 'achievement-modal';
   modal.innerHTML = `
     <div class="achievement-modal-sheet">
-      <div class="achievement-modal-img-wrap" id="achievementModalImgWrap">
-        <img id="achievementModalImg" src="" alt="">
-      </div>
+      <div class="achievement-modal-img-wrap achievement-icon-bg" id="achievementModalImgWrap" oncontextmenu="return false"></div>
       <div class="achievement-modal-status" id="achievementModalStatus"></div>
       <div class="achievement-modal-title" id="achievementModalTitle"></div>
       <div class="achievement-modal-desc" id="achievementModalDesc"></div>
@@ -90,12 +88,12 @@ function ensureAchievementModal() {
 function showAchievementInfo(code, name, description, earned) {
   const modal = ensureAchievementModal();
   const imgWrap = modal.querySelector('#achievementModalImgWrap');
-  const img = modal.querySelector('#achievementModalImg');
   const statusEl = modal.querySelector('#achievementModalStatus');
   const titleEl = modal.querySelector('#achievementModalTitle');
   const descEl = modal.querySelector('#achievementModalDesc');
 
-  img.src = ACHIEVEMENT_IMAGES[code] || '';
+  const src = ACHIEVEMENT_IMAGES[code] || '';
+  imgWrap.style.backgroundImage = src ? `url('${src}')` : '';
   imgWrap.classList.toggle('locked', !earned);
   statusEl.textContent = earned ? '✓ ПОЛУЧЕНО' : '🔒 НЕДОСТУПНО';
   statusEl.className = 'achievement-modal-status ' + (earned ? 'earned' : 'locked');
