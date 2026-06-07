@@ -15,6 +15,10 @@ const ACHIEVEMENT_ICONS = {
   lucky:`<svg viewBox="0 0 52 52" fill="none"><defs><linearGradient id="g14" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5d05a"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><circle cx="26" cy="26" r="24" stroke="url(#g14)" stroke-width="1.5" fill="rgba(212,175,55,0.08)"/><path d="M26 14 Q26 20 20 20 Q26 20 26 26 Q26 20 32 20 Q26 20 26 14 Z" fill="url(#g14)"/><path d="M26 26 Q26 32 20 32 Q26 32 26 38 Q26 32 32 32 Q26 32 26 26 Z" fill="url(#g14)"/><circle cx="26" cy="26" r="2" fill="url(#g14)"/></svg>`
 };
 
+const ACHIEVEMENT_BADGE_DONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>`;
+const ACHIEVEMENT_BADGE_LOCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+const ACHIEVEMENT_DIVIDER_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="5"/><path d="M9.5 10.5L7.5 3h2l2.5 5 2.5-5h2l-2 7.5"/></svg>`;
+
 // Инициализация пользователя
 
 async function loadAchievements() {
@@ -35,8 +39,11 @@ async function loadAchievements() {
     let html = `<div class="achievement-count">// Получено: <b style="color:var(--gold)">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
     data.forEach(a => {
       const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
+      const badge = a.earned
+        ? `<div class="achievement-earned-badge" title="Получено">${ACHIEVEMENT_BADGE_DONE}</div>`
+        : `<div class="achievement-locked-badge" title="Закрыто">${ACHIEVEMENT_BADGE_LOCK}</div>`;
       html += `<div class="achievement-card ${a.earned?'':'locked'}" onclick='showAchievementInfo(${JSON.stringify(a.name)},${JSON.stringify(a.description)},${Boolean(a.earned)})'>
-        ${a.earned ? '<div class="achievement-earned-badge">✨</div>' : ''}
+        ${badge}
         <div class="achievement-svg">${svgIcon}</div>
         <div class="achievement-name">${a.name}</div>
       </div>`;
