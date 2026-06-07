@@ -1062,3 +1062,64 @@ async function submitDiaryStars(value) {
     buttons.forEach(btn => { btn.disabled = false; });
   }
 }
+
+async function submitDiaryStars() {
+  if (!diaryStarsCurrentStudent || !isAdmin) return;
+  const { telegramId, name, date, pendingAction, currentBonus } = diaryStarsCurrentStudent;
+  if (!pendingAction) return;
+
+  const popup = document.getElementById('diaryStarsPopup');
+  const buttons = popup ? popup.querySelectorAll('button') : [];
+  const isBonus = pendingAction === 'bonus';
+  const isReset = pendingAction === 'reset';
+  const isRemoveBonus = isBonus && currentBonus;
+  const payload = {
+    telegram_id: telegramId,
+    entry_date: date,
+    stars: (isBonus || isReset) ? null : pendingAction,
+    bonus: isBonus && !isRemoveBonus,
+    reset: isReset,
+    remove_bonus: isRemoveBonus
+  };
+
+  try {
+    buttons.forEach(btn => { btn.disabled = true; });
+    const r = await fetch(`${API_URL}/api/diary/stars/rate`, {
+      method: 'POST',
+      headers: diaryHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      const data = await r.json();
+      closeDiaryStarsPopup();
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      showToast(`✅ ${name}: ${data.points_delta >= 0 ? '+' : ''}${data.points_delta}★`);
+      const cached = diaryStarsEntriesCache.find(en => en.telegram_id === telegramId);
+      if (cached) {
+        cached.stars = data.stars;
+        cached.bonus = data.bonus;
+        renderDiaryStarsList(filterDiaryStarsEntries(diaryStarsEntriesCache), diaryStarsEntriesDate);
+      } else {
+        loadDiaryStarsList();
+      }
+    } else {
+      let errorText = 'Ошибка при начислении.';
+      try {
+        const data = await r.json();
+        if (data.detail) errorText = data.detail;
+      } catch(e) {}
+      showToast(errorText);
+      cancelDiaryStarsAction();
+    }
+  } catch(e) {
+    closeDiaryStarsPopup();
+    showToast('Запрос отправлен. Проверяю результат на сервере...');
+    try {
+      await loadDiaryStarsList();
+    } catch (reloadError) {
+      showToast('Не удалось проверить результат. Обнови список позже.');
+    }
+  } finally {
+    buttons.forEach(btn => { btn.disabled = false; });
+  }
+}
