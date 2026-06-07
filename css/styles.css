@@ -3149,6 +3149,8 @@ body.is-admin .more-item.admin-only-item::before {
   transition: all var(--transition-fast) var(--ease-standard);
 }
 .admin-nav-icon { font-size: 18px; line-height: 1; display: block; }
+.admin-nav-icon svg { width: 19px; height: 19px; display: block; stroke: currentColor; color: var(--gold); }
+.admin-sec-btn.active .admin-nav-icon svg { color: var(--gold); }
 .admin-nav-label {
   display: block;
   font-size: 7.5px;
