@@ -267,7 +267,14 @@ async function submitDiaryStars() {
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
       const delta = data.points_delta;
       showToast(`✅ ${name}: ${delta >= 0 ? '+' : ''}${delta}★`);
-      loadDiaryStarsList();
+      const cached = diaryStarsEntriesCache.find(en => en.telegram_id === telegramId);
+      if (cached) {
+        cached.stars = data.stars;
+        cached.bonus = data.bonus;
+        renderDiaryStarsList(filterDiaryStarsEntries(diaryStarsEntriesCache), diaryStarsEntriesDate);
+      } else {
+        loadDiaryStarsList();
+      }
     } else {
       let errorText = 'Ошибка при начислении';
       try { const d = await r.json(); if (d.detail) errorText = d.detail; } catch(e) {}
