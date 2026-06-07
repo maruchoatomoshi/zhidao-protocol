@@ -1380,18 +1380,30 @@ async function adminResolveContract(id, action) {
     cancel_no_refund: 'сжечь без возврата',
     remove:         'удалить контракт',
   };
-  if (!confirm(`Действие: ${labels[action] || action}. Продолжить?`)) return;
-  try {
-    const r = await fetch(`${API_URL}/api/admin/contracts/${id}/resolve`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-admin-id': String(currentUserId)},
-      body: JSON.stringify({action}),
-    });
-    const data = await r.json();
-    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
-    showToast('Решение применено');
-    adminLoadContracts(adminContractsActiveFilter);
-  } catch (e) { showToast('Нет соединения'); }
+  // window.confirm() is a blocking native dialog that Telegram's WebView doesn't
+  // properly support — it hung the JS thread (no response to taps) and left the
+  // app in a broken state requiring a restart. Use the Telegram popup bridge instead.
+  safeShowPopup({
+    title: 'Подтверди действие',
+    message: `Действие: ${labels[action] || action}.\nПродолжить?`,
+    buttons: [
+      {id: 'confirm', type: action === 'remove' || action === 'cancel_no_refund' ? 'destructive' : 'default', text: 'Продолжить'},
+      {type: 'cancel'}
+    ]
+  }, async (buttonId) => {
+    if (buttonId !== 'confirm') return;
+    try {
+      const r = await fetch(`${API_URL}/api/admin/contracts/${id}/resolve`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','x-admin-id': String(currentUserId)},
+        body: JSON.stringify({action}),
+      });
+      const data = await r.json();
+      if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
+      showToast('Решение применено');
+      adminLoadContracts(adminContractsActiveFilter);
+    } catch (e) { showToast('Нет соединения'); }
+  });
 }
 
 /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v2.0 (Быстрый старт) --- */
