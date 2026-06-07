@@ -1015,3 +1015,50 @@ function initDiaryPage() {
 
   loadDiaryPage(getShanghaiDateString());
 }
+
+async function submitDiaryStars(value) {
+  if (!diaryStarsCurrentStudent || !isAdmin) return;
+  const { telegramId, name, date } = diaryStarsCurrentStudent;
+  const popup = document.getElementById('diaryStarsPopup');
+  const buttons = popup ? popup.querySelectorAll('button') : [];
+
+  const isBonus = value === 'bonus';
+  const payload = {
+    telegram_id: telegramId,
+    entry_date: date,
+    stars: isBonus ? null : value,
+    bonus: isBonus
+  };
+
+  try {
+    buttons.forEach(btn => { btn.disabled = true; });
+    const r = await fetch(`${API_URL}/api/diary/stars/rate`, {
+      method: 'POST',
+      headers: diaryHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      const data = await r.json();
+      closeDiaryStarsPopup();
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      showToast(`✅ ${name}: ${data.points_delta >= 0 ? '+' : ''}${data.points_delta}★`);
+      loadDiaryStarsList();
+    } else {
+      let errorText = 'Ошибка при начислении.';
+      try {
+        const data = await r.json();
+        if (data.detail) errorText = data.detail;
+      } catch(e) {}
+      showToast(errorText);
+    }
+  } catch(e) {
+    showToast('Запрос отправлен. Проверяю результат на сервере...');
+    try {
+      await loadDiaryStarsList();
+    } catch (reloadError) {
+      showToast('Не удалось проверить результат. Обнови список позже.');
+    }
+  } finally {
+    buttons.forEach(btn => { btn.disabled = false; });
+  }
+}

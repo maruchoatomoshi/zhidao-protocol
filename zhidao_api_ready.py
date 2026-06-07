@@ -5,6 +5,8 @@ import hmac
 import os
 import re
 import sqlite3
+import time
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import parse_qsl
@@ -33,6 +35,14 @@ WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 TELEGRAM_AUTH_REQUIRED = os.getenv("TELEGRAM_AUTH_REQUIRED", "0").strip().lower() in {"1", "true", "yes", "on"}
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
+REQUEST_LOG_SLOW_MS = int(os.getenv("REQUEST_LOG_SLOW_MS", "1500") or "1500")
+REQUEST_LOG_ALL = os.getenv("REQUEST_LOG_ALL", "0").strip().lower() in {"1", "true", "yes", "on"}
+
+PROFILED_PATH_PATTERNS = [
+    re.compile(r"^/api/contracts(?:/\d+/(?:accept|complete|cancel|dispute))?$"),
+    re.compile(r"^/api/admin/(?:points|rep)$"),
+    re.compile(r"^/api/diary/stars/rate$"),
+]
 
 
 def parse_int_list_env(name: str) -> list[int]:
@@ -187,6 +197,50 @@ def auth_error_response(request: Request, detail: str, status_code: int) -> JSON
         # Auth middleware can return before CORSMiddleware decorates the response.
         response.headers["Access-Control-Allow-Origin"] = "*"
     return response
+
+
+def should_profile_request(method: str, path: str, elapsed_ms: float) -> bool:
+    if REQUEST_LOG_ALL:
+        return path.startswith("/api/")
+    if elapsed_ms >= REQUEST_LOG_SLOW_MS and path.startswith("/api/"):
+        return True
+    if method == "POST":
+        return any(pattern.match(path) for pattern in PROFILED_PATH_PATTERNS)
+    return False
+
+
+@app.middleware("http")
+async def request_timing_middleware(request: Request, call_next):
+    request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:12]
+    request.state.request_id = request_id
+    started = time.perf_counter()
+    status_code = 500
+    error = None
+    response = None
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    except Exception as exc:
+        error = exc.__class__.__name__
+        raise
+    finally:
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        if response is not None:
+            response.headers["X-Request-ID"] = request_id
+            response.headers["X-Process-Time-ms"] = f"{elapsed_ms:.1f}"
+        if should_profile_request(request.method, request.url.path, elapsed_ms):
+            print(
+                "ZHIDAO_API_TIMING "
+                f"request_id={request_id} "
+                f"method={request.method} "
+                f"path={request.url.path} "
+                f"status={status_code} "
+                f"elapsed_ms={elapsed_ms:.1f} "
+                f"client={request.client.host if request.client else '-'} "
+                f"error={error or '-'}",
+                flush=True,
+            )
 
 
 async def enforce_verified_user_identity(request: Request, verified_id: Optional[int], is_admin_request: bool):
@@ -447,7 +501,8 @@ ARCHITECT_QUESTION_SEEDS = {
 
 
 def get_conn():
-    conn = sqlite3.connect('/root/zhidao.db', timeout=10)
+    conn = sqlite3.connect('/root/zhidao.db', timeout=30)
+    conn.execute("PRAGMA busy_timeout=30000")
     return conn
 
 
@@ -462,6 +517,8 @@ def init_db():
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA cache_size=-8000")
     c = conn.cursor()
+    c.execute("PRAGMA journal_mode=WAL")
+    c.execute("PRAGMA synchronous=NORMAL")
     c.execute('''CREATE TABLE IF NOT EXISTS users
                  (code TEXT PRIMARY KEY,
                  marzban_username TEXT,
@@ -5844,7 +5901,8 @@ async def join_raid(data: dict):
 
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    conn = sqlite3.connect('/root/zhidao.db', isolation_level='EXCLUSIVE')
+    conn = sqlite3.connect('/root/zhidao.db', timeout=30, isolation_level='EXCLUSIVE')
+    conn.execute("PRAGMA busy_timeout=30000")
     c = conn.cursor()
 
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))

@@ -55,6 +55,20 @@ async function contractFetch(url, options = {}, timeoutMs = 30000) {
   }
 }
 
+async function recoverContractsAfterUncertainMutation(message) {
+  try {
+    tg.showPopup({
+      title: 'Проверяю результат',
+      message: message || 'Запрос мог выполниться на сервере. Обновляю доску поручений.',
+      buttons: [{ type: 'ok' }],
+    });
+  } catch (e) {}
+  await Promise.allSettled([
+    loadOpenContracts({ silent: true }),
+    currentUserId ? loadMyContracts({ silent: true }) : Promise.resolve(),
+  ]);
+}
+
 function getCurrentContractUserName() {
   return (document.getElementById('username')?.textContent || tg?.initDataUnsafe?.user?.first_name || 'Игрок').trim();
 }
@@ -706,6 +720,171 @@ async function disputeContract(id) {
       switchContractsTabLocal('disputed');
     } catch (e) {
       tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
+    }
+  });
+}
+
+async function submitCreateContract() {
+  const title    = (document.getElementById('contractTitle')?.value || '').trim();
+  const desc     = (document.getElementById('contractDesc')?.value || '').trim();
+  const category = document.getElementById('contractCategory')?.value || 'other';
+  const reward   = parseInt(document.getElementById('contractReward')?.value) || 0;
+  const isAnonymous = !!document.getElementById('contractAnonymous')?.checked;
+  const errEl    = document.getElementById('contractCreateError');
+
+  const showErr = (msg) => {
+    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+  };
+
+  if (!currentUserId) { showErr('Войди в систему'); return; }
+  if (title.length < 3) { showErr('Название слишком короткое'); return; }
+  if (desc.length < 5)  { showErr('Описание слишком короткое'); return; }
+  const maxReward = getContractMaxReward();
+  if (reward < CONTRACT_MIN_REWARD || reward > maxReward) { showErr(`Награда: от ${CONTRACT_MIN_REWARD} до ${maxReward} ★`); return; }
+
+  try {
+    const r = await contractFetch(`${API_URL}/api/contracts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-Id': String(currentUserId) },
+      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous }),
+    });
+    const data = await r.json();
+    if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
+    closeCreateContractModal();
+    currentPoints = Math.max(0, currentPoints - reward);
+    updatePoints();
+    const localContract = {
+      id: data.id,
+      title,
+      description: desc,
+      category,
+      reward_stars: reward,
+      fee_stars: data.fee_stars,
+      payout_stars: data.payout_stars,
+      creator_telegram_id: currentUserId,
+      assignee_telegram_id: null,
+      creator_is_admin: !!isAdmin,
+      creator_name: getCurrentContractUserName(),
+      assignee_name: null,
+      creator_avatar_url: null,
+      assignee_avatar_url: null,
+      is_anonymous: isAnonymous,
+      status: 'open',
+      is_suspicious: false,
+      suspicious_reason: null,
+      created_at: new Date().toISOString(),
+      role: 'creator',
+    };
+    contractsMyCache.unshift(localContract);
+    contractsOpenCache.unshift(localContract);
+    switchContractsTabLocal('my');
+  } catch (e) {
+    showErr('Запрос отправлен. Проверяю, создалось ли поручение...');
+    await recoverContractsAfterUncertainMutation('Запрос мог выполниться. Проверяю список поручений.');
+  }
+}
+
+async function acceptContract(id) {
+  if (!currentUserId) return;
+  try {
+    const r = await contractFetch(`${API_URL}/api/contracts/${id}/accept`, {
+      method: 'POST',
+      headers: { 'X-Telegram-Id': String(currentUserId) },
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось принять', buttons: [{ type: 'ok' }] });
+      return;
+    }
+    updateContractInCaches(id, {
+      status: 'accepted',
+      assignee_telegram_id: currentUserId,
+      assignee_name: getCurrentContractUserName(),
+      accepted_at: new Date().toISOString(),
+      role: 'assignee',
+    });
+    switchContractsTabLocal('my');
+  } catch (e) {
+    await recoverContractsAfterUncertainMutation('Проверяю, было ли поручение принято.');
+  }
+}
+
+async function completeContract(id) {
+  if (!currentUserId) return;
+  tg.showPopup({
+    title: 'Подтвердить выполнение?',
+    message: 'Исполнитель получит ★ на баланс.',
+    buttons: [{ id: 'ok', type: 'default', text: 'Подтвердить' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/complete`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось завершить', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      updateContractInCaches(id, { status: 'completed', completed_at: new Date().toISOString() });
+    } catch (e) {
+      await recoverContractsAfterUncertainMutation('Проверяю, было ли поручение завершено.');
+    }
+  });
+}
+
+async function cancelContract(id) {
+  if (!currentUserId) return;
+  tg.showPopup({
+    title: 'Отменить поручение?',
+    message: 'Замороженные ★ вернутся на твой баланс.',
+    buttons: [{ id: 'ok', type: 'destructive', text: 'Отменить' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/cancel`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось отменить', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      if (data.refunded) {
+        currentPoints += data.refunded;
+        updatePoints();
+      }
+      removeContractFromCaches(id);
+    } catch (e) {
+      await recoverContractsAfterUncertainMutation('Проверяю, было ли поручение отменено.');
+    }
+  });
+}
+
+async function disputeContract(id) {
+  if (!currentUserId) return;
+  tg.showPopup({
+    title: 'Открыть спор?',
+    message: 'Администратор рассмотрит ситуацию и вынесет решение.',
+    buttons: [{ id: 'ok', type: 'default', text: 'Открыть спор' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/dispute`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось открыть спор', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      updateContractInCaches(id, { status: 'disputed', disputed_at: new Date().toISOString() });
+      switchContractsTabLocal('disputed');
+    } catch (e) {
+      await recoverContractsAfterUncertainMutation('Проверяю, был ли спор открыт.');
     }
   });
 }
