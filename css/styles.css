@@ -7836,18 +7836,18 @@ body.tg-ios .event-hero-video {
 }
 
 body.tg-ios .event-hud {
-  top: calc(48px + var(--tg-safe-top));
+  top: calc(62px + var(--tg-safe-top));
   left: calc(12px + var(--tg-safe-left));
   width: min(330px, calc(100vw - 24px - var(--tg-safe-left) - var(--tg-safe-right)));
 }
 
 body.tg-ios .event-final-timer {
-  top: calc(96px + var(--tg-safe-top));
+  top: calc(110px + var(--tg-safe-top));
   right: calc(12px + var(--tg-safe-right));
 }
 
 body.tg-ios .event-phase-warning {
-  top: calc(132px + var(--tg-safe-top));
+  top: calc(146px + var(--tg-safe-top));
   max-width: calc(100vw - 24px - var(--tg-safe-left) - var(--tg-safe-right));
 }
 
@@ -7885,6 +7885,8 @@ body.tg-ios .event-actions {
   right: 0;
   bottom: 0;
   padding-bottom: var(--tg-safe-bottom);
+  padding-left: var(--tg-safe-left);
+  padding-right: var(--tg-safe-right);
 }
 
 body.tg-ios .event-log {
