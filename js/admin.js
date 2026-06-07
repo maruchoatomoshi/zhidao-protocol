@@ -235,11 +235,12 @@ async function adminAddLaundrySlot() {
 }
 
 async function adminDeleteLaundrySlot(id) {
-  safeShowPopup({title:'Удалить слот?',message:'Запись будет удалена.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
-    if(b!=='ok')return;
+  const ok = await showConfirmDialog({title:'Удалить слот?',message:'Запись будет удалена.',confirmText:'Удалить',danger:true});
+  if(!ok)return;
+  try {
     await fetch(`${API_URL}/api/laundry/schedule/${id}`,{method:'DELETE',headers:{'x-admin-id':currentUserId}});
     adminLoadLaundrySlots();
-  });
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 async function adminCancelLaundryBooking(slotId, telegramId) {
@@ -306,11 +307,12 @@ async function adminAddWaterSlot() {
 }
 
 async function adminDeleteWaterSlot(id) {
-  safeShowPopup({title:'Удалить слот?',message:'Слот будет удалён.',buttons:[{id:'ok',type:'destructive',text:'Удалить'},{type:'cancel'}]}, async(b)=>{
-    if(b!=='ok')return;
+  const ok = await showConfirmDialog({title:'Удалить слот?',message:'Слот будет удалён.',confirmText:'Удалить',danger:true});
+  if(!ok)return;
+  try {
     await fetch(`${API_URL}/api/water/schedule/${id}`,{method:'DELETE',headers:{'x-admin-id':currentUserId}});
     adminLoadWaterSlots();
-  });
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 async function adminCancelWaterBooking(slotId, telegramId) {
@@ -796,17 +798,14 @@ async function adminAdjustPointsFromForm(direction) {
   const title = delta > 0 ? 'Начислить баллы?' : 'Снять баллы?';
   const dangerText = Math.abs(delta) >= 100 ? '\n\n⚠️ Крупная операция. Проверь сумму и цель.' : '';
   const targetName = adminSelectedUser?.telegram_id === targetId ? adminSelectedUser.full_name : String(targetId);
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title,
     message: `${targetName}\n${delta > 0 ? '+' : ''}${delta}★\nПричина: ${reason}${dangerText}`,
-    buttons: [
-      {id: 'confirm', type: delta < 0 ? 'destructive' : 'default', text: delta > 0 ? 'Начислить' : 'Снять'},
-      {type: 'cancel'}
-    ]
-  }, async (buttonId) => {
-    if (buttonId !== 'confirm') return;
-    await adminSubmitPointAdjustment(targetId, delta, reason);
+    confirmText: delta > 0 ? 'Начислить' : 'Снять',
+    danger: delta < 0,
   });
+  if (!ok) return;
+  await adminSubmitPointAdjustment(targetId, delta, reason);
 }
 
 async function adminSubmitPointAdjustment(targetId, delta, reason) {
@@ -894,17 +893,14 @@ async function adminAdjustRepFromForm(direction) {
   const title = delta > 0 ? 'Начислить REP?' : 'Снять REP?';
   const dangerText = Math.abs(delta) >= 50 ? '\n\n⚠️ Крупное изменение репутации. Проверь цель.' : '';
   const targetName = adminSelectedUser?.telegram_id === targetId ? adminSelectedUser.full_name : String(targetId);
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title,
     message: `${targetName}\n${delta > 0 ? '+' : ''}${delta} REP\nПричина: ${reason}${dangerText}`,
-    buttons: [
-      {id: 'confirm', type: delta < 0 ? 'destructive' : 'default', text: delta > 0 ? 'Начислить' : 'Снять'},
-      {type: 'cancel'}
-    ]
-  }, async (buttonId) => {
-    if (buttonId !== 'confirm') return;
-    await adminSubmitRepAdjustment(targetId, delta, reason);
+    confirmText: delta > 0 ? 'Начислить' : 'Снять',
+    danger: delta < 0,
   });
+  if (!ok) return;
+  await adminSubmitRepAdjustment(targetId, delta, reason);
 }
 
 async function adminSubmitRepAdjustment(targetId, delta, reason) {
@@ -1040,63 +1036,56 @@ function adminLoadPresenceAll() {
 async function adminDispatchPresence(checkType) {
   if (!isAdmin || !currentUserId) return;
   const label = adminPresenceLabel(checkType);
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: 'Запустить отметку?',
     message: `${label} будет отправлена детям прямо сейчас через Telegram-бота.`,
-    buttons: [
-      {id: 'confirm', type: 'default', text: 'Запустить'},
-      {type: 'cancel'}
-    ]
-  }, async (buttonId) => {
-    if (buttonId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/presence/admin/dispatch`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-        body: JSON.stringify({check_type: checkType, attempt_no: 1, note: 'Mini App dispatch'}),
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        showToast(data.detail || 'Не удалось запустить отметку');
-        return;
-      }
-      showToast(`Отправлено: ${data.sent_count || 0}\nОшибок: ${data.failed_count || 0}`);
-      adminLoadPresence(checkType);
-    } catch (e) {
-      showToast('Ошибка соединения');
-    }
+    confirmText: 'Запустить',
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/presence/admin/dispatch`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({check_type: checkType, attempt_no: 1, note: 'Mini App dispatch'}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось запустить отметку');
+      return;
+    }
+    showToast(`Отправлено: ${data.sent_count || 0}\nОшибок: ${data.failed_count || 0}`);
+    adminLoadPresence(checkType);
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
 }
 
 async function adminCancelPresence(checkType) {
   if (!isAdmin || !currentUserId) return;
   const label = adminPresenceLabel(checkType);
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: 'Отменить отметку?',
     message: `${label} будет помечена как отменённая для тех, кто ещё не подтвердил.`,
-    buttons: [
-      {id: 'confirm', type: 'destructive', text: 'Отменить'},
-      {type: 'cancel'}
-    ]
-  }, async (buttonId) => {
-    if (buttonId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/presence/admin/cancel`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-        body: JSON.stringify({check_type: checkType, admin_id: currentUserId, reason: 'Отменено из Mini App'}),
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        showToast(data.detail || 'Не удалось отменить отметку');
-        return;
-      }
-      showToast(`Отменено статусов: ${data.cancelled || 0}`);
-      adminLoadPresence(checkType);
-    } catch (e) {
-      showToast('Ошибка соединения');
-    }
+    confirmText: 'Отменить',
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/presence/admin/cancel`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({check_type: checkType, admin_id: currentUserId, reason: 'Отменено из Mini App'}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось отменить отметку');
+      return;
+    }
+    showToast(`Отменено статусов: ${data.cancelled || 0}`);
+    adminLoadPresence(checkType);
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
 }
 
 let _actionLogCache = [];
