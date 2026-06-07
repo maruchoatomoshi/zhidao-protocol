@@ -282,8 +282,9 @@ async function submitDiaryStars() {
       cancelDiaryStarsAction();
     }
   } catch(e) {
-    showToast('Нет соединения');
-    cancelDiaryStarsAction();
+    closeDiaryStarsPopup();
+    showToast('⚠️ Нет ответа от сервера. Проверяю, применилась ли оценка...');
+    loadDiaryStarsList();
   } finally {
     if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = originalText; }
   }
