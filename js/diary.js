@@ -53,6 +53,8 @@ function initDiaryStarsPage() {
   if (dateInput && !dateInput.value) {
     dateInput.value = getShanghaiDateString();
   }
+  const searchInput = document.getElementById('diaryStarsSearch');
+  if (searchInput) searchInput.style.display = isAdmin ? '' : 'none';
   loadDiaryStarsList();
 }
 
@@ -73,16 +75,33 @@ async function loadDiaryStarsList() {
       return;
     }
     const data = await r.json();
-    renderDiaryStarsList(data.entries || [], date);
+    diaryStarsEntriesCache = Array.isArray(data.entries) ? data.entries : [];
+    diaryStarsEntriesDate = date;
+    renderDiaryStarsList(filterDiaryStarsEntries(diaryStarsEntriesCache), date);
   } catch(e) {
     list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет соединения</div>';
   }
 }
 
+let diaryStarsEntriesCache = [];
+let diaryStarsEntriesDate = '';
+
+function filterDiaryStarsEntries(entries) {
+  const q = String(document.getElementById('diaryStarsSearch')?.value || '').trim().toLowerCase();
+  if (!q) return entries;
+  return entries.filter(entry => String(entry.full_name || '').toLowerCase().includes(q));
+}
+
+function filterDiaryStarsList() {
+  if (!diaryStarsEntriesCache.length) return;
+  renderDiaryStarsList(filterDiaryStarsEntries(diaryStarsEntriesCache), diaryStarsEntriesDate);
+}
+
 function renderDiaryStarsList(entries, date) {
   const list = document.getElementById('diaryStarsList');
   if (!entries.length) {
-    list.innerHTML = '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет студентов в базе</div>';
+    const q = String(document.getElementById('diaryStarsSearch')?.value || '').trim();
+    list.innerHTML = `<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">${q ? 'Никого не найдено' : 'Нет студентов в базе'}</div>`;
     return;
   }
 

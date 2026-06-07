@@ -383,17 +383,24 @@ function adminRenderUserCard(user) {
   </div>`;
 }
 
+let adminSearchRequestSeq = 0;
+
 async function adminSearchUsers() {
   if (!isAdmin || !currentUserId) return;
   const container = document.getElementById('adminUserResults');
   if (!container) return;
   const q = String(document.getElementById('adminUserSearch')?.value || '').trim();
   container.innerHTML = '<div class="empty-state">Поиск...</div>';
+  // Guard against out-of-order responses: an older request that resolves after
+  // a newer one would otherwise overwrite fresh results with stale/empty data,
+  // which is what made the user list intermittently fail to show.
+  const requestId = ++adminSearchRequestSeq;
   try {
     const r = await fetch(`${API_URL}/api/admin/users?q=${encodeURIComponent(q)}`, {
       headers: {'x-admin-id': currentUserId},
     });
     const data = await r.json();
+    if (requestId !== adminSearchRequestSeq) return;
     if (!r.ok) {
       container.innerHTML = '<div class="empty-state">Нет доступа</div>';
       return;
@@ -404,7 +411,8 @@ async function adminSearchUsers() {
       ? users.map(adminRenderUserCard).join('')
       : '<div class="empty-state">Никого не найдено</div>';
   } catch (e) {
-    container.innerHTML = '<div class="empty-state">Ошибка поиска</div>';
+    if (requestId !== adminSearchRequestSeq) return;
+    container.innerHTML = '<div class="empty-state">Ошибка поиска<br><span style="font-size:10px;color:var(--text3);">Нажми ещё раз, чтобы повторить</span></div>';
   }
 }
 
