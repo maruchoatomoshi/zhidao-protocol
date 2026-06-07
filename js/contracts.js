@@ -45,7 +45,7 @@ let contractsCategoryFilter = 'all';
 let contractsOpenCache = [];
 let contractsMyCache = [];
 
-async function contractFetch(url, options = {}, timeoutMs = 12000) {
+async function contractFetch(url, options = {}, timeoutMs = 30000) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
