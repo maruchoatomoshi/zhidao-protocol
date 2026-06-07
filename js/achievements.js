@@ -1,22 +1,22 @@
-function achIcon(name) {
-  return `<div class="achievement-icon-wrap"><i class="ti ti-${name}"></i></div>`;
+function achIcon(filename) {
+  return `<div class="achievement-icon-wrap"><img src="${filename}" alt=""></div>`;
 }
 
 const ACHIEVEMENT_ICONS = {
-  early_bird: achIcon('sunrise'),
-  iron_mode: achIcon('shield-check'),
-  legend: achIcon('trophy'),
-  curious: achIcon('search'),
-  polyglot: achIcon('language'),
-  explorer: achIcon('compass'),
-  brave: achIcon('sword'),
-  exemplary: achIcon('rosette-discount-check'),
-  helper: achIcon('heart-handshake'),
-  dragon: achIcon('flame'),
-  night_watch: achIcon('moon-stars'),
-  master: achIcon('school'),
-  gambler: achIcon('cards'),
-  lucky: achIcon('clover')
+  early_bird: achIcon('ach_early_bird.png'),
+  iron_mode: achIcon('ach_iron_mode.png'),
+  legend: achIcon('ach_protocol_legend.png'),
+  curious: achIcon('ach_explorer.png'),
+  polyglot: achIcon('ach_polyglot.png'),
+  explorer: achIcon('ach_guide.png'),
+  brave: achIcon('ach_bold_move.png'),
+  exemplary: achIcon('ach_model_participant.png'),
+  helper: achIcon('ach_group_helper.png'),
+  dragon: achIcon('ach_dragon_trace.png'),
+  night_watch: achIcon('ach_night_watch.png'),
+  master: achIcon('ach_summon_master.png'),
+  gambler: achIcon('ach_probability_player.png'),
+  lucky: achIcon('ach_lucky_signal.png')
 };
 
 const ACHIEVEMENT_BADGE_DONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>`;
@@ -42,7 +42,7 @@ async function loadAchievements() {
     const earned = data.filter(a => a.earned).length;
     let html = `<div class="achievement-count">// Получено: <b style="color:var(--gold)">${earned}</b> из ${data.length}</div><div class="achievements-grid">`;
     data.forEach(a => {
-      const svgIcon = ACHIEVEMENT_ICONS[a.code] || achIcon('award');
+      const svgIcon = ACHIEVEMENT_ICONS[a.code] || `<div class="achievement-icon-wrap"><i class="ti ti-award"></i></div>`;
       const badge = a.earned
         ? `<div class="achievement-earned-badge" title="Получено">${ACHIEVEMENT_BADGE_DONE}</div>`
         : `<div class="achievement-locked-badge" title="Закрыто">${ACHIEVEMENT_BADGE_LOCK}</div>`;
