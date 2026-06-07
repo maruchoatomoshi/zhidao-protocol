@@ -993,14 +993,15 @@ async function loadCasinoInventory() {
     const container = document.getElementById('casinoInventoryList');
     if (!data.length) { container.innerHTML = '<div class="empty-state">Призов пока нет<br>Открывай кейсы!</div>'; return; }
     container.innerHTML = data.map(item => {
-      const expires = item.expires_at ? `<div style="color:#cc4444;font-size:10px;margin-top:3px;">⏰ До ${item.expires_at.slice(11,16)}</div>` : '';
-      return `<div class="inventory-item">
+      const expires = item.expires_at ? `<div class="inventory-expiry">⏰ До ${item.expires_at.slice(11,16)}</div>` : '';
+      return `<div class="inventory-item inventory-item-prize">
         <div class="inventory-header">
           <div class="inventory-icon">${item.icon}</div>
           <div class="inventory-info">
             <div class="inventory-kicker">CASE PRIZE</div>
             <div class="inventory-name">${item.name}</div>
             <div class="inventory-desc">${item.desc}</div>
+            <div class="inventory-date">Получено: ${new Date(item.purchased_at).toLocaleDateString('ru-RU')}</div>
             ${expires}
           </div>
           <div class="inventory-side">

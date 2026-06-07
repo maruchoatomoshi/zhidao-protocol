@@ -2702,9 +2702,24 @@ body.is-admin .profile-card-kicker {
 .inventory-dur .dur-dot.off,
 .inventory-dur-dot.off { background: rgba(255,255,255,0.12); }
 .inventory-item-legendary { border-color: rgba(180,20,20,0.38); }
+.inventory-icon.legendary {
+  border-color: rgba(212,175,55,0.55) !important;
+  background: linear-gradient(145deg, rgba(212,175,55,0.16), rgba(180,20,20,0.10));
+  box-shadow: inset 0 0 18px rgba(255,200,0,0.10), 0 0 12px rgba(212,175,55,0.18);
+  color: var(--gold);
+}
 .inventory-item-card { border-color: color-mix(in srgb, var(--gold) 22%, var(--border)); }
 
 /* ===== CARD RARITY VARIANTS ===== */
+
+.inventory-expiry { font-size: 9px; color: var(--red); font-family: monospace; margin-top: 3px; letter-spacing: 0.2px; }
+
+/* Case prize card: red-gold glow */
+.inventory-item-prize::before {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--red) 18%, transparent), transparent 40%),
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 34%);
+}
 
 /* Shop card: gold left glow */
 .inventory-item-shop::before {
