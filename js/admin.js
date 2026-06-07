@@ -1380,30 +1380,28 @@ async function adminResolveContract(id, action) {
     cancel_no_refund: 'сжечь без возврата',
     remove:         'удалить контракт',
   };
-  // window.confirm() is a blocking native dialog that Telegram's WebView doesn't
-  // properly support — it hung the JS thread (no response to taps) and left the
-  // app in a broken state requiring a restart. Use the Telegram popup bridge instead.
-  safeShowPopup({
+  // Neither window.confirm() (hangs the WebView's JS thread) nor tg.showPopup
+  // (silently does nothing on clients that don't implement it) reliably worked
+  // here — the action looked like "no reaction at all". A custom in-app modal
+  // always renders, regardless of the host Telegram client's capabilities.
+  const ok = await showConfirmDialog({
     title: 'Подтверди действие',
     message: `Действие: ${labels[action] || action}.\nПродолжить?`,
-    buttons: [
-      {id: 'confirm', type: action === 'remove' || action === 'cancel_no_refund' ? 'destructive' : 'default', text: 'Продолжить'},
-      {type: 'cancel'}
-    ]
-  }, async (buttonId) => {
-    if (buttonId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/admin/contracts/${id}/resolve`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','x-admin-id': String(currentUserId)},
-        body: JSON.stringify({action}),
-      });
-      const data = await r.json();
-      if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
-      showToast('Решение применено');
-      adminLoadContracts(adminContractsActiveFilter);
-    } catch (e) { showToast('Нет соединения'); }
+    confirmText: 'Продолжить',
+    danger: action === 'remove' || action === 'cancel_no_refund',
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/admin/contracts/${id}/resolve`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-admin-id': String(currentUserId)},
+      body: JSON.stringify({action}),
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
+    showToast('Решение применено');
+    adminLoadContracts(adminContractsActiveFilter);
+  } catch (e) { showToast('Нет соединения'); }
 }
 
 /* --- ЛОГИКА РЕЙДОВОЙ СИСТЕМЫ v2.0 (Быстрый старт) --- */

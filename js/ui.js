@@ -731,3 +731,60 @@ function safeShowPopup(options, callback) {
     if (typeof callback === 'function') callback('cancel');
   }
 }
+
+// Some Telegram clients don't implement tg.showPopup at all (it's silently a
+// no-op or throws), which made safeShowPopup() look like it "did nothing" —
+// no dialog appears, the action quietly cancels. window.confirm() is even worse:
+// it can hang the WebView's JS thread entirely. This builds our own modal in the
+// DOM, so confirmations always work regardless of the host client's capabilities.
+function ensureConfirmDialogModal() {
+  let modal = document.getElementById('confirmDialogModal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'confirmDialogModal';
+  modal.className = 'confirm-dialog-modal';
+  modal.style.display = 'none';
+  modal.innerHTML = `
+    <div class="confirm-dialog-sheet">
+      <div class="confirm-dialog-title" id="confirmDialogTitle"></div>
+      <div class="confirm-dialog-msg" id="confirmDialogMsg"></div>
+      <div class="confirm-dialog-actions">
+        <button class="confirm-dialog-btn cancel" type="button" data-role="cancel">Отмена</button>
+        <button class="confirm-dialog-btn confirm" type="button" data-role="confirm">Подтвердить</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function showConfirmDialog(options) {
+  const opts = options || {};
+  const modal = ensureConfirmDialogModal();
+  const titleEl = modal.querySelector('#confirmDialogTitle');
+  const msgEl = modal.querySelector('#confirmDialogMsg');
+  const confirmBtn = modal.querySelector('[data-role="confirm"]');
+  const cancelBtn = modal.querySelector('[data-role="cancel"]');
+
+  titleEl.textContent = opts.title || 'Подтверди действие';
+  msgEl.textContent = opts.message || '';
+  confirmBtn.textContent = opts.confirmText || 'Подтвердить';
+  cancelBtn.textContent = opts.cancelText || 'Отмена';
+  confirmBtn.classList.toggle('danger', !!opts.danger);
+  modal.style.display = 'flex';
+
+  return new Promise((resolve) => {
+    const close = (result) => {
+      modal.style.display = 'none';
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdrop);
+      resolve(result);
+    };
+    const onConfirm = () => close(true);
+    const onCancel = () => close(false);
+    const onBackdrop = (event) => { if (event.target === modal) close(false); };
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdrop);
+  });
+}

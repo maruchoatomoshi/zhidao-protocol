@@ -2687,6 +2687,28 @@ body.is-admin .profile-card-kicker {
   background: rgba(180,20,20,0.18);
   color: #f07a68;
 }
+/* Generic in-app confirm dialog — used instead of tg.showPopup/window.confirm,
+   both of which can be unsupported or hang on some Telegram clients. */
+.confirm-dialog-modal {
+  position: fixed; inset: 0; z-index: 9400;
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px; background: rgba(3,2,7,0.72); backdrop-filter: blur(12px);
+}
+.confirm-dialog-sheet {
+  position: relative; width: min(360px, 100%); padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--gold) 32%, var(--border));
+  border-radius: 20px;
+  background: radial-gradient(circle at 100% 0, color-mix(in srgb, var(--gold) 16%, transparent), transparent 44%), color-mix(in srgb, var(--bg2) 94%, #120c04);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.42);
+}
+.confirm-dialog-title { color: var(--text); font-size: 15px; font-weight: 800; line-height: 1.3; }
+.confirm-dialog-msg { margin-top: 8px; color: var(--text2); font-size: 12px; line-height: 1.45; white-space: pre-line; }
+.confirm-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.confirm-dialog-btn { min-height: 42px; border-radius: 12px; border: 1px solid transparent; font-size: 11px; font-weight: 700; font-family: monospace; cursor: pointer; }
+.confirm-dialog-btn.cancel { border-color: var(--border); background: rgba(255,255,255,0.03); color: var(--text2); }
+.confirm-dialog-btn.confirm { border-color: color-mix(in srgb, var(--gold) 38%, transparent); background: color-mix(in srgb, var(--gold-dim) 70%, transparent); color: var(--gold); }
+.confirm-dialog-btn.confirm.danger { border-color: rgba(180,20,20,0.34); background: rgba(180,20,20,0.16); color: #f07a68; }
+
 .inventory-dur { display: flex; gap: 3px; justify-content: flex-end; }
 .inventory-dur .dur-dot,
 .inventory-dur-dot {
