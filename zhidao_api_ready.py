@@ -529,6 +529,8 @@ ARCHITECT_QUESTION_SEEDS = {
 def get_conn():
     conn = sqlite3.connect('/root/zhidao.db', timeout=30)
     conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
     return conn
 
 
@@ -6075,8 +6077,7 @@ async def join_raid(data: dict):
 
         today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
         now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-        conn = sqlite3.connect('/root/zhidao.db', timeout=30, isolation_level='EXCLUSIVE')
-        conn.execute("PRAGMA busy_timeout=30000")
+        conn = get_conn()
         c = conn.cursor()
 
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
