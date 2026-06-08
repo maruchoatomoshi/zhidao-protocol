@@ -14,6 +14,9 @@ const CAMPUS_MAP_CATEGORIES = [
   { id: 'meeting', label: 'Сбор' },
 ];
 
+const CAMPUS_MAP_EDITOR_OWNER_ID = 389741116;
+const CAMPUS_MAP_EDITOR_STORAGE_KEY = 'zhidao_campus_map_editor_v1';
+
 const CAMPUS_POINTS = [
   {
     id: 'classroom-1',
@@ -221,6 +224,20 @@ const CAMPUS_POINTS = [
     description: 'Группа общежитий в западной части кампуса.',
   },
   {
+    id: 'our-dorm',
+    title: 'Наша общага',
+    label: 'Наша общага',
+    cn: '宿舍',
+    en: 'ZHIDAO Dormitory',
+    category: 'dorm',
+    x: 15.2,
+    y: 62.6,
+    labelPos: 'right',
+    labelDx: 0,
+    labelDy: 0,
+    description: 'Общежитие, где будет жить группа ZHIDAO.',
+  },
+  {
     id: 'dorm-south',
     title: 'Южные общежития',
     label: 'Общ. 5-10',
@@ -344,9 +361,53 @@ const CAMPUS_POINTS = [
 
 let campusMapFilter = 'all';
 let campusMapQuery = '';
+let campusMapEditorEnabled = false;
+let campusMapEditorSelectionId = '';
+let campusMapEditorCursor = null;
 
 function campusMapCategoryLabel(category) {
   return (CAMPUS_MAP_CATEGORIES.find(item => item.id === category) || {}).label || category;
+}
+
+function campusMapCanEdit() {
+  return Number(typeof currentUserId !== 'undefined' ? currentUserId : 0) === CAMPUS_MAP_EDITOR_OWNER_ID
+    && !!(typeof isArchitect !== 'undefined' && isArchitect);
+}
+
+function campusMapLoadEditorEdits() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CAMPUS_MAP_EDITOR_STORAGE_KEY) || '{}');
+    return {
+      overrides: parsed && typeof parsed.overrides === 'object' && parsed.overrides ? parsed.overrides : {},
+      custom: Array.isArray(parsed?.custom) ? parsed.custom : [],
+    };
+  } catch (e) {
+    return { overrides: {}, custom: [] };
+  }
+}
+
+function campusMapSaveEditorEdits(edits) {
+  localStorage.setItem(CAMPUS_MAP_EDITOR_STORAGE_KEY, JSON.stringify({
+    overrides: edits?.overrides || {},
+    custom: Array.isArray(edits?.custom) ? edits.custom : [],
+  }));
+}
+
+function campusMapAllPoints() {
+  const edits = campusMapLoadEditorEdits();
+  const base = CAMPUS_POINTS.map(point => ({
+    ...point,
+    ...(edits.overrides[point.id] || {}),
+    isCustom: false,
+  }));
+  const custom = edits.custom
+    .filter(point => point && point.id)
+    .map(point => ({ ...point, isCustom: true }));
+  return [...base, ...custom];
+}
+
+function campusMapFindPoint(id) {
+  return campusMapAllPoints().find(item => item.id === id);
 }
 
 function campusMapEscape(value) {
@@ -360,7 +421,7 @@ function campusMapEscape(value) {
 
 function campusMapFilteredPoints() {
   const q = campusMapQuery.trim().toLowerCase();
-  return CAMPUS_POINTS.filter(point => {
+  return campusMapAllPoints().filter(point => {
     const categoryOk = campusMapFilter === 'all' || point.category === campusMapFilter;
     if (!categoryOk) return false;
     if (!q) return true;
@@ -369,12 +430,70 @@ function campusMapFilteredPoints() {
   });
 }
 
+function campusMapEditorPanel() {
+  if (!campusMapCanEdit()) return '';
+  const point = campusMapEditorSelectionId ? campusMapFindPoint(campusMapEditorSelectionId) : null;
+  const cursor = campusMapEditorCursor || point || { x: 50, y: 50 };
+  const title = point?.title || '';
+  const label = point?.label || '';
+  const category = point?.category || 'important';
+  const labelPos = point?.labelPos || 'right';
+  const labelDx = Number(point?.labelDx || 0);
+  const labelDy = Number(point?.labelDy || 0);
+  const description = point?.description || '';
+  const selectedLabel = point
+    ? `${campusMapEscape(point.label || point.title)} · ${Number(point.x).toFixed(1)} / ${Number(point.y).toFixed(1)}`
+    : 'Кликни по карте или выбери точку';
+
+  return `
+    <div class="campus-map-editor ${campusMapEditorEnabled ? 'active' : ''}">
+      <div class="campus-map-editor-top">
+        <div>
+          <b>Редактор Архитектора</b>
+          <small>${selectedLabel}</small>
+        </div>
+        <button type="button" onclick="toggleCampusMapEditor()">${campusMapEditorEnabled ? 'выкл' : 'вкл'}</button>
+      </div>
+      ${campusMapEditorEnabled ? `
+        <div class="campus-map-editor-grid">
+          <label>Название<input id="campusEditTitle" value="${campusMapEscape(title)}" placeholder="Название в карточке"></label>
+          <label>Подпись<input id="campusEditLabel" value="${campusMapEscape(label)}" placeholder="Короткая подпись"></label>
+          <label>X<input id="campusEditX" type="number" step="0.1" value="${Number(cursor.x || 0).toFixed(1)}"></label>
+          <label>Y<input id="campusEditY" type="number" step="0.1" value="${Number(cursor.y || 0).toFixed(1)}"></label>
+          <label>Тип
+            <select id="campusEditCategory">
+              ${CAMPUS_MAP_CATEGORIES.filter(item => item.id !== 'all').map(item => `
+                <option value="${item.id}" ${category === item.id ? 'selected' : ''}>${campusMapEscape(item.label)}</option>
+              `).join('')}
+            </select>
+          </label>
+          <label>Подпись
+            <select id="campusEditLabelPos">
+              ${['up', 'down', 'left', 'right'].map(pos => `<option value="${pos}" ${labelPos === pos ? 'selected' : ''}>${pos}</option>`).join('')}
+            </select>
+          </label>
+          <label>Label X<input id="campusEditLabelDx" type="number" step="1" value="${labelDx}"></label>
+          <label>Label Y<input id="campusEditLabelDy" type="number" step="1" value="${labelDy}"></label>
+        </div>
+        <label class="campus-map-editor-description">Описание<textarea id="campusEditDescription" rows="2">${campusMapEscape(description)}</textarea></label>
+        <div class="campus-map-editor-actions">
+          <button type="button" onclick="saveCampusMapEditorPoint()">Сохранить</button>
+          <button type="button" onclick="newCampusMapEditorPoint()">Новая</button>
+          <button type="button" onclick="removeCampusMapEditorPoint()">Сброс/удалить</button>
+          <button type="button" onclick="copyCampusMapEditorExport()">JSON</button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
 function initCampusMap() {
   const root = document.getElementById('campusMapRoot');
   if (!root) return;
 
   const mode = campusMapAssetMode();
   const points = campusMapFilteredPoints();
+  const canEdit = campusMapCanEdit();
   root.innerHTML = `
     <div class="campus-map-panel">
       <div class="campus-map-head">
@@ -382,7 +501,10 @@ function initCampusMap() {
           <div class="campus-map-kicker">${mode === 'genshin' ? 'LIYUE CAMPUS ATLAS' : 'CAMPUS NETWORK MAP'}</div>
           <div class="campus-map-title">Beijing Language and Culture University</div>
         </div>
-        <button class="campus-map-mode" type="button" onclick="toggleCampusMapOriginal()">${mode === 'original' ? 'THEME' : 'ORIGINAL'}</button>
+        <div class="campus-map-head-actions">
+          ${canEdit ? `<button class="campus-map-mode editor" type="button" onclick="toggleCampusMapEditor()">${campusMapEditorEnabled ? 'EDITOR ON' : 'EDITOR'}</button>` : ''}
+          <button class="campus-map-mode" type="button" onclick="toggleCampusMapOriginal()">${mode === 'original' ? 'THEME' : 'ORIGINAL'}</button>
+        </div>
       </div>
       <div class="campus-map-search">
         <i class="ti ti-search"></i>
@@ -393,11 +515,12 @@ function initCampusMap() {
           <button type="button" class="${campusMapFilter === category.id ? 'active' : ''}" onclick="setCampusMapFilter('${category.id}')">${campusMapEscape(category.label)}</button>
         `).join('')}
       </div>
+      ${campusMapEditorPanel()}
       <div class="campus-map-scroll">
-        <div class="campus-map-stage">
+        <div class="campus-map-stage ${campusMapEditorEnabled && canEdit ? 'editing' : ''}" onclick="handleCampusMapStageClick(event)">
           <img src="${CAMPUS_MAP_ASSETS[mode] || CAMPUS_MAP_ASSETS.cyberpunk}" alt="Campus map">
           ${points.map(point => `
-            <button class="campus-map-pin ${campusMapEscape(point.category)} label-${campusMapEscape(point.labelPos || 'down')}" style="left:${point.x}%;top:${point.y}%;" type="button" onclick="openCampusMapPoint('${campusMapEscape(point.id)}')" aria-label="${campusMapEscape(point.title)}">
+            <button class="campus-map-pin ${campusMapEscape(point.category)} label-${campusMapEscape(point.labelPos || 'down')} ${campusMapEditorSelectionId === point.id ? 'selected' : ''}" style="left:${point.x}%;top:${point.y}%;--label-dx:${Number(point.labelDx || 0)}px;--label-dy:${Number(point.labelDy || 0)}px;" type="button" onclick="handleCampusMapPinClick(event, '${campusMapEscape(point.id)}')" aria-label="${campusMapEscape(point.title)}">
               <span></span>
               <em>${campusMapEscape(point.label || point.title)}</em>
             </button>
@@ -434,6 +557,122 @@ function setCampusMapFilter(filter) {
   initCampusMap();
 }
 
+function toggleCampusMapEditor() {
+  if (!campusMapCanEdit()) return;
+  campusMapEditorEnabled = !campusMapEditorEnabled;
+  if (!campusMapEditorEnabled) campusMapEditorSelectionId = '';
+  initCampusMap();
+}
+
+function handleCampusMapPinClick(event, id) {
+  if (event) event.stopPropagation();
+  if (campusMapEditorEnabled && campusMapCanEdit()) {
+    const point = campusMapFindPoint(id);
+    campusMapEditorSelectionId = id;
+    campusMapEditorCursor = point ? { x: Number(point.x || 0), y: Number(point.y || 0) } : campusMapEditorCursor;
+    initCampusMap();
+    return;
+  }
+  openCampusMapPoint(id);
+}
+
+function handleCampusMapStageClick(event) {
+  if (!campusMapEditorEnabled || !campusMapCanEdit() || !event) return;
+  if (event.target && event.target.closest && event.target.closest('.campus-map-pin')) return;
+  const stage = event.currentTarget;
+  const rect = stage.getBoundingClientRect();
+  const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+  const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
+  campusMapEditorCursor = { x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
+  campusMapEditorSelectionId = '';
+  initCampusMap();
+}
+
+function campusMapEditorValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+function campusMapEditorNumber(id, fallback = 0) {
+  const value = Number(campusMapEditorValue(id));
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function campusMapEditorPayload(existing) {
+  const x = Number(campusMapEditorNumber('campusEditX', existing?.x || 50).toFixed(1));
+  const y = Number(campusMapEditorNumber('campusEditY', existing?.y || 50).toFixed(1));
+  const title = campusMapEditorValue('campusEditTitle').trim() || existing?.title || 'Новая точка';
+  const label = campusMapEditorValue('campusEditLabel').trim() || title;
+  return {
+    id: existing?.id || `custom-${Date.now()}`,
+    title,
+    label,
+    cn: existing?.cn || '',
+    en: existing?.en || '',
+    category: campusMapEditorValue('campusEditCategory') || existing?.category || 'important',
+    x,
+    y,
+    labelPos: campusMapEditorValue('campusEditLabelPos') || existing?.labelPos || 'right',
+    labelDx: Math.round(campusMapEditorNumber('campusEditLabelDx', existing?.labelDx || 0)),
+    labelDy: Math.round(campusMapEditorNumber('campusEditLabelDy', existing?.labelDy || 0)),
+    description: campusMapEditorValue('campusEditDescription').trim() || existing?.description || 'Точка на карте кампуса.',
+  };
+}
+
+function saveCampusMapEditorPoint() {
+  if (!campusMapCanEdit()) return;
+  const edits = campusMapLoadEditorEdits();
+  const existing = campusMapEditorSelectionId ? campusMapFindPoint(campusMapEditorSelectionId) : null;
+  const payload = campusMapEditorPayload(existing);
+
+  if (existing?.isCustom || payload.id.startsWith('custom-')) {
+    edits.custom = edits.custom.filter(point => point.id !== payload.id);
+    edits.custom.push({ ...payload, isCustom: undefined });
+  } else {
+    edits.overrides[payload.id] = payload;
+  }
+
+  campusMapSaveEditorEdits(edits);
+  campusMapEditorSelectionId = payload.id;
+  campusMapEditorCursor = { x: payload.x, y: payload.y };
+  if (typeof showToast === 'function') showToast('Точка карты сохранена локально');
+  initCampusMap();
+}
+
+function newCampusMapEditorPoint() {
+  if (!campusMapCanEdit()) return;
+  campusMapEditorSelectionId = '';
+  campusMapEditorCursor = campusMapEditorCursor || { x: 50, y: 50 };
+  initCampusMap();
+}
+
+function removeCampusMapEditorPoint() {
+  if (!campusMapCanEdit() || !campusMapEditorSelectionId) return;
+  const edits = campusMapLoadEditorEdits();
+  const existing = campusMapFindPoint(campusMapEditorSelectionId);
+  if (existing?.isCustom) {
+    edits.custom = edits.custom.filter(point => point.id !== campusMapEditorSelectionId);
+  } else {
+    delete edits.overrides[campusMapEditorSelectionId];
+  }
+  campusMapSaveEditorEdits(edits);
+  campusMapEditorSelectionId = '';
+  if (typeof showToast === 'function') showToast('Локальная правка карты сброшена');
+  initCampusMap();
+}
+
+function copyCampusMapEditorExport() {
+  if (!campusMapCanEdit()) return;
+  const data = JSON.stringify(campusMapLoadEditorEdits(), null, 2);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(data).then(() => {
+      if (typeof showToast === 'function') showToast('JSON карты скопирован');
+    }).catch(() => window.prompt('JSON карты', data));
+  } else {
+    window.prompt('JSON карты', data);
+  }
+}
+
 function toggleCampusMapOriginal() {
   const forced = document.body.dataset.campusMapMode;
   if (forced === 'original') {
@@ -454,7 +693,7 @@ function campusMapAssetMode() {
 }
 
 function openCampusMapPoint(id) {
-  const point = CAMPUS_POINTS.find(item => item.id === id);
+  const point = campusMapFindPoint(id);
   const popup = document.getElementById('campusMapPopup');
   if (!point || !popup) return;
   popup.innerHTML = `
