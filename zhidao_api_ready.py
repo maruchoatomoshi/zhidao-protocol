@@ -545,9 +545,11 @@ async def db_write(fn):
         result = await asyncio.to_thread(fn)
         exec_ms = (time.time() - t1) * 1000
         if lock_wait > 100 or exec_ms > 100:
-            logging.warning(
-                "ZHIDAO_DB_WRITE fn=%s lock_wait=%.0fms exec=%.0fms",
-                getattr(fn, '__name__', '?'), lock_wait, exec_ms)
+            print(
+                "ZHIDAO_DB_WRITE fn=%s lock_wait=%.0fms exec=%.0fms" % (
+                    getattr(fn, '__name__', '?'), lock_wait, exec_ms),
+                flush=True,
+            )
         return result
 
 
