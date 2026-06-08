@@ -1212,6 +1212,43 @@ init_db()
 migrate_db()
 ensure_seed_data()
 
+WAL_CHECKPOINT_INTERVAL_SECONDS = 300
+
+
+async def wal_checkpoint_loop():
+    while True:
+        await asyncio.sleep(WAL_CHECKPOINT_INTERVAL_SECONDS)
+        try:
+            t0 = time.time()
+
+            def _checkpoint():
+                conn = sqlite3.connect('/root/zhidao.db', timeout=30)
+                try:
+                    row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+                    return row
+                finally:
+                    conn.close()
+
+            row = await asyncio.to_thread(_checkpoint)
+            ms = (time.time() - t0) * 1000
+            if ms > 200 or (row and row[0] != 0):
+                print(
+                    "ZHIDAO_WAL_CHECKPOINT busy=%s log_frames=%s checkpointed_frames=%s elapsed_ms=%.0f" % (
+                        row[0] if row else "?",
+                        row[1] if row else "?",
+                        row[2] if row else "?",
+                        ms,
+                    ),
+                    flush=True,
+                )
+        except Exception as exc:
+            print("ZHIDAO_WAL_CHECKPOINT_ERROR %r" % (exc,), flush=True)
+
+
+@app.on_event("startup")
+async def start_background_tasks():
+    asyncio.create_task(wal_checkpoint_loop())
+
 
 def now_iso() -> str:
     return datetime.utcnow().isoformat()

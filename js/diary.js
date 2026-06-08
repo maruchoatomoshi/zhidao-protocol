@@ -257,7 +257,12 @@ async function loadDiaryOverview(dateOverride) {
     const r = await fetch(`${API_URL}/api/diary/admin/overview?entry_date=${date}`, {
       headers: diaryHeaders()
     });
-    if (!r.ok) { list.innerHTML = '<div class="diary-day-chip-empty">Ошибка загрузки.</div>'; return; }
+    if (!r.ok) {
+      let detail = '';
+      try { const d = await r.json(); if (d.detail) detail = `: ${d.detail}`; } catch(e) {}
+      list.innerHTML = `<div class="diary-day-chip-empty">Ошибка загрузки (${r.status}${detail})</div>`;
+      return;
+    }
     const data = await r.json();
     const entries = data.entries || [];
     if (!entries.length) {

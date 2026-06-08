@@ -340,7 +340,9 @@ async function loadDiaryStarsLeaderboardRating() {
         const parsed = await diaryResponse.json();
         if (Array.isArray(parsed)) diaryRows = parsed;
       } else {
-        warning = `Дневниковый API ответил ${diaryResponse.status}; показываю общий список.`;
+        let detail = '';
+        try { const d = await diaryResponse.json(); if (d.detail) detail = `: ${d.detail}`; } catch(e) {}
+        warning = `Дневниковый API ответил ${diaryResponse.status}${detail}; показываю общий список.`;
       }
     } catch(e) {
       warning = 'Дневниковый API недоступен; показываю общий список.';
@@ -458,8 +460,14 @@ async function loadLeaderboard() {
   ];
   try {
     const r = await fetch(`${API_URL}/api/leaderboard`);
-    const data = await r.json();
     const container = document.getElementById('leaderboardContent');
+    if (!r.ok) {
+      let detail = '';
+      try { const d = await r.json(); if (d.detail) detail = `: ${d.detail}`; } catch(e) {}
+      container.innerHTML = `<div class="empty-state">Ошибка загрузки (${r.status}${detail})</div>`;
+      return;
+    }
+    const data = await r.json();
     if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
     let myRank = '—', html = '';
@@ -548,7 +556,7 @@ async function loadLeaderboard() {
     container.innerHTML = html;
     const placeEl = document.getElementById('profileLeaderboardPlace');
     if (placeEl) placeEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '—');
-  } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+  } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Нет соединения</div>'; }
 }
 
 // ===== МАГАЗИН =====
