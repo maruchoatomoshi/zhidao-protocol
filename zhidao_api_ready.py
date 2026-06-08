@@ -40,7 +40,7 @@ REQUEST_LOG_ALL = os.getenv("REQUEST_LOG_ALL", "0").strip().lower() in {"1", "tr
 
 PROFILED_PATH_PATTERNS = [
     re.compile(r"^/api/contracts(?:/\d+/(?:accept|complete|cancel|dispute))?$"),
-    re.compile(r"^/api/admin/(?:points|rep)$"),
+    re.compile(r"^/api/admin/(?:points|rep|fragments|scan-attempt)$"),
     re.compile(r"^/api/diary/stars/rate$"),
 ]
 

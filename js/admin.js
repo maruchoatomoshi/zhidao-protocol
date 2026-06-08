@@ -9,6 +9,87 @@ function setLastSeenGlobalAlertId(alertId) {
 let adminSelectedUser = null;
 let adminSearchTimer = null;
 let adminUsersCache = [];
+let adminDossierRefreshTimer = null;
+let adminEconomyMutationInFlight = false;
+
+const ADMIN_MUTATION_TIMEOUT_MS = 45000;
+
+function adminRequestId(prefix = 'admin') {
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `${prefix}-${Date.now().toString(36)}-${rand}`;
+}
+
+async function adminFetch(url, options = {}, timeoutMs = ADMIN_MUTATION_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  const headers = new Headers(options.headers || {});
+  if (!headers.has('X-Request-ID')) headers.set('X-Request-ID', adminRequestId());
+
+  try {
+    return await fetch(url, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+async function adminReadJsonSafe(response) {
+  try {
+    return await response.json();
+  } catch (e) {
+    return {};
+  }
+}
+
+function adminPatchUserCache(telegramId, patch = {}) {
+  const targetId = Number(telegramId);
+  let changed = false;
+  adminUsersCache = adminUsersCache.map(user => {
+    if (Number(user.telegram_id) !== targetId) return user;
+    changed = true;
+    return { ...user, ...patch };
+  });
+  if (changed) {
+    const container = document.getElementById('adminUserResults');
+    if (container && adminUsersCache.length) {
+      container.innerHTML = adminUsersCache.map(adminRenderUserCard).join('');
+    }
+  }
+}
+
+function adminRefreshSelectedDossierLater(telegramId, delayMs = 700) {
+  window.clearTimeout(adminDossierRefreshTimer);
+  adminDossierRefreshTimer = window.setTimeout(() => {
+    if (adminSelectedUser && Number(adminSelectedUser.telegram_id) === Number(telegramId)) {
+      adminLoadUserDossier(telegramId);
+    }
+  }, delayMs);
+}
+
+async function adminRecoverAfterUncertainMutation(targetId, message) {
+  showToast(message || 'Запрос отправлен. Проверяю результат...');
+  await Promise.allSettled([
+    targetId ? adminLoadUserDossier(targetId) : Promise.resolve(),
+    adminLoadActionLog(),
+    targetId === currentUserId && typeof loadPoints === 'function' ? loadPoints(currentUserId) : Promise.resolve(),
+  ]);
+}
+
+async function adminRunEconomyMutation(task) {
+  if (adminEconomyMutationInFlight) {
+    showToast('Предыдущая операция ещё выполняется');
+    return null;
+  }
+  adminEconomyMutationInFlight = true;
+  try {
+    return await task();
+  } finally {
+    adminEconomyMutationInFlight = false;
+  }
+}
 
 async function triggerGlobalArchitectAlert() {
   if (!currentUserId) {
@@ -1418,3 +1499,130 @@ const RAID_CONFIG = {
 let raidRefreshTimer = null;
 let isJoiningRaid = false;
 let raidIntroToken = 0;
+
+async function adminSubmitPointAdjustment(targetId, delta, reason) {
+  return adminRunEconomyMutation(async () => {
+  try {
+    showToast('Выполняю операцию...');
+    const r = await adminFetch(`${API_URL}/api/admin/points`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
+      body: JSON.stringify({telegram_id: targetId, delta, reason}),
+    });
+    const data = await adminReadJsonSafe(r);
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка операции');
+      return;
+    }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    const actualDelta = Number(data.delta || delta);
+    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta}★\nБаланс: ${data.new_points}★`);
+    const pointsInput = document.getElementById('awardPoints');
+    const reasonInput = document.getElementById('awardReason');
+    if (pointsInput) pointsInput.value = '';
+    if (reasonInput) reasonInput.value = '';
+    if (adminSelectedUser && Number(adminSelectedUser.telegram_id) === Number(targetId)) {
+      adminSelectedUser.points = data.new_points;
+      adminSelectUser(targetId, data.full_name, data.new_points, adminSelectedUser);
+      adminRefreshSelectedDossierLater(targetId);
+    }
+    adminPatchUserCache(targetId, { points: data.new_points, full_name: data.full_name });
+    adminLoadActionLog();
+    if (Number(targetId) === Number(currentUserId)) {
+      currentPoints = data.new_points;
+      updatePoints();
+    }
+  } catch (e) {
+    await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверяю баланс игрока...');
+  }
+  });
+}
+
+async function adminSubmitRepAdjustment(targetId, delta, reason) {
+  return adminRunEconomyMutation(async () => {
+  try {
+    showToast('Выполняю операцию...');
+    const r = await adminFetch(`${API_URL}/api/admin/rep`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
+      body: JSON.stringify({telegram_id: targetId, delta, reason}),
+    });
+    const data = await adminReadJsonSafe(r);
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка операции');
+      return;
+    }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    const actualDelta = Number(data.delta || delta);
+    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta} REP\nРепутация: ${data.new_rep_score}`);
+    const pointsInput = document.getElementById('awardPoints');
+    const reasonInput = document.getElementById('awardReason');
+    if (pointsInput) pointsInput.value = '';
+    if (reasonInput) reasonInput.value = '';
+    if (adminSelectedUser && Number(adminSelectedUser.telegram_id) === Number(targetId)) {
+      adminSelectedUser.rep_score = data.new_rep_score;
+      adminSelectUser(targetId, data.full_name, data.points, adminSelectedUser);
+      adminRefreshSelectedDossierLater(targetId);
+    }
+    adminPatchUserCache(targetId, { points: data.points, rep_score: data.new_rep_score, full_name: data.full_name });
+    adminLoadActionLog();
+    if (typeof loadLeaderboard === 'function') loadLeaderboard();
+  } catch (e) {
+    await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверяю REP игрока...');
+  }
+  });
+}
+
+async function adminGrantScanAttempt() {
+  if (!isArchitect) return;
+  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
+  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
+  if (!targetId) { showToast('Укажи Telegram ID'); return; }
+  return adminRunEconomyMutation(async () => {
+  try {
+    showToast('Выдаю попытку...');
+    const r = await adminFetch(`${API_URL}/api/admin/scan-attempt`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
+      body: JSON.stringify({telegram_id: targetId}),
+    });
+    const data = await adminReadJsonSafe(r);
+    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    showToast(`+1 попытка сканирования\nИтого: ${data.scan_attempts}/7`);
+    adminRefreshSelectedDossierLater(targetId);
+  } catch(e) {
+    await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверяю попытки сканирования...');
+  }
+  });
+}
+
+async function adminGrantFragments() {
+  if (!isArchitect) return;
+  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
+  const amount = parseInt(document.getElementById('fragmentAmount')?.value, 10);
+  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
+  if (!targetId || !amount || amount < 1) {
+    showToast('Укажи Telegram ID и количество');
+    return;
+  }
+  return adminRunEconomyMutation(async () => {
+  try {
+    showToast('Выдаю фрагменты...');
+    const r = await adminFetch(`${API_URL}/api/admin/fragments`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
+      body: JSON.stringify({telegram_id: targetId, amount}),
+    });
+    const data = await adminReadJsonSafe(r);
+    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    showToast(`Выдано ${amount} фрагментов\nИтого у игрока: ${data.protocol_fragments}`);
+    const amountInput = document.getElementById('fragmentAmount');
+    if (amountInput) amountInput.value = '';
+    adminRefreshSelectedDossierLater(targetId);
+  } catch(e) {
+    await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверяю фрагменты игрока...');
+  }
+  });
+}
