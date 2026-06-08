@@ -538,8 +538,17 @@ DB_WRITE_LOCK = asyncio.Lock()
 
 
 async def db_write(fn):
+    t0 = time.time()
     async with DB_WRITE_LOCK:
-        return await asyncio.to_thread(fn)
+        lock_wait = (time.time() - t0) * 1000
+        t1 = time.time()
+        result = await asyncio.to_thread(fn)
+        exec_ms = (time.time() - t1) * 1000
+        if lock_wait > 100 or exec_ms > 100:
+            logging.warning(
+                "ZHIDAO_DB_WRITE fn=%s lock_wait=%.0fms exec=%.0fms",
+                getattr(fn, '__name__', '?'), lock_wait, exec_ms)
+        return result
 
 
 def normalize_expected_student_name(value: str) -> str:
