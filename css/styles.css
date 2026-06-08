@@ -14973,11 +14973,79 @@ body.lite-mode .profile-card-home::after { display: none; }
   animation: campusPinPulse 2s ease-out infinite;
 }
 
+.campus-map-pin em {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  transform: translateX(-50%);
+  min-width: max-content;
+  max-width: 104px;
+  padding: 3px 6px;
+  border: 1px solid rgba(0, 212, 255, 0.38);
+  border-radius: 999px;
+  background: rgba(3, 8, 14, 0.86);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(0, 212, 255, 0.18);
+  color: #e8fdff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.campus-map-pin.label-up em {
+  top: auto;
+  bottom: 22px;
+}
+
+.campus-map-pin.label-left em {
+  left: auto;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.campus-map-pin.label-right em {
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .campus-map-pin.food span { background: #d4af37; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(212,175,55,0.8); }
 .campus-map-pin.dorm span { background: #e887ff; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(232,135,255,0.75); }
 .campus-map-pin.sport span { background: #42e88f; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(66,232,143,0.75); }
 .campus-map-pin.important span { background: #ff3b3b; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(255,59,59,0.8); }
 .campus-map-pin.meeting span { background: #ffffff; box-shadow: 0 0 0 2px rgba(0,0,0,0.7), 0 0 20px rgba(255,255,255,0.8); }
+
+.campus-map-pin.food em { border-color: rgba(212,175,55,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(212,175,55,0.2); }
+.campus-map-pin.dorm em { border-color: rgba(232,135,255,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(232,135,255,0.18); }
+.campus-map-pin.sport em { border-color: rgba(66,232,143,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(66,232,143,0.18); }
+.campus-map-pin.important em { border-color: rgba(255,59,59,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(255,59,59,0.2); }
+.campus-map-pin.meeting em { border-color: rgba(255,255,255,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(255,255,255,0.18); }
+
+body.theme-genshin-light .campus-map-pin em,
+body.theme-genshin-warm .campus-map-pin em,
+body.theme-genshin .campus-map-pin em {
+  border-color: rgba(154, 110, 39, 0.45);
+  background: rgba(255, 247, 226, 0.92);
+  box-shadow: 0 8px 16px rgba(88, 56, 16, 0.22);
+  color: #624018;
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.02em;
+}
+
+body.theme-light .campus-map-pin em,
+body.theme-netwatch-light .campus-map-pin em {
+  border-color: rgba(21, 82, 116, 0.24);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 16px rgba(25, 40, 56, 0.18);
+  color: #143044;
+}
 
 @keyframes campusPinPulse {
   0% { opacity: 0.7; transform: scale(0.7); }
