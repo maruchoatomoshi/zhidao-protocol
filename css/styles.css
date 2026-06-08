@@ -14925,6 +14925,150 @@ body.lite-mode .profile-card-home::after { display: none; }
   box-shadow: 0 0 18px rgba(0, 212, 255, 0.18);
 }
 
+.campus-map-mode.active {
+  border-color: rgba(0, 212, 255, 0.6);
+  background: rgba(0, 212, 255, 0.16);
+  color: #8ff4ff;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.2);
+}
+
+.campus-map-route-bar {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 6px;
+  margin: 0 14px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  border-radius: 13px;
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.campus-map-route-points {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.campus-map-route-chip {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+}
+
+.campus-map-route-chip.set {
+  border-color: rgba(0, 212, 255, 0.4);
+  color: #8ff4ff;
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.campus-map-route-arrow {
+  color: var(--text3);
+  font-size: 11px;
+}
+
+.campus-map-route-estimate {
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.campus-map-route-estimate.hint {
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.campus-map-route-clear {
+  justify-self: start;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.campus-map-route-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.campus-map-route-line line {
+  stroke: rgba(0, 212, 255, 0.85);
+  stroke-width: 0.4;
+  stroke-dasharray: 1.6 1.2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.6));
+}
+
+.campus-map-pin.route-from span,
+.campus-map-pin.route-to span {
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 22px rgba(0, 212, 255, 0.95);
+}
+
+.campus-map-pin.route-from span { background: #00ffaa; }
+.campus-map-pin.route-to span { background: #ff8a00; }
+
+.campus-map-row.route-from,
+.campus-map-row.route-to {
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.14);
+}
+
+.campus-map-row-fav {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: rgba(255,255,255,0.22);
+  font-size: 14px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.campus-map-row-fav.on {
+  color: #ffd24a;
+  text-shadow: 0 0 10px rgba(255, 210, 74, 0.7);
+}
+
+.campus-map-row-fav:active {
+  transform: scale(0.85);
+}
+
+.campus-map-popup-fav {
+  position: absolute;
+  top: 10px;
+  right: 50px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.3);
+  font-size: 16px;
+}
+
+.campus-map-popup-fav.on {
+  color: #ffd24a;
+  border-color: rgba(255, 210, 74, 0.4);
+  background: rgba(255, 210, 74, 0.1);
+  text-shadow: 0 0 10px rgba(255, 210, 74, 0.7);
+}
+
 .campus-map-editor {
   position: relative;
   z-index: 2;
@@ -15175,7 +15319,7 @@ body.theme-nw-light .campus-map-pin em {
 
 .campus-map-row {
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
+  grid-template-columns: 14px minmax(0, 1fr) auto;
   gap: 9px;
   align-items: center;
   text-align: left;
@@ -15359,6 +15503,10 @@ body.theme-nw-light .campus-map-search {
   border-color: rgba(0, 0, 0, 0.1);
 }
 
+body.theme-nw-light .campus-map-search i {
+  color: rgba(21, 82, 116, 0.7);
+}
+
 body.theme-nw-light .campus-map-filters button {
   background: rgba(0, 0, 0, 0.035);
   border-color: rgba(0, 0, 0, 0.08);
@@ -15394,10 +15542,59 @@ body.theme-nw-light .campus-map-popup-category {
   color: #15526a;
 }
 
+body.theme-nw-light .campus-map-mode.active {
+  border-color: rgba(21, 82, 116, 0.55);
+  background: rgba(21, 82, 116, 0.16);
+  color: #15526a;
+  box-shadow: 0 0 14px rgba(21, 82, 116, 0.16);
+}
+
+body.theme-nw-light .campus-map-route-bar {
+  border-color: rgba(21, 82, 116, 0.22);
+  background: rgba(21, 82, 116, 0.06);
+}
+
+body.theme-nw-light .campus-map-route-chip {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--text2);
+}
+
+body.theme-nw-light .campus-map-route-chip.set {
+  border-color: rgba(21, 82, 116, 0.4);
+  color: #15526a;
+  background: rgba(21, 82, 116, 0.1);
+}
+
+body.theme-nw-light .campus-map-route-clear {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text2);
+}
+
+body.theme-nw-light .campus-map-route-line line {
+  stroke: rgba(21, 82, 116, 0.8);
+  filter: drop-shadow(0 0 3px rgba(21, 82, 116, 0.45));
+}
+
+body.theme-nw-light .campus-map-row-fav {
+  color: rgba(0, 0, 0, 0.18);
+}
+
+body.theme-nw-light .campus-map-popup-fav {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.25);
+}
+
 body.theme-genshin-light .campus-map-search,
 body.theme-genshin-dark .campus-map-search {
   background: rgba(219,177,101,0.08);
   border-color: rgba(219,177,101,0.22);
+}
+
+body.theme-genshin-light .campus-map-search i,
+body.theme-genshin-dark .campus-map-search i {
+  color: var(--gold);
 }
 
 body.theme-genshin-light .campus-map-filters button,
@@ -15430,6 +15627,50 @@ body.theme-genshin-light .campus-map-popup-close,
 body.theme-genshin-dark .campus-map-popup-close {
   border-color: rgba(219,177,101,0.3);
   background: rgba(219,177,101,0.12);
+}
+
+body.theme-genshin-light .campus-map-route-bar,
+body.theme-genshin-dark .campus-map-route-bar {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.08);
+}
+
+body.theme-genshin-light .campus-map-route-chip,
+body.theme-genshin-dark .campus-map-route-chip {
+  border-color: rgba(219,177,101,0.2);
+  color: var(--text2);
+}
+
+body.theme-genshin-light .campus-map-route-chip.set,
+body.theme-genshin-dark .campus-map-route-chip.set {
+  border-color: rgba(219,177,101,0.45);
+  color: var(--gold);
+  background: rgba(219,177,101,0.14);
+}
+
+body.theme-genshin-light .campus-map-route-clear,
+body.theme-genshin-dark .campus-map-route-clear {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.1);
+  color: var(--text2);
+}
+
+body.theme-genshin-light .campus-map-route-line line,
+body.theme-genshin-dark .campus-map-route-line line {
+  stroke: rgba(154, 110, 39, 0.7);
+  filter: drop-shadow(0 0 3px rgba(154, 110, 39, 0.4));
+}
+
+body.theme-genshin-light .campus-map-row-fav,
+body.theme-genshin-dark .campus-map-row-fav {
+  color: rgba(154, 110, 39, 0.25);
+}
+
+body.theme-genshin-light .campus-map-popup-fav,
+body.theme-genshin-dark .campus-map-popup-fav {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.1);
+  color: rgba(154, 110, 39, 0.4);
 }
 
 body.theme-nw-light .campus-map-editor {

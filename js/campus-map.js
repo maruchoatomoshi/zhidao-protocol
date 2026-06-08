@@ -407,6 +407,8 @@ const CAMPUS_POINTS = [
   },
 ];
 
+const CAMPUS_MAP_FAVORITES_STORAGE_KEY = 'zhidao_campus_map_favorites_v1';
+
 let campusMapFilter = 'all';
 let campusMapQuery = '';
 let campusMapEditorEnabled = false;
@@ -415,9 +417,81 @@ let campusMapEditorCursor = null;
 let campusMapEditorAutosaveTimer = null;
 let campusMapEditorCloudLoaded = false;
 let campusMapGlobalLoaded = false;
+let campusMapFavorites = null;
+let campusMapFavoritesOnly = false;
+let campusMapRouteMode = false;
+let campusMapRouteFrom = '';
+let campusMapRouteTo = '';
 
 function campusMapCategoryLabel(category) {
   return (CAMPUS_MAP_CATEGORIES.find(item => item.id === category) || {}).label || category;
+}
+
+function campusMapLoadFavorites() {
+  if (campusMapFavorites) return campusMapFavorites;
+  try {
+    const raw = JSON.parse(localStorage.getItem(CAMPUS_MAP_FAVORITES_STORAGE_KEY) || '[]');
+    campusMapFavorites = Array.isArray(raw) ? raw.filter(id => typeof id === 'string') : [];
+  } catch (e) {
+    campusMapFavorites = [];
+  }
+  return campusMapFavorites;
+}
+
+function campusMapIsFavorite(id) {
+  return campusMapLoadFavorites().includes(id);
+}
+
+function toggleCampusMapFavorite(event, id) {
+  if (event) event.stopPropagation();
+  const list = campusMapLoadFavorites();
+  const idx = list.indexOf(id);
+  if (idx >= 0) list.splice(idx, 1);
+  else list.push(id);
+  try { localStorage.setItem(CAMPUS_MAP_FAVORITES_STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+  if (campusMapFavoritesOnly && idx >= 0 && !list.length) campusMapFavoritesOnly = false;
+  initCampusMap();
+}
+
+function toggleCampusMapFavoritesOnly() {
+  campusMapFavoritesOnly = !campusMapFavoritesOnly;
+  initCampusMap();
+}
+
+function toggleCampusMapRouteMode() {
+  campusMapRouteMode = !campusMapRouteMode;
+  if (!campusMapRouteMode) {
+    campusMapRouteFrom = '';
+    campusMapRouteTo = '';
+  }
+  initCampusMap();
+}
+
+function clearCampusMapRoute() {
+  campusMapRouteFrom = '';
+  campusMapRouteTo = '';
+  initCampusMap();
+}
+
+function campusMapHandleRoutePick(id) {
+  if (!campusMapRouteFrom || (campusMapRouteFrom && campusMapRouteTo)) {
+    campusMapRouteFrom = id;
+    campusMapRouteTo = '';
+  } else if (id === campusMapRouteFrom) {
+    campusMapRouteFrom = '';
+  } else {
+    campusMapRouteTo = id;
+  }
+  initCampusMap();
+}
+
+function campusMapRouteEstimate(from, to) {
+  const dx = Number(from.x || 0) - Number(to.x || 0);
+  const dy = Number(from.y || 0) - Number(to.y || 0);
+  const pct = Math.sqrt(dx * dx + dy * dy);
+  const meters = Math.round(pct * 6.5);
+  const minutes = Math.max(1, Math.round(meters / 75));
+  return { meters, minutes };
 }
 
 function campusMapCanEdit() {
@@ -572,6 +646,7 @@ function campusMapEscape(value) {
 function campusMapFilteredPoints() {
   const q = campusMapQuery.trim().toLowerCase();
   return campusMapAllPoints().filter(point => {
+    if (campusMapFavoritesOnly && !campusMapIsFavorite(point.id)) return false;
     const categoryOk = campusMapFilter === 'all' || point.category === campusMapFilter;
     if (!categoryOk) return false;
     if (!q) return true;
@@ -648,6 +723,9 @@ function initCampusMap() {
     const mode = campusMapAssetMode();
     const points = campusMapFilteredPoints();
     const canEdit = campusMapCanEdit();
+    const routeFromPoint = campusMapRouteFrom ? campusMapFindPoint(campusMapRouteFrom) : null;
+    const routeToPoint = campusMapRouteTo ? campusMapFindPoint(campusMapRouteTo) : null;
+    const routeEstimate = routeFromPoint && routeToPoint ? campusMapRouteEstimate(routeFromPoint, routeToPoint) : null;
     root.innerHTML = `
     <div class="campus-map-panel">
       <div class="campus-map-head">
@@ -657,6 +735,8 @@ function initCampusMap() {
         </div>
         <div class="campus-map-head-actions">
           ${canEdit ? `<button class="campus-map-mode editor" type="button" onclick="toggleCampusMapEditor()">${campusMapEditorEnabled ? 'EDITOR ON' : 'EDITOR'}</button>` : ''}
+          <button class="campus-map-mode ${campusMapRouteMode ? 'active' : ''}" type="button" onclick="toggleCampusMapRouteMode()">МАРШРУТ</button>
+          <button class="campus-map-mode ${campusMapFavoritesOnly ? 'active' : ''}" type="button" onclick="toggleCampusMapFavoritesOnly()">★ ИЗБРАННОЕ</button>
           <button class="campus-map-mode" type="button" onclick="toggleCampusMapOriginal()">${mode === 'original' ? 'THEME' : 'ORIGINAL'}</button>
         </div>
       </div>
@@ -669,12 +749,28 @@ function initCampusMap() {
           <button type="button" class="${campusMapFilter === category.id ? 'active' : ''}" onclick="setCampusMapFilter('${category.id}')">${campusMapEscape(category.label)}</button>
         `).join('')}
       </div>
+      ${campusMapRouteMode ? `
+        <div class="campus-map-route-bar">
+          <div class="campus-map-route-points">
+            <span class="campus-map-route-chip from ${routeFromPoint ? 'set' : ''}">A: ${routeFromPoint ? campusMapEscape(routeFromPoint.title) : 'выбери точку'}</span>
+            <span class="campus-map-route-arrow">→</span>
+            <span class="campus-map-route-chip to ${routeToPoint ? 'set' : ''}">B: ${routeToPoint ? campusMapEscape(routeToPoint.title) : 'выбери точку'}</span>
+          </div>
+          ${routeEstimate ? `<div class="campus-map-route-estimate">≈ ${routeEstimate.meters} м · ~${routeEstimate.minutes} мин пешком</div>` : '<div class="campus-map-route-estimate hint">Кликай по точкам на карте или в списке, чтобы построить маршрут</div>'}
+          ${routeFromPoint || routeToPoint ? `<button type="button" class="campus-map-route-clear" onclick="clearCampusMapRoute()">Сбросить</button>` : ''}
+        </div>
+      ` : ''}
       ${campusMapEditorPanel()}
       <div class="campus-map-scroll">
         <div class="campus-map-stage ${campusMapEditorEnabled && canEdit ? 'editing' : ''}" onclick="handleCampusMapStageClick(event)">
           <img src="${CAMPUS_MAP_ASSETS[mode] || CAMPUS_MAP_ASSETS.cyberpunk}" alt="Campus map">
+          ${routeFromPoint && routeToPoint ? `
+            <svg class="campus-map-route-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line x1="${routeFromPoint.x}" y1="${routeFromPoint.y}" x2="${routeToPoint.x}" y2="${routeToPoint.y}" />
+            </svg>
+          ` : ''}
           ${points.map(point => `
-            <button class="campus-map-pin ${campusMapEscape(point.category)} label-${campusMapEscape(point.labelPos || 'down')} ${campusMapEditorSelectionId === point.id ? 'selected' : ''}" style="left:${point.x}%;top:${point.y}%;--label-dx:${Number(point.labelDx || 0)}px;--label-dy:${Number(point.labelDy || 0)}px;" type="button" onclick="handleCampusMapPinClick(event, '${campusMapEscape(point.id)}')" aria-label="${campusMapEscape(point.title)}">
+            <button class="campus-map-pin ${campusMapEscape(point.category)} label-${campusMapEscape(point.labelPos || 'down')} ${campusMapEditorSelectionId === point.id ? 'selected' : ''} ${campusMapRouteFrom === point.id ? 'route-from' : ''} ${campusMapRouteTo === point.id ? 'route-to' : ''}" style="left:${point.x}%;top:${point.y}%;--label-dx:${Number(point.labelDx || 0)}px;--label-dy:${Number(point.labelDy || 0)}px;" type="button" onclick="handleCampusMapPinClick(event, '${campusMapEscape(point.id)}')" aria-label="${campusMapEscape(point.title)}">
               <span></span>
               <em>${campusMapEscape(point.label || point.title)}</em>
             </button>
@@ -683,12 +779,13 @@ function initCampusMap() {
       </div>
       <div class="campus-map-list">
         ${points.length ? points.map(point => `
-          <button type="button" class="campus-map-row ${campusMapEscape(point.category)}" onclick="openCampusMapPoint('${campusMapEscape(point.id)}')">
+          <button type="button" class="campus-map-row ${campusMapEscape(point.category)} ${campusMapRouteFrom === point.id ? 'route-from' : ''} ${campusMapRouteTo === point.id ? 'route-to' : ''}" onclick="${campusMapRouteMode ? `campusMapHandleRoutePick('${campusMapEscape(point.id)}')` : `openCampusMapPoint('${campusMapEscape(point.id)}')`}">
             <span class="campus-map-row-dot"></span>
             <span>
               <b>${campusMapEscape(point.title)}</b>
               <small>${campusMapEscape(point.cn)} · ${campusMapEscape(point.en)} · ${campusMapCategoryLabel(point.category)}</small>
             </span>
+            <span class="campus-map-row-fav ${campusMapIsFavorite(point.id) ? 'on' : ''}" onclick="toggleCampusMapFavorite(event, '${campusMapEscape(point.id)}')">★</span>
           </button>
         `).join('') : '<div class="campus-map-empty">Ничего не найдено</div>'}
       </div>
@@ -735,6 +832,10 @@ function toggleCampusMapEditor() {
 
 function handleCampusMapPinClick(event, id) {
   if (event) event.stopPropagation();
+  if (campusMapRouteMode) {
+    campusMapHandleRoutePick(id);
+    return;
+  }
   if (campusMapEditorEnabled && campusMapCanEdit()) {
     const point = campusMapFindPoint(id);
     campusMapEditorSelectionId = id;
@@ -904,6 +1005,7 @@ function openCampusMapPoint(id) {
     <div class="campus-map-popup-backdrop" onclick="closeCampusMapPoint()"></div>
     <div class="campus-map-popup-card ${campusMapEscape(point.category)}">
       <button class="campus-map-popup-close" type="button" onclick="closeCampusMapPoint()">×</button>
+      <button class="campus-map-popup-fav ${campusMapIsFavorite(point.id) ? 'on' : ''}" type="button" onclick="toggleCampusMapFavorite(event, '${campusMapEscape(point.id)}'); openCampusMapPoint('${campusMapEscape(point.id)}')">★</button>
       <div class="campus-map-popup-category">${campusMapCategoryLabel(point.category)}</div>
       <h3>${campusMapEscape(point.title)}</h3>
       <div class="campus-map-popup-cn">${campusMapEscape(point.cn)} · ${campusMapEscape(point.en)}</div>
