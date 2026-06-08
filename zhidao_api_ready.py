@@ -2623,7 +2623,7 @@ class LaundryBook(BaseModel):
 
 
 @app.post("/api/user/set_path")
-async def set_user_theme_path(data: dict):
+def set_user_theme_path(data: dict):
     telegram_id = data.get("telegram_id")
     path = str(data.get("path") or "").strip()
     if not telegram_id:
@@ -2648,7 +2648,7 @@ async def set_user_theme_path(data: dict):
 
 
 @app.get("/api/profile/{telegram_id}")
-async def get_user_profile_dossier(telegram_id: int):
+def get_user_profile_dossier(telegram_id: int):
     implant_info = {
         "implant_red_dragon": {"name": "Красный Дракон 红龙", "glyph": "龍", "weight": 100},
         "implant_netwatch": {"name": "Сетевой Дозор 网络守卫", "glyph": "衛", "weight": 95},
@@ -2860,7 +2860,7 @@ async def get_user_profile_dossier(telegram_id: int):
 
 
 @app.post("/api/profile/showcase")
-async def set_profile_showcase(data: dict):
+def set_profile_showcase(data: dict):
     telegram_id = data.get("telegram_id")
     showcase_kind = str(data.get("kind") or "auto").strip()
     showcase_code = str(data.get("code") or "").strip()
@@ -2935,12 +2935,18 @@ def get_last_event_mvp_id(c) -> Optional[int]:
 
 @app.get("/api/user/{telegram_id}")
 async def get_user(telegram_id: int):
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT full_name, avatar_url, marzban_username FROM users WHERE telegram_id=?", (telegram_id,))
-    profile_row = c.fetchone()
-    is_last_mvp = get_last_event_mvp_id(c) == telegram_id
-    conn.close()
+    def _db():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT full_name, avatar_url, marzban_username FROM users WHERE telegram_id=?", (telegram_id,))
+            profile_row = c.fetchone()
+            is_last_mvp = get_last_event_mvp_id(c) == telegram_id
+            return profile_row, is_last_mvp
+        finally:
+            conn.close()
+
+    profile_row, is_last_mvp = await asyncio.to_thread(_db)
     if not profile_row:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -2978,7 +2984,7 @@ async def get_user(telegram_id: int):
 
 
 @app.post("/api/user/avatar")
-async def update_user_avatar(data: dict):
+def update_user_avatar(data: dict):
     telegram_id = data.get("telegram_id")
     avatar_url = str(data.get("avatar_url") or "").strip()
     if not telegram_id:
@@ -3032,7 +3038,7 @@ async def get_global_alert_current():
 
 
 @app.get("/api/schedule")
-async def get_schedule():
+def get_schedule():
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT id, day, time, subject, location FROM schedule ORDER BY day, time")
@@ -3042,7 +3048,7 @@ async def get_schedule():
 
 
 @app.post("/api/schedule")
-async def add_schedule(item: ScheduleItem, x_admin_id: Optional[int] = Header(None)):
+def add_schedule(item: ScheduleItem, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = get_conn()
@@ -3054,7 +3060,7 @@ async def add_schedule(item: ScheduleItem, x_admin_id: Optional[int] = Header(No
 
 
 @app.delete("/api/schedule/{item_id}")
-async def delete_schedule(item_id: int, x_admin_id: Optional[int] = Header(None)):
+def delete_schedule(item_id: int, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = get_conn()
@@ -3066,7 +3072,7 @@ async def delete_schedule(item_id: int, x_admin_id: Optional[int] = Header(None)
 
 
 @app.get("/api/announcements")
-async def get_announcements():
+def get_announcements():
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT id, text, created_at FROM announcements ORDER BY created_at DESC LIMIT 10")
@@ -3095,7 +3101,7 @@ async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Heade
 
 
 @app.delete("/api/announcements/{item_id}")
-async def delete_announcement(item_id: int, x_admin_id: Optional[int] = Header(None)):
+def delete_announcement(item_id: int, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = get_conn()
@@ -3107,7 +3113,7 @@ async def delete_announcement(item_id: int, x_admin_id: Optional[int] = Header(N
 
 
 @app.get("/api/announcements/{item_id}/reactions")
-async def get_reactions(item_id: int):
+def get_reactions(item_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT emoji, COUNT(*) as cnt FROM announcement_reactions WHERE announcement_id=? GROUP BY emoji", (item_id,))
@@ -3117,7 +3123,7 @@ async def get_reactions(item_id: int):
 
 
 @app.post("/api/announcements/{item_id}/react")
-async def react_to_announcement(item_id: int, data: dict):
+def react_to_announcement(item_id: int, data: dict):
     telegram_id = data.get("telegram_id")
     emoji = data.get("emoji")
     if not telegram_id or not emoji:
@@ -3136,7 +3142,7 @@ async def react_to_announcement(item_id: int, data: dict):
 
 
 @app.get("/api/laundry")
-async def get_laundry():
+def get_laundry():
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT id, date, time, telegram_id, username FROM laundry ORDER BY date, time")
@@ -3146,7 +3152,7 @@ async def get_laundry():
 
 
 @app.post("/api/laundry")
-async def book_laundry(item: LaundryBook):
+def book_laundry(item: LaundryBook):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT id FROM laundry WHERE date=? AND time=?", (item.date, item.time))
@@ -3164,7 +3170,7 @@ async def book_laundry(item: LaundryBook):
 
 
 @app.delete("/api/laundry/{item_id}")
-async def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(None)):
+def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(None)):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT telegram_id FROM laundry WHERE id=?", (item_id,))
@@ -3182,7 +3188,7 @@ async def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(Non
 
 
 @app.get("/api/points/{telegram_id}")
-async def get_points(telegram_id: int):
+def get_points(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT points, full_name, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
@@ -3206,7 +3212,7 @@ async def get_points(telegram_id: int):
 
 
 @app.get("/api/admin/users")
-async def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
+def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -3284,7 +3290,7 @@ async def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(Non
 
 
 @app.post("/api/admin/user/room")
-async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(None)):
+def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -3346,7 +3352,7 @@ async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(
 
 
 @app.get("/api/admin/user/{telegram_id}/dossier")
-async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None)):
+def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -3551,7 +3557,7 @@ async def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Heade
 
 
 @app.get("/api/admin/expected-students")
-async def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None)):
+def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -3761,7 +3767,7 @@ async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/admin/actions")
-async def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(None)):
+def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -3799,7 +3805,7 @@ async def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(N
 
 
 @app.post("/api/presence/start")
-async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -3940,7 +3946,7 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
 
 
 @app.get("/api/presence/status")
-async def get_presence_status(check_type: str, telegram_id: int, check_date: Optional[str] = None):
+def get_presence_status(check_type: str, telegram_id: int, check_date: Optional[str] = None):
     check_type = normalize_presence_check_type(check_type)
     check_date = normalize_presence_date(check_date)
     conn = get_conn()
@@ -4093,7 +4099,7 @@ async def confirm_presence(data: dict):
 
 
 @app.post("/api/presence/attempt")
-async def mark_presence_attempt(data: dict, x_admin_id: Optional[int] = Header(None)):
+def mark_presence_attempt(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4128,7 +4134,7 @@ async def mark_presence_attempt(data: dict, x_admin_id: Optional[int] = Header(N
 
 
 @app.post("/api/presence/admin/approve")
-async def approve_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
+def approve_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4164,7 +4170,7 @@ async def approve_presence_leave(data: dict, x_admin_id: Optional[int] = Header(
 
 
 @app.post("/api/presence/admin/reject")
-async def reject_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
+def reject_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4191,7 +4197,7 @@ async def reject_presence_leave(data: dict, x_admin_id: Optional[int] = Header(N
 
 
 @app.post("/api/presence/admin/escalate")
-async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4230,7 +4236,7 @@ async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header
 
 
 @app.post("/api/presence/admin/cancel")
-async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4268,7 +4274,7 @@ async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(N
 
 
 @app.post("/api/presence/admin/penalize")
-async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4379,7 +4385,7 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
 
 
 @app.get("/api/presence/admin/overview")
-async def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
+def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4424,7 +4430,7 @@ async def presence_admin_overview(check_type: str, check_date: Optional[str] = N
 
 
 @app.get("/api/diary/admin/overview")
-async def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
+def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
     if not is_diary_staff(x_admin_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4487,7 +4493,7 @@ async def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Opt
 
 
 @app.get("/api/diary/stars/overview")
-async def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
     if not entry_date:
         raise HTTPException(status_code=400, detail="Missing entry_date")
@@ -4677,7 +4683,7 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/diary/stars/leaderboard")
-async def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     placeholders = ','.join('?' * len(ADMIN_IDS))
     conn = get_conn()
     c = conn.cursor()
@@ -4721,7 +4727,7 @@ async def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None
 
 
 @app.get("/api/diary/{telegram_id}")
-async def get_diary_entries(telegram_id: int, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def get_diary_entries(telegram_id: int, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
     if viewer_id not in (None, telegram_id) and not is_diary_staff(viewer_id):
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -4779,7 +4785,7 @@ async def get_diary_entries(telegram_id: int, x_telegram_id: Optional[int] = Hea
 
 
 @app.get("/api/diary/{telegram_id}/{entry_date}")
-async def get_diary_entry(telegram_id: int, entry_date: str, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def get_diary_entry(telegram_id: int, entry_date: str, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
     if viewer_id not in (None, telegram_id) and not is_diary_staff(viewer_id):
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -4828,7 +4834,7 @@ async def get_diary_entry(telegram_id: int, entry_date: str, x_telegram_id: Opti
 
 
 @app.post("/api/diary/save")
-async def save_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def save_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     telegram_id = data.get("telegram_id")
     entry_date = data.get("entry_date")
     if not telegram_id or not entry_date:
@@ -4873,7 +4879,7 @@ async def save_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(Non
 
 
 @app.post("/api/diary/submit")
-async def submit_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def submit_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     telegram_id = data.get("telegram_id")
     entry_date = data.get("entry_date")
     if not telegram_id or not entry_date:
@@ -4902,7 +4908,7 @@ async def submit_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(N
 
 
 @app.post("/api/diary/score")
-async def score_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
+def score_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
     if not is_diary_staff(x_admin_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4944,7 +4950,7 @@ async def score_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)
 
 
 @app.post("/api/diary/lock")
-async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
+def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
     if not is_diary_staff(x_admin_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4975,7 +4981,7 @@ async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/leaderboard")
-async def get_leaderboard():
+def get_leaderboard():
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     placeholders = ','.join('?' * len(ADMIN_IDS))
     conn = get_conn()
@@ -5027,7 +5033,7 @@ async def get_leaderboard():
 
 
 @app.get("/api/achievements/{telegram_id}")
-async def get_user_achievements(telegram_id: int):
+def get_user_achievements(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT code, name, description, icon, secret FROM achievements")
@@ -5053,7 +5059,7 @@ async def get_user_achievements(telegram_id: int):
 
 
 @app.post("/api/achievements/grant")
-async def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)):
+def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     telegram_id = data.get("telegram_id")
@@ -5070,7 +5076,7 @@ async def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)
         return {"success": False, "detail": "Already earned"}
 
 @app.get("/api/user/scans/{telegram_id}")
-async def get_user_scans(telegram_id: int):
+def get_user_scans(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
@@ -5186,7 +5192,7 @@ async def open_case(data: dict):
 
 
 @app.get("/api/casino/status/{telegram_id}")
-async def get_casino_status(telegram_id: int):
+def get_casino_status(telegram_id: int):
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
@@ -5213,7 +5219,7 @@ async def get_casino_status(telegram_id: int):
 
 
 @app.get("/api/casino/history/{telegram_id}")
-async def get_casino_history(telegram_id: int):
+def get_casino_history(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""SELECT prize, created_at FROM casino_log
@@ -5246,7 +5252,7 @@ async def get_casino_history(telegram_id: int):
 
 
 @app.get("/api/casino/inventory/{telegram_id}")
-async def get_casino_inventory(telegram_id: int):
+def get_casino_inventory(telegram_id: int):
     now_beijing = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
     conn = get_conn()
     c = conn.cursor()
@@ -5277,7 +5283,7 @@ async def get_casino_inventory(telegram_id: int):
 
 
 @app.get("/api/casino/implants/{telegram_id}")
-async def get_implants(telegram_id: int):
+def get_implants(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""SELECT id, implant_id, durability, obtained_at FROM user_implants
@@ -5312,7 +5318,7 @@ async def get_implants(telegram_id: int):
 
 
 @app.get("/api/implants/legendary/status/{telegram_id}")
-async def get_legendary_implant_status(telegram_id: int):
+def get_legendary_implant_status(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     result = {}
@@ -5371,7 +5377,7 @@ async def red_dragon_intercept(data: dict):
 
 
 @app.post("/api/implants/red-dragon/impulse-reset")
-async def red_dragon_impulse_reset(data: dict):
+def red_dragon_impulse_reset(data: dict):
     actor_id = int(data.get("telegram_id") or 0)
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
@@ -5499,7 +5505,7 @@ async def netwatch_veil_breach(data: dict):
 
 
 @app.post("/api/casino/implants/disassemble/{implant_id}")
-async def disassemble_implant(implant_id: int, data: dict):
+def disassemble_implant(implant_id: int, data: dict):
     telegram_id = data.get("telegram_id")
     if not telegram_id:
         raise HTTPException(status_code=400, detail="No telegram_id")
@@ -5528,7 +5534,7 @@ async def disassemble_implant(implant_id: int, data: dict):
 
 
 @app.post("/api/casino/use/{purchase_id}")
-async def use_casino_prize(purchase_id: int, data: dict):
+def use_casino_prize(purchase_id: int, data: dict):
     telegram_id = data.get("telegram_id")
     conn = get_conn()
     c = conn.cursor()
@@ -5550,7 +5556,7 @@ async def use_casino_prize(purchase_id: int, data: dict):
 
 
 @app.get("/api/shop")
-async def get_shop(telegram_id: int = 0):
+def get_shop(telegram_id: int = 0):
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
@@ -5697,7 +5703,7 @@ async def buy_item(data: dict):
 
 
 @app.get("/api/shop/inventory/{telegram_id}")
-async def get_inventory(telegram_id: int):
+def get_inventory(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""SELECT sp.id, sp.item_code, si.name, si.icon, si.price,
@@ -5712,7 +5718,7 @@ async def get_inventory(telegram_id: int):
 
 
 @app.post("/api/shop/gift")
-async def gift_item(data: dict):
+def gift_item(data: dict):
     purchase_id = data.get("purchase_id")
     from_id = data.get("from_id")
     to_id = data.get("to_id")
@@ -5761,7 +5767,7 @@ async def gift_item(data: dict):
 
 
 @app.post("/api/shop/sell")
-async def sell_item(data: dict):
+def sell_item(data: dict):
     purchase_id = data.get("purchase_id")
     telegram_id = data.get("telegram_id")
     conn = get_conn()
@@ -5786,7 +5792,7 @@ async def sell_item(data: dict):
 
 
 @app.post("/api/shop/use/{purchase_id}")
-async def use_shop_item(purchase_id: int, data: dict):
+def use_shop_item(purchase_id: int, data: dict):
     telegram_id = data.get("telegram_id")
     conn = get_conn()
     c = conn.cursor()
@@ -5857,7 +5863,7 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/reset_shop")
-async def reset_shop(x_admin_id: Optional[int] = Header(None)):
+def reset_shop(x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
@@ -5895,7 +5901,7 @@ async def send_question(data: dict):
 
 
 @app.get("/api/settings")
-async def get_settings():
+def get_settings():
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT value FROM settings WHERE key='blackwall'")
@@ -5910,7 +5916,7 @@ async def get_settings():
 
 
 @app.post("/api/admin/blackwall")
-async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None)):
+def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     enabled = data.get("enabled", False)
@@ -5929,7 +5935,7 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.post("/api/admin/architect-event")
-async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     enabled = bool(data.get("enabled", False))
@@ -5948,7 +5954,7 @@ async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(
 
 
 @app.get("/api/raid/status")
-async def get_raid_status(telegram_id: int = 0):
+def get_raid_status(telegram_id: int = 0):
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
@@ -6205,7 +6211,7 @@ GENSHIN_POOL = {
 }
 
 @app.get("/api/cards/{telegram_id}")
-async def get_cards(telegram_id: int):
+def get_cards(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT id, card_id, obtained_at, durability FROM user_cards WHERE telegram_id=? AND durability > 0 ORDER BY obtained_at DESC", (telegram_id,))
@@ -6227,7 +6233,7 @@ async def get_cards(telegram_id: int):
 
 
 @app.post("/api/genshin/open")
-async def open_genshin_case(data: dict):
+def open_genshin_case(data: dict):
     telegram_id = data.get("telegram_id")
     if not telegram_id:
         raise HTTPException(status_code=400, detail="No telegram_id")
@@ -6414,7 +6420,7 @@ FRAGMENT_CARD_POOL = [
 FRAGMENT_COST = 10
 
 @app.post("/api/fragments/exchange")
-async def exchange_fragments(data: dict):
+def exchange_fragments(data: dict):
     telegram_id = data.get("telegram_id")
     exchange_type = data.get("type")  # "implant" or "card"
     if not telegram_id or exchange_type not in ("implant", "card"):
@@ -6466,7 +6472,7 @@ async def exchange_fragments(data: dict):
 
 
 @app.post("/api/cards/disassemble/{card_id}")
-async def disassemble_card(card_id: int, data: dict):
+def disassemble_card(card_id: int, data: dict):
     telegram_id = data.get("telegram_id")
     if not telegram_id:
         raise HTTPException(status_code=400, detail="No telegram_id")
@@ -6494,7 +6500,7 @@ async def disassemble_card(card_id: int, data: dict):
 
 
 @app.get("/api/laundry/schedule")
-async def get_laundry_schedule():
+def get_laundry_schedule():
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT id, day, time, note, COALESCE(capacity, 1) FROM laundry_schedule ORDER BY id")
@@ -6528,7 +6534,7 @@ async def get_laundry_schedule():
 
 
 @app.post("/api/laundry/schedule")
-async def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
+def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
@@ -6544,7 +6550,7 @@ async def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
 
 
 @app.delete("/api/laundry/schedule/{slot_id}")
-async def delete_laundry_slot(slot_id: int, x_admin_id: int = Header(None)):
+def delete_laundry_slot(slot_id: int, x_admin_id: int = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
@@ -6557,7 +6563,7 @@ async def delete_laundry_slot(slot_id: int, x_admin_id: int = Header(None)):
 
 
 @app.post("/api/laundry/schedule/{slot_id}/book")
-async def book_laundry_slot(slot_id: int, data: dict):
+def book_laundry_slot(slot_id: int, data: dict):
     telegram_id = int(data.get("telegram_id") or 0)
     if not telegram_id:
         raise HTTPException(status_code=400, detail="Missing telegram_id")
@@ -6585,7 +6591,7 @@ async def book_laundry_slot(slot_id: int, data: dict):
 
 
 @app.post("/api/laundry/schedule/{slot_id}/cancel")
-async def cancel_laundry_slot(slot_id: int, data: dict):
+def cancel_laundry_slot(slot_id: int, data: dict):
     telegram_id = int(data.get("telegram_id") or 0)
     if not telegram_id:
         raise HTTPException(status_code=400, detail="Missing telegram_id")
@@ -6599,7 +6605,7 @@ async def cancel_laundry_slot(slot_id: int, data: dict):
 
 
 @app.post("/api/laundry/schedule/{slot_id}/admin-cancel")
-async def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
+def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Not admin")
     telegram_id = int(data.get("telegram_id") or 0)
@@ -6615,7 +6621,7 @@ async def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int
 
 
 @app.get("/api/water/schedule")
-async def get_water_schedule():
+def get_water_schedule():
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT id, day, time, COALESCE(floor, ''), note, COALESCE(capacity, 1) FROM water_schedule ORDER BY id")
@@ -6649,7 +6655,7 @@ async def get_water_schedule():
 
 
 @app.post("/api/water/schedule")
-async def add_water_slot(data: dict, x_admin_id: int = Header(None)):
+def add_water_slot(data: dict, x_admin_id: int = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
@@ -6671,7 +6677,7 @@ async def add_water_slot(data: dict, x_admin_id: int = Header(None)):
 
 
 @app.delete("/api/water/schedule/{slot_id}")
-async def delete_water_slot(slot_id: int, x_admin_id: int = Header(None)):
+def delete_water_slot(slot_id: int, x_admin_id: int = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Not admin")
     conn = get_conn()
@@ -6684,7 +6690,7 @@ async def delete_water_slot(slot_id: int, x_admin_id: int = Header(None)):
 
 
 @app.post("/api/water/schedule/{slot_id}/book")
-async def book_water_slot(slot_id: int, data: dict):
+def book_water_slot(slot_id: int, data: dict):
     telegram_id = int(data.get("telegram_id") or 0)
     if not telegram_id:
         raise HTTPException(status_code=400, detail="Missing telegram_id")
@@ -6711,7 +6717,7 @@ async def book_water_slot(slot_id: int, data: dict):
 
 
 @app.post("/api/water/schedule/{slot_id}/cancel")
-async def cancel_water_slot(slot_id: int, data: dict):
+def cancel_water_slot(slot_id: int, data: dict):
     telegram_id = int(data.get("telegram_id") or 0)
     if not telegram_id:
         raise HTTPException(status_code=400, detail="Missing telegram_id")
@@ -6724,7 +6730,7 @@ async def cancel_water_slot(slot_id: int, data: dict):
 
 
 @app.post("/api/water/schedule/{slot_id}/admin-cancel")
-async def admin_cancel_water_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
+def admin_cancel_water_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Not admin")
     telegram_id = int(data.get("telegram_id") or 0)
@@ -6739,7 +6745,7 @@ async def admin_cancel_water_booking(slot_id: int, data: dict, x_admin_id: int =
 
 
 @app.post("/api/events/architect/create")
-async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
+def create_architect_event(data: dict, x_admin_id: int = Header(None)):
     admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
     if admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -6794,7 +6800,7 @@ async def get_event_details(event_id: int):
 
 
 @app.post("/api/events/{event_id}/join")
-async def join_event_team(event_id: int, data: dict):
+def join_event_team(event_id: int, data: dict):
     telegram_id = data.get("telegram_id")
     if not telegram_id:
         raise HTTPException(status_code=400, detail="No telegram_id")
@@ -6829,7 +6835,7 @@ async def join_event_team(event_id: int, data: dict):
 
 
 @app.post("/api/events/{event_id}/leave")
-async def leave_event_team(event_id: int, data: dict):
+def leave_event_team(event_id: int, data: dict):
     telegram_id = data.get("telegram_id")
     if not telegram_id:
         raise HTTPException(status_code=400, detail="No telegram_id")
@@ -6883,7 +6889,7 @@ async def get_event_team(event_id: int):
 
 
 @app.post("/api/events/{event_id}/extra")
-async def add_event_extra_participant(
+def add_event_extra_participant(
     event_id: int,
     data: dict,
     x_admin_id: int = Header(None),
@@ -6926,7 +6932,7 @@ async def add_event_extra_participant(
 
 
 @app.post("/api/events/{event_id}/start")
-async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header(None)):
+def start_event(event_id: int, data: dict = None, x_admin_id: int = Header(None)):
     admin_id = x_admin_id if x_admin_id is not None else (data or {}).get("telegram_id")
     if admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -6965,7 +6971,7 @@ async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header
 
 
 @app.post("/api/events/{event_id}/reset")
-async def reset_event(event_id: int, x_admin_id: int = Header(None)):
+def reset_event(event_id: int, x_admin_id: int = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -6996,7 +7002,7 @@ async def reset_event(event_id: int, x_admin_id: int = Header(None)):
 
 
 @app.get("/api/events/{event_id}/question")
-async def get_event_question(event_id: int, telegram_id: int, action_type: str):
+def get_event_question(event_id: int, telegram_id: int, action_type: str):
     snapshot = get_event_snapshot(event_id)
     if not snapshot:
         raise HTTPException(status_code=404, detail="Event not found")
@@ -7041,7 +7047,7 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
 
 
 @app.post("/api/events/action")
-async def resolve_event_action(data: dict):
+def resolve_event_action(data: dict):
     event_id = data.get("event_id")
     telegram_id = data.get("telegram_id")
     action_type = data.get("action_type")
@@ -7200,7 +7206,7 @@ async def resolve_event_action(data: dict):
 
 
 @app.get("/api/events/{event_id}/leaderboard")
-async def get_event_leaderboard(event_id: int):
+def get_event_leaderboard(event_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute(
@@ -7298,7 +7304,7 @@ def _check_blackwall(c, user_id):
 
 
 @app.get("/api/contracts")
-async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
+def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
     conn = get_conn()
     c = conn.cursor()
     _check_blackwall(c, x_telegram_id)
@@ -7323,7 +7329,7 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
 
 
 @app.get("/api/contracts/my")
-async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
+def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     if not x_telegram_id:
         raise HTTPException(status_code=401, detail="Not authorized")
     conn = get_conn()
@@ -7502,7 +7508,7 @@ async def accept_contract(contract_id: int, x_telegram_id: Optional[int] = Heade
 
 
 @app.post("/api/contracts/{contract_id}/complete")
-async def complete_contract(contract_id: int,
+def complete_contract(contract_id: int,
                              x_telegram_id: Optional[int] = Header(None),
                              x_admin_id: Optional[int] = Header(None)):
     acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
@@ -7556,7 +7562,7 @@ async def complete_contract(contract_id: int,
 
 
 @app.post("/api/contracts/{contract_id}/cancel")
-async def cancel_contract(contract_id: int,
+def cancel_contract(contract_id: int,
                            x_telegram_id: Optional[int] = Header(None),
                            x_admin_id: Optional[int] = Header(None)):
     acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
@@ -7592,7 +7598,7 @@ async def cancel_contract(contract_id: int,
 
 
 @app.post("/api/contracts/{contract_id}/dispute")
-async def dispute_contract(contract_id: int,
+def dispute_contract(contract_id: int,
                             x_telegram_id: Optional[int] = Header(None),
                             x_admin_id: Optional[int] = Header(None)):
     acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
@@ -7621,7 +7627,7 @@ async def dispute_contract(contract_id: int,
 
 
 @app.get("/api/admin/contracts")
-async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
+def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                                 status: Optional[str] = None):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -7666,7 +7672,7 @@ async def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
 
 
 @app.get("/api/admin/contracts/monitor")
-async def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
+def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = get_conn()
@@ -7815,7 +7821,7 @@ async def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/contracts/{contract_id}/resolve")
-async def admin_resolve_contract(contract_id: int, data: dict,
+def admin_resolve_contract(contract_id: int, data: dict,
                                   x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
