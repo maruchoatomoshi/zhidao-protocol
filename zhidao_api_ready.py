@@ -1050,6 +1050,25 @@ def migrate_db():
                   reference_type TEXT DEFAULT NULL,
                   note TEXT DEFAULT NULL,
                   created_at TEXT NOT NULL)''')
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_economy_log_telegram_id ON economy_log(telegram_id, created_at)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_user_implants_tid ON user_implants(telegram_id, implant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_user_cards_tid ON user_cards(telegram_id, card_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_implant_daily_uses_tid ON implant_daily_uses(telegram_id, implant_id, use_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_shop_purchases_tid ON shop_purchases(telegram_id, item_code)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_casino_log_tid ON casino_log(telegram_id, date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_admin_action_logs_target ON admin_action_logs(target_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_daily_checks_tid ON daily_checks(telegram_id, check_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_diary_stars_tid ON diary_stars(telegram_id, entry_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_diary_entries_tid ON diary_entries(telegram_id, date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_raids_date ON raids(date, status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_raid_participants_rid ON raid_participants(raid_id, telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_contracts_status ON contracts(status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_legendary_actions ON legendary_implant_actions(actor_telegram_id, action_code)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_event_actions_eid ON event_actions(event_id, telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_event_participants_eid ON event_participants(event_id, telegram_id)")
+
     conn.commit()
     conn.close()
 
