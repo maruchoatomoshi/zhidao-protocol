@@ -8,8 +8,11 @@ function applyThemePath(path) {
   if (path === 'cyberpunk') {
     nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
     if (!isAdmin) gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-    const t = localStorage.getItem('zhidao_theme') || '';
-    if (t.startsWith('genshin')) setTheme('');
+    // Admins may use any theme regardless of path — don't force their theme back.
+    if (!isAdmin) {
+      const t = localStorage.getItem('zhidao_theme') || '';
+      if (t.startsWith('genshin')) setTheme('');
+    }
     // Показываем импланты, скрываем карточки
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'none';
@@ -22,8 +25,11 @@ function applyThemePath(path) {
   } else if (path === 'genshin') {
     if (!isAdmin) nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
-    const t = localStorage.getItem('zhidao_theme') || '';
-    if (!t.startsWith('genshin')) setTheme('genshin-light');
+    // Admins may use any theme regardless of path — don't force their theme.
+    if (!isAdmin) {
+      const t = localStorage.getItem('zhidao_theme') || '';
+      if (!t.startsWith('genshin')) setTheme('genshin-light');
+    }
     // Показываем карточки, скрываем импланты
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'block';
