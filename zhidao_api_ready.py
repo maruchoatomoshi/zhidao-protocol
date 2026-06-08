@@ -532,6 +532,12 @@ def get_conn():
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
+    # The VPS disk has very slow fsync latency (~195ms/fsync). With WAL+NORMAL a
+    # commit does not fsync, but an automatic checkpoint does, and it runs
+    # synchronously inside whichever write crosses the WAL threshold — turning a
+    # cheap write into a multi-second stall. Disable auto-checkpoint here and let
+    # wal_checkpoint_loop() perform passive checkpoints off the request path.
+    conn.execute("PRAGMA wal_autocheckpoint=0")
     ms = (time.time() - t0) * 1000
     if ms > 50:
         print("ZHIDAO_SLOW_CONN %.0fms" % ms, flush=True)
