@@ -546,7 +546,7 @@ async def db_write(fn):
     async with DB_WRITE_LOCK:
         lock_wait = (time.time() - t0) * 1000
         t1 = time.time()
-        result = fn()
+        result = await asyncio.to_thread(fn)
         exec_ms = (time.time() - t1) * 1000
         if lock_wait > 100 or exec_ms > 100:
             print(
