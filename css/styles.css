@@ -14788,3 +14788,356 @@ body.lite-mode .profile-card-home::after { display: none; }
   0%, 100% { filter: brightness(1); }
   50%      { filter: brightness(1.25); }
 }
+
+/* Campus map */
+.campus-map-root {
+  padding: 0 12px 16px;
+}
+
+.campus-map-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(0, 212, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(204, 34, 0, 0.18), transparent 32%),
+    rgba(5, 8, 14, 0.88);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.campus-map-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0,255,136,0.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.35;
+}
+
+.campus-map-head,
+.campus-map-search,
+.campus-map-filters,
+.campus-map-list {
+  position: relative;
+  z-index: 2;
+}
+
+.campus-map-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 14px 8px;
+}
+
+.campus-map-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(0, 212, 255, 0.86);
+}
+
+.campus-map-title {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.campus-map-mode {
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(0, 212, 255, 0.08);
+  color: rgba(0, 212, 255, 0.95);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+
+.campus-map-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 14px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 13px;
+  background: rgba(0,0,0,0.22);
+}
+
+.campus-map-search i {
+  color: rgba(0, 212, 255, 0.75);
+}
+
+.campus-map-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.campus-map-search input::placeholder {
+  color: var(--text3);
+}
+
+.campus-map-filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 14px 12px;
+  scrollbar-width: none;
+}
+
+.campus-map-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.campus-map-filters button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+}
+
+.campus-map-filters button.active {
+  border-color: rgba(0, 212, 255, 0.55);
+  background: rgba(0, 212, 255, 0.14);
+  color: #8ff4ff;
+  box-shadow: 0 0 18px rgba(0, 212, 255, 0.18);
+}
+
+.campus-map-scroll {
+  position: relative;
+  z-index: 1;
+  overflow: auto;
+  margin: 0 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.24);
+  -webkit-overflow-scrolling: touch;
+}
+
+.campus-map-stage {
+  position: relative;
+  width: 980px;
+  max-width: none;
+}
+
+.campus-map-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.campus-map-pin {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.campus-map-pin span {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(0,212,255,0.8);
+}
+
+.campus-map-pin::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(0, 212, 255, 0.7);
+  border-radius: 50%;
+  animation: campusPinPulse 2s ease-out infinite;
+}
+
+.campus-map-pin.food span { background: #d4af37; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(212,175,55,0.8); }
+.campus-map-pin.dorm span { background: #e887ff; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(232,135,255,0.75); }
+.campus-map-pin.sport span { background: #42e88f; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(66,232,143,0.75); }
+.campus-map-pin.important span { background: #ff3b3b; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(255,59,59,0.8); }
+.campus-map-pin.meeting span { background: #ffffff; box-shadow: 0 0 0 2px rgba(0,0,0,0.7), 0 0 20px rgba(255,255,255,0.8); }
+
+@keyframes campusPinPulse {
+  0% { opacity: 0.7; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+.campus-map-list {
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px 14px;
+}
+
+.campus-map-row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 13px;
+  padding: 10px;
+  background: rgba(255,255,255,0.035);
+  color: var(--text);
+}
+
+.campus-map-row b {
+  display: block;
+  font-size: 12px;
+}
+
+.campus-map-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--text3);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.campus-map-row-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 12px rgba(0,212,255,0.7);
+}
+
+.campus-map-row.food .campus-map-row-dot { background: #d4af37; box-shadow: 0 0 12px rgba(212,175,55,0.7); }
+.campus-map-row.dorm .campus-map-row-dot { background: #e887ff; box-shadow: 0 0 12px rgba(232,135,255,0.7); }
+.campus-map-row.sport .campus-map-row-dot { background: #42e88f; box-shadow: 0 0 12px rgba(66,232,143,0.7); }
+.campus-map-row.important .campus-map-row-dot { background: #ff3b3b; box-shadow: 0 0 12px rgba(255,59,59,0.7); }
+.campus-map-row.meeting .campus-map-row-dot { background: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.7); }
+
+.campus-map-empty {
+  padding: 14px;
+  color: var(--text3);
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+
+.campus-map-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 9200;
+}
+
+.campus-map-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+}
+
+.campus-map-popup-card {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 18px;
+  border: 1px solid rgba(0, 212, 255, 0.28);
+  border-radius: 18px;
+  padding: 18px;
+  background: rgba(8, 12, 20, 0.96);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+
+.campus-map-popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+  font-size: 20px;
+}
+
+.campus-map-popup-category {
+  margin-bottom: 6px;
+  color: rgba(0, 212, 255, 0.85);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.campus-map-popup-card h3 {
+  margin: 0;
+  padding-right: 34px;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.campus-map-popup-cn {
+  margin-top: 5px;
+  color: var(--gold);
+  font-size: 11px;
+}
+
+.campus-map-popup-card p {
+  margin: 12px 0 0;
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.campus-map-popup-note {
+  margin-top: 12px;
+  border: 1px solid rgba(212,175,55,0.22);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(212,175,55,0.08);
+  color: var(--gold);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+body.theme-genshin-light .campus-map-panel,
+body.theme-genshin-dark .campus-map-panel {
+  border-color: rgba(219,177,101,0.35);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(219,177,101,0.22), transparent 36%),
+    radial-gradient(circle at 100% 20%, rgba(75,83,102,0.18), transparent 34%),
+    var(--bg2);
+}
+
+body.theme-genshin-light .campus-map-kicker,
+body.theme-genshin-dark .campus-map-kicker,
+body.theme-genshin-light .campus-map-popup-category,
+body.theme-genshin-dark .campus-map-popup-category {
+  color: var(--gold);
+  font-family: Georgia, serif;
+}
+
+body.theme-genshin-light .campus-map-mode,
+body.theme-genshin-dark .campus-map-mode,
+body.theme-genshin-light .campus-map-filters button.active,
+body.theme-genshin-dark .campus-map-filters button.active {
+  border-color: rgba(219,177,101,0.45);
+  background: rgba(219,177,101,0.14);
+  color: var(--gold);
+}

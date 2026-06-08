@@ -601,6 +601,11 @@
       <div class="more-item-name">ПОГОДА</div>
       <div class="more-item-cn">天气 tiān qì</div>
     </div>
+    <div class="more-item" onclick="openMore('map')">
+      <i class="ti ti-map-2 more-item-icon" style="color:#00d4ff;"></i>
+      <div class="more-item-name">КАРТА</div>
+      <div class="more-item-cn">校园地图 xiào yuán dì tú</div>
+    </div>
     <div class="more-item" onclick="openMore('laundry')">
       <i class="ti ti-wash more-item-icon" style="color:#60b4d4;"></i>
       <div class="more-item-name">СТИРКА</div>
@@ -624,6 +629,11 @@
   </div>
 
   <!-- Субстраницы More -->
+  <div id="more-map" style="display:none;">
+    <div class="cn-divider">🗺 校园地图 КАРТА КАМПУСА</div>
+    <div id="campusMapRoot" class="campus-map-root"></div>
+  </div>
+
   <div id="more-themes" style="display:none;">
     <div class="cn-divider">🎨 主题 ТЕМЫ ИНТЕРФЕЙСА</div>
     <div style="padding:0 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -2397,6 +2407,7 @@
 <script src="./js/team.js?v=20260604a"></script>
 <script src="./js/contracts.js?v=20260607b"></script>
 <script src="./js/admin.js?v=20260608a"></script>
+<script src="./js/campus-map.js?v=20260608a"></script>
 <script src="./js/raid.js"></script>
 <script src="./js/events.js?v=20260607a"></script>
 <script src="./js/architect-event.js?v=20260607a"></script>
