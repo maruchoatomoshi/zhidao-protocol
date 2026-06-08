@@ -152,18 +152,6 @@ const CAMPUS_POINTS = [
     description: 'Магазин, кофейня, блинчики',
   },
   {
-    id: 'mcdonalds',
-    title: 'Макдональдс',
-    label: '麦当劳和蜜雪',
-    cn: '麦当劳和蜜雪',
-    en: 'McDonalds / Mixue',
-    category: 'food',
-    x: 31.9,
-    y: 64.5,
-    labelPos: 'up',
-    description: 'Райское место. Ещё есть кофейня и магазин.',
-  },
-  {
     id: 'pickup-point',
     title: 'ПВЗ',
     label: 'ПВЗ',
@@ -353,8 +341,8 @@ const CAMPUS_POINTS = [
     en: 'Hospital',
     category: 'important',
     x: 6.4,
-    y: 60.0,
-    labelPos: 'down',
+    y: 68.7,
+    labelPos: 'right',
     description: 'Важная точка для медицинских вопросов.',
   },
   {
@@ -419,9 +407,50 @@ const CAMPUS_POINTS = [
   },
 ];
 
-const CAMPUS_MAP_LOCKED_IDENTITY_FIELDS = ['title', 'label', 'cn', 'en', 'category', 'description'];
-const CAMPUS_MAP_BASE_IDS = new Set(CAMPUS_POINTS.map(point => point.id));
-const CAMPUS_MAP_BASE_TITLE_KEYS = new Set(CAMPUS_POINTS.map(point => campusMapPointTitleKey(point)).filter(Boolean));
+const CAMPUS_MAP_DISPLAY_FIXES = {
+  'банк': {
+    label: '银行',
+    cn: '银行',
+    en: 'Bank',
+    category: 'important',
+    description: 'Ориентир в виде банка. В этом же здании находится автомат для пополнения интернета и Старбакс',
+  },
+  'макдональдс': {
+    label: '麦当劳和蜜雪',
+    cn: '麦当劳和蜜雪',
+    en: 'McDonalds / Mixue',
+    category: 'food',
+    description: 'Райское место. Ещё есть кофейня и магазин.',
+  },
+  'магазин': {
+    label: '超市和咖啡店',
+    cn: '超市和咖啡店',
+    en: 'Shop and Coffee',
+    category: 'food',
+    description: 'Магазин, кофейня, блинчики',
+  },
+  'пвз': {
+    label: 'ПВЗ',
+    cn: 'ПВЗ',
+    en: 'Pickup Point',
+    category: 'important',
+    description: 'Пункт выдачи заказов',
+  },
+  'медпункт / больница': {
+    label: '校医院',
+    cn: '校医院',
+    en: 'Hospital',
+    category: 'important',
+    description: 'Важная точка для медицинских вопросов.',
+  },
+  'медпункт': {
+    label: '校医院',
+    cn: '校医院',
+    en: 'Hospital',
+    category: 'important',
+    description: 'Важная точка для медицинских вопросов.',
+  },
+};
 
 const CAMPUS_MAP_FAVORITES_STORAGE_KEY = 'zhidao_campus_map_favorites_v1';
 
@@ -522,38 +551,11 @@ function campusMapPointTitleKey(point) {
     .replace(/\s+/g, ' ');
 }
 
-function campusMapSanitizeOverride(id, override) {
-  if (!override || typeof override !== 'object') return {};
-  const next = { ...override };
-  if (CAMPUS_MAP_BASE_IDS.has(id)) {
-    CAMPUS_MAP_LOCKED_IDENTITY_FIELDS.forEach(field => delete next[field]);
-  }
-  return next;
-}
-
-function campusMapSanitizeCustomPoints(points) {
-  const seen = new Set(CAMPUS_MAP_BASE_TITLE_KEYS);
-  return (Array.isArray(points) ? points : []).filter(point => {
-    if (!point || !point.id || CAMPUS_MAP_BASE_IDS.has(point.id)) return false;
-    const key = campusMapPointTitleKey(point);
-    if (key && seen.has(key)) return false;
-    if (key) seen.add(key);
-    return true;
-  });
-}
-
 function campusMapNormalizeEditorEdits(value) {
   const parsed = value && typeof value === 'object' ? value : {};
-  const rawOverrides = parsed.overrides && typeof parsed.overrides === 'object' ? parsed.overrides : {};
-  const overrides = Object.keys(rawOverrides).reduce((acc, id) => {
-    const clean = campusMapSanitizeOverride(id, rawOverrides[id]);
-    if (Object.keys(clean).length) acc[id] = clean;
-    return acc;
-  }, {});
-
   return {
-    overrides,
-    custom: campusMapSanitizeCustomPoints(parsed.custom),
+    overrides: parsed.overrides && typeof parsed.overrides === 'object' ? parsed.overrides : {},
+    custom: Array.isArray(parsed.custom) ? parsed.custom.filter(point => point && point.id) : [],
     updatedAt: Number(parsed.updatedAt || 0),
   };
 }
@@ -677,7 +679,31 @@ function campusMapAllPoints() {
   const custom = edits.custom
     .filter(point => point && point.id)
     .map(point => ({ ...point, isCustom: true }));
-  return [...base, ...custom];
+  return [...base, ...custom].map(campusMapApplyDisplayFix);
+}
+
+function campusMapApplyDisplayFix(point) {
+  const fix = CAMPUS_MAP_DISPLAY_FIXES[campusMapPointTitleKey(point)];
+  return fix ? { ...point, ...fix } : point;
+}
+
+function campusMapCatalogPoints(points) {
+  const result = [];
+  const byTitle = new Map();
+  (points || []).forEach(point => {
+    const key = campusMapPointTitleKey(point) || point.id;
+    const existingIndex = byTitle.get(key);
+    if (existingIndex === undefined) {
+      byTitle.set(key, result.length);
+      result.push(point);
+      return;
+    }
+
+    if (point.isCustom && !result[existingIndex].isCustom) {
+      result[existingIndex] = point;
+    }
+  });
+  return result;
 }
 
 function campusMapFindPoint(id) {
@@ -772,6 +798,7 @@ function initCampusMap() {
 
     const mode = campusMapAssetMode();
     const points = campusMapFilteredPoints();
+    const catalogPoints = campusMapCatalogPoints(points);
     const canEdit = campusMapCanEdit();
     const routeFromPoint = campusMapRouteFrom ? campusMapFindPoint(campusMapRouteFrom) : null;
     const routeToPoint = campusMapRouteTo ? campusMapFindPoint(campusMapRouteTo) : null;
@@ -828,7 +855,7 @@ function initCampusMap() {
         </div>
       </div>
       <div class="campus-map-list">
-        ${points.length ? points.map(point => `
+        ${catalogPoints.length ? catalogPoints.map(point => `
           <button type="button" class="campus-map-row ${campusMapEscape(point.category)} ${campusMapRouteFrom === point.id ? 'route-from' : ''} ${campusMapRouteTo === point.id ? 'route-to' : ''}" onclick="${campusMapRouteMode ? `campusMapHandleRoutePick('${campusMapEscape(point.id)}')` : `openCampusMapPoint('${campusMapEscape(point.id)}')`}">
             <span class="campus-map-row-dot"></span>
             <span>
