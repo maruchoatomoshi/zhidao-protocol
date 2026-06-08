@@ -152,6 +152,18 @@ const CAMPUS_POINTS = [
     description: 'Магазин, кофейня, блинчики',
   },
   {
+    id: 'mcdonalds',
+    title: 'Макдональдс',
+    label: '麦当劳和蜜雪',
+    cn: '麦当劳和蜜雪',
+    en: 'McDonalds / Mixue',
+    category: 'food',
+    x: 31.9,
+    y: 64.5,
+    labelPos: 'up',
+    description: 'Райское место. Ещё есть кофейня и магазин.',
+  },
+  {
     id: 'pickup-point',
     title: 'ПВЗ',
     label: 'ПВЗ',
@@ -341,8 +353,8 @@ const CAMPUS_POINTS = [
     en: 'Hospital',
     category: 'important',
     x: 6.4,
-    y: 68.7,
-    labelPos: 'right',
+    y: 60.0,
+    labelPos: 'down',
     description: 'Важная точка для медицинских вопросов.',
   },
   {
@@ -406,6 +418,10 @@ const CAMPUS_POINTS = [
     description: 'Юго-западный выход к остановкам общественного транспорта.',
   },
 ];
+
+const CAMPUS_MAP_LOCKED_IDENTITY_FIELDS = ['title', 'label', 'cn', 'en', 'category', 'description'];
+const CAMPUS_MAP_BASE_IDS = new Set(CAMPUS_POINTS.map(point => point.id));
+const CAMPUS_MAP_BASE_TITLE_KEYS = new Set(CAMPUS_POINTS.map(point => campusMapPointTitleKey(point)).filter(Boolean));
 
 const CAMPUS_MAP_FAVORITES_STORAGE_KEY = 'zhidao_campus_map_favorites_v1';
 
@@ -499,11 +515,45 @@ function campusMapCanEdit() {
     && !!(typeof isArchitect !== 'undefined' && isArchitect);
 }
 
+function campusMapPointTitleKey(point) {
+  return String(point && point.title || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function campusMapSanitizeOverride(id, override) {
+  if (!override || typeof override !== 'object') return {};
+  const next = { ...override };
+  if (CAMPUS_MAP_BASE_IDS.has(id)) {
+    CAMPUS_MAP_LOCKED_IDENTITY_FIELDS.forEach(field => delete next[field]);
+  }
+  return next;
+}
+
+function campusMapSanitizeCustomPoints(points) {
+  const seen = new Set(CAMPUS_MAP_BASE_TITLE_KEYS);
+  return (Array.isArray(points) ? points : []).filter(point => {
+    if (!point || !point.id || CAMPUS_MAP_BASE_IDS.has(point.id)) return false;
+    const key = campusMapPointTitleKey(point);
+    if (key && seen.has(key)) return false;
+    if (key) seen.add(key);
+    return true;
+  });
+}
+
 function campusMapNormalizeEditorEdits(value) {
   const parsed = value && typeof value === 'object' ? value : {};
+  const rawOverrides = parsed.overrides && typeof parsed.overrides === 'object' ? parsed.overrides : {};
+  const overrides = Object.keys(rawOverrides).reduce((acc, id) => {
+    const clean = campusMapSanitizeOverride(id, rawOverrides[id]);
+    if (Object.keys(clean).length) acc[id] = clean;
+    return acc;
+  }, {});
+
   return {
-    overrides: parsed.overrides && typeof parsed.overrides === 'object' ? parsed.overrides : {},
-    custom: Array.isArray(parsed.custom) ? parsed.custom : [],
+    overrides,
+    custom: campusMapSanitizeCustomPoints(parsed.custom),
     updatedAt: Number(parsed.updatedAt || 0),
   };
 }
