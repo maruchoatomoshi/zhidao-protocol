@@ -2623,28 +2623,30 @@ class LaundryBook(BaseModel):
 
 
 @app.post("/api/user/set_path")
-def set_user_theme_path(data: dict):
-    telegram_id = data.get("telegram_id")
-    path = str(data.get("path") or "").strip()
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
-    if path not in ("cyberpunk", "genshin"):
-        raise HTTPException(status_code=400, detail="Invalid path")
+async def set_user_theme_path(data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        path = str(data.get("path") or "").strip()
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
+        if path not in ("cyberpunk", "genshin"):
+            raise HTTPException(status_code=400, detail="Invalid path")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
+        if not c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+        c.execute(
+            """INSERT INTO user_status (telegram_id, theme_path) VALUES (?, ?)
+               ON CONFLICT(telegram_id) DO UPDATE SET theme_path=excluded.theme_path""",
+            (telegram_id, path),
+        )
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-    c.execute(
-        """INSERT INTO user_status (telegram_id, theme_path) VALUES (?, ?)
-           ON CONFLICT(telegram_id) DO UPDATE SET theme_path=excluded.theme_path""",
-        (telegram_id, path),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "theme_path": path}
+        return {"success": True, "theme_path": path}
+    return await db_write(_run)
 
 
 @app.get("/api/profile/{telegram_id}")
@@ -2860,68 +2862,70 @@ def get_user_profile_dossier(telegram_id: int):
 
 
 @app.post("/api/profile/showcase")
-def set_profile_showcase(data: dict):
-    telegram_id = data.get("telegram_id")
-    showcase_kind = str(data.get("kind") or "auto").strip()
-    showcase_code = str(data.get("code") or "").strip()
+async def set_profile_showcase(data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        showcase_kind = str(data.get("kind") or "auto").strip()
+        showcase_code = str(data.get("code") or "").strip()
 
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
-    if showcase_kind not in ("auto", "implant", "card"):
-        raise HTTPException(status_code=400, detail="Invalid showcase kind")
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
+        if showcase_kind not in ("auto", "implant", "card"):
+            raise HTTPException(status_code=400, detail="Invalid showcase kind")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+        if not c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if showcase_kind == "auto":
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
+                   VALUES (?, NULL, NULL)
+                   ON CONFLICT(telegram_id) DO UPDATE SET
+                     profile_showcase_kind=NULL,
+                     profile_showcase_code=NULL''',
+                (telegram_id,),
+            )
+        elif showcase_kind == "implant":
+            c.execute(
+                "SELECT 1 FROM user_implants WHERE telegram_id=? AND implant_id=? AND durability > 0 LIMIT 1",
+                (telegram_id, showcase_code),
+            )
+            if not c.fetchone():
+                conn.close()
+                raise HTTPException(status_code=404, detail="Implant not found")
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
+                   VALUES (?, 'implant', ?)
+                   ON CONFLICT(telegram_id) DO UPDATE SET
+                     profile_showcase_kind='implant',
+                     profile_showcase_code=excluded.profile_showcase_code''',
+                (telegram_id, showcase_code),
+            )
+        else:
+            c.execute(
+                "SELECT 1 FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0 LIMIT 1",
+                (telegram_id, showcase_code),
+            )
+            if not c.fetchone():
+                conn.close()
+                raise HTTPException(status_code=404, detail="Card not found")
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
+                   VALUES (?, 'card', ?)
+                   ON CONFLICT(telegram_id) DO UPDATE SET
+                     profile_showcase_kind='card',
+                     profile_showcase_code=excluded.profile_showcase_code''',
+                (telegram_id, showcase_code),
+            )
+
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if showcase_kind == "auto":
-        c.execute(
-            '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
-               VALUES (?, NULL, NULL)
-               ON CONFLICT(telegram_id) DO UPDATE SET
-                 profile_showcase_kind=NULL,
-                 profile_showcase_code=NULL''',
-            (telegram_id,),
-        )
-    elif showcase_kind == "implant":
-        c.execute(
-            "SELECT 1 FROM user_implants WHERE telegram_id=? AND implant_id=? AND durability > 0 LIMIT 1",
-            (telegram_id, showcase_code),
-        )
-        if not c.fetchone():
-            conn.close()
-            raise HTTPException(status_code=404, detail="Implant not found")
-        c.execute(
-            '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
-               VALUES (?, 'implant', ?)
-               ON CONFLICT(telegram_id) DO UPDATE SET
-                 profile_showcase_kind='implant',
-                 profile_showcase_code=excluded.profile_showcase_code''',
-            (telegram_id, showcase_code),
-        )
-    else:
-        c.execute(
-            "SELECT 1 FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0 LIMIT 1",
-            (telegram_id, showcase_code),
-        )
-        if not c.fetchone():
-            conn.close()
-            raise HTTPException(status_code=404, detail="Card not found")
-        c.execute(
-            '''INSERT INTO user_status (telegram_id, profile_showcase_kind, profile_showcase_code)
-               VALUES (?, 'card', ?)
-               ON CONFLICT(telegram_id) DO UPDATE SET
-                 profile_showcase_kind='card',
-                 profile_showcase_code=excluded.profile_showcase_code''',
-            (telegram_id, showcase_code),
-        )
-
-    conn.commit()
-    conn.close()
-    return {"success": True, "kind": None if showcase_kind == "auto" else showcase_kind, "code": showcase_code or None}
+        return {"success": True, "kind": None if showcase_kind == "auto" else showcase_kind, "code": showcase_code or None}
+    return await db_write(_run)
 
 
 def get_last_event_mvp_id(c) -> Optional[int]:
@@ -2984,33 +2988,35 @@ async def get_user(telegram_id: int):
 
 
 @app.post("/api/user/avatar")
-def update_user_avatar(data: dict):
-    telegram_id = data.get("telegram_id")
-    avatar_url = str(data.get("avatar_url") or "").strip()
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
-    if avatar_url and not (
-        avatar_url.startswith("data:image/")
-        or avatar_url.startswith("https://")
-        or avatar_url.startswith("http://")
-    ):
-        raise HTTPException(status_code=400, detail="Invalid avatar_url")
-    if len(avatar_url) > 350000:
-        raise HTTPException(status_code=400, detail="Avatar is too large")
+async def update_user_avatar(data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        avatar_url = str(data.get("avatar_url") or "").strip()
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
+        if avatar_url and not (
+            avatar_url.startswith("data:image/")
+            or avatar_url.startswith("https://")
+            or avatar_url.startswith("http://")
+        ):
+            raise HTTPException(status_code=400, detail="Invalid avatar_url")
+        if len(avatar_url) > 350000:
+            raise HTTPException(status_code=400, detail="Avatar is too large")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
+        if not c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+        c.execute(
+            "UPDATE users SET avatar_url=? WHERE telegram_id=?",
+            (avatar_url or None, telegram_id),
+        )
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-    c.execute(
-        "UPDATE users SET avatar_url=? WHERE telegram_id=?",
-        (avatar_url or None, telegram_id),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "avatar_url": avatar_url or None}
+        return {"success": True, "avatar_url": avatar_url or None}
+    return await db_write(_run)
 
 
 @app.post("/api/global-alert")
@@ -3048,27 +3054,31 @@ def get_schedule():
 
 
 @app.post("/api/schedule")
-def add_schedule(item: ScheduleItem, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("INSERT INTO schedule (day, time, subject, location) VALUES (?,?,?,?)", (item.day, item.time, item.subject, item.location))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def add_schedule(item: ScheduleItem, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT INTO schedule (day, time, subject, location) VALUES (?,?,?,?)", (item.day, item.time, item.subject, item.location))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.delete("/api/schedule/{item_id}")
-def delete_schedule(item_id: int, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM schedule WHERE id=?", (item_id,))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def delete_schedule(item_id: int, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM schedule WHERE id=?", (item_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.get("/api/announcements")
@@ -3089,27 +3099,30 @@ async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Heade
     if not text:
         raise HTTPException(status_code=400, detail="Announcement text is empty")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
-    announcement_id = c.lastrowid
-    conn.commit()
-    conn.close()
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
+        announcement_id = c.lastrowid
+        conn.commit()
+        conn.close()
 
     telegram_delivery = await broadcast_announcement_to_telegram(text)
     return {"success": True, "id": announcement_id, "telegram_delivery": telegram_delivery}
 
 
 @app.delete("/api/announcements/{item_id}")
-def delete_announcement(item_id: int, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM announcements WHERE id=?", (item_id,))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def delete_announcement(item_id: int, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM announcements WHERE id=?", (item_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.get("/api/announcements/{item_id}/reactions")
@@ -3123,22 +3136,24 @@ def get_reactions(item_id: int):
 
 
 @app.post("/api/announcements/{item_id}/react")
-def react_to_announcement(item_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
-    emoji = data.get("emoji")
-    if not telegram_id or not emoji:
-        raise HTTPException(status_code=400, detail="Missing data")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT emoji FROM announcement_reactions WHERE announcement_id=? AND telegram_id=?", (item_id, telegram_id))
-    existing = c.fetchone()
-    if existing and existing[0] == emoji:
-        c.execute("DELETE FROM announcement_reactions WHERE announcement_id=? AND telegram_id=?", (item_id, telegram_id))
-    else:
-        c.execute("INSERT OR REPLACE INTO announcement_reactions (announcement_id, telegram_id, emoji) VALUES (?,?,?)", (item_id, telegram_id, emoji))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def react_to_announcement(item_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        emoji = data.get("emoji")
+        if not telegram_id or not emoji:
+            raise HTTPException(status_code=400, detail="Missing data")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT emoji FROM announcement_reactions WHERE announcement_id=? AND telegram_id=?", (item_id, telegram_id))
+        existing = c.fetchone()
+        if existing and existing[0] == emoji:
+            c.execute("DELETE FROM announcement_reactions WHERE announcement_id=? AND telegram_id=?", (item_id, telegram_id))
+        else:
+            c.execute("INSERT OR REPLACE INTO announcement_reactions (announcement_id, telegram_id, emoji) VALUES (?,?,?)", (item_id, telegram_id, emoji))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.get("/api/laundry")
@@ -3152,39 +3167,43 @@ def get_laundry():
 
 
 @app.post("/api/laundry")
-def book_laundry(item: LaundryBook):
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT id FROM laundry WHERE date=? AND time=?", (item.date, item.time))
-    if c.fetchone():
+async def book_laundry(item: LaundryBook):
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT id FROM laundry WHERE date=? AND time=?", (item.date, item.time))
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=409, detail="Slot already booked")
+        c.execute("SELECT id FROM laundry WHERE telegram_id=? AND date=?", (item.telegram_id, item.date))
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=409, detail="Already booked for this day")
+        c.execute("INSERT INTO laundry (date, time, telegram_id, username) VALUES (?,?,?,?)", (item.date, item.time, item.telegram_id, item.username))
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=409, detail="Slot already booked")
-    c.execute("SELECT id FROM laundry WHERE telegram_id=? AND date=?", (item.telegram_id, item.date))
-    if c.fetchone():
-        conn.close()
-        raise HTTPException(status_code=409, detail="Already booked for this day")
-    c.execute("INSERT INTO laundry (date, time, telegram_id, username) VALUES (?,?,?,?)", (item.date, item.time, item.telegram_id, item.username))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.delete("/api/laundry/{item_id}")
-def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(None)):
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT telegram_id FROM laundry WHERE id=?", (item_id,))
-    row = c.fetchone()
-    if not row:
+async def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(None)):
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT telegram_id FROM laundry WHERE id=?", (item_id,))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        if row[0] != x_telegram_id and x_telegram_id not in ADMIN_IDS:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden")
+        c.execute("DELETE FROM laundry WHERE id=?", (item_id,))
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    if row[0] != x_telegram_id and x_telegram_id not in ADMIN_IDS:
-        conn.close()
-        raise HTTPException(status_code=403, detail="Forbidden")
-    c.execute("DELETE FROM laundry WHERE id=?", (item_id,))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.get("/api/points/{telegram_id}")
@@ -3290,65 +3309,67 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/user/room")
-def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
+async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    try:
-        telegram_id = int(data.get("telegram_id"))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+        try:
+            telegram_id = int(data.get("telegram_id"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid telegram_id")
 
-    room_number = str(data.get("room_number") or "").strip()
-    if len(room_number) > 40:
-        raise HTTPException(status_code=400, detail="Room number is too long")
+        room_number = str(data.get("room_number") or "").strip()
+        if len(room_number) > 40:
+            raise HTTPException(status_code=400, detail="Room number is too long")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
-    target = c.fetchone()
-    if not target:
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
+        target = c.fetchone()
+        if not target:
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
 
-    c.execute(
-        "UPDATE users SET room_number=? WHERE telegram_id=?",
-        (room_number or None, telegram_id),
-    )
-    roommates = []
-    if room_number:
         c.execute(
-            '''SELECT telegram_id, full_name, avatar_url
-               FROM users
-               WHERE room_number=?
-                 AND telegram_id IS NOT NULL
-                 AND telegram_id != ?
-               ORDER BY full_name COLLATE NOCASE''',
-            (room_number, telegram_id),
+            "UPDATE users SET room_number=? WHERE telegram_id=?",
+            (room_number or None, telegram_id),
         )
-        roommates = [
-            {
-                "telegram_id": row[0],
-                "full_name": row[1] or str(row[0]),
-                "avatar_url": row[2],
-            }
-            for row in c.fetchall()
-        ]
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, ?, 'room_update', 0, ?, ?)''',
-        (x_admin_id, telegram_id, f"room: {room_number or 'empty'}", now_iso()),
-    )
-    conn.commit()
-    conn.close()
-    return {
-        "success": True,
-        "telegram_id": telegram_id,
-        "full_name": target[0] or str(telegram_id),
-        "room_number": room_number,
-        "roommates": roommates,
-    }
+        roommates = []
+        if room_number:
+            c.execute(
+                '''SELECT telegram_id, full_name, avatar_url
+                   FROM users
+                   WHERE room_number=?
+                     AND telegram_id IS NOT NULL
+                     AND telegram_id != ?
+                   ORDER BY full_name COLLATE NOCASE''',
+                (room_number, telegram_id),
+            )
+            roommates = [
+                {
+                    "telegram_id": row[0],
+                    "full_name": row[1] or str(row[0]),
+                    "avatar_url": row[2],
+                }
+                for row in c.fetchall()
+            ]
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, ?, 'room_update', 0, ?, ?)''',
+            (x_admin_id, telegram_id, f"room: {room_number or 'empty'}", now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {
+            "success": True,
+            "telegram_id": telegram_id,
+            "full_name": target[0] or str(telegram_id),
+            "room_number": room_number,
+            "roommates": roommates,
+        }
+    return await db_write(_run)
 
 
 @app.get("/api/admin/user/{telegram_id}/dossier")
@@ -3805,49 +3826,51 @@ def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/presence/start")
-def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
+async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = new_manual_presence_session() if check_type == "manual" and not data.get("check_date") else normalize_presence_date(data.get("check_date"))
-    target_ids = data.get("telegram_ids")
-    note = str(data.get("note") or "").strip()
+        check_type = normalize_presence_check_type(data.get("check_type"))
+        check_date = new_manual_presence_session() if check_type == "manual" and not data.get("check_date") else normalize_presence_date(data.get("check_date"))
+        target_ids = data.get("telegram_ids")
+        note = str(data.get("note") or "").strip()
 
-    conn = get_conn()
-    c = conn.cursor()
-    if target_ids:
-        ids = []
-        for raw_id in target_ids:
-            try:
-                ids.append(int(raw_id))
-            except (TypeError, ValueError):
-                continue
-        ids = [tid for tid in ids if tid not in ADMIN_IDS]
-    else:
-        placeholders = ','.join('?' * len(ADMIN_IDS))
-        c.execute(
-            f'''SELECT telegram_id
-                FROM users
-                WHERE telegram_id IS NOT NULL
-                  AND telegram_id NOT IN ({placeholders})''',
-            ADMIN_IDS,
-        )
-        ids = [row[0] for row in c.fetchall()]
+        conn = get_conn()
+        c = conn.cursor()
+        if target_ids:
+            ids = []
+            for raw_id in target_ids:
+                try:
+                    ids.append(int(raw_id))
+                except (TypeError, ValueError):
+                    continue
+            ids = [tid for tid in ids if tid not in ADMIN_IDS]
+        else:
+            placeholders = ','.join('?' * len(ADMIN_IDS))
+            c.execute(
+                f'''SELECT telegram_id
+                    FROM users
+                    WHERE telegram_id IS NOT NULL
+                      AND telegram_id NOT IN ({placeholders})''',
+                ADMIN_IDS,
+            )
+            ids = [row[0] for row in c.fetchall()]
 
-    created = []
-    for telegram_id in ids:
-        created.append(ensure_presence_check(c, check_type, check_date, telegram_id, note))
+        created = []
+        for telegram_id in ids:
+            created.append(ensure_presence_check(c, check_type, check_date, telegram_id, note))
 
-    conn.commit()
-    conn.close()
-    return {
-        "success": True,
-        "check_type": check_type,
-        "check_date": check_date,
-        "created_count": len(created),
-        "checks": created,
-    }
+        conn.commit()
+        conn.close()
+        return {
+            "success": True,
+            "check_type": check_type,
+            "check_date": check_date,
+            "created_count": len(created),
+            "checks": created,
+        }
+    return await db_write(_run)
 
 
 @app.post("/api/presence/admin/dispatch")
@@ -3861,50 +3884,51 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
     note = str(data.get("note") or f"admin dispatch attempt {attempt_no}").strip()
     target_ids = data.get("telegram_ids")
 
-    conn = get_conn()
-    c = conn.cursor()
-    if target_ids:
-        ids = []
-        for raw_id in target_ids:
-            try:
-                ids.append(int(raw_id))
-            except (TypeError, ValueError):
-                continue
-        ids = [tid for tid in ids if tid not in ADMIN_IDS]
-    else:
-        placeholders = ','.join('?' * len(ADMIN_IDS))
-        c.execute(
-            f'''SELECT telegram_id
-                FROM users
-                WHERE telegram_id IS NOT NULL
-                  AND telegram_id NOT IN ({placeholders})''',
-            ADMIN_IDS,
-        )
-        ids = [row[0] for row in c.fetchall()]
-
-    eligible = []
-    skipped = 0
-    for telegram_id in ids:
-        row = ensure_presence_check(c, check_type, check_date, telegram_id, note)
-        if row and row.get("status") == "skipped":
-            c.execute(
-                '''UPDATE daily_checks
-                   SET status='pending',
-                       attempts_sent=0,
-                       first_sent_at=NULL,
-                       last_attempt_at=NULL,
-                       note=?,
-                       updated_at=?
-                   WHERE check_type=? AND check_date=? AND telegram_id=?''',
-                (note, now_iso(), check_type, check_date, telegram_id),
-            )
-            row = fetch_presence_row(c, check_type, check_date, telegram_id)
-        if row and row.get("status") in ("pending", "leave_rejected"):
-            eligible.append(telegram_id)
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        if target_ids:
+            ids = []
+            for raw_id in target_ids:
+                try:
+                    ids.append(int(raw_id))
+                except (TypeError, ValueError):
+                    continue
+            ids = [tid for tid in ids if tid not in ADMIN_IDS]
         else:
-            skipped += 1
-    conn.commit()
-    conn.close()
+            placeholders = ','.join('?' * len(ADMIN_IDS))
+            c.execute(
+                f'''SELECT telegram_id
+                    FROM users
+                    WHERE telegram_id IS NOT NULL
+                      AND telegram_id NOT IN ({placeholders})''',
+                ADMIN_IDS,
+            )
+            ids = [row[0] for row in c.fetchall()]
+
+        eligible = []
+        skipped = 0
+        for telegram_id in ids:
+            row = ensure_presence_check(c, check_type, check_date, telegram_id, note)
+            if row and row.get("status") == "skipped":
+                c.execute(
+                    '''UPDATE daily_checks
+                       SET status='pending',
+                           attempts_sent=0,
+                           first_sent_at=NULL,
+                           last_attempt_at=NULL,
+                           note=?,
+                           updated_at=?
+                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                    (note, now_iso(), check_type, check_date, telegram_id),
+                )
+                row = fetch_presence_row(c, check_type, check_date, telegram_id)
+            if row and row.get("status") in ("pending", "leave_rejected"):
+                eligible.append(telegram_id)
+            else:
+                skipped += 1
+        conn.commit()
+        conn.close()
 
     sent = []
     failed = []
@@ -3914,20 +3938,21 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
         ok, response = await send_telegram_message(telegram_id, text, markup)
         if ok:
             sent.append(telegram_id)
-            conn = get_conn()
-            c = conn.cursor()
-            now = now_iso()
-            c.execute(
-                '''UPDATE daily_checks
-                   SET attempts_sent=COALESCE(attempts_sent, 0) + 1,
-                       first_sent_at=COALESCE(first_sent_at, ?),
-                       last_attempt_at=?,
-                       updated_at=?
-                   WHERE check_type=? AND check_date=? AND telegram_id=?''',
-                (now, now, now, check_type, check_date, telegram_id),
-            )
-            conn.commit()
-            conn.close()
+            async with DB_WRITE_LOCK:
+                conn = get_conn()
+                c = conn.cursor()
+                now = now_iso()
+                c.execute(
+                    '''UPDATE daily_checks
+                       SET attempts_sent=COALESCE(attempts_sent, 0) + 1,
+                           first_sent_at=COALESCE(first_sent_at, ?),
+                           last_attempt_at=?,
+                           updated_at=?
+                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                    (now, now, now, check_type, check_date, telegram_id),
+                )
+                conn.commit()
+                conn.close()
         else:
             failed.append({"telegram_id": telegram_id, "error": response})
 
@@ -4099,289 +4124,301 @@ async def confirm_presence(data: dict):
 
 
 @app.post("/api/presence/attempt")
-def mark_presence_attempt(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
+async def mark_presence_attempt(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    try:
-        telegram_id = int(data.get("telegram_id"))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+        try:
+            telegram_id = int(data.get("telegram_id"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid telegram_id")
 
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
-    conn = get_conn()
-    c = conn.cursor()
-    ensure_presence_check(c, check_type, check_date, telegram_id)
-    now = now_iso()
-    c.execute(
-        '''UPDATE daily_checks
-           SET attempts_sent=attempts_sent+1,
-               first_sent_at=COALESCE(first_sent_at, ?),
-               last_attempt_at=?,
-               updated_at=?
-           WHERE check_type=? AND check_date=? AND telegram_id=?''',
-        (now, now, now, check_type, check_date, telegram_id),
-    )
-    row = fetch_presence_row(c, check_type, check_date, telegram_id)
-    conn.commit()
-    conn.close()
-    return {
-        "success": True,
-        "needs_admin_alert": row["attempts_sent"] >= PRESENCE_ATTEMPT_LIMIT and row["status"] not in PRESENCE_SAFE_STATUSES,
-        "check": row,
-    }
+        check_type = normalize_presence_check_type(data.get("check_type"))
+        check_date = normalize_presence_date(data.get("check_date"))
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_presence_check(c, check_type, check_date, telegram_id)
+        now = now_iso()
+        c.execute(
+            '''UPDATE daily_checks
+               SET attempts_sent=attempts_sent+1,
+                   first_sent_at=COALESCE(first_sent_at, ?),
+                   last_attempt_at=?,
+                   updated_at=?
+               WHERE check_type=? AND check_date=? AND telegram_id=?''',
+            (now, now, now, check_type, check_date, telegram_id),
+        )
+        row = fetch_presence_row(c, check_type, check_date, telegram_id)
+        conn.commit()
+        conn.close()
+        return {
+            "success": True,
+            "needs_admin_alert": row["attempts_sent"] >= PRESENCE_ATTEMPT_LIMIT and row["status"] not in PRESENCE_SAFE_STATUSES,
+            "check": row,
+        }
+    return await db_write(_run)
 
 
 @app.post("/api/presence/admin/approve")
-def approve_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
+async def approve_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    try:
-        telegram_id = int(data.get("telegram_id"))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+        try:
+            telegram_id = int(data.get("telegram_id"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid telegram_id")
 
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
-    reason = str(data.get("reason") or "admin_approved").strip()
-    starts_at = data.get("starts_at")
-    ends_at = data.get("ends_at")
+        check_type = normalize_presence_check_type(data.get("check_type"))
+        check_date = normalize_presence_date(data.get("check_date"))
+        reason = str(data.get("reason") or "admin_approved").strip()
+        starts_at = data.get("starts_at")
+        ends_at = data.get("ends_at")
 
-    conn = get_conn()
-    c = conn.cursor()
-    row = apply_presence_status(c, check_type, check_date, telegram_id, "admin_approved", reason)
-    c.execute(
-        '''INSERT INTO daily_check_exemptions
-           (telegram_id, check_type, check_date, reason_text, starts_at, ends_at, created_by, created_at, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')''',
-        (telegram_id, check_type, check_date, reason, starts_at, ends_at, x_admin_id, now_iso()),
-    )
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, ?, 'presence_approve', 0, ?, ?)''',
-        (x_admin_id, telegram_id, f"{check_type} {check_date}: {reason}", now_iso()),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "check": row}
-
-
-@app.post("/api/presence/admin/reject")
-def reject_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    try:
-        telegram_id = int(data.get("telegram_id"))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid telegram_id")
-
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
-    reason = str(data.get("reason") or "leave rejected").strip()
-    conn = get_conn()
-    c = conn.cursor()
-    row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_rejected", reason)
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, ?, 'presence_reject', 0, ?, ?)''',
-        (x_admin_id, telegram_id, f"{check_type} {check_date}: {reason}", now_iso()),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "check": row}
-
-
-@app.post("/api/presence/admin/escalate")
-def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
-    conn = get_conn()
-    c = conn.cursor()
-    now = now_iso()
-    c.execute(
-        '''UPDATE daily_checks
-           SET status='needs_attention',
-               escalated_at=COALESCE(escalated_at, ?),
-               updated_at=?
-           WHERE check_type=?
-             AND check_date=?
-             AND status IN ('pending', 'leave_requested', 'leave_rejected')
-             AND attempts_sent >= ?''',
-        (now, now, check_type, check_date, PRESENCE_ATTEMPT_LIMIT),
-    )
-    changed = c.rowcount
-    conn.commit()
-    c.execute(
-        '''SELECT dc.id, dc.check_type, dc.check_date, dc.telegram_id, u.full_name,
-                  dc.status, dc.attempts_sent, dc.first_sent_at, dc.last_attempt_at,
-                  dc.confirmed_at, dc.escalated_at, dc.penalized_at,
-                  dc.penalty_points, dc.note, u.points
-           FROM daily_checks dc
-           LEFT JOIN users u ON u.telegram_id = dc.telegram_id
-           WHERE dc.check_type=? AND dc.check_date=? AND dc.status='needs_attention'
-           ORDER BY u.full_name COLLATE NOCASE''',
-        (check_type, check_date),
-    )
-    rows = [serialize_presence_row(row) for row in c.fetchall()]
-    conn.close()
-    return {"success": True, "changed": changed, "needs_attention": rows}
-
-
-@app.post("/api/presence/admin/cancel")
-def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    reason = str(data.get("reason") or "manual cancel").strip()
-    now = now_iso()
-
-    conn = get_conn()
-    c = conn.cursor()
-    check_date = str(data.get("check_date") or "").strip()
-    if not check_date and check_type == "manual":
-        check_date = latest_manual_presence_session(c) or normalize_presence_date()
-    else:
-        check_date = normalize_presence_date(check_date)
-    c.execute(
-        '''UPDATE daily_checks
-           SET status='skipped',
-               note=?,
-               updated_at=?
-           WHERE check_type=?
-             AND check_date=?
-             AND status IN ('pending', 'leave_requested', 'leave_rejected', 'needs_attention')''',
-        (reason, now, check_type, check_date),
-    )
-    cancelled = c.rowcount
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, NULL, 'presence_cancel', 0, ?, ?)''',
-        (x_admin_id, f"{check_type} {check_date}: {reason}", now),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "cancelled": cancelled, "check_type": check_type, "check_date": check_date}
-
-
-@app.post("/api/presence/admin/penalize")
-def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
-    penalty = int(data.get("penalty_points") or PRESENCE_PENALTY_POINTS)
-    if penalty <= 0 or penalty > 500:
-        raise HTTPException(status_code=400, detail="Invalid penalty")
-
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute(
-        '''SELECT dc.telegram_id, u.full_name, COALESCE(u.points, 0), COALESCE(u.rep_score, 0)
-           FROM daily_checks dc
-           JOIN users u ON u.telegram_id = dc.telegram_id
-           WHERE dc.check_type=?
-             AND dc.check_date=?
-             AND dc.status='needs_attention'
-             AND dc.telegram_id NOT IN ({})'''.format(','.join('?' * len(ADMIN_IDS))),
-        [check_type, check_date] + ADMIN_IDS,
-    )
-    targets = c.fetchall()
-    penalized = []
-    now = now_iso()
-    for telegram_id, full_name, previous_points, previous_rep in targets:
-        if (
-            try_block_penalty_with_terracota(c, telegram_id, f"presence: {check_type} {check_date}")
-        ):
-            c.execute(
-                '''UPDATE daily_checks
-                   SET status='penalized',
-                       penalized_at=?,
-                       penalty_points=0,
-                       note=TRIM(COALESCE(note, '') || ' // terracota blocked penalty'),
-                       updated_at=?
-                   WHERE check_type=? AND check_date=? AND telegram_id=?''',
-                (now, now, check_type, check_date, telegram_id),
-            )
-            penalized.append({
-                "telegram_id": telegram_id,
-                "full_name": full_name or str(telegram_id),
-                "previous_points": previous_points or 0,
-                "new_points": previous_points or 0,
-                "new_rep_score": previous_rep or 0,
-                "delta": 0,
-                "rep_delta": 0,
-                "blocked_by_implant": "implant_terracota",
-            })
-            continue
-        effective_penalty = max(
-            0,
-            penalty
-            - consume_terracota_armor(c, telegram_id)
-            - consume_card_penalty_reduction(c, telegram_id, f"presence: {check_type} {check_date}"),
-        )
+        conn = get_conn()
+        c = conn.cursor()
+        row = apply_presence_status(c, check_type, check_date, telegram_id, "admin_approved", reason)
         c.execute(
-            """UPDATE users
-               SET points = MAX(0, COALESCE(points, 0) - ?),
-                   rep_score = MAX(0, COALESCE(rep_score, 0) - ?)
-               WHERE telegram_id=?""",
-            (effective_penalty, effective_penalty, telegram_id),
-        )
-        c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
-        updated_user = c.fetchone() or (0, 0)
-        new_points = updated_user[0] or 0
-        new_rep = updated_user[1] or 0
-        actual_delta = new_points - (previous_points or 0)
-        pyro_bonus = 0
-        if actual_delta < 0:
-            pyro_bonus = apply_card_pyro_rebirth(c, telegram_id, f"presence: {check_type} {check_date}", abs(actual_delta))
-            if pyro_bonus:
-                c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
-                updated_user = c.fetchone() or (new_points, new_rep)
-                new_points = updated_user[0] or 0
-                new_rep = updated_user[1] or 0
-                actual_delta = new_points - (previous_points or 0)
-        c.execute(
-            '''UPDATE daily_checks
-               SET status='penalized',
-                   penalized_at=?,
-                   penalty_points=?,
-                   updated_at=?
-               WHERE check_type=? AND check_date=? AND telegram_id=?''',
-            (now, abs(actual_delta), now, check_type, check_date, telegram_id),
+            '''INSERT INTO daily_check_exemptions
+               (telegram_id, check_type, check_date, reason_text, starts_at, ends_at, created_by, created_at, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')''',
+            (telegram_id, check_type, check_date, reason, starts_at, ends_at, x_admin_id, now_iso()),
         )
         c.execute(
             '''INSERT INTO admin_action_logs
                (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, ?, 'presence_penalty', ?, ?, ?)''',
-            (x_admin_id, telegram_id, actual_delta, f"{check_type} {check_date}", now),
+               VALUES (?, ?, 'presence_approve', 0, ?, ?)''',
+            (x_admin_id, telegram_id, f"{check_type} {check_date}: {reason}", now_iso()),
         )
-        actual_rep_delta = new_rep - previous_rep
-        log_economy(c, telegram_id, 'presence_penalty', actual_delta, new_points, None, 'presence', f"{check_type} {check_date}")
-        log_economy(c, telegram_id, 'presence_rep_penalty', actual_rep_delta, new_rep, None, 'rep', f"{check_type} {check_date}")
-        penalized.append({
-            "telegram_id": telegram_id,
-            "full_name": full_name or str(telegram_id),
-            "previous_points": previous_points or 0,
-            "new_points": new_points,
-            "new_rep_score": new_rep,
-            "delta": actual_delta,
-            "rep_delta": actual_rep_delta,
-            "card_pyro_bonus": pyro_bonus,
-        })
-    conn.commit()
-    conn.close()
-    return {"success": True, "penalized": penalized}
+        conn.commit()
+        conn.close()
+        return {"success": True, "check": row}
+    return await db_write(_run)
+
+
+@app.post("/api/presence/admin/reject")
+async def reject_presence_leave(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        try:
+            telegram_id = int(data.get("telegram_id"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+        check_type = normalize_presence_check_type(data.get("check_type"))
+        check_date = normalize_presence_date(data.get("check_date"))
+        reason = str(data.get("reason") or "leave rejected").strip()
+        conn = get_conn()
+        c = conn.cursor()
+        row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_rejected", reason)
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, ?, 'presence_reject', 0, ?, ?)''',
+            (x_admin_id, telegram_id, f"{check_type} {check_date}: {reason}", now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "check": row}
+    return await db_write(_run)
+
+
+@app.post("/api/presence/admin/escalate")
+async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        check_type = normalize_presence_check_type(data.get("check_type"))
+        check_date = normalize_presence_date(data.get("check_date"))
+        conn = get_conn()
+        c = conn.cursor()
+        now = now_iso()
+        c.execute(
+            '''UPDATE daily_checks
+               SET status='needs_attention',
+                   escalated_at=COALESCE(escalated_at, ?),
+                   updated_at=?
+               WHERE check_type=?
+                 AND check_date=?
+                 AND status IN ('pending', 'leave_requested', 'leave_rejected')
+                 AND attempts_sent >= ?''',
+            (now, now, check_type, check_date, PRESENCE_ATTEMPT_LIMIT),
+        )
+        changed = c.rowcount
+        conn.commit()
+        c.execute(
+            '''SELECT dc.id, dc.check_type, dc.check_date, dc.telegram_id, u.full_name,
+                      dc.status, dc.attempts_sent, dc.first_sent_at, dc.last_attempt_at,
+                      dc.confirmed_at, dc.escalated_at, dc.penalized_at,
+                      dc.penalty_points, dc.note, u.points
+               FROM daily_checks dc
+               LEFT JOIN users u ON u.telegram_id = dc.telegram_id
+               WHERE dc.check_type=? AND dc.check_date=? AND dc.status='needs_attention'
+               ORDER BY u.full_name COLLATE NOCASE''',
+            (check_type, check_date),
+        )
+        rows = [serialize_presence_row(row) for row in c.fetchall()]
+        conn.close()
+        return {"success": True, "changed": changed, "needs_attention": rows}
+    return await db_write(_run)
+
+
+@app.post("/api/presence/admin/cancel")
+async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        check_type = normalize_presence_check_type(data.get("check_type"))
+        reason = str(data.get("reason") or "manual cancel").strip()
+        now = now_iso()
+
+        conn = get_conn()
+        c = conn.cursor()
+        check_date = str(data.get("check_date") or "").strip()
+        if not check_date and check_type == "manual":
+            check_date = latest_manual_presence_session(c) or normalize_presence_date()
+        else:
+            check_date = normalize_presence_date(check_date)
+        c.execute(
+            '''UPDATE daily_checks
+               SET status='skipped',
+                   note=?,
+                   updated_at=?
+               WHERE check_type=?
+                 AND check_date=?
+                 AND status IN ('pending', 'leave_requested', 'leave_rejected', 'needs_attention')''',
+            (reason, now, check_type, check_date),
+        )
+        cancelled = c.rowcount
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'presence_cancel', 0, ?, ?)''',
+            (x_admin_id, f"{check_type} {check_date}: {reason}", now),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "cancelled": cancelled, "check_type": check_type, "check_date": check_date}
+    return await db_write(_run)
+
+
+@app.post("/api/presence/admin/penalize")
+async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        check_type = normalize_presence_check_type(data.get("check_type"))
+        check_date = normalize_presence_date(data.get("check_date"))
+        penalty = int(data.get("penalty_points") or PRESENCE_PENALTY_POINTS)
+        if penalty <= 0 or penalty > 500:
+            raise HTTPException(status_code=400, detail="Invalid penalty")
+
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute(
+            '''SELECT dc.telegram_id, u.full_name, COALESCE(u.points, 0), COALESCE(u.rep_score, 0)
+               FROM daily_checks dc
+               JOIN users u ON u.telegram_id = dc.telegram_id
+               WHERE dc.check_type=?
+                 AND dc.check_date=?
+                 AND dc.status='needs_attention'
+                 AND dc.telegram_id NOT IN ({})'''.format(','.join('?' * len(ADMIN_IDS))),
+            [check_type, check_date] + ADMIN_IDS,
+        )
+        targets = c.fetchall()
+        penalized = []
+        now = now_iso()
+        for telegram_id, full_name, previous_points, previous_rep in targets:
+            if (
+                try_block_penalty_with_terracota(c, telegram_id, f"presence: {check_type} {check_date}")
+            ):
+                c.execute(
+                    '''UPDATE daily_checks
+                       SET status='penalized',
+                           penalized_at=?,
+                           penalty_points=0,
+                           note=TRIM(COALESCE(note, '') || ' // terracota blocked penalty'),
+                           updated_at=?
+                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                    (now, now, check_type, check_date, telegram_id),
+                )
+                penalized.append({
+                    "telegram_id": telegram_id,
+                    "full_name": full_name or str(telegram_id),
+                    "previous_points": previous_points or 0,
+                    "new_points": previous_points or 0,
+                    "new_rep_score": previous_rep or 0,
+                    "delta": 0,
+                    "rep_delta": 0,
+                    "blocked_by_implant": "implant_terracota",
+                })
+                continue
+            effective_penalty = max(
+                0,
+                penalty
+                - consume_terracota_armor(c, telegram_id)
+                - consume_card_penalty_reduction(c, telegram_id, f"presence: {check_type} {check_date}"),
+            )
+            c.execute(
+                """UPDATE users
+                   SET points = MAX(0, COALESCE(points, 0) - ?),
+                       rep_score = MAX(0, COALESCE(rep_score, 0) - ?)
+                   WHERE telegram_id=?""",
+                (effective_penalty, effective_penalty, telegram_id),
+            )
+            c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
+            updated_user = c.fetchone() or (0, 0)
+            new_points = updated_user[0] or 0
+            new_rep = updated_user[1] or 0
+            actual_delta = new_points - (previous_points or 0)
+            pyro_bonus = 0
+            if actual_delta < 0:
+                pyro_bonus = apply_card_pyro_rebirth(c, telegram_id, f"presence: {check_type} {check_date}", abs(actual_delta))
+                if pyro_bonus:
+                    c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
+                    updated_user = c.fetchone() or (new_points, new_rep)
+                    new_points = updated_user[0] or 0
+                    new_rep = updated_user[1] or 0
+                    actual_delta = new_points - (previous_points or 0)
+            c.execute(
+                '''UPDATE daily_checks
+                   SET status='penalized',
+                       penalized_at=?,
+                       penalty_points=?,
+                       updated_at=?
+                   WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                (now, abs(actual_delta), now, check_type, check_date, telegram_id),
+            )
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, ?, 'presence_penalty', ?, ?, ?)''',
+                (x_admin_id, telegram_id, actual_delta, f"{check_type} {check_date}", now),
+            )
+            actual_rep_delta = new_rep - previous_rep
+            log_economy(c, telegram_id, 'presence_penalty', actual_delta, new_points, None, 'presence', f"{check_type} {check_date}")
+            log_economy(c, telegram_id, 'presence_rep_penalty', actual_rep_delta, new_rep, None, 'rep', f"{check_type} {check_date}")
+            penalized.append({
+                "telegram_id": telegram_id,
+                "full_name": full_name or str(telegram_id),
+                "previous_points": previous_points or 0,
+                "new_points": new_points,
+                "new_rep_score": new_rep,
+                "delta": actual_delta,
+                "rep_delta": actual_rep_delta,
+                "card_pyro_bonus": pyro_bonus,
+            })
+        conn.commit()
+        conn.close()
+        return {"success": True, "penalized": penalized}
+    return await db_write(_run)
 
 
 @app.get("/api/presence/admin/overview")
@@ -4834,150 +4871,158 @@ def get_diary_entry(telegram_id: int, entry_date: str, x_telegram_id: Optional[i
 
 
 @app.post("/api/diary/save")
-def save_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
-    telegram_id = data.get("telegram_id")
-    entry_date = data.get("entry_date")
-    if not telegram_id or not entry_date:
-        raise HTTPException(status_code=400, detail="Missing data")
+async def save_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        entry_date = data.get("entry_date")
+        if not telegram_id or not entry_date:
+            raise HTTPException(status_code=400, detail="Missing data")
 
-    acting_user = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
-    is_staff = is_diary_staff(acting_user)
-    if acting_user not in (None, telegram_id) and not is_staff:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        acting_user = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
+        is_staff = is_diary_staff(acting_user)
+        if acting_user not in (None, telegram_id) and not is_staff:
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    conn = get_conn()
-    c = conn.cursor()
-    entry_id, current_status, locked_at = get_or_create_diary_entry(c, telegram_id, entry_date)
-    if locked_at and not is_staff:
+        conn = get_conn()
+        c = conn.cursor()
+        entry_id, current_status, locked_at = get_or_create_diary_entry(c, telegram_id, entry_date)
+        if locked_at and not is_staff:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Diary entry locked")
+
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        next_status = data.get("status") if is_staff and data.get("status") else ('draft' if current_status != 'locked' else 'locked')
+        c.execute(
+            '''UPDATE diary_entries
+               SET weekday=?, weather=?, discussion_rating=?, discussion_person=?, discussion_topic=?,
+                   story=?, status=?, updated_at=?
+               WHERE id=?''',
+            (
+                get_weekday_ru(entry_date),
+                data.get("weather", ""),
+                int(data.get("discussion_rating", 0) or 0),
+                data.get("discussion_person", ""),
+                data.get("discussion_topic", ""),
+                data.get("story", ""),
+                next_status,
+                now_str,
+                entry_id,
+            ),
+        )
+        store_diary_words(c, entry_id, data.get("words", []))
+        conn.commit()
+        payload = build_diary_entry_payload(c, entry_id)
         conn.close()
-        raise HTTPException(status_code=403, detail="Diary entry locked")
-
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    next_status = data.get("status") if is_staff and data.get("status") else ('draft' if current_status != 'locked' else 'locked')
-    c.execute(
-        '''UPDATE diary_entries
-           SET weekday=?, weather=?, discussion_rating=?, discussion_person=?, discussion_topic=?,
-               story=?, status=?, updated_at=?
-           WHERE id=?''',
-        (
-            get_weekday_ru(entry_date),
-            data.get("weather", ""),
-            int(data.get("discussion_rating", 0) or 0),
-            data.get("discussion_person", ""),
-            data.get("discussion_topic", ""),
-            data.get("story", ""),
-            next_status,
-            now_str,
-            entry_id,
-        ),
-    )
-    store_diary_words(c, entry_id, data.get("words", []))
-    conn.commit()
-    payload = build_diary_entry_payload(c, entry_id)
-    conn.close()
-    return {"success": True, "entry": payload}
+        return {"success": True, "entry": payload}
+    return await db_write(_run)
 
 
 @app.post("/api/diary/submit")
-def submit_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
-    telegram_id = data.get("telegram_id")
-    entry_date = data.get("entry_date")
-    if not telegram_id or not entry_date:
-        raise HTTPException(status_code=400, detail="Missing data")
+async def submit_diary_entry(data: dict, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        entry_date = data.get("entry_date")
+        if not telegram_id or not entry_date:
+            raise HTTPException(status_code=400, detail="Missing data")
 
-    acting_user = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
-    if acting_user not in (None, telegram_id) and not is_diary_staff(acting_user):
-        raise HTTPException(status_code=403, detail="Forbidden")
+        acting_user = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
+        if acting_user not in (None, telegram_id) and not is_diary_staff(acting_user):
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    conn = get_conn()
-    c = conn.cursor()
-    entry_id, _, locked_at = get_or_create_diary_entry(c, telegram_id, entry_date)
-    if locked_at and not is_diary_staff(acting_user):
+        conn = get_conn()
+        c = conn.cursor()
+        entry_id, _, locked_at = get_or_create_diary_entry(c, telegram_id, entry_date)
+        if locked_at and not is_diary_staff(acting_user):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Diary entry locked")
+
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            "UPDATE diary_entries SET status='submitted', submitted_at=?, updated_at=? WHERE id=?",
+            (now_str, now_str, entry_id),
+        )
+        conn.commit()
+        payload = build_diary_entry_payload(c, entry_id)
         conn.close()
-        raise HTTPException(status_code=403, detail="Diary entry locked")
-
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        "UPDATE diary_entries SET status='submitted', submitted_at=?, updated_at=? WHERE id=?",
-        (now_str, now_str, entry_id),
-    )
-    conn.commit()
-    payload = build_diary_entry_payload(c, entry_id)
-    conn.close()
-    return {"success": True, "entry": payload}
+        return {"success": True, "entry": payload}
+    return await db_write(_run)
 
 
 @app.post("/api/diary/score")
-def score_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if not is_diary_staff(x_admin_id):
-        raise HTTPException(status_code=403, detail="Forbidden")
+async def score_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if not is_diary_staff(x_admin_id):
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    telegram_id = data.get("telegram_id")
-    entry_date = data.get("entry_date")
-    if not telegram_id or not entry_date:
-        raise HTTPException(status_code=400, detail="Missing data")
+        telegram_id = data.get("telegram_id")
+        entry_date = data.get("entry_date")
+        if not telegram_id or not entry_date:
+            raise HTTPException(status_code=400, detail="Missing data")
 
-    conn = get_conn()
-    c = conn.cursor()
-    entry_id, _, _ = get_or_create_diary_entry(c, telegram_id, entry_date)
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        '''INSERT INTO diary_scores
-           (entry_id, lesson_score, diary_score, lesson_comment, diary_comment, rated_by, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(entry_id) DO UPDATE SET
-             lesson_score=excluded.lesson_score,
-             diary_score=excluded.diary_score,
-             lesson_comment=excluded.lesson_comment,
-             diary_comment=excluded.diary_comment,
-             rated_by=excluded.rated_by,
-             updated_at=excluded.updated_at''',
-        (
-            entry_id,
-            data.get("lesson_score", ""),
-            data.get("diary_score", ""),
-            data.get("lesson_comment", ""),
-            data.get("diary_comment", ""),
-            x_admin_id,
-            now_str,
-        ),
-    )
-    c.execute("UPDATE diary_entries SET status='reviewed', updated_at=? WHERE id=?", (now_str, entry_id))
-    conn.commit()
-    payload = build_diary_entry_payload(c, entry_id)
-    conn.close()
-    return {"success": True, "entry": payload}
+        conn = get_conn()
+        c = conn.cursor()
+        entry_id, _, _ = get_or_create_diary_entry(c, telegram_id, entry_date)
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''INSERT INTO diary_scores
+               (entry_id, lesson_score, diary_score, lesson_comment, diary_comment, rated_by, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(entry_id) DO UPDATE SET
+                 lesson_score=excluded.lesson_score,
+                 diary_score=excluded.diary_score,
+                 lesson_comment=excluded.lesson_comment,
+                 diary_comment=excluded.diary_comment,
+                 rated_by=excluded.rated_by,
+                 updated_at=excluded.updated_at''',
+            (
+                entry_id,
+                data.get("lesson_score", ""),
+                data.get("diary_score", ""),
+                data.get("lesson_comment", ""),
+                data.get("diary_comment", ""),
+                x_admin_id,
+                now_str,
+            ),
+        )
+        c.execute("UPDATE diary_entries SET status='reviewed', updated_at=? WHERE id=?", (now_str, entry_id))
+        conn.commit()
+        payload = build_diary_entry_payload(c, entry_id)
+        conn.close()
+        return {"success": True, "entry": payload}
+    return await db_write(_run)
 
 
 @app.post("/api/diary/lock")
-def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if not is_diary_staff(x_admin_id):
-        raise HTTPException(status_code=403, detail="Forbidden")
+async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if not is_diary_staff(x_admin_id):
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    telegram_id = data.get("telegram_id")
-    entry_date = data.get("entry_date")
-    locked = bool(data.get("locked", True))
-    if not telegram_id or not entry_date:
-        raise HTTPException(status_code=400, detail="Missing data")
+        telegram_id = data.get("telegram_id")
+        entry_date = data.get("entry_date")
+        locked = bool(data.get("locked", True))
+        if not telegram_id or not entry_date:
+            raise HTTPException(status_code=400, detail="Missing data")
 
-    conn = get_conn()
-    c = conn.cursor()
-    entry_id, _, _ = get_or_create_diary_entry(c, telegram_id, entry_date)
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    if locked:
-        c.execute(
-            "UPDATE diary_entries SET status='locked', locked_at=?, updated_at=? WHERE id=?",
-            (now_str, now_str, entry_id),
-        )
-    else:
-        c.execute(
-            "UPDATE diary_entries SET status='reviewed', locked_at=NULL, updated_at=? WHERE id=?",
-            (now_str, entry_id),
-        )
-    conn.commit()
-    payload = build_diary_entry_payload(c, entry_id)
-    conn.close()
-    return {"success": True, "entry": payload}
+        conn = get_conn()
+        c = conn.cursor()
+        entry_id, _, _ = get_or_create_diary_entry(c, telegram_id, entry_date)
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        if locked:
+            c.execute(
+                "UPDATE diary_entries SET status='locked', locked_at=?, updated_at=? WHERE id=?",
+                (now_str, now_str, entry_id),
+            )
+        else:
+            c.execute(
+                "UPDATE diary_entries SET status='reviewed', locked_at=NULL, updated_at=? WHERE id=?",
+                (now_str, entry_id),
+            )
+        conn.commit()
+        payload = build_diary_entry_payload(c, entry_id)
+        conn.close()
+        return {"success": True, "entry": payload}
+    return await db_write(_run)
 
 
 @app.get("/api/leaderboard")
@@ -5059,21 +5104,23 @@ def get_user_achievements(telegram_id: int):
 
 
 @app.post("/api/achievements/grant")
-def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    telegram_id = data.get("telegram_id")
-    code = data.get("code")
-    conn = get_conn()
-    c = conn.cursor()
-    try:
-        c.execute("INSERT INTO user_achievements (telegram_id, achievement_code) VALUES (?,?)", (telegram_id, code))
-        conn.commit()
-        conn.close()
-        return {"success": True}
-    except Exception:
-        conn.close()
-        return {"success": False, "detail": "Already earned"}
+async def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        telegram_id = data.get("telegram_id")
+        code = data.get("code")
+        conn = get_conn()
+        c = conn.cursor()
+        try:
+            c.execute("INSERT INTO user_achievements (telegram_id, achievement_code) VALUES (?,?)", (telegram_id, code))
+            conn.commit()
+            conn.close()
+            return {"success": True}
+        except Exception:
+            conn.close()
+            return {"success": False, "detail": "Already earned"}
+    return await db_write(_run)
 
 @app.get("/api/user/scans/{telegram_id}")
 def get_user_scans(telegram_id: int):
@@ -5252,34 +5299,36 @@ def get_casino_history(telegram_id: int):
 
 
 @app.get("/api/casino/inventory/{telegram_id}")
-def get_casino_inventory(telegram_id: int):
-    now_beijing = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("""UPDATE shop_purchases SET status='expired'
-                 WHERE telegram_id=? AND status='active'
-                 AND expires_at IS NOT NULL AND expires_at < ?""", (telegram_id, now_beijing))
-    conn.commit()
-    c.execute("""SELECT id, item_code, purchased_at, expires_at FROM shop_purchases
-                 WHERE telegram_id=? AND status='active'
-                 AND item_code IN ('casino_walk', 'casino_laundry', 'casino_immunity')
-                 ORDER BY purchased_at DESC""", (telegram_id,))
-    rows = c.fetchall()
-    conn.close()
-    item_info = {
-        "casino_walk": {"name": "+30 мин свободы", "icon": "🕐", "desc": "Действует с 21:00 до 22:00"},
-        "casino_laundry": {"name": "Вне очереди!", "icon": "🧺", "desc": "Первым на стирку или за водой"},
-        "casino_immunity": {"name": "Иммунитет!", "icon": "🛡", "desc": "Один пропуск без штрафа"},
-    }
-    return [{
-        "id": row[0],
-        "code": row[1],
-        "name": item_info.get(row[1], {"name": row[1]})["name"],
-        "icon": item_info.get(row[1], {"icon": "🎁"})["icon"],
-        "desc": item_info.get(row[1], {"desc": ""})["desc"],
-        "purchased_at": row[2],
-        "expires_at": row[3],
-    } for row in rows]
+async def get_casino_inventory(telegram_id: int):
+    def _run():
+        now_beijing = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("""UPDATE shop_purchases SET status='expired'
+                     WHERE telegram_id=? AND status='active'
+                     AND expires_at IS NOT NULL AND expires_at < ?""", (telegram_id, now_beijing))
+        conn.commit()
+        c.execute("""SELECT id, item_code, purchased_at, expires_at FROM shop_purchases
+                     WHERE telegram_id=? AND status='active'
+                     AND item_code IN ('casino_walk', 'casino_laundry', 'casino_immunity')
+                     ORDER BY purchased_at DESC""", (telegram_id,))
+        rows = c.fetchall()
+        conn.close()
+        item_info = {
+            "casino_walk": {"name": "+30 мин свободы", "icon": "🕐", "desc": "Действует с 21:00 до 22:00"},
+            "casino_laundry": {"name": "Вне очереди!", "icon": "🧺", "desc": "Первым на стирку или за водой"},
+            "casino_immunity": {"name": "Иммунитет!", "icon": "🛡", "desc": "Один пропуск без штрафа"},
+        }
+        return [{
+            "id": row[0],
+            "code": row[1],
+            "name": item_info.get(row[1], {"name": row[1]})["name"],
+            "icon": item_info.get(row[1], {"icon": "🎁"})["icon"],
+            "desc": item_info.get(row[1], {"desc": ""})["desc"],
+            "purchased_at": row[2],
+            "expires_at": row[3],
+        } for row in rows]
+    return await db_write(_run)
 
 
 @app.get("/api/casino/implants/{telegram_id}")
@@ -5344,73 +5393,76 @@ async def red_dragon_intercept(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    conn = get_conn()
-    c = conn.cursor()
-    ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "intercept")
-    target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
-    if target_points < 80:
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "intercept")
+        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
+        if target_points < 80:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Target balance below 80")
+        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''SELECT 1 FROM legendary_implant_actions
+               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='intercept'
+                 AND created_at>=? LIMIT 1''',
+            (actor_id, target_id, cutoff),
+        )
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=429, detail="Target protected for 3 days")
+        c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (target_id,))
+        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+        target_balance = c.fetchone()[0] or 0
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+        actor_balance = c.fetchone()[0] or 0
+        log_economy(c, target_id, "red_dragon_intercept_loss", -10, target_balance, actor_id, "implant", "Перехват")
+        log_economy(c, actor_id, "red_dragon_intercept_gain", 10, actor_balance, target_id, "implant", "Перехват")
+        log_legendary_action(c, actor_id, target_id, None, "implant_red_dragon", "intercept", 10, 0, target_name)
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=400, detail="Target balance below 80")
-    cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        '''SELECT 1 FROM legendary_implant_actions
-           WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='intercept'
-             AND created_at>=? LIMIT 1''',
-        (actor_id, target_id, cutoff),
-    )
-    if c.fetchone():
-        conn.close()
-        raise HTTPException(status_code=429, detail="Target protected for 3 days")
-    c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (target_id,))
-    c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
-    target_balance = c.fetchone()[0] or 0
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
-    actor_balance = c.fetchone()[0] or 0
-    log_economy(c, target_id, "red_dragon_intercept_loss", -10, target_balance, actor_id, "implant", "Перехват")
-    log_economy(c, actor_id, "red_dragon_intercept_gain", 10, actor_balance, target_id, "implant", "Перехват")
-    log_legendary_action(c, actor_id, target_id, None, "implant_red_dragon", "intercept", 10, 0, target_name)
-    conn.commit()
-    conn.close()
     await send_telegram_message(target_id, "🐉 Красный Дракон активировал «Перехват».\nС вашего баланса снято 10★.")
     return {"success": True, "target": target_name, "stolen": 10, "new_points": actor_balance}
 
 
 @app.post("/api/implants/red-dragon/impulse-reset")
-def red_dragon_impulse_reset(data: dict):
-    actor_id = int(data.get("telegram_id") or 0)
-    if not actor_id:
-        raise HTTPException(status_code=400, detail="telegram_id required")
-    conn = get_conn()
-    c = conn.cursor()
-    ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "impulse_reset")
-    c.execute(
-        '''SELECT id, operation, amount, note
-           FROM economy_log
-           WHERE telegram_id=? AND amount < 0 AND amount >= -20
-             AND reference_type IN ('event', 'casino_game')
-             AND NOT EXISTS (
-               SELECT 1 FROM economy_log resets
-               WHERE resets.operation='red_dragon_impulse_reset'
-                 AND resets.reference_id=economy_log.id
-             )
-           ORDER BY created_at DESC LIMIT 1''',
-        (actor_id,),
-    )
-    row = c.fetchone()
-    if not row:
+async def red_dragon_impulse_reset(data: dict):
+    def _run():
+        actor_id = int(data.get("telegram_id") or 0)
+        if not actor_id:
+            raise HTTPException(status_code=400, detail="telegram_id required")
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "impulse_reset")
+        c.execute(
+            '''SELECT id, operation, amount, note
+               FROM economy_log
+               WHERE telegram_id=? AND amount < 0 AND amount >= -20
+                 AND reference_type IN ('event', 'casino_game')
+                 AND NOT EXISTS (
+                   SELECT 1 FROM economy_log resets
+                   WHERE resets.operation='red_dragon_impulse_reset'
+                     AND resets.reference_id=economy_log.id
+                 )
+               ORDER BY created_at DESC LIMIT 1''',
+            (actor_id,),
+        )
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="No eligible game penalty")
+        penalty_id, operation, amount, note = row
+        refund = abs(amount)
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, actor_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+        balance = c.fetchone()[0] or 0
+        log_economy(c, actor_id, "red_dragon_impulse_reset", refund, balance, penalty_id, "implant", note or operation)
+        log_legendary_action(c, actor_id, actor_id, None, "implant_red_dragon", "impulse_reset", refund, 0, note or operation)
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="No eligible game penalty")
-    penalty_id, operation, amount, note = row
-    refund = abs(amount)
-    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, actor_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
-    balance = c.fetchone()[0] or 0
-    log_economy(c, actor_id, "red_dragon_impulse_reset", refund, balance, penalty_id, "implant", note or operation)
-    log_legendary_action(c, actor_id, actor_id, None, "implant_red_dragon", "impulse_reset", refund, 0, note or operation)
-    conn.commit()
-    conn.close()
-    return {"success": True, "refunded": refund, "new_points": balance}
+        return {"success": True, "refunded": refund, "new_points": balance}
+    return await db_write(_run)
 
 
 @app.post("/api/implants/netwatch/formatting")
@@ -5420,40 +5472,41 @@ async def netwatch_formatting(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    conn = get_conn()
-    c = conn.cursor()
-    ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "formatting")
-    target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
-    if target_points < 80:
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "formatting")
+        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
+        if target_points < 80:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Target balance below 80")
+        c.execute(
+            '''SELECT telegram_id, full_name, COALESCE(points, 0)
+               FROM users
+               WHERE telegram_id NOT IN (?, ?)
+                 AND telegram_id NOT IN ({})
+                 AND COALESCE(points, 0) >= 80
+               ORDER BY RANDOM()
+               LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
+            [actor_id, target_id] + ADMIN_IDS,
+        )
+        secondary = c.fetchone()
+        secondary_id = secondary[0] if secondary else None
+        secondary_name = secondary[1] if secondary else None
+        c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (target_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+        target_balance = c.fetchone()[0] or 0
+        log_economy(c, target_id, "netwatch_formatting", -15, target_balance, actor_id, "implant", "Форматирование")
+        secondary_delta = 0
+        if secondary_id:
+            c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
+            secondary_balance = c.fetchone()[0] or 0
+            log_economy(c, secondary_id, "netwatch_formatting_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
+            secondary_delta = -5
+        log_legendary_action(c, actor_id, target_id, secondary_id, "implant_netwatch", "formatting", -15, secondary_delta, target_name)
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=400, detail="Target balance below 80")
-    c.execute(
-        '''SELECT telegram_id, full_name, COALESCE(points, 0)
-           FROM users
-           WHERE telegram_id NOT IN (?, ?)
-             AND telegram_id NOT IN ({})
-             AND COALESCE(points, 0) >= 80
-           ORDER BY RANDOM()
-           LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
-        [actor_id, target_id] + ADMIN_IDS,
-    )
-    secondary = c.fetchone()
-    secondary_id = secondary[0] if secondary else None
-    secondary_name = secondary[1] if secondary else None
-    c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (target_id,))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
-    target_balance = c.fetchone()[0] or 0
-    log_economy(c, target_id, "netwatch_formatting", -15, target_balance, actor_id, "implant", "Форматирование")
-    secondary_delta = 0
-    if secondary_id:
-        c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
-        secondary_balance = c.fetchone()[0] or 0
-        log_economy(c, secondary_id, "netwatch_formatting_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
-        secondary_delta = -5
-    log_legendary_action(c, actor_id, target_id, secondary_id, "implant_netwatch", "formatting", -15, secondary_delta, target_name)
-    conn.commit()
-    conn.close()
     await send_telegram_message(target_id, "🔴 NetWatch выполнил «Форматирование».\nС вашего баланса снято 15★.")
     if secondary_id:
         await send_telegram_message(secondary_id, "🔴 Побочный импульс NetWatch.\nС вашего баланса снято 5★.")
@@ -5473,29 +5526,30 @@ async def netwatch_veil_breach(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    conn = get_conn()
-    c = conn.cursor()
-    ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "veil_breach")
-    target_id, target_name, _ = find_action_target(c, actor_id, target_id, target_name)
-    cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        '''SELECT 1 FROM legendary_implant_actions
-           WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='veil_breach'
-             AND created_at>=? LIMIT 1''',
-        (actor_id, target_id, cutoff),
-    )
-    if c.fetchone():
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "veil_breach")
+        target_id, target_name, _ = find_action_target(c, actor_id, target_id, target_name)
+        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''SELECT 1 FROM legendary_implant_actions
+               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='veil_breach'
+                 AND created_at>=? LIMIT 1''',
+            (actor_id, target_id, cutoff),
+        )
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=429, detail="Target protected for 14 days")
+        locked_until = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
+               ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
+            (target_id, locked_until),
+        )
+        log_legendary_action(c, actor_id, target_id, None, "implant_netwatch", "veil_breach", 0, 0, target_name)
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=429, detail="Target protected for 14 days")
-    locked_until = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
-           ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
-        (target_id, locked_until),
-    )
-    log_legendary_action(c, actor_id, target_id, None, "implant_netwatch", "veil_breach", 0, 0, target_name)
-    conn.commit()
-    conn.close()
     await send_telegram_message(
         target_id,
         "🔴 NetWatch активировал «Взлом Заслона».\n"
@@ -5505,54 +5559,58 @@ async def netwatch_veil_breach(data: dict):
 
 
 @app.post("/api/casino/implants/disassemble/{implant_id}")
-def disassemble_implant(implant_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT implant_id FROM user_implants WHERE id=? AND telegram_id=? AND durability > 0", (implant_id, telegram_id))
-    row = c.fetchone()
-    if not row:
+async def disassemble_implant(implant_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT implant_id FROM user_implants WHERE id=? AND telegram_id=? AND durability > 0", (implant_id, telegram_id))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        implant_type = row[0]
+        c.execute("""SELECT COUNT(*) FROM user_implants
+                     WHERE telegram_id=? AND implant_id=? AND durability > 0""", (telegram_id, implant_type))
+        count = c.fetchone()[0]
+        if count < 2:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Not a duplicate")
+        c.execute("UPDATE user_implants SET durability=0 WHERE id=?", (implant_id,))
+        c.execute("UPDATE users SET points = points + 100 WHERE telegram_id=?", (telegram_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        new_points = c.fetchone()[0]
+        log_economy(c, telegram_id, 'implant_disassemble', 100, new_points, implant_id, 'implant', implant_type)
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    implant_type = row[0]
-    c.execute("""SELECT COUNT(*) FROM user_implants
-                 WHERE telegram_id=? AND implant_id=? AND durability > 0""", (telegram_id, implant_type))
-    count = c.fetchone()[0]
-    if count < 2:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Not a duplicate")
-    c.execute("UPDATE user_implants SET durability=0 WHERE id=?", (implant_id,))
-    c.execute("UPDATE users SET points = points + 100 WHERE telegram_id=?", (telegram_id,))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    new_points = c.fetchone()[0]
-    log_economy(c, telegram_id, 'implant_disassemble', 100, new_points, implant_id, 'implant', implant_type)
-    conn.commit()
-    conn.close()
-    return {"success": True, "refund": 100, "new_points": new_points}
+        return {"success": True, "refund": 100, "new_points": new_points}
+    return await db_write(_run)
 
 
 @app.post("/api/casino/use/{purchase_id}")
-def use_casino_prize(purchase_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT telegram_id, item_code, expires_at FROM shop_purchases WHERE id=? AND status='active'", (purchase_id,))
-    row = c.fetchone()
-    if not row or row[0] != telegram_id:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    now_beijing = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    if row[2] and row[2] < now_beijing:
-        c.execute("UPDATE shop_purchases SET status='expired' WHERE id=?", (purchase_id,))
+async def use_casino_prize(purchase_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT telegram_id, item_code, expires_at FROM shop_purchases WHERE id=? AND status='active'", (purchase_id,))
+        row = c.fetchone()
+        if not row or row[0] != telegram_id:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        now_beijing = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        if row[2] and row[2] < now_beijing:
+            c.execute("UPDATE shop_purchases SET status='expired' WHERE id=?", (purchase_id,))
+            conn.commit()
+            conn.close()
+            raise HTTPException(status_code=400, detail="Prize expired")
+        c.execute("UPDATE shop_purchases SET status='used' WHERE id=?", (purchase_id,))
         conn.commit()
         conn.close()
-        raise HTTPException(status_code=400, detail="Prize expired")
-    c.execute("UPDATE shop_purchases SET status='used' WHERE id=?", (purchase_id,))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.get("/api/shop")
@@ -5718,106 +5776,112 @@ def get_inventory(telegram_id: int):
 
 
 @app.post("/api/shop/gift")
-def gift_item(data: dict):
-    purchase_id = data.get("purchase_id")
-    from_id = data.get("from_id")
-    to_id = data.get("to_id")
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT item_code FROM shop_purchases WHERE id=? AND telegram_id=? AND status='active'", (purchase_id, from_id))
-    purchase = c.fetchone()
-    if not purchase:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Purchase not found")
-    if from_id not in ADMIN_IDS:
-        c.execute(
-            """SELECT COUNT(*) FROM shop_purchases
-               WHERE given_to=? AND date(gifted_at)=?""",
-            (from_id, today),
-        )
-        gifts_today = c.fetchone()[0] or 0
-        if gifts_today >= SHOP_GIFT_DAILY_LIMIT:
+async def gift_item(data: dict):
+    def _run():
+        purchase_id = data.get("purchase_id")
+        from_id = data.get("from_id")
+        to_id = data.get("to_id")
+        today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT item_code FROM shop_purchases WHERE id=? AND telegram_id=? AND status='active'", (purchase_id, from_id))
+        purchase = c.fetchone()
+        if not purchase:
             conn.close()
-            raise HTTPException(status_code=400, detail="Daily gift limit reached")
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
-    user = c.fetchone()
-    fox_gift_trick = (
-        has_active_card(c, from_id, "card_fox")
-        and not has_used_card_today(c, from_id, "card_fox", "gift_tax_trick", today)
-    )
-    gift_tax = 15 if fox_gift_trick else 20
-    if not user or (user[0] or 0) < gift_tax:
+            raise HTTPException(status_code=404, detail="Purchase not found")
+        if from_id not in ADMIN_IDS:
+            c.execute(
+                """SELECT COUNT(*) FROM shop_purchases
+                   WHERE given_to=? AND date(gifted_at)=?""",
+                (from_id, today),
+            )
+            gifts_today = c.fetchone()[0] or 0
+            if gifts_today >= SHOP_GIFT_DAILY_LIMIT:
+                conn.close()
+                raise HTTPException(status_code=400, detail="Daily gift limit reached")
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
+        user = c.fetchone()
+        fox_gift_trick = (
+            has_active_card(c, from_id, "card_fox")
+            and not has_used_card_today(c, from_id, "card_fox", "gift_tax_trick", today)
+        )
+        gift_tax = 15 if fox_gift_trick else 20
+        if not user or (user[0] or 0) < gift_tax:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Not enough points for tax")
+        if fox_gift_trick:
+            mark_card_used_today(c, from_id, "card_fox", "gift_tax_trick", today)
+        c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (gift_tax, from_id))
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, gifted_at=?, status='active' WHERE id=?", (to_id, from_id, now_str, purchase_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
+        new_points = c.fetchone()[0] or 0
+        log_economy(c, from_id, 'gift_tax', -gift_tax, new_points, purchase_id, 'shop_gift', purchase[0])
+        if gift_tax < 20:
+            log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
+        log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=400, detail="Not enough points for tax")
-    if fox_gift_trick:
-        mark_card_used_today(c, from_id, "card_fox", "gift_tax_trick", today)
-    c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (gift_tax, from_id))
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, gifted_at=?, status='active' WHERE id=?", (to_id, from_id, now_str, purchase_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
-    new_points = c.fetchone()[0] or 0
-    log_economy(c, from_id, 'gift_tax', -gift_tax, new_points, purchase_id, 'shop_gift', purchase[0])
-    if gift_tax < 20:
-        log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
-    log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
-    conn.commit()
-    conn.close()
-    return {"success": True}
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/shop/sell")
-def sell_item(data: dict):
-    purchase_id = data.get("purchase_id")
-    telegram_id = data.get("telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("""SELECT sp.item_code, si.price FROM shop_purchases sp
-                 JOIN shop_items si ON sp.item_code = si.code
-                 WHERE sp.id=? AND sp.telegram_id=? AND sp.status='active'""", (purchase_id, telegram_id))
-    purchase = c.fetchone()
-    if not purchase:
+async def sell_item(data: dict):
+    def _run():
+        purchase_id = data.get("purchase_id")
+        telegram_id = data.get("telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("""SELECT sp.item_code, si.price FROM shop_purchases sp
+                     JOIN shop_items si ON sp.item_code = si.code
+                     WHERE sp.id=? AND sp.telegram_id=? AND sp.status='active'""", (purchase_id, telegram_id))
+        purchase = c.fetchone()
+        if not purchase:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        sell_rate = 0.6 if has_active_implant(c, telegram_id, "implant_panda") else 0.5
+        refund = int(purchase[1] * sell_rate)
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, telegram_id))
+        c.execute("UPDATE shop_purchases SET status='sold' WHERE id=?", (purchase_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        new_points = c.fetchone()[0]
+        log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    sell_rate = 0.6 if has_active_implant(c, telegram_id, "implant_panda") else 0.5
-    refund = int(purchase[1] * sell_rate)
-    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, telegram_id))
-    c.execute("UPDATE shop_purchases SET status='sold' WHERE id=?", (purchase_id,))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    new_points = c.fetchone()[0]
-    log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
-    conn.commit()
-    conn.close()
-    return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
+        return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
+    return await db_write(_run)
 
 
 @app.post("/api/shop/use/{purchase_id}")
-def use_shop_item(purchase_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT telegram_id, item_code FROM shop_purchases WHERE id=? AND status='active'", (purchase_id,))
-    row = c.fetchone()
-    if not row or row[0] != telegram_id:
+async def use_shop_item(purchase_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT telegram_id, item_code FROM shop_purchases WHERE id=? AND status='active'", (purchase_id,))
+        row = c.fetchone()
+        if not row or row[0] != telegram_id:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        item_code = row[1]
+        c.execute("UPDATE shop_purchases SET status='used' WHERE id=?", (purchase_id,))
+
+        extra = {}
+        if item_code == 'path_switch':
+            c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
+            path_row = c.fetchone()
+            current_path = path_row[0] if path_row else 'cyberpunk'
+            new_path = 'genshin' if current_path != 'genshin' else 'cyberpunk'
+            c.execute("""INSERT INTO user_status (telegram_id, theme_path) VALUES (?,?)
+                         ON CONFLICT(telegram_id) DO UPDATE SET theme_path=excluded.theme_path""",
+                      (telegram_id, new_path))
+            extra = {"new_path": new_path}
+
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    item_code = row[1]
-    c.execute("UPDATE shop_purchases SET status='used' WHERE id=?", (purchase_id,))
-
-    extra = {}
-    if item_code == 'path_switch':
-        c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
-        path_row = c.fetchone()
-        current_path = path_row[0] if path_row else 'cyberpunk'
-        new_path = 'genshin' if current_path != 'genshin' else 'cyberpunk'
-        c.execute("""INSERT INTO user_status (telegram_id, theme_path) VALUES (?,?)
-                     ON CONFLICT(telegram_id) DO UPDATE SET theme_path=excluded.theme_path""",
-                  (telegram_id, new_path))
-        extra = {"new_path": new_path}
-
-    conn.commit()
-    conn.close()
-    return {"success": True, **extra}
+        return {"success": True, **extra}
+    return await db_write(_run)
 
 @app.post("/api/admin/freeze")
 async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
@@ -5825,24 +5889,25 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
         raise HTTPException(status_code=403, detail="Forbidden")
     telegram_id = data.get("telegram_id")
     frozen = data.get("frozen", True)
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("""INSERT INTO user_status (telegram_id, frozen) VALUES (?,?)
-                 ON CONFLICT(telegram_id) DO UPDATE SET frozen=?""", (telegram_id, int(frozen), int(frozen)))
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, ?, ?, 0, ?, ?)''',
-        (
-            x_admin_id,
-            telegram_id,
-            'freeze' if frozen else 'unfreeze',
-            'NetWatch freeze' if frozen else 'NetWatch unfreeze',
-            now_iso(),
-        ),
-    )
-    conn.commit()
-    conn.close()
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("""INSERT INTO user_status (telegram_id, frozen) VALUES (?,?)
+                     ON CONFLICT(telegram_id) DO UPDATE SET frozen=?""", (telegram_id, int(frozen), int(frozen)))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, ?, ?, 0, ?, ?)''',
+            (
+                x_admin_id,
+                telegram_id,
+                'freeze' if frozen else 'unfreeze',
+                'NetWatch freeze' if frozen else 'NetWatch unfreeze',
+                now_iso(),
+            ),
+        )
+        conn.commit()
+        conn.close()
     text = (
         "⛔ NETWATCH 网络保安\n\n"
         "系统检测到异常活动\n"
@@ -5863,22 +5928,24 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/reset_shop")
-def reset_shop(x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM shop_daily_counts WHERE date=?", (today,))
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, NULL, 'reset_shop', 0, ?, ?)''',
-        (x_admin_id, f"Reset shop daily counts for {today}", now_iso()),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "message": "Магазин сброшен!"}
+async def reset_shop(x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM shop_daily_counts WHERE date=?", (today,))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'reset_shop', 0, ?, ?)''',
+            (x_admin_id, f"Reset shop daily counts for {today}", now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "message": "Магазин сброшен!"}
+    return await db_write(_run)
 
 
 @app.post("/api/question")
@@ -5916,41 +5983,45 @@ def get_settings():
 
 
 @app.post("/api/admin/blackwall")
-def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    enabled = data.get("enabled", False)
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', ?)", ('1' if enabled else '0',))
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, NULL, 'blackwall', 0, ?, ?)''',
-        (x_admin_id, 'BlackWall enabled' if enabled else 'BlackWall disabled', now_iso()),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "blackwall": enabled}
+async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        enabled = data.get("enabled", False)
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', ?)", ('1' if enabled else '0',))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'blackwall', 0, ?, ?)''',
+            (x_admin_id, 'BlackWall enabled' if enabled else 'BlackWall disabled', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "blackwall": enabled}
+    return await db_write(_run)
 
 
 @app.post("/api/admin/architect-event")
-def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    enabled = bool(data.get("enabled", False))
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('architect_event', ?)", ('1' if enabled else '0',))
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, NULL, 'architect_event', 0, ?, ?)''',
-        (x_admin_id, 'Architect event enabled' if enabled else 'Architect event disabled', now_iso()),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True, "architect_event": enabled}
+async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        enabled = bool(data.get("enabled", False))
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('architect_event', ?)", ('1' if enabled else '0',))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'architect_event', 0, ?, ?)''',
+            (x_admin_id, 'Architect event enabled' if enabled else 'Architect event disabled', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "architect_event": enabled}
+    return await db_write(_run)
 
 
 @app.get("/api/raid/status")
@@ -5997,146 +6068,148 @@ def get_raid_status(telegram_id: int = 0):
 
 @app.post("/api/raid/join")
 async def join_raid(data: dict):
-    telegram_id = data.get("telegram_id")
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
+    def _run():
+        telegram_id = data.get("telegram_id")
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
 
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    conn = sqlite3.connect('/root/zhidao.db', timeout=30, isolation_level='EXCLUSIVE')
-    conn.execute("PRAGMA busy_timeout=30000")
-    c = conn.cursor()
+        today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        conn = sqlite3.connect('/root/zhidao.db', timeout=30, isolation_level='EXCLUSIVE')
+        conn.execute("PRAGMA busy_timeout=30000")
+        c = conn.cursor()
 
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    user = c.fetchone()
-    if not user or (user[0] or 0) < RAID_ENTRY_COST:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Not enough points")
-
-    finished_count = public_finished_raid_count(c, today)
-    extra_raids = 0 if telegram_id in ADMIN_IDS else get_extra_raids(c, telegram_id)
-    user_attempts = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
-    consumed_extra_attempt = False
-    needs_extra_attempt = telegram_id not in ADMIN_IDS and (
-        finished_count >= RAID_DAILY_LIMIT or user_attempts >= RAID_USER_DAILY_LIMIT
-    )
-    if needs_extra_attempt:
-        if extra_raids <= 0:
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        user = c.fetchone()
+        if not user or (user[0] or 0) < RAID_ENTRY_COST:
             conn.close()
-            raise HTTPException(status_code=400, detail="Daily raid limit reached")
-        c.execute("""INSERT INTO user_status (telegram_id, extra_raids) VALUES (?,0)
-                     ON CONFLICT(telegram_id) DO UPDATE SET extra_raids=extra_raids-1""", (telegram_id,))
-        consumed_extra_attempt = True
+            raise HTTPException(status_code=400, detail="Not enough points")
 
-    c.execute("""SELECT r.id FROM raids r
-                 WHERE r.date=? AND r.status='open'
-                 AND r.id NOT IN (SELECT raid_id FROM raid_participants WHERE telegram_id=?)
-                 LIMIT 1""", (today, telegram_id))
-    raid = c.fetchone()
-    if not raid:
-        c.execute("INSERT INTO raids (date, created_at) VALUES (?,?)", (today, now_str))
-        raid_id = c.lastrowid
-    else:
-        raid_id = raid[0]
-
-    try:
-        c.execute("INSERT INTO raid_participants (raid_id, telegram_id) VALUES (?,?)", (raid_id, telegram_id))
-    except sqlite3.IntegrityError:
-        conn.close()
-        raise HTTPException(status_code=409, detail="Already joined")
-
-    # Verify answer if provided
-    answer = str(data.get("answer") or "").strip().lower()
-    question_id = data.get("question_id")
-    answer_correct = 0
-    if answer in ("a", "b", "c") and question_id:
-        c.execute(
-            "SELECT correct_option FROM event_questions WHERE id=? AND event_code='raid'",
-            (int(question_id),),
+        finished_count = public_finished_raid_count(c, today)
+        extra_raids = 0 if telegram_id in ADMIN_IDS else get_extra_raids(c, telegram_id)
+        user_attempts = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
+        consumed_extra_attempt = False
+        needs_extra_attempt = telegram_id not in ADMIN_IDS and (
+            finished_count >= RAID_DAILY_LIMIT or user_attempts >= RAID_USER_DAILY_LIMIT
         )
-        q_row = c.fetchone()
-        if q_row and q_row[0] == answer:
-            answer_correct = 1
-    c.execute(
-        "UPDATE raid_participants SET answer_correct=? WHERE raid_id=? AND telegram_id=?",
-        (answer_correct, raid_id, telegram_id),
-    )
+        if needs_extra_attempt:
+            if extra_raids <= 0:
+                conn.close()
+                raise HTTPException(status_code=400, detail="Daily raid limit reached")
+            c.execute("""INSERT INTO user_status (telegram_id, extra_raids) VALUES (?,0)
+                         ON CONFLICT(telegram_id) DO UPDATE SET extra_raids=extra_raids-1""", (telegram_id,))
+            consumed_extra_attempt = True
 
-    c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (RAID_ENTRY_COST, telegram_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    raid_entry_balance = c.fetchone()[0] or 0
-    log_economy(c, telegram_id, 'raid_entry', -RAID_ENTRY_COST, raid_entry_balance, raid_id, 'raid', f"Raid {today}")
-    c.execute("SELECT COUNT(*) FROM raid_participants WHERE raid_id=?", (raid_id,))
-    count = c.fetchone()[0]
-
-    launched = False
-    result = None
-    card_raid_bonus = 0
-    if count >= RAID_MIN_PLAYERS or (telegram_id in ADMIN_IDS and count >= 1):
-        launched = True
-        c.execute("SELECT COALESCE(SUM(answer_correct),0) FROM raid_participants WHERE raid_id=?", (raid_id,))
-        correct_count = c.fetchone()[0] or 0
-        _chance_map = {0: 0.15, 1: 0.35, 2: 0.60, 3: 0.82}
-        win_chance = _chance_map.get(int(correct_count), RAID_SUCCESS_CHANCE)
-        result = 'success' if random.random() < win_chance else 'defended'
-        c.execute("UPDATE raids SET status='finished', result=? WHERE id=?", (result, raid_id))
-        c.execute("SELECT telegram_id FROM raid_participants WHERE raid_id=?", (raid_id,))
-        all_participants = [r[0] for r in c.fetchall()]
-        if result == 'success':
-            for tid in all_participants:
-                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (RAID_SUCCESS_REWARD, tid))
-                c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
-                raid_reward_balance = c.fetchone()[0] or 0
-                log_economy(c, tid, 'raid_reward', RAID_SUCCESS_REWARD, raid_reward_balance, raid_id, 'raid', f"Raid {today}")
-                bonus = grant_card_points_once(
-                    c, tid, "card_star", "raid_victory", 10,
-                    "card_star_raid_victory", f"Raid {today}", today, raid_id, "raid",
-                )
-                if tid == telegram_id:
-                    card_raid_bonus += bonus
+        c.execute("""SELECT r.id FROM raids r
+                     WHERE r.date=? AND r.status='open'
+                     AND r.id NOT IN (SELECT raid_id FROM raid_participants WHERE telegram_id=?)
+                     LIMIT 1""", (today, telegram_id))
+        raid = c.fetchone()
+        if not raid:
+            c.execute("INSERT INTO raids (date, created_at) VALUES (?,?)", (today, now_str))
+            raid_id = c.lastrowid
         else:
-            for tid in all_participants:
-                pyro_refund = grant_card_points_once(
-                    c, tid, "card_pyro", "raid_ember", 10,
-                    "card_pyro_raid_ember", f"Raid {today}", today, raid_id, "raid",
-                )
-                star_refund = grant_card_points_once(
-                    c, tid, "card_star", "raid_judgement", 15,
-                    "card_star_raid_judgement", f"Raid {today}", today, raid_id, "raid",
-                )
-                if tid == telegram_id:
-                    card_raid_bonus += pyro_refund + star_refund
+            raid_id = raid[0]
 
-    conn.commit()
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    new_points = c.fetchone()[0]
-    finished_today = public_finished_raid_count(c, today)
-    attempts_today = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
-    base_remaining = max(0, RAID_USER_DAILY_LIMIT - attempts_today)
-    if finished_today >= RAID_DAILY_LIMIT:
-        base_remaining = 0
-    remaining = 999 if telegram_id in ADMIN_IDS else base_remaining + get_extra_raids(c, telegram_id)
-    conn.close()
-    return {
-        "joined": True,
-        "count": count,
-        "launched": launched,
-        "result": result,
-        "participants_count": count,
-        "new_points": new_points,
-        "remaining_today": remaining,
-        "limit_today": RAID_USER_DAILY_LIMIT,
-        "required_players": RAID_MIN_PLAYERS,
-        "consumed_extra_attempt": consumed_extra_attempt,
-        "card_raid_bonus": card_raid_bonus,
-        "answer_correct": answer_correct,
-        "points_change": ((RAID_SUCCESS_REWARD - RAID_ENTRY_COST) if (launched and result == 'success') else -RAID_ENTRY_COST) + card_raid_bonus,
-        "message": (
-            f"🏆 РЕЙД УСПЕШЕН! +{RAID_SUCCESS_REWARD}★ каждому!" if (launched and result == 'success') else
-            "🛡 АЛЬФАБОСС ЗАЩИТИЛСЯ! Ставки сгорели 🔥" if (launched and result == 'defended') else
-            f"⚔️ Ты в отряде! Бойцов: {count}/{RAID_MIN_PLAYERS}"
-        ),
-    }
+        try:
+            c.execute("INSERT INTO raid_participants (raid_id, telegram_id) VALUES (?,?)", (raid_id, telegram_id))
+        except sqlite3.IntegrityError:
+            conn.close()
+            raise HTTPException(status_code=409, detail="Already joined")
+
+        # Verify answer if provided
+        answer = str(data.get("answer") or "").strip().lower()
+        question_id = data.get("question_id")
+        answer_correct = 0
+        if answer in ("a", "b", "c") and question_id:
+            c.execute(
+                "SELECT correct_option FROM event_questions WHERE id=? AND event_code='raid'",
+                (int(question_id),),
+            )
+            q_row = c.fetchone()
+            if q_row and q_row[0] == answer:
+                answer_correct = 1
+        c.execute(
+            "UPDATE raid_participants SET answer_correct=? WHERE raid_id=? AND telegram_id=?",
+            (answer_correct, raid_id, telegram_id),
+        )
+
+        c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (RAID_ENTRY_COST, telegram_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        raid_entry_balance = c.fetchone()[0] or 0
+        log_economy(c, telegram_id, 'raid_entry', -RAID_ENTRY_COST, raid_entry_balance, raid_id, 'raid', f"Raid {today}")
+        c.execute("SELECT COUNT(*) FROM raid_participants WHERE raid_id=?", (raid_id,))
+        count = c.fetchone()[0]
+
+        launched = False
+        result = None
+        card_raid_bonus = 0
+        if count >= RAID_MIN_PLAYERS or (telegram_id in ADMIN_IDS and count >= 1):
+            launched = True
+            c.execute("SELECT COALESCE(SUM(answer_correct),0) FROM raid_participants WHERE raid_id=?", (raid_id,))
+            correct_count = c.fetchone()[0] or 0
+            _chance_map = {0: 0.15, 1: 0.35, 2: 0.60, 3: 0.82}
+            win_chance = _chance_map.get(int(correct_count), RAID_SUCCESS_CHANCE)
+            result = 'success' if random.random() < win_chance else 'defended'
+            c.execute("UPDATE raids SET status='finished', result=? WHERE id=?", (result, raid_id))
+            c.execute("SELECT telegram_id FROM raid_participants WHERE raid_id=?", (raid_id,))
+            all_participants = [r[0] for r in c.fetchall()]
+            if result == 'success':
+                for tid in all_participants:
+                    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (RAID_SUCCESS_REWARD, tid))
+                    c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
+                    raid_reward_balance = c.fetchone()[0] or 0
+                    log_economy(c, tid, 'raid_reward', RAID_SUCCESS_REWARD, raid_reward_balance, raid_id, 'raid', f"Raid {today}")
+                    bonus = grant_card_points_once(
+                        c, tid, "card_star", "raid_victory", 10,
+                        "card_star_raid_victory", f"Raid {today}", today, raid_id, "raid",
+                    )
+                    if tid == telegram_id:
+                        card_raid_bonus += bonus
+            else:
+                for tid in all_participants:
+                    pyro_refund = grant_card_points_once(
+                        c, tid, "card_pyro", "raid_ember", 10,
+                        "card_pyro_raid_ember", f"Raid {today}", today, raid_id, "raid",
+                    )
+                    star_refund = grant_card_points_once(
+                        c, tid, "card_star", "raid_judgement", 15,
+                        "card_star_raid_judgement", f"Raid {today}", today, raid_id, "raid",
+                    )
+                    if tid == telegram_id:
+                        card_raid_bonus += pyro_refund + star_refund
+
+        conn.commit()
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        new_points = c.fetchone()[0]
+        finished_today = public_finished_raid_count(c, today)
+        attempts_today = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
+        base_remaining = max(0, RAID_USER_DAILY_LIMIT - attempts_today)
+        if finished_today >= RAID_DAILY_LIMIT:
+            base_remaining = 0
+        remaining = 999 if telegram_id in ADMIN_IDS else base_remaining + get_extra_raids(c, telegram_id)
+        conn.close()
+        return {
+            "joined": True,
+            "count": count,
+            "launched": launched,
+            "result": result,
+            "participants_count": count,
+            "new_points": new_points,
+            "remaining_today": remaining,
+            "limit_today": RAID_USER_DAILY_LIMIT,
+            "required_players": RAID_MIN_PLAYERS,
+            "consumed_extra_attempt": consumed_extra_attempt,
+            "card_raid_bonus": card_raid_bonus,
+            "answer_correct": answer_correct,
+            "points_change": ((RAID_SUCCESS_REWARD - RAID_ENTRY_COST) if (launched and result == 'success') else -RAID_ENTRY_COST) + card_raid_bonus,
+            "message": (
+                f"🏆 РЕЙД УСПЕШЕН! +{RAID_SUCCESS_REWARD}★ каждому!" if (launched and result == 'success') else
+                "🛡 АЛЬФАБОСС ЗАЩИТИЛСЯ! Ставки сгорели 🔥" if (launched and result == 'defended') else
+                f"⚔️ Ты в отряде! Бойцов: {count}/{RAID_MIN_PLAYERS}"
+            ),
+        }
+    return await db_write(_run)
 
 
 @app.get("/api/raid/question")
@@ -6233,117 +6306,119 @@ def get_cards(telegram_id: int):
 
 
 @app.post("/api/genshin/open")
-def open_genshin_case(data: dict):
-    telegram_id = data.get("telegram_id")
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    user = c.fetchone()
-    if not user:
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-    points = user[0] or 0
-
-    if telegram_id not in ADMIN_IDS:
-        c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
-        status_row = c.fetchone()
-        scan_attempts = status_row[0] if status_row else 0
-        if scan_attempts <= 0:
+async def open_genshin_case(data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        user = c.fetchone()
+        if not user:
             conn.close()
-            raise HTTPException(status_code=400, detail="No scan attempts")
-        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET
-                       scan_attempts=MAX(0, scan_attempts-1),
-                       protocol_fragments=protocol_fragments+1""", (telegram_id,))
-    else:
-        c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
-        status_row = c.fetchone()
+            raise HTTPException(status_code=404, detail="User not found")
+        points = user[0] or 0
 
-    pool_name = random.choices(['blue', 'purple', 'gold'], weights=[790, 200, 10])[0]
-    pool = GENSHIN_POOL[pool_name]
-    item = random.choices(pool['items'], weights=[it['weight'] for it in pool['items']])[0]
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    result = {}
+        if telegram_id not in ADMIN_IDS:
+            c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
+            status_row = c.fetchone()
+            scan_attempts = status_row[0] if status_row else 0
+            if scan_attempts <= 0:
+                conn.close()
+                raise HTTPException(status_code=400, detail="No scan attempts")
+            c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
+                         ON CONFLICT(telegram_id) DO UPDATE SET
+                           scan_attempts=MAX(0, scan_attempts-1),
+                           protocol_fragments=protocol_fragments+1""", (telegram_id,))
+        else:
+            c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+            status_row = c.fetchone()
 
-    if item['type'] == 'card':
-        card_id = item['id']
-        info = CARD_INFO[card_id]
-        c.execute("SELECT COUNT(*) FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0", (telegram_id, card_id))
-        already_has = c.fetchone()[0]
-        if already_has > 0:
-            prize_code = f"genshin_duplicate_{card_id}"
-            duplicate_bonus = 0
-            if card_id == "card_moon":
-                duplicate_bonus = 50
-                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (duplicate_bonus, telegram_id))
+        pool_name = random.choices(['blue', 'purple', 'gold'], weights=[790, 200, 10])[0]
+        pool = GENSHIN_POOL[pool_name]
+        item = random.choices(pool['items'], weights=[it['weight'] for it in pool['items']])[0]
+        today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        result = {}
+
+        if item['type'] == 'card':
+            card_id = item['id']
+            info = CARD_INFO[card_id]
+            c.execute("SELECT COUNT(*) FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0", (telegram_id, card_id))
+            already_has = c.fetchone()[0]
+            if already_has > 0:
+                prize_code = f"genshin_duplicate_{card_id}"
+                duplicate_bonus = 0
+                if card_id == "card_moon":
+                    duplicate_bonus = 50
+                    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (duplicate_bonus, telegram_id))
+                    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                    balance_after = c.fetchone()[0] or 0
+                    log_economy(c, telegram_id, "card_moon_duplicate_bonus", duplicate_bonus, balance_after, None, "card", info["name"])
+                result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": True, "bonus": duplicate_bonus or None}
+            else:
+                c.execute("INSERT INTO user_cards (telegram_id, card_id, obtained_at, durability) VALUES (?,?,?,3)", (telegram_id, card_id, now_str))
+                prize_code = f"genshin_{card_id}"
+                result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": False, "bonus": None}
+        elif item['type'] == 'points':
+            amount = item['amount']
+            fox_bonus = 0
+            if (
+                amount == 30
+                and has_active_card(c, telegram_id, "card_fox")
+                and not has_used_card_today(c, telegram_id, "card_fox", "trick")
+            ):
+                mark_card_used_today(c, telegram_id, "card_fox", "trick")
+                fox_bonus = 30
+                amount += fox_bonus
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
+            prize_code = f"genshin_points_{amount}"
+            if fox_bonus:
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                 balance_after = c.fetchone()[0] or 0
-                log_economy(c, telegram_id, "card_moon_duplicate_bonus", duplicate_bonus, balance_after, None, "card", info["name"])
-            result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": True, "bonus": duplicate_bonus or None}
+                log_economy(c, telegram_id, "card_fox_trick", fox_bonus, balance_after, None, "card", "genshin_points_30_to_60")
+            result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★", "rarity": 0, "card_bonus": fox_bonus}
+        elif item['type'] == 'immunity':
+            c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
+            prize_code = "genshin_immunity"
+            result = {"type": "immunity", "pool": pool_name, "name": "Иммунитет", "rarity": 0}
         else:
-            c.execute("INSERT INTO user_cards (telegram_id, card_id, obtained_at, durability) VALUES (?,?,?,3)", (telegram_id, card_id, now_str))
-            prize_code = f"genshin_{card_id}"
-            result = {"type": "card", "card_id": card_id, "name": info["name"], "rarity": info["rarity"], "passive": info["passive"], "pool": pool_name, "duplicate": False, "bonus": None}
-    elif item['type'] == 'points':
-        amount = item['amount']
-        fox_bonus = 0
-        if (
-            amount == 30
-            and has_active_card(c, telegram_id, "card_fox")
-            and not has_used_card_today(c, telegram_id, "card_fox", "trick")
-        ):
-            mark_card_used_today(c, telegram_id, "card_fox", "trick")
-            fox_bonus = 30
-            amount += fox_bonus
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
-        prize_code = f"genshin_points_{amount}"
-        if fox_bonus:
-            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-            balance_after = c.fetchone()[0] or 0
-            log_economy(c, telegram_id, "card_fox_trick", fox_bonus, balance_after, None, "card", "genshin_points_30_to_60")
-        result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★", "rarity": 0, "card_bonus": fox_bonus}
-    elif item['type'] == 'immunity':
-        c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
-        prize_code = "genshin_immunity"
-        result = {"type": "immunity", "pool": pool_name, "name": "Иммунитет", "rarity": 0}
-    else:
-        expires = today + ' 22:00:00'
-        c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
-        prize_code = "genshin_walk"
-        result = {"type": "walk", "pool": pool_name, "name": "+30 мин свободы", "rarity": 0}
+            expires = today + ' 22:00:00'
+            c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
+            prize_code = "genshin_walk"
+            result = {"type": "walk", "pool": pool_name, "name": "+30 мин свободы", "rarity": 0}
 
-    c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize_code, now_str))
-    sea_bonus = 0
-    if has_active_card(c, telegram_id, "card_sea"):
-        c.execute(
-            """SELECT COUNT(*) FROM casino_log
-               WHERE telegram_id=? AND date=? AND prize LIKE 'genshin_%'""",
-            (telegram_id, today),
-        )
-        prayers_today = c.fetchone()[0] or 0
-        if prayers_today > 0 and prayers_today % 3 == 0 and not has_used_card_today(c, telegram_id, "card_sea", f"tide:{prayers_today}", today):
-            sea_bonus = 20
-            mark_card_used_today(c, telegram_id, "card_sea", f"tide:{prayers_today}", today)
-            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (sea_bonus, telegram_id))
-            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-            balance_after = c.fetchone()[0] or 0
-            log_economy(c, telegram_id, "card_sea_tide", sea_bonus, balance_after, None, "card", f"prayer #{prayers_today}")
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    new_points = c.fetchone()[0]
-    c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
-    sc_row = c.fetchone()
-    log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
-    conn.commit()
-    conn.close()
-    result["new_points"] = new_points
-    if sea_bonus:
-        result["sea_bonus"] = sea_bonus
-    result["scan_attempts"] = sc_row[0] if sc_row else 0
-    result["protocol_fragments"] = sc_row[1] if sc_row else 0
-    return result
+        c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize_code, now_str))
+        sea_bonus = 0
+        if has_active_card(c, telegram_id, "card_sea"):
+            c.execute(
+                """SELECT COUNT(*) FROM casino_log
+                   WHERE telegram_id=? AND date=? AND prize LIKE 'genshin_%'""",
+                (telegram_id, today),
+            )
+            prayers_today = c.fetchone()[0] or 0
+            if prayers_today > 0 and prayers_today % 3 == 0 and not has_used_card_today(c, telegram_id, "card_sea", f"tide:{prayers_today}", today):
+                sea_bonus = 20
+                mark_card_used_today(c, telegram_id, "card_sea", f"tide:{prayers_today}", today)
+                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (sea_bonus, telegram_id))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                balance_after = c.fetchone()[0] or 0
+                log_economy(c, telegram_id, "card_sea_tide", sea_bonus, balance_after, None, "card", f"prayer #{prayers_today}")
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        new_points = c.fetchone()[0]
+        c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+        sc_row = c.fetchone()
+        log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
+        conn.commit()
+        conn.close()
+        result["new_points"] = new_points
+        if sea_bonus:
+            result["sea_bonus"] = sea_bonus
+        result["scan_attempts"] = sc_row[0] if sc_row else 0
+        result["protocol_fragments"] = sc_row[1] if sc_row else 0
+        return result
+    return await db_write(_run)
 
 
 @app.post("/api/admin/fragments")
@@ -6420,83 +6495,87 @@ FRAGMENT_CARD_POOL = [
 FRAGMENT_COST = 10
 
 @app.post("/api/fragments/exchange")
-def exchange_fragments(data: dict):
-    telegram_id = data.get("telegram_id")
-    exchange_type = data.get("type")  # "implant" or "card"
-    if not telegram_id or exchange_type not in ("implant", "card"):
-        raise HTTPException(status_code=400, detail="Missing data")
+async def exchange_fragments(data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        exchange_type = data.get("type")  # "implant" or "card"
+        if not telegram_id or exchange_type not in ("implant", "card"):
+            raise HTTPException(status_code=400, detail="Missing data")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+        if not c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+
+        c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+        row = c.fetchone()
+        fragments = row[0] if row else 0
+        if fragments < FRAGMENT_COST:
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"Not enough fragments ({fragments}/{FRAGMENT_COST})")
+
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        _implant_names = {
+            'implant_guanxi': 'Гуаньси 关系', 'implant_terracota': 'Терракота 兵马俑',
+            'implant_panda': 'Панда 🐼', 'implant_shaolin': 'Шаолинь 少林',
+            'implant_linguasoft': 'Linguasoft 口才', 'implant_caishen': 'Цайшэнь 财神',
+            'implant_qilin': 'Цилинь 麒麟',
+        }
+        if exchange_type == "implant":
+            item_id = random.choice(FRAGMENT_IMPLANT_POOL)
+            c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)",
+                      (telegram_id, item_id, now_str))
+            result = {"type": "implant", "id": item_id, "name": _implant_names.get(item_id, item_id)}
+        else:
+            item_id = random.choice(FRAGMENT_CARD_POOL)
+            info = CARD_INFO.get(item_id, {"name": item_id, "rarity": 4, "passive": ""})
+            c.execute("INSERT INTO user_cards (telegram_id, card_id, obtained_at, durability) VALUES (?,?,?,3)",
+                      (telegram_id, item_id, now_str))
+            result = {"type": "card", "card_id": item_id, "name": info["name"],
+                      "rarity": info.get("rarity", 4), "passive": info.get("passive", "")}
+
+        c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,?)
+                     ON CONFLICT(telegram_id) DO UPDATE SET protocol_fragments=protocol_fragments-?""",
+                  (telegram_id, FRAGMENT_COST, FRAGMENT_COST))
+        c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+        new_frags = c.fetchone()[0]
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-
-    c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
-    row = c.fetchone()
-    fragments = row[0] if row else 0
-    if fragments < FRAGMENT_COST:
-        conn.close()
-        raise HTTPException(status_code=400, detail=f"Not enough fragments ({fragments}/{FRAGMENT_COST})")
-
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    _implant_names = {
-        'implant_guanxi': 'Гуаньси 关系', 'implant_terracota': 'Терракота 兵马俑',
-        'implant_panda': 'Панда 🐼', 'implant_shaolin': 'Шаолинь 少林',
-        'implant_linguasoft': 'Linguasoft 口才', 'implant_caishen': 'Цайшэнь 财神',
-        'implant_qilin': 'Цилинь 麒麟',
-    }
-    if exchange_type == "implant":
-        item_id = random.choice(FRAGMENT_IMPLANT_POOL)
-        c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)",
-                  (telegram_id, item_id, now_str))
-        result = {"type": "implant", "id": item_id, "name": _implant_names.get(item_id, item_id)}
-    else:
-        item_id = random.choice(FRAGMENT_CARD_POOL)
-        info = CARD_INFO.get(item_id, {"name": item_id, "rarity": 4, "passive": ""})
-        c.execute("INSERT INTO user_cards (telegram_id, card_id, obtained_at, durability) VALUES (?,?,?,3)",
-                  (telegram_id, item_id, now_str))
-        result = {"type": "card", "card_id": item_id, "name": info["name"],
-                  "rarity": info.get("rarity", 4), "passive": info.get("passive", "")}
-
-    c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,?)
-                 ON CONFLICT(telegram_id) DO UPDATE SET protocol_fragments=protocol_fragments-?""",
-              (telegram_id, FRAGMENT_COST, FRAGMENT_COST))
-    c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
-    new_frags = c.fetchone()[0]
-    conn.commit()
-    conn.close()
-    result["protocol_fragments"] = new_frags
-    return result
+        result["protocol_fragments"] = new_frags
+        return result
+    return await db_write(_run)
 
 
 @app.post("/api/cards/disassemble/{card_id}")
-def disassemble_card(card_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT card_id FROM user_cards WHERE id=? AND telegram_id=? AND durability > 0", (card_id, telegram_id))
-    row = c.fetchone()
-    if not row:
+async def disassemble_card(card_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT card_id FROM user_cards WHERE id=? AND telegram_id=? AND durability > 0", (card_id, telegram_id))
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        card_type = row[0]
+        c.execute("SELECT COUNT(*) FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0", (telegram_id, card_type))
+        count = c.fetchone()[0]
+        if count < 2:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Not a duplicate")
+        c.execute("UPDATE user_cards SET durability=0 WHERE id=?", (card_id,))
+        c.execute("UPDATE users SET points = points + 50 WHERE telegram_id=?", (telegram_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+        new_points = c.fetchone()[0]
+        log_economy(c, telegram_id, 'card_disassemble', 50, new_points, card_id, 'card', card_type)
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    card_type = row[0]
-    c.execute("SELECT COUNT(*) FROM user_cards WHERE telegram_id=? AND card_id=? AND durability > 0", (telegram_id, card_type))
-    count = c.fetchone()[0]
-    if count < 2:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Not a duplicate")
-    c.execute("UPDATE user_cards SET durability=0 WHERE id=?", (card_id,))
-    c.execute("UPDATE users SET points = points + 50 WHERE telegram_id=?", (telegram_id,))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    new_points = c.fetchone()[0]
-    log_economy(c, telegram_id, 'card_disassemble', 50, new_points, card_id, 'card', card_type)
-    conn.commit()
-    conn.close()
-    return {"success": True, "refund": 50, "new_points": new_points}
+        return {"success": True, "refund": 50, "new_points": new_points}
+    return await db_write(_run)
 
 
 @app.get("/api/laundry/schedule")
@@ -6534,90 +6613,100 @@ def get_laundry_schedule():
 
 
 @app.post("/api/laundry/schedule")
-def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Not admin")
-    conn = get_conn()
-    c = conn.cursor()
-    capacity = max(int(data.get("capacity") or 1), 1)
-    c.execute(
-        "INSERT INTO laundry_schedule (day, time, note, capacity) VALUES (?,?,?,?)",
-        (data.get("day"), data.get("time"), data.get("note", ""), capacity),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Not admin")
+        conn = get_conn()
+        c = conn.cursor()
+        capacity = max(int(data.get("capacity") or 1), 1)
+        c.execute(
+            "INSERT INTO laundry_schedule (day, time, note, capacity) VALUES (?,?,?,?)",
+            (data.get("day"), data.get("time"), data.get("note", ""), capacity),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.delete("/api/laundry/schedule/{slot_id}")
-def delete_laundry_slot(slot_id: int, x_admin_id: int = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Not admin")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM laundry_bookings WHERE slot_id=?", (slot_id,))
-    c.execute("DELETE FROM laundry_schedule WHERE id=?", (slot_id,))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def delete_laundry_slot(slot_id: int, x_admin_id: int = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Not admin")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM laundry_bookings WHERE slot_id=?", (slot_id,))
+        c.execute("DELETE FROM laundry_schedule WHERE id=?", (slot_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/laundry/schedule/{slot_id}/book")
-def book_laundry_slot(slot_id: int, data: dict):
-    telegram_id = int(data.get("telegram_id") or 0)
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="Missing telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT COALESCE(capacity, 1) FROM laundry_schedule WHERE id=?", (slot_id,))
-    slot = c.fetchone()
-    if not slot:
+async def book_laundry_slot(slot_id: int, data: dict):
+    def _run():
+        telegram_id = int(data.get("telegram_id") or 0)
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="Missing telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT COALESCE(capacity, 1) FROM laundry_schedule WHERE id=?", (slot_id,))
+        slot = c.fetchone()
+        if not slot:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        capacity = max(int(slot[0] or 1), 1)
+        c.execute("SELECT COUNT(*) FROM laundry_bookings WHERE slot_id=?", (slot_id,))
+        if c.fetchone()[0] >= capacity:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Slot full")
+        c.execute("DELETE FROM laundry_bookings WHERE telegram_id=?", (telegram_id,))
+        c.execute(
+            "INSERT OR IGNORE INTO laundry_bookings (slot_id, telegram_id) VALUES (?,?)",
+            (slot_id, telegram_id),
+        )
+        c.execute("UPDATE laundry_schedule SET taken_by=NULL")
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    capacity = max(int(slot[0] or 1), 1)
-    c.execute("SELECT COUNT(*) FROM laundry_bookings WHERE slot_id=?", (slot_id,))
-    if c.fetchone()[0] >= capacity:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Slot full")
-    c.execute("DELETE FROM laundry_bookings WHERE telegram_id=?", (telegram_id,))
-    c.execute(
-        "INSERT OR IGNORE INTO laundry_bookings (slot_id, telegram_id) VALUES (?,?)",
-        (slot_id, telegram_id),
-    )
-    c.execute("UPDATE laundry_schedule SET taken_by=NULL")
-    conn.commit()
-    conn.close()
-    return {"success": True}
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/laundry/schedule/{slot_id}/cancel")
-def cancel_laundry_slot(slot_id: int, data: dict):
-    telegram_id = int(data.get("telegram_id") or 0)
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="Missing telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM laundry_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
-    c.execute("UPDATE laundry_schedule SET taken_by=NULL WHERE id=? AND taken_by=?", (slot_id, telegram_id))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def cancel_laundry_slot(slot_id: int, data: dict):
+    def _run():
+        telegram_id = int(data.get("telegram_id") or 0)
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="Missing telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM laundry_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
+        c.execute("UPDATE laundry_schedule SET taken_by=NULL WHERE id=? AND taken_by=?", (slot_id, telegram_id))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/laundry/schedule/{slot_id}/admin-cancel")
-def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Not admin")
-    telegram_id = int(data.get("telegram_id") or 0)
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="Missing telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM laundry_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
-    c.execute("UPDATE laundry_schedule SET taken_by=NULL WHERE id=? AND taken_by=?", (slot_id, telegram_id))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Not admin")
+        telegram_id = int(data.get("telegram_id") or 0)
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="Missing telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM laundry_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
+        c.execute("UPDATE laundry_schedule SET taken_by=NULL WHERE id=? AND taken_by=?", (slot_id, telegram_id))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.get("/api/water/schedule")
@@ -6655,134 +6744,146 @@ def get_water_schedule():
 
 
 @app.post("/api/water/schedule")
-def add_water_slot(data: dict, x_admin_id: int = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Not admin")
-    conn = get_conn()
-    c = conn.cursor()
-    capacity = max(int(data.get("capacity") or 1), 1)
-    c.execute(
-        "INSERT INTO water_schedule (day, time, floor, note, capacity) VALUES (?,?,?,?,?)",
-        (
-            data.get("day"),
-            data.get("time"),
-            data.get("floor", ""),
-            data.get("note", ""),
-            capacity,
-        ),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def add_water_slot(data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Not admin")
+        conn = get_conn()
+        c = conn.cursor()
+        capacity = max(int(data.get("capacity") or 1), 1)
+        c.execute(
+            "INSERT INTO water_schedule (day, time, floor, note, capacity) VALUES (?,?,?,?,?)",
+            (
+                data.get("day"),
+                data.get("time"),
+                data.get("floor", ""),
+                data.get("note", ""),
+                capacity,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.delete("/api/water/schedule/{slot_id}")
-def delete_water_slot(slot_id: int, x_admin_id: int = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Not admin")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM water_bookings WHERE slot_id=?", (slot_id,))
-    c.execute("DELETE FROM water_schedule WHERE id=?", (slot_id,))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def delete_water_slot(slot_id: int, x_admin_id: int = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Not admin")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM water_bookings WHERE slot_id=?", (slot_id,))
+        c.execute("DELETE FROM water_schedule WHERE id=?", (slot_id,))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/water/schedule/{slot_id}/book")
-def book_water_slot(slot_id: int, data: dict):
-    telegram_id = int(data.get("telegram_id") or 0)
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="Missing telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT COALESCE(capacity, 1) FROM water_schedule WHERE id=?", (slot_id,))
-    slot = c.fetchone()
-    if not slot:
+async def book_water_slot(slot_id: int, data: dict):
+    def _run():
+        telegram_id = int(data.get("telegram_id") or 0)
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="Missing telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT COALESCE(capacity, 1) FROM water_schedule WHERE id=?", (slot_id,))
+        slot = c.fetchone()
+        if not slot:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not found")
+        capacity = max(int(slot[0] or 1), 1)
+        c.execute("SELECT COUNT(*) FROM water_bookings WHERE slot_id=?", (slot_id,))
+        if c.fetchone()[0] >= capacity:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Slot full")
+        c.execute("DELETE FROM water_bookings WHERE telegram_id=?", (telegram_id,))
+        c.execute(
+            "INSERT OR IGNORE INTO water_bookings (slot_id, telegram_id) VALUES (?,?)",
+            (slot_id, telegram_id),
+        )
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Not found")
-    capacity = max(int(slot[0] or 1), 1)
-    c.execute("SELECT COUNT(*) FROM water_bookings WHERE slot_id=?", (slot_id,))
-    if c.fetchone()[0] >= capacity:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Slot full")
-    c.execute("DELETE FROM water_bookings WHERE telegram_id=?", (telegram_id,))
-    c.execute(
-        "INSERT OR IGNORE INTO water_bookings (slot_id, telegram_id) VALUES (?,?)",
-        (slot_id, telegram_id),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True}
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/water/schedule/{slot_id}/cancel")
-def cancel_water_slot(slot_id: int, data: dict):
-    telegram_id = int(data.get("telegram_id") or 0)
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="Missing telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM water_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def cancel_water_slot(slot_id: int, data: dict):
+    def _run():
+        telegram_id = int(data.get("telegram_id") or 0)
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="Missing telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM water_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/water/schedule/{slot_id}/admin-cancel")
-def admin_cancel_water_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Not admin")
-    telegram_id = int(data.get("telegram_id") or 0)
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="Missing telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("DELETE FROM water_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
-    conn.commit()
-    conn.close()
-    return {"success": True}
+async def admin_cancel_water_booking(slot_id: int, data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Not admin")
+        telegram_id = int(data.get("telegram_id") or 0)
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="Missing telegram_id")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("DELETE FROM water_bookings WHERE slot_id=? AND telegram_id=?", (slot_id, telegram_id))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.post("/api/events/architect/create")
-def create_architect_event(data: dict, x_admin_id: int = Header(None)):
-    admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
-    if admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
+async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
+        if admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
 
-    blocking_event_id = get_blocking_event_id()
-    if blocking_event_id:
-        raise HTTPException(status_code=409, detail="Another event is already active")
+        blocking_event_id = get_blocking_event_id()
+        if blocking_event_id:
+            raise HTTPException(status_code=409, detail="Another event is already active")
 
-    conn = get_conn()
-    c = conn.cursor()
+        conn = get_conn()
+        c = conn.cursor()
 
-    title = data.get("title") or "ARCHITECT PROTOCOL"
-    boss_name = data.get("boss_name") or "Архитектор"
-    boss_image = data.get("boss_image")
-    reward_text = data.get("reward_text") or "Приз не указан"
-    min_players = int(data.get("min_players") or 3)
-    max_players = int(data.get("max_players") or 5)
-    max_hp = int(data.get("max_hp") or ARCHITECT_DEFAULT_HP)
-    created_at = now_iso()
-    if min_players < 1:
-        min_players = 1
-    if max_players < min_players:
-        max_players = min_players
-    c.execute(
-        '''INSERT INTO events
-           (code, title, boss_name, boss_image, reward_text, min_players, max_players,
-            max_hp, current_hp, phase, state,
-            phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
-        ('architect', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
-    )
-    event_id = c.lastrowid
-    add_event_log(c, event_id, "system", "Architect event created. Team registration is open.")
-    add_event_log(c, event_id, "boss", f"Набор команды открыт. Приз: {reward_text}")
-    conn.commit()
-    conn.close()
-    return get_event_snapshot(event_id)
+        title = data.get("title") or "ARCHITECT PROTOCOL"
+        boss_name = data.get("boss_name") or "Архитектор"
+        boss_image = data.get("boss_image")
+        reward_text = data.get("reward_text") or "Приз не указан"
+        min_players = int(data.get("min_players") or 3)
+        max_players = int(data.get("max_players") or 5)
+        max_hp = int(data.get("max_hp") or ARCHITECT_DEFAULT_HP)
+        created_at = now_iso()
+        if min_players < 1:
+            min_players = 1
+        if max_players < min_players:
+            max_players = min_players
+        c.execute(
+            '''INSERT INTO events
+               (code, title, boss_name, boss_image, reward_text, min_players, max_players,
+                max_hp, current_hp, phase, state,
+                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
+            ('architect', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
+        )
+        event_id = c.lastrowid
+        add_event_log(c, event_id, "system", "Architect event created. Team registration is open.")
+        add_event_log(c, event_id, "boss", f"Набор команды открыт. Приз: {reward_text}")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
 
 
 @app.get("/api/events/current")
@@ -6800,74 +6901,78 @@ async def get_event_details(event_id: int):
 
 
 @app.post("/api/events/{event_id}/join")
-def join_event_team(event_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
+async def join_event_team(event_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
 
-    conn = get_conn()
-    c = conn.cursor()
-    event_row = fetch_event_row(c, event_id)
-    if not event_row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Event not found")
-    if event_row["state"] != "REGISTRATION":
-        conn.close()
-        raise HTTPException(status_code=400, detail="Registration is closed")
+        conn = get_conn()
+        c = conn.cursor()
+        event_row = fetch_event_row(c, event_id)
+        if not event_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Event not found")
+        if event_row["state"] != "REGISTRATION":
+            conn.close()
+            raise HTTPException(status_code=400, detail="Registration is closed")
 
-    team_members = get_event_team_members(c, event_id)
-    if any(member["telegram_id"] == telegram_id for member in team_members):
-        conn.close()
-        raise HTTPException(status_code=409, detail="Already in team")
-    if len(team_members) >= event_row["max_players"]:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Team is full")
+        team_members = get_event_team_members(c, event_id)
+        if any(member["telegram_id"] == telegram_id for member in team_members):
+            conn.close()
+            raise HTTPException(status_code=409, detail="Already in team")
+        if len(team_members) >= event_row["max_players"]:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Team is full")
 
-    c.execute(
-        "INSERT INTO event_team_members (event_id, telegram_id, joined_at) VALUES (?, ?, ?)",
-        (event_id, telegram_id, now_iso()),
-    )
-    player_name = get_user_display_name(c, telegram_id)
-    add_event_log(c, event_id, "system", f"{player_name} вступил(а) в команду")
-    conn.commit()
-    conn.close()
-    return get_event_snapshot(event_id)
+        c.execute(
+            "INSERT INTO event_team_members (event_id, telegram_id, joined_at) VALUES (?, ?, ?)",
+            (event_id, telegram_id, now_iso()),
+        )
+        player_name = get_user_display_name(c, telegram_id)
+        add_event_log(c, event_id, "system", f"{player_name} вступил(а) в команду")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
 
 
 @app.post("/api/events/{event_id}/leave")
-def leave_event_team(event_id: int, data: dict):
-    telegram_id = data.get("telegram_id")
-    if not telegram_id:
-        raise HTTPException(status_code=400, detail="No telegram_id")
+async def leave_event_team(event_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        if not telegram_id:
+            raise HTTPException(status_code=400, detail="No telegram_id")
 
-    conn = get_conn()
-    c = conn.cursor()
-    event_row = fetch_event_row(c, event_id)
-    if not event_row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Event not found")
-    if event_row["state"] != "REGISTRATION":
-        conn.close()
-        raise HTTPException(status_code=400, detail="Cannot leave after start")
+        conn = get_conn()
+        c = conn.cursor()
+        event_row = fetch_event_row(c, event_id)
+        if not event_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Event not found")
+        if event_row["state"] != "REGISTRATION":
+            conn.close()
+            raise HTTPException(status_code=400, detail="Cannot leave after start")
 
-    c.execute(
-        "SELECT id FROM event_team_members WHERE event_id=? AND telegram_id=?",
-        (event_id, telegram_id),
-    )
-    existing = c.fetchone()
-    if not existing:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Not in team")
+        c.execute(
+            "SELECT id FROM event_team_members WHERE event_id=? AND telegram_id=?",
+            (event_id, telegram_id),
+        )
+        existing = c.fetchone()
+        if not existing:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Not in team")
 
-    c.execute(
-        "DELETE FROM event_team_members WHERE event_id=? AND telegram_id=?",
-        (event_id, telegram_id),
-    )
-    player_name = get_user_display_name(c, telegram_id)
-    add_event_log(c, event_id, "system", f"{player_name} покинул(а) команду")
-    conn.commit()
-    conn.close()
-    return get_event_snapshot(event_id)
+        c.execute(
+            "DELETE FROM event_team_members WHERE event_id=? AND telegram_id=?",
+            (event_id, telegram_id),
+        )
+        player_name = get_user_display_name(c, telegram_id)
+        add_event_log(c, event_id, "system", f"{player_name} покинул(а) команду")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
 
 
 @app.get("/api/events/{event_id}/team")
@@ -6889,320 +6994,330 @@ async def get_event_team(event_id: int):
 
 
 @app.post("/api/events/{event_id}/extra")
-def add_event_extra_participant(
+async def add_event_extra_participant(
     event_id: int,
     data: dict,
     x_admin_id: int = Header(None),
 ):
-    """Admin: add or remove a free-text name from extra_participants list."""
-    import json as _json
-    if not x_admin_id or x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Admin only")
-    name = str(data.get("name", "")).strip()
-    action = str(data.get("action", "add")).strip()  # "add" | "remove"
-    if not name:
-        raise HTTPException(status_code=400, detail="name required")
+    def _run():
+        """Admin: add or remove a free-text name from extra_participants list."""
+        import json as _json
+        if not x_admin_id or x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Admin only")
+        name = str(data.get("name", "")).strip()
+        action = str(data.get("action", "add")).strip()  # "add" | "remove"
+        if not name:
+            raise HTTPException(status_code=400, detail="name required")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT extra_participants FROM events WHERE id=?", (event_id,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Event not found")
-
-    try:
-        current = _json.loads(row[0]) if row[0] else []
-    except Exception:
-        current = []
-
-    if action == "remove":
-        current = [n for n in current if n != name]
-    else:
-        if name not in current:
-            current.append(name)
-
-    c.execute(
-        "UPDATE events SET extra_participants=? WHERE id=?",
-        (_json.dumps(current, ensure_ascii=False), event_id),
-    )
-    conn.commit()
-    conn.close()
-    return {"event_id": event_id, "extra_participants": current}
-
-
-@app.post("/api/events/{event_id}/start")
-def start_event(event_id: int, data: dict = None, x_admin_id: int = Header(None)):
-    admin_id = x_admin_id if x_admin_id is not None else (data or {}).get("telegram_id")
-    if admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    conn = get_conn()
-    c = conn.cursor()
-    event_row = fetch_event_row(c, event_id)
-    if not event_row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Event not found")
-    if event_row["state"] != "REGISTRATION":
-        conn.close()
-        raise HTTPException(status_code=400, detail="Event is not in registration state")
-
-    team_members = get_event_team_members(c, event_id)
-    admin_solo_mode = len(team_members) < event_row["min_players"] and admin_id in ADMIN_IDS
-    if len(team_members) < event_row["min_players"] and not admin_solo_mode:
-        conn.close()
-        raise HTTPException(
-            status_code=400,
-            detail=f"Not enough players: {len(team_members)}/{event_row['min_players']}"
-        )
-    if admin_solo_mode:
-        ensure_admin_event_team_member(c, event_id, int(admin_id))
-
-    started_at = now_iso()
-    c.execute(
-        "UPDATE events SET state='ACTIVE', phase=1, phase_started_at=?, started_at=? WHERE id=?",
-        (started_at, started_at, event_id),
-    )
-    add_event_log(c, event_id, "system", "Architect event started.")
-    add_event_log(c, event_id, "boss", "观察开始。 / Фаза наблюдения активирована.")
-    conn.commit()
-    conn.close()
-    return get_event_snapshot(event_id)
-
-
-@app.post("/api/events/{event_id}/reset")
-def reset_event(event_id: int, x_admin_id: int = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    conn = get_conn()
-    c = conn.cursor()
-    event_row = fetch_event_row(c, event_id)
-    if not event_row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Event not found")
-
-    max_hp = event_row["max_hp"] or ARCHITECT_DEFAULT_HP
-    c.execute(
-        """UPDATE events
-           SET state='REGISTRATION', phase=1, current_hp=?,
-               phase_started_at=NULL, started_at=NULL, ended_at=NULL,
-               final_phase_deadline=NULL, vulnerability_until=NULL,
-               overload_pressure=0, mvp_user_id=NULL
-           WHERE id=?""",
-        (max_hp, event_id),
-    )
-    # Clear logs and action history for a clean test run
-    c.execute("DELETE FROM event_logs WHERE event_id=?", (event_id,))
-    c.execute("DELETE FROM event_actions WHERE event_id=?", (event_id,))
-    add_event_log(c, event_id, "system", "Ивент сброшен администратором. Регистрация открыта.")
-    conn.commit()
-    conn.close()
-    return get_event_snapshot(event_id)
-
-
-@app.get("/api/events/{event_id}/question")
-def get_event_question(event_id: int, telegram_id: int, action_type: str):
-    snapshot = get_event_snapshot(event_id)
-    if not snapshot:
-        raise HTTPException(status_code=404, detail="Event not found")
-    if snapshot["state"] != "ACTIVE":
-        raise HTTPException(status_code=400, detail="Event is not active")
-    if action_type not in ("attack", "protocol", "stabilize", "sync"):
-        raise HTTPException(status_code=400, detail="Invalid action_type")
-
-    conn = get_conn()
-    c = conn.cursor()
-    if not is_event_team_member(c, event_id, telegram_id) and not ensure_admin_event_team_member(c, event_id, int(telegram_id)):
-        conn.close()
-        raise HTTPException(status_code=403, detail="You are not in the event team")
-    conn.commit()
-
-    if action_type == "sync":
-        conn.close()
-        return {
-            "event_id": event_id,
-            "action_type": "sync",
-            "question": None,
-            "hint": "SYNC does not require a question in MVP.",
-        }
-
-    question = choose_architect_question(c, action_type)
-    conn.close()
-    if not question:
-        raise HTTPException(status_code=404, detail="Question not found")
-    return {
-        "event_id": event_id,
-        "action_type": action_type,
-        "question": {
-            "id": question["id"],
-            "prompt": question["prompt"],
-            "options": {
-                "a": question["option_a"],
-                "b": question["option_b"],
-                "c": question["option_c"],
-            },
-        },
-    }
-
-
-@app.post("/api/events/action")
-def resolve_event_action(data: dict):
-    event_id = data.get("event_id")
-    telegram_id = data.get("telegram_id")
-    action_type = data.get("action_type")
-    question_id = data.get("question_id")
-    answer_option = data.get("answer_option")
-    use_active_modifier = bool(data.get("use_active_modifier"))
-
-    if not event_id or not telegram_id or action_type not in ("attack", "protocol", "sync", "stabilize"):
-        raise HTTPException(status_code=400, detail="Invalid payload")
-
-    conn = get_conn()
-    c = conn.cursor()
-    event_row = fetch_event_row(c, int(event_id))
-    if not event_row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Event not found")
-
-    event_row = refresh_event_state(c, event_row)
-    if event_row["state"] != "ACTIVE":
-        conn.commit()
-        conn.close()
-        raise HTTPException(status_code=400, detail="Event is not active")
-    if not is_event_team_member(c, int(event_id), int(telegram_id)) and not ensure_admin_event_team_member(c, int(event_id), int(telegram_id)):
-        conn.close()
-        raise HTTPException(status_code=403, detail="You are not in the event team")
-
-    participant = ensure_event_participant(c, int(event_id), int(telegram_id))
-
-    is_correct = 1
-    question = None
-    if action_type != "sync":
-        if not question_id or answer_option not in ("a", "b", "c"):
-            conn.close()
-            raise HTTPException(status_code=400, detail="Question and answer required")
-        c.execute(
-            '''SELECT id, correct_option, explanation
-               FROM event_questions
-               WHERE id=? AND event_code='architect' AND action_type=?''',
-            (question_id, action_type),
-        )
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT extra_participants FROM events WHERE id=?", (event_id,))
         row = c.fetchone()
         if not row:
             conn.close()
+            raise HTTPException(status_code=404, detail="Event not found")
+
+        try:
+            current = _json.loads(row[0]) if row[0] else []
+        except Exception:
+            current = []
+
+        if action == "remove":
+            current = [n for n in current if n != name]
+        else:
+            if name not in current:
+                current.append(name)
+
+        c.execute(
+            "UPDATE events SET extra_participants=? WHERE id=?",
+            (_json.dumps(current, ensure_ascii=False), event_id),
+        )
+        conn.commit()
+        conn.close()
+        return {"event_id": event_id, "extra_participants": current}
+    return await db_write(_run)
+
+
+@app.post("/api/events/{event_id}/start")
+async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header(None)):
+    def _run():
+        admin_id = x_admin_id if x_admin_id is not None else (data or {}).get("telegram_id")
+        if admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        conn = get_conn()
+        c = conn.cursor()
+        event_row = fetch_event_row(c, event_id)
+        if not event_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Event not found")
+        if event_row["state"] != "REGISTRATION":
+            conn.close()
+            raise HTTPException(status_code=400, detail="Event is not in registration state")
+
+        team_members = get_event_team_members(c, event_id)
+        admin_solo_mode = len(team_members) < event_row["min_players"] and admin_id in ADMIN_IDS
+        if len(team_members) < event_row["min_players"] and not admin_solo_mode:
+            conn.close()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough players: {len(team_members)}/{event_row['min_players']}"
+            )
+        if admin_solo_mode:
+            ensure_admin_event_team_member(c, event_id, int(admin_id))
+
+        started_at = now_iso()
+        c.execute(
+            "UPDATE events SET state='ACTIVE', phase=1, phase_started_at=?, started_at=? WHERE id=?",
+            (started_at, started_at, event_id),
+        )
+        add_event_log(c, event_id, "system", "Architect event started.")
+        add_event_log(c, event_id, "boss", "观察开始。 / Фаза наблюдения активирована.")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
+
+
+@app.post("/api/events/{event_id}/reset")
+async def reset_event(event_id: int, x_admin_id: int = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        conn = get_conn()
+        c = conn.cursor()
+        event_row = fetch_event_row(c, event_id)
+        if not event_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Event not found")
+
+        max_hp = event_row["max_hp"] or ARCHITECT_DEFAULT_HP
+        c.execute(
+            """UPDATE events
+               SET state='REGISTRATION', phase=1, current_hp=?,
+                   phase_started_at=NULL, started_at=NULL, ended_at=NULL,
+                   final_phase_deadline=NULL, vulnerability_until=NULL,
+                   overload_pressure=0, mvp_user_id=NULL
+               WHERE id=?""",
+            (max_hp, event_id),
+        )
+        # Clear logs and action history for a clean test run
+        c.execute("DELETE FROM event_logs WHERE event_id=?", (event_id,))
+        c.execute("DELETE FROM event_actions WHERE event_id=?", (event_id,))
+        add_event_log(c, event_id, "system", "Ивент сброшен администратором. Регистрация открыта.")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
+
+
+@app.get("/api/events/{event_id}/question")
+async def get_event_question(event_id: int, telegram_id: int, action_type: str):
+    def _run():
+        snapshot = get_event_snapshot(event_id)
+        if not snapshot:
+            raise HTTPException(status_code=404, detail="Event not found")
+        if snapshot["state"] != "ACTIVE":
+            raise HTTPException(status_code=400, detail="Event is not active")
+        if action_type not in ("attack", "protocol", "stabilize", "sync"):
+            raise HTTPException(status_code=400, detail="Invalid action_type")
+
+        conn = get_conn()
+        c = conn.cursor()
+        if not is_event_team_member(c, event_id, telegram_id) and not ensure_admin_event_team_member(c, event_id, int(telegram_id)):
+            conn.close()
+            raise HTTPException(status_code=403, detail="You are not in the event team")
+        conn.commit()
+
+        if action_type == "sync":
+            conn.close()
+            return {
+                "event_id": event_id,
+                "action_type": "sync",
+                "question": None,
+                "hint": "SYNC does not require a question in MVP.",
+            }
+
+        question = choose_architect_question(c, action_type)
+        conn.close()
+        if not question:
             raise HTTPException(status_code=404, detail="Question not found")
-        question = {"id": row[0], "correct_option": row[1], "explanation": row[2]}
-        is_correct = 1 if row[1] == answer_option else 0
+        return {
+            "event_id": event_id,
+            "action_type": action_type,
+            "question": {
+                "id": question["id"],
+                "prompt": question["prompt"],
+                "options": {
+                    "a": question["option_a"],
+                    "b": question["option_b"],
+                    "c": question["option_c"],
+                },
+            },
+        }
+    return await db_write(_run)
 
-    result = compute_event_action_result(
-        c,
-        event_row,
-        participant,
-        action_type,
-        bool(is_correct),
-        use_active_modifier,
-        telegram_id=int(telegram_id),
-    )
 
-    c.execute(
-        '''INSERT INTO event_actions
-           (event_id, telegram_id, action_type, question_id, is_correct, base_value, modifier_value, final_value, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-        (
-            int(event_id),
-            int(telegram_id),
+@app.post("/api/events/action")
+async def resolve_event_action(data: dict):
+    def _run():
+        event_id = data.get("event_id")
+        telegram_id = data.get("telegram_id")
+        action_type = data.get("action_type")
+        question_id = data.get("question_id")
+        answer_option = data.get("answer_option")
+        use_active_modifier = bool(data.get("use_active_modifier"))
+
+        if not event_id or not telegram_id or action_type not in ("attack", "protocol", "sync", "stabilize"):
+            raise HTTPException(status_code=400, detail="Invalid payload")
+
+        conn = get_conn()
+        c = conn.cursor()
+        event_row = fetch_event_row(c, int(event_id))
+        if not event_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Event not found")
+
+        event_row = refresh_event_state(c, event_row)
+        if event_row["state"] != "ACTIVE":
+            conn.commit()
+            conn.close()
+            raise HTTPException(status_code=400, detail="Event is not active")
+        if not is_event_team_member(c, int(event_id), int(telegram_id)) and not ensure_admin_event_team_member(c, int(event_id), int(telegram_id)):
+            conn.close()
+            raise HTTPException(status_code=403, detail="You are not in the event team")
+
+        participant = ensure_event_participant(c, int(event_id), int(telegram_id))
+
+        is_correct = 1
+        question = None
+        if action_type != "sync":
+            if not question_id or answer_option not in ("a", "b", "c"):
+                conn.close()
+                raise HTTPException(status_code=400, detail="Question and answer required")
+            c.execute(
+                '''SELECT id, correct_option, explanation
+                   FROM event_questions
+                   WHERE id=? AND event_code='architect' AND action_type=?''',
+                (question_id, action_type),
+            )
+            row = c.fetchone()
+            if not row:
+                conn.close()
+                raise HTTPException(status_code=404, detail="Question not found")
+            question = {"id": row[0], "correct_option": row[1], "explanation": row[2]}
+            is_correct = 1 if row[1] == answer_option else 0
+
+        result = compute_event_action_result(
+            c,
+            event_row,
+            participant,
             action_type,
-            question_id,
-            int(is_correct),
-            result["base_value"],
-            result["modifier_value"],
-            result["final_value"] if action_type != "stabilize" else result["support_value"],
-            now_iso(),
-        ),
-    )
-
-    actor_name = get_user_display_name(c, int(telegram_id))
-    if action_type in ("attack", "protocol"):
-        event_row["current_hp"] = max(0, event_row["current_hp"] - result["final_value"])
-        c.execute("UPDATE events SET current_hp=? WHERE id=?", (event_row["current_hp"], int(event_id)))
-        c.execute(
-            "UPDATE event_participants SET total_damage = total_damage + ? WHERE id=?",
-            (result["final_value"], participant["id"]),
+            bool(is_correct),
+            use_active_modifier,
+            telegram_id=int(telegram_id),
         )
-        action_name = "Protocol" if action_type == "protocol" else "атака"
-        if is_correct:
-            if result.get("penalty_active"):
-                pct = result.get("overload_pct_str", "50%")
-                add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА: {actor_name} нанёс(ла) {result['final_value']} урона (−{pct} из-за перегрузки)")
+
+        c.execute(
+            '''INSERT INTO event_actions
+               (event_id, telegram_id, action_type, question_id, is_correct, base_value, modifier_value, final_value, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (
+                int(event_id),
+                int(telegram_id),
+                action_type,
+                question_id,
+                int(is_correct),
+                result["base_value"],
+                result["modifier_value"],
+                result["final_value"] if action_type != "stabilize" else result["support_value"],
+                now_iso(),
+            ),
+        )
+
+        actor_name = get_user_display_name(c, int(telegram_id))
+        if action_type in ("attack", "protocol"):
+            event_row["current_hp"] = max(0, event_row["current_hp"] - result["final_value"])
+            c.execute("UPDATE events SET current_hp=? WHERE id=?", (event_row["current_hp"], int(event_id)))
+            c.execute(
+                "UPDATE event_participants SET total_damage = total_damage + ? WHERE id=?",
+                (result["final_value"], participant["id"]),
+            )
+            action_name = "Protocol" if action_type == "protocol" else "атака"
+            if is_correct:
+                if result.get("penalty_active"):
+                    pct = result.get("overload_pct_str", "50%")
+                    add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА: {actor_name} нанёс(ла) {result['final_value']} урона (−{pct} из-за перегрузки)")
+                else:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} активировал(а) {action_name} и нанёс(ла) {result['final_value']} урона")
             else:
-                add_event_log(c, int(event_id), "action", f"{actor_name} активировал(а) {action_name} и нанёс(ла) {result['final_value']} урона")
-        else:
-            partial = result['final_value']
-            if partial > 0:
-                add_event_log(c, int(event_id), "action", f"{actor_name} сбойнул(а) в {action_name} — частичный удар {partial} урона")
+                partial = result['final_value']
+                if partial > 0:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} сбойнул(а) в {action_name} — частичный удар {partial} урона")
+                else:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} — протокол не пробит")
+        elif action_type == "stabilize":
+            c.execute(
+                "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
+                (result["support_value"], participant["id"]),
+            )
+            if is_correct:
+                add_event_log(c, int(event_id), "action", f"{actor_name} стабилизировал(а) протокол (+{result['support_value']} support)")
             else:
-                add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} — протокол не пробит")
-    elif action_type == "stabilize":
-        c.execute(
-            "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
-            (result["support_value"], participant["id"]),
-        )
-        if is_correct:
-            add_event_log(c, int(event_id), "action", f"{actor_name} стабилизировал(а) протокол (+{result['support_value']} support)")
+                add_event_log(c, int(event_id), "action", f"{actor_name} попытался(ась) стабилизировать протокол, но допустил(а) ошибку")
         else:
-            add_event_log(c, int(event_id), "action", f"{actor_name} попытался(ась) стабилизировать протокол, но допустил(а) ошибку")
-    else:
-        c.execute(
-            "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
-            (result["support_value"], participant["id"]),
-        )
-        add_event_log(c, int(event_id), "action", f"{actor_name} синхронизировал(а) канал")
-        maybe_trigger_sync_window(c, event_row)
+            c.execute(
+                "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
+                (result["support_value"], participant["id"]),
+            )
+            add_event_log(c, int(event_id), "action", f"{actor_name} синхронизировал(а) канал")
+            maybe_trigger_sync_window(c, event_row)
 
-    if action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
-        ovl_threshold = result["overload_threshold"]
-        pct_str = result.get("overload_pct_str", "50%")
-        old_pressure = event_row["overload_pressure"]
-        event_row["overload_pressure"] = max(0, old_pressure + result["pressure_delta"])
-        c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
-        if old_pressure < ovl_threshold <= event_row["overload_pressure"]:
-            add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА АКТИВНА — урон от атак снижен на {pct_str}")
-        elif old_pressure >= ovl_threshold > event_row["overload_pressure"]:
-            add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
+        if action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
+            ovl_threshold = result["overload_threshold"]
+            pct_str = result.get("overload_pct_str", "50%")
+            old_pressure = event_row["overload_pressure"]
+            event_row["overload_pressure"] = max(0, old_pressure + result["pressure_delta"])
+            c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
+            if old_pressure < ovl_threshold <= event_row["overload_pressure"]:
+                add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА АКТИВНА — урон от атак снижен на {pct_str}")
+            elif old_pressure >= ovl_threshold > event_row["overload_pressure"]:
+                add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
 
-    # Boss counter-attack: every N total actions adds pressure
-    c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
-    total_actions_count = c.fetchone()[0]
-    if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
-        new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
-        c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
-        event_row["overload_pressure"] = new_pressure
-        add_event_log(c, int(event_id), "boss", f"АРХИТЕКТОР УСИЛИВАЕТ ДАВЛЕНИЕ (+{ARCHITECT_BOSS_COUNTER_PRESSURE} перегрузки)")
+        # Boss counter-attack: every N total actions adds pressure
+        c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
+        total_actions_count = c.fetchone()[0]
+        if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
+            new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
+            c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
+            event_row["overload_pressure"] = new_pressure
+            add_event_log(c, int(event_id), "boss", f"АРХИТЕКТОР УСИЛИВАЕТ ДАВЛЕНИЕ (+{ARCHITECT_BOSS_COUNTER_PRESSURE} перегрузки)")
 
-    if result["active_note"]:
-        add_event_log(c, int(event_id), "modifier", result["active_note"])
+        if result["active_note"]:
+            add_event_log(c, int(event_id), "modifier", result["active_note"])
 
-    event_row = fetch_event_row(c, int(event_id))
-    event_row = refresh_event_state(c, event_row)
-    conn.commit()
-    conn.close()
+        event_row = fetch_event_row(c, int(event_id))
+        event_row = refresh_event_state(c, event_row)
+        conn.commit()
+        conn.close()
 
-    snapshot = get_event_snapshot(int(event_id))
-    return {
-        "event_id": int(event_id),
-        "action_type": action_type,
-        "is_correct": bool(is_correct),
-        "damage_dealt": result["final_value"],
-        "support_value": result["support_value"],
-        "current_hp": snapshot["current_hp"],
-        "phase": snapshot["phase"],
-        "state": snapshot["state"],
-        "vulnerability_active": snapshot["vulnerability_active"],
-        "overload_pressure": snapshot["overload_pressure"],
-        "logs": snapshot["logs"],
-        "question_explanation": question["explanation"] if question else None,
-    }
+        snapshot = get_event_snapshot(int(event_id))
+        return {
+            "event_id": int(event_id),
+            "action_type": action_type,
+            "is_correct": bool(is_correct),
+            "damage_dealt": result["final_value"],
+            "support_value": result["support_value"],
+            "current_hp": snapshot["current_hp"],
+            "phase": snapshot["phase"],
+            "state": snapshot["state"],
+            "vulnerability_active": snapshot["vulnerability_active"],
+            "overload_pressure": snapshot["overload_pressure"],
+            "logs": snapshot["logs"],
+            "question_explanation": question["explanation"] if question else None,
+        }
+    return await db_write(_run)
 
 
 @app.get("/api/events/{event_id}/leaderboard")
@@ -7508,122 +7623,128 @@ async def accept_contract(contract_id: int, x_telegram_id: Optional[int] = Heade
 
 
 @app.post("/api/contracts/{contract_id}/complete")
-def complete_contract(contract_id: int,
+async def complete_contract(contract_id: int,
                              x_telegram_id: Optional[int] = Header(None),
                              x_admin_id: Optional[int] = Header(None)):
-    acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
-    if not acting_id:
-        raise HTTPException(status_code=401, detail="Not authorized")
-    conn = get_conn()
-    c = conn.cursor()
-    row = get_contract_row(c, contract_id)
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Контракт не найден")
-    creator_id, assignee_id, reward, fee, status, accepted_at = row[6], row[7], row[4], row[5], row[8], row[12]
-    is_susp, susp_reason = bool(row[9]), row[10]
-    if status != 'accepted':
-        conn.close()
-        raise HTTPException(status_code=400, detail="Можно завершить только принятый контракт")
-    if x_admin_id not in ADMIN_IDS and acting_id != creator_id:
-        conn.close()
-        raise HTTPException(status_code=403, detail="Только заказчик или администратор может подтвердить выполнение")
+    def _run():
+        acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
+        if not acting_id:
+            raise HTTPException(status_code=401, detail="Not authorized")
+        conn = get_conn()
+        c = conn.cursor()
+        row = get_contract_row(c, contract_id)
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Контракт не найден")
+        creator_id, assignee_id, reward, fee, status, accepted_at = row[6], row[7], row[4], row[5], row[8], row[12]
+        is_susp, susp_reason = bool(row[9]), row[10]
+        if status != 'accepted':
+            conn.close()
+            raise HTTPException(status_code=400, detail="Можно завершить только принятый контракт")
+        if x_admin_id not in ADMIN_IDS and acting_id != creator_id:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Только заказчик или администратор может подтвердить выполнение")
 
-    now = datetime.now(BEIJING_TZ)
-    now_str = now.strftime('%Y-%m-%d %H:%M:%S')
-    if accepted_at:
-        try:
-            accepted_dt = datetime.strptime(accepted_at, '%Y-%m-%d %H:%M:%S')
-            elapsed = (now.replace(tzinfo=None) - accepted_dt).total_seconds()
-            if elapsed < CONTRACT_MIN_COMPLETE_SECONDS:
-                new_reason = ((susp_reason or '') + '; слишком быстрое завершение').lstrip('; ')
-                c.execute("UPDATE contracts SET is_suspicious=1, suspicious_reason=? WHERE id=?",
-                          (new_reason, contract_id))
-        except Exception:
-            pass
+        now = datetime.now(BEIJING_TZ)
+        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+        if accepted_at:
+            try:
+                accepted_dt = datetime.strptime(accepted_at, '%Y-%m-%d %H:%M:%S')
+                elapsed = (now.replace(tzinfo=None) - accepted_dt).total_seconds()
+                if elapsed < CONTRACT_MIN_COMPLETE_SECONDS:
+                    new_reason = ((susp_reason or '') + '; слишком быстрое завершение').lstrip('; ')
+                    c.execute("UPDATE contracts SET is_suspicious=1, suspicious_reason=? WHERE id=?",
+                              (new_reason, contract_id))
+            except Exception:
+                pass
 
-    payout = reward - fee
-    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
-    assignee_bal = c.fetchone()[0] or 0
-    log_economy(c, assignee_id, 'contract_payout', payout, assignee_bal, contract_id, 'contract',
-                f"Выплата за контракт #{contract_id}")
-    sea_bonus = grant_card_points_once(
-        c, assignee_id, "card_sea", "contract_current", 5,
-        "card_sea_current", f"контракт #{contract_id}", now.strftime('%Y-%m-%d'),
-        contract_id, "contract",
-    )
-    c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
-    log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
-                f"Комиссия Сетевого Дозора: контракт #{contract_id}")
-    conn.commit()
-    conn.close()
-    return {"success": True, "payout": payout, "fee_burned": fee, "card_sea_bonus": sea_bonus}
+        payout = reward - fee
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
+        assignee_bal = c.fetchone()[0] or 0
+        log_economy(c, assignee_id, 'contract_payout', payout, assignee_bal, contract_id, 'contract',
+                    f"Выплата за контракт #{contract_id}")
+        sea_bonus = grant_card_points_once(
+            c, assignee_id, "card_sea", "contract_current", 5,
+            "card_sea_current", f"контракт #{contract_id}", now.strftime('%Y-%m-%d'),
+            contract_id, "contract",
+        )
+        c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
+        log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
+                    f"Комиссия Сетевого Дозора: контракт #{contract_id}")
+        conn.commit()
+        conn.close()
+        return {"success": True, "payout": payout, "fee_burned": fee, "card_sea_bonus": sea_bonus}
+    return await db_write(_run)
 
 
 @app.post("/api/contracts/{contract_id}/cancel")
-def cancel_contract(contract_id: int,
+async def cancel_contract(contract_id: int,
                            x_telegram_id: Optional[int] = Header(None),
                            x_admin_id: Optional[int] = Header(None)):
-    acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
-    if not acting_id:
-        raise HTTPException(status_code=401, detail="Not authorized")
-    conn = get_conn()
-    c = conn.cursor()
-    row = get_contract_row(c, contract_id)
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Контракт не найден")
-    creator_id, reward, status = row[6], row[4], row[8]
-    if status not in ('open', 'accepted', 'disputed'):
-        conn.close()
-        raise HTTPException(status_code=400, detail="Контракт нельзя отменить в текущем статусе")
-    if status == 'open' and acting_id != creator_id and x_admin_id not in ADMIN_IDS:
-        conn.close()
-        raise HTTPException(status_code=403, detail="Только заказчик может отменить открытый контракт")
-    if status in ('accepted', 'disputed') and x_admin_id not in ADMIN_IDS:
-        conn.close()
-        raise HTTPException(status_code=403, detail="Только администратор может отменить принятый контракт")
+    def _run():
+        acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
+        if not acting_id:
+            raise HTTPException(status_code=401, detail="Not authorized")
+        conn = get_conn()
+        c = conn.cursor()
+        row = get_contract_row(c, contract_id)
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Контракт не найден")
+        creator_id, reward, status = row[6], row[4], row[8]
+        if status not in ('open', 'accepted', 'disputed'):
+            conn.close()
+            raise HTTPException(status_code=400, detail="Контракт нельзя отменить в текущем статусе")
+        if status == 'open' and acting_id != creator_id and x_admin_id not in ADMIN_IDS:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Только заказчик может отменить открытый контракт")
+        if status in ('accepted', 'disputed') and x_admin_id not in ADMIN_IDS:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Только администратор может отменить принятый контракт")
 
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
-    bal = c.fetchone()[0] or 0
-    c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
-    log_economy(c, creator_id, 'contract_refund', reward, bal, contract_id, 'contract',
-                f"Возврат: контракт #{contract_id} отменён")
-    conn.commit()
-    conn.close()
-    return {"success": True, "refunded": reward}
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
+        bal = c.fetchone()[0] or 0
+        c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+        log_economy(c, creator_id, 'contract_refund', reward, bal, contract_id, 'contract',
+                    f"Возврат: контракт #{contract_id} отменён")
+        conn.commit()
+        conn.close()
+        return {"success": True, "refunded": reward}
+    return await db_write(_run)
 
 
 @app.post("/api/contracts/{contract_id}/dispute")
-def dispute_contract(contract_id: int,
+async def dispute_contract(contract_id: int,
                             x_telegram_id: Optional[int] = Header(None),
                             x_admin_id: Optional[int] = Header(None)):
-    acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
-    if not acting_id:
-        raise HTTPException(status_code=401, detail="Not authorized")
-    conn = get_conn()
-    c = conn.cursor()
-    row = get_contract_row(c, contract_id)
-    if not row:
+    def _run():
+        acting_id = x_admin_id if (x_admin_id and x_admin_id in ADMIN_IDS) else x_telegram_id
+        if not acting_id:
+            raise HTTPException(status_code=401, detail="Not authorized")
+        conn = get_conn()
+        c = conn.cursor()
+        row = get_contract_row(c, contract_id)
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Контракт не найден")
+        creator_id, assignee_id, status = row[6], row[7], row[8]
+        if status != 'accepted':
+            conn.close()
+            raise HTTPException(status_code=400, detail="Спор можно открыть только для принятого контракта")
+        if acting_id not in (creator_id, assignee_id) and x_admin_id not in ADMIN_IDS:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Только участники контракта могут открыть спор")
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute("UPDATE contracts SET status='disputed', disputed_at=? WHERE id=?", (now_str, contract_id))
+        log_economy(c, acting_id, 'contract_dispute', 0, None, contract_id, 'contract',
+                    f"Открыт спор: контракт #{contract_id}")
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=404, detail="Контракт не найден")
-    creator_id, assignee_id, status = row[6], row[7], row[8]
-    if status != 'accepted':
-        conn.close()
-        raise HTTPException(status_code=400, detail="Спор можно открыть только для принятого контракта")
-    if acting_id not in (creator_id, assignee_id) and x_admin_id not in ADMIN_IDS:
-        conn.close()
-        raise HTTPException(status_code=403, detail="Только участники контракта могут открыть спор")
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute("UPDATE contracts SET status='disputed', disputed_at=? WHERE id=?", (now_str, contract_id))
-    log_economy(c, acting_id, 'contract_dispute', 0, None, contract_id, 'contract',
-                f"Открыт спор: контракт #{contract_id}")
-    conn.commit()
-    conn.close()
-    return {"success": True}
+        return {"success": True}
+    return await db_write(_run)
 
 
 @app.get("/api/admin/contracts")
@@ -7821,76 +7942,78 @@ def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/contracts/{contract_id}/resolve")
-def admin_resolve_contract(contract_id: int, data: dict,
+async def admin_resolve_contract(contract_id: int, data: dict,
                                   x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ADMIN_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    action = str(data.get("action") or "").strip()
-    if action not in ('refund_creator', 'pay_assignee', 'split', 'cancel_no_refund', 'remove'):
-        raise HTTPException(status_code=400, detail="Invalid action")
-    conn = get_conn()
-    c = conn.cursor()
-    row = get_contract_row(c, contract_id)
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Контракт не найден")
-    creator_id, assignee_id, reward, fee, status = row[6], row[7], row[4], row[5], row[8]
-    if status in ('completed', 'cancelled') and action != 'remove':
-        conn.close()
-        raise HTTPException(status_code=400, detail="Контракт уже завершён")
-
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    payout = reward - fee
-
-    if action == 'refund_creator':
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
-        bal = c.fetchone()[0] or 0
-        c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
-        log_economy(c, creator_id, 'contract_admin_refund', reward, bal, contract_id, 'contract',
-                    f"Решение админа: возврат заказчику #{contract_id}")
-
-    elif action == 'pay_assignee':
-        if not assignee_id:
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        action = str(data.get("action") or "").strip()
+        if action not in ('refund_creator', 'pay_assignee', 'split', 'cancel_no_refund', 'remove'):
+            raise HTTPException(status_code=400, detail="Invalid action")
+        conn = get_conn()
+        c = conn.cursor()
+        row = get_contract_row(c, contract_id)
+        if not row:
             conn.close()
-            raise HTTPException(status_code=400, detail="Нет исполнителя")
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
-        bal = c.fetchone()[0] or 0
-        c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
-        log_economy(c, assignee_id, 'contract_admin_pay', payout, bal, contract_id, 'contract',
-                    f"Решение админа: выплата исполнителю #{contract_id}")
-        log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
-                    f"Комиссия Сетевого Дозора: #{contract_id}")
-
-    elif action == 'split':
-        if not assignee_id:
+            raise HTTPException(status_code=404, detail="Контракт не найден")
+        creator_id, assignee_id, reward, fee, status = row[6], row[7], row[4], row[5], row[8]
+        if status in ('completed', 'cancelled') and action != 'remove':
             conn.close()
-            raise HTTPException(status_code=400, detail="Нет исполнителя")
-        half = reward // 2
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (half, creator_id))
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward - half, assignee_id))
-        c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
-        log_economy(c, creator_id, 'contract_admin_split', half, None, contract_id, 'contract',
-                    f"Решение админа: раздел #{contract_id}")
-        log_economy(c, assignee_id, 'contract_admin_split', reward - half, None, contract_id, 'contract',
-                    f"Решение админа: раздел #{contract_id}")
+            raise HTTPException(status_code=400, detail="Контракт уже завершён")
 
-    elif action == 'cancel_no_refund':
-        c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
-        log_economy(c, creator_id, 'contract_admin_burn', -reward, None, contract_id, 'contract',
-                    f"Решение админа: сгорание без возврата #{contract_id}")
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        payout = reward - fee
 
-    elif action == 'remove':
-        if status in ('open', 'accepted', 'disputed'):
+        if action == 'refund_creator':
             c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
-            log_economy(c, creator_id, 'contract_admin_refund', reward, None, contract_id, 'contract',
-                        f"Возврат при удалении контракта #{contract_id}")
-        c.execute("DELETE FROM contracts WHERE id=?", (contract_id,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
+            bal = c.fetchone()[0] or 0
+            c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+            log_economy(c, creator_id, 'contract_admin_refund', reward, bal, contract_id, 'contract',
+                        f"Решение админа: возврат заказчику #{contract_id}")
+
+        elif action == 'pay_assignee':
+            if not assignee_id:
+                conn.close()
+                raise HTTPException(status_code=400, detail="Нет исполнителя")
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
+            bal = c.fetchone()[0] or 0
+            c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
+            log_economy(c, assignee_id, 'contract_admin_pay', payout, bal, contract_id, 'contract',
+                        f"Решение админа: выплата исполнителю #{contract_id}")
+            log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
+                        f"Комиссия Сетевого Дозора: #{contract_id}")
+
+        elif action == 'split':
+            if not assignee_id:
+                conn.close()
+                raise HTTPException(status_code=400, detail="Нет исполнителя")
+            half = reward // 2
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (half, creator_id))
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward - half, assignee_id))
+            c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+            log_economy(c, creator_id, 'contract_admin_split', half, None, contract_id, 'contract',
+                        f"Решение админа: раздел #{contract_id}")
+            log_economy(c, assignee_id, 'contract_admin_split', reward - half, None, contract_id, 'contract',
+                        f"Решение админа: раздел #{contract_id}")
+
+        elif action == 'cancel_no_refund':
+            c.execute("UPDATE contracts SET status='cancelled', cancelled_at=? WHERE id=?", (now_str, contract_id))
+            log_economy(c, creator_id, 'contract_admin_burn', -reward, None, contract_id, 'contract',
+                        f"Решение админа: сгорание без возврата #{contract_id}")
+
+        elif action == 'remove':
+            if status in ('open', 'accepted', 'disputed'):
+                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
+                log_economy(c, creator_id, 'contract_admin_refund', reward, None, contract_id, 'contract',
+                            f"Возврат при удалении контракта #{contract_id}")
+            c.execute("DELETE FROM contracts WHERE id=?", (contract_id,))
+            conn.commit()
+            conn.close()
+            return {"success": True, "action": action}
+
         conn.commit()
         conn.close()
-        return {"success": True, "action": action}
-
-    conn.commit()
-    conn.close()
+    return await db_write(_run)
     return {"success": True, "action": action}
