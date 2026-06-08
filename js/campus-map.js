@@ -1,7 +1,7 @@
 const CAMPUS_MAP_ASSETS = {
-  cyberpunk: './cyberpunk_map.png',
-  genshin: './genshin_map.png',
-  original: './blcu_map.png',
+  cyberpunk: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/cyberpunk_map.png',
+  genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_map.png',
+  original: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/blcu_map.png',
 };
 
 const CAMPUS_MAP_CATEGORIES = [
