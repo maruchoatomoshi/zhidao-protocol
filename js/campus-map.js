@@ -440,10 +440,16 @@ function campusMapHasEditorEdits(edits) {
 
 function campusMapEditorCloudStorage() {
   try {
-    return window.Telegram?.WebApp?.CloudStorage || null;
+    return window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage
+      ? window.Telegram.WebApp.CloudStorage
+      : null;
   } catch (e) {
     return null;
   }
+}
+
+function campusMapApiBase() {
+  return typeof API_URL === 'string' && API_URL ? API_URL : '';
 }
 
 function campusMapLoadEditorEdits() {
@@ -468,7 +474,9 @@ async function campusMapLoadGlobalOnce() {
   campusMapGlobalLoaded = true;
 
   try {
-    const response = await fetch(`${API_URL}/api/campus-map`);
+    const apiBase = campusMapApiBase();
+    if (!apiBase) return;
+    const response = await fetch(`${apiBase}/api/campus-map`);
     if (!response.ok) return;
     const globalEdits = campusMapNormalizeEditorEdits(await response.json());
     const localEdits = campusMapLoadEditorEdits();
@@ -488,8 +496,10 @@ async function campusMapLoadGlobalOnce() {
 async function campusMapSaveGlobalEdits(edits) {
   if (!campusMapCanEdit()) return;
   try {
-    const normalized = { ...campusMapNormalizeEditorEdits(edits), updatedAt: Number(edits?.updatedAt || 0) || Date.now() };
-    await fetch(`${API_URL}/api/admin/campus-map`, {
+    const apiBase = campusMapApiBase();
+    if (!apiBase) return;
+    const normalized = { ...campusMapNormalizeEditorEdits(edits), updatedAt: Number(edits && edits.updatedAt || 0) || Date.now() };
+    await fetch(`${apiBase}/api/admin/campus-map`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -574,13 +584,13 @@ function campusMapEditorPanel() {
   if (!campusMapCanEdit()) return '';
   const point = campusMapEditorSelectionId ? campusMapFindPoint(campusMapEditorSelectionId) : null;
   const cursor = campusMapEditorCursor || point || { x: 50, y: 50 };
-  const title = point?.title || '';
-  const label = point?.label || '';
-  const category = point?.category || 'important';
-  const labelPos = point?.labelPos || 'right';
-  const labelDx = Number(point?.labelDx || 0);
-  const labelDy = Number(point?.labelDy || 0);
-  const description = point?.description || '';
+  const title = point && point.title || '';
+  const label = point && point.label || '';
+  const category = point && point.category || 'important';
+  const labelPos = point && point.labelPos || 'right';
+  const labelDx = Number(point && point.labelDx || 0);
+  const labelDy = Number(point && point.labelDy || 0);
+  const description = point && point.description || '';
   const selectedLabel = point
     ? `${campusMapEscape(point.label || point.title)} · ${Number(point.x).toFixed(1)} / ${Number(point.y).toFixed(1)}`
     : 'Кликни по карте или выбери точку';
@@ -631,13 +641,14 @@ function initCampusMap() {
   const root = document.getElementById('campusMapRoot');
   if (!root) return;
 
-  campusMapLoadGlobalOnce();
-  campusMapLoadEditorCloudOnce();
+  try {
+    campusMapLoadGlobalOnce();
+    campusMapLoadEditorCloudOnce();
 
-  const mode = campusMapAssetMode();
-  const points = campusMapFilteredPoints();
-  const canEdit = campusMapCanEdit();
-  root.innerHTML = `
+    const mode = campusMapAssetMode();
+    const points = campusMapFilteredPoints();
+    const canEdit = campusMapCanEdit();
+    root.innerHTML = `
     <div class="campus-map-panel">
       <div class="campus-map-head">
         <div>
@@ -683,18 +694,31 @@ function initCampusMap() {
       </div>
     </div>
     <div id="campusMapPopup" class="campus-map-popup" style="display:none;"></div>
-  `;
+    `;
 
-  const search = document.getElementById('campusMapSearch');
-  if (search) {
-    search.addEventListener('input', () => {
-      campusMapQuery = search.value || '';
-      window.clearTimeout(search._campusMapTimer);
-      search._campusMapTimer = window.setTimeout(initCampusMap, 180);
-    });
+    const search = document.getElementById('campusMapSearch');
+    if (search) {
+      search.addEventListener('input', () => {
+        campusMapQuery = search.value || '';
+        window.clearTimeout(search._campusMapTimer);
+        search._campusMapTimer = window.setTimeout(initCampusMap, 180);
+      });
+    }
+
+    bindCampusMapEditorAutosave();
+  } catch (e) {
+    root.innerHTML = `
+      <div class="campus-map-panel">
+        <div class="campus-map-head">
+          <div>
+            <div class="campus-map-kicker">CAMPUS MAP SAFE MODE</div>
+            <div class="campus-map-title">Карта временно недоступна</div>
+          </div>
+        </div>
+        <div class="campus-map-empty">Ошибка карты изолирована. Остальное приложение должно работать.</div>
+      </div>
+    `;
   }
-
-  bindCampusMapEditorAutosave();
 }
 
 function setCampusMapFilter(filter) {
@@ -747,23 +771,23 @@ function campusMapEditorNumber(id, fallback = 0) {
 }
 
 function campusMapEditorPayload(existing) {
-  const x = Number(campusMapEditorNumber('campusEditX', existing?.x || 50).toFixed(1));
-  const y = Number(campusMapEditorNumber('campusEditY', existing?.y || 50).toFixed(1));
-  const title = campusMapEditorValue('campusEditTitle').trim() || existing?.title || 'Новая точка';
+  const x = Number(campusMapEditorNumber('campusEditX', existing && existing.x || 50).toFixed(1));
+  const y = Number(campusMapEditorNumber('campusEditY', existing && existing.y || 50).toFixed(1));
+  const title = campusMapEditorValue('campusEditTitle').trim() || existing && existing.title || 'Новая точка';
   const label = campusMapEditorValue('campusEditLabel').trim() || title;
   return {
-    id: existing?.id || `custom-${Date.now()}`,
+    id: existing && existing.id || `custom-${Date.now()}`,
     title,
     label,
-    cn: existing?.cn || '',
-    en: existing?.en || '',
-    category: campusMapEditorValue('campusEditCategory') || existing?.category || 'important',
+    cn: existing && existing.cn || '',
+    en: existing && existing.en || '',
+    category: campusMapEditorValue('campusEditCategory') || existing && existing.category || 'important',
     x,
     y,
-    labelPos: campusMapEditorValue('campusEditLabelPos') || existing?.labelPos || 'right',
-    labelDx: Math.round(campusMapEditorNumber('campusEditLabelDx', existing?.labelDx || 0)),
-    labelDy: Math.round(campusMapEditorNumber('campusEditLabelDy', existing?.labelDy || 0)),
-    description: campusMapEditorValue('campusEditDescription').trim() || existing?.description || 'Точка на карте кампуса.',
+    labelPos: campusMapEditorValue('campusEditLabelPos') || existing && existing.labelPos || 'right',
+    labelDx: Math.round(campusMapEditorNumber('campusEditLabelDx', existing && existing.labelDx || 0)),
+    labelDy: Math.round(campusMapEditorNumber('campusEditLabelDy', existing && existing.labelDy || 0)),
+    description: campusMapEditorValue('campusEditDescription').trim() || existing && existing.description || 'Точка на карте кампуса.',
   };
 }
 
@@ -805,7 +829,7 @@ function saveCampusMapEditorPoint(options = {}) {
   const existing = campusMapEditorSelectionId ? campusMapFindPoint(campusMapEditorSelectionId) : null;
   const payload = campusMapApplyPayloadPatch(campusMapEditorPayload(existing), options);
 
-  if (existing?.isCustom || payload.id.startsWith('custom-')) {
+  if (existing && existing.isCustom || payload.id.startsWith('custom-')) {
     edits.custom = edits.custom.filter(point => point.id !== payload.id);
     edits.custom.push({ ...payload, isCustom: undefined });
   } else {
@@ -830,7 +854,7 @@ function removeCampusMapEditorPoint() {
   if (!campusMapCanEdit() || !campusMapEditorSelectionId) return;
   const edits = campusMapLoadEditorEdits();
   const existing = campusMapFindPoint(campusMapEditorSelectionId);
-  if (existing?.isCustom) {
+  if (existing && existing.isCustom) {
     edits.custom = edits.custom.filter(point => point.id !== campusMapEditorSelectionId);
   } else {
     delete edits.overrides[campusMapEditorSelectionId];
