@@ -6014,6 +6014,56 @@ def get_settings():
     }
 
 
+@app.get("/api/campus-map")
+def get_campus_map():
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key='campus_map'")
+    row = c.fetchone()
+    conn.close()
+    if not row or not row[0]:
+        return {"overrides": {}, "custom": [], "updatedAt": 0}
+    try:
+        data = json.loads(row[0])
+    except Exception:
+        return {"overrides": {}, "custom": [], "updatedAt": 0}
+    return {
+        "overrides": data.get("overrides") if isinstance(data.get("overrides"), dict) else {},
+        "custom": data.get("custom") if isinstance(data.get("custom"), list) else [],
+        "updatedAt": int(data.get("updatedAt") or 0),
+    }
+
+
+@app.post("/api/admin/campus-map")
+async def save_campus_map(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ARCHITECT_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        payload = {
+            "overrides": data.get("overrides") if isinstance(data.get("overrides"), dict) else {},
+            "custom": data.get("custom") if isinstance(data.get("custom"), list) else [],
+            "updatedAt": int(data.get("updatedAt") or int(time.time() * 1000)),
+        }
+        encoded = json.dumps(payload, ensure_ascii=False)
+        if len(encoded.encode("utf-8")) > 120_000:
+            raise HTTPException(status_code=413, detail="Campus map payload too large")
+
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('campus_map', ?)", (encoded,))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'campus_map', 0, ?, ?)''',
+            (x_admin_id, 'Campus map updated', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "campus_map": payload}
+    return await db_write(_run)
+
+
 @app.post("/api/admin/blackwall")
 async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None)):
     def _run():
