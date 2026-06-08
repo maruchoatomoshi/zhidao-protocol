@@ -1061,7 +1061,7 @@ def migrate_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_admin_action_logs_target ON admin_action_logs(target_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_daily_checks_tid ON daily_checks(telegram_id, check_date)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_diary_stars_tid ON diary_stars(telegram_id, entry_date)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_diary_entries_tid ON diary_entries(telegram_id, date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_diary_entries_tid ON diary_entries(telegram_id, entry_date)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_raids_date ON raids(date, status)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_raid_participants_rid ON raid_participants(raid_id, telegram_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_contracts_status ON contracts(status)")
