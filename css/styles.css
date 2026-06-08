@@ -14925,6 +14925,42 @@ body.lite-mode .profile-card-home::after { display: none; }
   box-shadow: 0 0 18px rgba(0, 212, 255, 0.18);
 }
 
+/* Category filter chips match their map-pin colour:
+   study #00d4ff, food #d4af37, dorm #e887ff, sport #42e88f,
+   important #ff3b3b, meeting #ffffff. Resting state is a muted tint,
+   active state lights up like the pin on the map. */
+.campus-map-filters button.cat-study   { color: rgba(143, 244, 255, 0.78); border-color: rgba(0, 212, 255, 0.22); }
+.campus-map-filters button.cat-food    { color: rgba(232, 200, 110, 0.82); border-color: rgba(212, 175, 55, 0.24); }
+.campus-map-filters button.cat-dorm    { color: rgba(232, 170, 255, 0.82); border-color: rgba(232, 135, 255, 0.24); }
+.campus-map-filters button.cat-sport   { color: rgba(120, 240, 175, 0.82); border-color: rgba(66, 232, 143, 0.24); }
+.campus-map-filters button.cat-important{ color: rgba(255, 130, 130, 0.85); border-color: rgba(255, 59, 59, 0.26); }
+.campus-map-filters button.cat-meeting { color: rgba(235, 235, 235, 0.85); border-color: rgba(255, 255, 255, 0.22); }
+
+.campus-map-filters button.cat-study.active {
+  border-color: rgba(0, 212, 255, 0.55); background: rgba(0, 212, 255, 0.14);
+  color: #8ff4ff; box-shadow: 0 0 18px rgba(0, 212, 255, 0.20);
+}
+.campus-map-filters button.cat-food.active {
+  border-color: rgba(212, 175, 55, 0.60); background: rgba(212, 175, 55, 0.15);
+  color: #ffdf8a; box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+}
+.campus-map-filters button.cat-dorm.active {
+  border-color: rgba(232, 135, 255, 0.60); background: rgba(232, 135, 255, 0.15);
+  color: #f3c2ff; box-shadow: 0 0 18px rgba(232, 135, 255, 0.22);
+}
+.campus-map-filters button.cat-sport.active {
+  border-color: rgba(66, 232, 143, 0.60); background: rgba(66, 232, 143, 0.15);
+  color: #9bffce; box-shadow: 0 0 18px rgba(66, 232, 143, 0.22);
+}
+.campus-map-filters button.cat-important.active {
+  border-color: rgba(255, 59, 59, 0.62); background: rgba(255, 59, 59, 0.15);
+  color: #ff9b9b; box-shadow: 0 0 18px rgba(255, 59, 59, 0.24);
+}
+.campus-map-filters button.cat-meeting.active {
+  border-color: rgba(255, 255, 255, 0.60); background: rgba(255, 255, 255, 0.16);
+  color: #ffffff; box-shadow: 0 0 18px rgba(255, 255, 255, 0.22);
+}
+
 .campus-map-mode.active {
   border-color: rgba(0, 212, 255, 0.6);
   background: rgba(0, 212, 255, 0.16);

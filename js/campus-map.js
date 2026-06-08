@@ -746,7 +746,7 @@ function initCampusMap() {
       </div>
       <div class="campus-map-filters">
         ${CAMPUS_MAP_CATEGORIES.map(category => `
-          <button type="button" class="${campusMapFilter === category.id ? 'active' : ''}" onclick="setCampusMapFilter('${category.id}')">${campusMapEscape(category.label)}</button>
+          <button type="button" class="cat-${category.id} ${campusMapFilter === category.id ? 'active' : ''}" onclick="setCampusMapFilter('${category.id}')">${campusMapEscape(category.label)}</button>
         `).join('')}
       </div>
       ${campusMapRouteMode ? `
