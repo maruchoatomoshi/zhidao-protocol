@@ -15416,9 +15416,12 @@ body.theme-nw-light .campus-map-pin em {
 
 .campus-map-popup-card {
   position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 18px;
+  top: 50%;
+  left: 50%;
+  width: min(420px, calc(100vw - 28px));
+  max-height: min(620px, calc(100vh - 42px));
+  overflow-y: auto;
+  transform: translate(-50%, -50%);
   border: 1px solid rgba(0, 212, 255, 0.28);
   border-radius: 18px;
   padding: 18px;
