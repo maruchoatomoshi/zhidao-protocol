@@ -15145,7 +15145,7 @@ body.lite-mode .profile-card-home::after { display: none; }
 .campus-map-pin.meeting em { border-color: rgba(255,255,255,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(255,255,255,0.18); }
 
 body.theme-genshin-light .campus-map-pin em,
-body.theme-genshin-warm .campus-map-pin em,
+body.theme-genshin-dark .campus-map-pin em,
 body.theme-genshin .campus-map-pin em {
   border-color: rgba(154, 110, 39, 0.45);
   background: rgba(255, 247, 226, 0.92);
@@ -15155,8 +15155,7 @@ body.theme-genshin .campus-map-pin em {
   letter-spacing: 0.02em;
 }
 
-body.theme-light .campus-map-pin em,
-body.theme-netwatch-light .campus-map-pin em {
+body.theme-nw-light .campus-map-pin em {
   border-color: rgba(21, 82, 116, 0.24);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 8px 16px rgba(25, 40, 56, 0.18);
@@ -15324,4 +15323,172 @@ body.theme-genshin-dark .campus-map-filters button.active {
   border-color: rgba(219,177,101,0.45);
   background: rgba(219,177,101,0.14);
   color: var(--gold);
+}
+
+/* ===== CAMPUS MAP — LIGHT THEME ADAPTATION ===== */
+
+body.theme-nw-light .campus-map-panel {
+  border-color: rgba(21, 82, 116, 0.2);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(21, 82, 116, 0.08), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(153, 51, 51, 0.07), transparent 32%),
+    var(--bg2);
+}
+
+body.theme-nw-light .campus-map-panel::before {
+  background:
+    linear-gradient(90deg, rgba(21, 82, 116, 0.07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(21, 82, 116, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.4;
+}
+
+body.theme-nw-light .campus-map-kicker {
+  color: rgba(21, 82, 116, 0.78);
+}
+
+body.theme-nw-light .campus-map-mode,
+body.theme-nw-light .campus-map-filters button.active {
+  border-color: rgba(21, 82, 116, 0.35);
+  background: rgba(21, 82, 116, 0.1);
+  color: #15526a;
+}
+
+body.theme-nw-light .campus-map-search {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.theme-nw-light .campus-map-filters button {
+  background: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--text2);
+}
+
+body.theme-nw-light .campus-map-scroll {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-nw-light .campus-map-row {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-nw-light .campus-map-popup-card {
+  border-color: rgba(21, 82, 116, 0.28);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 20px 60px rgba(25, 40, 56, 0.22);
+}
+
+body.theme-nw-light .campus-map-popup-backdrop {
+  background: rgba(20, 30, 40, 0.35);
+}
+
+body.theme-nw-light .campus-map-popup-close {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-nw-light .campus-map-popup-category {
+  color: #15526a;
+}
+
+body.theme-genshin-light .campus-map-search,
+body.theme-genshin-dark .campus-map-search {
+  background: rgba(219,177,101,0.08);
+  border-color: rgba(219,177,101,0.22);
+}
+
+body.theme-genshin-light .campus-map-filters button,
+body.theme-genshin-dark .campus-map-filters button {
+  background: rgba(219,177,101,0.08);
+  border-color: rgba(219,177,101,0.18);
+  color: var(--text2);
+}
+
+body.theme-genshin-light .campus-map-scroll,
+body.theme-genshin-dark .campus-map-scroll {
+  background: rgba(219,177,101,0.05);
+  border-color: rgba(219,177,101,0.18);
+}
+
+body.theme-genshin-light .campus-map-row,
+body.theme-genshin-dark .campus-map-row {
+  background: rgba(219,177,101,0.06);
+  border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-light .campus-map-popup-card,
+body.theme-genshin-dark .campus-map-popup-card {
+  border-color: rgba(219,177,101,0.32);
+  background: var(--bg3);
+  box-shadow: 0 20px 60px rgba(88, 56, 16, 0.22);
+}
+
+body.theme-genshin-light .campus-map-popup-close,
+body.theme-genshin-dark .campus-map-popup-close {
+  border-color: rgba(219,177,101,0.3);
+  background: rgba(219,177,101,0.12);
+}
+
+body.theme-nw-light .campus-map-editor {
+  border-color: rgba(21, 82, 116, 0.22);
+  background: rgba(21, 82, 116, 0.05);
+}
+
+body.theme-nw-light .campus-map-editor.active {
+  border-color: rgba(21, 82, 116, 0.5);
+  box-shadow: 0 0 24px rgba(21, 82, 116, 0.14);
+}
+
+body.theme-nw-light .campus-map-editor-top b {
+  color: #15526a;
+}
+
+body.theme-nw-light .campus-map-editor-top button,
+body.theme-nw-light .campus-map-editor-actions button {
+  border-color: rgba(21, 82, 116, 0.35);
+  background: rgba(21, 82, 116, 0.1);
+  color: #15526a;
+}
+
+body.theme-nw-light .campus-map-editor input,
+body.theme-nw-light .campus-map-editor select,
+body.theme-nw-light .campus-map-editor textarea {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+body.theme-genshin-light .campus-map-editor,
+body.theme-genshin-dark .campus-map-editor {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.06);
+}
+
+body.theme-genshin-light .campus-map-editor.active,
+body.theme-genshin-dark .campus-map-editor.active {
+  border-color: rgba(219,177,101,0.5);
+  box-shadow: 0 0 24px rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-light .campus-map-editor-top b,
+body.theme-genshin-dark .campus-map-editor-top b,
+body.theme-genshin-light .campus-map-editor-top button,
+body.theme-genshin-dark .campus-map-editor-top button,
+body.theme-genshin-light .campus-map-editor-actions button,
+body.theme-genshin-dark .campus-map-editor-actions button {
+  color: var(--gold);
+  border-color: rgba(219,177,101,0.35);
+  background: rgba(219,177,101,0.1);
+}
+
+body.theme-genshin-light .campus-map-editor input,
+body.theme-genshin-dark .campus-map-editor input,
+body.theme-genshin-light .campus-map-editor select,
+body.theme-genshin-dark .campus-map-editor select,
+body.theme-genshin-light .campus-map-editor textarea,
+body.theme-genshin-dark .campus-map-editor textarea {
+  border-color: rgba(219,177,101,0.22);
+  background: var(--bg3);
 }
