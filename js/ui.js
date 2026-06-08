@@ -180,10 +180,53 @@ function openMore(section) {
 // ===== ДАННЫЕ =====
 
 async function loadUserData(telegramId) {
+  let r, data;
+  const _initData = (typeof getTelegramInitData === 'function') ? getTelegramInitData() : '';
+  console.log('[loadUserData] start', {
+    telegramId,
+    initDataLength: _initData ? _initData.length : 0,
+    hasInitDataUnsafeUser: Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user),
+  });
   try {
-    const r = await fetch(`${API_URL}/api/user/${telegramId}`);
-    if (r.ok) {
-      const data = await r.json();
+    r = await fetch(`${API_URL}/api/user/${telegramId}`);
+  } catch(e) {
+    console.error('[loadUserData] network error', telegramId, e && e.stack || e);
+    document.getElementById('status').textContent = '● ОФЛАЙН';
+    document.getElementById('username').textContent = 'Ошибка связи';
+    hideStartupCover();
+    return;
+  }
+
+  console.log('[loadUserData] response', {
+    status: r.status,
+    requestId: r.headers.get('X-Request-ID') || r.headers.get('x-request-id'),
+    processTimeMs: r.headers.get('X-Process-Time-ms') || r.headers.get('x-process-time-ms'),
+  });
+
+  if (!r.ok) {
+    console.warn('[loadUserData] non-OK response', r.status, r.statusText);
+    document.getElementById('status').textContent = '● НЕ НАЙДЕН';
+    document.getElementById('username').textContent = 'Нет подписки';
+    hideStartupCover();
+    return;
+  }
+
+  try {
+    data = await r.json();
+  } catch(e) {
+    console.error('[loadUserData] JSON parse error', e && e.stack || e);
+    document.getElementById('status').textContent = '● ОФЛАЙН';
+    document.getElementById('username').textContent = 'Ошибка связи';
+    hideStartupCover();
+    return;
+  }
+
+  try {
+    {
+      document.getElementById('status').textContent = '● АКТИВЕН';
+      document.getElementById('status').style.color = '#cc4444';
+      document.getElementById('username').textContent = data.full_name || data.username;
+
       isAdmin = !!data.is_admin;
       isArchitect = !!data.is_architect;
       document.body.classList.toggle('is-architect', isArchitect);
@@ -241,9 +284,6 @@ async function loadUserData(telegramId) {
       if (typeof syncDiaryAccessVisibility === 'function') {
         syncDiaryAccessVisibility();
       }
-      document.getElementById('status').textContent = '● АКТИВЕН';
-      document.getElementById('status').style.color = '#cc4444';
-      document.getElementById('username').textContent = data.full_name || data.username;
       document.getElementById('serverTag').textContent = data.has_vpn === false
         ? 'STUDENT NODE // VPN не привязан'
         : 'HK NODE // ' + ((data.used_traffic || 0) / 1024/1024/1024).toFixed(2) + ' GB';
@@ -253,14 +293,11 @@ async function loadUserData(telegramId) {
       const percent = Math.min((used / (10*1024*1024*1024)) * 100, 100);
       setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
       if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
-    } else {
-      document.getElementById('status').textContent = '● НЕ НАЙДЕН';
-      document.getElementById('username').textContent = 'Нет подписки';
-      hideStartupCover();
     }
   } catch(e) {
-    document.getElementById('status').textContent = '● ОФЛАЙН';
-    document.getElementById('username').textContent = 'Ошибка связи';
+    // Profile data was fetched successfully — a UI render error here must not
+    // blank out a valid profile with a false "ОФЛАЙН" state.
+    console.error('[loadUserData] UI render error after successful fetch', e && e.stack || e);
     hideStartupCover();
   }
 }

@@ -1,4 +1,5 @@
-﻿import random
+﻿import asyncio
+import random
 import json
 import hashlib
 import hmac
@@ -33,6 +34,7 @@ MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 TELEGRAM_AUTH_REQUIRED = os.getenv("TELEGRAM_AUTH_REQUIRED", "0").strip().lower() in {"1", "true", "yes", "on"}
+TELEGRAM_AUTH_DEBUG_LOG = os.getenv("TELEGRAM_AUTH_DEBUG_LOG", "0").strip().lower() in {"1", "true", "yes", "on"}
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 REQUEST_LOG_SLOW_MS = int(os.getenv("REQUEST_LOG_SLOW_MS", "1500") or "1500")
@@ -280,6 +282,24 @@ async def enforce_verified_user_identity(request: Request, verified_id: Optional
     return None
 
 
+def _log_telegram_auth(request: Request, verified_id: Optional[int], reason: str):
+    request_id = getattr(request.state, "request_id", "-")
+    init_data = request.headers.get("x-telegram-init-data", "")
+    print(
+        "ZHIDAO_TELEGRAM_AUTH "
+        f"request_id={request_id} "
+        f"path={request.url.path} "
+        f"method={request.method} "
+        f"has_init_data={bool(init_data)} "
+        f"init_data_len={len(init_data)} "
+        f"verified_id={verified_id or '-'} "
+        f"x_admin_id={request.headers.get('x-admin-id') or '-'} "
+        f"x_telegram_id={request.headers.get('x-telegram-id') or '-'} "
+        f"reason={reason}",
+        flush=True,
+    )
+
+
 @app.middleware("http")
 async def telegram_auth_middleware(request: Request, call_next):
     if request_has_internal_token(request):
@@ -295,8 +315,10 @@ async def telegram_auth_middleware(request: Request, call_next):
         for header_name in ("x-admin-id", "x-telegram-id"):
             header_value = request.headers.get(header_name)
             if header_value and str(header_value) != str(verified_id):
+                _log_telegram_auth(request, verified_id, "identity_header_mismatch")
                 return auth_error_response(request, "Telegram identity mismatch", 403)
     elif is_sensitive_api_request(request):
+        _log_telegram_auth(request, verified_id, "missing_or_invalid_init_data")
         return auth_error_response(request, "Telegram auth required", 401)
 
     identity_error = await enforce_verified_user_identity(
@@ -305,7 +327,11 @@ async def telegram_auth_middleware(request: Request, call_next):
         is_verified_admin_request(request, verified_id),
     )
     if identity_error:
+        _log_telegram_auth(request, verified_id, "identity_mismatch")
         return identity_error
+
+    if TELEGRAM_AUTH_DEBUG_LOG and extract_path_telegram_id(request.url.path) is not None:
+        _log_telegram_auth(request, verified_id, "ok")
 
     return await call_next(request)
 
@@ -3585,56 +3611,71 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
         raise HTTPException(status_code=400, detail="Reason required")
     requested_delta = delta
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT full_name, points FROM users WHERE telegram_id=?", (target_id,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT full_name, points FROM users WHERE telegram_id=?", (target_id,))
+            row = c.fetchone()
+            if not row:
+                return None
 
-    previous_points = row[1] or 0
-    blocked_by_implant = delta < 0 and try_block_penalty_with_terracota(c, target_id, f"admin_points: {reason}")
-    if not blocked_by_implant:
-        if delta < 0:
-            armor_reduction = consume_terracota_armor(c, target_id)
-            card_reduction = consume_card_penalty_reduction(c, target_id, f"admin_points: {reason}")
-            delta = min(0, delta + armor_reduction)
-            delta = min(0, delta + card_reduction)
-        c.execute(
-            "UPDATE users SET points = MAX(0, COALESCE(points, 0) + ?) WHERE telegram_id=?",
-            (delta, target_id),
-        )
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
-    new_points = c.fetchone()[0] or 0
-    actual_delta = new_points - previous_points
-    pyro_bonus = 0
-    if actual_delta < 0:
-        pyro_bonus = apply_card_pyro_rebirth(c, target_id, f"admin_points: {reason}", abs(actual_delta))
-        if pyro_bonus:
+            previous_points = row[1] or 0
+            local_delta = delta
+            blocked_by_implant = local_delta < 0 and try_block_penalty_with_terracota(c, target_id, f"admin_points: {reason}")
+            if not blocked_by_implant:
+                if local_delta < 0:
+                    armor_reduction = consume_terracota_armor(c, target_id)
+                    card_reduction = consume_card_penalty_reduction(c, target_id, f"admin_points: {reason}")
+                    local_delta = min(0, local_delta + armor_reduction)
+                    local_delta = min(0, local_delta + card_reduction)
+                c.execute(
+                    "UPDATE users SET points = MAX(0, COALESCE(points, 0) + ?) WHERE telegram_id=?",
+                    (local_delta, target_id),
+                )
             c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
             new_points = c.fetchone()[0] or 0
             actual_delta = new_points - previous_points
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, ?, 'points_adjust', ?, ?, ?)''',
-        (x_admin_id, target_id, actual_delta, reason, now_iso()),
-    )
-    log_economy(c, target_id, 'admin_points', actual_delta, new_points, x_admin_id, 'admin', reason)
-    conn.commit()
-    conn.close()
+            pyro_bonus = 0
+            if actual_delta < 0:
+                pyro_bonus = apply_card_pyro_rebirth(c, target_id, f"admin_points: {reason}", abs(actual_delta))
+                if pyro_bonus:
+                    c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+                    new_points = c.fetchone()[0] or 0
+                    actual_delta = new_points - previous_points
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, ?, 'points_adjust', ?, ?, ?)''',
+                (x_admin_id, target_id, actual_delta, reason, now_iso()),
+            )
+            log_economy(c, target_id, 'admin_points', actual_delta, new_points, x_admin_id, 'admin', reason)
+            conn.commit()
+            return {
+                "full_name": row[0] or str(target_id),
+                "previous_points": previous_points,
+                "new_points": new_points,
+                "actual_delta": actual_delta,
+                "blocked_by_implant": blocked_by_implant,
+                "pyro_bonus": pyro_bonus,
+            }
+        finally:
+            conn.close()
+
+    result = await asyncio.to_thread(_run)
+    if result is None:
+        raise HTTPException(status_code=404, detail="User not found")
 
     return {
         "success": True,
         "telegram_id": target_id,
-        "full_name": row[0] or str(target_id),
-        "previous_points": previous_points,
-        "new_points": new_points,
-        "delta": actual_delta,
+        "full_name": result["full_name"],
+        "previous_points": result["previous_points"],
+        "new_points": result["new_points"],
+        "delta": result["actual_delta"],
         "requested_delta": requested_delta,
-        "blocked_by_implant": "implant_terracota" if blocked_by_implant else None,
-        "card_pyro_bonus": pyro_bonus,
+        "blocked_by_implant": "implant_terracota" if result["blocked_by_implant"] else None,
+        "card_pyro_bonus": result["pyro_bonus"],
     }
 
 
@@ -3658,42 +3699,55 @@ async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None))
     if len(reason) < 3:
         raise HTTPException(status_code=400, detail="Reason required")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT full_name, points, rep_score FROM users WHERE telegram_id=?", (target_id,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT full_name, points, rep_score FROM users WHERE telegram_id=?", (target_id,))
+            row = c.fetchone()
+            if not row:
+                return None
 
-    previous_rep = row[2] or 0
-    c.execute(
-        "UPDATE users SET rep_score = MAX(0, COALESCE(rep_score, 0) + ?) WHERE telegram_id=?",
-        (delta, target_id),
-    )
-    c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (target_id,))
-    updated = c.fetchone() or (row[1] or 0, previous_rep)
-    new_points = updated[0] or 0
-    new_rep = updated[1] or 0
-    actual_delta = new_rep - previous_rep
-    c.execute(
-        '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, ?, 'rep_adjust', ?, ?, ?)''',
-        (x_admin_id, target_id, actual_delta, reason, now_iso()),
-    )
-    log_economy(c, target_id, 'admin_rep', actual_delta, new_rep, x_admin_id, 'rep', reason)
-    conn.commit()
-    conn.close()
+            previous_rep = row[2] or 0
+            c.execute(
+                "UPDATE users SET rep_score = MAX(0, COALESCE(rep_score, 0) + ?) WHERE telegram_id=?",
+                (delta, target_id),
+            )
+            c.execute("SELECT points, rep_score FROM users WHERE telegram_id=?", (target_id,))
+            updated = c.fetchone() or (row[1] or 0, previous_rep)
+            new_points = updated[0] or 0
+            new_rep = updated[1] or 0
+            actual_delta = new_rep - previous_rep
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, ?, 'rep_adjust', ?, ?, ?)''',
+                (x_admin_id, target_id, actual_delta, reason, now_iso()),
+            )
+            log_economy(c, target_id, 'admin_rep', actual_delta, new_rep, x_admin_id, 'rep', reason)
+            conn.commit()
+            return {
+                "full_name": row[0] or str(target_id),
+                "points": new_points,
+                "previous_rep": previous_rep,
+                "new_rep": new_rep,
+                "actual_delta": actual_delta,
+            }
+        finally:
+            conn.close()
+
+    result = await asyncio.to_thread(_run)
+    if result is None:
+        raise HTTPException(status_code=404, detail="User not found")
 
     return {
         "success": True,
         "telegram_id": target_id,
-        "full_name": row[0] or str(target_id),
-        "points": new_points,
-        "previous_rep_score": previous_rep,
-        "new_rep_score": new_rep,
-        "delta": actual_delta,
+        "full_name": result["full_name"],
+        "points": result["points"],
+        "previous_rep_score": result["previous_rep"],
+        "new_rep_score": result["new_rep"],
+        "delta": result["actual_delta"],
         "requested_delta": delta,
     }
 
@@ -6252,19 +6306,27 @@ async def admin_grant_fragments(data: dict, x_admin_id: Optional[int] = Header(N
     amount = int(data.get("amount") or 0)
     if not telegram_id or amount < 1:
         raise HTTPException(status_code=400, detail="Missing data")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
-        conn.close()
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+            if not c.fetchone():
+                return None
+            c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,?)
+                         ON CONFLICT(telegram_id) DO UPDATE SET protocol_fragments=COALESCE(protocol_fragments,0)+?""",
+                      (telegram_id, amount, amount))
+            c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+            new_val = c.fetchone()[0]
+            conn.commit()
+            return new_val
+        finally:
+            conn.close()
+
+    new_val = await asyncio.to_thread(_run)
+    if new_val is None:
         raise HTTPException(status_code=404, detail="User not found")
-    c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,?)
-                 ON CONFLICT(telegram_id) DO UPDATE SET protocol_fragments=COALESCE(protocol_fragments,0)+?""",
-              (telegram_id, amount, amount))
-    c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
-    new_val = c.fetchone()[0]
-    conn.commit()
-    conn.close()
     return {"success": True, "telegram_id": telegram_id, "amount": amount, "protocol_fragments": new_val}
 
 
@@ -6275,19 +6337,27 @@ async def admin_grant_scan_attempt(data: dict, x_admin_id: Optional[int] = Heade
     telegram_id = data.get("telegram_id")
     if not telegram_id:
         raise HTTPException(status_code=400, detail="Missing telegram_id")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
-        conn.close()
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+            if not c.fetchone():
+                return None
+            c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                         ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
+                      (telegram_id,))
+            c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
+            new_val = c.fetchone()[0]
+            conn.commit()
+            return new_val
+        finally:
+            conn.close()
+
+    new_val = await asyncio.to_thread(_run)
+    if new_val is None:
         raise HTTPException(status_code=404, detail="User not found")
-    c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
-                 ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
-              (telegram_id,))
-    c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
-    new_val = c.fetchone()[0]
-    conn.commit()
-    conn.close()
     return {"success": True, "telegram_id": telegram_id, "scan_attempts": new_val}
 
 
