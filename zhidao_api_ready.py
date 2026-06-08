@@ -528,8 +528,16 @@ ARCHITECT_QUESTION_SEEDS = {
 
 def get_conn():
     conn = sqlite3.connect('/root/zhidao.db', timeout=30)
-    conn.execute("PRAGMA busy_timeout=30000")
+    conn.execute("PRAGMA busy_timeout=5000")
     return conn
+
+
+DB_WRITE_LOCK = asyncio.Lock()
+
+
+async def db_write(fn):
+    async with DB_WRITE_LOCK:
+        return await asyncio.to_thread(fn)
 
 
 def normalize_expected_student_name(value: str) -> str:
@@ -3662,7 +3670,7 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
         finally:
             conn.close()
 
-    result = await asyncio.to_thread(_run)
+    result = await db_write(_run)
     if result is None:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -3736,7 +3744,7 @@ async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None))
         finally:
             conn.close()
 
-    result = await asyncio.to_thread(_run)
+    result = await db_write(_run)
     if result is None:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -3959,124 +3967,129 @@ async def confirm_presence(data: dict):
     action = str(data.get("action") or "confirm").strip().lower()
     note = str(data.get("note") or "").strip()
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
+            if not c.fetchone():
+                return {"error": "User not found", "status": 404}
 
-    previous_row = fetch_presence_row(c, check_type, check_date, telegram_id)
-    if action == "confirm":
-        row = apply_presence_status(c, check_type, check_date, telegram_id, "confirmed", note)
-        shaolin_reward = (
-            check_type in {"morning", "evening"}
-            and (not previous_row or previous_row["status"] not in PRESENCE_SAFE_STATUSES)
-            and has_active_implant(c, telegram_id, "implant_shaolin")
-        )
-        if shaolin_reward:
-            use_key = f"{check_type}:{check_date}"
-            if not has_used_implant_today(c, telegram_id, "implant_shaolin", use_key):
-                mark_implant_used_today(c, telegram_id, "implant_shaolin", use_key)
-                c.execute("UPDATE users SET points = points + 20 WHERE telegram_id=?", (telegram_id,))
-                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-                balance_after = c.fetchone()[0] or 0
-                log_economy(
-                    c, telegram_id, "implant_shaolin_bonus", 20, balance_after,
-                    None, "implant", f"{check_type} {check_date}",
+            previous_row = fetch_presence_row(c, check_type, check_date, telegram_id)
+            row = None
+            if action == "confirm":
+                row = apply_presence_status(c, check_type, check_date, telegram_id, "confirmed", note)
+                shaolin_reward = (
+                    check_type in {"morning", "evening"}
+                    and (not previous_row or previous_row["status"] not in PRESENCE_SAFE_STATUSES)
+                    and has_active_implant(c, telegram_id, "implant_shaolin")
                 )
-        # Perfect day bonus: +10★ when evening confirmed and morning was already confirmed
-        if (
-            check_type == "evening"
-            and has_active_implant(c, telegram_id, "implant_shaolin")
-            and not has_used_implant_today(c, telegram_id, "implant_shaolin", f"perfect_day:{check_date}")
-        ):
-            c.execute(
-                """SELECT 1 FROM daily_checks
-                   WHERE telegram_id=? AND check_date=? AND check_type='morning'
-                     AND status IN ('confirmed','free_time')""",
-                (telegram_id, check_date),
-            )
-            if c.fetchone():
-                mark_implant_used_today(c, telegram_id, "implant_shaolin", f"perfect_day:{check_date}")
-                c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
-                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-                balance_after = c.fetchone()[0] or 0
-                log_economy(
-                    c, telegram_id, "implant_shaolin_perfect_day", 10, balance_after,
-                    None, "implant", check_date,
+                if shaolin_reward:
+                    use_key = f"{check_type}:{check_date}"
+                    if not has_used_implant_today(c, telegram_id, "implant_shaolin", use_key):
+                        mark_implant_used_today(c, telegram_id, "implant_shaolin", use_key)
+                        c.execute("UPDATE users SET points = points + 20 WHERE telegram_id=?", (telegram_id,))
+                        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                        balance_after = c.fetchone()[0] or 0
+                        log_economy(
+                            c, telegram_id, "implant_shaolin_bonus", 20, balance_after,
+                            None, "implant", f"{check_type} {check_date}",
+                        )
+                if (
+                    check_type == "evening"
+                    and has_active_implant(c, telegram_id, "implant_shaolin")
+                    and not has_used_implant_today(c, telegram_id, "implant_shaolin", f"perfect_day:{check_date}")
+                ):
+                    c.execute(
+                        """SELECT 1 FROM daily_checks
+                           WHERE telegram_id=? AND check_date=? AND check_type='morning'
+                             AND status IN ('confirmed','free_time')""",
+                        (telegram_id, check_date),
+                    )
+                    if c.fetchone():
+                        mark_implant_used_today(c, telegram_id, "implant_shaolin", f"perfect_day:{check_date}")
+                        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
+                        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                        balance_after = c.fetchone()[0] or 0
+                        log_economy(
+                            c, telegram_id, "implant_shaolin_perfect_day", 10, balance_after,
+                            None, "implant", check_date,
+                        )
+                is_new_confirm = not previous_row or previous_row["status"] not in PRESENCE_SAFE_STATUSES
+                if check_type in {"morning", "evening"} and is_new_confirm:
+                    if has_active_card(c, telegram_id, "card_fairy") and not has_used_card_today(c, telegram_id, "card_fairy", f"presence:{check_type}", check_date):
+                        mark_card_used_today(c, telegram_id, "card_fairy", f"presence:{check_type}", check_date)
+                        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
+                        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                        balance_after = c.fetchone()[0] or 0
+                        log_economy(
+                            c, telegram_id, "card_fairy_blessing", 10, balance_after,
+                            None, "card", f"{check_type} {check_date}",
+                        )
+                if check_type == "evening" and is_new_confirm:
+                    c.execute(
+                        """SELECT 1 FROM daily_checks
+                           WHERE telegram_id=? AND check_date=? AND check_type='morning'
+                             AND status IN ('confirmed','free_time','admin_approved')""",
+                        (telegram_id, check_date),
+                    )
+                    if c.fetchone():
+                        grant_card_points_once(
+                            c, telegram_id, "card_fairy", f"perfect_day:{check_date}", 10,
+                            "card_fairy_perfect_day", f"утро+вечер {check_date}", check_date,
+                        )
+                if check_type == "morning" and is_new_confirm:
+                    if has_active_card(c, telegram_id, "card_forest") and not has_used_card_today(c, telegram_id, "card_forest", "morning_harvest", check_date):
+                        mark_card_used_today(c, telegram_id, "card_forest", "morning_harvest", check_date)
+                        c.execute("UPDATE users SET points = points + 8 WHERE telegram_id=?", (telegram_id,))
+                        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                        balance_after = c.fetchone()[0] or 0
+                        log_economy(
+                            c, telegram_id, "card_forest_harvest", 8, balance_after,
+                            None, "card", check_date,
+                        )
+                if check_type == "manual" and is_new_confirm:
+                    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+                    grant_card_points_once(
+                        c, telegram_id, "card_forest", "manual_anchor", 6,
+                        "card_forest_anchor", f"ручная перекличка {check_date}", today,
+                    )
+                if check_type == "evening" and is_new_confirm:
+                    grant_card_scan_once(
+                        c, telegram_id, "card_moon", f"evening_scan:{check_date}",
+                        "card_moon_lunar_path", f"вечерняя отметка {check_date}", check_date,
+                    )
+                if check_type in {"morning", "evening"} and is_new_confirm:
+                    c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                                 ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
+                              (telegram_id,))
+            elif action == "request_leave":
+                row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_requested", note)
+            elif action == "free_time":
+                purchase_id = has_active_free_time(c, telegram_id)
+                if not purchase_id:
+                    return {"error": "No active free time", "status": 400}
+                row = apply_presence_status(
+                    c,
+                    check_type,
+                    check_date,
+                    telegram_id,
+                    "free_time",
+                    note or f"casino_walk purchase #{purchase_id}",
                 )
-        # Scan attempt award: +1 per new morning/evening confirmation (cap 7)
-        is_new_confirm = not previous_row or previous_row["status"] not in PRESENCE_SAFE_STATUSES
-        if check_type in {"morning", "evening"} and is_new_confirm:
-            if has_active_card(c, telegram_id, "card_fairy") and not has_used_card_today(c, telegram_id, "card_fairy", f"presence:{check_type}", check_date):
-                mark_card_used_today(c, telegram_id, "card_fairy", f"presence:{check_type}", check_date)
-                c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
-                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-                balance_after = c.fetchone()[0] or 0
-                log_economy(
-                    c, telegram_id, "card_fairy_blessing", 10, balance_after,
-                    None, "card", f"{check_type} {check_date}",
-                )
-        if check_type == "evening" and is_new_confirm:
-            c.execute(
-                """SELECT 1 FROM daily_checks
-                   WHERE telegram_id=? AND check_date=? AND check_type='morning'
-                     AND status IN ('confirmed','free_time','admin_approved')""",
-                (telegram_id, check_date),
-            )
-            if c.fetchone():
-                grant_card_points_once(
-                    c, telegram_id, "card_fairy", f"perfect_day:{check_date}", 10,
-                    "card_fairy_perfect_day", f"утро+вечер {check_date}", check_date,
-                )
-        if check_type == "morning" and is_new_confirm:
-            if has_active_card(c, telegram_id, "card_forest") and not has_used_card_today(c, telegram_id, "card_forest", "morning_harvest", check_date):
-                mark_card_used_today(c, telegram_id, "card_forest", "morning_harvest", check_date)
-                c.execute("UPDATE users SET points = points + 8 WHERE telegram_id=?", (telegram_id,))
-                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-                balance_after = c.fetchone()[0] or 0
-                log_economy(
-                    c, telegram_id, "card_forest_harvest", 8, balance_after,
-                    None, "card", check_date,
-                )
-        if check_type == "manual" and is_new_confirm:
-            today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-            grant_card_points_once(
-                c, telegram_id, "card_forest", "manual_anchor", 6,
-                "card_forest_anchor", f"ручная перекличка {check_date}", today,
-            )
-        if check_type == "evening" and is_new_confirm:
-            grant_card_scan_once(
-                c, telegram_id, "card_moon", f"evening_scan:{check_date}",
-                "card_moon_lunar_path", f"вечерняя отметка {check_date}", check_date,
-            )
-        if check_type in {"morning", "evening"} and is_new_confirm:
-            c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
-                         ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
-                      (telegram_id,))
-    elif action == "request_leave":
-        row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_requested", note)
-    elif action == "free_time":
-        purchase_id = has_active_free_time(c, telegram_id)
-        if not purchase_id:
+            else:
+                return {"error": "Invalid action", "status": 400}
+
+            conn.commit()
+            return {"check": row}
+        finally:
             conn.close()
-            raise HTTPException(status_code=400, detail="No active free time")
-        row = apply_presence_status(
-            c,
-            check_type,
-            check_date,
-            telegram_id,
-            "free_time",
-            note or f"casino_walk purchase #{purchase_id}",
-        )
-    else:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Invalid action")
 
-    conn.commit()
-    conn.close()
-    return {"success": True, "check": row}
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+
+    return {"success": True, "check": result["check"]}
 
 
 @app.post("/api/presence/attempt")
@@ -4514,7 +4527,7 @@ async def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int]
 
 
 @app.post("/api/diary/stars/rate")
-def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None)):
     if not is_diary_staff(x_admin_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -4535,125 +4548,131 @@ def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None)):
         if incoming_stars not in (0, 1, 2, 3):
             raise HTTPException(status_code=400, detail="Invalid stars")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+            if not c.fetchone():
+                return {"error": "User not found"}
 
-    c.execute("SELECT stars, bonus FROM diary_stars WHERE telegram_id=? AND entry_date=?", (telegram_id, entry_date))
-    previous = c.fetchone()
-    previous_stars = previous[0] if previous else 0
-    previous_bonus = previous[1] if previous else 0
+            c.execute("SELECT stars, bonus FROM diary_stars WHERE telegram_id=? AND entry_date=?", (telegram_id, entry_date))
+            previous = c.fetchone()
+            previous_stars = previous[0] if previous else 0
+            previous_bonus = previous[1] if previous else 0
 
-    if is_reset:
-        next_stars = 0
-        next_bonus = 0
-    elif is_remove_bonus:
-        next_stars = previous_stars
-        next_bonus = 0
-    else:
-        next_stars = previous_stars if incoming_stars is None else incoming_stars
-        next_bonus = 1 if incoming_bonus else previous_bonus
-    previous_points = compute_diary_star_points(previous_stars, previous_bonus)
-    next_points = compute_diary_star_points(next_stars, next_bonus)
+            if is_reset:
+                next_stars = 0
+                next_bonus = 0
+            elif is_remove_bonus:
+                next_stars = previous_stars
+                next_bonus = 0
+            else:
+                next_stars = previous_stars if incoming_stars is None else incoming_stars
+                next_bonus = 1 if incoming_bonus else previous_bonus
+            previous_points = compute_diary_star_points(previous_stars, previous_bonus)
+            next_points = compute_diary_star_points(next_stars, next_bonus)
 
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        '''INSERT INTO diary_stars (telegram_id, entry_date, stars, bonus, rated_by, rated_at)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(telegram_id, entry_date) DO UPDATE SET
-             stars=excluded.stars,
-             bonus=excluded.bonus,
-             rated_by=excluded.rated_by,
-             rated_at=excluded.rated_at''',
-        (telegram_id, entry_date, next_stars, next_bonus, x_admin_id, now_str),
-    )
-    apply_diary_points_delta(c, telegram_id, previous_points, next_points)
-    linguasoft_bonus = 0
-    if (
-        next_stars == 3
-        and previous_stars < 3
-        and has_active_implant(c, telegram_id, "implant_linguasoft")
-        and not has_used_implant_today(c, telegram_id, "implant_linguasoft", "diary_top_score", entry_date)
-    ):
-        mark_implant_used_today(c, telegram_id, "implant_linguasoft", "diary_top_score", entry_date)
-        c.execute("UPDATE users SET points = points + 30 WHERE telegram_id=?", (telegram_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-        balance_after = c.fetchone()[0] or 0
-        log_economy(c, telegram_id, "implant_linguasoft_bonus", 30, balance_after, None, "implant", entry_date)
-        linguasoft_bonus = 30
-    literature_bonus = 0
-    if (
-        next_stars == 3
-        and previous_stars < 3
-        and has_active_card(c, telegram_id, "card_literature")
-        and not has_used_card_today(c, telegram_id, "card_literature", "diary_3star", entry_date)
-    ):
-        mark_card_used_today(c, telegram_id, "card_literature", "diary_3star", entry_date)
-        c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (telegram_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-        balance_after = c.fetchone()[0] or 0
-        log_economy(c, telegram_id, "card_literature_wisdom", 15, balance_after, None, "card", entry_date)
-        literature_bonus = 15
-    if next_bonus and not previous_bonus:
-        literature_bonus += grant_card_points_once(
-            c, telegram_id, "card_literature", f"bonus_line:{entry_date}", 10,
-            "card_literature_bonus_line", f"бонус дневника {entry_date}", entry_date,
-        )
-    star_diary_bonus = 0
-    if next_stars == 3 and previous_stars < 3:
-        star_diary_bonus = grant_card_points_once(
-            c, telegram_id, "card_star", f"diary_constellation:{entry_date}", 10,
-            "card_star_constellation", f"дневник 3★ {entry_date}", entry_date,
-        )
-    # Streak bonus: +20★ for 3 consecutive 3★ diary entries
-    if (
-        next_stars == 3
-        and has_active_implant(c, telegram_id, "implant_linguasoft")
-        and not has_used_implant_today(c, telegram_id, "implant_linguasoft", f"streak3:{entry_date}")
-    ):
-        c.execute(
-            """SELECT COUNT(*) FROM diary_stars
-               WHERE telegram_id=? AND stars=3 AND entry_date < ?
-               ORDER BY entry_date DESC
-               LIMIT 2""",
-            (telegram_id, entry_date),
-        )
-        # count the two most recent entries before this one
-        c.execute(
-            """SELECT stars FROM diary_stars
-               WHERE telegram_id=? AND entry_date < ?
-               ORDER BY entry_date DESC
-               LIMIT 2""",
-            (telegram_id, entry_date),
-        )
-        prev_two = [r[0] for r in c.fetchall()]
-        if len(prev_two) == 2 and all(s == 3 for s in prev_two):
-            mark_implant_used_today(c, telegram_id, "implant_linguasoft", f"streak3:{entry_date}")
-            c.execute("UPDATE users SET points = points + 20 WHERE telegram_id=?", (telegram_id,))
-            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-            balance_after = c.fetchone()[0] or 0
-            log_economy(c, telegram_id, "implant_linguasoft_streak", 20, balance_after, None, "implant", entry_date)
-            linguasoft_bonus += 20
-    # Scan attempt award: +1 when diary reaches 3★ for the first time
-    if next_stars == 3 and previous_stars < 3:
-        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
-                  (telegram_id,))
-    conn.commit()
-    conn.close()
+            now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''INSERT INTO diary_stars (telegram_id, entry_date, stars, bonus, rated_by, rated_at)
+                   VALUES (?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(telegram_id, entry_date) DO UPDATE SET
+                     stars=excluded.stars,
+                     bonus=excluded.bonus,
+                     rated_by=excluded.rated_by,
+                     rated_at=excluded.rated_at''',
+                (telegram_id, entry_date, next_stars, next_bonus, x_admin_id, now_str),
+            )
+            apply_diary_points_delta(c, telegram_id, previous_points, next_points)
+            linguasoft_bonus = 0
+            if (
+                next_stars == 3
+                and previous_stars < 3
+                and has_active_implant(c, telegram_id, "implant_linguasoft")
+                and not has_used_implant_today(c, telegram_id, "implant_linguasoft", "diary_top_score", entry_date)
+            ):
+                mark_implant_used_today(c, telegram_id, "implant_linguasoft", "diary_top_score", entry_date)
+                c.execute("UPDATE users SET points = points + 30 WHERE telegram_id=?", (telegram_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                balance_after = c.fetchone()[0] or 0
+                log_economy(c, telegram_id, "implant_linguasoft_bonus", 30, balance_after, None, "implant", entry_date)
+                linguasoft_bonus = 30
+            literature_bonus = 0
+            if (
+                next_stars == 3
+                and previous_stars < 3
+                and has_active_card(c, telegram_id, "card_literature")
+                and not has_used_card_today(c, telegram_id, "card_literature", "diary_3star", entry_date)
+            ):
+                mark_card_used_today(c, telegram_id, "card_literature", "diary_3star", entry_date)
+                c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (telegram_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                balance_after = c.fetchone()[0] or 0
+                log_economy(c, telegram_id, "card_literature_wisdom", 15, balance_after, None, "card", entry_date)
+                literature_bonus = 15
+            if next_bonus and not previous_bonus:
+                literature_bonus += grant_card_points_once(
+                    c, telegram_id, "card_literature", f"bonus_line:{entry_date}", 10,
+                    "card_literature_bonus_line", f"бонус дневника {entry_date}", entry_date,
+                )
+            star_diary_bonus = 0
+            if next_stars == 3 and previous_stars < 3:
+                star_diary_bonus = grant_card_points_once(
+                    c, telegram_id, "card_star", f"diary_constellation:{entry_date}", 10,
+                    "card_star_constellation", f"дневник 3★ {entry_date}", entry_date,
+                )
+            if (
+                next_stars == 3
+                and has_active_implant(c, telegram_id, "implant_linguasoft")
+                and not has_used_implant_today(c, telegram_id, "implant_linguasoft", f"streak3:{entry_date}")
+            ):
+                c.execute(
+                    """SELECT stars FROM diary_stars
+                       WHERE telegram_id=? AND entry_date < ?
+                       ORDER BY entry_date DESC
+                       LIMIT 2""",
+                    (telegram_id, entry_date),
+                )
+                prev_two = [r[0] for r in c.fetchall()]
+                if len(prev_two) == 2 and all(s == 3 for s in prev_two):
+                    mark_implant_used_today(c, telegram_id, "implant_linguasoft", f"streak3:{entry_date}")
+                    c.execute("UPDATE users SET points = points + 20 WHERE telegram_id=?", (telegram_id,))
+                    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                    balance_after = c.fetchone()[0] or 0
+                    log_economy(c, telegram_id, "implant_linguasoft_streak", 20, balance_after, None, "implant", entry_date)
+                    linguasoft_bonus += 20
+            if next_stars == 3 and previous_stars < 3:
+                c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
+                          (telegram_id,))
+            conn.commit()
+            return {
+                "next_stars": next_stars,
+                "next_bonus": next_bonus,
+                "next_points": next_points,
+                "previous_points": previous_points,
+                "linguasoft_bonus": linguasoft_bonus,
+                "literature_bonus": literature_bonus,
+                "star_diary_bonus": star_diary_bonus,
+            }
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+
     return {
         "success": True,
         "telegram_id": telegram_id,
         "entry_date": entry_date,
-        "stars": next_stars,
-        "bonus": bool(next_bonus),
-        "points_awarded": next_points,
-        "points_delta": next_points - previous_points,
-        "implant_bonus": linguasoft_bonus,
-        "card_bonus": literature_bonus + star_diary_bonus,
+        "stars": result["next_stars"],
+        "bonus": bool(result["next_bonus"]),
+        "points_awarded": result["next_points"],
+        "points_delta": result["next_points"] - result["previous_points"],
+        "implant_bonus": result["linguasoft_bonus"],
+        "card_bonus": result["literature_bonus"] + result["star_diary_bonus"],
     }
 
 
@@ -5068,24 +5087,6 @@ async def open_case(data: dict):
     if not telegram_id:
         raise HTTPException(status_code=400, detail="No telegram_id")
 
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-    if not c.fetchone():
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-
-    now_beijing = datetime.now(BEIJING_TZ)
-    today = now_beijing.strftime('%Y-%m-%d')
-
-    if telegram_id not in ADMIN_IDS:
-        c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
-        row = c.fetchone()
-        attempts = row[0] if row else 0
-        if attempts <= 0:
-            conn.close()
-            raise HTTPException(status_code=400, detail="No scan attempts remaining")
-
     case_type = random.choices(['gold', 'purple', 'black'], weights=[789, 210, 1], k=1)[0]
     if case_type == 'gold':
         prizes = [
@@ -5111,48 +5112,76 @@ async def open_case(data: dict):
         prizes = [
             {"code": "implant_red_dragon", "name": "Протокол Красный Дракон 红龙", "points": 0, "weight": 1, "icon": "🐉", "case_type": "black"},
         ]
-
     prize = dict(random.choices(prizes, weights=[p["weight"] for p in prizes], k=1)[0])
-    now_str = now_beijing.strftime('%Y-%m-%d %H:%M:%S')
 
-    # Spend one scan attempt, earn one protocol fragment
-    if telegram_id not in ADMIN_IDS:
-        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET
-                       scan_attempts = MAX(0, scan_attempts - 1),
-                       protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
-    else:
-        c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET
-                       protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+            if not c.fetchone():
+                return {"error": "User not found", "status": 404}
 
-    if prize["code"] == "skip":
-        c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET immunity=1""", (telegram_id,))
-        c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_immunity', now_str, 'active'))
-    elif prize["code"] == "walk":
-        expires = now_beijing.strftime('%Y-%m-%d') + ' 22:00:00'
-        c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
-    elif prize["code"] == "laundry":
-        c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_laundry', now_str, 'active'))
-    elif prize["code"].startswith("implant_"):
-        c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
-    if prize.get("points", 0) > 0:
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (prize["points"], telegram_id))
+            now_beijing = datetime.now(BEIJING_TZ)
+            today = now_beijing.strftime('%Y-%m-%d')
 
-    c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    new_points = c.fetchone()[0]
-    c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
-    scan_row = c.fetchone()
-    log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
-    conn.commit()
-    conn.close()
+            if telegram_id not in ADMIN_IDS:
+                c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
+                row = c.fetchone()
+                attempts = row[0] if row else 0
+                if attempts <= 0:
+                    return {"error": "No scan attempts remaining", "status": 400}
+
+            now_str = now_beijing.strftime('%Y-%m-%d %H:%M:%S')
+
+            if telegram_id not in ADMIN_IDS:
+                c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET
+                               scan_attempts = MAX(0, scan_attempts - 1),
+                               protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
+            else:
+                c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET
+                               protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
+
+            if prize["code"] == "skip":
+                c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET immunity=1""", (telegram_id,))
+                c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_immunity', now_str, 'active'))
+            elif prize["code"] == "walk":
+                expires = now_beijing.strftime('%Y-%m-%d') + ' 22:00:00'
+                c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
+            elif prize["code"] == "laundry":
+                c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_laundry', now_str, 'active'))
+            elif prize["code"].startswith("implant_"):
+                c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
+            if prize.get("points", 0) > 0:
+                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (prize["points"], telegram_id))
+
+            c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+            new_points = c.fetchone()[0]
+            c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+            scan_row = c.fetchone()
+            log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
+            conn.commit()
+            return {
+                "new_points": new_points,
+                "scan_attempts": scan_row[0] if scan_row else 0,
+                "protocol_fragments": scan_row[1] if scan_row else 0,
+            }
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+
     return {
         "prize": prize,
-        "new_points": new_points,
-        "scan_attempts": scan_row[0] if scan_row else 0,
-        "protocol_fragments": scan_row[1] if scan_row else 0,
+        "new_points": result["new_points"],
+        "scan_attempts": result["scan_attempts"],
+        "protocol_fragments": result["protocol_fragments"],
     }
 
 
@@ -5571,86 +5600,99 @@ async def get_shop(telegram_id: int = 0):
 async def buy_item(data: dict):
     telegram_id = data.get("telegram_id")
     item_code = data.get("item_code")
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     if not telegram_id or not item_code:
         raise HTTPException(status_code=400, detail="Missing data")
 
-    conn = get_conn()
-    c = conn.cursor()
-    if user_netwatch_locked(c, telegram_id):
-        conn.close()
-        raise HTTPException(status_code=403, detail="Account frozen")
+    def _run():
+        today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            if user_netwatch_locked(c, telegram_id):
+                return {"error": "Account frozen", "status": 403}
 
-    c.execute("SELECT name, price, daily_limit, category FROM shop_items WHERE code=? AND active=1", (item_code,))
-    item = c.fetchone()
-    if not item:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Item not found")
-    name, price, daily_limit, category = item
-    base_price = price
-    if has_active_implant(c, telegram_id, "implant_guanxi"):
-        price = max(0, int(price * 0.9))
-    price_after_guanxi = price
-    if has_active_card(c, telegram_id, "card_zhongli"):
-        price = max(0, int(price * 0.95))
+            c.execute("SELECT name, price, daily_limit, category FROM shop_items WHERE code=? AND active=1", (item_code,))
+            item = c.fetchone()
+            if not item:
+                return {"error": "Item not found", "status": 404}
+            name, price, daily_limit, category = item
+            base_price = price
+            if has_active_implant(c, telegram_id, "implant_guanxi"):
+                price = max(0, int(price * 0.9))
+            price_after_guanxi = price
+            if has_active_card(c, telegram_id, "card_zhongli"):
+                price = max(0, int(price * 0.95))
 
-    if daily_limit != -1:
-        c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (item_code, today))
-        row = c.fetchone()
-        if row and row[0] >= daily_limit:
+            if daily_limit != -1:
+                c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (item_code, today))
+                row = c.fetchone()
+                if row and row[0] >= daily_limit:
+                    return {"error": "Daily limit reached", "status": 409}
+
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+            user = c.fetchone()
+            if not user or (user[0] or 0) < price:
+                return {"error": "Not enough points", "status": 400}
+
+            c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (price, telegram_id))
+            if item_code == 'immunity':
+                c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET immunity=1""", (telegram_id,))
+            elif item_code == 'extra_case':
+                c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""", (telegram_id,))
+            elif item_code == SHOP_EXTRA_RAID_CODE:
+                c.execute("""INSERT INTO user_status (telegram_id, extra_raids) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET extra_raids=extra_raids+1""", (telegram_id,))
+            elif item_code == 'double_win':
+                c.execute("""INSERT INTO user_status (telegram_id, double_win) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET double_win=1""", (telegram_id,))
+            elif item_code == 'title_player':
+                c.execute("""INSERT INTO user_status (telegram_id, title_date) VALUES (?,?)
+                             ON CONFLICT(telegram_id) DO UPDATE SET title_date=?""", (telegram_id, today, today))
+
+            c.execute("INSERT INTO shop_purchases (telegram_id, item_code) VALUES (?,?)", (telegram_id, item_code))
+            c.execute("""INSERT INTO shop_daily_counts (item_code, date, count) VALUES (?,?,1)
+                         ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, today))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+            new_points = c.fetchone()[0]
+            log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
+            if has_active_implant(c, telegram_id, "implant_panda"):
+                c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                new_points = c.fetchone()[0] or 0
+                log_economy(c, telegram_id, 'implant_panda_cashback', 10, new_points, None, 'implant', name)
+            zhongli_scan_bonus = grant_card_scan_once(
+                c, telegram_id, "card_zhongli", "shop_resonance",
+                "card_zhongli_shop_resonance", name, today,
+            )
+            conn.commit()
+            return {
+                "name": name,
+                "new_points": new_points,
+                "price_paid": price,
+                "base_price": base_price,
+                "guanxi_discount": base_price - price_after_guanxi,
+                "zhongli_discount": price_after_guanxi - price,
+                "zhongli_scan_bonus": zhongli_scan_bonus,
+            }
+        finally:
             conn.close()
-            raise HTTPException(status_code=409, detail="Daily limit reached")
 
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    user = c.fetchone()
-    if not user or (user[0] or 0) < price:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Not enough points")
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
 
-    c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (price, telegram_id))
-    if item_code == 'immunity':
-        c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET immunity=1""", (telegram_id,))
-    elif item_code == 'extra_case':
-        c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""", (telegram_id,))
-    elif item_code == SHOP_EXTRA_RAID_CODE:
-        c.execute("""INSERT INTO user_status (telegram_id, extra_raids) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET extra_raids=extra_raids+1""", (telegram_id,))
-    elif item_code == 'double_win':
-        c.execute("""INSERT INTO user_status (telegram_id, double_win) VALUES (?,1)
-                     ON CONFLICT(telegram_id) DO UPDATE SET double_win=1""", (telegram_id,))
-    elif item_code == 'title_player':
-        c.execute("""INSERT INTO user_status (telegram_id, title_date) VALUES (?,?)
-                     ON CONFLICT(telegram_id) DO UPDATE SET title_date=?""", (telegram_id, today, today))
-
-    c.execute("INSERT INTO shop_purchases (telegram_id, item_code) VALUES (?,?)", (telegram_id, item_code))
-    c.execute("""INSERT INTO shop_daily_counts (item_code, date, count) VALUES (?,?,1)
-                 ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, today))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    new_points = c.fetchone()[0]
-    log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
-    if has_active_implant(c, telegram_id, "implant_panda"):
-        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-        new_points = c.fetchone()[0] or 0
-        log_economy(c, telegram_id, 'implant_panda_cashback', 10, new_points, None, 'implant', name)
-    zhongli_scan_bonus = grant_card_scan_once(
-        c, telegram_id, "card_zhongli", "shop_resonance",
-        "card_zhongli_shop_resonance", name, today,
-    )
-    conn.commit()
-    conn.close()
     return {
         "success": True,
-        "item": name,
-        "new_points": new_points,
-        "price_paid": price,
-        "base_price": base_price,
-        "guanxi_discount": base_price - price_after_guanxi,
-        "zhongli_discount": price_after_guanxi - price,
-        "total_discount": base_price - price,
-        "zhongli_scan_bonus": zhongli_scan_bonus,
+        "item": result["name"],
+        "new_points": result["new_points"],
+        "price_paid": result["price_paid"],
+        "base_price": result["base_price"],
+        "guanxi_discount": result["guanxi_discount"],
+        "zhongli_discount": result["zhongli_discount"],
+        "total_discount": result["base_price"] - result["price_paid"],
+        "zhongli_scan_bonus": result["zhongli_scan_bonus"],
     }
 
 
@@ -6324,7 +6366,7 @@ async def admin_grant_fragments(data: dict, x_admin_id: Optional[int] = Header(N
         finally:
             conn.close()
 
-    new_val = await asyncio.to_thread(_run)
+    new_val = await db_write(_run)
     if new_val is None:
         raise HTTPException(status_code=404, detail="User not found")
     return {"success": True, "telegram_id": telegram_id, "amount": amount, "protocol_fragments": new_val}
@@ -6355,7 +6397,7 @@ async def admin_grant_scan_attempt(data: dict, x_admin_id: Optional[int] = Heade
         finally:
             conn.close()
 
-    new_val = await asyncio.to_thread(_run)
+    new_val = await db_write(_run)
     if new_val is None:
         raise HTTPException(status_code=404, detail="User not found")
     return {"success": True, "telegram_id": telegram_id, "scan_attempts": new_val}
@@ -7334,116 +7376,128 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
         raise HTTPException(status_code=400, detail=f"Награда: от {CONTRACT_MIN_REWARD} до {max_reward} ★")
 
     fee = compute_contract_fee(reward)
-    conn = get_conn()
-    c = conn.cursor()
-    _check_blackwall(c, x_telegram_id)
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    zhongli_fee_reduction = 0
-    if (
-        has_active_card(c, x_telegram_id, "card_zhongli")
-        and not has_used_card_today(c, x_telegram_id, "card_zhongli", "contract_seal", today)
-    ):
-        zhongli_fee_reduction = 1
-        fee = max(1, fee - zhongli_fee_reduction)
-        mark_card_used_today(c, x_telegram_id, "card_zhongli", "contract_seal", today)
 
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
-    user = c.fetchone()
-    if not user:
-        conn.close()
-        raise HTTPException(status_code=404, detail="User not found")
-    if (user[0] or 0) < reward:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Недостаточно ★ для создания контракта")
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            _check_blackwall(c, x_telegram_id)
+            today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+            local_fee = fee
+            zhongli_fee_reduction = 0
+            if (
+                has_active_card(c, x_telegram_id, "card_zhongli")
+                and not has_used_card_today(c, x_telegram_id, "card_zhongli", "contract_seal", today)
+            ):
+                zhongli_fee_reduction = 1
+                local_fee = max(1, local_fee - zhongli_fee_reduction)
+                mark_card_used_today(c, x_telegram_id, "card_zhongli", "contract_seal", today)
 
-    c.execute(
-        "SELECT COUNT(*) FROM contracts WHERE creator_telegram_id=? AND status IN ('open','accepted')",
-        (x_telegram_id,),
-    )
-    if (c.fetchone()[0] or 0) >= CONTRACT_MAX_ACTIVE:
-        conn.close()
-        raise HTTPException(status_code=400, detail=f"Максимум {CONTRACT_MAX_ACTIVE} активных контракта одновременно")
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
+            user = c.fetchone()
+            if not user:
+                return {"error": "User not found", "status": 404}
+            if (user[0] or 0) < reward:
+                return {"error": "Недостаточно ★ для создания контракта", "status": 400}
 
-    c.execute(
-        "SELECT COALESCE(SUM(reward_stars),0) FROM contracts WHERE creator_telegram_id=? AND date(created_at)=?",
-        (x_telegram_id, today),
-    )
-    if ((c.fetchone()[0] or 0) + reward) > CONTRACT_MAX_DAILY_SPEND:
-        conn.close()
-        raise HTTPException(status_code=400, detail=f"Дневной лимит расходов через контракты: {CONTRACT_MAX_DAILY_SPEND} ★")
+            c.execute(
+                "SELECT COUNT(*) FROM contracts WHERE creator_telegram_id=? AND status IN ('open','accepted')",
+                (x_telegram_id,),
+            )
+            if (c.fetchone()[0] or 0) >= CONTRACT_MAX_ACTIVE:
+                return {"error": f"Максимум {CONTRACT_MAX_ACTIVE} активных контракта одновременно", "status": 400}
 
-    is_susp, susp_reason = detect_suspicious(c, x_telegram_id, reward, title, description, category)
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                "SELECT COALESCE(SUM(reward_stars),0) FROM contracts WHERE creator_telegram_id=? AND date(created_at)=?",
+                (x_telegram_id, today),
+            )
+            if ((c.fetchone()[0] or 0) + reward) > CONTRACT_MAX_DAILY_SPEND:
+                return {"error": f"Дневной лимит расходов через контракты: {CONTRACT_MAX_DAILY_SPEND} ★", "status": 400}
 
-    c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (reward, x_telegram_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
-    balance_after = c.fetchone()[0] or 0
+            is_susp, susp_reason = detect_suspicious(c, x_telegram_id, reward, title, description, category)
+            now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
 
-    c.execute(
-        '''INSERT INTO contracts
-           (title, description, category, reward_stars, fee_stars,
-            creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)''',
-        (title, description, category, reward, fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str),
-    )
-    contract_id = c.lastrowid
-    log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
-                contract_id, 'contract', f"Заморозка: контракт #{contract_id}")
-    if zhongli_fee_reduction:
-        log_economy(c, x_telegram_id, 'card_zhongli_contract_seal', 0, balance_after,
-                    contract_id, 'card', f"Комиссия снижена на {zhongli_fee_reduction}★")
-    conn.commit()
-    conn.close()
-    return {"success": True, "id": contract_id, "fee_stars": fee, "payout_stars": reward - fee}
+            c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (reward, x_telegram_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
+            balance_after = c.fetchone()[0] or 0
+
+            c.execute(
+                '''INSERT INTO contracts
+                   (title, description, category, reward_stars, fee_stars,
+                    creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)''',
+                (title, description, category, reward, local_fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str),
+            )
+            contract_id = c.lastrowid
+            log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
+                        contract_id, 'contract', f"Заморозка: контракт #{contract_id}")
+            if zhongli_fee_reduction:
+                log_economy(c, x_telegram_id, 'card_zhongli_contract_seal', 0, balance_after,
+                            contract_id, 'card', f"Комиссия снижена на {zhongli_fee_reduction}★")
+            conn.commit()
+            return {"contract_id": contract_id, "fee_stars": local_fee}
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+
+    return {"success": True, "id": result["contract_id"], "fee_stars": result["fee_stars"], "payout_stars": reward - result["fee_stars"]}
 
 
 @app.post("/api/contracts/{contract_id}/accept")
 async def accept_contract(contract_id: int, x_telegram_id: Optional[int] = Header(None)):
     if not x_telegram_id:
         raise HTTPException(status_code=401, detail="Not authorized")
-    conn = get_conn()
-    c = conn.cursor()
-    _check_blackwall(c, x_telegram_id)
-    row = get_contract_row(c, contract_id)
-    if not row:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Контракт не найден")
-    creator_id, reward, status = row[6], row[4], row[8]
-    if status != 'open':
-        conn.close()
-        raise HTTPException(status_code=400, detail="Контракт недоступен для принятия")
-    if creator_id == x_telegram_id:
-        conn.close()
-        raise HTTPException(status_code=400, detail="Нельзя принять собственный контракт")
 
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    c.execute(
-        "SELECT COUNT(*) FROM contracts WHERE assignee_telegram_id=? AND status='completed' AND date(completed_at)=?",
-        (x_telegram_id, today),
-    )
-    if (c.fetchone()[0] or 0) >= CONTRACT_MAX_COMPLETED_PER_DAY:
-        conn.close()
-        raise HTTPException(status_code=400, detail=f"Дневной лимит выполненных контрактов: {CONTRACT_MAX_COMPLETED_PER_DAY}")
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            _check_blackwall(c, x_telegram_id)
+            row = get_contract_row(c, contract_id)
+            if not row:
+                return {"error": "Контракт не найден", "status": 404}
+            creator_id, reward, status = row[6], row[4], row[8]
+            if status != 'open':
+                return {"error": "Контракт недоступен для принятия", "status": 400}
+            if creator_id == x_telegram_id:
+                return {"error": "Нельзя принять собственный контракт", "status": 400}
 
-    c.execute(
-        "SELECT COALESCE(SUM(reward_stars-fee_stars),0) FROM contracts WHERE assignee_telegram_id=? AND status='completed' AND date(completed_at)=?",
-        (x_telegram_id, today),
-    )
-    today_earn = c.fetchone()[0] or 0
-    payout = reward - compute_contract_fee(reward)
-    if today_earn + payout > CONTRACT_MAX_DAILY_EARN:
-        conn.close()
-        raise HTTPException(status_code=400, detail=f"Дневной лимит заработка: {CONTRACT_MAX_DAILY_EARN} ★")
+            today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+            c.execute(
+                "SELECT COUNT(*) FROM contracts WHERE assignee_telegram_id=? AND status='completed' AND date(completed_at)=?",
+                (x_telegram_id, today),
+            )
+            if (c.fetchone()[0] or 0) >= CONTRACT_MAX_COMPLETED_PER_DAY:
+                return {"error": f"Дневной лимит выполненных контрактов: {CONTRACT_MAX_COMPLETED_PER_DAY}", "status": 400}
 
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    c.execute(
-        "UPDATE contracts SET status='accepted', assignee_telegram_id=?, accepted_at=? WHERE id=?",
-        (x_telegram_id, now_str, contract_id),
-    )
-    log_economy(c, x_telegram_id, 'contract_accept', 0, None, contract_id, 'contract',
-                f"Принят контракт #{contract_id}")
-    conn.commit()
-    conn.close()
+            c.execute(
+                "SELECT COALESCE(SUM(reward_stars-fee_stars),0) FROM contracts WHERE assignee_telegram_id=? AND status='completed' AND date(completed_at)=?",
+                (x_telegram_id, today),
+            )
+            today_earn = c.fetchone()[0] or 0
+            payout = reward - compute_contract_fee(reward)
+            if today_earn + payout > CONTRACT_MAX_DAILY_EARN:
+                return {"error": f"Дневной лимит заработка: {CONTRACT_MAX_DAILY_EARN} ★", "status": 400}
+
+            now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                "UPDATE contracts SET status='accepted', assignee_telegram_id=?, accepted_at=? WHERE id=?",
+                (x_telegram_id, now_str, contract_id),
+            )
+            log_economy(c, x_telegram_id, 'contract_accept', 0, None, contract_id, 'contract',
+                        f"Принят контракт #{contract_id}")
+            conn.commit()
+            return {}
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+
     return {"success": True}
 
 
