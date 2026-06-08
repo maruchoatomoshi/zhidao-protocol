@@ -78,6 +78,53 @@ conn.close()
 PY
 ```
 
+SQLite direct write benchmark:
+
+```bash
+python3 - <<'PY'
+import sqlite3, time
+
+for i in range(5):
+    conn = sqlite3.connect('/root/zhidao.db', timeout=30)
+    conn.execute('PRAGMA busy_timeout=5000')
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA synchronous=NORMAL')
+    t = time.time()
+    conn.execute("""
+        INSERT INTO admin_action_logs
+        (admin_id, target_id, action_type, points_delta, reason, created_at)
+        VALUES (0, NULL, 'bench', 0, 'bench', datetime('now'))
+    """)
+    conn.commit()
+    print('write %d: %.0f ms' % (i, (time.time() - t) * 1000))
+    conn.execute("DELETE FROM admin_action_logs WHERE action_type='bench'")
+    conn.commit()
+    conn.close()
+    time.sleep(0.2)
+PY
+```
+
+Live API write queue:
+
+```bash
+journalctl -u zhidao_api.service --since "10 minutes ago" --no-pager -l \
+  | grep 'ZHIDAO_DB_WRITE'
+```
+
+Expected healthy state after warmup:
+
+- `lock_wait=0ms` or very close to zero;
+- normal writes usually below `1000 ms`;
+- one first write after idle can be slower because WAL/checkpoint/filesystem state warms up.
+
+If `lock_wait` grows, another process is holding the SQLite write lock. Check the bot first:
+
+```bash
+grep -n "sqlite3.connect" /root/zhidao_bot.py
+grep -n "PRAGMA synchronous=NORMAL" /root/zhidao_bot.py
+lsof /root/zhidao.db 2>/dev/null || echo "lsof not installed"
+```
+
 ## Interpretation
 
 If `elapsed_ms` is small, for example `< 500 ms`, but the user sees "no connection", the delay is probably outside the handler:
@@ -109,7 +156,12 @@ The API now sets:
 
 - `PRAGMA journal_mode=WAL` during startup;
 - `PRAGMA synchronous=NORMAL` during startup;
-- `timeout=30` and `PRAGMA busy_timeout=30000` for SQLite connections.
+- `timeout=30` and `PRAGMA busy_timeout=5000` for SQLite connections.
+
+The bot must use the same SQLite connection settings. A bot using SQLite defaults can hold
+the single writer lock during `synchronous=FULL` commits and make API writes wait for many
+seconds. This caused the historical black-screen failure mode where Mini App mutations
+queued behind the bot.
 
 This helps with read/write concurrency and short lock bursts. It does not replace a real queue or PostgreSQL under heavy parallel writes.
 
