@@ -16,6 +16,7 @@ const CAMPUS_MAP_CATEGORIES = [
 
 const CAMPUS_MAP_EDITOR_OWNER_ID = 389741116;
 const CAMPUS_MAP_EDITOR_STORAGE_KEY = 'zhidao_campus_map_editor_v1';
+const CAMPUS_MAP_EDITOR_CLOUD_KEY = 'campus_map_editor_v1';
 
 const CAMPUS_POINTS = [
   {
@@ -364,6 +365,8 @@ let campusMapQuery = '';
 let campusMapEditorEnabled = false;
 let campusMapEditorSelectionId = '';
 let campusMapEditorCursor = null;
+let campusMapEditorAutosaveTimer = null;
+let campusMapEditorCloudLoaded = false;
 
 function campusMapCategoryLabel(category) {
   return (CAMPUS_MAP_CATEGORIES.find(item => item.id === category) || {}).label || category;
@@ -374,23 +377,74 @@ function campusMapCanEdit() {
     && !!(typeof isArchitect !== 'undefined' && isArchitect);
 }
 
+function campusMapNormalizeEditorEdits(value) {
+  const parsed = value && typeof value === 'object' ? value : {};
+  return {
+    overrides: parsed.overrides && typeof parsed.overrides === 'object' ? parsed.overrides : {},
+    custom: Array.isArray(parsed.custom) ? parsed.custom : [],
+    updatedAt: Number(parsed.updatedAt || 0),
+  };
+}
+
+function campusMapHasEditorEdits(edits) {
+  return !!(edits && (Object.keys(edits.overrides || {}).length || (edits.custom || []).length));
+}
+
+function campusMapEditorCloudStorage() {
+  try {
+    return window.Telegram?.WebApp?.CloudStorage || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function campusMapLoadEditorEdits() {
   try {
     const parsed = JSON.parse(localStorage.getItem(CAMPUS_MAP_EDITOR_STORAGE_KEY) || '{}');
-    return {
-      overrides: parsed && typeof parsed.overrides === 'object' && parsed.overrides ? parsed.overrides : {},
-      custom: Array.isArray(parsed?.custom) ? parsed.custom : [],
-    };
+    return campusMapNormalizeEditorEdits(parsed);
   } catch (e) {
-    return { overrides: {}, custom: [] };
+    return { overrides: {}, custom: [], updatedAt: 0 };
   }
 }
 
 function campusMapSaveEditorEdits(edits) {
-  localStorage.setItem(CAMPUS_MAP_EDITOR_STORAGE_KEY, JSON.stringify({
-    overrides: edits?.overrides || {},
-    custom: Array.isArray(edits?.custom) ? edits.custom : [],
-  }));
+  const normalized = { ...campusMapNormalizeEditorEdits(edits), updatedAt: Date.now() };
+  const data = JSON.stringify(normalized);
+  localStorage.setItem(CAMPUS_MAP_EDITOR_STORAGE_KEY, data);
+  campusMapSaveEditorCloudEdits(normalized);
+}
+
+function campusMapSaveEditorCloudEdits(edits) {
+  const cloud = campusMapEditorCloudStorage();
+  if (!cloud || !campusMapCanEdit()) return;
+  try {
+    cloud.setItem(CAMPUS_MAP_EDITOR_CLOUD_KEY, JSON.stringify(campusMapNormalizeEditorEdits(edits)));
+  } catch (e) {}
+}
+
+function campusMapLoadEditorCloudOnce() {
+  if (!campusMapCanEdit() || campusMapEditorCloudLoaded) return;
+  campusMapEditorCloudLoaded = true;
+  const cloud = campusMapEditorCloudStorage();
+  if (!cloud) return;
+
+  try {
+    cloud.getItem(CAMPUS_MAP_EDITOR_CLOUD_KEY, (err, value) => {
+      if (err) return;
+      let cloudEdits = { overrides: {}, custom: [], updatedAt: 0 };
+      try {
+        cloudEdits = campusMapNormalizeEditorEdits(JSON.parse(value || '{}'));
+      } catch (e) {}
+
+      const localEdits = campusMapLoadEditorEdits();
+      if (campusMapHasEditorEdits(cloudEdits) && (!campusMapHasEditorEdits(localEdits) || cloudEdits.updatedAt > localEdits.updatedAt)) {
+        localStorage.setItem(CAMPUS_MAP_EDITOR_STORAGE_KEY, JSON.stringify(cloudEdits));
+        initCampusMap();
+      } else if (campusMapHasEditorEdits(localEdits)) {
+        campusMapSaveEditorEdits(localEdits);
+      }
+    });
+  } catch (e) {}
 }
 
 function campusMapAllPoints() {
@@ -491,6 +545,8 @@ function initCampusMap() {
   const root = document.getElementById('campusMapRoot');
   if (!root) return;
 
+  campusMapLoadEditorCloudOnce();
+
   const mode = campusMapAssetMode();
   const points = campusMapFilteredPoints();
   const canEdit = campusMapCanEdit();
@@ -550,6 +606,8 @@ function initCampusMap() {
       search._campusMapTimer = window.setTimeout(initCampusMap, 180);
     });
   }
+
+  bindCampusMapEditorAutosave();
 }
 
 function setCampusMapFilter(filter) {
@@ -584,7 +642,10 @@ function handleCampusMapStageClick(event) {
   const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
   const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
   campusMapEditorCursor = { x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
-  campusMapEditorSelectionId = '';
+  if (campusMapEditorSelectionId) {
+    saveCampusMapEditorPoint({ x: campusMapEditorCursor.x, y: campusMapEditorCursor.y, silent: true });
+    return;
+  }
   initCampusMap();
 }
 
@@ -619,11 +680,43 @@ function campusMapEditorPayload(existing) {
   };
 }
 
-function saveCampusMapEditorPoint() {
+function campusMapApplyPayloadPatch(payload, patch) {
+  const next = { ...payload };
+  if (patch && Object.prototype.hasOwnProperty.call(patch, 'x')) next.x = Number(Number(patch.x).toFixed(1));
+  if (patch && Object.prototype.hasOwnProperty.call(patch, 'y')) next.y = Number(Number(patch.y).toFixed(1));
+  return next;
+}
+
+function bindCampusMapEditorAutosave() {
+  if (!campusMapEditorEnabled || !campusMapCanEdit()) return;
+  const fields = [
+    'campusEditTitle',
+    'campusEditLabel',
+    'campusEditX',
+    'campusEditY',
+    'campusEditCategory',
+    'campusEditLabelPos',
+    'campusEditLabelDx',
+    'campusEditLabelDy',
+    'campusEditDescription',
+  ];
+
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
+    el.addEventListener(eventName, () => {
+      window.clearTimeout(campusMapEditorAutosaveTimer);
+      campusMapEditorAutosaveTimer = window.setTimeout(() => saveCampusMapEditorPoint({ silent: true, keepFocus: true }), 350);
+    });
+  });
+}
+
+function saveCampusMapEditorPoint(options = {}) {
   if (!campusMapCanEdit()) return;
   const edits = campusMapLoadEditorEdits();
   const existing = campusMapEditorSelectionId ? campusMapFindPoint(campusMapEditorSelectionId) : null;
-  const payload = campusMapEditorPayload(existing);
+  const payload = campusMapApplyPayloadPatch(campusMapEditorPayload(existing), options);
 
   if (existing?.isCustom || payload.id.startsWith('custom-')) {
     edits.custom = edits.custom.filter(point => point.id !== payload.id);
@@ -635,8 +728,8 @@ function saveCampusMapEditorPoint() {
   campusMapSaveEditorEdits(edits);
   campusMapEditorSelectionId = payload.id;
   campusMapEditorCursor = { x: payload.x, y: payload.y };
-  if (typeof showToast === 'function') showToast('Точка карты сохранена локально');
-  initCampusMap();
+  if (!options.silent && typeof showToast === 'function') showToast('Точка карты сохранена');
+  if (!options.keepFocus) initCampusMap();
 }
 
 function newCampusMapEditorPoint() {
