@@ -788,3 +788,190 @@ function showConfirmDialog(options) {
     modal.addEventListener('click', onBackdrop);
   });
 }
+
+function zSetText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function zSetStyle(id, prop, value) {
+  const el = document.getElementById(id);
+  if (el) el.style[prop] = value;
+}
+
+function zSafeUiCall(label, fn) {
+  try {
+    if (typeof fn === 'function') fn();
+  } catch (e) {
+    console.warn(`[ZHIDAO UI] ${label} failed`, e);
+  }
+}
+
+function zCacheUserProfile(telegramId, data) {
+  try {
+    localStorage.setItem(`zhidao_profile_cache_${telegramId}`, JSON.stringify({
+      saved_at: Date.now(),
+      data,
+    }));
+  } catch (e) {}
+}
+
+function zReadCachedUserProfile(telegramId) {
+  try {
+    const raw = localStorage.getItem(`zhidao_profile_cache_${telegramId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && parsed.data ? parsed.data : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function zFetchUserProfile(telegramId, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const r = await fetch(`${API_URL}/api/user/${telegramId}`, {
+      signal: controller.signal,
+      headers: { 'X-Request-ID': `profile-${Date.now().toString(36)}` },
+    });
+    let data = null;
+    try { data = await r.json(); } catch (e) {}
+    return { response: r, data };
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function zApplyUserProfile(telegramId, data, options = {}) {
+  isAdmin = !!data.is_admin;
+  isArchitect = !!data.is_architect;
+  document.body.classList.toggle('is-architect', isArchitect);
+
+  userConfig = data.link;
+  currentAvatarUrl = data.avatar_url || null;
+
+  const displayName = data.full_name || data.username || `ID ${telegramId}`;
+  zSetText('status', options.fromCache ? '● КЕШ' : '● АКТИВЕН');
+  zSetStyle('status', 'color', options.fromCache ? '#dbb165' : '#cc4444');
+  zSetText('username', displayName);
+
+  const used = data.used_traffic || 0;
+  const usedGB = (used / 1024 / 1024 / 1024).toFixed(2);
+  const hasVpn = data.has_vpn !== false;
+  zSetText('serverTag', hasVpn ? `HK NODE // ${usedGB} GB` : 'STUDENT NODE // VPN не привязан');
+  zSetText('trafficValue', hasVpn ? `${usedGB} GB` : '— GB');
+  const percent = Math.min((used / (10 * 1024 * 1024 * 1024)) * 100, 100);
+  window.setTimeout(() => {
+    const fill = document.getElementById('progressFill');
+    if (fill) fill.style.width = `${percent}%`;
+  }, 100);
+
+  zSafeUiCall('architect visibility', () => {
+    document.querySelectorAll('.architect-only-block').forEach(el => {
+      el.style.display = isArchitect ? '' : 'none';
+    });
+  });
+
+  if (isArchitect) {
+    localStorage.setItem('zhidao_architect', '1');
+    zSafeUiCall('architect profile labels', () => {
+      const badge = document.querySelector('.profile-admin-badge');
+      if (badge) badge.textContent = '架构师 // ARCHITECT';
+      const kicker = document.getElementById('profileKicker');
+      if (kicker) kicker.textContent = 'ARCHITECT // PROTOCOL';
+    });
+    zSafeUiCall('architect boot', () => {
+      const afterIntro = () => cipherDecode(document.getElementById('profileDisplayName'));
+      if (!playAdminIntroIfNeeded(data, afterIntro)) startBlackwallBoot(afterIntro);
+      setupProfileTilt();
+    });
+  } else {
+    localStorage.removeItem('zhidao_architect');
+    zSafeUiCall('hide stale boot', () => {
+      const ov = document.getElementById('blackwall-boot');
+      if (ov) ov.style.display = 'none';
+      if (_bootRunning) {
+        _bootRunning = false;
+        _bootCbs = [];
+      }
+    });
+  }
+
+  zSafeUiCall('theme guard', () => {
+    if (!isArchitect && document.body.classList.contains('theme-architect')) {
+      if (typeof setTheme === 'function') setTheme('');
+      try { tg.CloudStorage.setItem('zhidao_theme', ''); } catch(e) {}
+      localStorage.setItem('zhidao_theme', '');
+    }
+    if (isAdmin && typeof syncAdminThemeMode === 'function') {
+      syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
+    }
+  });
+
+  zSafeUiCall('admin intro', () => {
+    if (isAdmin && !isArchitect) {
+      const badge = document.querySelector('.profile-admin-badge');
+      if (badge) badge.textContent = '系统架构师';
+      playAdminIntroIfNeeded(data);
+    }
+  });
+
+  zSafeUiCall('admin visibility', () => syncAdminUiVisibility());
+  zSafeUiCall('mvp badge', () => {
+    const mvpBadge = document.getElementById('profileMvpBadge');
+    if (mvpBadge) mvpBadge.style.display = data.is_last_mvp ? 'inline-flex' : 'none';
+  });
+  zSafeUiCall('profile avatar', () => {
+    if (typeof renderProfileAvatarCard === 'function') renderProfileAvatarCard(data);
+  });
+  zSafeUiCall('diary access', () => {
+    if (typeof syncDiaryAccessVisibility === 'function') syncDiaryAccessVisibility();
+  });
+
+  if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
+}
+
+async function loadUserData(telegramId) {
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const { response, data } = await zFetchUserProfile(telegramId);
+      if (response.ok && data) {
+        zCacheUserProfile(telegramId, data);
+        zApplyUserProfile(telegramId, data);
+        return;
+      }
+      if (response.status === 404) {
+        zSetText('status', '● НЕ НАЙДЕН');
+        zSetText('username', 'Нет подписки');
+        hideStartupCover();
+        return;
+      }
+      if (response.status === 401 || response.status === 403) {
+        zSetText('status', '● НЕТ ДОСТУПА');
+        zSetStyle('status', 'color', '#dbb165');
+        zSetText('username', 'Открой через Telegram');
+        hideStartupCover();
+        return;
+      }
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (e) {
+      lastError = e;
+    }
+    await new Promise(resolve => window.setTimeout(resolve, 700));
+  }
+
+  const cached = zReadCachedUserProfile(telegramId);
+  if (cached) {
+    zApplyUserProfile(telegramId, cached, { fromCache: true });
+    showToast('Профиль временно показан из кеша. Проверю соединение позже.');
+    return;
+  }
+
+  console.warn('[ZHIDAO UI] profile load failed', lastError);
+  zSetText('status', '● ОФЛАЙН');
+  zSetStyle('status', 'color', '#dbb165');
+  zSetText('username', 'Ошибка связи');
+  hideStartupCover();
+}
