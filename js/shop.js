@@ -310,14 +310,20 @@ const SHOP_CATEGORY_LABEL = {
   reminder: '🔔 НАПОМИНАНИЕ', trade: '🔄 ОБМЕН', privilege: '⚡ ПРИВИЛЕГИЯ', other: '📦 ПРОЧЕЕ',
 };
 
+function _bjDateStr(d) {
+  // Shift to Beijing (UTC+8) then take the date portion
+  const bj = new Date(d.getTime() + (8 * 60 + d.getTimezoneOffset()) * 60000);
+  return bj.toISOString().slice(0, 10);
+}
+
 function _inventoryExpiryLine(item, sellValue) {
   const bought = new Date(item.purchased_at).toLocaleDateString('ru-RU');
   const base = `Куплено: ${bought} · продажа ${sellValue}★`;
   if (!item.expires_at) return base;
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = _bjDateStr(now);
   const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+  const tomorrowStr = _bjDateStr(tomorrow);
   const expDate = item.expires_at.slice(0, 10);
   if (expDate === todayStr)
     return `<span class="inventory-expiry-warn">⚠ Сгорает сегодня в 23:59</span> · продажа ${sellValue}★`;
