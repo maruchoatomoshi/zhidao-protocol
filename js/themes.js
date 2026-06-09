@@ -7,7 +7,12 @@ function applyThemePath(path) {
 
   if (path === 'cyberpunk') {
     nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
-    if (!isAdmin) gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    if (!isAdmin) {
+      gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    } else {
+      // Admins always see both path catalogs regardless of current path
+      gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
+    }
     // Admins may use any theme regardless of path — don't force their theme back.
     if (!isAdmin) {
       const t = localStorage.getItem('zhidao_theme') || '';

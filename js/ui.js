@@ -344,6 +344,11 @@ async function loadUserData(telegramId) {
       if (isAdmin && typeof syncAdminThemeMode === 'function') {
         syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
       }
+      // Re-apply path so admin-specific catalog visibility is correct even if
+      // loadPoints() ran before isAdmin was set (race condition fix).
+      if (isAdmin && currentThemePath && typeof applyThemePath === 'function') {
+        applyThemePath(currentThemePath);
+      }
       syncAdminUiVisibility();
       // MVP badge on profile
       const mvpBadge = document.getElementById('profileMvpBadge');
