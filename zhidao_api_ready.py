@@ -2339,6 +2339,10 @@ LEGENDARY_ACTION_COOLDOWNS = {
     "impulse_reset": timedelta(days=7),
     "formatting": timedelta(hours=72),
     "veil_breach": timedelta(days=7),
+    "fate_verdict": timedelta(hours=24),
+    "star_ward": timedelta(days=7),
+    "earth_contract": timedelta(hours=72),
+    "okamenenie": timedelta(days=7),
 }
 
 
@@ -2367,7 +2371,12 @@ def legendary_cooldown_until(c, actor_id: int, action_code: str) -> Optional[dat
 
 
 def ensure_legendary_action_ready(c, actor_id: int, implant_id: str, action_code: str):
-    if not has_active_implant(c, actor_id, implant_id):
+    is_active = (
+        has_active_card(c, actor_id, implant_id)
+        if implant_id.startswith("card_")
+        else has_active_implant(c, actor_id, implant_id)
+    )
+    if not is_active:
         raise HTTPException(status_code=403, detail="Required legendary implant not found")
     cooldown_until = legendary_cooldown_until(c, actor_id, action_code)
     now = datetime.now(BEIJING_TZ)
@@ -4076,11 +4085,11 @@ async def confirm_presence(data: dict):
                 if check_type in {"morning", "evening"} and is_new_confirm:
                     if has_active_card(c, telegram_id, "card_fairy") and not has_used_card_today(c, telegram_id, "card_fairy", f"presence:{check_type}", check_date):
                         mark_card_used_today(c, telegram_id, "card_fairy", f"presence:{check_type}", check_date)
-                        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
+                        c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (telegram_id,))
                         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                         balance_after = c.fetchone()[0] or 0
                         log_economy(
-                            c, telegram_id, "card_fairy_blessing", 10, balance_after,
+                            c, telegram_id, "card_fairy_blessing", 15, balance_after,
                             None, "card", f"{check_type} {check_date}",
                         )
                 if check_type == "evening" and is_new_confirm:
@@ -4092,23 +4101,23 @@ async def confirm_presence(data: dict):
                     )
                     if c.fetchone():
                         grant_card_points_once(
-                            c, telegram_id, "card_fairy", f"perfect_day:{check_date}", 10,
+                            c, telegram_id, "card_fairy", f"perfect_day:{check_date}", 15,
                             "card_fairy_perfect_day", f"утро+вечер {check_date}", check_date,
                         )
                 if check_type == "morning" and is_new_confirm:
                     if has_active_card(c, telegram_id, "card_forest") and not has_used_card_today(c, telegram_id, "card_forest", "morning_harvest", check_date):
                         mark_card_used_today(c, telegram_id, "card_forest", "morning_harvest", check_date)
-                        c.execute("UPDATE users SET points = points + 8 WHERE telegram_id=?", (telegram_id,))
+                        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
                         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                         balance_after = c.fetchone()[0] or 0
                         log_economy(
-                            c, telegram_id, "card_forest_harvest", 8, balance_after,
+                            c, telegram_id, "card_forest_harvest", 10, balance_after,
                             None, "card", check_date,
                         )
                 if check_type == "manual" and is_new_confirm:
                     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
                     grant_card_points_once(
-                        c, telegram_id, "card_forest", "manual_anchor", 6,
+                        c, telegram_id, "card_forest", "manual_anchor", 8,
                         "card_forest_anchor", f"ручная перекличка {check_date}", today,
                     )
                 if check_type == "evening" and is_new_confirm:
@@ -4675,14 +4684,14 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
                 and not has_used_card_today(c, telegram_id, "card_literature", "diary_3star", entry_date)
             ):
                 mark_card_used_today(c, telegram_id, "card_literature", "diary_3star", entry_date)
-                c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (telegram_id,))
+                c.execute("UPDATE users SET points = points + 20 WHERE telegram_id=?", (telegram_id,))
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                 balance_after = c.fetchone()[0] or 0
-                log_economy(c, telegram_id, "card_literature_wisdom", 15, balance_after, None, "card", entry_date)
-                literature_bonus = 15
+                log_economy(c, telegram_id, "card_literature_wisdom", 20, balance_after, None, "card", entry_date)
+                literature_bonus = 20
             if next_bonus and not previous_bonus:
                 literature_bonus += grant_card_points_once(
-                    c, telegram_id, "card_literature", f"bonus_line:{entry_date}", 10,
+                    c, telegram_id, "card_literature", f"bonus_line:{entry_date}", 15,
                     "card_literature_bonus_line", f"бонус дневника {entry_date}", entry_date,
                 )
             star_diary_bonus = 0
@@ -5412,6 +5421,26 @@ def get_legendary_implant_status(telegram_id: int):
     return result
 
 
+@app.get("/api/cards/legendary/status/{telegram_id}")
+def get_legendary_card_status(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    result = {}
+    for action_code, card_id in {
+        "fate_verdict": "card_star",
+        "star_ward": "card_star",
+        "earth_contract": "card_zhongli",
+        "okamenenie": "card_zhongli",
+    }.items():
+        cooldown_until = legendary_cooldown_until(c, telegram_id, action_code)
+        result[action_code] = {
+            "available": has_active_card(c, telegram_id, card_id),
+            "cooldown_until": cooldown_until.strftime('%Y-%m-%d %H:%M:%S') if cooldown_until else None,
+        }
+    conn.close()
+    return result
+
+
 @app.post("/api/implants/red-dragon/intercept")
 async def red_dragon_intercept(data: dict):
     actor_id = int(data.get("telegram_id") or 0)
@@ -5584,6 +5613,186 @@ async def netwatch_veil_breach(data: dict):
     return {"success": True, "target": target_name, "locked_until": locked_until}
 
 
+@app.post("/api/cards/star/fate-verdict")
+async def star_fate_verdict(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_id = data.get("target_telegram_id")
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "card_star", "fate_verdict")
+        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
+        if target_points < 80:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Target balance below 80")
+        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''SELECT 1 FROM legendary_implant_actions
+               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='fate_verdict'
+                 AND created_at>=? LIMIT 1''',
+            (actor_id, target_id, cutoff),
+        )
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=429, detail="Target protected for 3 days")
+        c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (target_id,))
+        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+        target_balance = c.fetchone()[0] or 0
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+        actor_balance = c.fetchone()[0] or 0
+        log_economy(c, target_id, "star_fate_verdict_loss", -10, target_balance, actor_id, "card", "Предсказание судьбы")
+        log_economy(c, actor_id, "star_fate_verdict_gain", 10, actor_balance, target_id, "card", "Предсказание судьбы")
+        log_legendary_action(c, actor_id, target_id, None, "card_star", "fate_verdict", 10, 0, target_name)
+        conn.commit()
+        conn.close()
+    await send_telegram_message(target_id, "⭐ Звёздная карта вынесла «Предсказание судьбы».\nС вашего баланса снято 10★.")
+    return {"success": True, "target": target_name, "stolen": 10, "new_points": actor_balance}
+
+
+@app.post("/api/cards/star/ward")
+async def star_ward(data: dict):
+    def _run():
+        actor_id = int(data.get("telegram_id") or 0)
+        if not actor_id:
+            raise HTTPException(status_code=400, detail="telegram_id required")
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "card_star", "star_ward")
+        c.execute(
+            '''SELECT id, operation, amount, note
+               FROM economy_log
+               WHERE telegram_id=? AND amount < 0 AND amount >= -20
+                 AND reference_type IN ('event', 'casino_game')
+                 AND NOT EXISTS (
+                   SELECT 1 FROM economy_log resets
+                   WHERE resets.operation='star_ward'
+                     AND resets.reference_id=economy_log.id
+                 )
+               ORDER BY created_at DESC LIMIT 1''',
+            (actor_id,),
+        )
+        row = c.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="No eligible game penalty")
+        penalty_id, operation, amount, note = row
+        refund = abs(amount)
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, actor_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+        balance = c.fetchone()[0] or 0
+        log_economy(c, actor_id, "star_ward", refund, balance, penalty_id, "card", note or operation)
+        log_legendary_action(c, actor_id, actor_id, None, "card_star", "star_ward", refund, 0, note or operation)
+        conn.commit()
+        conn.close()
+        return {"success": True, "refunded": refund, "new_points": balance}
+    return await db_write(_run)
+
+
+@app.post("/api/cards/zhongli/earth-contract")
+async def zhongli_earth_contract(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_id = data.get("target_telegram_id")
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "card_zhongli", "earth_contract")
+        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
+        if target_points < 80:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Target balance below 80")
+        c.execute(
+            '''SELECT telegram_id, full_name, COALESCE(points, 0)
+               FROM users
+               WHERE telegram_id NOT IN (?, ?)
+                 AND telegram_id NOT IN ({})
+                 AND COALESCE(points, 0) >= 80
+               ORDER BY RANDOM()
+               LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
+            [actor_id, target_id] + ADMIN_IDS,
+        )
+        secondary = c.fetchone()
+        secondary_id = secondary[0] if secondary else None
+        secondary_name = secondary[1] if secondary else None
+        c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (target_id,))
+        c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (actor_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+        target_balance = c.fetchone()[0] or 0
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+        actor_balance = c.fetchone()[0] or 0
+        log_economy(c, target_id, "zhongli_earth_contract_loss", -15, target_balance, actor_id, "card", "Контракт Земли")
+        log_economy(c, actor_id, "zhongli_earth_contract_gain", 15, actor_balance, target_id, "card", "Контракт Земли")
+        secondary_delta = 0
+        if secondary_id:
+            c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
+            c.execute("UPDATE users SET points = points + 5 WHERE telegram_id=?", (actor_id,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
+            secondary_balance = c.fetchone()[0] or 0
+            log_economy(c, secondary_id, "zhongli_earth_contract_collateral", -5, secondary_balance, actor_id, "card", "Побочная дань")
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+            actor_balance = c.fetchone()[0] or 0
+            log_economy(c, actor_id, "zhongli_earth_contract_gain", 5, actor_balance, secondary_id, "card", "Побочная дань")
+            secondary_delta = -5
+        log_legendary_action(c, actor_id, target_id, secondary_id, "card_zhongli", "earth_contract", 15, secondary_delta, target_name)
+        conn.commit()
+        conn.close()
+    await send_telegram_message(target_id, "🪨 Архонт Земли заключил «Контракт Земли».\nС вашего баланса снято 15★ дани.")
+    if secondary_id:
+        await send_telegram_message(secondary_id, "🪨 Побочная дань Контракта Земли.\nС вашего баланса снято 5★.")
+    return {
+        "success": True,
+        "target": target_name,
+        "damage": 15,
+        "secondary_target": secondary_name,
+        "secondary_damage": 5 if secondary_id else 0,
+    }
+
+
+@app.post("/api/cards/zhongli/okamenenie")
+async def zhongli_okamenenie(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_id = data.get("target_telegram_id")
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    async with DB_WRITE_LOCK:
+        conn = get_conn()
+        c = conn.cursor()
+        ensure_legendary_action_ready(c, actor_id, "card_zhongli", "okamenenie")
+        target_id, target_name, _ = find_action_target(c, actor_id, target_id, target_name)
+        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''SELECT 1 FROM legendary_implant_actions
+               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='okamenenie'
+                 AND created_at>=? LIMIT 1''',
+            (actor_id, target_id, cutoff),
+        )
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=429, detail="Target protected for 14 days")
+        locked_until = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
+               ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
+            (target_id, locked_until),
+        )
+        log_legendary_action(c, actor_id, target_id, None, "card_zhongli", "okamenenie", 0, 0, target_name)
+        conn.commit()
+        conn.close()
+    await send_telegram_message(
+        target_id,
+        "🪨 Архонт Земли применил «Окаменение».\n"
+        "Магазин и молитвы временно недоступны на 12 часов.",
+    )
+    return {"success": True, "target": target_name, "locked_until": locked_until}
+
+
 @app.post("/api/casino/implants/disassemble/{implant_id}")
 async def disassemble_implant(implant_id: int, data: dict):
     def _run():
@@ -5655,7 +5864,7 @@ def get_shop(telegram_id: int = 0):
         if has_guanxi:
             effective_price = max(0, int(effective_price * 0.9))
         if has_zhongli:
-            effective_price = max(0, int(effective_price * 0.95))
+            effective_price = max(0, int(effective_price * 0.93))
         c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (code, today))
         row = c.fetchone()
         sold_today = row[0] if row else 0
@@ -5711,7 +5920,7 @@ async def buy_item(data: dict):
                 price = max(0, int(price * 0.9))
             price_after_guanxi = price
             if has_active_card(c, telegram_id, "card_zhongli"):
-                price = max(0, int(price * 0.95))
+                price = max(0, int(price * 0.93))
 
             if daily_limit != -1:
                 c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (item_code, today))
@@ -6266,15 +6475,15 @@ def get_raid_question():
 
 
 CARD_INFO = {
-    'card_zhongli':    {"name": "岩王帝君 Архонт Земли",        "rarity": 5, "passive": "-5% к магазину, -1★ комиссии контракта 1 раз в день, первая покупка дня даёт +1 скан"},
+    'card_zhongli':    {"name": "岩王帝君 Архонт Земли",        "rarity": 5, "passive": "-7% к магазину, -1★ комиссии контракта 1 раз в день, первая покупка дня даёт +1 скан"},
     'card_pyro':       {"name": "焰莲使者 Страж Огня",          "rarity": 4, "passive": "первый штраф дня возвращает до 25★, первый провал рейда возвращает 10★"},
     'card_fox':        {"name": "九尾狐灵 Лиса-Оборотень",      "rarity": 4, "passive": "раз в день +30★ в молитве превращаются в +60★, первый подарок дня платит налог 15★ вместо 20★"},
-    'card_fairy':      {"name": "桃花仙子 Небесная Фея",         "rarity": 4, "passive": "+10★ за первую утреннюю или вечернюю отметку, ещё +10★ за полный день утро+вечер"},
-    'card_literature': {"name": "文曲星君 Звезда Литературы",   "rarity": 4, "passive": "+15★ за дневник на 3★, +10★ за бонусную строку дневника"},
-    'card_forest':     {"name": "木灵仙君 Дух Леса",             "rarity": 4, "passive": "+8★ за утреннюю отметку, +6★ за первую ручную перекличку дня"},
-    'card_sea':        {"name": "海灵仙后 Дух Морей",            "rarity": 4, "passive": "каждая 3-я молитва дня даёт +20★, первый выполненный контракт дня даёт +5★"},
+    'card_fairy':      {"name": "桃花仙子 Небесная Фея",         "rarity": 4, "passive": "+15★ за первую утреннюю или вечернюю отметку, ещё +15★ за полный день утро+вечер"},
+    'card_literature': {"name": "文曲星君 Звезда Литературы",   "rarity": 4, "passive": "+20★ за дневник на 3★, +15★ за бонусную строку дневника"},
+    'card_forest':     {"name": "木灵仙君 Дух Леса",             "rarity": 4, "passive": "+10★ за утреннюю отметку, +8★ за первую ручную перекличку дня"},
+    'card_sea':        {"name": "海灵仙后 Дух Морей",            "rarity": 4, "passive": "каждая 3-я молитва дня даёт +25★, первый выполненный контракт дня даёт +5★"},
     'card_star':       {"name": "紫微星君 Императорская Звезда", "rarity": 5, "passive": "первый штраф дня уменьшается на 15★, дневник на 3★ даёт +10★, победа в рейде +10★, провал рейда возвращает 15★"},
-    'card_moon':       {"name": "嫦娥仙子 Богиня Луны",          "rarity": 4, "passive": "дубль этой карты сразу даёт +50★, вечерняя отметка даёт +1 скан"},
+    'card_moon':       {"name": "嫦娥仙子 Богиня Луны",          "rarity": 4, "passive": "+12★ каждые 24 часа · дубль этой карты сразу даёт +50★ · вечерняя отметка даёт +1 скан"},
 }
 
 GENSHIN_POOL = {
@@ -6429,7 +6638,7 @@ async def open_genshin_case(data: dict):
             )
             prayers_today = c.fetchone()[0] or 0
             if prayers_today > 0 and prayers_today % 3 == 0 and not has_used_card_today(c, telegram_id, "card_sea", f"tide:{prayers_today}", today):
-                sea_bonus = 20
+                sea_bonus = 25
                 mark_card_used_today(c, telegram_id, "card_sea", f"tide:{prayers_today}", today)
                 c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (sea_bonus, telegram_id))
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
