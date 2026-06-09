@@ -25,7 +25,7 @@ window.ARCHITECT_EVENT_ENABLED = false;
 // === ЗАМОРОЗКА ФИЧ (до официального старта) ===
 // Разделы ниже закрыты для обычных игроков. Админы и архитекторы видят всё.
 // Чтобы разморозить раздел — поставь false. Чтобы выключить всю систему — APP_FEATURE_FREEZE_ENABLED = false.
-window.APP_FEATURE_FREEZE_ENABLED = true;
+window.APP_FEATURE_FREEZE_ENABLED = false;
 window.APP_FROZEN_FEATURES = {
   casino:        true, // кейсы / молитвы
   shop:          true, // магазин
