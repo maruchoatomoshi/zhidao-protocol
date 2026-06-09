@@ -478,7 +478,9 @@ async function _giftSearchUsers(q) {
       const avatarHtml = u.avatar_url
         ? `<img src="${u.avatar_url}" class="gift-user-img" onerror="this.style.display='none'">`
         : `<span class="gift-user-initials">${initials}</span>`;
-      return `<div class="gift-user-row" onclick="giftSelectUser(${u.telegram_id},${JSON.stringify(u.full_name)},${JSON.stringify(u.avatar_url||'')})">
+      const _gn = JSON.stringify(u.full_name).replace(/"/g, '&quot;');
+      const _ga = JSON.stringify(u.avatar_url || '').replace(/"/g, '&quot;');
+      return `<div class="gift-user-row" onclick="giftSelectUser(${u.telegram_id},${_gn},${_ga})">
         <div class="gift-user-ava">${avatarHtml}</div>
         <div class="gift-user-info">
           <div class="gift-user-name">${u.full_name}</div>
