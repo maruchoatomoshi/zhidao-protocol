@@ -1,0 +1,7 @@
+[Unit]
+Description=ZHIDAO SQLite WAL growth and lock-error watchdog
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/zhidao/watchdog.env
+ExecStart=/usr/local/sbin/wal_watchdog.sh

@@ -79,6 +79,28 @@ systemctl list-timers zhidao-db-backup.timer --no-pager
 
 A local-only archive is not an adequate recovery plan for server loss.
 
+## 4b. WAL Watchdog (early warning for SQLite degradation)
+
+Both 2026-06-09 incidents were visible hours in advance as WAL file growth.
+The watchdog checks WAL size, `database is locked` errors, and `ZHIDAO_SLOW_CONN`
+log entries every 10 minutes and alerts to Telegram.
+
+```bash
+install -m 700 ops/wal_watchdog.sh /usr/local/sbin/wal_watchdog.sh
+install -m 644 ops/zhidao-wal-watchdog.service /etc/systemd/system/zhidao-wal-watchdog.service
+install -m 644 ops/zhidao-wal-watchdog.timer /etc/systemd/system/zhidao-wal-watchdog.timer
+cp ops/watchdog.env.example /etc/zhidao/watchdog.env
+chmod 600 /etc/zhidao/watchdog.env
+nano /etc/zhidao/watchdog.env   # fill ZHIDAO_ALERT_BOT_TOKEN and ZHIDAO_ALERT_CHAT_ID
+systemctl daemon-reload
+systemctl start zhidao-wal-watchdog.service   # test run (exit 0 = healthy)
+systemctl enable --now zhidao-wal-watchdog.timer
+systemctl list-timers zhidao-wal-watchdog.timer --no-pager
+```
+
+To test alert delivery, temporarily set `ZHIDAO_WAL_LIMIT_BYTES=1` in the env
+file, run the service once, then restore the value.
+
 ## 5. Telegram Auth Smoke Test
 
 The public API must reject unauthenticated changes:
