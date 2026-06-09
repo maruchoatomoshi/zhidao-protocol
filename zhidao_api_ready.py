@@ -532,12 +532,11 @@ def get_conn():
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
-    # The VPS disk has very slow fsync latency (~195ms/fsync). With WAL+NORMAL a
-    # commit does not fsync, but an automatic checkpoint does, and it runs
-    # synchronously inside whichever write crosses the WAL threshold — turning a
-    # cheap write into a multi-second stall. Disable auto-checkpoint here and let
-    # wal_checkpoint_loop() perform passive checkpoints off the request path.
-    conn.execute("PRAGMA wal_autocheckpoint=0")
+    # Allow auto-checkpoint every 1000 pages (~4 MB). Without this, wal_autocheckpoint=0
+    # lets the WAL grow unboundedly; each new get_conn() must scan the whole WAL to build
+    # its read-snapshot, which turns into 100-300 s exec times once the WAL is large.
+    # The background wal_checkpoint_loop also runs TRUNCATE every 60 s for cleanup.
+    conn.execute("PRAGMA wal_autocheckpoint=1000")
     ms = (time.time() - t0) * 1000
     if ms > 50:
         print("ZHIDAO_SLOW_CONN %.0fms" % ms, flush=True)
@@ -1218,7 +1217,7 @@ init_db()
 migrate_db()
 ensure_seed_data()
 
-WAL_CHECKPOINT_INTERVAL_SECONDS = 300
+WAL_CHECKPOINT_INTERVAL_SECONDS = 60
 
 
 async def wal_checkpoint_loop():
@@ -1230,7 +1229,9 @@ async def wal_checkpoint_loop():
             def _checkpoint():
                 conn = sqlite3.connect('/root/zhidao.db', timeout=30)
                 try:
-                    row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+                    # TRUNCATE: checkpoints all WAL frames and truncates the WAL file
+                    # to zero, keeping it from growing indefinitely. Runs every 60 s.
+                    row = conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
                     return row
                 finally:
                     conn.close()
