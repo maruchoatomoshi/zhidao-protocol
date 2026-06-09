@@ -31,6 +31,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+def log_api_error(message: str):
+    """Write critical diagnostics to a file even if journald misses stdout/stderr."""
+    try:
+        with open(API_ERROR_LOG_PATH, "a", encoding="utf-8") as fh:
+            fh.write(f"{datetime.utcnow().isoformat()}Z {message}\n")
+    except Exception:
+        pass
+
 MARZBAN_URL = os.getenv("MARZBAN_URL", "http://127.0.0.1:8000")
 MARZBAN_USER = os.getenv("MARZBAN_USER", "")
 MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
@@ -39,6 +48,7 @@ WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 TELEGRAM_AUTH_REQUIRED = os.getenv("TELEGRAM_AUTH_REQUIRED", "0").strip().lower() in {"1", "true", "yes", "on"}
 TELEGRAM_AUTH_DEBUG_LOG = os.getenv("TELEGRAM_AUTH_DEBUG_LOG", "0").strip().lower() in {"1", "true", "yes", "on"}
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
+API_ERROR_LOG_PATH = os.getenv("ZHIDAO_API_ERROR_LOG", "/root/zhidao_api_error.log")
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 REQUEST_LOG_SLOW_MS = int(os.getenv("REQUEST_LOG_SLOW_MS", "1500") or "1500")
 REQUEST_LOG_ALL = os.getenv("REQUEST_LOG_ALL", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -228,6 +238,14 @@ async def request_timing_middleware(request: Request, call_next):
         return response
     except Exception as exc:
         error = exc.__class__.__name__
+        log_api_error(
+            "REQUEST_ERROR "
+            f"request_id={request_id} "
+            f"method={request.method} "
+            f"path={request.url.path} "
+            f"error={exc.__class__.__name__}: {exc}\n"
+            f"{traceback.format_exc()}"
+        )
         raise
     finally:
         elapsed_ms = (time.perf_counter() - started) * 1000
@@ -608,14 +626,14 @@ async def db_write(fn, label=None):
         try:
             result = await loop.run_in_executor(DB_WRITE_EXECUTOR, fn)
         except Exception as exc:
-            print(
-                "ZHIDAO_DB_WRITE_ERROR fn=%s error=%s: %s" % (
-                    label or getattr(fn, "__name__", "?"),
-                    exc.__class__.__name__,
-                    exc,
-                ),
-                flush=True,
+            message = "ZHIDAO_DB_WRITE_ERROR fn=%s error=%s: %s\n%s" % (
+                label or getattr(fn, "__name__", "?"),
+                exc.__class__.__name__,
+                exc,
+                traceback.format_exc(),
             )
+            print(message, flush=True)
+            log_api_error(message)
             traceback.print_exc()
             raise
         exec_ms = (time.time() - t1) * 1000
