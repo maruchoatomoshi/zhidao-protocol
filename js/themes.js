@@ -121,13 +121,14 @@ function setTheme(theme) {
   });
 
   // Обновляем логотип под тему
-  const logoImg = document.querySelector('.main-logo img');
+  const logoBg = document.querySelector('.main-logo .no-leak-bg');
   const isG = theme === 'genshin-light' || theme === 'genshin-dark';
   document.body.classList.toggle('theme-genshin', isG);
-  if (logoImg) {
-    logoImg.src = isG
+  if (logoBg) {
+    const logoUrl = isG
       ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo_genshintheme_nobackground.png'
-      : 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true';
+      : 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png';
+    logoBg.style.backgroundImage = `url('${logoUrl}')`;
   }
   // Переименовываем разделы под тему
   const el = (id) => document.getElementById(id);
