@@ -16531,3 +16531,173 @@ body.theme-genshin-dark .gift-modal-search {
   color: var(--gold);
   font-weight: 600;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ARCHITECT PROTOCOL THEME — recolor BlackWall FX to green/cyan
+   The BlackWall decoration system (body.is-architect) defaults
+   to red/orange/purple regardless of active theme. When the
+   Architect Protocol theme itself is active, recolor it to match
+   the theme's green/cyan/lime palette instead of clashing.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Heartbeat glow + border cycle on profile card */
+@keyframes architectHeartbeatGreen {
+  0%,  100% { box-shadow: 0 0 12px rgba(0,255,136,0.12), inset 0 0 16px rgba(0,255,136,0.05); }
+  6%         { box-shadow: 0 0 55px rgba(0,255,136,0.45), 0 0 110px rgba(0,255,136,0.18), 0 0 0 2px rgba(0,229,255,0.5), inset 0 0 36px rgba(0,255,136,0.16); }
+  12%        { box-shadow: 0 0 16px rgba(0,255,136,0.15), inset 0 0 18px rgba(0,255,136,0.06); }
+  18%        { box-shadow: 0 0 38px rgba(0,255,136,0.30), 0 0 80px rgba(0,229,255,0.12), 0 0 0 1px rgba(0,229,255,0.35), inset 0 0 26px rgba(0,255,136,0.11); }
+  24%        { box-shadow: 0 0 12px rgba(0,255,136,0.12), inset 0 0 16px rgba(0,255,136,0.05); }
+  36%        { box-shadow: 0 0 14px rgba(57,255,20,0.10), inset 0 0 18px rgba(0,255,136,0.04); }
+}
+@keyframes architectBorderCycleGreen {
+  0%   { border-color: rgba(0,255,136,0.95); }
+  20%  { border-color: rgba(0,229,255,0.9);  }
+  40%  { border-color: rgba(57,255,20,0.9);  }
+  60%  { border-color: rgba(0,229,255,0.85); }
+  80%  { border-color: rgba(0,255,136,0.85); }
+  100% { border-color: rgba(0,255,136,0.95); }
+}
+body.theme-architect.is-architect .profile-card-home {
+  border: 2px solid rgba(0,255,136,0.95);
+  animation: architectHeartbeatGreen 3.5s ease-in-out infinite,
+             architectBorderCycleGreen 5s linear infinite !important;
+}
+
+/* Profile name flicker */
+@keyframes architectNeonFlickerGreen {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    color: #f0fff8;
+    text-shadow:
+      0 0 8px rgba(0,255,136,0.95),
+      0 0 20px rgba(0,255,136,0.6),
+      0 0 45px rgba(0,255,136,0.25);
+    filter: brightness(1);
+  }
+  19%, 23%, 54% {
+    color: rgba(240,255,248,0.25);
+    text-shadow: none;
+    filter: brightness(0.35);
+  }
+  68% {
+    color: #e0fcff;
+    text-shadow:
+      0 0 12px rgba(0,229,255,0.9),
+      0 0 28px rgba(0,229,255,0.45);
+  }
+  84% {
+    color: #eaffe0;
+    text-shadow:
+      0 0 10px rgba(57,255,20,0.9),
+      0 0 24px rgba(57,255,20,0.45);
+  }
+}
+body.theme-architect.is-architect .profile-card-name {
+  animation: architectNeonFlickerGreen 9s ease-in-out infinite;
+}
+
+/* Scan line + neural grid overlay */
+body.theme-architect.is-architect .blackwall-overlay::before {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0,255,136,0.7) 20%,
+    rgba(0,229,255,0.95) 50%,
+    rgba(0,255,136,0.7) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px rgba(0,255,136,0.6), 0 0 20px rgba(0,255,136,0.2);
+}
+body.theme-architect.is-architect .blackwall-overlay::after {
+  background-image:
+    linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+}
+
+/* Nav beacon */
+@keyframes architectNavBeaconGreen {
+  0%, 100% { text-shadow: 0 0 4px rgba(0,255,136,0.3); }
+  5%        { text-shadow: 0 0 14px rgba(0,255,136,1), 0 0 28px rgba(0,229,255,0.5); }
+  10%       { text-shadow: 0 0 4px rgba(0,255,136,0.3); }
+  16%       { text-shadow: 0 0 10px rgba(0,255,136,0.8), 0 0 22px rgba(0,255,136,0.3); }
+  22%       { text-shadow: 0 0 4px rgba(0,255,136,0.3); }
+}
+body.theme-architect.is-architect .nav-item.active,
+body.theme-architect.is-architect .nav-item.active .ti {
+  animation: architectNavBeaconGreen 3s ease-in-out infinite;
+}
+
+/* LED indicator on badge */
+@keyframes architectLEDGreen {
+  0%, 100% { opacity: 0.35; text-shadow: none; }
+  50%       { opacity: 1;    text-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0,255,136,0.4); }
+}
+body.theme-architect.is-architect .profile-admin-badge::before {
+  color: #00ff88;
+  animation: architectLEDGreen 1.4s ease-in-out infinite;
+}
+
+/* Page title glitch */
+@keyframes architectTitleGlitchGreen {
+  0%, 88%, 100% {
+    text-shadow: 0 0 30px rgba(0,255,136,0.7), 0 0 70px rgba(0,255,136,0.25);
+    filter: none;
+    transform: none;
+  }
+  89% {
+    text-shadow: 5px 0 rgba(0,255,136,0.95), -5px 0 rgba(0,229,255,0.95), 0 0 50px rgba(0,255,136,0.9);
+    filter: brightness(1.3);
+    transform: skewX(-2deg);
+  }
+  90% {
+    text-shadow: -3px 0 rgba(57,255,20,0.9), 4px 0 rgba(0,229,255,0.7);
+    filter: none;
+    transform: none;
+  }
+  91% {
+    text-shadow: 0 0 30px rgba(0,255,136,0.7), 0 0 70px rgba(0,255,136,0.25);
+    filter: none;
+  }
+  95% {
+    text-shadow: 2px 0 rgba(0,229,255,0.5), 0 0 40px rgba(0,255,136,0.8);
+    transform: translateX(1px);
+  }
+  96% {
+    text-shadow: 0 0 30px rgba(0,255,136,0.7), 0 0 70px rgba(0,255,136,0.25);
+    transform: none;
+  }
+}
+body.theme-architect.is-architect .page-title {
+  animation: architectTitleGlitchGreen 11s ease-in-out infinite;
+}
+
+/* Status line */
+body.theme-architect.is-architect .profile-status-line {
+  color: rgba(0,255,136,0.55);
+}
+
+/* Avatar scan ring */
+@keyframes architectAvatarRingGreen {
+  0%, 100% { box-shadow: 0 0 0 0px rgba(0,255,136,0.5), 0 0 0 0px rgba(0,229,255,0); }
+  40%       { box-shadow: 0 0 0 6px rgba(0,255,136,0.2), 0 0 0 12px rgba(0,229,255,0.08); }
+  60%       { box-shadow: 0 0 0 8px rgba(0,255,136,0.0), 0 0 0 16px rgba(0,255,136,0.0); }
+}
+body.theme-architect.is-architect .profile-avatar-wrap {
+  animation: architectAvatarRingGreen 3.5s ease-out infinite;
+}
+
+/* Architect theme card pulse (in theme picker) */
+@keyframes architectCardPulseGreen {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,255,136,0.15), inset 0 0 20px rgba(0,255,136,0.03); border-color: rgba(0,255,136,0.55); }
+  50%       { box-shadow: 0 0 40px rgba(0,255,136,0.35), 0 0 80px rgba(0,229,255,0.08), inset 0 0 30px rgba(0,255,136,0.07); border-color: rgba(0,229,255,0.75); }
+}
+body.theme-architect.is-architect .architect-theme-card {
+  border-color: rgba(0,255,136,0.7);
+  box-shadow: 0 0 20px rgba(0,255,136,0.2), inset 0 0 30px rgba(0,255,136,0.04);
+  animation: architectCardPulseGreen 3s ease-in-out infinite;
+}
+
+/* Corner sparks */
+body.theme-architect.is-architect .profile-card-spark.spark-tl { background: #00e5ff; }
+body.theme-architect.is-architect .profile-card-spark.spark-br { background: #39ff14; }
+body.theme-architect.is-architect .profile-card-spark.spark-tr { background: #00ff88; }
+body.theme-architect.is-architect .profile-card-spark.spark-bl { background: #00e5ff; }
