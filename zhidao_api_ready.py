@@ -1311,25 +1311,26 @@ init_db()
 migrate_db()
 ensure_seed_data()
 
-WAL_CHECKPOINT_INTERVAL_SECONDS = 60
+WAL_CHECKPOINT_INTERVAL_SECONDS = 300
 
 
 async def wal_checkpoint_loop():
     while True:
         await asyncio.sleep(WAL_CHECKPOINT_INTERVAL_SECONDS)
+        if DB_WRITE_LOCK.locked():
+            # Never let maintenance compete with user/admin mutations.
+            continue
         try:
             t0 = time.time()
 
             def _checkpoint():
-                conn = sqlite3.connect('/root/zhidao.db', timeout=5)
+                conn = sqlite3.connect('/root/zhidao.db', timeout=1)
                 try:
-                    # RESTART: waits for active readers (up to timeout=5s), checkpoints
-                    # all WAL frames, then resets the WAL write position to offset 0.
-                    # PASSIVE never resets the write position, so the WAL grows without
-                    # bound and new sqlite3.connect() calls must scan the entire WAL
-                    # (observed as 100-300s exec times). RESTART prevents that growth.
-                    # TRUNCATE also resets position but needs the exclusive WRITER lock.
-                    row = conn.execute("PRAGMA wal_checkpoint(RESTART)").fetchone()
+                    conn.execute("PRAGMA busy_timeout=100")
+                    # PASSIVE checkpoints what it can and returns immediately if
+                    # readers/writers are active. User actions must never wait for
+                    # maintenance; startup handles WAL reset after restarts.
+                    row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
                     return row
                 finally:
                     conn.close()
@@ -1358,8 +1359,9 @@ async def start_background_tasks():
     # startup (no active readers yet) resets the WAL write position to 0.
     def _startup_checkpoint():
         try:
-            conn = sqlite3.connect('/root/zhidao.db', timeout=10)
+            conn = sqlite3.connect('/root/zhidao.db', timeout=5)
             try:
+                conn.execute("PRAGMA busy_timeout=1000")
                 row = conn.execute("PRAGMA wal_checkpoint(RESTART)").fetchone()
                 print(
                     "ZHIDAO_STARTUP_CHECKPOINT busy=%s log_frames=%s checkpointed_frames=%s" % (
@@ -1374,10 +1376,7 @@ async def start_background_tasks():
         except Exception as exc:
             print("ZHIDAO_STARTUP_CHECKPOINT_ERROR %r" % (exc,), flush=True)
 
-    # Run startup checkpoint in background so it never blocks server readiness.
-    # If the WAL is large (e.g. after a crash), sqlite3.connect() itself can
-    # take hundreds of seconds to scan it — blocking the server indefinitely.
-    asyncio.create_task(asyncio.to_thread(_startup_checkpoint))
+    await asyncio.to_thread(_startup_checkpoint)
     asyncio.create_task(wal_checkpoint_loop())
 
 
