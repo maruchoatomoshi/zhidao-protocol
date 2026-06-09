@@ -1567,19 +1567,63 @@ async def netwatch_blackwall_cmd(message: types.Message):
                 await message.answer("❌ Ошибка. Цель не найдена?")
 
 
+def _cyberpunk_active_owners(c, implant_id: str):
+    """Owners of an active (durability > 0) cyberpunk-path implant whose passive
+    is not currently frozen by switching to the genshin path. Admins are exempt."""
+    placeholders = ",".join("?" for _ in ADMIN_IDS) or "NULL"
+    c.execute(
+        f'''SELECT DISTINCT ui.telegram_id FROM user_implants ui
+            LEFT JOIN user_status us ON us.telegram_id = ui.telegram_id
+            WHERE ui.implant_id=? AND ui.durability > 0
+              AND (COALESCE(us.theme_path, 'cyberpunk') != 'genshin' OR ui.telegram_id IN ({placeholders}))''',
+        [implant_id] + list(ADMIN_IDS),
+    )
+    return [row[0] for row in c.fetchall()]
+
+
+def _genshin_active_owners(c, card_id: str):
+    """Owners of an active (durability > 0) genshin-path card whose passive
+    is not currently frozen by switching to the cyberpunk path. Admins are exempt."""
+    placeholders = ",".join("?" for _ in ADMIN_IDS) or "NULL"
+    c.execute(
+        f'''SELECT DISTINCT uc.telegram_id FROM user_cards uc
+            LEFT JOIN user_status us ON us.telegram_id = uc.telegram_id
+            WHERE uc.card_id=? AND uc.durability > 0
+              AND (us.theme_path = 'genshin' OR uc.telegram_id IN ({placeholders}))''',
+        [card_id] + list(ADMIN_IDS),
+    )
+    return [row[0] for row in c.fetchall()]
+
+
+async def moon_morning():
+    conn = sqlite3.connect("/root/zhidao.db")
+    c = conn.cursor()
+    owners = [(tg_id,) for tg_id in _genshin_active_owners(c, 'card_moon')]
+    for (tg_id,) in owners:
+        c.execute("UPDATE users SET points = points + 12 WHERE telegram_id=?", (tg_id,))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
+        row = c.fetchone()
+        bot_log_economy(c, tg_id, 'card_moon_passive', 12, row[0] if row else None, note='утренний пассив Богини Луны')
+        try:
+            await bot.send_message(tg_id, "🌙 +12★ // лунный свет Чанъэ 嫦娥")
+        except Exception:
+            pass
+    conn.commit()
+    conn.close()
+
+
 async def netwatch_morning():
     conn = db_connect()
     c = conn.cursor()
-    c.execute("SELECT DISTINCT telegram_id FROM user_implants WHERE implant_id='implant_netwatch' AND durability > 0")
-    owners = [row[0] for row in c.fetchall()]
-    for tg_id in owners:
+    owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_netwatch')]
+    for (tg_id,) in owners:
         c.execute("UPDATE users SET points = points + 25 WHERE telegram_id=?", (tg_id,))
         c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
         row = c.fetchone()
         bot_log_economy(c, tg_id, 'netwatch_passive', 25, row[0] if row else None, note='утренний пассив NetWatch')
     conn.commit()
     conn.close()
-    for tg_id in owners:
+    for (tg_id,) in owners:
         try:
             await bot.send_message(tg_id, "🔴 +25★ // восполнение памяти NetWatch")
         except Exception:
@@ -1589,16 +1633,15 @@ async def netwatch_morning():
 async def caishen_morning():
     conn = db_connect()
     c = conn.cursor()
-    c.execute("SELECT DISTINCT telegram_id FROM user_implants WHERE implant_id='implant_caishen' AND durability > 0")
-    owners = [row[0] for row in c.fetchall()]
-    for tg_id in owners:
+    owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_caishen')]
+    for (tg_id,) in owners:
         c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (tg_id,))
         c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
         row = c.fetchone()
         bot_log_economy(c, tg_id, 'caishen_passive', 15, row[0] if row else None, note='утренний пассив Цайшэнь')
     conn.commit()
     conn.close()
-    for tg_id in owners:
+    for (tg_id,) in owners:
         try:
             await bot.send_message(tg_id, "💰 +15★ // пассивный доход Цайшэня 财神")
         except Exception:
@@ -1608,16 +1651,15 @@ async def caishen_morning():
 async def qilin_morning():
     conn = db_connect()
     c = conn.cursor()
-    c.execute("SELECT COUNT(DISTINCT telegram_id) FROM user_implants WHERE implant_id='implant_qilin' AND durability > 0")
-    total_owners = c.fetchone()[0]
+    active_owners = _cyberpunk_active_owners(c, 'implant_qilin')
+    total_owners = len(active_owners)
     if total_owners == 0:
         conn.close()
         return
     # Diminishing returns: 40★ за 1 владельца, -6★ за каждого следующего, минимум 8★
     bonus = max(8, 40 - (total_owners - 1) * 6)
-    c.execute("SELECT DISTINCT telegram_id FROM user_implants WHERE implant_id='implant_qilin' AND durability > 0")
-    owners = [row[0] for row in c.fetchall()]
-    for tg_id in owners:
+    owners = [(tg_id,) for tg_id in active_owners]
+    for (tg_id,) in owners:
         c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (bonus, tg_id))
         c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
         row = c.fetchone()
@@ -1625,7 +1667,7 @@ async def qilin_morning():
                         note=f'Цилинь: {total_owners} владельцев → {bonus}★')
     conn.commit()
     conn.close()
-    for tg_id in owners:
+    for (tg_id,) in owners:
         try:
             await bot.send_message(tg_id, f"🦄 +{bonus}★ // Цилинь麒麟 ({total_owners} вл. → {bonus}★/чел.)")
         except Exception:
@@ -1650,6 +1692,7 @@ async def main():
     scheduler.add_job(netwatch_morning, CronTrigger(hour=8, minute=1, timezone=BEIJING_TZ))
     scheduler.add_job(caishen_morning, CronTrigger(hour=8, minute=2, timezone=BEIJING_TZ))
     scheduler.add_job(qilin_morning, CronTrigger(hour=8, minute=3, timezone=BEIJING_TZ))
+    scheduler.add_job(moon_morning, CronTrigger(hour=8, minute=4, timezone=BEIJING_TZ))
     scheduler.start()
     await dp.start_polling(bot)
 

@@ -53,6 +53,27 @@ const LEGENDARY_IMPLANT_INFO = {
     ],
   },
 };
+const LEGENDARY_CARD_INFO = {
+  card_zhongli: {
+    title: 'ПРОТОКОЛ АРХОНТА ЗЕМЛИ',
+    glyph: '岩',
+    passive: 'Скидка -7% в магазине · -1★ комиссии контракта раз в день · первая покупка дня даёт +1 скан.',
+    actions: [
+      { code: 'earth_contract', label: 'КОНТРАКТ ЗЕМЛИ', hint: 'Цель -15★, побочная дань -5★' },
+      { code: 'okamenenie', label: 'ОКАМЕНЕНИЕ', hint: 'Блок магазина и молитв на 12 часов' },
+    ],
+  },
+  card_star: {
+    title: 'ПРОТОКОЛ ИМПЕРАТОРСКОЙ ЗВЕЗДЫ',
+    glyph: '星',
+    passive: 'Первый штраф дня уменьшается на 15★ · дневник на 3★ даёт +10★ · победа в рейде +10★ · провал рейда возвращает 15★.',
+    actions: [
+      { code: 'fate_verdict', label: 'ПРЕДСКАЗАНИЕ СУДЬБЫ', hint: 'Забрать 10★ у цели' },
+      { code: 'star_ward', label: 'ЗВЁЗДНАЯ ЗАЩИТА', hint: 'Вернуть последний игровой штраф до 20★' },
+    ],
+  },
+};
+let legendaryCardStatus = {};
 let legendaryImplantStatus = {};
 let hasPandaImplant = false;
 let scanAttempts = 0;
@@ -216,6 +237,70 @@ function toggleLegendaryImplantMenu(implantId) {
   if (!panel) return;
   const isOpen = panel.style.display !== 'none';
   panel.style.display = isOpen ? 'none' : 'block';
+}
+
+function toggleLegendaryCardMenu(cardId) {
+  const panel = document.getElementById(`legendaryCardPanel${cardId}`);
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+}
+
+function renderLegendaryCardActionButton(action) {
+  const status = legendaryCardStatus[action.code] || {};
+  const cooldown = getLegendaryCooldownLabel(status.cooldown_until);
+  const disabled = Boolean(cooldown);
+  return `<button class="legendary-action-btn ${disabled ? 'disabled' : ''}" ${disabled ? 'disabled' : ''} onclick="runLegendaryCardAction('${action.code}')">
+    <strong>${action.label}</strong>
+    <span>${cooldown || action.hint}</span>
+  </button>`;
+}
+
+async function runLegendaryCardAction(actionCode) {
+  if (!currentUserId) return;
+  const targetActions = new Set(['fate_verdict', 'earth_contract']);
+  let payload = { telegram_id: currentUserId };
+  if (targetActions.has(actionCode)) {
+    const targetName = await askLegendaryTargetName();
+    if (!targetName) return;
+    payload.target_name = targetName.trim();
+  }
+  const endpointMap = {
+    fate_verdict: '/api/cards/star/fate-verdict',
+    star_ward: '/api/cards/star/ward',
+    earth_contract: '/api/cards/zhongli/earth-contract',
+    okamenenie: '/api/cards/zhongli/okamenenie',
+  };
+  try {
+    const r = await fetch(`${API_URL}${endpointMap[actionCode]}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      const messages = {
+        'Target balance below 80': 'Нельзя выбрать игрока с балансом ниже 80★',
+        'Target protected for 3 days': 'Эту цель уже использовали недавно',
+        'Target protected for 14 days': 'Эта цель недавно уже была окаменена',
+        'No eligible game penalty': 'Нет подходящего игрового штрафа для возврата',
+        'Admins are protected': 'Администраторы защищены от этой команды',
+      };
+      showToast(messages[data.detail] || data.detail || 'Команда не выполнена');
+      return;
+    }
+    const successText = {
+      fate_verdict: `Предсказание судьбы: ${data.target} -10★`,
+      star_ward: `Звёздная защита: +${data.refunded}★`,
+      earth_contract: `Контракт Земли: ${data.target} -15★${data.secondary_target ? `, ${data.secondary_target} -5★` : ''}`,
+      okamenenie: `Окаменение применено к ${data.target}`,
+    };
+    showToast(successText[actionCode] || 'Команда выполнена');
+    if (typeof loadPoints === 'function') loadPoints(currentUserId);
+    loadCards(currentUserId);
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
 }
 
 function renderLegendaryActionButton(action) {
@@ -593,6 +678,12 @@ async function loadCards(telegramId) {
     const r = await fetch(`${API_URL}/api/cards/${telegramId}`);
     if (!r.ok) { container.innerHTML = '<div class="empty-state">Карточек пока нет</div>'; return; }
     const data = await r.json();
+    try {
+      const statusR = await fetch(`${API_URL}/api/cards/legendary/status/${telegramId}`);
+      legendaryCardStatus = statusR.ok ? await statusR.json() : {};
+    } catch(e) {
+      legendaryCardStatus = {};
+    }
     if (!data.length) {
       container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Кейсы!</span></div>';
       return;
@@ -621,6 +712,22 @@ async function loadCards(telegramId) {
       const disassembleBtn = isSecond
         ? `<button class="inv-btn inv-btn-gift" onclick="disassembleCard(${card.id})">✦ [ РАЗОБРАТЬ +50 ✦ ]</button>`
         : '';
+      const legendaryInfo = LEGENDARY_CARD_INFO[card.card_id];
+      const legendaryBtn = legendaryInfo && !isSecond
+        ? `<button class="inv-btn inv-btn-legendary" onclick="toggleLegendaryCardMenu(${card.id})">⚡ [ ПРОТОКОЛ ]</button>`
+        : '';
+      const legendaryPanel = legendaryInfo && !isSecond
+        ? `<div class="legendary-implant-panel" id="legendaryCardPanel${card.id}" style="display:none;">
+            <div class="legendary-implant-head">
+              <span>${legendaryInfo.glyph}</span>
+              <strong>${legendaryInfo.title}</strong>
+            </div>
+            <div class="legendary-implant-line"><b>Пассивный эффект</b><span>${legendaryInfo.passive}</span></div>
+            <div class="legendary-implant-actions">
+              ${legendaryInfo.actions.map(action => renderLegendaryCardActionButton(action)).join('')}
+            </div>
+          </div>`
+        : '';
       const cardClass = isDup ? 'inventory-card-dup' : `inventory-card-${pool}`;
       return `<div class="inventory-item inventory-item-card ${cardClass}">
         <div class="inventory-header">
@@ -636,7 +743,8 @@ async function loadCards(telegramId) {
             <div class="inventory-dur">${dots}</div>
           </div>
         </div>
-        ${disassembleBtn ? `<div class="inventory-actions">${disassembleBtn}</div>` : ''}
+        ${(disassembleBtn || legendaryBtn) ? `<div class="inventory-actions">${legendaryBtn}${disassembleBtn}</div>` : ''}
+        ${legendaryPanel}
       </div>`;
     }).join('');
   } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
