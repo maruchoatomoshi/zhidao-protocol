@@ -384,22 +384,24 @@ RAID_MIN_PLAYERS = 3
 SHOP_EXTRA_RAID_CODE = "extra_raid_attempt"
 SHOP_EXTRA_RAID_PRICE = 80
 SHOP_ITEM_SEEDS = [
-    ("immunity", "Иммунитет", "Блокирует один штраф", "🛡", 150, -1, "privilege"),
-    ("laundry_vip", "Стирка VIP", "Приоритет на стирку", "🧺", 80, -1, "privilege"),
-    ("dj", "DJ-сет", "Право выбрать музыку", "🎵", 100, -1, "social"),
-    ("solo_seat", "Место соло", "Отдельное место по согласованию", "🪑", 120, -1, "privilege"),
-    ("amnesty", "Амнистия", "Снять один штраф по согласованию", "🤝", 80, -1, "privilege"),
-    ("kfc", "KFC", "Награда из специального меню", "🍗", 300, -1, "food"),
-    ("bubbletea", "Bubble Tea", "Награда из специального меню", "🧋", 250, -1, "food"),
-    ("snack", "Снэк", "Награда из специального меню", "🍦", 200, -1, "food"),
-    ("no_report", "Без доклада", "Пропуск одного доклада по согласованию", "📄", 400, -1, "vip"),
-    ("poizon", "Poizon", "Премиальная награда", "👕", 600, -1, "vip"),
-    ("extra_case", "Дополнительный кейс", "Открыть ещё один кейс сверх дневного лимита", "📦", 180, -1, "privilege"),
-    ("double_win", "Двойной выигрыш", "Удвоить следующий денежный выигрыш", "🎴", 130, -1, "privilege"),
-    ("title_player", "Титул дня", "Особый титул профиля на день", "👑", 150, -1, "vip"),
-    (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня", "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
-    ("path_switch", "Смена пути 转换", "Переключиться между NetWatch и Genshin", "🔁", 500, -1, "vip"),
+    # (code, name, desc, icon, price, daily_limit, category)
+    # daily_limit=-1 → unlimited; >0 → global units sold per day cap
+    ("immunity",    "Иммунитет",         "Блокирует один штраф",                          "🛡", 150,  5, "privilege"),
+    ("laundry_vip", "Стирка VIP",         "Приоритет на стирку",                           "🧺",  80,  5, "privilege"),
+    ("dj",          "DJ-сет",             "Право выбрать музыку",                          "🎵", 100,  1, "social"),
+    ("amnesty",     "Амнистия",           "Снять один штраф по согласованию",              "🤝",  80,  5, "privilege"),
+    ("kfc",         "KFC",                "Награда из специального меню",                  "🍗", 300,  5, "food"),
+    ("bubbletea",   "Bubble Tea",         "Награда из специального меню",                  "🧋", 250,  5, "food"),
+    ("snack",       "Снэк",               "Награда из специального меню",                  "🍦", 200,  5, "food"),
+    ("no_report",   "Без доклада",        "Пропуск одного доклада по согласованию",        "📄", 400,  5, "vip"),
+    ("poizon",      "Poizon",             "Премиальная награда",                           "👕", 600,  3, "vip"),
+    ("double_win",  "Двойной выигрыш",    "Удваивает очки первой кртуки кейса или молитвы — после использования сгорает", "🎴", 130, 10, "privilege"),
+    ("title_player","Титул дня",          "Особый титул профиля на сегодня",               "👑", 150, -1, "vip"),
+    (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня",                        "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
+    ("path_switch", "Смена пути 转换",    "Переключиться между NetWatch и Genshin",        "🔁", 500, -1, "vip"),
 ]
+# Items removed from active catalog (deactivated on every startup so seeds don't re-enable them)
+SHOP_ITEM_DEACTIVATE = {"extra_case", "solo_seat"}
 
 ACHIEVEMENT_SEEDS = [
     ("early_bird", "Ранний подъём", "Подтвердить утреннюю отметку без напоминаний и опозданий.", "🌅", 0),
@@ -1206,6 +1208,8 @@ def ensure_seed_data():
                  active=1''',
             item,
         )
+    for deactivated_code in SHOP_ITEM_DEACTIVATE:
+        c.execute("UPDATE shop_items SET active=0 WHERE code=?", (deactivated_code,))
     for achievement in ACHIEVEMENT_SEEDS:
         c.execute(
             '''INSERT INTO achievements
@@ -5429,6 +5433,12 @@ async def open_case(data: dict):
             elif prize["code"].startswith("implant_"):
                 c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
             if prize.get("points", 0) > 0:
+                c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
+                dw_row = c.fetchone()
+                if dw_row and dw_row[0]:
+                    prize["points"] *= 2
+                    prize["double_win_applied"] = True
+                    c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
                 c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (prize["points"], telegram_id))
 
             c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
@@ -6659,13 +6669,20 @@ async def open_genshin_case(data: dict):
                 mark_card_used_today(c, telegram_id, "card_fox", "trick")
                 fox_bonus = 30
                 amount += fox_bonus
+            double_win_applied = False
+            c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
+            dw_row = c.fetchone()
+            if dw_row and dw_row[0]:
+                amount *= 2
+                double_win_applied = True
+                c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
             c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
             prize_code = f"genshin_points_{amount}"
             if fox_bonus:
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                 balance_after = c.fetchone()[0] or 0
                 log_economy(c, telegram_id, "card_fox_trick", fox_bonus, balance_after, None, "card", "genshin_points_30_to_60")
-            result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★", "rarity": 0, "card_bonus": fox_bonus}
+            result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★", "rarity": 0, "card_bonus": fox_bonus, "double_win_applied": double_win_applied or None}
         elif item['type'] == 'immunity':
             c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
             prize_code = "genshin_immunity"

@@ -148,7 +148,7 @@ async function loadShop() {
       const remaining = item.daily_limit > 0 ? Math.max(0, item.daily_limit - item.sold_today) : Infinity;
       return item.available && remaining > 0;
     });
-    const suggestionPriority = ['immunity', 'extra_case', 'extra_raid_attempt', 'amnesty', 'double_win', 'laundry_vip', 'title_player'];
+    const suggestionPriority = ['immunity', 'extra_raid_attempt', 'amnesty', 'double_win', 'laundry_vip', 'title_player'];
     const priorityIndex = (item) => {
       const index = suggestionPriority.indexOf(item.code);
       return index === -1 ? 99 : index;
