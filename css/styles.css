@@ -6601,6 +6601,73 @@ body.theme-nw-light .toast.toast-success { background: rgba(240,252,245,0.97); }
 body.theme-nw-light .toast.toast-error   { background: rgba(252,240,240,0.97); }
 body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
 
+/* --- nw-light: admin dossier modal --- */
+body.theme-nw-light .admin-dossier-sheet {
+  background:
+    radial-gradient(circle at top left, rgba(180,130,60,0.08), transparent 42%),
+    linear-gradient(145deg, rgba(255,252,245,0.98), rgba(250,246,238,0.96));
+  border-color: rgba(160,110,40,0.22);
+  box-shadow: 0 14px 50px rgba(0,0,0,0.14);
+}
+body.theme-nw-light .admin-dossier-stat {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.07);
+}
+body.theme-nw-light .admin-dossier-stat span,
+body.theme-nw-light .admin-dossier-panel-title {
+  color: rgba(100,60,10,0.7);
+}
+body.theme-nw-light .admin-dossier-stat strong { color: #1a1a1a; }
+body.theme-nw-light .admin-dossier-stat em     { color: #3a3a3a; }
+body.theme-nw-light .admin-dossier-panel {
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,0,0,0.07);
+}
+body.theme-nw-light .admin-dossier-row { border-color: rgba(0,0,0,0.06); }
+body.theme-nw-light .admin-dossier-row strong { color: #1a1a1a; }
+body.theme-nw-light .admin-dossier-row span   { color: #4a4a4a; }
+body.theme-nw-light .admin-dossier-room {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+body.theme-nw-light .admin-dossier-empty { color: #888; }
+
+/* --- nw-light: admin blackwall / architect event cards --- */
+body.theme-nw-light .admin-blackwall-card {
+  background: linear-gradient(135deg, rgba(60,20,90,0.07), rgba(100,50,140,0.05));
+  border: 1px solid rgba(120,60,160,0.22);
+  box-shadow: 0 4px 16px rgba(80,30,120,0.07);
+}
+body.theme-nw-light .admin-blackwall-glyph {
+  color: rgba(100,40,140,0.45);
+  text-shadow: none;
+}
+body.theme-nw-light .admin-blackwall-title { color: #2a1a3a; }
+body.theme-nw-light .admin-blackwall-desc  { color: #5a4a6a; }
+
+/* --- nw-light: diary star rating buttons --- */
+body.theme-nw-light .diary-star {
+  border-color: rgba(140,90,10,0.28);
+  background: rgba(255,255,255,0.6);
+  color: rgba(140,90,10,0.5);
+}
+body.theme-nw-light .diary-star.active {
+  background: linear-gradient(135deg, rgba(200,155,40,0.18), rgba(220,175,60,0.12));
+  color: #8a5a10;
+  border-color: rgba(160,110,20,0.45);
+  box-shadow: 0 0 10px rgba(180,130,30,0.18);
+}
+body.theme-nw-light .diary-admin-date {
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(0,0,0,0.12);
+  color: #2a2a2a;
+}
+body.theme-nw-light .diary-admin-refresh {
+  border-color: rgba(0,0,0,0.12);
+  color: #555;
+}
+body.theme-nw-light .diary-admin-refresh:hover { background: rgba(0,0,0,0.05); }
+
 /* Ripple на кнопках */
 .btn, .btn-primary, .shop-item-buy, .subtab, .nav-item {
   position: relative;
