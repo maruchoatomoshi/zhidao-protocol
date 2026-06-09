@@ -1,4 +1,5 @@
 ﻿import asyncio
+import concurrent.futures
 import random
 import json
 import hashlib
@@ -556,7 +557,7 @@ def _open_raw_conn():
     conn = sqlite3.connect('/root/zhidao.db', timeout=30, check_same_thread=False)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA wal_autocheckpoint=1000")
+    conn.execute("PRAGMA wal_autocheckpoint=0")
     ms = (time.time() - t0) * 1000
     if ms > 50:
         print("ZHIDAO_SLOW_CONN %.0fms" % ms, flush=True)
@@ -590,6 +591,10 @@ def get_conn():
 
 
 DB_WRITE_LOCK = asyncio.Lock()
+DB_WRITE_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
+    max_workers=1,
+    thread_name_prefix="zhidao-db-writer",
+)
 
 
 async def db_write(fn, label=None):
@@ -598,7 +603,8 @@ async def db_write(fn, label=None):
     async with DB_WRITE_LOCK:
         lock_wait = (time.time() - t0) * 1000
         t1 = time.time()
-        result = await asyncio.to_thread(fn)
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(DB_WRITE_EXECUTOR, fn)
         exec_ms = (time.time() - t1) * 1000
         if lock_wait > 100 or exec_ms > 100:
             if label:
