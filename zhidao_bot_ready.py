@@ -102,7 +102,7 @@ def db_connect():
     conn = sqlite3.connect("/root/zhidao.db", timeout=30)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA wal_autocheckpoint=0")  # prevent bot from triggering auto-checkpoints
+    conn.execute("PRAGMA wal_autocheckpoint=1000")
     return conn
 
 

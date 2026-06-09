@@ -576,7 +576,7 @@ def _open_raw_conn():
     conn = sqlite3.connect('/root/zhidao.db', timeout=30, check_same_thread=False)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA wal_autocheckpoint=0")
+    conn.execute("PRAGMA wal_autocheckpoint=1000")
     ms = (time.time() - t0) * 1000
     if ms > 50:
         print("ZHIDAO_SLOW_CONN %.0fms" % ms, flush=True)
@@ -1353,10 +1353,12 @@ async def wal_checkpoint_loop():
 
 @app.on_event("startup")
 async def start_background_tasks():
-    # Run an immediate RESTART checkpoint before accepting requests.
-    # If the service was previously killed with a large WAL, the first
-    # get_conn() would scan all WAL frames (100-300s). Checkpointing at
-    # startup (no active readers yet) resets the WAL write position to 0.
+    if os.getenv("ZHIDAO_ENABLE_WAL_CHECKPOINT", "0") != "1":
+        return
+
+    # Manual WAL checkpointing is disabled by default. On the production
+    # server RESTART checkpoints were observed taking 49-72 seconds and
+    # competing with admin/shop writes. Keep this as opt-in maintenance only.
     def _startup_checkpoint():
         try:
             conn = sqlite3.connect('/root/zhidao.db', timeout=5)
@@ -1376,7 +1378,7 @@ async def start_background_tasks():
         except Exception as exc:
             print("ZHIDAO_STARTUP_CHECKPOINT_ERROR %r" % (exc,), flush=True)
 
-    await asyncio.to_thread(_startup_checkpoint)
+    asyncio.create_task(asyncio.to_thread(_startup_checkpoint))
     asyncio.create_task(wal_checkpoint_loop())
 
 
