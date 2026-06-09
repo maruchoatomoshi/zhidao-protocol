@@ -6019,6 +6019,42 @@ def get_inventory(telegram_id: int):
     return [{"id": r[0], "code": r[1], "name": r[2], "icon": r[3], "price": r[4], "category": r[5], "purchased_at": r[6], "status": r[7], "given_to": r[8], "description": r[9]} for r in rows]
 
 
+@app.get("/api/users/search")
+def search_users_for_gift(q: str = "", caller_id: Optional[int] = None):
+    if not caller_id:
+        raise HTTPException(status_code=400, detail="caller_id required")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (caller_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=403, detail="Unknown caller")
+    query = str(q or "").strip()
+    if query:
+        like = f"%{query}%"
+        c.execute(
+            '''SELECT telegram_id, full_name, avatar_url, points
+               FROM users
+               WHERE telegram_id IS NOT NULL AND telegram_id != ?
+                 AND (full_name LIKE ? OR CAST(telegram_id AS TEXT) LIKE ?)
+               ORDER BY full_name COLLATE NOCASE
+               LIMIT 15''',
+            (caller_id, like, like),
+        )
+    else:
+        c.execute(
+            '''SELECT telegram_id, full_name, avatar_url, points
+               FROM users
+               WHERE telegram_id IS NOT NULL AND telegram_id != ?
+               ORDER BY full_name COLLATE NOCASE
+               LIMIT 20''',
+            (caller_id,),
+        )
+    rows = c.fetchall()
+    conn.close()
+    return {"users": [{"telegram_id": r[0], "full_name": r[1], "avatar_url": r[2], "points": r[3]} for r in rows]}
+
+
 @app.post("/api/shop/gift")
 async def gift_item(data: dict):
     def _run():
