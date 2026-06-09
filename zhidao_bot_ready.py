@@ -1570,36 +1570,38 @@ async def netwatch_morning():
     conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT DISTINCT telegram_id FROM user_implants WHERE implant_id='implant_netwatch' AND durability > 0")
-    owners = c.fetchall()
-    for (tg_id,) in owners:
+    owners = [row[0] for row in c.fetchall()]
+    for tg_id in owners:
         c.execute("UPDATE users SET points = points + 25 WHERE telegram_id=?", (tg_id,))
         c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
         row = c.fetchone()
         bot_log_economy(c, tg_id, 'netwatch_passive', 25, row[0] if row else None, note='утренний пассив NetWatch')
+    conn.commit()
+    conn.close()
+    for tg_id in owners:
         try:
             await bot.send_message(tg_id, "🔴 +25★ // восполнение памяти NetWatch")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def caishen_morning():
     conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT DISTINCT telegram_id FROM user_implants WHERE implant_id='implant_caishen' AND durability > 0")
-    owners = c.fetchall()
-    for (tg_id,) in owners:
+    owners = [row[0] for row in c.fetchall()]
+    for tg_id in owners:
         c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (tg_id,))
         c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
         row = c.fetchone()
         bot_log_economy(c, tg_id, 'caishen_passive', 15, row[0] if row else None, note='утренний пассив Цайшэнь')
+    conn.commit()
+    conn.close()
+    for tg_id in owners:
         try:
             await bot.send_message(tg_id, "💰 +15★ // пассивный доход Цайшэня 财神")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def qilin_morning():
@@ -1613,19 +1615,20 @@ async def qilin_morning():
     # Diminishing returns: 40★ за 1 владельца, -6★ за каждого следующего, минимум 8★
     bonus = max(8, 40 - (total_owners - 1) * 6)
     c.execute("SELECT DISTINCT telegram_id FROM user_implants WHERE implant_id='implant_qilin' AND durability > 0")
-    owners = c.fetchall()
-    for (tg_id,) in owners:
+    owners = [row[0] for row in c.fetchall()]
+    for tg_id in owners:
         c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (bonus, tg_id))
         c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
         row = c.fetchone()
         bot_log_economy(c, tg_id, 'qilin_passive', bonus, row[0] if row else None,
                         note=f'Цилинь: {total_owners} владельцев → {bonus}★')
+    conn.commit()
+    conn.close()
+    for tg_id in owners:
         try:
             await bot.send_message(tg_id, f"🦄 +{bonus}★ // Цилинь麒麟 ({total_owners} вл. → {bonus}★/чел.)")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def main():

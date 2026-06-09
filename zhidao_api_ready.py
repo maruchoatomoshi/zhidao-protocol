@@ -546,7 +546,8 @@ def get_conn():
 DB_WRITE_LOCK = asyncio.Lock()
 
 
-async def db_write(fn):
+async def db_write(fn, label=None):
+    import inspect as _inspect
     t0 = time.time()
     async with DB_WRITE_LOCK:
         lock_wait = (time.time() - t0) * 1000
@@ -554,9 +555,19 @@ async def db_write(fn):
         result = await asyncio.to_thread(fn)
         exec_ms = (time.time() - t1) * 1000
         if lock_wait > 100 or exec_ms > 100:
+            if label:
+                name = label
+            else:
+                # Walk up the call stack to find the first non-db_write frame
+                # so logs show the actual endpoint name, not the generic '_run'.
+                name = '?'
+                for frame_info in _inspect.stack()[1:6]:
+                    fname = frame_info.function
+                    if fname not in ('db_write', '_run', '<lambda>', 'wrapper'):
+                        name = fname
+                        break
             print(
-                "ZHIDAO_DB_WRITE fn=%s lock_wait=%.0fms exec=%.0fms" % (
-                    getattr(fn, '__name__', '?'), lock_wait, exec_ms),
+                "ZHIDAO_DB_WRITE fn=%s lock_wait=%.0fms exec=%.0fms" % (name, lock_wait, exec_ms),
                 flush=True,
             )
         return result
