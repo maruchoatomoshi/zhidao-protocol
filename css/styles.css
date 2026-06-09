@@ -14959,15 +14959,14 @@ body.lite-mode .profile-card-home::after { display: none; }
 
 .campus-map-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   padding: 14px 14px 8px;
 }
 
 .campus-map-head-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
@@ -14980,11 +14979,12 @@ body.lite-mode .profile-card-home::after { display: none; }
 
 .campus-map-title {
   margin-top: 3px;
-  font-size: 20px;
-  line-height: 1.2;
+  font-size: 22px;
+  line-height: 1.15;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   color: var(--text);
+  white-space: nowrap;
 }
 
 body.theme-genshin-light .campus-map-title,
