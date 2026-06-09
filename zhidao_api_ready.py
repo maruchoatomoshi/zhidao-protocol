@@ -9,6 +9,7 @@ import re
 import sqlite3
 import threading
 import time
+import traceback
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional
@@ -604,7 +605,19 @@ async def db_write(fn, label=None):
         lock_wait = (time.time() - t0) * 1000
         t1 = time.time()
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(DB_WRITE_EXECUTOR, fn)
+        try:
+            result = await loop.run_in_executor(DB_WRITE_EXECUTOR, fn)
+        except Exception as exc:
+            print(
+                "ZHIDAO_DB_WRITE_ERROR fn=%s error=%s: %s" % (
+                    label or getattr(fn, "__name__", "?"),
+                    exc.__class__.__name__,
+                    exc,
+                ),
+                flush=True,
+            )
+            traceback.print_exc()
+            raise
         exec_ms = (time.time() - t1) * 1000
         if lock_wait > 100 or exec_ms > 100:
             if label:
