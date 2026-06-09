@@ -128,7 +128,7 @@ function setTheme(theme) {
   // Обновляем логотип под тему
   const logoBg = document.querySelector('.main-logo .no-leak-bg');
   const isG = theme === 'genshin-light' || theme === 'genshin-dark';
-  const isA = theme === 'admin';
+  const isA = theme === 'architect';
   document.body.classList.toggle('theme-genshin', isG);
   if (logoBg) {
     const logoUrl = isG
