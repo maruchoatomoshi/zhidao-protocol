@@ -6,46 +6,29 @@ This project is a Telegram Mini App plus a FastAPI backend file used for deploym
 
 ## Current Priority
 
-The latest visible bug reported by the user:
+**Backend is stable on the server.** The server runs a known-good version of `/root/zhidao_api.py` that was backed up on 2026-06-09:
 
-- The diary stars page shows `Ошибка загрузки`.
-- The diary leaderboard/rating tab shows nobody.
-- This likely means the deployed backend is not serving the new diary stars endpoints correctly, or the frontend is receiving a non-OK response from:
-  - `GET /api/diary/stars/overview?entry_date=YYYY-MM-DD`
-  - `GET /api/diary/stars/leaderboard`
-  - `POST /api/diary/stars/rate`
-
-Start there before doing visual polish.
-
-Recommended diagnostic commands on the server:
-
-```bash
-grep -n "/api/diary/stars" /root/zhidao_api.py
-python3 -m py_compile /root/zhidao_api.py
-systemctl status zhidao_api.service --no-pager
-journalctl -u zhidao_api.service -n 120 --no-pager
-curl -k "https://127.0.0.1:8443/api/diary/stars/overview?entry_date=2026-04-29" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
-curl -k "https://127.0.0.1:8443/api/diary/stars/leaderboard" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
+```
+/root/zhidao_known_good/zhidao_known_good_20260609_123206.tar.gz
+sha256: d842860f72718193c24151f60e6ece7f0041a7dc6c201e770e50c2b840b2c07a
 ```
 
-Frontend diagnostics:
+**CRITICAL: The repo's `zhidao_api_ready.py` diverged from the server during SQLite debugging on 2026-06-09.** Before deploying from the repo, compare the two files or verify with the user.
 
-- Check `js/diary.js`, function `loadDiaryStarsList()`.
-- Check `js/leaderboard.js`, function `loadDiaryStarsLeaderboardRating()`.
-- If the backend returns 404, the deployed `/root/zhidao_api.py` is stale.
-- If the backend returns 500, inspect journal logs. Common causes are missing DB columns/tables after a migration, malformed SQL, or an older deployed file.
-
-Backend update command used in this project:
-
+To check what's running vs what's in the repo:
 ```bash
-cp /root/zhidao_api.py /root/zhidao_api.backup.py
-curl -L https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/zhidao_api_ready.py -o /root/zhidao_api.py
-grep -n "/api/diary/stars" /root/zhidao_api.py
-python3 -m py_compile /root/zhidao_api.py
-systemctl restart zhidao_api.service
-sleep 3
-systemctl status zhidao_api.service --no-pager
+diff /root/zhidao_api.py <(curl -sL https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/zhidao_api_ready.py)
 ```
+
+Monitoring command:
+```bash
+journalctl -u zhidao_api.service -u zhidao_bot.service --since "10 minutes ago" --no-pager -l \
+  | grep -E "ZHIDAO_DB_WRITE|ZHIDAO_SLOW_CONN|ZHIDAO_WAL|database is locked|ERROR|Traceback"
+
+ls -lh /root/zhidao.db*
+```
+
+Healthy state: no grep hits, WAL file ≤ 4MB.
 
 ## Repository Structure
 
@@ -320,11 +303,33 @@ Do not amend commits unless explicitly requested.
 - Do not make Architect video a small contained box unless explicitly requested.
 - Do not hide admin tools for admins while simplifying normal-user UX.
 
+## SQLite / Backend — Hard Rules (learned 2026-06-09)
+
+These rules exist because a series of WAL/checkpoint experiments caused cascading 27–1463 second stalls and a broken startup. Do not repeat them.
+
+**Never run `wal_checkpoint(RESTART)` or `wal_checkpoint(TRUNCATE)` on a live background loop.** Both modes can compete with active writers and cause `database is locked` or 30–70 second stalls that block all API writes. If a checkpoint loop is needed, use `PASSIVE` only, accept that the WAL file won't shrink, and control WAL size via `wal_autocheckpoint`.
+
+**Never add an `await asyncio.to_thread(startup_checkpoint)` inside `@app.on_event("startup")` before the server is ready.** This blocked uvicorn from completing startup — port 8443 was unreachable until manually killed. If a startup checkpoint is needed, run it as a fire-and-forget background task after `asyncio.create_task(...)`.
+
+**The bot is a second writer process.** Any change that increases write lock hold time in the bot (e.g. doing Telegram sends before commit) can starve the API. The bot's `db_connect()` must: commit + close before any `await`, and set `PRAGMA wal_autocheckpoint=0` so it doesn't trigger auto-checkpoints.
+
+**Do not add a dedicated writer executor or thread pool for DB writes** without benchmarking. An extra queue layer just adds latency on top of `DB_WRITE_LOCK`.
+
+**Before any backend change:** check current server state first:
+```bash
+ls -lh /root/zhidao.db*
+journalctl -u zhidao_api.service -n 20 --no-pager | grep -E "WRITE|SLOW|WAL|locked"
+```
+
+**If the server degrades again:**
+1. Stop both services, run `python3 -c "import sqlite3; c=sqlite3.connect('/root/zhidao.db'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()"`, restart.
+2. If that doesn't help, restore from `/root/zhidao_known_good/`.
+3. Only then investigate root cause with logs before changing any code.
+
 ## Recommended Next Steps
 
-1. Fix the diary stars load error and diary leaderboard empty state.
-2. Confirm server has `/api/diary/stars/*` routes deployed.
-3. If backend works, improve frontend error display so it shows the actual `detail` from API instead of generic `Ошибка загрузки`.
-4. Continue profile polish after diary is stable.
-5. Then return to Architect result screens, music crossfade, and iPhone battle layout polish.
+1. Continue profile polish and UX features — backend is stable.
+2. If slow writes return: check if the bot is holding a write transaction during async Telegram sends (the main historical cause).
+3. After the trip: consider migrating the bot to API-only writes via `X-Internal-Token` so there is only one SQLite writer process.
+4. PostgreSQL migration is plan B, only if SQLite continues to cause issues after the bot write isolation is done.
 
