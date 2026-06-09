@@ -2179,7 +2179,18 @@ def log_economy(c, telegram_id: int, operation: str, amount: int,
     )
 
 
+def get_user_theme_path(c, telegram_id: int) -> str:
+    """Returns the user's current path: 'cyberpunk' or 'genshin'. Defaults to 'cyberpunk'."""
+    c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    return row[0] if row and row[0] else 'cyberpunk'
+
+
 def has_active_implant(c, telegram_id: int, implant_id: str) -> bool:
+    # Implants belong to the cyberpunk path. While a player has switched to the
+    # genshin path, implant passives are frozen (not lost, just inactive).
+    if telegram_id not in ADMIN_IDS and get_user_theme_path(c, telegram_id) == 'genshin':
+        return False
     c.execute(
         '''SELECT 1 FROM user_implants
            WHERE telegram_id=? AND implant_id=? AND durability > 0
@@ -2190,6 +2201,10 @@ def has_active_implant(c, telegram_id: int, implant_id: str) -> bool:
 
 
 def has_active_card(c, telegram_id: int, card_id: str) -> bool:
+    # Cards belong to the genshin path. While a player is on the cyberpunk path,
+    # card passives are frozen (not lost, just inactive).
+    if telegram_id not in ADMIN_IDS and get_user_theme_path(c, telegram_id) != 'genshin':
+        return False
     c.execute(
         '''SELECT 1 FROM user_cards
            WHERE telegram_id=? AND card_id=? AND durability > 0
