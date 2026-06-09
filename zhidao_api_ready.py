@@ -5722,10 +5722,14 @@ async def buy_item(data: dict):
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
             if has_active_implant(c, telegram_id, "implant_panda"):
-                c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (telegram_id,))
-                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-                new_points = c.fetchone()[0] or 0
-                log_economy(c, telegram_id, 'implant_panda_cashback', 10, new_points, None, 'implant', name)
+                # Cap cashback so it can never make a buy+resell cycle profitable
+                # (resale rate 60% + cashback must stay <= 100% of price).
+                panda_cashback = min(10, int(price * 0.4))
+                if panda_cashback > 0:
+                    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (panda_cashback, telegram_id))
+                    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                    new_points = c.fetchone()[0] or 0
+                    log_economy(c, telegram_id, 'implant_panda_cashback', panda_cashback, new_points, None, 'implant', name)
             zhongli_scan_bonus = grant_card_scan_once(
                 c, telegram_id, "card_zhongli", "shop_resonance",
                 "card_zhongli_shop_resonance", name, today,
