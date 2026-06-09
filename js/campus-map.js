@@ -807,8 +807,8 @@ function initCampusMap() {
     <div class="campus-map-panel">
       <div class="campus-map-head">
         <div>
-          <div class="campus-map-kicker">${mode === 'genshin' ? 'LIYUE CAMPUS ATLAS' : 'CAMPUS NETWORK MAP'}</div>
-          <div class="campus-map-title">Beijing Language and Culture University</div>
+          <div class="campus-map-kicker">${mode === 'genshin' ? '校园地图 · LIYUE ATLAS' : '校园地图 · CAMPUS MAP'}</div>
+          <div class="campus-map-title">北京语言大学</div>
         </div>
         <div class="campus-map-head-actions">
           ${canEdit ? `<button class="campus-map-mode editor" type="button" onclick="toggleCampusMapEditor()">${campusMapEditorEnabled ? 'EDITOR ON' : 'EDITOR'}</button>` : ''}

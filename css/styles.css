@@ -14979,11 +14979,18 @@ body.lite-mode .profile-card-home::after { display: none; }
 }
 
 .campus-map-title {
-  margin-top: 4px;
-  font-size: 15px;
-  line-height: 1.25;
+  margin-top: 3px;
+  font-size: 20px;
+  line-height: 1.2;
   font-weight: 800;
+  letter-spacing: 0.5px;
   color: var(--text);
+}
+
+body.theme-genshin-light .campus-map-title,
+body.theme-genshin-dark .campus-map-title {
+  font-family: 'Noto Serif SC', Georgia, serif;
+  letter-spacing: 2px;
 }
 
 .campus-map-mode {
@@ -16262,4 +16269,82 @@ body.theme-admin-light .contract-flow-labels,
 body.theme-admin-light .contract-privacy-toggle small {
   color: #4a5188;
   opacity: 1;
+}
+
+/* ===== LEADERBOARD — ADMIN LIGHT THEME ===== */
+
+body.theme-admin-light .lb-points {
+  color: #4456e0 !important;
+}
+
+body.theme-admin-light .lb-name {
+  color: #1a1f40 !important;
+}
+
+body.theme-admin-light .lb-item {
+  background:
+    radial-gradient(circle at 0% 50%, rgba(68,86,224,0.07), transparent 38%),
+    rgba(255,255,255,0.52);
+  border-color: rgba(68,86,224,0.12);
+}
+
+body.theme-admin-light .lb-item.top1 {
+  border-color: rgba(0,153,204,0.44);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(0,153,204,0.18), transparent 46%),
+    linear-gradient(90deg, rgba(210,240,255,0.96), rgba(255,255,255,0.74));
+}
+
+body.theme-admin-light .lb-item.top2 {
+  border-color: rgba(120, 128, 140, 0.36);
+  background: linear-gradient(90deg, rgba(220,226,236,0.92), rgba(255,255,255,0.70));
+}
+
+body.theme-admin-light .lb-item.top3 {
+  border-color: rgba(68,86,224,0.28);
+  background: linear-gradient(90deg, rgba(210,216,248,0.92), rgba(255,255,255,0.70));
+}
+
+body.theme-admin-light .lb-subline,
+body.theme-admin-light .diary-rank-sub {
+  color: var(--text2);
+}
+
+body.theme-admin-light .lb-path-badge {
+  background: rgba(255,255,255,0.78);
+  color: #3a4070;
+  border-color: rgba(68,86,224,0.24);
+}
+
+body.theme-admin-light .alpha-boss-block {
+  background: rgba(255,255,255,0.50);
+  border-color: rgba(68,86,224,0.22);
+}
+
+body.theme-admin-light .alpha-boss-pts {
+  color: #4456e0;
+}
+
+body.theme-admin-light .alpha-boss-raid-cost {
+  color: rgba(68,86,224,0.65);
+}
+
+body.theme-admin-light .alpha-boss-raid-btn {
+  background: rgba(68,86,224,0.08);
+  border-top-color: rgba(68,86,224,0.15);
+  color: #4456e0;
+}
+
+body.theme-admin-light .diary-rank-card {
+  border-color: rgba(68,86,224,0.14);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(68,86,224,0.07), transparent 38%),
+    rgba(255,255,255,0.52);
+}
+
+body.theme-admin-light .diary-rank-card.top1 {
+  border-color: rgba(0,153,204,0.44);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(0,153,204,0.18), transparent 46%),
+    linear-gradient(90deg, rgba(210,240,255,0.96), rgba(255,255,255,0.74));
 }
