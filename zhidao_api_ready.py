@@ -6,6 +6,7 @@ import hmac
 import os
 import re
 import sqlite3
+import threading
 import time
 import uuid
 from datetime import datetime, timedelta
@@ -526,21 +527,67 @@ ARCHITECT_QUESTION_SEEDS = {
 }
 
 
-def get_conn():
+_THREAD_LOCAL = threading.local()
+
+
+class _PersistentConn:
+    """Proxy for a thread-local sqlite3 connection.
+
+    close() is a deliberate no-op: the underlying connection is kept alive
+    in the thread-local pool and reused by the next get_conn() call on the
+    same thread.  This avoids the per-request WAL scan that caused
+    sqlite3.connect() to take 100-300 s after the WAL file grew large.
+    All other attributes/methods are transparently delegated to the real
+    connection, so existing code requires no changes.
+    """
+
+    def __init__(self, conn):
+        self.__dict__['_conn'] = conn
+
+    def close(self):
+        pass  # intentional no-op; real connection lives in thread-local pool
+
+    def __getattr__(self, name):
+        return getattr(self.__dict__['_conn'], name)
+
+
+def _open_raw_conn():
     t0 = time.time()
-    conn = sqlite3.connect('/root/zhidao.db', timeout=30)
+    conn = sqlite3.connect('/root/zhidao.db', timeout=30, check_same_thread=False)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
-    # Allow auto-checkpoint every 1000 pages (~4 MB). Without this, wal_autocheckpoint=0
-    # lets the WAL grow unboundedly; each new get_conn() must scan the whole WAL to build
-    # its read-snapshot, which turns into 100-300 s exec times once the WAL is large.
-    # The background wal_checkpoint_loop also runs TRUNCATE every 60 s for cleanup.
     conn.execute("PRAGMA wal_autocheckpoint=1000")
     ms = (time.time() - t0) * 1000
     if ms > 50:
         print("ZHIDAO_SLOW_CONN %.0fms" % ms, flush=True)
     return conn
+
+
+def get_conn():
+    """Return a _PersistentConn wrapping the thread-local raw connection.
+
+    On each call we check whether the previous _run() left an uncommitted
+    transaction (e.g. it raised before conn.commit()).  If so we roll it
+    back so the connection is clean for the next caller.  If the connection
+    is broken we close it and open a fresh one.
+    """
+    raw = getattr(_THREAD_LOCAL, 'conn', None)
+    if raw is not None:
+        try:
+            if raw.in_transaction:
+                raw.rollback()
+        except Exception:
+            try:
+                raw.close()
+            except Exception:
+                pass
+            raw = None
+            _THREAD_LOCAL.conn = None
+    if raw is None:
+        raw = _open_raw_conn()
+        _THREAD_LOCAL.conn = raw
+    return _PersistentConn(raw)
 
 
 DB_WRITE_LOCK = asyncio.Lock()
