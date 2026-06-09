@@ -1338,7 +1338,10 @@ async def start_background_tasks():
         except Exception as exc:
             print("ZHIDAO_STARTUP_CHECKPOINT_ERROR %r" % (exc,), flush=True)
 
-    await asyncio.to_thread(_startup_checkpoint)
+    # Run startup checkpoint in background so it never blocks server readiness.
+    # If the WAL is large (e.g. after a crash), sqlite3.connect() itself can
+    # take hundreds of seconds to scan it — blocking the server indefinitely.
+    asyncio.create_task(asyncio.to_thread(_startup_checkpoint))
     asyncio.create_task(wal_checkpoint_loop())
 
 
