@@ -168,11 +168,11 @@ Implemented:
 
 - Guanxi: `-10%` shop discount.
 - Terracota: blocks one penalty/day; after block, next penalty reduced by `5★`.
-- Panda: `+10★` cashback on shop purchase; resale `60%` instead of `50%`.
+- Panda: `min(10★, 40% of price)` cashback on shop purchase (caps arbitrage even on cheap future items); resale `60%` instead of `50%`.
 - Shaolin: `+20★` for timely morning/evening confirmation; `+10★` for full morning+evening day.
 - Linguasoft: `+30★` for new `3★` diary; `+20★` for three consecutive `3★` diary entries.
 - Caishen: `+15★` daily bot-side.
-- Qilin: `+10★ * number_of_qilin_owners` daily bot-side.
+- Qilin: diminishing-returns daily payout, `max(8★, 40★ - (N-1)*6★)` per owner (already capped, see Inflation Risks).
 - Red Dragon: salary/award multiplier in bot; active legendary actions.
 - NetWatch: `+25★` daily bot-side; active legendary actions.
 
@@ -195,16 +195,17 @@ Legendary cards:
 
 ## Main Inflation Risks
 
-1. Qilin can scale fastest: total daily mint is `10 * N^2`.
+1. ~~Qilin can scale fastest: total daily mint is `10 * N^2`.~~ Fixed: diminishing-returns formula caps per-owner payout, total mint grows ~linearly with N.
 2. Bot-side salary and passive payouts bypass `economy_log`.
 3. Gifts are still indirect value transfer through resale.
 4. Cards now add more daily bonuses, but all new effects are capped by daily keys.
 5. Scan attempts can convert activity into random value, so the cap `7` matters.
+6. ~~Panda cashback + 60% resale could exceed item price for items priced ≤25★.~~ Fixed: cashback is now `min(10★, 40% of price)`, so buy+resell can never net a profit regardless of future item pricing.
 
 ## Required Follow-Up
 
 1. Move bot `/award`, `/penalize`, `/зп`, Caishen, Qilin, NetWatch payouts to API or add `economy_log` writes.
-2. Decide a Qilin cap before trip launch.
+2. ~~Decide a Qilin cap before trip launch.~~ Done — diminishing returns formula in `zhidao_bot_ready.py`.
 3. Keep gift/contract monitoring enabled.
 4. After server deploy, run `python3 -m py_compile /root/zhidao_api.py`.
 5. Do one real Telegram smoke test for: diary rating, presence, shop purchase, gift, contract completion, raid.
