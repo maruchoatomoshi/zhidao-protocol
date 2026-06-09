@@ -310,6 +310,22 @@ const SHOP_CATEGORY_LABEL = {
   reminder: '🔔 НАПОМИНАНИЕ', trade: '🔄 ОБМЕН', privilege: '⚡ ПРИВИЛЕГИЯ', other: '📦 ПРОЧЕЕ',
 };
 
+function _inventoryExpiryLine(item, sellValue) {
+  const bought = new Date(item.purchased_at).toLocaleDateString('ru-RU');
+  const base = `Куплено: ${bought} · продажа ${sellValue}★`;
+  if (!item.expires_at) return base;
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+  const expDate = item.expires_at.slice(0, 10);
+  if (expDate === todayStr)
+    return `<span class="inventory-expiry-warn">⚠ Сгорает сегодня в 23:59</span> · продажа ${sellValue}★`;
+  if (expDate === tomorrowStr)
+    return `<span class="inventory-expiry-soon">↯ Истекает завтра в 23:59</span> · продажа ${sellValue}★`;
+  return `${base} · до ${expDate}`;
+}
+
 async function loadInventory() {
   try {
     const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
@@ -331,7 +347,7 @@ async function loadInventory() {
             <div class="inventory-kicker">${tier} · ${catLabel}</div>
             <div class="inventory-name">${item.name}</div>
             ${descHtml}
-            <div class="inventory-date">Куплено: ${new Date(item.purchased_at).toLocaleDateString('ru-RU')} · продажа ${sellValue}★</div>
+            <div class="inventory-date">${_inventoryExpiryLine(item, sellValue)}</div>
           </div>
           <div class="inventory-side">
             <div class="inventory-pill">${item.price}★</div>

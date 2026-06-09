@@ -403,6 +403,19 @@ SHOP_ITEM_SEEDS = [
 # Items removed from active catalog (deactivated on every startup so seeds don't re-enable them)
 SHOP_ITEM_DEACTIVATE = {"extra_case", "solo_seat"}
 
+# Items that expire at midnight (Beijing) after purchase.
+# 0 = tonight 23:59 (same calendar day), 1 = tomorrow 23:59.
+SHOP_ITEM_EXPIRY_DAYS = {
+    'laundry_vip': 0,
+    'kfc':         0,
+    'bubbletea':   0,
+    'snack':       0,
+    'immunity':    1,
+    'amnesty':     1,
+    'dj':          1,
+    'no_report':   1,
+}
+
 ACHIEVEMENT_SEEDS = [
     ("early_bird", "Ранний подъём", "Подтвердить утреннюю отметку без напоминаний и опозданий.", "🌅", 0),
     ("iron_mode", "Железный режим", "Пройти день без штрафов, пропусков и тревожных статусов.", "🎯", 0),
@@ -5959,7 +5972,17 @@ async def buy_item(data: dict):
                 c.execute("""INSERT INTO user_status (telegram_id, title_date) VALUES (?,?)
                              ON CONFLICT(telegram_id) DO UPDATE SET title_date=?""", (telegram_id, today, today))
 
-            c.execute("INSERT INTO shop_purchases (telegram_id, item_code) VALUES (?,?)", (telegram_id, item_code))
+            expiry_days = SHOP_ITEM_EXPIRY_DAYS.get(item_code)
+            if expiry_days is not None:
+                now_bj = datetime.now(BEIJING_TZ)
+                expires_dt = (now_bj + timedelta(days=expiry_days)).replace(
+                    hour=23, minute=59, second=59, microsecond=0
+                )
+                expires_at = expires_dt.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                expires_at = None
+            c.execute("INSERT INTO shop_purchases (telegram_id, item_code, expires_at) VALUES (?,?,?)",
+                      (telegram_id, item_code, expires_at))
             c.execute("""INSERT INTO shop_daily_counts (item_code, date, count) VALUES (?,?,1)
                          ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, today))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
@@ -6009,14 +6032,18 @@ def get_inventory(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""SELECT sp.id, sp.item_code, si.name, si.icon, si.price,
-                        si.category, sp.purchased_at, sp.status, sp.given_to, si.description
+                        si.category, sp.purchased_at, sp.status, sp.given_to, si.description,
+                        sp.expires_at
                  FROM shop_purchases sp
                  JOIN shop_items si ON sp.item_code = si.code
                  WHERE sp.telegram_id=? AND sp.status='active'
+                   AND (sp.expires_at IS NULL OR sp.expires_at > datetime('now', '+8 hours'))
                  ORDER BY sp.purchased_at DESC""", (telegram_id,))
     rows = c.fetchall()
     conn.close()
-    return [{"id": r[0], "code": r[1], "name": r[2], "icon": r[3], "price": r[4], "category": r[5], "purchased_at": r[6], "status": r[7], "given_to": r[8], "description": r[9]} for r in rows]
+    return [{"id": r[0], "code": r[1], "name": r[2], "icon": r[3], "price": r[4],
+             "category": r[5], "purchased_at": r[6], "status": r[7], "given_to": r[8],
+             "description": r[9], "expires_at": r[10]} for r in rows]
 
 
 @app.get("/api/users/search")

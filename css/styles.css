@@ -16363,8 +16363,8 @@ body.theme-admin-light .diary-rank-card.top1 {
 .gift-modal-overlay.show { display: flex; }
 .gift-modal {
   width: 100%;
-  background: var(--bg2);
-  border-top: 1px solid rgba(212,175,55,0.25);
+  background: var(--bg);
+  border-top: 1px solid var(--gold-border);
   border-radius: 18px 18px 0 0;
   padding: 20px 16px 32px;
   max-height: 82vh;
@@ -16406,8 +16406,8 @@ body.theme-admin-light .diary-rank-card.top1 {
   font-weight: 700;
   color: var(--gold);
   font-family: monospace;
-  background: rgba(212,175,55,0.07);
-  border: 1px solid rgba(212,175,55,0.2);
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
   border-radius: 8px;
   padding: 7px 12px;
 }
@@ -16420,7 +16420,7 @@ body.theme-admin-light .diary-rank-card.top1 {
   width: 100%;
   box-sizing: border-box;
   background: var(--bg3);
-  border: 1px solid rgba(212,175,55,0.22);
+  border: 1px solid var(--gold-border);
   border-radius: 10px;
   color: var(--text);
   font-size: 14px;
@@ -16428,7 +16428,7 @@ body.theme-admin-light .diary-rank-card.top1 {
   font-family: inherit;
   outline: none;
 }
-.gift-modal-search:focus { border-color: rgba(212,175,55,0.5); }
+.gift-modal-search:focus { border-color: var(--gold); }
 .gift-modal-search::placeholder { color: var(--text3); }
 .gift-modal-results {
   overflow-y: auto;
@@ -16453,14 +16453,14 @@ body.theme-admin-light .diary-rank-card.top1 {
   background: transparent;
   transition: background 0.12s;
 }
-.gift-user-row:active { background: rgba(212,175,55,0.1); }
+.gift-user-row:active { background: var(--gold-dim); }
 .gift-user-ava {
   width: 34px;
   height: 34px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: rgba(212,175,55,0.12);
+  background: var(--gold-dim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16493,8 +16493,8 @@ body.theme-admin-light .diary-rank-card.top1 {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  background: rgba(212,175,55,0.07);
-  border: 1px solid rgba(212,175,55,0.25);
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
   border-radius: 10px;
 }
 .gift-clear-btn {
@@ -16515,3 +16515,19 @@ body.theme-admin-light .diary-rank-card.top1 {
 .gift-modal-confirm { flex: 1; opacity: 1; }
 .gift-modal-confirm:disabled { opacity: 0.4; cursor: default; }
 body.lite-mode .gift-modal-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+/* Light themes: search input needs a visible fill since --bg3 is transparent in some themes */
+body.theme-nw-light .gift-modal-search,
+body.theme-genshin-light .gift-modal-search,
+body.theme-genshin-dark .gift-modal-search {
+  background: rgba(0,0,0,0.06);
+}
+
+/* ===== INVENTORY EXPIRY LABELS ===== */
+.inventory-expiry-warn {
+  color: #e05050;
+  font-weight: 700;
+}
+.inventory-expiry-soon {
+  color: var(--gold);
+  font-weight: 600;
+}
