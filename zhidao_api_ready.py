@@ -2653,6 +2653,17 @@ async def set_user_theme_path(data: dict):
         if not c.fetchone():
             conn.close()
             raise HTTPException(status_code=404, detail="User not found")
+
+        # This endpoint is the one-time initial path choice. Switching afterwards
+        # must go through the "Смена пути" shop item (path_switch), so that
+        # implant/card passive freezing can't be bypassed for free.
+        if telegram_id not in ADMIN_IDS:
+            c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
+            existing = c.fetchone()
+            if existing and existing[0]:
+                conn.close()
+                raise HTTPException(status_code=409, detail="Path already chosen")
+
         c.execute(
             """INSERT INTO user_status (telegram_id, theme_path) VALUES (?, ?)
                ON CONFLICT(telegram_id) DO UPDATE SET theme_path=excluded.theme_path""",
