@@ -1240,10 +1240,13 @@ async def wal_checkpoint_loop():
             def _checkpoint():
                 conn = sqlite3.connect('/root/zhidao.db', timeout=5)
                 try:
-                    # PASSIVE: checkpoints frames without acquiring the WRITER lock.
-                    # TRUNCATE requires the WRITER lock to shrink the WAL file and
-                    # was timing out for 30 s whenever any writer held the lock.
-                    row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+                    # RESTART: waits for active readers (up to timeout=5s), checkpoints
+                    # all WAL frames, then resets the WAL write position to offset 0.
+                    # PASSIVE never resets the write position, so the WAL grows without
+                    # bound and new sqlite3.connect() calls must scan the entire WAL
+                    # (observed as 100-300s exec times). RESTART prevents that growth.
+                    # TRUNCATE also resets position but needs the exclusive WRITER lock.
+                    row = conn.execute("PRAGMA wal_checkpoint(RESTART)").fetchone()
                     return row
                 finally:
                     conn.close()
@@ -1266,6 +1269,29 @@ async def wal_checkpoint_loop():
 
 @app.on_event("startup")
 async def start_background_tasks():
+    # Run an immediate RESTART checkpoint before accepting requests.
+    # If the service was previously killed with a large WAL, the first
+    # get_conn() would scan all WAL frames (100-300s). Checkpointing at
+    # startup (no active readers yet) resets the WAL write position to 0.
+    def _startup_checkpoint():
+        try:
+            conn = sqlite3.connect('/root/zhidao.db', timeout=10)
+            try:
+                row = conn.execute("PRAGMA wal_checkpoint(RESTART)").fetchone()
+                print(
+                    "ZHIDAO_STARTUP_CHECKPOINT busy=%s log_frames=%s checkpointed_frames=%s" % (
+                        row[0] if row else "?",
+                        row[1] if row else "?",
+                        row[2] if row else "?",
+                    ),
+                    flush=True,
+                )
+            finally:
+                conn.close()
+        except Exception as exc:
+            print("ZHIDAO_STARTUP_CHECKPOINT_ERROR %r" % (exc,), flush=True)
+
+    await asyncio.to_thread(_startup_checkpoint)
     asyncio.create_task(wal_checkpoint_loop())
 
 
