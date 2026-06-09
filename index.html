@@ -581,7 +581,7 @@
     <div class="page-sub">> gèng duō // все функции</div>
   </div>
   <div class="more-grid">
-    <div class="more-item" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
+    <div class="more-item" data-feature="diary-stars" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
       <i class="ti ti-star more-item-icon" style="color:var(--gold);"></i>
       <div class="more-item-name">ДНЕВНИК ★</div>
       <div class="more-item-cn">日记评分 rì jì píng fēn</div>
@@ -606,12 +606,12 @@
       <div class="more-item-name">КАРТА</div>
       <div class="more-item-cn">校园地图 xiào yuán dì tú</div>
     </div>
-    <div class="more-item" onclick="openMore('laundry')">
+    <div class="more-item" data-feature="laundry" onclick="openMore('laundry')">
       <i class="ti ti-wash more-item-icon" style="color:#60b4d4;"></i>
       <div class="more-item-name">СТИРКА</div>
       <div class="more-item-cn">洗衣 xǐ yī</div>
     </div>
-    <div class="more-item" onclick="openMore('achievements')">
+    <div class="more-item" data-feature="achievements" onclick="openMore('achievements')">
       <i class="ti ti-medal more-item-icon" style="color:var(--gold);"></i>
       <div class="more-item-name">АЧИВКИ</div>
       <div class="more-item-cn">成就 chéng jiù</div>
@@ -2266,19 +2266,19 @@
     <i class="ti ti-layout-list"></i>
     <span class="nav-cn">日程</span>
   </button>
-  <button class="nav-item" onclick="showPage('rating',this)">
+  <button class="nav-item" data-feature="rating" onclick="showPage('rating',this)">
     <i class="ti ti-trophy"></i>
     <span class="nav-cn">排名</span>
   </button>
-  <button class="nav-item" id="nav-shop-btn" onclick="showPage('shop',this)">
+  <button class="nav-item" id="nav-shop-btn" data-feature="shop" onclick="showPage('shop',this)">
     <i class="ti ti-building-store"></i>
     <span class="nav-cn">商店</span>
   </button>
-  <button class="nav-item" onclick="showPage('casino',this)">
+  <button class="nav-item" data-feature="casino" onclick="showPage('casino',this)">
     <i class="ti ti-package" id="nav-casino-icon"></i>
     <span class="nav-cn" id="nav-casino-label">箱子</span>
   </button>
-  <button class="nav-item" onclick="showPage('implants',this)">
+  <button class="nav-item" data-feature="implants" onclick="showPage('implants',this)">
     <i class="ti ti-cpu" id="nav-implants-icon"></i>
     <span class="nav-cn" id="nav-implants-label">植入物</span>
   </button>
@@ -2389,10 +2389,25 @@
   </div>
 </div>
 
+<div id="featureFreezeOverlay" class="launch-gate-overlay" onclick="closeFeatureFreezeOverlay()">
+  <div class="launch-gate-panel" onclick="event.stopPropagation()">
+    <div class="launch-gate-scan"></div>
+    <button class="launch-gate-close" onclick="closeFeatureFreezeOverlay()">×</button>
+    <div class="launch-gate-kicker">SYSTEM // MODULE LOCKED</div>
+    <div class="launch-gate-big">即将开放</div>
+    <div class="launch-gate-panel-title">Раздел <span id="featureFreezeTitle">—</span> заморожен</div>
+    <div class="launch-gate-panel-copy">
+      Этот модуль откроется ближе к старту. Следи за объявлениями — доступ включат всем сразу.
+    </div>
+    <div class="launch-gate-panel-timer" id="featureFreezeTimer" data-freeze-countdown style="display:none;"></div>
+    <button class="launch-gate-return" onclick="closeFeatureFreezeOverlay()">Понятно</button>
+  </div>
+</div>
+
 <script src="./js/config.js"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260608a"></script>
+<script src="./js/ui.js?v=20260608b"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js?v=20260604b"></script>
 <script src="./js/blackwall.js"></script>

@@ -38,6 +38,10 @@ function updateLaunchGateCountdowns() {
   document.querySelectorAll('[data-launch-countdown]').forEach(el => {
     el.textContent = text;
   });
+  const freezeText = formatFeatureFreezeCountdown();
+  document.querySelectorAll('[data-freeze-countdown]').forEach(el => {
+    el.textContent = freezeText;
+  });
 }
 
 function syncLaunchGateVisibility() {
@@ -64,11 +68,72 @@ function closeLaunchGateOverlay() {
   if (overlay) overlay.classList.remove('show');
 }
 
+// === ЗАМОРОЗКА ОТДЕЛЬНЫХ РАЗДЕЛОВ ===
+// Ключи совпадают с именами страниц (showPage) и секций (openMore).
+const FEATURE_FREEZE_LABELS = {
+  casino:        'КЕЙСЫ / МОЛИТВЫ',
+  shop:          'МАГАЗИН',
+  implants:      'ИМПЛАНТЫ / КАРТОЧКИ',
+  laundry:       'СТИРКА / ВОДА',
+  achievements:  'АЧИВКИ',
+  'diary-stars': 'ДНЕВНИК ★',
+  rating:        'РЕЙТИНГ',
+};
+
+function isFeatureFrozen(name) {
+  if (!window.APP_FEATURE_FREEZE_ENABLED) return false;
+  if (!currentUserId || isAdmin || isArchitect) return false;
+  return !!(window.APP_FROZEN_FEATURES || {})[name];
+}
+
+function formatFeatureFreezeCountdown() {
+  const target = new Date(window.APP_FREEZE_TARGET_AT || '');
+  if (Number.isNaN(target.getTime())) return '';
+  const diff = target.getTime() - Date.now();
+  if (diff <= 0) return 'Скоро открытие';
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${days}д ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
+function showFeatureFreezeOverlay(name) {
+  const overlay = document.getElementById('featureFreezeOverlay');
+  if (!overlay) return;
+  const titleEl = document.getElementById('featureFreezeTitle');
+  if (titleEl) titleEl.textContent = FEATURE_FREEZE_LABELS[name] || 'ЭТОТ РАЗДЕЛ';
+  const cd = formatFeatureFreezeCountdown();
+  const timerEl = document.getElementById('featureFreezeTimer');
+  if (timerEl) { timerEl.textContent = cd; timerEl.style.display = cd ? 'block' : 'none'; }
+  overlay.classList.add('show');
+  try { tg.HapticFeedback.notificationOccurred('warning'); } catch(e) {}
+}
+
+function closeFeatureFreezeOverlay() {
+  const overlay = document.getElementById('featureFreezeOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
+// Помечает замочком пункты навигации/меню с data-feature, если раздел заморожен.
+function syncFeatureFreezeBadges() {
+  document.querySelectorAll('[data-feature]').forEach(el => {
+    el.classList.toggle('feature-frozen', isFeatureFrozen(el.getAttribute('data-feature')));
+  });
+}
+
 let _currentPage = 'home';
 
 function showPage(name, btn) {
   if (isLaunchGateActive() && name !== 'home') {
     showLaunchGateOverlay();
+    return;
+  }
+
+  if (isFeatureFrozen(name)) {
+    showFeatureFreezeOverlay(name);
     return;
   }
 
@@ -139,6 +204,7 @@ function showPage(name, btn) {
 function syncAdminUiVisibility() {
   document.body.classList.toggle('is-admin', !!isAdmin);
   syncLaunchGateVisibility();
+  syncFeatureFreezeBadges();
   if (typeof syncArchitectEventAvailability === 'function') syncArchitectEventAvailability();
 
   const shopReset = document.getElementById('shopResetBtn');
@@ -154,6 +220,11 @@ function syncAdminUiVisibility() {
 function openMore(section) {
   if (isLaunchGateActive()) {
     showLaunchGateOverlay();
+    return;
+  }
+
+  if (isFeatureFrozen(section)) {
+    showFeatureFreezeOverlay(section);
     return;
   }
 
@@ -965,6 +1036,9 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   });
   zSafeUiCall('diary access', () => {
     if (typeof syncDiaryAccessVisibility === 'function') syncDiaryAccessVisibility();
+  });
+  zSafeUiCall('feature freeze', () => {
+    if (typeof syncFeatureFreezeBadges === 'function') syncFeatureFreezeBadges();
   });
 
   if (!adminIntroPlaying && !_bootRunning) hideStartupCover();

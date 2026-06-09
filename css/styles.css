@@ -11647,6 +11647,23 @@ body.launch-locked .home-event-card {
   82% { opacity: 0.65; }
   to { transform: translateY(360px); opacity: 0; }
 }
+
+/* Заморозка отдельных разделов — замок на пунктах навигации/меню */
+.feature-frozen { position: relative; }
+.feature-frozen::after {
+  content: "\1F512"; /* 🔒 */
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.85;
+  pointer-events: none;
+  filter: grayscale(0.2);
+}
+.more-item.feature-frozen { opacity: 0.5; }
+.nav-item.feature-frozen { opacity: 0.62; }
+.nav-item.feature-frozen::after { top: 2px; right: 50%; transform: translateX(14px); }
 /* ═══════════════════════════════════════════════════════════════
    ARCHITECT // WOW LAYER II — Holographic · Neon · Boot · Tilt
    ═══════════════════════════════════════════════════════════════ */
