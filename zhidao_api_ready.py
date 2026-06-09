@@ -3178,14 +3178,18 @@ async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Heade
     if not text:
         raise HTTPException(status_code=400, detail="Announcement text is empty")
 
-    async with DB_WRITE_LOCK:
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
-        announcement_id = c.lastrowid
-        conn.commit()
-        conn.close()
+        try:
+            c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
+            announcement_id = c.lastrowid
+            conn.commit()
+            return announcement_id
+        finally:
+            conn.close()
 
+    announcement_id = await db_write(_run)
     telegram_delivery = await broadcast_announcement_to_telegram(text)
     return {"success": True, "id": announcement_id, "telegram_delivery": telegram_delivery}
 
@@ -3963,51 +3967,56 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
     note = str(data.get("note") or f"admin dispatch attempt {attempt_no}").strip()
     target_ids = data.get("telegram_ids")
 
-    async with DB_WRITE_LOCK:
+    def _prepare():
         conn = get_conn()
         c = conn.cursor()
-        if target_ids:
-            ids = []
-            for raw_id in target_ids:
-                try:
-                    ids.append(int(raw_id))
-                except (TypeError, ValueError):
-                    continue
-            ids = [tid for tid in ids if tid not in ADMIN_IDS]
-        else:
-            placeholders = ','.join('?' * len(ADMIN_IDS))
-            c.execute(
-                f'''SELECT telegram_id
-                    FROM users
-                    WHERE telegram_id IS NOT NULL
-                      AND telegram_id NOT IN ({placeholders})''',
-                ADMIN_IDS,
-            )
-            ids = [row[0] for row in c.fetchall()]
-
-        eligible = []
-        skipped = 0
-        for telegram_id in ids:
-            row = ensure_presence_check(c, check_type, check_date, telegram_id, note)
-            if row and row.get("status") == "skipped":
-                c.execute(
-                    '''UPDATE daily_checks
-                       SET status='pending',
-                           attempts_sent=0,
-                           first_sent_at=NULL,
-                           last_attempt_at=NULL,
-                           note=?,
-                           updated_at=?
-                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
-                    (note, now_iso(), check_type, check_date, telegram_id),
-                )
-                row = fetch_presence_row(c, check_type, check_date, telegram_id)
-            if row and row.get("status") in ("pending", "leave_rejected"):
-                eligible.append(telegram_id)
+        try:
+            if target_ids:
+                ids = []
+                for raw_id in target_ids:
+                    try:
+                        ids.append(int(raw_id))
+                    except (TypeError, ValueError):
+                        continue
+                ids = [tid for tid in ids if tid not in ADMIN_IDS]
             else:
-                skipped += 1
-        conn.commit()
-        conn.close()
+                placeholders = ','.join('?' * len(ADMIN_IDS))
+                c.execute(
+                    f'''SELECT telegram_id
+                        FROM users
+                        WHERE telegram_id IS NOT NULL
+                          AND telegram_id NOT IN ({placeholders})''',
+                    ADMIN_IDS,
+                )
+                ids = [row[0] for row in c.fetchall()]
+
+            eligible = []
+            skipped = 0
+            for telegram_id in ids:
+                row = ensure_presence_check(c, check_type, check_date, telegram_id, note)
+                if row and row.get("status") == "skipped":
+                    c.execute(
+                        '''UPDATE daily_checks
+                           SET status='pending',
+                               attempts_sent=0,
+                               first_sent_at=NULL,
+                               last_attempt_at=NULL,
+                               note=?,
+                               updated_at=?
+                           WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                        (note, now_iso(), check_type, check_date, telegram_id),
+                    )
+                    row = fetch_presence_row(c, check_type, check_date, telegram_id)
+                if row and row.get("status") in ("pending", "leave_rejected"):
+                    eligible.append(telegram_id)
+                else:
+                    skipped += 1
+            conn.commit()
+            return eligible, skipped
+        finally:
+            conn.close()
+
+    eligible, skipped = await db_write(_prepare)
 
     sent = []
     failed = []
@@ -4017,23 +4026,29 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
         ok, response = await send_telegram_message(telegram_id, text, markup)
         if ok:
             sent.append(telegram_id)
-            async with DB_WRITE_LOCK:
-                conn = get_conn()
-                c = conn.cursor()
-                now = now_iso()
-                c.execute(
-                    '''UPDATE daily_checks
-                       SET attempts_sent=COALESCE(attempts_sent, 0) + 1,
-                           first_sent_at=COALESCE(first_sent_at, ?),
-                           last_attempt_at=?,
-                           updated_at=?
-                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
-                    (now, now, now, check_type, check_date, telegram_id),
-                )
-                conn.commit()
-                conn.close()
         else:
             failed.append({"telegram_id": telegram_id, "error": response})
+
+    if sent:
+        def _mark_sent():
+            conn = get_conn()
+            c = conn.cursor()
+            try:
+                now = now_iso()
+                for telegram_id in sent:
+                    c.execute(
+                        '''UPDATE daily_checks
+                           SET attempts_sent=COALESCE(attempts_sent, 0) + 1,
+                               first_sent_at=COALESCE(first_sent_at, ?),
+                               last_attempt_at=?,
+                               updated_at=?
+                           WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                        (now, now, now, check_type, check_date, telegram_id),
+                    )
+                conn.commit()
+            finally:
+                conn.close()
+        await db_write(_mark_sent)
 
     return {
         "success": True,
@@ -5472,35 +5487,39 @@ async def red_dragon_intercept(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    async with DB_WRITE_LOCK:
+
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "intercept")
-        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
-        if target_points < 80:
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "intercept")
+            tid, tname, target_points = find_action_target(c, actor_id, target_id, target_name)
+            if target_points < 80:
+                raise HTTPException(status_code=400, detail="Target balance below 80")
+            cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''SELECT 1 FROM legendary_implant_actions
+                   WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='intercept'
+                     AND created_at>=? LIMIT 1''',
+                (actor_id, tid, cutoff),
+            )
+            if c.fetchone():
+                raise HTTPException(status_code=429, detail="Target protected for 3 days")
+            c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (tid,))
+            c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
+            target_balance = c.fetchone()[0] or 0
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+            actor_balance = c.fetchone()[0] or 0
+            log_economy(c, tid, "red_dragon_intercept_loss", -10, target_balance, actor_id, "implant", "Перехват")
+            log_economy(c, actor_id, "red_dragon_intercept_gain", 10, actor_balance, tid, "implant", "Перехват")
+            log_legendary_action(c, actor_id, tid, None, "implant_red_dragon", "intercept", 10, 0, tname)
+            conn.commit()
+            return tid, tname, actor_balance
+        finally:
             conn.close()
-            raise HTTPException(status_code=400, detail="Target balance below 80")
-        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
-        c.execute(
-            '''SELECT 1 FROM legendary_implant_actions
-               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='intercept'
-                 AND created_at>=? LIMIT 1''',
-            (actor_id, target_id, cutoff),
-        )
-        if c.fetchone():
-            conn.close()
-            raise HTTPException(status_code=429, detail="Target protected for 3 days")
-        c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (target_id,))
-        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
-        target_balance = c.fetchone()[0] or 0
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
-        actor_balance = c.fetchone()[0] or 0
-        log_economy(c, target_id, "red_dragon_intercept_loss", -10, target_balance, actor_id, "implant", "Перехват")
-        log_economy(c, actor_id, "red_dragon_intercept_gain", 10, actor_balance, target_id, "implant", "Перехват")
-        log_legendary_action(c, actor_id, target_id, None, "implant_red_dragon", "intercept", 10, 0, target_name)
-        conn.commit()
-        conn.close()
+
+    target_id, target_name, actor_balance = await db_write(_run)
     await send_telegram_message(target_id, "🐉 Красный Дракон активировал «Перехват».\nС вашего баланса снято 10★.")
     return {"success": True, "target": target_name, "stolen": 10, "new_points": actor_balance}
 
@@ -5551,41 +5570,46 @@ async def netwatch_formatting(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    async with DB_WRITE_LOCK:
+
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "formatting")
-        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
-        if target_points < 80:
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "formatting")
+            tid, tname, target_points = find_action_target(c, actor_id, target_id, target_name)
+            if target_points < 80:
+                raise HTTPException(status_code=400, detail="Target balance below 80")
+            c.execute(
+                '''SELECT telegram_id, full_name, COALESCE(points, 0)
+                   FROM users
+                   WHERE telegram_id NOT IN (?, ?)
+                     AND telegram_id NOT IN ({})
+                     AND COALESCE(points, 0) >= 80
+                   ORDER BY RANDOM()
+                   LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
+                [actor_id, tid] + ADMIN_IDS,
+            )
+            secondary = c.fetchone()
+            secondary_id = secondary[0] if secondary else None
+            secondary_name = secondary[1] if secondary else None
+            c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (tid,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
+            target_balance = c.fetchone()[0] or 0
+            log_economy(c, tid, "netwatch_formatting", -15, target_balance, actor_id, "implant", "Форматирование")
+            secondary_delta = 0
+            if secondary_id:
+                c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
+                secondary_balance = c.fetchone()[0] or 0
+                log_economy(c, secondary_id, "netwatch_formatting_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
+                secondary_delta = -5
+            log_legendary_action(c, actor_id, tid, secondary_id, "implant_netwatch", "formatting", -15, secondary_delta, tname)
+            conn.commit()
+            return tid, tname, secondary_id, secondary_name
+        finally:
             conn.close()
-            raise HTTPException(status_code=400, detail="Target balance below 80")
-        c.execute(
-            '''SELECT telegram_id, full_name, COALESCE(points, 0)
-               FROM users
-               WHERE telegram_id NOT IN (?, ?)
-                 AND telegram_id NOT IN ({})
-                 AND COALESCE(points, 0) >= 80
-               ORDER BY RANDOM()
-               LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
-            [actor_id, target_id] + ADMIN_IDS,
-        )
-        secondary = c.fetchone()
-        secondary_id = secondary[0] if secondary else None
-        secondary_name = secondary[1] if secondary else None
-        c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (target_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
-        target_balance = c.fetchone()[0] or 0
-        log_economy(c, target_id, "netwatch_formatting", -15, target_balance, actor_id, "implant", "Форматирование")
-        secondary_delta = 0
-        if secondary_id:
-            c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
-            c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
-            secondary_balance = c.fetchone()[0] or 0
-            log_economy(c, secondary_id, "netwatch_formatting_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
-            secondary_delta = -5
-        log_legendary_action(c, actor_id, target_id, secondary_id, "implant_netwatch", "formatting", -15, secondary_delta, target_name)
-        conn.commit()
-        conn.close()
+
+    target_id, target_name, secondary_id, secondary_name = await db_write(_run)
     await send_telegram_message(target_id, "🔴 NetWatch выполнил «Форматирование».\nС вашего баланса снято 15★.")
     if secondary_id:
         await send_telegram_message(secondary_id, "🔴 Побочный импульс NetWatch.\nС вашего баланса снято 5★.")
@@ -5605,30 +5629,35 @@ async def netwatch_veil_breach(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    async with DB_WRITE_LOCK:
+
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "veil_breach")
-        target_id, target_name, _ = find_action_target(c, actor_id, target_id, target_name)
-        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
-        c.execute(
-            '''SELECT 1 FROM legendary_implant_actions
-               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='veil_breach'
-                 AND created_at>=? LIMIT 1''',
-            (actor_id, target_id, cutoff),
-        )
-        if c.fetchone():
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "veil_breach")
+            tid, tname, _ = find_action_target(c, actor_id, target_id, target_name)
+            cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''SELECT 1 FROM legendary_implant_actions
+                   WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='veil_breach'
+                     AND created_at>=? LIMIT 1''',
+                (actor_id, tid, cutoff),
+            )
+            if c.fetchone():
+                raise HTTPException(status_code=429, detail="Target protected for 14 days")
+            lu = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
+                   ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
+                (tid, lu),
+            )
+            log_legendary_action(c, actor_id, tid, None, "implant_netwatch", "veil_breach", 0, 0, tname)
+            conn.commit()
+            return tid, tname, lu
+        finally:
             conn.close()
-            raise HTTPException(status_code=429, detail="Target protected for 14 days")
-        locked_until = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
-        c.execute(
-            '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
-               ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
-            (target_id, locked_until),
-        )
-        log_legendary_action(c, actor_id, target_id, None, "implant_netwatch", "veil_breach", 0, 0, target_name)
-        conn.commit()
-        conn.close()
+
+    target_id, target_name, locked_until = await db_write(_run)
     await send_telegram_message(
         target_id,
         "🔴 NetWatch активировал «Взлом Заслона».\n"
@@ -5968,25 +5997,29 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
         raise HTTPException(status_code=403, detail="Forbidden")
     telegram_id = data.get("telegram_id")
     frozen = data.get("frozen", True)
-    async with DB_WRITE_LOCK:
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        c.execute("""INSERT INTO user_status (telegram_id, frozen) VALUES (?,?)
-                     ON CONFLICT(telegram_id) DO UPDATE SET frozen=?""", (telegram_id, int(frozen), int(frozen)))
-        c.execute(
-            '''INSERT INTO admin_action_logs
-               (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, ?, ?, 0, ?, ?)''',
-            (
-                x_admin_id,
-                telegram_id,
-                'freeze' if frozen else 'unfreeze',
-                'NetWatch freeze' if frozen else 'NetWatch unfreeze',
-                now_iso(),
-            ),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            c.execute("""INSERT INTO user_status (telegram_id, frozen) VALUES (?,?)
+                         ON CONFLICT(telegram_id) DO UPDATE SET frozen=?""", (telegram_id, int(frozen), int(frozen)))
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, ?, ?, 0, ?, ?)''',
+                (
+                    x_admin_id,
+                    telegram_id,
+                    'freeze' if frozen else 'unfreeze',
+                    'NetWatch freeze' if frozen else 'NetWatch unfreeze',
+                    now_iso(),
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    await db_write(_run)
     text = (
         "⛔ NETWATCH 网络保安\n\n"
         "系统检测到异常活动\n"
