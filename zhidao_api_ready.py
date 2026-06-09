@@ -1238,11 +1238,12 @@ async def wal_checkpoint_loop():
             t0 = time.time()
 
             def _checkpoint():
-                conn = sqlite3.connect('/root/zhidao.db', timeout=30)
+                conn = sqlite3.connect('/root/zhidao.db', timeout=5)
                 try:
-                    # TRUNCATE: checkpoints all WAL frames and truncates the WAL file
-                    # to zero, keeping it from growing indefinitely. Runs every 60 s.
-                    row = conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                    # PASSIVE: checkpoints frames without acquiring the WRITER lock.
+                    # TRUNCATE requires the WRITER lock to shrink the WAL file and
+                    # was timing out for 30 s whenever any writer held the lock.
+                    row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
                     return row
                 finally:
                     conn.close()
