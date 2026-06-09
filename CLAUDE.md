@@ -4,6 +4,38 @@ Context and working rules for Claude / Claude Code in the `ZHIDAO Protocol` repo
 
 This project is a Telegram Mini App plus a FastAPI backend file used for deployment. The app is intentionally game-like: cyberpunk / NetWatch / Genshin themes, points economy, cases, raids, diary scoring, Architect Protocol event, profile cards, inventory, and admin tools.
 
+## Project Incident History
+
+### 2026-05-27 — Великий датакрэш (The Great Data Crash)
+
+Server/API/DB ended up in a near-empty state: `users=0`, `expected_students=0`, `shop_items=1`, `achievements=0`, `settings=0`. The environment had to be rebuilt from scratch:
+
+- API and bot were in a reset/old state
+- All users, admins, testers, shop items, settings and seed data were gone
+- Had to reconfigure all systemd env vars: `ADMIN_IDS`, `ARCHITECT_IDS`, `TELEGRAM_AUTH_REQUIRED`, `API_INTERNAL_TOKEN`, `BOT_TOKEN`, `EXPECTED_STUDENTS_FILE`
+- HTTPS/certificate was broken; restored via `certbot --nginx -d hk.marucho.icu`
+- Restored the student list via `/root/expected_students.txt` (85 students)
+- Manually re-added admins and test accounts: Марк, Юля, МЮ, Лиза, Илья, Тяньхао, 原马克
+- Restored VPN/Marzban username bindings
+- Restored shop inventory
+- Re-verified registration, themes, profiles, Mini App, bot, API
+
+This crash prompted the known-good backup approach and more careful handling of env/secrets.
+
+### 2026-06-09 — Второй датакрэш (The Second Data Crash)
+
+SQLite WAL/checkpoint experiments caused cascading 27–1463 second stalls on all write endpoints (shop purchases, point adjustments). Root causes identified and fixed:
+
+- `wal_checkpoint(TRUNCATE/RESTART)` in a background loop competed with active writers — took 49–72 s and blocked everything
+- `await asyncio.to_thread(startup_checkpoint)` inside `@app.on_event("startup")` blocked uvicorn from completing startup — port 8443 unreachable
+- Per-request `sqlite3.connect()` scanned the entire WAL file on open (100–300 s when WAL was large)
+
+Resolution: persistent thread-local connections (`_PersistentConn`), PASSIVE-only checkpoint loop (opt-in via env var), startup checkpoint as fire-and-forget background task. Rolled back to known-good backup:
+```
+/root/zhidao_known_good/zhidao_known_good_20260609_123206.tar.gz
+sha256: d842860f72718193c24151f60e6ece7f0041a7dc6c201e770e50c2b840b2c07a
+```
+
 ## Current Priority
 
 **Backend is stable on the server.** The server runs a known-good version of `/root/zhidao_api.py` that was backed up on 2026-06-09:
