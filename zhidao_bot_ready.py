@@ -101,7 +101,6 @@ def db_connect():
     # means commits no longer fsync, so the bot releases the write lock fast.
     conn = sqlite3.connect("/root/zhidao.db", timeout=30)
     conn.execute("PRAGMA busy_timeout=5000")
-    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA wal_autocheckpoint=0")  # prevent bot from triggering auto-checkpoints
     return conn
@@ -114,6 +113,7 @@ class Form(StatesGroup):
 
 def init_db():
     conn = db_connect()
+    conn.execute("PRAGMA journal_mode=WAL")
     c = conn.cursor()
     c.execute(
         """CREATE TABLE IF NOT EXISTS users

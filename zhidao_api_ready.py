@@ -555,7 +555,6 @@ def _open_raw_conn():
     t0 = time.time()
     conn = sqlite3.connect('/root/zhidao.db', timeout=30, check_same_thread=False)
     conn.execute("PRAGMA busy_timeout=5000")
-    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA wal_autocheckpoint=1000")
     ms = (time.time() - t0) * 1000
