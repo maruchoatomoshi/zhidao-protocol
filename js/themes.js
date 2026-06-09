@@ -128,11 +128,14 @@ function setTheme(theme) {
   // Обновляем логотип под тему
   const logoBg = document.querySelector('.main-logo .no-leak-bg');
   const isG = theme === 'genshin-light' || theme === 'genshin-dark';
+  const isA = theme === 'admin' || theme === 'admin-light';
   document.body.classList.toggle('theme-genshin', isG);
   if (logoBg) {
     const logoUrl = isG
       ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo_genshintheme_nobackground.png'
-      : 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png';
+      : isA
+        ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_logo.png'
+        : 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png';
     logoBg.style.backgroundImage = `url('${logoUrl}')`;
   }
   // Переименовываем разделы под тему
