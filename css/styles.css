@@ -4955,18 +4955,50 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   animation: architectBannerEnter 0.4s steps(8, end);
 }
 
-.architect-banner-close {
+.architect-banner-eye {
+  position: relative;
+  width: 96px;
+  height: 52px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(40,0,0,0.9), #000 70%);
+  box-shadow:
+    0 0 30px rgba(255,20,20,0.55),
+    inset 0 0 20px rgba(255,0,0,0.4);
+  overflow: hidden;
+  animation: architectEyeBlink 4.4s infinite;
+}
+
+.architect-banner-eye-iris {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  left: 50%;
+  top: 50%;
   width: 34px;
   height: 34px;
-  border: none;
-  background: none;
-  color: #ff5050;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #ff5050 0%, #ff1010 45%, #4a0000 100%);
+  box-shadow: 0 0 18px rgba(255,30,30,0.85);
+  animation: architectEyePulse 1.6s ease-in-out infinite;
+}
+
+.architect-banner-eye-iris::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #1a0000;
+}
+
+.architect-banner-eye-scan {
+  position: absolute;
+  inset: -10% 0;
+  background: linear-gradient(180deg, transparent, rgba(255,80,80,0.55), transparent);
+  animation: architectEyeScan 2.6s linear infinite;
 }
 
 .architect-banner-title {
@@ -5037,6 +5069,22 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   97.5% { transform: translate(-2px, 3px); }
   98% { transform: translate(2px, -1px); }
   98.5% { transform: translate(0, 0); }
+}
+
+@keyframes architectEyeBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+  97% { transform: scaleY(1); }
+}
+
+@keyframes architectEyePulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.12); opacity: 0.85; }
+}
+
+@keyframes architectEyeScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 }
 
 @keyframes architectGlitchTop {
