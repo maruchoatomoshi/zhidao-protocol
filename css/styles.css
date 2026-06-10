@@ -4038,6 +4038,75 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   background: rgba(231,76,60,0.12);
   color: #e74c3c;
 }
+
+/* Economy report: compact, expandable player rows */
+.economy-report-row {
+  margin-bottom: 7px;
+  padding: 9px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 11px;
+  background: rgba(0,0,0,0.10);
+  cursor: pointer;
+}
+.economy-report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.economy-report-head strong {
+  display: inline;
+  color: var(--text);
+  font-size: 12px;
+}
+.economy-report-id {
+  display: block;
+  margin-top: 1px;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 9px;
+}
+.economy-report-net {
+  flex-shrink: 0;
+  font-family: monospace;
+  font-weight: 900;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.economy-report-net.pos { color: var(--gold); }
+.economy-report-net.neg { color: #e74c3c; }
+.economy-report-details {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.economy-report-row.expanded .economy-report-details { display: block; }
+.economy-report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.economy-report-stat {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+}
+.economy-report-stat span {
+  display: block;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+}
+.economy-report-stat b {
+  display: block;
+  margin-top: 2px;
+  color: var(--text2);
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
 .admin-console-note {
   color: var(--text3);
   font-family: monospace;

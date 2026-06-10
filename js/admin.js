@@ -1661,10 +1661,25 @@ async function adminLoadEconomyReport(days, btn) {
       el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка отчёта')}</div>`;
       return;
     }
+    window._adminEconomyReportData = data;
     el.innerHTML = adminRenderEconomyReport(data);
   } catch (e) {
     el.innerHTML = '<div class="empty-state">Нет соединения</div>';
   }
+}
+
+function adminFilterEconomyReport() {
+  const data = window._adminEconomyReportData;
+  if (!data) return;
+  const q = (document.getElementById('adminReportSearch').value || '').trim().toLowerCase();
+  document.querySelectorAll('#adminReportContent .economy-report-row').forEach(row => {
+    const match = !q || row.dataset.search.includes(q);
+    row.style.display = match ? '' : 'none';
+  });
+}
+
+function adminToggleEconomyReportRow(el) {
+  el.classList.toggle('expanded');
 }
 
 function adminRenderEconomyReport(data) {
@@ -1694,23 +1709,41 @@ function adminRenderEconomyReport(data) {
 
   const rows = players.map(p => {
     const flags = [];
-    if (p.cases_spent >= 200) flags.push('🎰 азартный игрок');
-    if (p.gifts_sent + p.gifts_received >= 5) flags.push('🎁 активный даритель');
-    if (p.penalties >= 3) flags.push('⚠ частые штрафы');
+    if (p.cases_spent >= 200) flags.push('🎰 азартный');
+    if (p.gifts_sent + p.gifts_received >= 5) flags.push('🎁 даритель');
+    if (p.penalties >= 3) flags.push('⚠ штрафник');
     if (p.contract_earnings + p.contract_spent >= 100) flags.push('📜 коммерсант');
     if (p.tx_count <= 1) flags.push('💤 малоактивен');
 
     const netSign = p.net > 0 ? '+' : '';
-    const netClass = p.net > 0 ? 'risk' : '';
+    const search = `${String(p.full_name).toLowerCase()} ${p.telegram_id}`;
+
+    const stats = [
+      ['Баланс', `${p.points != null ? p.points : '—'}★`],
+      ['Операций', p.tx_count],
+      ['🛍 Магазин', `${p.shop_spent}★`],
+      ['🎰 Кейсы/молитвы', `${p.cases_opened} (−${p.cases_spent}/+${p.cases_won}★)`],
+      ['⚔ Рейды', `${p.raids_entered} (побед ${p.raids_won})`],
+      ['🎁 Подарки', `отпр. ${p.gifts_sent} / получ. ${p.gifts_received}`],
+      ['📜 Контракты', `+${p.contract_earnings}★/−${p.contract_spent}★`],
+      ['⚠ Штрафов', p.penalties],
+      ['💰 ЗП/награды', `+${p.salary_award_total}★`],
+    ].map(([label, value]) => `
+      <div class="economy-report-stat"><span>${escapeHtml(label)}</span><b>${escapeHtml(String(value))}</b></div>
+    `).join('');
 
     return `
-    <div class="contract-monitor-row">
-      <div>
-        <strong>${escapeHtml(p.full_name)} <span style="color:var(--text3);font-weight:400;">(ID ${p.telegram_id})</span></strong>
-        <span>Баланс: <b>${p.points != null ? p.points : '—'}★</b> · Изменение за период: <b>${netSign}${p.net}★</b> · Операций: ${p.tx_count}</span>
-        <span>🛍 Магазин: ${p.shop_spent}★ · 🎰 Кейсы/молитвы: ${p.cases_opened} (−${p.cases_spent}★/+${p.cases_won}★) · ⚔ Рейды: ${p.raids_entered} (побед ${p.raids_won})</span>
-        <span>🎁 Подарки: отправлено ${p.gifts_sent} / получено ${p.gifts_received} · 📜 Контракты: +${p.contract_earnings}★/−${p.contract_spent}★ · ⚠ Штрафов: ${p.penalties} · 💰 ЗП/награды: +${p.salary_award_total}★</span>
-        ${flags.length ? `<div class="contract-monitor-flags">${flags.map(f => `<span>${escapeHtml(f)}</span>`).join('')}</div>` : ''}
+    <div class="economy-report-row" data-search="${escapeHtml(search)}" onclick="adminToggleEconomyReportRow(this)">
+      <div class="economy-report-head">
+        <div>
+          <strong>${escapeHtml(p.full_name)}</strong>
+          <span class="economy-report-id">ID ${p.telegram_id}</span>
+        </div>
+        <div class="economy-report-net ${p.net >= 0 ? 'pos' : 'neg'}">${netSign}${p.net}★</div>
+      </div>
+      ${flags.length ? `<div class="contract-monitor-flags">${flags.map(f => `<span>${escapeHtml(f)}</span>`).join('')}</div>` : ''}
+      <div class="economy-report-details">
+        <div class="economy-report-grid">${stats}</div>
       </div>
     </div>`;
   }).join('');

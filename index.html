@@ -1111,6 +1111,7 @@
           <button class="admin-filter-btn" onclick="adminLoadEconomyReport(30, this)">30 дней</button>
           <button class="admin-filter-btn" onclick="adminLoadEconomyReport(0, this)">Всё время</button>
         </div>
+        <input class="admin-input" id="adminReportSearch" placeholder="Поиск по имени или ID" oninput="adminFilterEconomyReport()" style="margin-bottom:8px;">
         <div id="adminReportContent">
           <div class="empty-state">Загрузка...</div>
         </div>
