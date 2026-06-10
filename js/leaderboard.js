@@ -546,10 +546,17 @@ async function loadLeaderboard() {
       container.innerHTML = `<div class="empty-state">Ошибка загрузки (${r.status}${detail})</div>`;
       return;
     }
-    const data = await r.json();
+    let data = await r.json();
     if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
     let myRank = '—', html = '';
+
+    // Wild AI Breach: данные рейтинга визуально повреждены и перемешаны
+    const breachActive = typeof isWildAiBreachActive === 'function' && isWildAiBreachActive();
+    if (breachActive && typeof seededShuffle === 'function') {
+      data = seededShuffle(data, getWildAiBreachSeed());
+      html += '<div class="lb-corrupted-badge">⚠ ДАННЫЕ ПОВРЕЖДЕНЫ // ОТОБРАЖЕНИЕ НЕДОСТОВЕРНО</div>';
+    }
 
     data.forEach((item, i) => {
       const medal = medals[i] || (i+1)+'.';

@@ -5,6 +5,7 @@
 let _wildAiBreachActive = false;
 let _wildAiBreachNavOriginal = null;
 let _wildAiBreachTimerInterval = null;
+let _wildAiBreachSeed = 0;
 
 function seededShuffle(array, seed) {
   const arr = array.slice();
@@ -20,6 +21,7 @@ function seededShuffle(array, seed) {
 function applyWildAiBreachState(settings) {
   const active = !!(settings && settings.breach_active);
   _wildAiBreachActive = active;
+  _wildAiBreachSeed = (settings && settings.breach_seed) || 0;
   document.body.classList.toggle('wild-ai-breach', active);
 
   if (active) {
@@ -39,6 +41,10 @@ function applyWildAiBreachState(settings) {
 
 function isWildAiBreachActive() {
   return _wildAiBreachActive;
+}
+
+function getWildAiBreachSeed() {
+  return _wildAiBreachSeed;
 }
 
 function renderWildAiBreachBanner(settings) {
