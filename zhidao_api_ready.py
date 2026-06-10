@@ -528,7 +528,7 @@ ARCHITECT_QUESTION_SEEDS = {
 
 def get_conn():
     conn = sqlite3.connect('/root/zhidao.db', timeout=30)
-    conn.execute("PRAGMA busy_timeout=30000")
+    conn.execute("PRAGMA busy_timeout=5000")
     return conn
 
 

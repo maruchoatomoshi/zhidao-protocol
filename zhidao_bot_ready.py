@@ -99,7 +99,7 @@ class Form(StatesGroup):
 
 
 def init_db():
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute(
         """CREATE TABLE IF NOT EXISTS users
@@ -142,7 +142,7 @@ def init_db():
 
 
 def get_marzban_user(code):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT marzban_username FROM users WHERE code=?", (code,))
     result = c.fetchone()
@@ -153,7 +153,7 @@ def get_marzban_user(code):
 
 
 def code_exists(code):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT 1 FROM users WHERE code=?", (code,))
     result = c.fetchone()
@@ -162,7 +162,7 @@ def code_exists(code):
 
 
 def add_user(code, marzban_username):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute(
         "INSERT OR REPLACE INTO users (code, marzban_username) VALUES (?,?)",
@@ -173,7 +173,7 @@ def add_user(code, marzban_username):
 
 
 def save_telegram_id(code, telegram_id, full_name):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute(
         "UPDATE users SET telegram_id=?, full_name=? WHERE code=?",
@@ -201,7 +201,7 @@ def validate_expected_student_name(full_name, telegram_id):
         return False, full_name, "ФИО нужно ввести кириллицей: Фамилия Имя."
 
     normalized = normalize_registration_name(full_name)
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expected_students'")
     if not c.fetchone():
@@ -231,7 +231,7 @@ def validate_expected_student_name(full_name, telegram_id):
 
 def link_expected_student(full_name, telegram_id):
     normalized = normalize_registration_name(full_name)
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expected_students'")
     if not c.fetchone():
@@ -248,7 +248,7 @@ def link_expected_student(full_name, telegram_id):
 
 
 def get_all_users():
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT telegram_id, full_name FROM users WHERE telegram_id IS NOT NULL")
     result = c.fetchall()
@@ -400,7 +400,7 @@ async def presence_reject(telegram_id, check_type, admin_id, reason="leave rejec
 
 
 def has_dragon(telegram_id):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute(
         "SELECT id FROM user_implants WHERE telegram_id=? AND implant_id='implant_red_dragon' AND durability > 0",
@@ -426,7 +426,7 @@ def bot_log_economy(c, telegram_id: int, operation: str, amount: int,
 
 
 def change_points(telegram_id, delta, operation='bot_manual', note=None):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (delta, telegram_id))
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
@@ -439,7 +439,7 @@ def change_points(telegram_id, delta, operation='bot_manual', note=None):
 
 
 def get_points(telegram_id):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     result = c.fetchone()
@@ -448,7 +448,7 @@ def get_points(telegram_id):
 
 
 def get_leaderboard():
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     placeholders = ",".join("?" for _ in ADMIN_IDS)
     c.execute(
@@ -463,7 +463,7 @@ def get_leaderboard():
 
 
 def find_user_by_name(query):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute(
         "SELECT telegram_id, full_name, points FROM users WHERE full_name LIKE ?",
@@ -605,7 +605,7 @@ def save_bug_report(message: types.Message, text: str) -> int:
         message.from_user.last_name or "",
     ]
     fallback_name = " ".join(part for part in full_name_parts if part).strip()
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute(
         "SELECT full_name FROM users WHERE telegram_id=?",
@@ -628,7 +628,7 @@ def save_bug_report(message: types.Message, text: str) -> int:
 
 
 def get_recent_bug_reports(limit: int = 10):
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute(
         """SELECT id, telegram_id, full_name, username, text, status, created_at
@@ -1207,7 +1207,7 @@ async def list_users(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT code, marzban_username, telegram_id, full_name, points FROM users")
     users = c.fetchall()
@@ -1355,7 +1355,7 @@ async def penalize_points(message: types.Message):
         await message.answer(f"❌ Пользователь '{name_query}' не найден")
         return
     tg_id, full_name, current_points = user
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     c.execute("SELECT immunity FROM user_status WHERE telegram_id=?", (tg_id,))
     status = c.fetchone()
@@ -1582,7 +1582,7 @@ def _genshin_active_owners(c, card_id: str):
 
 
 async def moon_morning():
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     owners = [(tg_id,) for tg_id in _genshin_active_owners(c, 'card_moon')]
     for (tg_id,) in owners:
@@ -1599,7 +1599,7 @@ async def moon_morning():
 
 
 async def netwatch_morning():
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_netwatch')]
     for (tg_id,) in owners:
@@ -1616,7 +1616,7 @@ async def netwatch_morning():
 
 
 async def caishen_morning():
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_caishen')]
     for (tg_id,) in owners:
@@ -1633,7 +1633,7 @@ async def caishen_morning():
 
 
 async def qilin_morning():
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
     active_owners = _cyberpunk_active_owners(c, 'implant_qilin')
     total_owners = len(active_owners)
