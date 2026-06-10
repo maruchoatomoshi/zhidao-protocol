@@ -4946,8 +4946,6 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   width: 100%;
   max-width: 360px;
   padding: 28px 24px;
-  border: 1px solid rgba(255,60,40,0.5);
-  background: rgba(8,0,0,0.55);
   color: #fff;
   font-family: monospace;
   text-align: center;
@@ -4963,9 +4961,8 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   right: 10px;
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(255,60,60,0.4);
-  border-radius: 0;
-  background: rgba(0,0,0,0.5);
+  border: none;
+  background: none;
   color: #ff5050;
   font-size: 18px;
   line-height: 1;
@@ -4976,13 +4973,13 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   position: relative;
   margin: 12px 0 0;
   padding: 0;
-  color: #fff;
+  color: #ff2b2b;
   font-size: 32px;
   font-weight: 900;
   line-height: 1.15;
   letter-spacing: 1px;
   text-transform: uppercase;
-  text-shadow: 0 0 32px rgba(255,60,40,0.45);
+  text-shadow: 0 0 32px rgba(255,30,30,0.55);
 }
 
 .architect-banner-title::before,
@@ -4994,13 +4991,13 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 }
 
 .architect-banner-title::before {
-  color: #ff2b4d;
+  color: #fff;
   z-index: -1;
   animation: architectGlitchTop 1.4s infinite linear alternate-reverse;
 }
 
 .architect-banner-title::after {
-  color: #2bdcff;
+  color: #ff8a6a;
   z-index: -2;
   animation: architectGlitchBottom 1.7s infinite linear alternate-reverse;
 }
@@ -5020,10 +5017,9 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 .architect-banner-dismiss {
   width: 100%;
   padding: 14px;
-  border: 1px solid rgba(255,60,40,0.5);
-  border-radius: 0;
+  border: none;
   background: transparent;
-  color: #ff8a6a;
+  color: #ff2b2b;
   font-family: monospace;
   font-size: 13px;
   letter-spacing: 3px;
@@ -5031,8 +5027,7 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 }
 
 .architect-banner-dismiss:hover {
-  background: rgba(255,40,40,0.12);
-  color: #fff;
+  color: #ff8a6a;
 }
 
 @keyframes architectScreenShake {
