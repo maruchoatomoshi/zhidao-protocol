@@ -1916,6 +1916,9 @@ def get_event_snapshot(event_id: int):
     return snapshot
 
 
+ARCHITECT_RESULT_VISIBLE_HOURS = 12
+
+
 def get_current_or_latest_event_id():
     conn = get_conn()
     c = conn.cursor()
@@ -1929,8 +1932,21 @@ def get_current_or_latest_event_id():
             row = candidate
             break
     conn.commit()
+    if row:
+        conn.close()
+        return row[0]
+    # No live event: keep showing the latest finished/failed one for a while
+    # so participants see the result screen instead of the standby lobby.
+    c.execute(
+        "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') ORDER BY id DESC LIMIT 1"
+    )
+    terminal = c.fetchone()
     conn.close()
-    return row[0] if row else None
+    if terminal:
+        ended = parse_iso(terminal[1])
+        if ended and datetime.utcnow() - ended <= timedelta(hours=ARCHITECT_RESULT_VISIBLE_HOURS):
+            return terminal[0]
+    return None
 
 
 def get_blocking_event_id():
