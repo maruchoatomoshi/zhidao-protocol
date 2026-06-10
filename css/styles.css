@@ -9469,7 +9469,7 @@ body.theme-genshin-dark #page-home .home-event-card {
   z-index: 18;
   display: block;
   min-height: 44vh;
-  max-height: 62vh;
+  max-height: 52vh;
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -9650,11 +9650,13 @@ body.theme-genshin-dark #page-home .home-event-card {
 
 .event-result-card .event-team-list {
   margin-top: 6px;
-  max-height: 120px;
+  /* The result sheet itself scrolls — don't squash the MVP card and damage
+     board into a tiny inner scroll window (the crown was getting clipped). */
+  max-height: none;
   padding: 0;
   border: none;
   background: transparent;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .event-result-row {
@@ -9722,9 +9724,15 @@ body.tg-ios .event-overlay.event-terminal .event-log {
 .event-overlay.event-state-finished #eventBossImage,
 .event-overlay.event-state-failed #eventBossImage {
   display: block !important;
-  width: 100%;
-  max-height: 55vh;
+  /* Fit the artwork into the zone above the bottom result sheet:
+     the sheet is capped at 52vh, so the image box ends at 53vh from the bottom. */
+  top: max(56px, env(safe-area-inset-top, 0px));
+  bottom: 53vh;
+  height: auto;
+  max-height: none;
+  width: 100vw;
   object-fit: contain;
+  object-position: center center;
 }
 
 .event-overlay.event-state-finished .event-hero-glow {
@@ -14758,7 +14766,7 @@ body.lite-mode .profile-card-home::after { display: none; }
 
 .event-finale-mvp-crown {
   font-size: 26px;
-  line-height: 1;
+  line-height: 1.25;
   color: var(--gold, #d4af37);
   text-shadow: 0 0 14px rgba(212,175,55,0.5);
   margin-bottom: 4px;
