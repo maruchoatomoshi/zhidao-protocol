@@ -979,9 +979,9 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
   const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
   const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
   const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.7)';
-  const tagBg = isLegendary ? 'rgba(212,175,55,0.2)' : isPurple ? 'rgba(155,89,182,0.15)' : 'rgba(100,150,200,0.15)';
-  const tagBorder = isLegendary ? 'rgba(212,175,55,0.6)' : isPurple ? 'rgba(155,89,182,0.5)' : 'rgba(100,150,200,0.3)';
-  const tagColor = isLegendary ? '#d4af37' : isPurple ? '#9b59b6' : '#6aa0d4';
+  const tagBg = isLegendary ? 'rgba(212,175,55,0.28)' : isPurple ? 'rgba(155,89,182,0.25)' : 'rgba(106,160,212,0.25)';
+  const tagBorder = isLegendary ? 'rgba(212,175,55,0.7)' : isPurple ? 'rgba(155,89,182,0.6)' : 'rgba(106,160,212,0.55)';
+  const tagColor = isLegendary ? '#ffe9a8' : isPurple ? '#e6c7ff' : '#bfe0ff';
   const tagText = isLegendary ? '★ ЛЕГЕНДАРНЫЙ ★' : isPurple ? 'РЕДКИЙ // ФИОЛЕТОВЫЙ' : 'ОБЫЧНЫЙ';
 
   const legendaryClass = isLegendary ? ' cyber-result-legendary' : '';
@@ -1070,7 +1070,7 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
     <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">${partsHtml}${extraFxHtml}</div>
     <div style="position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;">
       ${itemHtml}
-      <div style="font-size:8px;font-family:monospace;letter-spacing:2px;padding:3px 14px;background:${tagBg};border:1px solid ${tagBorder};color:${tagColor};border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
+      <div style="font-size:8px;font-weight:700;font-family:monospace;letter-spacing:2px;padding:4px 14px;background:${tagBg};backdrop-filter:blur(4px);border:1px solid ${tagBorder};color:${tagColor};text-shadow:0 1px 3px rgba(0,0,0,0.8);border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
       ${contentHtml}
       <div style="font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;text-align:center;max-width:200px;line-height:1.6;animation:fadeUpAnim 0.3s ease-out 0.9s both;opacity:0;">${prize.desc||''}</div>
     </div>
