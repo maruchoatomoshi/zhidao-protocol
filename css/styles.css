@@ -4887,128 +4887,99 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   inset: 0;
   z-index: 6000;
   display: none;
-  align-items: stretch;
-  justify-content: stretch;
-  padding: 0;
-  background: #000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(40,0,0,0.32);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
 }
 
 .architect-banner-overlay.show {
   display: flex;
-}
-
-.architect-banner-card {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(170,0,0,0.22), transparent 45%),
-    #060304;
-  color: #fff;
-  font-family: monospace;
-}
-
-.architect-banner-overlay.show .architect-banner-card {
-  animation:
-    architectBannerEnter 0.4s steps(8, end),
-    architectCardJitter 2.6s 0.4s infinite linear;
+  animation: architectScreenShake 2.6s 0.4s infinite linear;
 }
 
 .architect-banner-redflash {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
   background: rgba(255,0,0,0.5);
+  mix-blend-mode: hard-light;
   opacity: 0;
   animation: architectRedFlash 2.6s infinite steps(1);
 }
 
-.architect-banner-scanlines {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(
-      180deg,
-      rgba(255,255,255,0.05) 0,
-      rgba(255,255,255,0.05) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-  mix-blend-mode: overlay;
-  opacity: 0.5;
-  animation: architectNoiseShift 0.22s steps(2) infinite;
-}
-
-.architect-banner-close {
-  position: absolute;
-  top: max(18px, env(safe-area-inset-top));
-  right: 18px;
-  z-index: 5;
-  width: 38px;
-  height: 38px;
-  border: 1px solid rgba(255,60,60,0.4);
-  border-radius: 0;
-  background: rgba(0,0,0,0.5);
-  color: #ff5050;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.architect-banner-head {
-  position: relative;
-  z-index: 2;
-  padding: max(60px, calc(env(safe-area-inset-top) + 40px)) 20px 0;
-  color: #ff5a3c;
-  font-size: 11px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
-
-.architect-banner-head::before {
-  content: '● ';
-  animation: architectAlertBlink 0.9s ease-in-out infinite;
-}
-
 .architect-banner-glitchbar {
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
-  height: 14px;
-  background: rgba(255,255,255,0.10);
-  mix-blend-mode: overlay;
+  height: 16px;
+  background: rgba(255,30,30,0.55);
+  mix-blend-mode: difference;
   pointer-events: none;
-  z-index: 3;
+  z-index: 1;
   opacity: 0;
 }
 
 .architect-banner-glitchbar-1 {
-  top: 28%;
+  top: 22%;
   animation: architectGlitchBar1 1.8s infinite steps(1);
 }
 
 .architect-banner-glitchbar-2 {
   top: 64%;
-  height: 8px;
-  background: rgba(255,40,40,0.3);
+  height: 10px;
   animation: architectGlitchBar2 2.2s infinite steps(1);
+}
+
+.architect-banner-glitchbar-3 {
+  top: 42%;
+  height: 6px;
+  animation: architectGlitchBar2 1.5s infinite steps(1) reverse;
+}
+
+.architect-banner-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 24px;
+  border: 1px solid rgba(255,60,40,0.5);
+  background: rgba(8,0,0,0.55);
+  color: #fff;
+  font-family: monospace;
+  text-align: center;
+}
+
+.architect-banner-overlay.show .architect-banner-card {
+  animation: architectBannerEnter 0.4s steps(8, end);
+}
+
+.architect-banner-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,60,60,0.4);
+  border-radius: 0;
+  background: rgba(0,0,0,0.5);
+  color: #ff5050;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .architect-banner-title {
   position: relative;
-  z-index: 2;
-  margin: 24px 20px 0;
+  margin: 12px 0 0;
   padding: 0;
   color: #fff;
-  font-size: 38px;
+  font-size: 32px;
   font-weight: 900;
-  line-height: 1.12;
+  line-height: 1.15;
   letter-spacing: 1px;
   text-transform: uppercase;
   text-shadow: 0 0 32px rgba(255,60,40,0.45);
@@ -5034,68 +5005,21 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   animation: architectGlitchBottom 1.7s infinite linear alternate-reverse;
 }
 
-.architect-banner-log {
-  position: relative;
-  z-index: 2;
-  margin: 28px 20px 0;
-  font-size: 13px;
-  line-height: 2.1;
+.architect-banner-subtitle {
+  margin-top: 12px;
   color: #ff8a6a;
-}
-
-.architect-banner-log-line {
-  white-space: pre-wrap;
-}
-
-.architect-banner-accent {
-  color: #fff;
-  text-shadow: 0 0 12px rgba(255,255,255,0.5);
-}
-
-.architect-banner-cursor {
-  display: inline-block;
-  width: 8px;
-  height: 14px;
-  margin-left: 4px;
-  vertical-align: middle;
-  background: #ff3b20;
-  box-shadow: 0 0 10px rgba(255,59,32,0.7);
-  animation: architectAlertBlink 0.8s steps(1) infinite;
-}
-
-.architect-banner-status {
-  position: relative;
-  z-index: 2;
-  margin: auto 20px 0;
-  padding: 14px 0;
-  border-top: 1px solid rgba(255,60,40,0.28);
-  color: #ffd3ae;
   font-size: 11px;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
 }
 
-.architect-banner-status::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 10px;
-  border-radius: 50%;
-  background: #ff3b20;
-  box-shadow: 0 0 12px rgba(255,59,32,0.75);
-  animation: architectAlertBlink 0.9s ease-in-out infinite;
-}
-
 .architect-banner-actions {
-  position: relative;
-  z-index: 2;
-  padding: 0 20px max(20px, env(safe-area-inset-bottom));
+  margin-top: 22px;
 }
 
 .architect-banner-dismiss {
   width: 100%;
-  padding: 16px;
+  padding: 14px;
   border: 1px solid rgba(255,60,40,0.5);
   border-radius: 0;
   background: transparent;
@@ -5111,10 +5035,13 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   color: #fff;
 }
 
-@keyframes architectNoiseShift {
-  0% { transform: translate(0, 0); opacity: 0.28; }
-  50% { transform: translate(1px, -1px); opacity: 0.42; }
-  100% { transform: translate(-1px, 1px); opacity: 0.30; }
+@keyframes architectScreenShake {
+  0%, 96%, 100% { transform: translate(0, 0); }
+  96.5% { transform: translate(-4px, 2px); }
+  97% { transform: translate(3px, -2px); }
+  97.5% { transform: translate(-2px, 3px); }
+  98% { transform: translate(2px, -1px); }
+  98.5% { transform: translate(0, 0); }
 }
 
 @keyframes architectGlitchTop {
@@ -5164,19 +5091,6 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   45% { opacity: 0.6; filter: brightness(2); }
   60% { opacity: 1; filter: brightness(0.8); }
   100% { opacity: 1; filter: brightness(1); }
-}
-
-@keyframes architectCardJitter {
-  0%, 96%, 100% { transform: translate(0, 0); }
-  96.5% { transform: translate(-3px, 1px); }
-  97% { transform: translate(2px, -1px); }
-  97.5% { transform: translate(-1px, 2px); }
-  98% { transform: translate(0, 0); }
-}
-
-@keyframes architectAlertBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
 }
 
 /* --- КРИТИЧЕСКИЙ CSS ДЛЯ РЕЙДА --- */
