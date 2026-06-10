@@ -698,6 +698,31 @@ body.theme-nw-light .shop-item-desc,
 body.theme-nw-light .announcement-date
 { color: #444444 !important; }
 
+/* Low-opacity gold "kicker" labels and headers are illegible on the light
+   background — darken them to the same readable gold used elsewhere in
+   theme-nw-light (#7a5010). */
+body.theme-nw-light .alpha-boss-kicker,
+body.theme-nw-light .alpha-boss-pts,
+body.theme-nw-light .alpha-boss-raid-cost,
+body.theme-nw-light .page-title-cn,
+body.theme-nw-light .main-pinyin,
+body.theme-nw-light .stat-cn,
+body.theme-nw-light .implant-py,
+body.theme-nw-light .profile-card-kicker,
+body.theme-nw-light .lb-leaders-label,
+body.theme-nw-light .more-stat-lbl span,
+body.theme-nw-light .more-item-cn,
+body.theme-nw-light .shop-cat .cn,
+body.theme-nw-light .shop-item-cn,
+body.theme-nw-light .case-cn.g,
+body.theme-nw-light .event-lobby-count,
+body.theme-nw-light .launch-gate-kicker,
+body.theme-nw-light .demo-lock-kicker,
+body.theme-nw-light .event-lobby-card .event-lobby-reward::before,
+body.theme-nw-light .event-result-card .event-lobby-reward::before,
+body.theme-nw-light .diary-star
+{ color: #7a5010 !important; }
+
 body.theme-genshin-light .page-title,
 body.theme-genshin-light .lb-name,
 body.theme-genshin-light .lb-points,
