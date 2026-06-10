@@ -47,6 +47,12 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 TELEGRAM_AUTH_REQUIRED = os.getenv("TELEGRAM_AUTH_REQUIRED", "0").strip().lower() in {"1", "true", "yes", "on"}
 TELEGRAM_AUTH_DEBUG_LOG = os.getenv("TELEGRAM_AUTH_DEBUG_LOG", "0").strip().lower() in {"1", "true", "yes", "on"}
+# Max age of a Telegram init-data signature before it is rejected (replay protection).
+# 0 disables the freshness check (escape hatch if it ever locks out long-lived sessions).
+try:
+    TELEGRAM_AUTH_MAX_AGE_SECONDS = int(os.getenv("TELEGRAM_AUTH_MAX_AGE_SECONDS", "86400") or "0")
+except ValueError:
+    TELEGRAM_AUTH_MAX_AGE_SECONDS = 86400
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
 API_ERROR_LOG_PATH = os.getenv("ZHIDAO_API_ERROR_LOG", "/root/zhidao_api_error.log")
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
@@ -123,6 +129,16 @@ def verify_telegram_init_data(init_data: str) -> Optional[dict]:
     calculated_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(calculated_hash, received_hash):
         return None
+
+    # Reject replayed signatures: a captured init-data string must not stay valid
+    # forever. Only checked after the HMAC passes so we don't leak timing on forgeries.
+    if TELEGRAM_AUTH_MAX_AGE_SECONDS > 0:
+        try:
+            auth_age = time.time() - int(parsed.get("auth_date", "0"))
+        except (TypeError, ValueError):
+            return None
+        if auth_age > TELEGRAM_AUTH_MAX_AGE_SECONDS:
+            return None
 
     try:
         user = json.loads(parsed.get("user", "{}"))
