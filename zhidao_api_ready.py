@@ -4052,6 +4052,43 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
     }
 
 
+@app.post("/api/internal/points/add")
+async def internal_add_points(data: dict, request: Request):
+    if not request_has_internal_token(request):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        target_id = int(data.get("telegram_id"))
+        delta = int(data.get("delta"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    operation = str(data.get("operation") or "bot_manual")
+    note = data.get("note")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (delta, target_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+            row = c.fetchone()
+            if not row:
+                return None
+            new_points = row[0]
+            log_economy(c, target_id, operation, delta, new_points, reference_type='bot', note=note)
+            conn.commit()
+            return new_points
+        finally:
+            conn.close()
+
+    new_points = await db_write(_run)
+    if new_points is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"success": True, "telegram_id": target_id, "new_points": new_points}
+
+
 @app.post("/api/admin/rep")
 async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:

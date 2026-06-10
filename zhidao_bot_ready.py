@@ -425,31 +425,18 @@ def has_dragon(telegram_id):
     return bool(result)
 
 
-def bot_log_economy(c, telegram_id: int, operation: str, amount: int,
-                    balance_after=None, note=None):
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    try:
-        c.execute(
-            '''INSERT INTO economy_log
-               (telegram_id, operation, amount, balance_after, reference_type, note, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (telegram_id, operation, amount, balance_after, 'bot', note, now_str),
-        )
-    except Exception:
-        pass  # economy_log may not exist on older DB; fail silently
-
-
-def change_points(telegram_id, delta, operation='bot_manual', note=None):
-    conn = db_connect()
-    c = conn.cursor()
-    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (delta, telegram_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    row = c.fetchone()
-    new_points = row[0] if row else 0
-    bot_log_economy(c, telegram_id, operation, delta, new_points, note=note)
-    conn.commit()
-    conn.close()
-    return new_points
+async def change_points(telegram_id, delta, operation='bot_manual', note=None):
+    result = await api_request(
+        "POST",
+        "/api/internal/points/add",
+        {
+            "telegram_id": telegram_id,
+            "delta": delta,
+            "operation": operation,
+            "note": note,
+        },
+    )
+    return result["new_points"]
 
 
 def get_points(telegram_id):
@@ -1341,7 +1328,7 @@ async def award_points(message: types.Message):
     if has_dragon(tg_id):
         points = int(points * 1.2)
         dragon_bonus = " (+20% 🐉)"
-    new_points = change_points(tg_id, points, operation='bot_award', note=reason)
+    new_points = await change_points(tg_id, points, operation='bot_award', note=reason)
     await message.answer(f"✅ {full_name}: +{points} баллов{dragon_bonus} ({reason})\nИтого: {new_points} баллов")
     try:
         await bot.send_message(tg_id, f"⭐ Вам начислено +{points} баллов!{dragon_bonus}\nПричина: {reason}\nВсего баллов: {new_points}")
@@ -1385,7 +1372,7 @@ async def penalize_points(message: types.Message):
         await message.answer(f"🛡 {full_name} использовал иммунитет! Штраф -{points}★ отменён.")
         return
     conn.close()
-    new_points = change_points(tg_id, -points, operation='bot_penalize', note=reason)
+    new_points = await change_points(tg_id, -points, operation='bot_penalize', note=reason)
     await message.answer(f"⚠️ {full_name}: -{points}★ ({reason})\nИтого: {new_points}★")
     try:
         await bot.send_message(tg_id, f"⚠️ У вас снято -{points}★\nПричина: {reason}\nВсего баллов: {new_points}")
@@ -1407,7 +1394,7 @@ async def salary(message: types.Message):
             continue
         dragon = has_dragon(tg_id)
         final = amount * 2 if dragon else amount
-        change_points(tg_id, final, operation='bot_salary', note=f'зп {amount}★' + (' x2 dragon' if dragon else ''))
+        await change_points(tg_id, final, operation='bot_salary', note=f'зп {amount}★' + (' x2 dragon' if dragon else ''))
         try:
             bonus_text = " (x2 🐉 Красный Дракон!)" if dragon else ""
             await bot.send_message(tg_id, f"💰 Воскресная зарплата: +{final}★{bonus_text}")
@@ -1598,32 +1585,29 @@ def _genshin_active_owners(c, card_id: str):
 async def moon_morning():
     conn = sqlite3.connect("/root/zhidao.db")
     c = conn.cursor()
-    owners = [(tg_id,) for tg_id in _genshin_active_owners(c, 'card_moon')]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + 12 WHERE telegram_id=?", (tg_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'card_moon_passive', 12, row[0] if row else None, note='утренний пассив Богини Луны')
+    owners = _genshin_active_owners(c, 'card_moon')
+    conn.close()
+    for tg_id in owners:
+        try:
+            await change_points(tg_id, 12, operation='card_moon_passive', note='утренний пассив Богини Луны')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, "🌙 +12★ // лунный свет Чанъэ 嫦娥")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def netwatch_morning():
     conn = db_connect()
     c = conn.cursor()
-    owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_netwatch')]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + 25 WHERE telegram_id=?", (tg_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'netwatch_passive', 25, row[0] if row else None, note='утренний пассив NetWatch')
-    conn.commit()
+    owners = _cyberpunk_active_owners(c, 'implant_netwatch')
     conn.close()
-    for (tg_id,) in owners:
+    for tg_id in owners:
+        try:
+            await change_points(tg_id, 25, operation='netwatch_passive', note='утренний пассив NetWatch')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, "🔴 +25★ // восполнение памяти NetWatch")
         except Exception:
@@ -1633,15 +1617,13 @@ async def netwatch_morning():
 async def caishen_morning():
     conn = db_connect()
     c = conn.cursor()
-    owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_caishen')]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (tg_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'caishen_passive', 15, row[0] if row else None, note='утренний пассив Цайшэнь')
-    conn.commit()
+    owners = _cyberpunk_active_owners(c, 'implant_caishen')
     conn.close()
-    for (tg_id,) in owners:
+    for tg_id in owners:
+        try:
+            await change_points(tg_id, 15, operation='caishen_passive', note='утренний пассив Цайшэнь')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, "💰 +15★ // пассивный доход Цайшэня 财神")
         except Exception:
@@ -1652,22 +1634,18 @@ async def qilin_morning():
     conn = db_connect()
     c = conn.cursor()
     active_owners = _cyberpunk_active_owners(c, 'implant_qilin')
+    conn.close()
     total_owners = len(active_owners)
     if total_owners == 0:
-        conn.close()
         return
     # Diminishing returns: 40★ за 1 владельца, -6★ за каждого следующего, минимум 8★
     bonus = max(8, 40 - (total_owners - 1) * 6)
-    owners = [(tg_id,) for tg_id in active_owners]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (bonus, tg_id))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'qilin_passive', bonus, row[0] if row else None,
-                        note=f'Цилинь: {total_owners} владельцев → {bonus}★')
-    conn.commit()
-    conn.close()
-    for (tg_id,) in owners:
+    for tg_id in active_owners:
+        try:
+            await change_points(tg_id, bonus, operation='qilin_passive',
+                                note=f'Цилинь: {total_owners} владельцев → {bonus}★')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, f"🦄 +{bonus}★ // Цилинь麒麟 ({total_owners} вл. → {bonus}★/чел.)")
         except Exception:
