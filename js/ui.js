@@ -631,14 +631,7 @@ function showHelp() {
   tg.showPopup({ title: '📖 Инструкция', message: '1. Нажми "КОНФИГ"\n2. Нажми "СКОПИРОВАТЬ"\n3. Открой Happ → + → вставь ссылку\n4. Подключись!', buttons: [{type:'ok'}] });
 }
 
-function contactAdmin() {
-  const url = window.ADMIN_CONTACT_URL || '';
-  if (!url) {
-    showToast('Контакт администратора настраивается на сервере', 'info');
-    return;
-  }
-  tg.openTelegramLink(url);
-}
+
 
 async function loadWeather() {
   try {

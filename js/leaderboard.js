@@ -139,9 +139,9 @@ function renderProfileDossier(profile = {}) {
   }
   if (showcase) {
     const sourceTag = showcase.source === 'manual' ? ' · ★' : '';
-    setProfileText('profileShowcaseText', `${showcase.name || showcase.code || '—'} · ${showcase.detail || 'active'}${sourceTag}`);
+    setProfileText('profileShowcaseText', `${showcase.name || showcase.code || '—'} · ${showcase.detail || 'активно'}${sourceTag}`);
   } else {
-    setProfileText('profileShowcaseText', 'SHOWCASE: AUTO // no active item');
+    setProfileText('profileShowcaseText', 'ВИТРИНА: АВТО // нет активного предмета');
   }
 }
 
@@ -208,18 +208,18 @@ async function openProfileShowcaseModal() {
       kind: 'auto',
       code: '',
       glyph: '自',
-      label: 'AUTO MODE',
-      name: 'Automatic showcase',
-      detail: 'System selects the strongest active item',
+      label: 'АВТО',
+      name: 'Автоматическая витрина',
+      detail: 'Система сама выбирает самый сильный активный предмет',
     }];
     (Array.isArray(implants) ? implants : []).forEach(item => {
       options.push({
         kind: 'implant',
         code: item.implant_id,
         glyph: getProfileShowcaseGlyph('implant', item.implant_id, item.icon),
-        label: 'IMPLANT',
+        label: 'ИМПЛАНТ',
         name: item.name || item.implant_id,
-        detail: item.desc || `durability ${item.durability || 0}`,
+        detail: item.desc || `прочность ${item.durability || 0}`,
       });
     });
     (Array.isArray(cards) ? cards : []).forEach(item => {
@@ -227,14 +227,14 @@ async function openProfileShowcaseModal() {
         kind: 'card',
         code: item.card_id,
         glyph: getProfileShowcaseGlyph('card', item.card_id),
-        label: `${item.rarity || 4}★ CARD`,
+        label: `${item.rarity || 4}★ КАРТА`,
         name: item.name || item.card_id,
-        detail: item.passive || `durability ${item.durability || 0}`,
+        detail: item.passive || `прочность ${item.durability || 0}`,
       });
     });
     renderProfileShowcaseOptions(options);
   } catch (e) {
-    box.innerHTML = '<div class="empty-state">Showcase loading error</div>';
+    box.innerHTML = '<div class="empty-state">Ошибка загрузки витрины</div>';
   }
 }
 

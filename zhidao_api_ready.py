@@ -3117,7 +3117,7 @@ def get_user_profile_dossier(telegram_id: int):
             "code": card_id,
             "name": info.get("name", card_id),
             "glyph": "月" if card_id == "card_moon" else "卡",
-            "detail": f"{info.get('rarity', 4)}★ · durability {durability}",
+            "detail": f"{info.get('rarity', 4)}★ · прочность {durability}",
             "source": source,
         }
 
@@ -3128,7 +3128,7 @@ def get_user_profile_dossier(telegram_id: int):
             "code": implant_id,
             "name": info.get("name", implant_id),
             "glyph": info.get("glyph", "芯"),
-            "detail": f"durability {durability}",
+            "detail": f"прочность {durability}",
             "source": source,
         }
 
