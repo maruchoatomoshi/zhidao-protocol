@@ -145,9 +145,9 @@ function setTheme(theme) {
   if (el('nav-implants-label'))  el('nav-implants-label').textContent = isG ? '卡片' : '植入物';
   if (el('nav-implants-icon'))   el('nav-implants-icon').className  = isG ? 'ti ti-cards' : 'ti ti-cpu';
   if (el('casino-page-cn'))      el('casino-page-cn').textContent   = isG ? '祈愿' : '箱子';
-  if (el('casino-page-title'))   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
+  if (el('casino-page-title') && el('casino-page-title').firstChild)   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
   if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';
-  if (el('implants-page-title')) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
+  if (el('implants-page-title') && el('implants-page-title').firstChild) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
   if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
   syncAdminThemeMode(theme);
   if (typeof buildMatrixRain === 'function') buildMatrixRain();

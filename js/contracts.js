@@ -585,7 +585,7 @@ async function submitCreateContract() {
     const data = await r.json();
     if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
     closeCreateContractModal();
-    currentPoints = Math.max(0, currentPoints - reward);
+    currentPoints = (data.new_points != null) ? data.new_points : Math.max(0, currentPoints - reward);
     updatePoints();
     const localContract = {
       id: data.id,
@@ -688,8 +688,12 @@ async function cancelContract(id) {
         return;
       }
       if (data.refunded) {
-        currentPoints += data.refunded;
-        updatePoints();
+        // Возврат идёт заказчику; админ может отменять чужой контракт — тогда его баланс не трогаем.
+        const refundIsMine = data.creator_telegram_id == null || Number(data.creator_telegram_id) === Number(currentUserId);
+        if (refundIsMine) {
+          currentPoints = (data.new_points != null) ? data.new_points : currentPoints + data.refunded;
+          updatePoints();
+        }
       }
       removeContractFromCaches(id);
     } catch (e) {
@@ -751,7 +755,7 @@ async function submitCreateContract() {
     const data = await r.json();
     if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
     closeCreateContractModal();
-    currentPoints = Math.max(0, currentPoints - reward);
+    currentPoints = (data.new_points != null) ? data.new_points : Math.max(0, currentPoints - reward);
     updatePoints();
     const localContract = {
       id: data.id,
@@ -853,8 +857,12 @@ async function cancelContract(id) {
         return;
       }
       if (data.refunded) {
-        currentPoints += data.refunded;
-        updatePoints();
+        // Возврат идёт заказчику; админ может отменять чужой контракт — тогда его баланс не трогаем.
+        const refundIsMine = data.creator_telegram_id == null || Number(data.creator_telegram_id) === Number(currentUserId);
+        if (refundIsMine) {
+          currentPoints = (data.new_points != null) ? data.new_points : currentPoints + data.refunded;
+          updatePoints();
+        }
       }
       removeContractFromCaches(id);
     } catch (e) {

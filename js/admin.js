@@ -127,6 +127,7 @@ async function triggerGlobalArchitectAlert() {
 
 async function checkGlobalAlert() {
   if (!currentUserId) return;
+  if (document.hidden) return;
 
   try {
     const r = await fetch(`${API_URL}/api/global-alert/current`);
@@ -154,7 +155,11 @@ async function checkGlobalAlert() {
 function startGlobalAlertPolling() {
   if (globalAlertPollingHandle) return;
   checkGlobalAlert();
-  globalAlertPollingHandle = setInterval(checkGlobalAlert, 4000);
+  // 10s + skip when hidden: ~85 одновременных клиентов не должны давать лавину GET'ов.
+  globalAlertPollingHandle = setInterval(checkGlobalAlert, 10000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkGlobalAlert();
+  });
 }
 
 function openArchitectArrivalBanner() {

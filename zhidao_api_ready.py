@@ -8188,7 +8188,7 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
                 log_economy(c, x_telegram_id, 'card_zhongli_contract_seal', 0, balance_after,
                             contract_id, 'card', f"Комиссия снижена на {zhongli_fee_reduction}★")
             conn.commit()
-            return {"contract_id": contract_id, "fee_stars": local_fee}
+            return {"contract_id": contract_id, "fee_stars": local_fee, "new_points": balance_after}
         finally:
             conn.close()
 
@@ -8196,7 +8196,8 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
     if "error" in result:
         raise HTTPException(status_code=result["status"], detail=result["error"])
 
-    return {"success": True, "id": result["contract_id"], "fee_stars": result["fee_stars"], "payout_stars": reward - result["fee_stars"]}
+    return {"success": True, "id": result["contract_id"], "fee_stars": result["fee_stars"],
+            "payout_stars": reward - result["fee_stars"], "new_points": result["new_points"]}
 
 
 @app.post("/api/contracts/{contract_id}/accept")
@@ -8344,7 +8345,9 @@ async def cancel_contract(contract_id: int,
                     f"Возврат: контракт #{contract_id} отменён")
         conn.commit()
         conn.close()
-        return {"success": True, "refunded": reward}
+        # creator_telegram_id: the refund goes to the creator, which may differ
+        # from the acting user when an admin cancels someone else's contract.
+        return {"success": True, "refunded": reward, "creator_telegram_id": creator_id, "new_points": bal}
     return await db_write(_run)
 
 
