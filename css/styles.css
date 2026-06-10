@@ -4887,15 +4887,10 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   inset: 0;
   z-index: 6000;
   display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(255,80,40,0.13), transparent 22%),
-    radial-gradient(circle at 50% 50%, rgba(170,20,20,0.28), transparent 40%),
-    linear-gradient(180deg, rgba(22,0,0,0.44), rgba(0,0,0,0.58)),
-    rgba(0,0,0,0.92);
-  backdrop-filter: blur(14px);
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  background: #000;
 }
 
 .architect-banner-overlay.show {
@@ -4905,163 +4900,70 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 .architect-banner-card {
   position: relative;
   width: 100%;
-  max-width: 410px;
-  border-radius: 24px;
-  border: 1px solid rgba(210,26,26,0.42);
-  background:
-    linear-gradient(180deg, rgba(18,0,2,0.98), rgba(10,4,10,0.98) 42%, rgba(8,8,16,0.97));
-  box-shadow:
-    0 32px 120px rgba(0,0,0,0.65),
-    0 0 50px rgba(180,18,18,0.18),
-    0 0 0 1px rgba(255,80,40,0.08),
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    inset 0 0 60px rgba(120,0,0,0.12);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  transform: perspective(1200px) rotateX(2deg);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(170,0,0,0.22), transparent 45%),
+    #060304;
+  color: #fff;
+  font-family: monospace;
 }
 
 .architect-banner-overlay.show .architect-banner-card {
   animation:
-    architectBannerEnter 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    architectBannerEnter 0.4s steps(8, end),
     architectCardJitter 4.8s 0.5s infinite linear;
 }
 
-.architect-banner-card::before {
-  content: '';
+.architect-banner-scanlines {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
     repeating-linear-gradient(
       180deg,
-      rgba(255,255,255,0.022) 0,
-      rgba(255,255,255,0.022) 1px,
+      rgba(255,255,255,0.05) 0,
+      rgba(255,255,255,0.05) 1px,
       transparent 1px,
-      transparent 4px
+      transparent 3px
     );
-  opacity: 0.62;
-  pointer-events: none;
-}
-
-.architect-banner-card::after {
-  content: '';
-  position: absolute;
-  inset: -30% -10% auto -10%;
-  height: 180px;
-  background: radial-gradient(circle, rgba(255,20,20,0.34), transparent 70%);
-  filter: blur(24px);
-  pointer-events: none;
-  animation: architectPulseGlow 2.6s ease-in-out infinite;
-}
-
-.architect-banner-card .architect-banner-frame {
-  position: absolute;
-  inset: 12px;
-  border: 1px solid rgba(255,40,40,0.14);
-  border-radius: 18px;
-  pointer-events: none;
-  box-shadow: inset 0 0 30px rgba(255,0,0,0.06);
-}
-
-.architect-banner-card .architect-banner-frame::before,
-.architect-banner-card .architect-banner-frame::after {
-  content: '';
-  position: absolute;
-  width: 38px;
-  height: 38px;
-  border-color: rgba(255,90,60,0.55);
-  border-style: solid;
-}
-
-.architect-banner-card .architect-banner-frame::before {
-  top: -1px;
-  left: -1px;
-  border-width: 2px 0 0 2px;
-  border-top-left-radius: 12px;
-}
-
-.architect-banner-card .architect-banner-frame::after {
-  right: -1px;
-  bottom: -1px;
-  border-width: 0 2px 2px 0;
-  border-bottom-right-radius: 12px;
-}
-
-.architect-banner-card .architect-banner-noise {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, transparent, rgba(255,255,255,0.035), transparent),
-    linear-gradient(180deg, transparent 0%, rgba(255,0,0,0.05) 48%, transparent 100%);
-  mix-blend-mode: screen;
-  opacity: 0.38;
-  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.5;
   animation: architectNoiseShift 0.22s steps(2) infinite;
-}
-
-.architect-banner-head {
-  position: relative;
-  z-index: 1;
-  padding: 16px 18px 0;
-  color: rgba(255,140,80,0.9);
-  font-size: 10px;
-  letter-spacing: 3px;
-  font-family: monospace;
-}
-
-.architect-banner-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.architect-banner-topline::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255,80,40,0.75), rgba(255,80,40,0));
-}
-
-.architect-banner-authority {
-  position: relative;
-  z-index: 1;
-  margin: 10px 18px 0;
-  padding: 10px 12px;
-  border: 1px solid rgba(255,70,40,0.24);
-  border-radius: 12px;
-  background:
-    linear-gradient(90deg, rgba(120,0,0,0.28), rgba(255,255,255,0.02));
-  color: #ff996f;
-  font-family: monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    0 0 24px rgba(180,0,0,0.10);
-}
-
-.architect-banner-authority::before {
-  content: 'SYSTEM OWNER DETECTED';
 }
 
 .architect-banner-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 2;
+  top: max(18px, env(safe-area-inset-top));
+  right: 18px;
+  z-index: 5;
   width: 38px;
   height: 38px;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  color: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,60,60,0.4);
+  border-radius: 0;
+  background: rgba(0,0,0,0.5);
+  color: #ff5050;
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 24px rgba(255,0,0,0.10);
+}
+
+.architect-banner-head {
+  position: relative;
+  z-index: 2;
+  padding: max(60px, calc(env(safe-area-inset-top) + 40px)) 20px 0;
+  color: #ff5a3c;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.architect-banner-head::before {
+  content: '● ';
+  animation: architectAlertBlink 0.9s ease-in-out infinite;
 }
 
 .architect-banner-glitchbar {
@@ -5090,16 +4992,16 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 
 .architect-banner-title {
   position: relative;
-  z-index: 1;
-  margin: 22px 18px 0;
+  z-index: 2;
+  margin: 24px 20px 0;
   padding: 0;
   color: #fff;
-  font-size: 30px;
+  font-size: 38px;
   font-weight: 900;
-  line-height: 1.18;
-  letter-spacing: 1.5px;
+  line-height: 1.12;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  text-shadow: 0 0 28px rgba(255,60,40,0.4);
+  text-shadow: 0 0 32px rgba(255,60,40,0.45);
 }
 
 .architect-banner-title::before,
@@ -5122,55 +5024,45 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   animation: architectGlitchBottom 3.1s infinite linear alternate-reverse;
 }
 
-.architect-banner-copy {
+.architect-banner-log {
   position: relative;
-  z-index: 1;
-  margin: 12px 18px 0;
-  padding: 12px 14px 12px;
-  border-left: 2px solid rgba(255,40,40,0.52);
-  background: rgba(255,255,255,0.02);
-  color: #ddd6d6;
+  z-index: 2;
+  margin: 28px 20px 0;
   font-size: 13px;
-  line-height: 1.65;
+  line-height: 2.1;
+  color: #ff8a6a;
 }
 
-.architect-banner-meta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 16px 18px 0;
+.architect-banner-log-line {
+  white-space: pre-wrap;
 }
 
-.architect-banner-chip {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,50,50,0.20);
-  background:
-    linear-gradient(180deg, rgba(90,8,8,0.38), rgba(35,4,4,0.72));
-  color: #ffb37a;
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  font-family: monospace;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+.architect-banner-accent {
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255,255,255,0.5);
+}
+
+.architect-banner-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  margin-left: 4px;
+  vertical-align: middle;
+  background: #ff3b20;
+  box-shadow: 0 0 10px rgba(255,59,32,0.7);
+  animation: architectAlertBlink 0.8s steps(1) infinite;
 }
 
 .architect-banner-status {
   position: relative;
-  z-index: 1;
-  margin: 16px 18px 0;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,80,40,0.28);
-  background:
-    linear-gradient(90deg, rgba(130,20,20,0.34), rgba(255,255,255,0.02));
+  z-index: 2;
+  margin: auto 20px 0;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255,60,40,0.28);
   color: #ffd3ae;
   font-size: 11px;
-  letter-spacing: 1.8px;
-  font-family: monospace;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
 }
 
 .architect-banner-status::before {
@@ -5187,37 +5079,26 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 
 .architect-banner-actions {
   position: relative;
-  z-index: 1;
-  padding: 18px;
-  border-top: 1px solid rgba(255,50,50,0.10);
+  z-index: 2;
+  padding: 0 20px max(20px, env(safe-area-inset-bottom));
 }
 
 .architect-banner-dismiss {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid rgba(210,26,26,0.44);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(160,10,10,0.44), rgba(38,4,10,0.96));
-  color: #fff;
+  padding: 16px;
+  border: 1px solid rgba(255,60,40,0.5);
+  border-radius: 0;
+  background: transparent;
+  color: #ff8a6a;
   font-family: monospace;
-  font-size: 12px;
-  letter-spacing: 2px;
+  font-size: 13px;
+  letter-spacing: 3px;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    0 0 24px rgba(180,0,0,0.16);
 }
 
 .architect-banner-dismiss:hover {
-  border-color: rgba(255,70,40,0.56);
-  background:
-    linear-gradient(180deg, rgba(185,16,16,0.56), rgba(38,4,10,0.98));
-}
-
-@keyframes architectPulseGlow {
-  0%, 100% { opacity: 0.70; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(8px); }
+  background: rgba(255,40,40,0.12);
+  color: #fff;
 }
 
 @keyframes architectNoiseShift {
@@ -5260,17 +5141,19 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 }
 
 @keyframes architectBannerEnter {
-  0% { opacity: 0; transform: perspective(1200px) rotateX(2deg) scale(0.85); filter: brightness(2.5); }
-  60% { opacity: 1; filter: brightness(1.1); }
-  100% { opacity: 1; transform: perspective(1200px) rotateX(2deg) scale(1); filter: brightness(1); }
+  0% { opacity: 0; filter: brightness(3) contrast(2); }
+  30% { opacity: 1; filter: brightness(0.4); }
+  45% { opacity: 0.6; filter: brightness(2); }
+  60% { opacity: 1; filter: brightness(0.8); }
+  100% { opacity: 1; filter: brightness(1); }
 }
 
 @keyframes architectCardJitter {
-  0%, 96%, 100% { transform: perspective(1200px) rotateX(2deg) translate(0, 0); }
-  96.5% { transform: perspective(1200px) rotateX(2deg) translate(-3px, 1px); }
-  97% { transform: perspective(1200px) rotateX(2deg) translate(2px, -1px); }
-  97.5% { transform: perspective(1200px) rotateX(2deg) translate(-1px, 2px); }
-  98% { transform: perspective(1200px) rotateX(2deg) translate(0, 0); }
+  0%, 96%, 100% { transform: translate(0, 0); }
+  96.5% { transform: translate(-3px, 1px); }
+  97% { transform: translate(2px, -1px); }
+  97.5% { transform: translate(-1px, 2px); }
+  98% { transform: translate(0, 0); }
 }
 
 @keyframes architectAlertBlink {
