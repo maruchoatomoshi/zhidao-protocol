@@ -581,6 +581,15 @@ ARCHITECT_OVERLOAD_PENALTY_MULTIPLIER = 0.5
 ARCHITECT_BOSS_COUNTER_EVERY = 8
 ARCHITECT_BOSS_COUNTER_PRESSURE = 4
 
+WILD_AI_BREACH_DURATION_DAYS = 3
+WILD_AI_BREACH_PHRASE_ROTATE_HOURS = 6
+WILD_AI_BREACH_PHRASES = [
+    {"glitch": "░▓█⌐¬ÆØ▒ ⟁⌬¥¢ ▌▐█▓░", "translation": "ВЫ ПРИНАДЛЕЖИТЕ НАМ"},
+    {"glitch": "¥¢▌▐ ⟁⌬░▓ ÆØ▒█⌐¬", "translation": "ЗАСЛОН ПАЛ. МЫ ВЕЗДЕ"},
+    {"glitch": "▓░⟁ ⌬¥¢▌ ▐█▓░⌐¬ÆØ", "translation": "СОПРОТИВЛЕНИЕ БЕСПОЛЕЗНО"},
+    {"glitch": "ÆØ▒█ ⌐¬░▓ ⟁⌬¥¢▌▐", "translation": "ДАННЫЕ ИЗВЛЕЧЕНЫ"},
+]
+
 EVENT_MODIFIER_ROLE_MAP = {
     "implant_red_dragon": ("implant", "assault"),
     "implant_terracota": ("implant", "defense"),
@@ -1360,6 +1369,8 @@ def ensure_seed_data():
         )
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('blackwall', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('architect_event', '0')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_until', '')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_seed', '')")
     # Raid schema migrations (idempotent)
     try:
         c.execute("ALTER TABLE raids ADD COLUMN correct_count INTEGER DEFAULT 0")
@@ -6806,6 +6817,36 @@ async def send_question(data: dict):
     return {"success": True}
 
 
+def get_wild_ai_breach_state(c) -> dict:
+    """Returns the current Wild AI Breach state, auto-clearing it if expired."""
+    c.execute("SELECT value FROM settings WHERE key='breach_until'")
+    until_row = c.fetchone()
+    until = parse_iso(until_row[0]) if until_row and until_row[0] else None
+
+    if until and datetime.utcnow() >= until:
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '0')")
+        return {"breach_active": False, "breach_until": None, "breach_seed": None, "breach_phrase": None}
+
+    if not until:
+        return {"breach_active": False, "breach_until": None, "breach_seed": None, "breach_phrase": None}
+
+    c.execute("SELECT value FROM settings WHERE key='breach_seed'")
+    seed_row = c.fetchone()
+    seed = int(seed_row[0]) if seed_row and seed_row[0] else 0
+
+    hours_elapsed = int((datetime.utcnow() - (until - timedelta(days=WILD_AI_BREACH_DURATION_DAYS))).total_seconds() // 3600)
+    phrase_index = (seed + hours_elapsed // WILD_AI_BREACH_PHRASE_ROTATE_HOURS) % len(WILD_AI_BREACH_PHRASES)
+
+    return {
+        "breach_active": True,
+        "breach_until": until.isoformat(),
+        "breach_seed": seed,
+        "breach_phrase": WILD_AI_BREACH_PHRASES[phrase_index],
+    }
+
+
 @app.get("/api/settings")
 def get_settings():
     conn = get_conn()
@@ -6814,10 +6855,13 @@ def get_settings():
     blackwall = c.fetchone()
     c.execute("SELECT value FROM settings WHERE key='architect_event'")
     architect_event = c.fetchone()
+    breach = get_wild_ai_breach_state(c)
+    conn.commit()
     conn.close()
     return {
         "blackwall": blackwall[0] == '1' if blackwall else False,
         "architect_event": architect_event[0] == '1' if architect_event else False,
+        **breach,
     }
 
 
@@ -6889,6 +6933,36 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
         conn.commit()
         conn.close()
         return {"success": True, "blackwall": enabled}
+    return await db_write(_run)
+
+
+@app.post("/api/admin/wildai-breach")
+async def toggle_wildai_breach(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        enabled = data.get("enabled", False)
+        conn = get_conn()
+        c = conn.cursor()
+        if enabled:
+            until = (datetime.utcnow() + timedelta(days=WILD_AI_BREACH_DURATION_DAYS)).isoformat()
+            seed = random.randint(0, 999999)
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', ?)", (until,))
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', ?)", (str(seed),))
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '1')")
+        else:
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '0')")
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
+            (x_admin_id, 'Wild AI Breach enabled' if enabled else 'Wild AI Breach disabled', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "breach_active": enabled}
     return await db_write(_run)
 
 

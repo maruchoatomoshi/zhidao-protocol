@@ -1235,6 +1235,30 @@ async function setBlackwall(enabled) {
   } catch(e) { showToast('Ошибка'); }
 }
 
+async function setWildAiBreach(enabled) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/wildai-breach`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({enabled})
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка переключения Wild AI Breach');
+      return;
+    }
+    if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
+    const status = document.getElementById('adminWildAiBreachStatus');
+    if (status) {
+      status.textContent = enabled ? 'STATUS // BREACH ACTIVE (3 ДНЯ)' : 'STATUS // CONTAINED';
+      status.classList.toggle('enabled', !!enabled);
+    }
+    showToast(enabled ? '⚠ Wild AI Breach активирован!' : '✅ Wild AI Breach снят!');
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
+}
+
 async function setArchitectEventEnabled(enabled) {
   try {
     const r = await fetch(`${API_URL}/api/admin/architect-event`, {

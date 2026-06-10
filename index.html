@@ -20,7 +20,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260610rankdelta">
+<link rel="stylesheet" href="./css/styles.css?v=20260610wildai">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -1082,6 +1082,20 @@
       <div class="admin-blackwall-btns">
         <button class="admin-bw-btn bw-on" onclick="setArchitectEventEnabled(true)">⚡ ОТКРЫТЬ ИВЕНТ</button>
         <button class="admin-bw-btn bw-off" onclick="setArchitectEventEnabled(false)">⛔ СКРЫТЬ ИВЕНТ</button>
+      </div>
+
+      <div class="admin-blackwall-card admin-architect-event-card">
+        <div class="admin-blackwall-glyph">乱</div>
+        <div class="admin-blackwall-info">
+          <div class="admin-console-kicker">WILD AI BREACH // 野生AI入侵</div>
+          <div class="admin-blackwall-title">Прорыв диких ИИ</div>
+          <div class="admin-blackwall-desc">Глобальный режим хаоса на 3 дня: баннер, глитчи, перемешанный интерфейс. Включает BlackWall lockdown.</div>
+          <div class="admin-architect-event-status" id="adminWildAiBreachStatus">STATUS // CHECKING</div>
+        </div>
+      </div>
+      <div class="admin-blackwall-btns">
+        <button class="admin-bw-btn bw-on" onclick="setWildAiBreach(true)">⚠ АКТИВИРОВАТЬ</button>
+        <button class="admin-bw-btn bw-off" onclick="setWildAiBreach(false)">✅ СНЯТЬ</button>
       </div>
 
       <div class="admin-danger-zone">
@@ -2444,10 +2458,11 @@
 <script src="./js/diary.js?v=20260608a"></script>
 <script src="./js/team.js?v=20260604a"></script>
 <script src="./js/contracts.js?v=20260607b"></script>
-<script src="./js/admin.js?v=20260610econ-report"></script>
+<script src="./js/admin.js?v=20260610wildai"></script>
 <script src="./js/campus-map.js?v=20260609b"></script>
 <script src="./js/raid.js"></script>
-<script src="./js/events.js?v=20260607a"></script>
+<script src="./js/wild-ai-breach.js?v=20260610a"></script>
+<script src="./js/events.js?v=20260610wildai"></script>
 <script src="./js/architect-event.js?v=20260607a"></script>
 <script src="./js/demo.js?v=20260605a"></script>
 <script src="./js/main.js?v=20260515a"></script>

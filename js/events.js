@@ -36,6 +36,7 @@ async function loadArchitectEventAvailability() {
     if (!r.ok) throw new Error('settings');
     const settings = await r.json();
     syncArchitectEventAvailability(!!settings.architect_event);
+    if (typeof applyWildAiBreachState === 'function') applyWildAiBreachState(settings);
   } catch (e) {
     syncArchitectEventAvailability(!!window.ARCHITECT_EVENT_ENABLED);
   }

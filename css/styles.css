@@ -16840,3 +16840,78 @@ body.theme-architect.is-architect .profile-card-spark.spark-tl { background: #00
 body.theme-architect.is-architect .profile-card-spark.spark-br { background: #39ff14; }
 body.theme-architect.is-architect .profile-card-spark.spark-tr { background: #00ff88; }
 body.theme-architect.is-architect .profile-card-spark.spark-bl { background: #00e5ff; }
+
+/* ===== WILD AI BREACH (野生AI入侵) ===== */
+.wild-ai-breach-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10000;
+  background: rgba(20,0,0,0.92);
+  border-bottom: 1px solid #cc2222;
+  font-family: monospace;
+  text-align: center;
+  padding: 6px 8px 5px;
+  pointer-events: none;
+  animation: wab-flicker 4s infinite;
+}
+.wild-ai-breach-banner .wab-line1 {
+  color: #ff3b3b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-shadow: 0 0 6px rgba(255,40,40,0.8);
+}
+.wild-ai-breach-banner .wab-line2 {
+  color: #ff6666;
+  font-size: 9px;
+  letter-spacing: 1px;
+  margin-top: 2px;
+  word-break: break-word;
+}
+.wild-ai-breach-banner .wab-translation {
+  color: #999;
+}
+.wild-ai-breach-banner .wab-timer {
+  color: #ff8888;
+  font-size: 9px;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+body.wild-ai-breach {
+  padding-top: 46px;
+}
+
+/* Глитч-оверлей поверх всего интерфейса */
+body.wild-ai-breach::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,0,0,0.04) 0px,
+      rgba(255,0,0,0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  animation: wab-static-flash 6s infinite;
+}
+
+@keyframes wab-flicker {
+  0%, 92%, 100% { opacity: 1; }
+  93% { opacity: 0.4; }
+  94% { opacity: 1; }
+  95% { opacity: 0.6; }
+  96% { opacity: 1; }
+}
+
+@keyframes wab-static-flash {
+  0%, 96%, 100% { opacity: 0.3; }
+  97% { opacity: 0.9; background-color: rgba(255,0,0,0.08); }
+  98% { opacity: 0.2; }
+  99% { opacity: 0.7; background-color: rgba(255,0,0,0.05); }
+}
