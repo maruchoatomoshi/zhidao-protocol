@@ -978,7 +978,7 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
 
   const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
   const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
-  const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : null;
+  const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.7)';
   const tagBg = isLegendary ? 'rgba(212,175,55,0.2)' : isPurple ? 'rgba(155,89,182,0.15)' : 'rgba(100,150,200,0.15)';
   const tagBorder = isLegendary ? 'rgba(212,175,55,0.6)' : isPurple ? 'rgba(155,89,182,0.5)' : 'rgba(100,150,200,0.3)';
   const tagColor = isLegendary ? '#d4af37' : isPurple ? '#9b59b6' : '#6aa0d4';
@@ -989,12 +989,48 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
     ? `<img src="${prize.img}" class="${legendaryClass.trim()}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
     : `<div class="${legendaryClass.trim()}" style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
 
+  // Анимация появления приза (зависит от типа кейса)
+  let itemHtml;
+  let extraFxHtml = '';
+  if (caseType === 'gold') {
+    // Голо-карта: 3D переворот + блик + энергетические кольца
+    itemHtml = `
+      <div style="position:relative;perspective:800px;">
+        <div style="position:relative;animation:prizeFlipGold 0.9s cubic-bezier(.34,1.56,.64,1) forwards;">
+          ${imgHtml}
+          <div style="position:absolute;inset:-6px;overflow:hidden;border-radius:50%;pointer-events:none;">
+            <div style="position:absolute;top:-50%;left:-150%;width:60%;height:200%;background:linear-gradient(75deg,transparent,rgba(255,255,255,.6),transparent);animation:prizeShineSweep 1.1s ease-in-out 0.8s 2;"></div>
+          </div>
+        </div>
+      </div>`;
+    extraFxHtml = `
+      <div style="position:absolute;width:80px;height:80px;border:2px solid rgba(212,175,55,0.7);border-radius:50%;left:50%;top:50%;margin-left:-40px;margin-top:-40px;animation:prizeRingPulseGold 1.1s ease-out 0.1s forwards;opacity:0;"></div>
+      <div style="position:absolute;width:80px;height:80px;border:2px solid rgba(255,235,150,0.6);border-radius:50%;left:50%;top:50%;margin-left:-40px;margin-top:-40px;animation:prizeRingPulseGold 1.1s ease-out 0.35s forwards;opacity:0;"></div>
+      <div style="position:absolute;width:80px;height:80px;border:2px solid rgba(212,175,55,0.5);border-radius:50%;left:50%;top:50%;margin-left:-40px;margin-top:-40px;animation:prizeRingPulseGold 1.1s ease-out 0.6s forwards;opacity:0;"></div>`;
+  } else if (isPurple) {
+    // Слот-дроп: падение сверху + удар экрана + вспышка + расходящееся кольцо
+    itemHtml = `
+      <div style="animation:prizeShakePurple 0.4s ease-out 0.55s both;">
+        <div style="animation:prizeDropPurple 0.55s cubic-bezier(.55,0,.85,.35) forwards;">${imgHtml}</div>
+      </div>`;
+    extraFxHtml = `
+      <div style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;animation:prizeFlashPurple 0.3s ease-out 0.5s;"></div>
+      <div style="position:absolute;width:40px;height:40px;border:3px solid #9b59b6;border-radius:50%;left:50%;top:50%;margin-left:-20px;margin-top:-20px;opacity:0;animation:prizeRingExpandPurple 0.7s ease-out 0.55s forwards;"></div>`;
+  } else {
+    // Чёрный кейс: цифровая расшифровка (глитч + скан-линия)
+    itemHtml = `<div style="position:relative;animation:cyberItemIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards, prizeGlitchBlack 0.25s steps(2) 0.6s 4;">${imgHtml}</div>`;
+    extraFxHtml = `<div style="position:absolute;left:8%;right:8%;height:2px;background:rgba(255,120,0,.85);box-shadow:0 0 12px rgba(255,120,0,.9);animation:prizeScanLineBlack 0.9s linear 0.4s 1;opacity:0;"></div>`;
+  }
+
   let contentHtml = '';
   if (prize.points > 0) {
     const doubleTag = doubledWin
       ? `<div style="font-size:13px;font-weight:800;color:#ffd700;text-shadow:0 0 10px #ffd700;letter-spacing:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;">🃏 УДВОЕНО ×2</div>`
       : '';
-    contentHtml = `${doubleTag}<div style="font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
+    const pointsStyle = isLegendary
+      ? `font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};display:inline-block;overflow:hidden;white-space:nowrap;border-right:2px solid ${particleColor};animation:prizeTypewriter 0.5s steps(10) 0.6s both, fadeUpAnim 0.1s ease-out 0.6s both;`
+      : `font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;`;
+    contentHtml = `${doubleTag}<div style="${pointsStyle}">+${prize.points}★</div>`;
   } else {
     contentHtml = `<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
   }
@@ -1010,8 +1046,8 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
 
   // Частицы
   let partsHtml = '';
-  const count = isLegendary ? 40 : isPurple ? 25 : 15;
-  const symbols = isLegendary ? ['龙','★','福','✦'] : isPurple ? ['✦','★','◈'] : ['★','✦'];
+  const count = isLegendary ? 40 : isPurple ? 25 : 28;
+  const symbols = isLegendary ? ['龙','★','福','✦'] : isPurple ? ['✦','★','◈'] : ['★','✦','◆','✪'];
   for (let i = 0; i < count; i++) {
     const px = (Math.random()-0.5)*300, py = (Math.random()-0.5)*300;
     const isText = Math.random() > 0.6;
@@ -1031,9 +1067,9 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
   };
   ov.innerHTML = `
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">${raysHtml}</div>
-    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">${partsHtml}</div>
+    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">${partsHtml}${extraFxHtml}</div>
     <div style="position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;">
-      <div style="animation:cyberItemIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;">${imgHtml}</div>
+      ${itemHtml}
       <div style="font-size:8px;font-family:monospace;letter-spacing:2px;padding:3px 14px;background:${tagBg};border:1px solid ${tagBorder};color:${tagColor};border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
       ${contentHtml}
       <div style="font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;text-align:center;max-width:200px;line-height:1.6;animation:fadeUpAnim 0.3s ease-out 0.9s both;opacity:0;">${prize.desc||''}</div>
