@@ -783,7 +783,10 @@ function showToast(msg, type) {
 
   const msgEl = document.createElement('span');
   msgEl.className = 'toast-msg';
-  msgEl.innerHTML = msg
+  // Strip a leading emoji from the message text — the toast already shows
+  // its own type icon on the left, so an embedded emoji would duplicate it.
+  const cleanMsg = msg.replace(/^[\p{Extended_Pictographic}‍️]+\s*/u, '');
+  msgEl.innerHTML = cleanMsg
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
