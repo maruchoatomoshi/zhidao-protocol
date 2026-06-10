@@ -16441,6 +16441,27 @@ body.theme-admin-light .alpha-boss-raid-cost {
   color: rgba(68,86,224,0.65);
 }
 
+/* Same low-opacity gold "kicker" labels are illegible on the admin light
+   background too — darken them to the admin-light accent. */
+body.theme-admin-light .alpha-boss-kicker,
+body.theme-admin-light .page-title-cn,
+body.theme-admin-light .main-pinyin,
+body.theme-admin-light .stat-cn,
+body.theme-admin-light .implant-py,
+body.theme-admin-light .lb-leaders-label,
+body.theme-admin-light .more-stat-lbl span,
+body.theme-admin-light .more-item-cn,
+body.theme-admin-light .shop-cat .cn,
+body.theme-admin-light .shop-item-cn,
+body.theme-admin-light .case-cn.g,
+body.theme-admin-light .event-lobby-count,
+body.theme-admin-light .launch-gate-kicker,
+body.theme-admin-light .demo-lock-kicker,
+body.theme-admin-light .event-lobby-card .event-lobby-reward::before,
+body.theme-admin-light .event-result-card .event-lobby-reward::before,
+body.theme-admin-light .diary-star
+{ color: #4456e0 !important; }
+
 body.theme-admin-light .alpha-boss-raid-btn {
   background: rgba(68,86,224,0.08);
   border-top-color: rgba(68,86,224,0.15);
