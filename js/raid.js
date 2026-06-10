@@ -276,7 +276,7 @@ async function loadRaidStatus() {
             setRaidProgressVisual(6, 'STANDBY', 'Операция ждёт первого бойца', 'pending');
             setRaidStatusText(
                 isAdmin
-                    ? 'Рейд ещё не создан. Админ может запустить одиночный тест или собрать команду.'
+                    ? 'Рейд ещё не создан'
                     : `Рейд ещё не собран. Осталось попыток сегодня: ${remainingToday}.`
             );
             setRaidButtonState(
@@ -326,7 +326,7 @@ async function loadRaidStatus() {
         setRaidProgressVisual(
             Math.min((count / requiredPlayers) * 100, 100),
             alreadyJoined ? 'LINKED' : 'ASSEMBLING',
-            alreadyJoined ? 'Ты уже синхронизирован с отрядом.' : 'Идёт добор бойцов для запуска.',
+            alreadyJoined ? 'Ты уже синхронизирован с отрядом' : 'Идёт добор бойцов для запуска',
             count >= requiredPlayers ? 'success' : 'pending'
         );
         setRaidStatusText(
@@ -342,16 +342,16 @@ async function loadRaidStatus() {
     } catch(e) {
         updateRaidUI(0);
         updateRaidRoster([]);
-        setRaidResultPanel('danger', 'СВЯЗЬ ПОТЕРЯНА', 'Не удалось получить статус операции.');
-        setRaidStatusText('Не удалось загрузить статус рейда.', '#cc4444');
+        setRaidResultPanel('danger', 'СВЯЗЬ ПОТЕРЯНА', 'Не удалось получить статус операции');
+        setRaidStatusText('Не удалось загрузить статус рейда', '#cc4444');
         setRaidButtonState('Повторить подключение', false);
     }
 }
 
 function getRaidErrorMessage(detail) {
-    if (detail === 'Already joined') return 'Ты уже в этом рейде.';
-    if (detail === 'Daily raid limit reached') return 'Сегодня лимит рейдов исчерпан. Попробуй завтра.';
-    if (detail === 'Not enough points') return 'Недостаточно баллов для рейда.';
+    if (detail === 'Already joined') return 'Ты уже в этом рейде';
+    if (detail === 'Daily raid limit reached') return 'Сегодня лимит рейдов исчерпан. Попробуй завтра';
+    if (detail === 'Not enough points') return 'Недостаточно баллов для рейда';
     return 'Не удалось присоединиться к рейду.';
 }
 
@@ -435,19 +435,19 @@ async function _executeRaidJoin(answer, questionId) {
         const correct = data.answer_correct;
         if (answer) {
             setRaidStatusText(
-                correct ? '✓ Анализ точный — уязвимость обнаружена.' : '✗ Анализ промахнулся. Продолжаем операцию.',
+                correct ? '✓ Анализ точный — уязвимость обнаружена' : '✗ Анализ промахнулся. Продолжаем операцию',
                 correct ? '#2ecc71' : '#e67e22'
             );
             await sleep(900);
         }
 
         if (data.launched && data.result === 'success') {
-            setRaidProgressVisual(100, 'VICTORY', 'Альфа-цель пробита. Награда зачислена.', 'success');
-            setRaidResultPanel('success', 'РЕЙД УСПЕШЕН', 'Команда вышла чисто. +100★ каждому участнику.');
+            setRaidProgressVisual(100, 'VICTORY', 'Альфа-цель пробита. Награда зачислена', 'success');
+            setRaidResultPanel('success', 'РЕЙД УСПЕШЕН', 'Команда вышла чисто. +100★ каждому участнику');
             launchConfetti(80);
         } else if (data.launched && data.result === 'defended') {
-            setRaidProgressVisual(100, 'FAIL', 'Контур сорван. Операция провалена.', 'danger');
-            setRaidResultPanel('danger', 'РЕЙД СОРВАН', 'Система обнаружила отряд. Ставка сгорела.');
+            setRaidProgressVisual(100, 'FAIL', 'Контур сорван. Операция провалена', 'danger');
+            setRaidResultPanel('danger', 'РЕЙД СОРВАН', 'Система обнаружила отряд. Ставка сгорела');
         } else {
             setRaidProgressVisual(
                 Math.min(((data.count || 1) / RAID_CONFIG.minPlayers) * 100, 100),
@@ -463,11 +463,11 @@ async function _executeRaidJoin(answer, questionId) {
             );
         } catch(e) {}
 
-        showToast(data.message || 'Рейд обновлён.');
+        showToast(data.message || 'Рейд обновлён');
         loadLeaderboard();
         loadPoints(currentUserId);
     } catch(e) {
-        showToast('Ошибка соединения с рейдом.');
+        showToast('Ошибка соединения с рейдом');
     } finally {
         isJoiningRaid = false;
         loadRaidStatus();
@@ -481,7 +481,7 @@ async function joinRaid() {
 
     tg.showPopup({
         title: '⚔️ Вступить в рейд?',
-        message: 'Ты ставишь 50★. Если отряд из 3+ человек соберётся — начнётся операция. Правильный анализ цели повышает шансы всей команды на победу.',
+        message: 'Ты ставишь 50★. Если отряд из 3+ человек соберётся — начнётся операция. Правильный анализ цели повышает шансы всей команды на победу',
         buttons: [{id:'confirm', type:'default', text:'⚔️ В РЕЙД'}, {type:'cancel'}]
     }, async (btnId) => {
         if (btnId !== 'confirm') return;
