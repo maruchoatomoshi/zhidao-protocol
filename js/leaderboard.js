@@ -501,19 +501,12 @@ async function loadLeaderboard() {
       const pathClass = item.theme_path === 'genshin' ? 'genshin' : item.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
       const rankSignal = i === 0 ? 'ALPHA' : i < 3 ? 'ELITE' : i < 10 ? 'TOP-10' : 'OPERATOR';
 
-      // Иероглиф импланта
-      let glyphHtml = '';
+      // Сигнал импланта/карты для подстроки
       let signalLabel = 'NO IMPLANT';
       if (item.implant && IMPLANT_GLYPHS[item.implant]) {
-        const [glyph, color, label] = IMPLANT_GLYPHS[item.implant];
-        signalLabel = label;
-        glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
-      } else if (item.card) {
-        if (CARD_GLYPHS[item.card]) {
-          const [glyph, color, label] = CARD_GLYPHS[item.card];
-          signalLabel = label;
-          glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
-        }
+        signalLabel = IMPLANT_GLYPHS[item.implant][2];
+      } else if (item.card && CARD_GLYPHS[item.card]) {
+        signalLabel = CARD_GLYPHS[item.card][2];
       }
 
       // Титул
@@ -540,7 +533,7 @@ async function loadLeaderboard() {
         <div class="lb-avatar">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
           <div class="lb-name-row">
-            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${glyphHtml}${isMe?' 👈':''}</div>
+            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${isMe?' 👈':''}</div>
             <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
           </div>
           <div class="lb-subline">
