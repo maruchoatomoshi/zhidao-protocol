@@ -20,7 +20,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260610lb-frames">
+<link rel="stylesheet" href="./css/styles.css?v=20260610frames2">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -111,7 +111,7 @@
     <div class="profile-card-spark spark-br"></div>
     <div class="profile-card-main">
       <div class="profile-identity-row">
-        <div class="profile-avatar-wrap">
+        <div class="profile-avatar-wrap" id="profileAvatarWrap">
           <img id="profileAvatarPreview" class="profile-avatar-img" alt="avatar" style="display:none;">
           <div id="profileAvatarFallback" class="profile-avatar-fallback">?</div>
           <div class="profile-admin-badge">架构师</div>
@@ -141,6 +141,7 @@
         <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
         <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">AVATAR</button>
         <button class="profile-mini-btn" onclick="openProfileShowcaseModal()">SHOWCASE</button>
+        <button class="profile-mini-btn" onclick="openProfileFrameModal()">РАМКИ</button>
         <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">RESET</button>
       </div>
     </div>
@@ -156,6 +157,21 @@
         <button class="profile-showcase-close" onclick="closeProfileShowcaseModal()">&#10005;</button>
       </div>
       <div class="profile-showcase-options" id="profileShowcaseOptions">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-showcase-modal" id="profileFrameModal" style="display:none;">
+    <div class="profile-showcase-panel">
+      <div class="profile-showcase-panel-head">
+        <div>
+          <div class="profile-card-kicker">FRAME SELECT</div>
+          <div class="profile-showcase-panel-title">&#36873;&#25321;&#26694; // Рамки аватара</div>
+        </div>
+        <button class="profile-showcase-close" onclick="closeProfileFrameModal()">&#10005;</button>
+      </div>
+      <div class="profile-showcase-options" id="profileFrameOptions">
         <div class="empty-state">Loading...</div>
       </div>
     </div>
@@ -2426,7 +2442,7 @@
 <script src="./js/announcements.js"></script>
 <script src="./js/laundry.js?v=20260604a"></script>
 <script src="./js/achievements.js?v=20260607e"></script>
-<script src="./js/leaderboard.js?v=20260610lb-frames"></script>
+<script src="./js/leaderboard.js?v=20260610frames2"></script>
 <script src="./js/shop.js?v=20260607a"></script>
 <script src="./js/casino.js?v=20260607a"></script>
 <script src="./js/diary.js?v=20260608a"></script>

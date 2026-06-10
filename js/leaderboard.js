@@ -83,6 +83,16 @@ function renderProfileAvatarCard(profile = {}) {
   }
 }
 
+const FRAME_IDS = ['bronze','silver','gold','diamond','dragon','netwatch-legend','zhongli','raider','scholar','path-netwatch','path-genshin'];
+
+function applyAvatarFrame(el, frameId) {
+  if (!el) return;
+  el.classList.remove('has-frame', ...FRAME_IDS.map(f => `frame-${f}`));
+  if (frameId && FRAME_IDS.includes(frameId)) {
+    el.classList.add('has-frame', `frame-${frameId}`);
+  }
+}
+
 function updateProfilePathBadge(path = currentThemePath) {
   const badge = document.getElementById('profilePathBadge');
   if (!badge) return;
@@ -108,6 +118,8 @@ function renderProfileDossier(profile = {}) {
   setProfileText('myRankSub', (profile.rank || 'D') + '-RANK');
   setProfileText('profileLeaderboardPlace', place);
   updateProfilePathBadge(profile.theme_path || currentThemePath);
+
+  applyAvatarFrame(document.getElementById('profileAvatarWrap'), profile.equipped_frame);
 
   setProfileText('profileStatusLine', profile.status_line || '状态：在线 // 权限：学生节点 // 同步率：0%');
   setProfileText('profileTitleBadge', profile.title || '协议执行者 / Исполнитель');
@@ -246,6 +258,73 @@ async function selectProfileShowcase(kind, code) {
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
   } catch (e) {
     showToast('Showcase save failed');
+  }
+}
+
+function renderProfileFrameOptions(data) {
+  const box = document.getElementById('profileFrameOptions');
+  if (!box) return;
+  const equipped = data.equipped || null;
+  let html = `
+    <button class="profile-showcase-option ${!equipped ? 'equipped' : ''}" onclick="selectProfileFrame(null)">
+      <span class="profile-frame-swatch frame-none"></span>
+      <span class="profile-showcase-option-copy">
+        <span>NO FRAME</span>
+        <strong>Без рамки</strong>
+        <em>Стандартный аватар</em>
+      </span>
+    </button>`;
+  html += (data.frames || []).map(f => `
+    <button class="profile-showcase-option ${f.unlocked ? '' : 'locked'} ${equipped === f.id ? 'equipped' : ''}"
+      onclick="${f.unlocked ? `selectProfileFrame('${f.id}')` : 'void(0)'}">
+      <span class="profile-frame-swatch frame-${f.id}"></span>
+      <span class="profile-showcase-option-copy">
+        <span>${f.unlocked ? 'РАЗБЛОКИРОВАНО' : 'ЗАБЛОКИРОВАНО'}</span>
+        <strong>${escapeHtml(f.name)}</strong>
+        <em>${escapeHtml(f.desc)}</em>
+      </span>
+      ${f.unlocked ? '' : '<span class="profile-frame-lock">🔒</span>'}
+    </button>`).join('');
+  box.innerHTML = html;
+}
+
+async function openProfileFrameModal() {
+  const modal = document.getElementById('profileFrameModal');
+  const box = document.getElementById('profileFrameOptions');
+  if (!modal || !box || !currentUserId) return;
+  modal.style.display = 'flex';
+  box.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/frames/${currentUserId}`);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Frames load failed');
+    renderProfileFrameOptions(data);
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state">Frames loading error</div>';
+  }
+}
+
+function closeProfileFrameModal() {
+  const modal = document.getElementById('profileFrameModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function selectProfileFrame(frameId) {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/frames/equip`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId, frame_id: frameId})
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Frame save failed');
+    applyAvatarFrame(document.getElementById('profileAvatarWrap'), data.equipped);
+    await openProfileFrameModal();
+    loadLeaderboard();
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  } catch (e) {
+    showToast('Не удалось сохранить рамку');
   }
 }
 
@@ -528,9 +607,12 @@ async function loadLeaderboard() {
       // Разделитель после топ-3
       const divider = i === 3 ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
 
+      // Рамка аватара — за топ-3 фиксированная, для остальных по выбору пользователя
+      const frameClass = (!topClass && item.equipped_frame) ? `has-frame frame-${item.equipped_frame}` : '';
+
       html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''}" style="${animDelay}">
         <div class="lb-rank">${medal}</div>
-        <div class="lb-avatar">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
+        <div class="lb-avatar ${frameClass}">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
           <div class="lb-name-row">
             <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${isMe?' 👈':''}</div>

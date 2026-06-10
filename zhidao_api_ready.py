@@ -121,6 +121,63 @@ ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS") or [-1]
 INTRO_CYBERPUNK_ADMIN_IDS = set(parse_int_list_env("INTRO_CYBERPUNK_ADMIN_IDS"))
 INTRO_GENSHIN_ADMIN_IDS = set(parse_int_list_env("INTRO_GENSHIN_ADMIN_IDS"))
 
+# Avatar frame "mini-achievements" — cosmetic only, no economy impact.
+# Each frame has an `id` matching its CSS class (frame-<id>) and a `check`
+# function that decides whether a given player's stats unlock it.
+FRAME_DEFINITIONS = [
+    {"id": "bronze", "name": "Бронзовый протокол", "desc": "Достигни 100 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 100},
+    {"id": "silver", "name": "Серебряный протокол", "desc": "Достигни 300 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 300},
+    {"id": "gold", "name": "Золотой протокол", "desc": "Достигни 600 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 600},
+    {"id": "diamond", "name": "Алмазный протокол", "desc": "Достигни 1000 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 1000},
+    {"id": "dragon", "name": "Печать Красного Дракона", "desc": "Имей имплант 红龙 Красный Дракон",
+     "category": "legendary", "check": lambda s: "implant_red_dragon" in s["implants"]},
+    {"id": "netwatch-legend", "name": "Печать NetWatch", "desc": "Имей имплант 衛 NetWatch",
+     "category": "legendary", "check": lambda s: "implant_netwatch" in s["implants"]},
+    {"id": "zhongli", "name": "Печать Архонта Земли", "desc": "Имей карту 岩 Чжун Ли",
+     "category": "legendary", "check": lambda s: "card_zhongli" in s["cards"]},
+    {"id": "raider", "name": "Рейдер", "desc": "Прими участие в 5+ рейдах",
+     "category": "activity", "check": lambda s: s["raids"] >= 5},
+    {"id": "scholar", "name": "Дневниковый отличник", "desc": "Набери 15+ ★ в дневнике",
+     "category": "activity", "check": lambda s: s["diary_stars"] >= 15},
+    {"id": "path-netwatch", "name": "Путь NetWatch", "desc": "Выбери путь NetWatch",
+     "category": "path", "check": lambda s: s["theme_path"] == "cyberpunk"},
+    {"id": "path-genshin", "name": "Путь Genshin", "desc": "Выбери путь Genshin",
+     "category": "path", "check": lambda s: s["theme_path"] == "genshin"},
+]
+FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
+
+
+def compute_unlocked_frames(c, telegram_id: int) -> list:
+    c.execute("SELECT rep_score, points FROM users WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    rep = (row[0] or 0) if row else 0
+
+    c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    theme_path = row[0] if row else None
+
+    c.execute("SELECT implant_id FROM user_implants WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    implants = {r[0] for r in c.fetchall()}
+
+    c.execute("SELECT card_id FROM user_cards WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    cards = {r[0] for r in c.fetchall()}
+
+    c.execute("SELECT COUNT(DISTINCT raid_id) FROM raid_participants WHERE telegram_id=?", (telegram_id,))
+    raids = c.fetchone()[0] or 0
+
+    c.execute("SELECT COALESCE(SUM(stars),0) FROM diary_stars WHERE telegram_id=?", (telegram_id,))
+    diary_stars = c.fetchone()[0] or 0
+
+    stats = {
+        "rep": rep, "theme_path": theme_path, "implants": implants,
+        "cards": cards, "raids": raids, "diary_stars": diary_stars,
+    }
+    return [f["id"] for f in FRAME_DEFINITIONS if f["check"](stats)]
+
 
 def verify_telegram_init_data(init_data: str) -> Optional[dict]:
     if not init_data or not BOT_TOKEN:
@@ -1105,6 +1162,8 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN scan_attempts INTEGER DEFAULT 0")
     if 'protocol_fragments' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN protocol_fragments INTEGER DEFAULT 0")
+    if 'equipped_frame' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN equipped_frame TEXT DEFAULT NULL")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -3001,7 +3060,7 @@ def get_user_profile_dossier(telegram_id: int):
     c = conn.cursor()
     c.execute(
         '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
-                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score
+                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score, us.equipped_frame
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -3012,7 +3071,9 @@ def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame = user_row
+    if equipped_frame not in FRAME_IDS:
+        equipped_frame = None
     points = points or 0
     rep_score = rep_score or 0
 
@@ -3180,6 +3241,7 @@ def get_user_profile_dossier(telegram_id: int):
         "title": title,
         "leaderboard_rank": leaderboard_rank,
         "showcase": showcase,
+        "equipped_frame": equipped_frame,
         "is_admin": telegram_id in ADMIN_IDS,
         "is_architect": telegram_id in ARCHITECT_IDS,
         "stats": {
@@ -5420,6 +5482,7 @@ def get_leaderboard():
     c.execute(
         f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
+                 us.equipped_frame,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
                   AND durability > 0
@@ -5456,11 +5519,78 @@ def get_leaderboard():
             "avatar_url": r[3],
             "theme_path": r[4],
             "has_title": bool(r[5]),
-            "implant": r[6],
-            "card": r[7],
+            "equipped_frame": r[6] if r[6] in FRAME_IDS else None,
+            "implant": r[7],
+            "card": r[8],
         }
         for r in result
     ]
+
+
+@app.get("/api/frames/{telegram_id}")
+def get_user_frames(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    unlocked = set(compute_unlocked_frames(c, telegram_id))
+    c.execute("SELECT equipped_frame FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    equipped = row[0] if row and row[0] in unlocked else None
+    conn.close()
+
+    return {
+        "equipped": equipped,
+        "frames": [
+            {
+                "id": f["id"],
+                "name": f["name"],
+                "desc": f["desc"],
+                "category": f["category"],
+                "unlocked": f["id"] in unlocked,
+            }
+            for f in FRAME_DEFINITIONS
+        ],
+    }
+
+
+@app.post("/api/frames/equip")
+async def equip_frame(data: dict):
+    telegram_id = data.get("telegram_id")
+    frame_id = data.get("frame_id")
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="No telegram_id")
+    if frame_id is not None and frame_id not in FRAME_IDS:
+        raise HTTPException(status_code=400, detail="Unknown frame")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+            if not c.fetchone():
+                raise HTTPException(status_code=404, detail="User not found")
+
+            if frame_id is not None:
+                unlocked = set(compute_unlocked_frames(c, telegram_id))
+                if frame_id not in unlocked:
+                    raise HTTPException(status_code=403, detail="Frame not unlocked")
+
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, equipped_frame) VALUES (?, ?)
+                   ON CONFLICT(telegram_id) DO UPDATE SET equipped_frame=excluded.equipped_frame''',
+                (telegram_id, frame_id),
+            )
+            conn.commit()
+            return frame_id
+        finally:
+            conn.close()
+
+    equipped = await db_write(_run)
+    return {"success": True, "equipped": equipped}
 
 
 @app.get("/api/achievements/{telegram_id}")

@@ -1721,6 +1721,32 @@ body.is-admin .profile-card-kicker {
   font-family: monospace;
   font-style: normal;
 }
+.profile-frame-swatch {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  background: var(--frame-gradient, conic-gradient(#888,#444,#888));
+  box-shadow: 0 0 8px var(--frame-glow, transparent);
+}
+.profile-frame-swatch.frame-none {
+  background: rgba(255,255,255,0.06);
+  border: 1px dashed rgba(255,255,255,0.18);
+  box-shadow: none;
+}
+.profile-showcase-option.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.profile-showcase-option.equipped {
+  border-color: rgba(212,175,55,0.5);
+  background: rgba(212,175,55,0.1);
+}
+.profile-frame-lock {
+  flex: 0 0 auto;
+  font-size: 14px;
+  color: var(--text3);
+}
 .lb-item {
   position: relative;
   display: flex;
@@ -1830,6 +1856,39 @@ body.is-admin .profile-card-kicker {
 .lb-item.top3 .lb-avatar-fallback {
   border-radius: 50%;
 }
+
+/* Equipped avatar frames — unlockable cosmetic "mini-achievements" */
+.has-frame {
+  border-radius: 50% !important;
+  overflow: visible !important;
+}
+.has-frame::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--frame-gradient);
+  box-shadow: 0 0 10px var(--frame-glow);
+  animation: lb-frame-spin 4s linear infinite;
+}
+.has-frame .lb-avatar-img,
+.has-frame .lb-avatar-fallback,
+.has-frame .profile-avatar-img,
+.has-frame .profile-avatar-fallback {
+  border-radius: 50%;
+}
+.frame-bronze    { --frame-gradient: conic-gradient(from 0deg, #b87333, #e8a050, #b87333, #e8a050, #b87333); --frame-glow: rgba(184,115,51,0.4); }
+.frame-silver    { --frame-gradient: conic-gradient(from 0deg, #b0b0b0, #f0f0f0, #b0b0b0, #f0f0f0, #b0b0b0); --frame-glow: rgba(200,200,200,0.4); }
+.frame-gold      { --frame-gradient: conic-gradient(from 0deg, #d4af37, #fff3b0, #d4af37, #fff3b0, #d4af37); --frame-glow: rgba(212,175,55,0.55); }
+.frame-diamond   { --frame-gradient: conic-gradient(from 0deg, #7fdbff, #ffffff, #7fdbff, #ffffff, #7fdbff); --frame-glow: rgba(127,219,255,0.55); }
+.frame-dragon    { --frame-gradient: conic-gradient(from 0deg, #cc2200, #ff6644, #cc2200, #ff6644, #cc2200); --frame-glow: rgba(204,34,0,0.55); }
+.frame-netwatch-legend { --frame-gradient: conic-gradient(from 0deg, #00fff7, #0a3d3d, #00fff7, #0a3d3d, #00fff7); --frame-glow: rgba(0,255,247,0.45); }
+.frame-zhongli   { --frame-gradient: conic-gradient(from 0deg, #d4af37, #5a3e1b, #d4af37, #5a3e1b, #d4af37); --frame-glow: rgba(212,175,55,0.45); }
+.frame-raider    { --frame-gradient: conic-gradient(from 0deg, #ff8800, #ff3300, #ff8800, #ff3300, #ff8800); --frame-glow: rgba(255,102,0,0.45); }
+.frame-scholar   { --frame-gradient: conic-gradient(from 0deg, #3498db, #ffffff, #3498db, #ffffff, #3498db); --frame-glow: rgba(52,152,219,0.45); }
+.frame-path-netwatch { --frame-gradient: conic-gradient(from 0deg, #cc2200, #330000, #cc2200, #330000, #cc2200); --frame-glow: rgba(204,34,0,0.35); }
+.frame-path-genshin  { --frame-gradient: conic-gradient(from 0deg, #9b59b6, #e91e8c, #9b59b6, #e91e8c, #9b59b6); --frame-glow: rgba(155,89,182,0.4); }
 @keyframes lb-frame-spin {
   to { transform: rotate(360deg); }
 }
