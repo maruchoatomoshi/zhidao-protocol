@@ -4914,7 +4914,17 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 .architect-banner-overlay.show .architect-banner-card {
   animation:
     architectBannerEnter 0.4s steps(8, end),
-    architectCardJitter 4.8s 0.5s infinite linear;
+    architectCardJitter 2.6s 0.4s infinite linear;
+}
+
+.architect-banner-redflash {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: rgba(255,0,0,0.5);
+  opacity: 0;
+  animation: architectRedFlash 2.6s infinite steps(1);
 }
 
 .architect-banner-scanlines {
@@ -4980,14 +4990,14 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 
 .architect-banner-glitchbar-1 {
   top: 28%;
-  animation: architectGlitchBar1 3.6s infinite steps(1);
+  animation: architectGlitchBar1 1.8s infinite steps(1);
 }
 
 .architect-banner-glitchbar-2 {
   top: 64%;
   height: 8px;
-  background: rgba(255,40,40,0.22);
-  animation: architectGlitchBar2 4.4s infinite steps(1);
+  background: rgba(255,40,40,0.3);
+  animation: architectGlitchBar2 2.2s infinite steps(1);
 }
 
 .architect-banner-title {
@@ -5015,13 +5025,13 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 .architect-banner-title::before {
   color: #ff2b4d;
   z-index: -1;
-  animation: architectGlitchTop 2.6s infinite linear alternate-reverse;
+  animation: architectGlitchTop 1.4s infinite linear alternate-reverse;
 }
 
 .architect-banner-title::after {
   color: #2bdcff;
   z-index: -2;
-  animation: architectGlitchBottom 3.1s infinite linear alternate-reverse;
+  animation: architectGlitchBottom 1.7s infinite linear alternate-reverse;
 }
 
 .architect-banner-log {
@@ -5138,6 +5148,14 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   71% { opacity: 1; transform: translateX(8%); }
   73% { opacity: 0.5; transform: translateX(-5%); }
   75% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes architectRedFlash {
+  0%, 90%, 100% { opacity: 0; }
+  91% { opacity: 0.55; }
+  92% { opacity: 0.1; }
+  93% { opacity: 0.4; }
+  94% { opacity: 0; }
 }
 
 @keyframes architectBannerEnter {
