@@ -4920,6 +4920,10 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   transform: perspective(1200px) rotateX(2deg);
 }
 
+.architect-banner-overlay.show .architect-banner-card {
+  animation: architectBannerEnter 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
 .architect-banner-card::before {
   content: '';
   position: absolute;
@@ -5118,42 +5122,35 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   text-shadow: 0 0 18px rgba(255,40,40,0.55);
 }
 
-.architect-banner-core {
+.architect-banner-portrait {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 132px;
+  height: 132px;
   border-radius: 50%;
-  border: 1px solid rgba(255,70,50,0.25);
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255,120,80,0.22), rgba(180,0,0,0.14) 42%, transparent 72%),
-    rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,70,50,0.35);
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
   box-shadow:
-    0 0 50px rgba(180,20,20,0.26),
-    inset 0 0 35px rgba(255,255,255,0.03);
+    0 0 50px rgba(180,20,20,0.30),
+    inset 0 0 35px rgba(255,0,0,0.10);
   animation: architectPulseCore 1.9s ease-in-out infinite;
 }
 
-.architect-banner-core::before,
-.architect-banner-core::after {
+.architect-banner-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.15) contrast(1.08);
+}
+
+.architect-banner-portrait::after {
   content: '';
   position: absolute;
-  inset: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   border-radius: 50%;
-}
-
-.architect-banner-core::before {
-  width: 76px;
-  height: 76px;
-  border: 1px solid rgba(255,70,50,0.55);
-  box-shadow: 0 0 18px rgba(255,70,50,0.28);
-}
-
-.architect-banner-core::after {
-  width: 20px;
-  height: 20px;
-  background: radial-gradient(circle, rgba(255,180,140,0.95), rgba(255,20,20,0.52));
-  box-shadow: 0 0 24px rgba(255,40,40,0.52);
+  background: radial-gradient(circle at 50% 40%, transparent 55%, rgba(120,0,0,0.45) 100%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 
 .architect-banner-title {
@@ -5316,6 +5313,12 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   59% { transform: translateX(2px); }
   60% { transform: translateX(-1px); }
   61% { transform: translateX(0); }
+}
+
+@keyframes architectBannerEnter {
+  0% { opacity: 0; transform: perspective(1200px) rotateX(2deg) scale(0.85); filter: brightness(2.5); }
+  60% { opacity: 1; filter: brightness(1.1); }
+  100% { opacity: 1; transform: perspective(1200px) rotateX(2deg) scale(1); filter: brightness(1); }
 }
 
 @keyframes architectAlertBlink {
