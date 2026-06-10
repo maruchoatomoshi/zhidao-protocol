@@ -8674,6 +8674,95 @@ def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
     }
 
 
+@app.get("/api/admin/economy/report")
+def admin_economy_report(since: Optional[str] = None, until: Optional[str] = None,
+                          x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if not since:
+        since = (datetime.now(BEIJING_TZ) - timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
+    elif len(since) == 10:
+        since = since + " 00:00:00"
+    if not until:
+        until = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d 23:59:59')
+    elif len(until) == 10:
+        until = until + " 23:59:59"
+
+    conn = get_conn()
+    c = conn.cursor()
+
+    c.execute(
+        '''SELECT
+             el.telegram_id,
+             COALESCE(u.full_name, el.telegram_id) AS full_name,
+             u.points,
+             COUNT(*) AS tx_count,
+             COALESCE(SUM(CASE WHEN el.amount>0 THEN el.amount ELSE 0 END),0) AS earned,
+             COALESCE(SUM(CASE WHEN el.amount<0 THEN -el.amount ELSE 0 END),0) AS spent,
+             COALESCE(SUM(CASE WHEN el.operation='shop_purchase' THEN -el.amount ELSE 0 END),0) AS shop_spent,
+             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') THEN 1 ELSE 0 END),0) AS cases_opened,
+             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') THEN -el.amount ELSE 0 END),0) AS cases_spent,
+             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') AND el.amount>0 THEN el.amount ELSE 0 END),0) AS cases_won,
+             COALESCE(SUM(CASE WHEN el.operation='raid_entry' THEN 1 ELSE 0 END),0) AS raids_entered,
+             COALESCE(SUM(CASE WHEN el.operation='raid_reward' THEN 1 ELSE 0 END),0) AS raids_won,
+             COALESCE(SUM(CASE WHEN el.operation='gift_tax' THEN 1 ELSE 0 END),0) AS gifts_sent,
+             COALESCE(SUM(CASE WHEN el.operation='gift_receive' THEN 1 ELSE 0 END),0) AS gifts_received,
+             COALESCE(SUM(CASE WHEN el.operation IN ('presence_penalty','presence_rep_penalty','admin_points','bot_penalize') AND el.amount<0 THEN 1 ELSE 0 END),0) AS penalties,
+             COALESCE(SUM(CASE WHEN el.operation IN ('bot_salary','bot_award') THEN el.amount ELSE 0 END),0) AS salary_award_total,
+             COALESCE(SUM(CASE WHEN el.operation='contract_payout' THEN el.amount ELSE 0 END),0) AS contract_earnings,
+             COALESCE(SUM(CASE WHEN el.operation='contract_freeze' THEN -el.amount ELSE 0 END),0) AS contract_spent
+           FROM economy_log el
+           LEFT JOIN users u ON u.telegram_id=el.telegram_id
+           WHERE el.created_at BETWEEN ? AND ?
+           GROUP BY el.telegram_id
+           ORDER BY tx_count DESC''',
+        (since, until),
+    )
+    rows = c.fetchall()
+    conn.close()
+
+    players = []
+    for row in rows:
+        earned, spent = row[4] or 0, row[5] or 0
+        players.append({
+            "telegram_id": row[0],
+            "full_name": str(row[1]),
+            "points": row[2] if row[2] is not None else None,
+            "tx_count": row[3] or 0,
+            "earned": earned,
+            "spent": spent,
+            "net": earned - spent,
+            "shop_spent": row[6] or 0,
+            "cases_opened": row[7] or 0,
+            "cases_spent": row[8] or 0,
+            "cases_won": row[9] or 0,
+            "raids_entered": row[10] or 0,
+            "raids_won": row[11] or 0,
+            "gifts_sent": row[12] or 0,
+            "gifts_received": row[13] or 0,
+            "penalties": row[14] or 0,
+            "salary_award_total": row[15] or 0,
+            "contract_earnings": row[16] or 0,
+            "contract_spent": row[17] or 0,
+        })
+
+    return {
+        "since": since,
+        "until": until,
+        "summary": {
+            "players": len(players),
+            "total_earned": sum(p["earned"] for p in players),
+            "total_spent": sum(p["spent"] for p in players),
+            "total_cases_opened": sum(p["cases_opened"] for p in players),
+            "total_raids_entered": sum(p["raids_entered"] for p in players),
+            "total_gifts": sum(p["gifts_sent"] for p in players),
+            "total_penalties": sum(p["penalties"] for p in players),
+        },
+        "players": players,
+    }
+
+
 @app.post("/api/admin/contracts/{contract_id}/resolve")
 async def admin_resolve_contract(contract_id: int, data: dict,
                                   x_admin_id: Optional[int] = Header(None)):

@@ -200,7 +200,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','presence','blackwall','contracts'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall','contracts','report'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -222,6 +222,7 @@ function showAdminSection(name, btn) {
   if (name==='presence') adminLoadPresenceAll();
   if (name==='blackwall' && typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
   if (name==='contracts') adminLoadContracts();
+  if (name==='report') adminLoadEconomyReport(7);
 }
 
 async function loadAdminLaundry() {
@@ -1632,4 +1633,87 @@ async function adminGrantFragments() {
     await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверяю фрагменты игрока...');
   }
   });
+}
+
+async function adminLoadEconomyReport(days, btn) {
+  const el = document.getElementById('adminReportContent');
+  if (!el || !currentUserId) return;
+  if (btn) {
+    document.querySelectorAll('#admin-report .admin-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  el.innerHTML = '<div class="empty-state">Собираю данные по игрокам...</div>';
+
+  const params = new URLSearchParams();
+  if (days && days > 0) {
+    const since = new Date(Date.now() - days * 86400000);
+    params.set('since', since.toISOString().slice(0, 10));
+  } else {
+    params.set('since', '2000-01-01');
+  }
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/economy/report?${params.toString()}`, {
+      headers: {'x-admin-id': String(currentUserId)},
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка отчёта')}</div>`;
+      return;
+    }
+    el.innerHTML = adminRenderEconomyReport(data);
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+  }
+}
+
+function adminRenderEconomyReport(data) {
+  const summary = data.summary || {};
+  const players = Array.isArray(data.players) ? data.players : [];
+
+  const periodLabel = `${escapeHtml(String(data.since || '').slice(0, 10))} — ${escapeHtml(String(data.until || '').slice(0, 10))}`;
+
+  const cards = [
+    ['Заработано', `${Number(summary.total_earned || 0)}★`, `${players.length} активных игроков`],
+    ['Потрачено', `${Number(summary.total_spent || 0)}★`, periodLabel],
+    ['Кейсы/молитвы', `${Number(summary.total_cases_opened || 0)}`, 'открыто за период'],
+    ['Рейды', `${Number(summary.total_raids_entered || 0)}`, 'попыток за период'],
+    ['Подарки', `${Number(summary.total_gifts || 0)}`, 'отправлено за период'],
+    ['Штрафы', `${Number(summary.total_penalties || 0)}`, 'начислено за период'],
+  ].map(([label, value, hint]) => `
+    <div class="contract-monitor-stat">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <em>${escapeHtml(hint)}</em>
+    </div>
+  `).join('');
+
+  if (!players.length) {
+    return `<div class="contract-monitor-stats">${cards}</div><div class="empty-state">Нет операций за выбранный период</div>`;
+  }
+
+  const rows = players.map(p => {
+    const flags = [];
+    if (p.cases_spent >= 200) flags.push('🎰 азартный игрок');
+    if (p.gifts_sent + p.gifts_received >= 5) flags.push('🎁 активный даритель');
+    if (p.penalties >= 3) flags.push('⚠ частые штрафы');
+    if (p.contract_earnings + p.contract_spent >= 100) flags.push('📜 коммерсант');
+    if (p.tx_count <= 1) flags.push('💤 малоактивен');
+
+    const netSign = p.net > 0 ? '+' : '';
+    const netClass = p.net > 0 ? 'risk' : '';
+
+    return `
+    <div class="contract-monitor-row">
+      <div>
+        <strong>${escapeHtml(p.full_name)} <span style="color:var(--text3);font-weight:400;">(ID ${p.telegram_id})</span></strong>
+        <span>Баланс: <b>${p.points != null ? p.points : '—'}★</b> · Изменение за период: <b>${netSign}${p.net}★</b> · Операций: ${p.tx_count}</span>
+        <span>🛍 Магазин: ${p.shop_spent}★ · 🎰 Кейсы/молитвы: ${p.cases_opened} (−${p.cases_spent}★/+${p.cases_won}★) · ⚔ Рейды: ${p.raids_entered} (побед ${p.raids_won})</span>
+        <span>🎁 Подарки: отправлено ${p.gifts_sent} / получено ${p.gifts_received} · 📜 Контракты: +${p.contract_earnings}★/−${p.contract_spent}★ · ⚠ Штрафов: ${p.penalties} · 💰 ЗП/награды: +${p.salary_award_total}★</span>
+        ${flags.length ? `<div class="contract-monitor-flags">${flags.map(f => `<span>${escapeHtml(f)}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="contract-monitor-stats">${cards}</div><div class="contract-monitor-grid">${rows}</div>`;
 }
