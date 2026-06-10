@@ -14639,12 +14639,14 @@ body.theme-genshin-light .demo-mode-banner span {
 body.theme-nw-light .demo-note,
 body.theme-nw-light .demo-catalog-lock,
 body.theme-nw-light .demo-card,
+body.theme-nw-light .demo-raid-locked,
 body.theme-genshin-light .demo-note,
 body.theme-genshin-light .demo-catalog-lock,
-body.theme-genshin-light .demo-card {
+body.theme-genshin-light .demo-card,
+body.theme-genshin-light .demo-raid-locked {
   background:
     radial-gradient(circle at 0% 0%, rgba(184,134,59,0.14), transparent 44%),
-    rgba(255,255,255,0.82);
+    rgba(255,255,255,0.82) !important;
   color: #33281d;
 }
 
@@ -16466,6 +16468,26 @@ body.theme-admin-light .alpha-boss-raid-btn {
   background: rgba(68,86,224,0.08);
   border-top-color: rgba(68,86,224,0.15);
   color: #4456e0;
+}
+
+body.theme-admin-light .demo-note,
+body.theme-admin-light .demo-catalog-lock,
+body.theme-admin-light .demo-card,
+body.theme-admin-light .demo-raid-locked {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(68,86,224,0.10), transparent 44%),
+    rgba(255,255,255,0.82) !important;
+  color: #1a1f40;
+}
+
+body.theme-admin-light .demo-card-title,
+body.theme-admin-light .demo-lock-title {
+  color: #1a1f40;
+}
+
+body.theme-admin-light .demo-card-body,
+body.theme-admin-light .demo-lock-copy {
+  color: #4a5188;
 }
 
 body.theme-admin-light .diary-rank-card {
