@@ -11,6 +11,7 @@ import threading
 import time
 import traceback
 import uuid
+from collections import deque
 from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import parse_qsl
@@ -55,6 +56,12 @@ except ValueError:
     TELEGRAM_AUTH_MAX_AGE_SECONDS = 86400
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
 API_ERROR_LOG_PATH = os.getenv("ZHIDAO_API_ERROR_LOG", "/root/zhidao_api_error.log")
+# Per-IP request rate limit (in-process, since nginx does not front this port).
+# 0 disables the limit.
+try:
+    RATE_LIMIT_MAX_REQUESTS_PER_SECOND = int(os.getenv("RATE_LIMIT_MAX_REQUESTS_PER_SECOND", "20") or "0")
+except ValueError:
+    RATE_LIMIT_MAX_REQUESTS_PER_SECOND = 20
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 REQUEST_LOG_SLOW_MS = int(os.getenv("REQUEST_LOG_SLOW_MS", "1500") or "1500")
 REQUEST_LOG_ALL = os.getenv("REQUEST_LOG_ALL", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -371,6 +378,42 @@ async def telegram_auth_middleware(request: Request, call_next):
         _log_telegram_auth(request, verified_id, "ok")
 
     return await call_next(request)
+
+
+# Per-IP sliding-window rate limit. nginx does not front this port (uvicorn
+# terminates TLS directly on 8443), so this is the only request-volume guard.
+_rate_limit_buckets: dict[str, deque] = {}
+_rate_limit_lock = threading.Lock()
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if RATE_LIMIT_MAX_REQUESTS_PER_SECOND <= 0 or request_has_internal_token(request):
+        return await call_next(request)
+
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    with _rate_limit_lock:
+        bucket = _rate_limit_buckets.setdefault(client_ip, deque())
+        while bucket and now - bucket[0] > 1.0:
+            bucket.popleft()
+        if len(bucket) >= RATE_LIMIT_MAX_REQUESTS_PER_SECOND:
+            return JSONResponse({"detail": "Too many requests"}, status_code=429)
+        bucket.append(now)
+
+    return await call_next(request)
+
+
+async def rate_limit_bucket_cleanup_loop():
+    """Drop per-IP buckets that have gone idle, so the dict doesn't grow forever
+    under a flood from many distinct IPs."""
+    while True:
+        await asyncio.sleep(60)
+        now = time.monotonic()
+        with _rate_limit_lock:
+            stale = [ip for ip, bucket in _rate_limit_buckets.items() if not bucket or now - bucket[-1] > 60]
+            for ip in stale:
+                del _rate_limit_buckets[ip]
 
 
 PRESENCE_CHECK_TYPES = {"morning", "evening", "manual"}
@@ -1386,6 +1429,8 @@ async def wal_checkpoint_loop():
 
 @app.on_event("startup")
 async def start_background_tasks():
+    asyncio.create_task(rate_limit_bucket_cleanup_loop())
+
     if os.getenv("ZHIDAO_ENABLE_WAL_CHECKPOINT", "0") != "1":
         return
 
