@@ -1482,6 +1482,7 @@ const RAID_CONFIG = {
     maxPlayers: 15,
     cyberpunk: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
+        imgLight: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme_light.png?raw=true',
         title: '// NIGHT RAID // TARGET: ALPHA',
         kicker: 'ALPHABOSS RAID // 夜间行动',
         chips: ['Stealth', 'Analyse', 'Risk: Variable'],
@@ -1489,6 +1490,7 @@ const RAID_CONFIG = {
     },
     genshin: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme.png?raw=true',
+        imgLight: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme_light.png?raw=true',
         title: '璃月试炼 // ALPHA TRIAL',
         kicker: 'LIYUE TRIAL // 璃月试炼',
         chips: ['契约', '分析', '胜算 可变'],

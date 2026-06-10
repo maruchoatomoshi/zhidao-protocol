@@ -2,6 +2,10 @@ function getRaidThemeKey() {
     return document.body.classList.contains('theme-genshin') ? 'genshin' : 'cyberpunk';
 }
 
+function isRaidLightTheme() {
+    return document.body.classList.contains('theme-nw-light') || document.body.classList.contains('theme-genshin-light');
+}
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -189,7 +193,7 @@ function prepareRaidVisual() {
             placeholder.style.opacity = '1';
         }, 50);
     };
-    bossImg.src = config.img;
+    bossImg.src = (isRaidLightTheme() && config.imgLight) ? config.imgLight : config.img;
 }
 
 async function playRaidIntro(token) {
