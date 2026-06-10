@@ -1483,7 +1483,7 @@ const RAID_CONFIG = {
     cyberpunk: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
         title: '// NIGHT RAID // TARGET: ALPHA',
-        kicker: 'MU RAID // 夜间行动',
+        kicker: 'ALPHABOSS RAID // 夜间行动',
         chips: ['Stealth', 'Analyse', 'Risk: Variable'],
         placeholderColor: '#ff003c'
     },

@@ -145,7 +145,7 @@ function prepareRaidVisual() {
     const existingPlaceholder = frame ? frame.querySelector('.boss-placeholder') : null;
 
     if (bossTitle) bossTitle.innerText = config.title;
-    if (kickerText) kickerText.textContent = config.kicker || 'MU RAID // 夜间行动';
+    if (kickerText) kickerText.textContent = config.kicker || 'ALPHABOSS RAID // 夜间行动';
     if (threatStrip && Array.isArray(config.chips)) {
         threatStrip.innerHTML = config.chips.map(chip => `<span class="raid-chip">${escapeHtml(chip)}</span>`).join('');
     }

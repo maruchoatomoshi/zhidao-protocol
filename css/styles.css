@@ -5741,62 +5741,119 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 
 /* --- СТИЛИЗАЦИЯ ПОД ТЕМЫ --- */
 
-/* GENSHIN (theme-genshin) */
-body.theme-genshin .raid-content {
+/* GENSHIN LIGHT (theme-genshin-light) */
+body.theme-genshin-light .raid-content {
     border-color: #d3bc8e; /* Золото Ли Юэ */
     box-shadow: 0 0 35px rgba(211, 188, 142, 0.3);
     background: #f0ebe1; /* Фон свитка */
     color: #3d4555;
 }
 
-body.theme-genshin .boss-img {
+body.theme-genshin-light .boss-img {
     border-color: #4b5366; /* Глубокий синий */
     box-shadow: 0 0 20px rgba(75, 83, 102, 0.3);
     border-radius: 20px; /* Прямоугольная карточка */
 }
 
-body.theme-genshin .boss-name { color: #3d4555; }
-body.theme-genshin .boss-title { color: #dbb165; } /* Светлое золото */
+body.theme-genshin-light .boss-name { color: #3d4555; }
+body.theme-genshin-light .boss-title { color: #dbb165; } /* Светлое золото */
 
-body.theme-genshin .raid-progress-container {
+body.theme-genshin-light .raid-progress-container {
     background: rgba(0,0,0,0.05);
     border-color: rgba(0,0,0,0.1);
 }
 
-body.theme-genshin .raid-progress-bar {
+body.theme-genshin-light .raid-progress-bar {
     background: linear-gradient(90deg, #dbb165, #f0ebe1);
     box-shadow: 0 0 15px rgba(219, 177, 101, 0.4);
 }
 
-body.theme-genshin .raid-kicker,
-body.theme-genshin .raid-meter-state {
+body.theme-genshin-light .raid-kicker,
+body.theme-genshin-light .raid-meter-state {
     border-color: rgba(75,83,102,0.18);
     background: rgba(75,83,102,0.08);
     color: #4b5366;
 }
 
-body.theme-genshin .raid-brief-card,
-body.theme-genshin .raid-roster-box,
-body.theme-genshin .raid-result-panel {
+body.theme-genshin-light .raid-brief-card,
+body.theme-genshin-light .raid-roster-box,
+body.theme-genshin-light .raid-result-panel {
     border-color: rgba(75,83,102,0.14);
     background: rgba(255,255,255,0.48);
 }
 
-body.theme-genshin .raid-brief-card strong,
-body.theme-genshin .raid-roster-chip b {
+body.theme-genshin-light .raid-brief-card strong,
+body.theme-genshin-light .raid-roster-chip b {
     color: #9b6f2c;
 }
 
-body.theme-genshin .raid-roster-chip {
+body.theme-genshin-light .raid-roster-chip {
     background: rgba(75,83,102,0.07);
     border-color: rgba(75,83,102,0.12);
     color: #4b5366;
 }
 
-body.theme-genshin #raid-action-btn {
+body.theme-genshin-light #raid-action-btn {
     background: #dbb165;
     color: #3d4555;
-}  
+}
+
+/* GENSHIN DARK (theme-genshin-dark) */
+body.theme-genshin-dark .raid-content {
+    border-color: rgba(219,177,101,0.35);
+    box-shadow: 0 0 35px rgba(219,177,101,0.18);
+    background: #1a1628;
+    color: #e8e0d0;
+}
+
+body.theme-genshin-dark .boss-img {
+    border-color: rgba(219,177,101,0.4);
+    box-shadow: 0 0 20px rgba(219,177,101,0.2);
+    border-radius: 20px;
+}
+
+body.theme-genshin-dark .boss-name { color: #e8e0d0; }
+body.theme-genshin-dark .boss-title { color: #dbb165; }
+
+body.theme-genshin-dark .raid-progress-container {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(219,177,101,0.15);
+}
+
+body.theme-genshin-dark .raid-progress-bar {
+    background: linear-gradient(90deg, #dbb165, #c8975a);
+    box-shadow: 0 0 15px rgba(219, 177, 101, 0.4);
+}
+
+body.theme-genshin-dark .raid-kicker,
+body.theme-genshin-dark .raid-meter-state {
+    border-color: rgba(219,177,101,0.2);
+    background: rgba(219,177,101,0.08);
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-brief-card,
+body.theme-genshin-dark .raid-roster-box,
+body.theme-genshin-dark .raid-result-panel {
+    border-color: rgba(219,177,101,0.14);
+    background: rgba(255,255,255,0.04);
+}
+
+body.theme-genshin-dark .raid-brief-card strong,
+body.theme-genshin-dark .raid-roster-chip b {
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-roster-chip {
+    background: rgba(219,177,101,0.07);
+    border-color: rgba(219,177,101,0.12);
+    color: #e8e0d0;
+}
+
+body.theme-genshin-dark #raid-action-btn {
+    background: #dbb165;
+    color: #1a1628;
+}
 
 /* DIARY */
 .diary-shell {
