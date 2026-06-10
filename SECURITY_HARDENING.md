@@ -7,9 +7,11 @@
 
 1. **Проверить `TELEGRAM_AUTH_REQUIRED=1`** в systemd-юните API. Это самый важный
    пункт. Без него любой может выдавать себя за любого юзера.
-2. **Добавить rate-limit в nginx** (блок ниже). Защита от DDoS/флуда, который
-   исторически уже дважды клал SQLite-писатель (см. CLAUDE.md, оба датакрэша).
-3. **(Сделано в коде)** Проверка свежести init-data — защита от replay.
+2. **(Сделано в коде)** Rate-limit по IP внутри приложения. Защита от
+   DDoS/флуда, который исторически уже дважды клал SQLite-писатель (см.
+   CLAUDE.md, оба датакрэша). Задеплоить и при необходимости подправить
+   `RATE_LIMIT_MAX_REQUESTS_PER_SECOND` (см. Дыра №2).
+3. **(Сделано в коде, задеплоено)** Проверка свежести init-data — защита от replay.
 
 ---
 
@@ -49,44 +51,62 @@ systemctl show zhidao_api.service -p Environment | tr ' ' '\n' \
 
 ---
 
-## Дыра №2 (важная для DDoS): нет rate-limit
+## Дыра №2 (важная для DDoS, ИСПРАВЛЕНО в коде): нет rate-limit
 
-В приложении нет троттлинга (проверено: 150 параллельных запросов — все 200).
+В приложении не было троттлинга (проверено: 150 параллельных запросов — все 200).
 Особо опасно, т.к. флуд write-запросов = тот самый каскад блокировок SQLite из
-истории инцидентов. Закрываем на уровне nginx (он уже стоит ради HTTPS).
+истории инцидентов.
 
-В `http {}` блок (обычно `/etc/nginx/nginx.conf`):
-```nginx
-limit_req_zone  $binary_remote_addr zone=zhidao_api:10m  rate=10r/s;
-limit_conn_zone $binary_remote_addr zone=zhidao_conn:10m;
-```
+**Важно:** изначально планировался rate-limit на уровне nginx, но проверка
+конфигурации сервера показала, что nginx **не проксирует** порт 8443 — uvicorn
+сам терминирует TLS и слушает 8443 напрямую (см. systemd unit/override). Поэтому
+nginx `limit_req` тут не сработает, и троттлинг сделан **внутри приложения**.
 
-В `server {}` для `hk.marucho.icu`, внутри `location /api/`:
-```nginx
-location /api/ {
-    limit_req  zone=zhidao_api burst=20 nodelay;
-    limit_conn zhidao_conn 20;
-    limit_req_status 429;
-    limit_conn_status 429;
+### Что добавлено
 
-    proxy_pass https://127.0.0.1:8443;
-    # ... существующие proxy_set_header ...
-}
-```
+In-process sliding-window rate-limit по IP, в `zhidao_api_ready.py`:
 
-Применить:
+- Новая переменная окружения: `RATE_LIMIT_MAX_REQUESTS_PER_SECOND` (дефолт `20`).
+  `0` отключает лимит (escape hatch).
+- Лимит — на IP-адрес, скользящее окно в 1 секунду (`collections.deque`).
+- При превышении — `429 Too Many Requests`.
+- Запросы с заголовком `x-internal-token` (внутренние вызовы бота через
+  `API_INTERNAL_TOKEN`) лимит не учитывает.
+- Фоновая задача раз в 60с чистит "остывшие" бакеты IP, чтобы память не росла
+  при флуде с большого числа разных адресов.
+
+Проверено в песочнице:
+- `RATE_LIMIT_MAX_REQUESTS_PER_SECOND=1`, 20 параллельных запросов — 1×200,
+  19×429.
+- С `x-internal-token` — все 20×200 (байпас работает).
+- После ожидания >1с — снова 200 (окно сбрасывается).
+- Реальная загрузка главной страницы (≈10 параллельных запросов на старте) при
+  дефолтном лимите 20/с — все 200, ни одного 429.
+
+### Деплой бэкенда
+
 ```bash
-nginx -t && systemctl reload nginx
+curl -sL https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/zhidao_api_ready.py -o /root/zhidao_api.py
+python3 -m py_compile /root/zhidao_api.py && systemctl restart zhidao_api.service
 ```
 
-Проверка (должны появиться 429 при флуде):
+Перед деплоем сверить с тем, что реально крутится (см. предупреждение в
+CLAUDE.md про расхождение репо/сервера после отладки SQLite 2026-06-09):
 ```bash
-for i in $(seq 1 60); do curl -s -o /dev/null -w "%{http_code}\n" \
-  https://hk.marucho.icu/api/settings & done | sort | uniq -c
+diff /root/zhidao_api.py <(curl -sL https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/zhidao_api_ready.py)
+```
+
+Если дефолт 20/с окажется слишком строгим или слишком мягким для реального
+трафика — подправить через systemd override:
+```bash
+systemctl edit zhidao_api.service
+# [Service]
+# Environment=RATE_LIMIT_MAX_REQUESTS_PER_SECOND=30
+systemctl daemon-reload && systemctl restart zhidao_api.service
 ```
 
 По возможности — поставить Cloudflare перед доменом (бесплатный тариф закрывает
-объёмный L3/L4 DDoS, до которого nginx уже не дотянется).
+объёмный L3/L4 DDoS, до которого приложение уже не дотянется).
 
 ---
 
@@ -121,5 +141,5 @@ diff /root/zhidao_api.py <(curl -sL https://raw.githubusercontent.com/maruchoato
 |---|---|
 | Школьники через нейронки / консоль браузера | Защищены — клиент ничего не решает |
 | Айтишники (подмена запросов, replay) | Защищены при `TELEGRAM_AUTH_REQUIRED=1` + фикс replay |
-| DDoS / флуд | Закрывается nginx rate-limit (Дыра №2) + Cloudflare |
+| DDoS / флуд | Закрывается in-app rate-limit (Дыра №2, исправлено) + желательно Cloudflare |
 | Профи-хакеры | Поверхность мала: нет инъекций/секретов, серверная экономика; главный вектор — отказ в обслуживании |
