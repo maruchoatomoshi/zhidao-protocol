@@ -5243,7 +5243,15 @@ async def open_case(data: dict):
                 c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_laundry', now_str, 'active'))
             elif prize["code"].startswith("implant_"):
                 c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
+            doubled_win = False
             if prize.get("points", 0) > 0:
+                c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
+                dw_row = c.fetchone()
+                if dw_row and dw_row[0]:
+                    prize["points"] *= 2
+                    prize["name"] = f'{prize["name"]} ×2'
+                    doubled_win = True
+                    c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
                 c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (prize["points"], telegram_id))
 
             c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
@@ -5252,11 +5260,14 @@ async def open_case(data: dict):
             c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
             scan_row = c.fetchone()
             log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
+            if doubled_win:
+                log_economy(c, telegram_id, 'double_win_consumed', 0, new_points, None, "shop_item", "Двойной выигрыш")
             conn.commit()
             return {
                 "new_points": new_points,
                 "scan_attempts": scan_row[0] if scan_row else 0,
                 "protocol_fragments": scan_row[1] if scan_row else 0,
+                "doubled_win": doubled_win,
             }
         finally:
             conn.close()
@@ -5270,6 +5281,7 @@ async def open_case(data: dict):
         "new_points": result["new_points"],
         "scan_attempts": result["scan_attempts"],
         "protocol_fragments": result["protocol_fragments"],
+        "doubled_win": result["doubled_win"],
     }
 
 
@@ -6611,13 +6623,24 @@ async def open_genshin_case(data: dict):
                 mark_card_used_today(c, telegram_id, "card_fox", "trick")
                 fox_bonus = 30
                 amount += fox_bonus
+            doubled_win = False
+            c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
+            dw_row = c.fetchone()
+            if dw_row and dw_row[0]:
+                amount *= 2
+                doubled_win = True
+                c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
             c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
             prize_code = f"genshin_points_{amount}"
             if fox_bonus:
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                 balance_after = c.fetchone()[0] or 0
                 log_economy(c, telegram_id, "card_fox_trick", fox_bonus, balance_after, None, "card", "genshin_points_30_to_60")
-            result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★", "rarity": 0, "card_bonus": fox_bonus}
+            if doubled_win:
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                balance_after = c.fetchone()[0] or 0
+                log_economy(c, telegram_id, "double_win_consumed", 0, balance_after, None, "shop_item", "Двойной выигрыш")
+            result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★" + (" ×2" if doubled_win else ""), "rarity": 0, "card_bonus": fox_bonus, "doubled_win": doubled_win}
         elif item['type'] == 'immunity':
             c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
             prize_code = "genshin_immunity"

@@ -877,9 +877,10 @@ async function openCase() {
     initRoulette(caseType, targetIdx);
     isSpinning = true;
     document.getElementById('openCaseBtn').disabled = true;
-    const prize = PRIZE_MAP[data.prize.code] || { code:data.prize.code, icon:data.prize.icon||'🎁', name:data.prize.name, desc:'Редкий приз!', points:data.prize.points||0 };
+    const basePrize = PRIZE_MAP[data.prize.code] || { code:data.prize.code, icon:data.prize.icon||'🎁', name:data.prize.name, desc:'Редкий приз!', points:0 };
+    const prize = { ...basePrize, points: data.prize.points ?? basePrize.points, name: data.prize.name || basePrize.name };
     await spinRoulette(prize, caseType, targetIdx);
-    showPrizeResult(prize, caseType);
+    showPrizeResult(prize, caseType, data.doubled_win);
     currentPoints = data.new_points;
     updatePoints();
     // Обновляем HUD попыток и текст кнопки
@@ -954,7 +955,7 @@ async function spinRoulette(targetPrize, caseType = 'gold', targetIdx = null) {
   });
 }
 
-function showPrizeResult(prize, caseType = 'gold') {
+function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
   const isLegendary = caseType === 'black';
   const isPurple = caseType === 'purple';
   const isDark = !document.body.classList.contains('theme-nw-light') &&
@@ -990,7 +991,10 @@ function showPrizeResult(prize, caseType = 'gold') {
 
   let contentHtml = '';
   if (prize.points > 0) {
-    contentHtml = `<div style="font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
+    const doubleTag = doubledWin
+      ? `<div style="font-size:13px;font-weight:800;color:#ffd700;text-shadow:0 0 10px #ffd700;letter-spacing:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;">🃏 УДВОЕНО ×2</div>`
+      : '';
+    contentHtml = `${doubleTag}<div style="font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
   } else {
     contentHtml = `<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
   }
