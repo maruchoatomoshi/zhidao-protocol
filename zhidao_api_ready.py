@@ -923,6 +923,11 @@ def init_db():
                   UNIQUE(telegram_id, achievement_code))''')
     c.execute('''CREATE TABLE IF NOT EXISTS settings
                  (key TEXT PRIMARY KEY, value TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS leaderboard_snapshots
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER, rank INTEGER, rep INTEGER,
+                  snapshot_date TEXT,
+                  UNIQUE(telegram_id, snapshot_date))''')
     c.execute('''CREATE TABLE IF NOT EXISTS raids
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   date TEXT, status TEXT DEFAULT 'open',
@@ -5474,7 +5479,7 @@ async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/leaderboard")
-def get_leaderboard():
+async def get_leaderboard():
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     placeholders = ','.join('?' * len(ADMIN_IDS))
     conn = get_conn()
@@ -5510,21 +5515,55 @@ def get_leaderboard():
         [today] + ADMIN_IDS,
     )
     result = c.fetchall()
+
+    # Динамика рейтинга: сравнение с последним сохранённым срезом
+    c.execute("SELECT MAX(snapshot_date) FROM leaderboard_snapshots WHERE snapshot_date < ?", (today,))
+    prev_date_row = c.fetchone()
+    prev_date = prev_date_row[0] if prev_date_row else None
+    prev_ranks = {}
+    if prev_date:
+        c.execute("SELECT telegram_id, rank FROM leaderboard_snapshots WHERE snapshot_date=?", (prev_date,))
+        prev_ranks = {row[0]: row[1] for row in c.fetchall()}
+
+    c.execute("SELECT 1 FROM leaderboard_snapshots WHERE snapshot_date=? LIMIT 1", (today,))
+    has_today_snapshot = c.fetchone() is not None
     conn.close()
-    return [
-        {
+
+    if not has_today_snapshot:
+        def _snapshot():
+            conn2 = get_conn()
+            try:
+                c2 = conn2.cursor()
+                c2.execute(
+                    f'''INSERT OR IGNORE INTO leaderboard_snapshots (telegram_id, rank, rep, snapshot_date)
+                        SELECT telegram_id, ROW_NUMBER() OVER (ORDER BY rep_score DESC), rep_score, ?
+                        FROM users
+                        WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders})''',
+                    [today] + ADMIN_IDS,
+                )
+                conn2.commit()
+            finally:
+                conn2.close()
+        await db_write(_snapshot)
+
+    out = []
+    for i, r in enumerate(result):
+        telegram_id = r[2]
+        prev_rank = prev_ranks.get(telegram_id)
+        rank_delta = (prev_rank - (i + 1)) if prev_rank is not None else None
+        out.append({
             "name": r[0] or "Аноним",
             "rep": r[1] or 0,
-            "telegram_id": r[2],
+            "telegram_id": telegram_id,
             "avatar_url": r[3],
             "theme_path": r[4],
             "has_title": bool(r[5]),
             "equipped_frame": r[6] if r[6] in FRAME_IDS else None,
             "implant": r[7],
             "card": r[8],
-        }
-        for r in result
-    ]
+            "rank_delta": rank_delta,
+        })
+    return out
 
 
 @app.get("/api/frames/{telegram_id}")

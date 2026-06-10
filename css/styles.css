@@ -1799,6 +1799,15 @@ body.is-admin .profile-card-kicker {
   min-width: 28px;
   text-align: center;
 }
+.lb-rank-change {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 2px;
+  letter-spacing: 0;
+}
+.lb-rank-change.up { color: #2ecc71; }
+.lb-rank-change.down { color: #e74c3c; }
 .lb-avatar {
   position: relative;
   z-index: 1;
