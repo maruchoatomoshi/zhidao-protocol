@@ -1394,7 +1394,10 @@ async def salary(message: types.Message):
             continue
         dragon = has_dragon(tg_id)
         final = amount * 2 if dragon else amount
-        await change_points(tg_id, final, operation='bot_salary', note=f'зп {amount}★' + (' x2 dragon' if dragon else ''))
+        try:
+            await change_points(tg_id, final, operation='bot_salary', note=f'зп {amount}★' + (' x2 dragon' if dragon else ''))
+        except Exception:
+            continue
         try:
             bonus_text = " (x2 🐉 Красный Дракон!)" if dragon else ""
             await bot.send_message(tg_id, f"💰 Воскресная зарплата: +{final}★{bonus_text}")
