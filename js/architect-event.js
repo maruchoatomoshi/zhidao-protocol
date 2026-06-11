@@ -1,5 +1,5 @@
 const ARCHITECT_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lobby.png';
-const WILD_AI_BREACH_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_ivent_lobby.png';
+const WILD_AI_BREACH_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_win.png';
 
 const ARCHITECT_PHASE_IMAGES = {
   1: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png',
@@ -12,11 +12,24 @@ const ARCHITECT_TERMINAL_IMAGES = {
   FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lose.png'
 };
 
+const WILD_AI_BREACH_TERMINAL_IMAGES = {
+  FINISHED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_win.png',
+  FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lose.png'
+};
+
 const ARCHITECT_PHASE_VIDEOS = {
   1: 'architect_phase1.mp4',
   2: 'architect_phase2.mp4',
   3: 'architect_phase3.mp4'
 };
+
+const WILD_AI_BREACH_PHASE_VIDEOS = {
+  1: 'wildai_phase1_cut.mp4',
+  2: 'wildai_phase2.mp4',
+  3: 'wildai_phase3.mp4'
+};
+
+const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
 
 const ARCHITECT_PHASE_MUSIC = {
   1: 'architect_phase1_music.mp3',
@@ -24,6 +37,13 @@ const ARCHITECT_PHASE_MUSIC = {
   3: 'architect_phase3_music.mp3'
 };
 const ARCHITECT_LOBBY_MUSIC = 'architector_ivent_lobby_theme.mp3';
+
+const WILD_AI_BREACH_PHASE_MUSIC = {
+  1: 'wildai_phase1_theme.mp3',
+  2: 'wildai_phase2_theme.mp3',
+  3: 'wildai_phase3_theme.mp3'
+};
+const WILD_AI_BREACH_LOBBY_MUSIC = 'wildai_lobbytheme.mp3';
 
 const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
 const ARCHITECT_MUSIC_FADE_MS = 1400;
@@ -52,7 +72,8 @@ function getArchitectPhaseImage(eventData) {
   const isWildAi = eventData.code === 'wildai_breach';
   const state = String(eventData.state || '').toUpperCase();
   if (state === 'REGISTRATION') return isWildAi ? WILD_AI_BREACH_LOBBY_IMAGE : ARCHITECT_LOBBY_IMAGE;
-  if (ARCHITECT_TERMINAL_IMAGES[state]) return ARCHITECT_TERMINAL_IMAGES[state];
+  const terminalImages = isWildAi ? WILD_AI_BREACH_TERMINAL_IMAGES : ARCHITECT_TERMINAL_IMAGES;
+  if (terminalImages[state]) return terminalImages[state];
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_IMAGES[2];
   if (phase >= 3) return ARCHITECT_PHASE_IMAGES[3];
@@ -61,22 +82,30 @@ function getArchitectPhaseImage(eventData) {
 
 function getArchitectPhaseVideo(eventData) {
   if (!eventData) return '';
+  const isWildAi = eventData.code === 'wildai_breach';
   const state = String(eventData.state || '').toUpperCase();
-  if (state === 'FINISHED' || state === 'FAILED' || state === 'REGISTRATION') return '';
+  if (state === 'REGISTRATION') return '';
+  if (state === 'FAILED') return isWildAi ? WILD_AI_BREACH_LOSE_VIDEO : '';
+  if (state === 'FINISHED') return '';
+  const videos = isWildAi ? WILD_AI_BREACH_PHASE_VIDEOS : ARCHITECT_PHASE_VIDEOS;
   const phase = Number(eventData.phase || 1);
-  if (phase === 2) return ARCHITECT_PHASE_VIDEOS[2] || '';
-  if (phase >= 3) return ARCHITECT_PHASE_VIDEOS[3] || '';
-  return ARCHITECT_PHASE_VIDEOS[1] || '';
+  if (phase === 2) return videos[2] || '';
+  if (phase >= 3) return videos[3] || '';
+  return videos[1] || '';
 }
 
 function getArchitectPhaseMusic(eventData) {
+  const isWildAi = eventData && eventData.code === 'wildai_breach';
   const state = eventData ? String(eventData.state || '').toUpperCase() : '';
-  if (state === 'REGISTRATION' || (!eventData && ARCHITECT_LOBBY_MUSIC)) return ARCHITECT_LOBBY_MUSIC;
+  if (state === 'REGISTRATION' || (!eventData && ARCHITECT_LOBBY_MUSIC)) {
+    return isWildAi ? WILD_AI_BREACH_LOBBY_MUSIC : ARCHITECT_LOBBY_MUSIC;
+  }
   if (!eventData || state !== 'ACTIVE') return '';
+  const music = isWildAi ? WILD_AI_BREACH_PHASE_MUSIC : ARCHITECT_PHASE_MUSIC;
   const phase = Number(eventData.phase || 1);
-  if (phase === 2) return ARCHITECT_PHASE_MUSIC[2] || '';
-  if (phase >= 3) return ARCHITECT_PHASE_MUSIC[3] || '';
-  return ARCHITECT_PHASE_MUSIC[1] || '';
+  if (phase === 2) return music[2] || '';
+  if (phase >= 3) return music[3] || '';
+  return music[1] || '';
 }
 
 function getArchitectMusicPlayers() {
