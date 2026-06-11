@@ -1,4 +1,5 @@
 const ARCHITECT_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lobby.png';
+const WILD_AI_BREACH_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_ivent_lobby.png';
 
 const ARCHITECT_PHASE_IMAGES = {
   1: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png',
@@ -48,8 +49,9 @@ const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
 
 function getArchitectPhaseImage(eventData) {
   if (!eventData) return ARCHITECT_LOBBY_IMAGE;
+  const isWildAi = eventData.code === 'wildai_breach';
   const state = String(eventData.state || '').toUpperCase();
-  if (state === 'REGISTRATION') return ARCHITECT_LOBBY_IMAGE;
+  if (state === 'REGISTRATION') return isWildAi ? WILD_AI_BREACH_LOBBY_IMAGE : ARCHITECT_LOBBY_IMAGE;
   if (ARCHITECT_TERMINAL_IMAGES[state]) return ARCHITECT_TERMINAL_IMAGES[state];
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_IMAGES[2];
@@ -1530,4 +1532,111 @@ async function removeEventExtraParticipant(eventId, name) {
     if (currentArchitectEvent) currentArchitectEvent.extra_participants = data.extra_participants;
     renderArchitectLobby(currentArchitectEvent);
   } catch(e) {}
+}
+
+// ===== Боевые бонусы имплантов/карточек в ивентах =====
+
+const EVENT_COMBAT_ITEM_CATALOG = {
+  implant_red_dragon: { icon: '🐉', name: 'Красный Дракон', desc: '+20% урона на Атаке/Протоколе' },
+  implant_shaolin:    { icon: '🥋', name: 'Шаолинь', desc: '+10% урона на Атаке' },
+  implant_linguasoft: { icon: '🎙', name: 'Linguasoft', desc: '+10% урона на Протоколе' },
+  card_pyro:          { icon: '🔥', name: 'Страж Огня', desc: '+10% урона на Атаке' },
+  card_literature:    { icon: '📖', name: 'Звезда Литературы', desc: '+10% урона на Протоколе' },
+  card_star:          { icon: '⭐', name: 'Императорская Звезда', desc: '+1 урон при верном ответе' },
+  implant_terracota:  { icon: '🗿', name: 'Терракота', desc: '-20% к росту перегрузки/заражения при ошибке' },
+  card_forest:        { icon: '🌲', name: 'Дух Леса', desc: '-20% к росту перегрузки/заражения при ошибке' },
+  implant_guanxi:     { icon: '🤝', name: 'Гуаньси', desc: '+1 поддержка при Синхронизации' },
+  card_sea:           { icon: '🌊', name: 'Дух Морей', desc: '+1 поддержка при Синхронизации' },
+  implant_caishen:    { icon: '💰', name: 'Цайшэнь', desc: '+2 поддержка при Стабилизации' },
+  card_fairy:         { icon: '🌸', name: 'Небесная Фея', desc: '+2 поддержка при Стабилизации' },
+  implant_panda:      { icon: '🐼', name: 'Панда', desc: '+1 поддержка при Синхронизации/Стабилизации' },
+  card_fox:           { icon: '🦊', name: 'Лиса-Оборотень', desc: '+1 поддержка при Синхронизации/Стабилизации' },
+  implant_qilin:      { icon: '🐲', name: 'Цилинь', desc: '+5% урона команде, если 2+ в команде с этим предметом' },
+  card_moon:          { icon: '🌙', name: 'Богиня Луны', desc: '+5% урона команде, если 2+ в команде с этим предметом' },
+  card_zhongli:       { icon: '⛰', name: 'Архонт Земли', desc: 'Доп. -1 к перегрузке/заражению при Стабилизации/Синхронизации' },
+  implant_netwatch:   { icon: '🔴', name: 'Сетевой Дозор', desc: 'Удачная Синхронизация продлевает окно уязвимости на +30с' },
+};
+
+async function loadEventActiveBonuses() {
+  const box = document.getElementById('eventActiveBonuses');
+  if (!box || !currentUserId) return;
+  try {
+    const [implantsRes, cardsRes] = await Promise.all([
+      fetch(`${API_URL}/api/casino/implants/${currentUserId}`),
+      fetch(`${API_URL}/api/cards/${currentUserId}`),
+    ]);
+    const implants = implantsRes.ok ? await implantsRes.json() : [];
+    const cards = cardsRes.ok ? await cardsRes.json() : [];
+    const ids = new Set([
+      ...(Array.isArray(implants) ? implants.map(i => i.implant_id) : []),
+      ...(Array.isArray(cards) ? cards.map(c => c.card_id) : []),
+    ]);
+
+    const active = Object.keys(EVENT_COMBAT_ITEM_CATALOG).filter(id => ids.has(id));
+    if (!active.length) {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+    box.style.display = 'flex';
+    box.innerHTML = active.map(id => {
+      const item = EVENT_COMBAT_ITEM_CATALOG[id];
+      return `<span class="event-bonus-badge" title="${escapeHtml(item.desc)}">${item.icon} ${escapeHtml(item.name)}</span>`;
+    }).join('');
+  } catch (e) {
+    box.style.display = 'none';
+  }
+}
+
+function buildEventBonusTableHtml() {
+  const rows = Object.values(EVENT_COMBAT_ITEM_CATALOG).map(item =>
+    `<tr><td>${item.icon} ${escapeHtml(item.name)}</td><td>${escapeHtml(item.desc)}</td></tr>`
+  ).join('');
+  return `<table class="event-bonus-table">${rows}</table>`;
+}
+
+function openEventInfoModal() {
+  const modal = document.getElementById('eventInfoModal');
+  const body = document.getElementById('eventInfoModalBody');
+  if (!modal || !body) return;
+
+  const isWildAi = currentArchitectEvent && currentArchitectEvent.code === 'wildai_breach';
+
+  let title, intro;
+  if (isWildAi) {
+    title = '⚠ WILD AI BREACH // СПРАВКА';
+    intro = `
+      <div class="event-info-text">
+        Дикий ИИ прорвался в систему. Команда восстанавливает <b>Целостность системы</b> (атака/протокол)
+        и сдерживает <b>Заражение</b> (синхронизация/стабилизация снижают, ошибки и время повышают).<br><br>
+        Заражение растёт само по времени. Если оно достигнет 100% или истечёт лимит времени —
+        операция провалена и активируется режим Wild AI Breach (хаос на 3 дня).<br>
+        Если Целостность дойдёт до 0 — Дикий ИИ вытеснен, команда получает награду.
+      </div>`;
+  } else {
+    title = '⬡ ARCHITECT PROTOCOL // СПРАВКА';
+    intro = `
+      <div class="event-info-text">
+        Командный бой против Архитектора. <b>Атака</b> и <b>Протокол</b> наносят урон,
+        <b>Синхронизация</b> открывает окна уязвимости, <b>Стабилизация</b> сдерживает перегрузку.<br><br>
+        У Архитектора 3 фазы — с каждой фазой растёт сложность и эффекты перегрузки.
+        Если перегрузка достигает критического порога в финальной фазе и не сбита вовремя — миссия провалена.
+      </div>`;
+  }
+
+  body.innerHTML = `
+    <div class="event-info-title">${title}</div>
+    ${intro}
+    <div class="event-info-section">ИМПЛАНТЫ И КАРТОЧКИ В БОЮ</div>
+    <div class="event-info-text">Активные предметы из инвентаря дают пассивные бонусы в бою:</div>
+    ${buildEventBonusTableHtml()}
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeEventInfoModal(e) {
+  if (e && e.target && e.target.id !== 'eventInfoModal') return;
+  const modal = document.getElementById('eventInfoModal');
+  if (modal) modal.style.display = 'none';
 }

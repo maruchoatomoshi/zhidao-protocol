@@ -20,7 +20,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260607h">
+<link rel="stylesheet" href="./css/styles.css?v=20260611wildai4">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -2398,8 +2398,9 @@
 <script src="./js/contracts.js?v=20260607b"></script>
 <script src="./js/admin.js?v=20260608a"></script>
 <script src="./js/raid.js"></script>
-<script src="./js/events.js?v=20260607a"></script>
-<script src="./js/architect-event.js?v=20260607a"></script>
+<script src="./js/wild-ai-breach.js?v=20260611d"></script>
+<script src="./js/events.js?v=20260611wildai3"></script>
+<script src="./js/architect-event.js?v=20260611wildai2"></script>
 <script src="./js/demo.js?v=20260605a"></script>
 <script src="./js/main.js?v=20260515a"></script>
 
@@ -2455,6 +2456,7 @@
         <div class="event-phase" id="eventPhaseLabel">ФАЗА I</div>
       </div>
       <div class="event-topbar-right">
+        <button class="event-mute-btn" id="eventInfoBtn" onclick="openEventInfoModal()">ℹ</button>
         <button class="event-mute-btn" id="eventMuteBtn" onclick="toggleArchitectMusicMute()">🔊</button>
         <button class="event-close-btn" onclick="closeEventOverlay()">✕</button>
       </div>
@@ -2503,6 +2505,8 @@
           <div class="event-hp-bar">
             <div id="eventHpFill" class="event-hp-fill" style="width:100%;"></div>
           </div>
+
+          <div class="event-active-bonuses" id="eventActiveBonuses" style="display:none;"></div>
         </div>
       </div>
 
@@ -2597,6 +2601,13 @@
     <div class="event-question-modal" id="eventQuestionBox" style="display:none;">
       <div class="event-question-title" id="eventQuestionPrompt">Вопрос появится здесь</div>
       <div class="event-options" id="eventOptions"></div>
+    </div>
+
+    <div class="event-info-modal" id="eventInfoModal" style="display:none;" onclick="closeEventInfoModal(event)">
+      <div class="event-info-modal-inner" onclick="event.stopPropagation()">
+        <button class="event-info-modal-close" onclick="closeEventInfoModal()">✕</button>
+        <div class="event-info-modal-body" id="eventInfoModalBody"></div>
+      </div>
     </div>
 
     <div class="event-create-modal" id="eventCreateModal" style="display:none;">
