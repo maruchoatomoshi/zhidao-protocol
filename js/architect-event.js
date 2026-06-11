@@ -809,19 +809,13 @@ function scheduleArchitectResultReveal(lobbyCard, eventData) {
 function renderArchitectLobby(eventData, errorText = '') {
   const lobbyCard = document.getElementById('eventLobbyCard');
   const overlay = document.getElementById('eventOverlay');
-  const statusEl = document.getElementById('eventStatusText');
-  const rewardEl = document.getElementById('eventRewardText');
-  const teamCountEl = document.getElementById('eventTeamCount');
-  const teamListEl = document.getElementById('eventTeamList');
-  const createBtn = document.getElementById('eventCreateBtn');
-  const joinBtn = document.getElementById('eventJoinBtn');
-  const leaveBtn = document.getElementById('eventLeaveBtn');
-  const startBtn = document.getElementById('eventStartBtn');
-  const kickerEl = lobbyCard ? lobbyCard.querySelector('.event-lobby-kicker') : null;
-  const labelEls = lobbyCard ? lobbyCard.querySelectorAll('.event-lobby-label') : [];
+  if (!lobbyCard) return;
 
-  if (!lobbyCard || !statusEl || !rewardEl || !teamCountEl || !teamListEl || !createBtn || !joinBtn || !leaveBtn || !startBtn) {
-    return;
+  // The standby screen below replaces lobbyCard.innerHTML and destroys the
+  // lobby elements (status, team list, buttons). Keep the original markup so
+  // it can be restored when a real event needs to render afterwards.
+  if (!window._eventLobbyMarkup && document.getElementById('eventStatusText')) {
+    window._eventLobbyMarkup = lobbyCard.innerHTML;
   }
 
   const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
@@ -852,6 +846,26 @@ function renderArchitectLobby(eventData, errorText = '') {
         </div>`;
     }
     updateArchitectBattleVisibility(null);
+    return;
+  }
+
+  // Standby screen wiped the lobby markup earlier — restore it before rendering
+  if (!document.getElementById('eventStatusText') && window._eventLobbyMarkup) {
+    lobbyCard.innerHTML = window._eventLobbyMarkup;
+  }
+
+  const statusEl = document.getElementById('eventStatusText');
+  const rewardEl = document.getElementById('eventRewardText');
+  const teamCountEl = document.getElementById('eventTeamCount');
+  const teamListEl = document.getElementById('eventTeamList');
+  const createBtn = document.getElementById('eventCreateBtn');
+  const joinBtn = document.getElementById('eventJoinBtn');
+  const leaveBtn = document.getElementById('eventLeaveBtn');
+  const startBtn = document.getElementById('eventStartBtn');
+  const kickerEl = lobbyCard.querySelector('.event-lobby-kicker');
+  const labelEls = lobbyCard.querySelectorAll('.event-lobby-label');
+
+  if (!statusEl || !rewardEl || !teamCountEl || !teamListEl || !createBtn || !joinBtn || !leaveBtn || !startBtn) {
     return;
   }
 
