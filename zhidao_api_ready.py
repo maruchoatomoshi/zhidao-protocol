@@ -2398,10 +2398,104 @@ def compute_wildai_action_result(c, event_row: dict, participant: dict, action_t
     }
 
 
+# ===== Implant/card combat bonuses (Architect Protocol & Wild AI Breach) =====
+# item_id -> (damage_pct, applicable action types)
+EVENT_ITEM_DAMAGE_BONUS = {
+    "implant_red_dragon": (0.20, ("attack", "protocol")),
+    "implant_shaolin": (0.10, ("attack",)),
+    "implant_linguasoft": (0.10, ("protocol",)),
+    "card_pyro": (0.10, ("attack",)),
+    "card_literature": (0.10, ("protocol",)),
+}
+EVENT_ITEM_PRESSURE_REDUCTION = ("implant_terracota", "card_forest")  # -20% pressure/overload gain on error
+EVENT_ITEM_SYNC_SUPPORT = ("implant_guanxi", "card_sea")  # +1 support on Sync
+EVENT_ITEM_STABILIZE_SUPPORT = ("implant_caishen", "card_fairy")  # +2 support on Stabilize
+EVENT_ITEM_ANY_SUPPORT = ("implant_panda", "card_fox")  # +1 support on Sync/Stabilize
+EVENT_ITEM_TEAM_DAMAGE = ("implant_qilin", "card_moon")  # +5% team damage if 2+ teammates hold it
+EVENT_ITEM_TEAM_DAMAGE_BONUS_PCT = 0.05
+EVENT_ITEM_TEAM_DAMAGE_MIN_HOLDERS = 2
+
+
+def get_event_combat_items(c, telegram_id: int) -> set:
+    items = set()
+    c.execute("SELECT implant_id FROM user_implants WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    items.update(row[0] for row in c.fetchall())
+    c.execute("SELECT card_id FROM user_cards WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    items.update(row[0] for row in c.fetchall())
+    return items
+
+
+def apply_event_item_bonuses(c, event_row: dict, telegram_id: int, action_type: str, is_correct: bool, result: dict):
+    if not telegram_id:
+        return
+    items = get_event_combat_items(c, telegram_id)
+    if not items:
+        return
+
+    if action_type in ("attack", "protocol") and result.get("final_value", 0) > 0:
+        damage_pct = sum(pct for item_id, (pct, actions) in EVENT_ITEM_DAMAGE_BONUS.items()
+                          if item_id in items and action_type in actions)
+        if damage_pct:
+            bonus = max(1, round(result["final_value"] * damage_pct))
+            result["final_value"] += bonus
+            result["modifier_value"] = result.get("modifier_value", 0) + bonus
+        if "card_star" in items and is_correct:
+            result["final_value"] += 1
+            result["modifier_value"] = result.get("modifier_value", 0) + 1
+
+        for item_id in EVENT_ITEM_TEAM_DAMAGE:
+            if item_id not in items:
+                continue
+            table = "user_implants" if item_id.startswith("implant_") else "user_cards"
+            column = "implant_id" if table == "user_implants" else "card_id"
+            c.execute(
+                f'''SELECT COUNT(*) FROM event_team_members etm
+                    JOIN {table} t ON t.telegram_id = etm.telegram_id AND t.{column}=? AND t.durability > 0
+                    WHERE etm.event_id=?''',
+                (item_id, event_row["id"]),
+            )
+            holders = c.fetchone()[0]
+            if holders >= EVENT_ITEM_TEAM_DAMAGE_MIN_HOLDERS:
+                bonus = max(1, round(result["final_value"] * EVENT_ITEM_TEAM_DAMAGE_BONUS_PCT))
+                result["final_value"] += bonus
+                result["modifier_value"] = result.get("modifier_value", 0) + bonus
+
+    if not is_correct and result.get("pressure_delta", 0) > 0 and any(i in items for i in EVENT_ITEM_PRESSURE_REDUCTION):
+        result["pressure_delta"] = max(0, result["pressure_delta"] - max(1, round(result["pressure_delta"] * 0.20)))
+
+    if action_type == "sync":
+        if any(i in items for i in EVENT_ITEM_SYNC_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 1
+        if any(i in items for i in EVENT_ITEM_ANY_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 1
+        if "card_zhongli" in items and result.get("pressure_delta", 0) < 0:
+            result["pressure_delta"] -= 1
+        if is_correct and "implant_netwatch" in items and is_vulnerability_active(event_row):
+            until = parse_iso(event_row.get("vulnerability_until"))
+            if until:
+                new_until = (until + timedelta(seconds=30)).isoformat()
+                event_row["vulnerability_until"] = new_until
+                c.execute("UPDATE events SET vulnerability_until=? WHERE id=?", (new_until, event_row["id"]))
+
+    if action_type == "stabilize":
+        if is_correct and any(i in items for i in EVENT_ITEM_STABILIZE_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 2
+        if is_correct and any(i in items for i in EVENT_ITEM_ANY_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 1
+        if "card_zhongli" in items and result.get("pressure_delta", 0) < 0:
+            result["pressure_delta"] -= 1
+
+
 def compute_event_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool, telegram_id: int = 0):
     if event_row.get("code") == "wildai_breach":
-        return compute_wildai_action_result(c, event_row, participant, action_type, is_correct, telegram_id=telegram_id)
+        result = compute_wildai_action_result(c, event_row, participant, action_type, is_correct, telegram_id=telegram_id)
+    else:
+        result = compute_architect_action_result(c, event_row, participant, action_type, is_correct, use_active_modifier, telegram_id=telegram_id)
+    apply_event_item_bonuses(c, event_row, telegram_id, action_type, is_correct, result)
+    return result
 
+
+def compute_architect_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool, telegram_id: int = 0):
     phase = event_row["phase"]
     role = participant.get("modifier_role")
     base_value = get_architect_base_value(phase, action_type, is_correct)
