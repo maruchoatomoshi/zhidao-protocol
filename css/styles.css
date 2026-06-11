@@ -16928,3 +16928,20 @@ body.wild-ai-breach::after {
   background: rgba(255,0,0,0.05);
   animation: wab-flicker 4s infinite;
 }
+
+/* Профиль во время Wild AI Breach — карточка показывает "профиль дикого ИИ" */
+.profile-card.wild-ai-profile {
+  border-color: rgba(255,40,40,0.5) !important;
+  filter: hue-rotate(-20deg) saturate(1.3);
+  animation: wab-flicker 4s infinite;
+}
+.profile-card.wild-ai-profile .profile-avatar-wrap {
+  filter: grayscale(1) contrast(1.4) sepia(1) hue-rotate(-50deg) saturate(4);
+}
+.profile-card.wild-ai-profile #profileDisplayName {
+  color: #ff3b3b;
+  text-shadow: 0 0 8px rgba(255,40,40,0.7);
+}
+.profile-card.wild-ai-profile #profileKicker {
+  color: #ff6666;
+}

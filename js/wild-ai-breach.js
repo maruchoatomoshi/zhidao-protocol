@@ -32,6 +32,8 @@ function applyWildAiBreachState(settings) {
     restoreNavLabels();
   }
 
+  if (typeof applyWildAiProfileOverride === 'function') applyWildAiProfileOverride();
+
   const status = document.getElementById('adminWildAiBreachStatus');
   if (status) {
     status.textContent = active ? 'STATUS // BREACH ACTIVE (3 ДНЯ)' : 'STATUS // CONTAINED';
@@ -108,4 +110,50 @@ function restoreNavLabels() {
   if (!_wildAiBreachNavOriginal) return;
   const spans = Array.from(document.querySelectorAll('.bottom-nav .nav-cn'));
   spans.forEach((s, i) => { s.textContent = _wildAiBreachNavOriginal[i]; });
+}
+
+// ===== "Профиль дикого ИИ" =====
+
+let _wildAiProfileOriginal = null;
+
+function getWildAiProfileName(seed, telegramId) {
+  let s = (Number(seed) || 0) + (Number(telegramId) || 0);
+  s = (s * 9301 + 49297) % 233280;
+  const code = (s % 9000) + 1000;
+  return `UNIT-${code}`;
+}
+
+function applyWildAiProfileOverride() {
+  const card = document.getElementById('profileCard');
+  if (!card) return;
+
+  if (!isWildAiBreachActive()) {
+    if (_wildAiProfileOriginal) {
+      card.classList.remove('wild-ai-profile');
+      setProfileText('profileKicker', _wildAiProfileOriginal.kicker);
+      setProfileText('profileDisplayName', _wildAiProfileOriginal.name);
+      setProfileText('profileStatusLine', _wildAiProfileOriginal.statusLine);
+      ['profileStatCases','profileStatPrayers','profileStatCards','profileStatImplants','profileStatDiaries','profileStatRaids']
+        .forEach(id => setProfileText(id, _wildAiProfileOriginal.stats[id]));
+    }
+    return;
+  }
+
+  if (!_wildAiProfileOriginal) {
+    _wildAiProfileOriginal = {
+      kicker: document.getElementById('profileKicker')?.textContent || '',
+      name: document.getElementById('profileDisplayName')?.textContent || '',
+      statusLine: document.getElementById('profileStatusLine')?.textContent || '',
+      stats: {},
+    };
+    ['profileStatCases','profileStatPrayers','profileStatCards','profileStatImplants','profileStatDiaries','profileStatRaids']
+      .forEach(id => { _wildAiProfileOriginal.stats[id] = document.getElementById(id)?.textContent || '0'; });
+  }
+
+  card.classList.add('wild-ai-profile');
+  setProfileText('profileKicker', 'ROGUE AI // UNIDENTIFIED UNIT');
+  setProfileText('profileDisplayName', getWildAiProfileName(getWildAiBreachSeed(), currentUserId));
+  setProfileText('profileStatusLine', '状态：失控 // 权限：未知 // 同步率：???%');
+  ['profileStatCases','profileStatPrayers','profileStatCards','profileStatImplants','profileStatDiaries','profileStatRaids']
+    .forEach(id => setProfileText(id, '???'));
 }

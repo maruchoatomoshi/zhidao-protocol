@@ -143,6 +143,8 @@ function renderProfileDossier(profile = {}) {
   } else {
     setProfileText('profileShowcaseText', 'ВИТРИНА: АВТО // нет активного предмета');
   }
+
+  if (typeof applyWildAiProfileOverride === 'function') applyWildAiProfileOverride();
 }
 
 async function loadProfileDossier() {
