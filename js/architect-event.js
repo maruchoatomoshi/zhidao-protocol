@@ -825,14 +825,34 @@ function renderArchitectLobby(eventData, errorText = '') {
     lobbyCard.classList.remove('result-banner-hidden', 'result-banner-reveal');
   }
 
+  const isWildAi = eventData.code === 'wildai_breach';
   const verdictEl = document.getElementById('eventResultVerdict');
   const verdictRow = document.getElementById('eventResultHeader');
+  const subtextEl = document.getElementById('eventResultSubtext');
   if (verdictEl && verdictRow) {
     if (isTerminal) {
-      verdictEl.textContent = eventData.state === 'FINISHED' ? 'ПРОТОКОЛ ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
+      if (eventData.state === 'FINISHED') {
+        verdictEl.textContent = isWildAi ? 'ДИКИЙ ИИ ВЫТЕСНЕН' : 'ПРОТОКОЛ ПРОБИТ';
+      } else {
+        verdictEl.textContent = isWildAi ? 'ЗАСЛОН ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
+      }
       verdictRow.style.display = 'block';
+
+      if (subtextEl) {
+        if (isWildAi && eventData.state === 'FAILED') {
+          subtextEl.textContent = 'Дикий ИИ прорвал BlackWall. Система перехвачена — приложение временно под контролем ИИ.';
+          subtextEl.style.display = 'block';
+        } else {
+          subtextEl.style.display = 'none';
+          subtextEl.textContent = '';
+        }
+      }
     } else {
       verdictRow.style.display = 'none';
+      if (subtextEl) {
+        subtextEl.style.display = 'none';
+        subtextEl.textContent = '';
+      }
     }
   }
 

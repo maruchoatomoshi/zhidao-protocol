@@ -9410,6 +9410,19 @@ body.theme-genshin-dark #page-home .home-event-card {
   text-shadow: 0 0 28px rgba(255,40,40,0.44);
 }
 
+.event-result-subtext {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.4;
+}
+
+.event-result-lose .event-result-subtext {
+  color: rgba(255,120,120,0.85);
+}
+
 .event-result-divider {
   margin-top: 12px;
   height: 1px;
