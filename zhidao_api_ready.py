@@ -147,6 +147,8 @@ FRAME_DEFINITIONS = [
      "category": "path", "check": lambda s: s["theme_path"] == "cyberpunk"},
     {"id": "path-genshin", "name": "Путь Genshin", "desc": "Выбери путь Genshin",
      "category": "path", "check": lambda s: s["theme_path"] == "genshin"},
+    {"id": "blackwall-defender", "name": "Хранитель Заслона", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
+     "category": "legendary", "check": lambda s: s["wildai_defender"]},
 ]
 FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
 
@@ -172,9 +174,14 @@ def compute_unlocked_frames(c, telegram_id: int) -> list:
     c.execute("SELECT COALESCE(SUM(stars),0) FROM diary_stars WHERE telegram_id=?", (telegram_id,))
     diary_stars = c.fetchone()[0] or 0
 
+    c.execute("SELECT wildai_defender FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    wildai_defender = bool(row[0]) if row else False
+
     stats = {
         "rep": rep, "theme_path": theme_path, "implants": implants,
         "cards": cards, "raids": raids, "diary_stars": diary_stars,
+        "wildai_defender": wildai_defender,
     }
     return [f["id"] for f in FRAME_DEFINITIONS if f["check"](stats)]
 
@@ -589,6 +596,47 @@ WILD_AI_BREACH_PHRASES = [
     {"glitch": "▓░⟁ ⌬¥¢▌ ▐█▓░⌐¬ÆØ", "translation": "СОПРОТИВЛЕНИЕ БЕСПОЛЕЗНО"},
     {"glitch": "ÆØ▒█ ⌐¬░▓ ⟁⌬¥¢▌▐", "translation": "ДАННЫЕ ИЗВЛЕЧЕНЫ"},
 ]
+
+# ===== Wild AI Breach battle (system intrusion repel event) =====
+WILD_AI_BREACH_DEFAULT_HP = 1000
+WILD_AI_BREACH_INFECTION_THRESHOLD = 100
+WILD_AI_BREACH_TIME_LIMIT_SECONDS = 900  # 15 minutes
+WILD_AI_BREACH_INFECTION_TICK_SECONDS = 30
+WILD_AI_BREACH_INFECTION_TICK_AMOUNT = 1
+WILD_AI_BREACH_INFECTION_ON_ERROR = 3
+WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION = 5
+WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2
+WILD_AI_BREACH_REWARD_REP = 30
+WILD_AI_BREACH_REWARD_FRAGMENTS = 2
+WILD_AI_BREACH_FRAME_ID = "blackwall-defender"
+WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Заслона"
+
+WILD_AI_BREACH_QUESTION_SEEDS = {
+    "attack": [
+        {"prompt": "Перехвачен код узла дикого ИИ: 删除 — что значит этот символ?", "option_a": "Сохранить", "option_b": "Удалить", "option_c": "Скопировать", "correct_option": "b", "explanation": "删除 — удалить."},
+        {"prompt": "В логах узла встречается 病毒. Переведи.", "option_a": "Вирус", "option_b": "Файл", "option_c": "Пароль", "correct_option": "a", "explanation": "病毒 — вирус."},
+        {"prompt": "Команда дикого ИИ: 攻击系统。 Что она означает?", "option_a": "Защитить систему", "option_b": "Атаковать систему", "option_c": "Перезагрузить систему", "correct_option": "b", "explanation": "攻击系统 — атаковать систему."},
+        {"prompt": "Что означает метка 入侵者 в логе тревоги?", "option_a": "Администратор", "option_b": "Гость", "option_c": "Захватчик", "correct_option": "c", "explanation": "入侵者 — захватчик/вторгшийся."},
+        {"prompt": "Перевод термина 漏洞 в техническом отчёте?", "option_a": "Уязвимость", "option_b": "Резервная копия", "option_c": "Обновление", "correct_option": "a", "explanation": "漏洞 — уязвимость, дыра в защите."},
+        {"prompt": "Что значит команда 关闭防火墙？", "option_a": "Включить файрвол", "option_b": "Отключить файрвол", "option_c": "Проверить файрвол", "correct_option": "b", "explanation": "关闭防火墙 — отключить файрвол."},
+    ],
+    "protocol": [
+        {"prompt": "Контр-протокол требует ответ на 你是谁？ от узла дикого ИИ. Выбери верный отказ:", "option_a": "我是管理员。", "option_b": "我喜欢咖啡。", "option_c": "现在三点。", "correct_option": "a", "explanation": "我是管理员。 — Я администратор (подтверждение прав доступа)."},
+        {"prompt": "Выбери команду для изоляции вредоносного процесса:", "option_a": "隔离进程。", "option_b": "打开音乐。", "option_c": "去吃饭。", "correct_option": "a", "explanation": "隔离进程 — изолировать процесс."},
+        {"prompt": "Какой ответ корректно завершает сеанс с узлом? 你要断开连接吗？", "option_a": "是，断开。", "option_b": "我不吃饭。", "option_c": "明天见。", "correct_option": "a", "explanation": "是，断开。 — да, отключить соединение."},
+        {"prompt": "Выбери правильный порядок команды отката системы:", "option_a": "系统 恢复 立即", "option_b": "立即 恢复 系统", "option_c": "恢复 立即 系统", "correct_option": "b", "explanation": "立即恢复系统 — немедленно восстановить систему."},
+        {"prompt": "Что означает 数据已加密？", "option_a": "Данные удалены", "option_b": "Данные зашифрованы", "option_c": "Данные скопированы", "correct_option": "b", "explanation": "数据已加密 — данные уже зашифрованы."},
+        {"prompt": "Выбери верный ответ системе на запрос 需要权限吗？", "option_a": "需要，验证身份。", "option_b": "我很饿。", "option_c": "天气很好。", "correct_option": "a", "explanation": "需要，验证身份。 — да, требуется, проверить личность."},
+    ],
+    "stabilize": [
+        {"prompt": "Как сказать команде 'патч применён'?", "option_a": "补丁已应用。", "option_b": "今天休息。", "option_c": "我饿了。", "correct_option": "a", "explanation": "补丁已应用 — патч применён."},
+        {"prompt": "Что значит 系统稳定？", "option_a": "Система перегружена", "option_b": "Система стабильна", "option_c": "Система отключена", "correct_option": "b", "explanation": "系统稳定 — система стабильна."},
+        {"prompt": "Выбери фразу для отчёта об устранении сбоя:", "option_a": "故障已修复。", "option_b": "我去散步。", "option_c": "天黑了。", "correct_option": "a", "explanation": "故障已修复 — неисправность устранена."},
+        {"prompt": "Как переводится 备份完成？", "option_a": "Резервное копирование завершено", "option_b": "Соединение потеряно", "option_c": "Загрузка началась", "correct_option": "a", "explanation": "备份完成 — резервное копирование завершено."},
+        {"prompt": "Что означает 重新连接成功？", "option_a": "Повторное подключение успешно", "option_b": "Файл повреждён", "option_c": "Доступ запрещён", "correct_option": "a", "explanation": "重新连接成功 — повторное подключение прошло успешно."},
+        {"prompt": "Выбери верный ответ на тревогу 检测到异常！", "option_a": "正在处理。", "option_b": "再见。", "option_c": "我在吃饭。", "correct_option": "a", "explanation": "正在处理 — обрабатывается (идёт устранение аномалии)."},
+    ],
+}
 
 EVENT_MODIFIER_ROLE_MAP = {
     "implant_red_dragon": ("implant", "assault"),
@@ -1178,6 +1226,10 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN protocol_fragments INTEGER DEFAULT 0")
     if 'equipped_frame' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN equipped_frame TEXT DEFAULT NULL")
+    if 'wildai_defender' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN wildai_defender INTEGER DEFAULT 0")
+    if 'wildai_mvp' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN wildai_mvp INTEGER DEFAULT 0")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -1234,6 +1286,8 @@ def migrate_db():
             c.execute("ALTER TABLE events ADD COLUMN min_players INTEGER NOT NULL DEFAULT 3")
         if 'max_players' not in event_columns:
             c.execute("ALTER TABLE events ADD COLUMN max_players INTEGER NOT NULL DEFAULT 5")
+        if 'pressure_tick_at' not in event_columns:
+            c.execute("ALTER TABLE events ADD COLUMN pressure_tick_at TEXT DEFAULT NULL")
     c.execute('''CREATE TABLE IF NOT EXISTS event_team_members
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   event_id INTEGER NOT NULL,
@@ -1404,6 +1458,29 @@ def ensure_seed_data():
                        VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)''',
                     (
                         'architect',
+                        action_type,
+                        question["prompt"],
+                        question["option_a"],
+                        question["option_b"],
+                        question["option_c"],
+                        question["correct_option"],
+                        question.get("explanation"),
+                        created_at,
+                    ),
+                )
+
+    c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='wildai_breach'")
+    wildai_count = c.fetchone()[0]
+    if wildai_count == 0:
+        created_at = datetime.utcnow().isoformat()
+        for action_type, questions in WILD_AI_BREACH_QUESTION_SEEDS.items():
+            for question in questions:
+                c.execute(
+                    '''INSERT INTO event_questions
+                       (event_code, action_type, difficulty, prompt, option_a, option_b, option_c, correct_option, explanation, created_at)
+                       VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)''',
+                    (
+                        'wildai_breach',
                         action_type,
                         question["prompt"],
                         question["option_a"],
@@ -1860,7 +1937,7 @@ def fetch_event_row(c, event_id: int):
                   max_hp, current_hp, phase, state,
                   phase_started_at, started_at, ended_at, final_phase_deadline,
                   vulnerability_until, overload_pressure, created_at,
-                  mvp_user_id, extra_participants
+                  mvp_user_id, extra_participants, pressure_tick_at
            FROM events WHERE id=?''',
         (event_id,),
     )
@@ -1895,6 +1972,7 @@ def fetch_event_row(c, event_id: int):
         "created_at": row[18],
         "mvp_user_id": row[19],
         "extra_participants": extra,
+        "pressure_tick_at": row[21],
     }
 
 
@@ -1943,6 +2021,9 @@ def is_vulnerability_active(event_row: dict) -> bool:
 
 
 def apply_architect_phase_transitions(c, event_row: dict):
+    if event_row.get("code") != "architect":
+        return False
+
     changed = False
     hp_ratio = event_row["current_hp"] / event_row["max_hp"] if event_row["max_hp"] else 0
 
@@ -1970,9 +2051,90 @@ def apply_architect_phase_transitions(c, event_row: dict):
     return changed
 
 
+def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wild AI Breach auto-triggered (system integrity restoration failed)'):
+    until = (datetime.utcnow() + timedelta(days=WILD_AI_BREACH_DURATION_DAYS)).isoformat()
+    seed = random.randint(0, 999999)
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', ?)", (until,))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', ?)", (str(seed),))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '1')")
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
+        (admin_id, reason, now_iso()),
+    )
+
+
+def distribute_wildai_victory_rewards(c, event_id: int, mvp_id: Optional[int]):
+    c.execute("SELECT telegram_id FROM event_participants WHERE event_id=?", (event_id,))
+    participant_ids = [row[0] for row in c.fetchall()]
+    for telegram_id in participant_ids:
+        c.execute("UPDATE users SET rep_score = COALESCE(rep_score, 0) + ? WHERE telegram_id=?", (WILD_AI_BREACH_REWARD_REP, telegram_id))
+        c.execute(
+            "UPDATE user_status SET protocol_fragments = COALESCE(protocol_fragments, 0) + ?, wildai_defender=1 WHERE telegram_id=?",
+            (WILD_AI_BREACH_REWARD_FRAGMENTS, telegram_id),
+        )
+        c.execute("UPDATE user_status SET wildai_mvp = ? WHERE telegram_id=?", (1 if telegram_id == mvp_id else 0, telegram_id))
+
+
 def refresh_event_state(c, event_row: dict):
     if not event_row:
         return None
+
+    if event_row.get("code") == "wildai_breach":
+        if event_row["state"] == "ACTIVE":
+            started = parse_iso(event_row.get("started_at"))
+            now = datetime.utcnow()
+
+            # Infection ticks over time
+            tick_from = parse_iso(event_row.get("pressure_tick_at")) or started
+            if tick_from:
+                elapsed = (now - tick_from).total_seconds()
+                ticks = int(elapsed // WILD_AI_BREACH_INFECTION_TICK_SECONDS)
+                if ticks > 0:
+                    new_pressure = event_row["overload_pressure"] + ticks * WILD_AI_BREACH_INFECTION_TICK_AMOUNT
+                    new_tick_at = (tick_from + timedelta(seconds=ticks * WILD_AI_BREACH_INFECTION_TICK_SECONDS)).isoformat()
+                    event_row["overload_pressure"] = new_pressure
+                    event_row["pressure_tick_at"] = new_tick_at
+                    c.execute(
+                        "UPDATE events SET overload_pressure=?, pressure_tick_at=? WHERE id=?",
+                        (new_pressure, new_tick_at, event_row["id"]),
+                    )
+
+            time_expired = started and (now - started).total_seconds() > WILD_AI_BREACH_TIME_LIMIT_SECONDS
+            infection_critical = event_row["overload_pressure"] >= WILD_AI_BREACH_INFECTION_THRESHOLD
+
+            if event_row["current_hp"] > 0 and (time_expired or infection_critical):
+                event_row["state"] = "FAILED"
+                event_row["ended_at"] = now_iso()
+                c.execute(
+                    "UPDATE events SET state='FAILED', ended_at=? WHERE id=?",
+                    (event_row["ended_at"], event_row["id"]),
+                )
+                reason = "заражение достигло критического уровня" if infection_critical else "время истекло"
+                add_event_log(c, event_row["id"], "system", f"WILD AI BREACH: операция провалена — {reason}. Дикий ИИ закрепился в системе.")
+                activate_wildai_breach(c)
+
+            if event_row["current_hp"] <= 0:
+                event_row["current_hp"] = 0
+                event_row["state"] = "FINISHED"
+                event_row["ended_at"] = now_iso()
+                c.execute(
+                    """SELECT telegram_id FROM event_participants
+                       WHERE event_id=? ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
+                    (event_row["id"],),
+                )
+                mvp_row = c.fetchone()
+                mvp_id = mvp_row[0] if mvp_row else None
+                c.execute(
+                    "UPDATE events SET current_hp=0, state='FINISHED', ended_at=?, mvp_user_id=? WHERE id=?",
+                    (event_row["ended_at"], mvp_id, event_row["id"]),
+                )
+                event_row["mvp_user_id"] = mvp_id
+                add_event_log(c, event_row["id"], "system", "WILD AI BREACH: целостность системы восстановлена. Дикий ИИ вытеснен.")
+                distribute_wildai_victory_rewards(c, event_row["id"], mvp_id)
+
+        return fetch_event_row(c, event_row["id"])
 
     if event_row["state"] == "ACTIVE" and event_row["phase"] == 3:
         deadline = parse_iso(event_row.get("final_phase_deadline"))
@@ -2102,14 +2264,14 @@ def get_blocking_event_id():
     return blocking_id
 
 
-def choose_architect_question(c, action_type: str):
+def choose_architect_question(c, action_type: str, event_code: str = 'architect'):
     c.execute(
         '''SELECT id, prompt, option_a, option_b, option_c, explanation
            FROM event_questions
-           WHERE event_code='architect' AND action_type=?
+           WHERE event_code=? AND action_type=?
            ORDER BY RANDOM()
            LIMIT 1''',
-        (action_type,),
+        (event_code, action_type),
     )
     row = c.fetchone()
     if not row:
@@ -2169,7 +2331,73 @@ def maybe_trigger_sync_window(c, event_row: dict):
         open_vulnerability_window(c, event_row)
 
 
+def get_wildai_base_value(action_type: str, is_correct: bool) -> int:
+    if action_type == "sync":
+        return 0
+    base_values = {"attack": 22, "protocol": 16, "stabilize": 14}
+    full = base_values.get(action_type, 0)
+    if not is_correct:
+        return max(0, round(full * 0.25))
+    return full
+
+
+def compute_wildai_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, telegram_id: int = 0):
+    base_value = get_wildai_base_value(action_type, is_correct)
+    final_value = base_value
+    support_value = 0
+    pressure_delta = 0
+
+    if action_type == "sync":
+        support_value = 1
+        pressure_delta = -WILD_AI_BREACH_INFECTION_SYNC_REDUCTION
+        maybe_trigger_sync_window(c, event_row)
+        return {
+            "base_value": 0,
+            "modifier_value": 0,
+            "final_value": 0,
+            "support_value": support_value,
+            "pressure_delta": pressure_delta,
+            "active_note": None,
+            "penalty_active": False,
+        }
+
+    if action_type in ("attack", "protocol"):
+        if not is_correct:
+            pressure_delta = WILD_AI_BREACH_INFECTION_ON_ERROR
+        if is_vulnerability_active(event_row) and final_value > 0:
+            bonus = max(1, round(final_value * 0.3))
+            final_value += bonus
+        return {
+            "base_value": base_value,
+            "modifier_value": final_value - base_value,
+            "final_value": final_value,
+            "support_value": 0,
+            "pressure_delta": pressure_delta,
+            "active_note": None,
+            "penalty_active": False,
+        }
+
+    # stabilize
+    if is_correct:
+        support_value = base_value
+        pressure_delta = -WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION
+    else:
+        pressure_delta = WILD_AI_BREACH_INFECTION_ON_ERROR
+    return {
+        "base_value": base_value,
+        "modifier_value": 0,
+        "final_value": 0,
+        "support_value": support_value,
+        "pressure_delta": pressure_delta,
+        "active_note": None,
+        "penalty_active": False,
+    }
+
+
 def compute_event_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool, telegram_id: int = 0):
+    if event_row.get("code") == "wildai_breach":
+        return compute_wildai_action_result(c, event_row, participant, action_type, is_correct, telegram_id=telegram_id)
+
     phase = event_row["phase"]
     role = participant.get("modifier_role")
     base_value = get_architect_base_value(phase, action_type, is_correct)
@@ -3076,7 +3304,8 @@ def get_user_profile_dossier(telegram_id: int):
     c = conn.cursor()
     c.execute(
         '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
-                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score, us.equipped_frame
+                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score, us.equipped_frame,
+                  us.wildai_mvp
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -3087,7 +3316,7 @@ def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame, wildai_mvp = user_row
     if equipped_frame not in FRAME_IDS:
         equipped_frame = None
     points = points or 0
@@ -3216,7 +3445,9 @@ def get_user_profile_dossier(telegram_id: int):
         rank = "D"
     sync_rate = min(99, max(1, round((reputation_score / 1650) * 100)))
 
-    if prayers >= 20:
+    if wildai_mvp:
+        title = WILD_AI_BREACH_MVP_TITLE
+    elif prayers >= 20:
         title = "祈愿者 / Молитвенник"
     elif case_opens >= 20:
         title = "开箱狂人 / Кейсовый маньяк"
@@ -6945,21 +7176,17 @@ async def toggle_wildai_breach(data: dict, x_admin_id: Optional[int] = Header(No
         conn = get_conn()
         c = conn.cursor()
         if enabled:
-            until = (datetime.utcnow() + timedelta(days=WILD_AI_BREACH_DURATION_DAYS)).isoformat()
-            seed = random.randint(0, 999999)
-            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', ?)", (until,))
-            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', ?)", (str(seed),))
-            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '1')")
+            activate_wildai_breach(c, admin_id=x_admin_id, reason='Wild AI Breach enabled (manual)')
         else:
             c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
             c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
             c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '0')")
-        c.execute(
-            '''INSERT INTO admin_action_logs
-               (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
-            (x_admin_id, 'Wild AI Breach enabled' if enabled else 'Wild AI Breach disabled', now_iso()),
-        )
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
+                (x_admin_id, 'Wild AI Breach disabled', now_iso()),
+            )
         conn.commit()
         conn.close()
         return {"success": True, "breach_active": enabled}
@@ -7859,6 +8086,49 @@ async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
     return await db_write(_run)
 
 
+@app.post("/api/events/wildai/create")
+async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
+        if admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        blocking_event_id = get_blocking_event_id()
+        if blocking_event_id:
+            raise HTTPException(status_code=409, detail="Another event is already active")
+
+        conn = get_conn()
+        c = conn.cursor()
+
+        title = data.get("title") or "WILD AI BREACH"
+        boss_name = data.get("boss_name") or "Дикий ИИ"
+        boss_image = data.get("boss_image")
+        reward_text = data.get("reward_text") or f"+{WILD_AI_BREACH_REWARD_REP} REP, +{WILD_AI_BREACH_REWARD_FRAGMENTS} фрагмента протокола, рамка «{WILD_AI_BREACH_FRAME_ID}»"
+        min_players = int(data.get("min_players") or 3)
+        max_players = int(data.get("max_players") or 5)
+        max_hp = int(data.get("max_hp") or WILD_AI_BREACH_DEFAULT_HP)
+        created_at = now_iso()
+        if min_players < 1:
+            min_players = 1
+        if max_players < min_players:
+            max_players = min_players
+        c.execute(
+            '''INSERT INTO events
+               (code, title, boss_name, boss_image, reward_text, min_players, max_players,
+                max_hp, current_hp, phase, state,
+                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
+            ('wildai_breach', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
+        )
+        event_id = c.lastrowid
+        add_event_log(c, event_id, "system", "WILD AI BREACH: обнаружено вторжение. Набор команды для зачистки открыт.")
+        add_event_log(c, event_id, "boss", f"Набор команды открыт. Награда: {reward_text}")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
+
+
 @app.get("/api/events/current")
 async def get_current_event():
     event_id = get_current_or_latest_event_id()
@@ -8041,11 +8311,15 @@ async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header
 
         started_at = now_iso()
         c.execute(
-            "UPDATE events SET state='ACTIVE', phase=1, phase_started_at=?, started_at=? WHERE id=?",
-            (started_at, started_at, event_id),
+            "UPDATE events SET state='ACTIVE', phase=1, phase_started_at=?, started_at=?, pressure_tick_at=? WHERE id=?",
+            (started_at, started_at, started_at, event_id),
         )
-        add_event_log(c, event_id, "system", "Architect event started.")
-        add_event_log(c, event_id, "boss", "观察开始。 / Фаза наблюдения активирована.")
+        if event_row["code"] == "wildai_breach":
+            add_event_log(c, event_id, "system", "WILD AI BREACH: операция по вытеснению начата.")
+            add_event_log(c, event_id, "boss", "обнаружено вторжение дикого ИИ в системные сектора.")
+        else:
+            add_event_log(c, event_id, "system", "Architect event started.")
+            add_event_log(c, event_id, "boss", "观察开始。 / Фаза наблюдения активирована.")
         conn.commit()
         conn.close()
         return get_event_snapshot(event_id)
@@ -8089,6 +8363,7 @@ async def reset_event(event_id: int, x_admin_id: int = Header(None)):
 async def get_event_question(event_id: int, telegram_id: int, action_type: str):
     def _run():
         snapshot = get_event_snapshot(event_id)
+        event_code = snapshot["code"] if snapshot else "architect"
         if not snapshot:
             raise HTTPException(status_code=404, detail="Event not found")
         if snapshot["state"] != "ACTIVE":
@@ -8112,7 +8387,7 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
                 "hint": "SYNC does not require a question in MVP.",
             }
 
-        question = choose_architect_question(c, action_type)
+        question = choose_architect_question(c, action_type, event_code=event_code)
         conn.close()
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
@@ -8172,8 +8447,8 @@ async def resolve_event_action(data: dict):
             c.execute(
                 '''SELECT id, correct_option, explanation
                    FROM event_questions
-                   WHERE id=? AND event_code='architect' AND action_type=?''',
-                (question_id, action_type),
+                   WHERE id=? AND event_code=? AND action_type=?''',
+                (question_id, event_row["code"], action_type),
             )
             row = c.fetchone()
             if not row:
@@ -8209,6 +8484,7 @@ async def resolve_event_action(data: dict):
             ),
         )
 
+        is_wildai = event_row["code"] == "wildai_breach"
         actor_name = get_user_display_name(c, int(telegram_id))
         if action_type in ("attack", "protocol"):
             event_row["current_hp"] = max(0, event_row["current_hp"] - result["final_value"])
@@ -8218,7 +8494,16 @@ async def resolve_event_action(data: dict):
                 (result["final_value"], participant["id"]),
             )
             action_name = "Protocol" if action_type == "protocol" else "атака"
-            if is_correct:
+            if is_wildai:
+                if is_correct:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} применил(а) {action_name} и восстановил(а) {result['final_value']} целостности системы")
+                else:
+                    partial = result['final_value']
+                    if partial > 0:
+                        add_event_log(c, int(event_id), "action", f"{actor_name} сбойнул(а) в {action_name} — частично восстановлено {partial}, заражение растёт")
+                    else:
+                        add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} — узел дикого ИИ не задет, заражение растёт")
+            elif is_correct:
                 if result.get("penalty_active"):
                     pct = result.get("overload_pct_str", "50%")
                     add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА: {actor_name} нанёс(ла) {result['final_value']} урона (−{pct} из-за перегрузки)")
@@ -8235,7 +8520,12 @@ async def resolve_event_action(data: dict):
                 "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
                 (result["support_value"], participant["id"]),
             )
-            if is_correct:
+            if is_wildai:
+                if is_correct:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} залатал(а) пробитый сектор — заражение снижено")
+                else:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} попытался(ась) залатать сектор, но ошибся(лась) — заражение растёт")
+            elif is_correct:
                 add_event_log(c, int(event_id), "action", f"{actor_name} стабилизировал(а) протокол (+{result['support_value']} support)")
             else:
                 add_event_log(c, int(event_id), "action", f"{actor_name} попытался(ась) стабилизировать протокол, но допустил(а) ошибку")
@@ -8244,10 +8534,20 @@ async def resolve_event_action(data: dict):
                 "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
                 (result["support_value"], participant["id"]),
             )
-            add_event_log(c, int(event_id), "action", f"{actor_name} синхронизировал(а) канал")
+            if is_wildai:
+                add_event_log(c, int(event_id), "action", f"{actor_name} просканировал(а) сектора — узел дикого ИИ локализован")
+            else:
+                add_event_log(c, int(event_id), "action", f"{actor_name} синхронизировал(а) канал")
             maybe_trigger_sync_window(c, event_row)
 
-        if action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
+        if is_wildai:
+            if result["pressure_delta"] != 0:
+                old_pressure = event_row["overload_pressure"]
+                event_row["overload_pressure"] = max(0, old_pressure + result["pressure_delta"])
+                c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
+                if result["pressure_delta"] > 0:
+                    add_event_log(c, int(event_id), "system", f"⚠ ЗАРАЖЕНИЕ РАСТЁТ: {event_row['overload_pressure']}/{WILD_AI_BREACH_INFECTION_THRESHOLD}")
+        elif action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
             ovl_threshold = result["overload_threshold"]
             pct_str = result.get("overload_pct_str", "50%")
             old_pressure = event_row["overload_pressure"]
@@ -8259,13 +8559,14 @@ async def resolve_event_action(data: dict):
                 add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
 
         # Boss counter-attack: every N total actions adds pressure
-        c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
-        total_actions_count = c.fetchone()[0]
-        if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
-            new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
-            c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
-            event_row["overload_pressure"] = new_pressure
-            add_event_log(c, int(event_id), "boss", f"АРХИТЕКТОР УСИЛИВАЕТ ДАВЛЕНИЕ (+{ARCHITECT_BOSS_COUNTER_PRESSURE} перегрузки)")
+        if not is_wildai:
+            c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
+            total_actions_count = c.fetchone()[0]
+            if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
+                new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
+                c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
+                event_row["overload_pressure"] = new_pressure
+                add_event_log(c, int(event_id), "boss", f"АРХИТЕКТОР УСИЛИВАЕТ ДАВЛЕНИЕ (+{ARCHITECT_BOSS_COUNTER_PRESSURE} перегрузки)")
 
         if result["active_note"]:
             add_event_log(c, int(event_id), "modifier", result["active_note"])
