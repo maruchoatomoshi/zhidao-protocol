@@ -743,7 +743,10 @@ function applyArchitectMedia(eventData) {
 
 async function loadCurrentArchitectEvent() {
   try {
-    const res = await fetch(`${API_URL}/api/events/current`);
+    const code = (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach')
+      ? 'wildai_breach'
+      : 'architect';
+    const res = await fetch(`${API_URL}/api/events/current?code=${encodeURIComponent(code)}`);
     const data = await res.json();
 
     currentArchitectEvent = data.event || null;

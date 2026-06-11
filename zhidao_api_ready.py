@@ -2221,10 +2221,13 @@ def get_event_snapshot(event_id: int):
 ARCHITECT_RESULT_VISIBLE_HOURS = 12
 
 
-def get_current_or_latest_event_id():
+def get_current_or_latest_event_id(event_code: Optional[str] = None):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
+    if event_code:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? ORDER BY id DESC", (event_code,))
+    else:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
     rows = c.fetchall()
     row = None
     for candidate in rows:
@@ -2239,9 +2242,15 @@ def get_current_or_latest_event_id():
         return row[0]
     # No live event: keep showing the latest finished/failed one for a while
     # so participants see the result screen instead of the standby lobby.
-    c.execute(
-        "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') ORDER BY id DESC LIMIT 1"
-    )
+    if event_code:
+        c.execute(
+            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') AND code=? ORDER BY id DESC LIMIT 1",
+            (event_code,)
+        )
+    else:
+        c.execute(
+            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') ORDER BY id DESC LIMIT 1"
+        )
     terminal = c.fetchone()
     conn.close()
     if terminal:
@@ -2251,10 +2260,13 @@ def get_current_or_latest_event_id():
     return None
 
 
-def get_blocking_event_id():
+def get_blocking_event_id(event_code: Optional[str] = None):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
+    if event_code:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? ORDER BY id DESC", (event_code,))
+    else:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
     rows = c.fetchall()
     blocking_id = None
     for candidate in rows:
@@ -8148,9 +8160,9 @@ async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
         if admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-        blocking_event_id = get_blocking_event_id()
+        blocking_event_id = get_blocking_event_id('architect')
         if blocking_event_id:
-            raise HTTPException(status_code=409, detail="Another event is already active")
+            raise HTTPException(status_code=409, detail="Another Architect Protocol event is already active")
 
         conn = get_conn()
         c = conn.cursor()
@@ -8191,9 +8203,9 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
         if admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-        blocking_event_id = get_blocking_event_id()
+        blocking_event_id = get_blocking_event_id('wildai_breach')
         if blocking_event_id:
-            raise HTTPException(status_code=409, detail="Another event is already active")
+            raise HTTPException(status_code=409, detail="A WILD AI BREACH event is already active")
 
         conn = get_conn()
         c = conn.cursor()
@@ -8228,8 +8240,8 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
 
 
 @app.get("/api/events/current")
-async def get_current_event():
-    event_id = get_current_or_latest_event_id()
+async def get_current_event(code: Optional[str] = None):
+    event_id = get_current_or_latest_event_id(code)
     return {"event": get_event_snapshot(event_id) if event_id else None}
 
 
