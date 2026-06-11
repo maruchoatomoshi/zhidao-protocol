@@ -72,7 +72,11 @@ const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
 const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
 
 function getArchitectPhaseImage(eventData) {
-  if (!eventData) return ARCHITECT_LOBBY_IMAGE;
+  if (!eventData) {
+    return (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach')
+      ? WILD_AI_BREACH_LOBBY_IMAGE
+      : ARCHITECT_LOBBY_IMAGE;
+  }
   const isWildAi = eventData.code === 'wildai_breach';
   const state = String(eventData.state || '').toUpperCase();
   if (state === 'REGISTRATION') return isWildAi ? WILD_AI_BREACH_LOBBY_IMAGE : ARCHITECT_LOBBY_IMAGE;
@@ -99,7 +103,8 @@ function getArchitectPhaseVideo(eventData) {
 }
 
 function getArchitectPhaseMusic(eventData) {
-  const isWildAi = eventData && eventData.code === 'wildai_breach';
+  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+  const isWildAi = eventData ? eventData.code === 'wildai_breach' : hintIsWildAi;
   const state = eventData ? String(eventData.state || '').toUpperCase() : '';
   if (state === 'REGISTRATION' || (!eventData && ARCHITECT_LOBBY_MUSIC)) {
     return isWildAi ? WILD_AI_BREACH_LOBBY_MUSIC : ARCHITECT_LOBBY_MUSIC;
@@ -608,6 +613,9 @@ function updateArchitectPhaseFxState(eventData) {
 
   if (!eventData) {
     overlay.classList.add('event-state-lobby');
+    if (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach') {
+      overlay.classList.add('event-wildai-lobby');
+    }
     architectLastRenderedPhase = null;
     architectLastLogCount = 0;
     updateArchitectFinalTimer(null);
@@ -817,14 +825,25 @@ function renderArchitectLobby(eventData, errorText = '') {
     if (overlay) overlay.classList.remove('event-terminal');
     lobbyCard.classList.remove('event-result-card', 'event-result-win', 'event-result-lose');
     lobbyCard.style.display = 'block';
-    lobbyCard.innerHTML = `
-      <div class="event-standby-screen">
-        <div class="event-standby-kicker">⬡ ARCHITECT PROTOCOL // STANDBY</div>
-        <div class="event-standby-title">${errorText || 'СИСТЕМА ГОТОВА'}</div>
-        <div class="event-standby-sub">Ивент не активен. Дождитесь запуска Архитектора.</div>
-        ${isAdmin ? `<button class="event-standby-create-btn" onclick="createArchitectEvent()">⚡ ИНИЦИИРОВАТЬ ПРОТОКОЛ</button>` : ''}
-        ${isAdmin ? `<button class="event-standby-create-btn" onclick="createWildAiEvent()">⚠ WILD AI BREACH // ОПЕРАЦИЯ ВЫТЕСНЕНИЯ</button>` : ''}
-      </div>`;
+
+    const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+    if (hintIsWildAi) {
+      lobbyCard.innerHTML = `
+        <div class="event-standby-screen">
+          <div class="event-standby-kicker">⚠ WILD AI BREACH // STANDBY</div>
+          <div class="event-standby-title">${errorText || 'BLACKWALL ОНЛАЙН'}</div>
+          <div class="event-standby-sub">Операция не активна. Вторжение Дикого ИИ пока не зафиксировано.</div>
+          ${isAdmin ? `<button class="event-standby-create-btn" onclick="createWildAiEvent()">⚠ WILD AI BREACH // ОПЕРАЦИЯ ВЫТЕСНЕНИЯ</button>` : ''}
+        </div>`;
+    } else {
+      lobbyCard.innerHTML = `
+        <div class="event-standby-screen">
+          <div class="event-standby-kicker">⬡ ARCHITECT PROTOCOL // STANDBY</div>
+          <div class="event-standby-title">${errorText || 'СИСТЕМА ГОТОВА'}</div>
+          <div class="event-standby-sub">Ивент не активен. Дождитесь запуска Архитектора.</div>
+          ${isAdmin ? `<button class="event-standby-create-btn" onclick="createArchitectEvent()">⚡ ИНИЦИИРОВАТЬ ПРОТОКОЛ</button>` : ''}
+        </div>`;
+    }
     updateArchitectBattleVisibility(null);
     return;
   }
@@ -1110,10 +1129,11 @@ function updateArchitectBattleVisibility(eventData) {
 
   if (!eventData) {
     applyArchitectMedia(null);
+    const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
     const kickerEl = document.getElementById('eventKicker');
     const bossNameEl = document.getElementById('eventBossName');
-    if (kickerEl) kickerEl.textContent = 'ARCHITECT PROTOCOL';
-    if (bossNameEl) bossNameEl.textContent = 'АРХИТЕКТОР';
+    if (kickerEl) kickerEl.textContent = hintIsWildAi ? 'WILD AI BREACH' : 'ARCHITECT PROTOCOL';
+    if (bossNameEl) bossNameEl.textContent = hintIsWildAi ? 'ДИКИЙ ИИ' : 'АРХИТЕКТОР';
     hpText.textContent = '-- / ----';
     hpFill.style.width = '0%';
     phaseText.textContent = 'NO SIGNAL';

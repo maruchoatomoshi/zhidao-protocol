@@ -1,4 +1,5 @@
 let architectEventPublicEnabled = !!window.ARCHITECT_EVENT_ENABLED;
+let eventLobbyTabHint = 'architect';
 
 function isArchitectEventPublicEnabled() {
   return !!architectEventPublicEnabled;
@@ -22,6 +23,12 @@ function syncArchitectEventAvailability(enabled) {
     card.classList.toggle('event-disabled-admin-view', !isArchitectEventPublicEnabled() && (isAdmin || isArchitect));
   }
 
+  const wildAiCard = document.getElementById('homeWildAiEventCard');
+  if (wildAiCard) {
+    wildAiCard.style.display = visible ? 'block' : 'none';
+    wildAiCard.classList.toggle('event-disabled-admin-view', !isArchitectEventPublicEnabled() && (isAdmin || isArchitect));
+  }
+
   const status = document.getElementById('adminArchitectEventStatus');
   if (status) {
     status.textContent = isArchitectEventPublicEnabled()
@@ -43,7 +50,7 @@ async function loadArchitectEventAvailability() {
   }
 }
 
-function openEventOverlay() {
+function openEventOverlay(tabHint) {
   if (typeof isLaunchGateActive === 'function' && isLaunchGateActive()) {
     showLaunchGateOverlay();
     return;
@@ -56,6 +63,8 @@ function openEventOverlay() {
 
   const overlay = document.getElementById('eventOverlay');
   if (!overlay) return;
+
+  eventLobbyTabHint = (tabHint === 'wildai_breach') ? 'wildai_breach' : 'architect';
 
   overlay.style.display = 'block';
 
@@ -70,8 +79,11 @@ function openEventOverlay() {
     architectMusicUnlocked = true;
   }
   // Start lobby music synchronously in gesture context — iOS blocks autoplay on async calls
-  if (typeof switchArchitectMusic === 'function' && typeof ARCHITECT_LOBBY_MUSIC !== 'undefined') {
-    switchArchitectMusic(ARCHITECT_LOBBY_MUSIC);
+  const lobbyMusic = (eventLobbyTabHint === 'wildai_breach' && typeof WILD_AI_BREACH_LOBBY_MUSIC !== 'undefined')
+    ? WILD_AI_BREACH_LOBBY_MUSIC
+    : (typeof ARCHITECT_LOBBY_MUSIC !== 'undefined' ? ARCHITECT_LOBBY_MUSIC : '');
+  if (typeof switchArchitectMusic === 'function' && lobbyMusic) {
+    switchArchitectMusic(lobbyMusic);
   }
   openArchitectEventEntryBanner();
 
