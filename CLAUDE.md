@@ -364,4 +364,5 @@ journalctl -u zhidao_api.service -n 20 --no-pager | grep -E "WRITE|SLOW|WAL|lock
 2. If slow writes return: check if the bot is holding a write transaction during async Telegram sends (the main historical cause).
 3. After the trip: consider migrating the bot to API-only writes via `X-Internal-Token` so there is only one SQLite writer process.
 4. PostgreSQL migration is plan B, only if SQLite continues to cause issues after the bot write isolation is done.
+5. Expand event question pools (user request 2026-06-11): Architect has only 8 questions per action, WildAI Breach only 6 — questions visibly repeat every couple of uses. Seeds live in `ARCHITECT_QUESTION_SEEDS` / `WILD_AI_BREACH_QUESTION_SEEDS` in `zhidao_api_ready.py`; selection is `ORDER BY RANDOM() LIMIT 1` from `event_questions` with no recent-question memory. Note: seeding only runs when the table count for that event_code is 0, so adding seeds requires either deleting existing rows for that code or inserting new rows directly on the server DB.
 
