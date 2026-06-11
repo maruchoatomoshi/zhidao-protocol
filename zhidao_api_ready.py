@@ -1423,6 +1423,7 @@ def ensure_seed_data():
         )
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('blackwall', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('architect_event', '0')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('wildai_event', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_until', '')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_seed', '')")
     # Raid schema migrations (idempotent)
@@ -7197,12 +7198,15 @@ def get_settings():
     blackwall = c.fetchone()
     c.execute("SELECT value FROM settings WHERE key='architect_event'")
     architect_event = c.fetchone()
+    c.execute("SELECT value FROM settings WHERE key='wildai_event'")
+    wildai_event = c.fetchone()
     breach = get_wild_ai_breach_state(c)
     conn.commit()
     conn.close()
     return {
         "blackwall": blackwall[0] == '1' if blackwall else False,
         "architect_event": architect_event[0] == '1' if architect_event else False,
+        "wildai_event": wildai_event[0] == '1' if wildai_event else False,
         **breach,
     }
 
@@ -7322,6 +7326,27 @@ async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(
         conn.commit()
         conn.close()
         return {"success": True, "architect_event": enabled}
+    return await db_write(_run)
+
+
+@app.post("/api/admin/wildai-event")
+async def toggle_wildai_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        enabled = bool(data.get("enabled", False))
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('wildai_event', ?)", ('1' if enabled else '0',))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'wildai_event', 0, ?, ?)''',
+            (x_admin_id, 'Wild AI event enabled' if enabled else 'Wild AI event disabled', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "wildai_event": enabled}
     return await db_write(_run)
 
 

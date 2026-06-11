@@ -47,6 +47,7 @@ function applyWildAiBreachState(settings) {
   }
 
   if (typeof syncArchitectEventAvailability === 'function') syncArchitectEventAvailability();
+  if (typeof syncWildAiEventAvailability === 'function') syncWildAiEventAvailability();
 
   const wildAiCardCopy = document.querySelector('#homeWildAiEventCard .home-event-card-copy');
   if (wildAiCardCopy) {

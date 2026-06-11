@@ -561,6 +561,8 @@ function adminDossierActionLabel(action) {
     reset_shop: 'Сброс магазина',
     blackwall: 'BlackWall',
     architect_event: 'Architect Event',
+    wildai_event: 'Wild AI Event',
+    wildai_breach: 'Wild AI Breach',
   };
   return labels[action] || String(action || 'Операция').replace(/_/g, ' ');
 }
@@ -1276,6 +1278,28 @@ async function setArchitectEventEnabled(enabled) {
       syncArchitectEventAvailability(!!data.architect_event);
     }
     showToast(enabled ? '⚡ Architect Event открыт!' : '⛔ Architect Event скрыт!');
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function setWildAiEventEnabled(enabled) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/wildai-event`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({enabled})
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка переключения ивента');
+      return;
+    }
+
+    if (typeof syncWildAiEventAvailability === 'function') {
+      syncWildAiEventAvailability(!!data.wildai_event);
+    }
+    showToast(enabled ? '⚡ Wild AI Event открыт!' : '⛔ Wild AI Event скрыт!');
   } catch(e) {
     showToast('Ошибка соединения');
   }

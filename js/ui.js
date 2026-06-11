@@ -206,6 +206,7 @@ function syncAdminUiVisibility() {
   syncLaunchGateVisibility();
   syncFeatureFreezeBadges();
   if (typeof syncArchitectEventAvailability === 'function') syncArchitectEventAvailability();
+  if (typeof syncWildAiEventAvailability === 'function') syncWildAiEventAvailability();
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? 'block' : 'none';
