@@ -16901,6 +16901,25 @@ body.wild-ai-breach::after {
   animation: wab-static-flash 6s infinite;
 }
 
+/* Полосы "разрыва экрана", периодически проезжающие по всему интерфейсу */
+body.wild-ai-breach::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background:
+    linear-gradient(transparent 0%, transparent 38%, rgba(255,40,40,0.18) 38%, rgba(0,255,200,0.12) 39%, transparent 40%, transparent 70%, rgba(255,40,40,0.14) 70%, transparent 71%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: wab-screen-tear 9s infinite;
+}
+
+/* Хромо-аберрация и дрожание интерфейса целиком */
+body.wild-ai-breach .page.active {
+  animation: wab-chroma-shift 8s infinite;
+}
+
 @keyframes wab-flicker {
   0%, 92%, 100% { opacity: 1; }
   93% { opacity: 0.4; }
@@ -16914,6 +16933,29 @@ body.wild-ai-breach::after {
   97% { opacity: 0.9; background-color: rgba(255,0,0,0.08); }
   98% { opacity: 0.2; }
   99% { opacity: 0.7; background-color: rgba(255,0,0,0.05); }
+}
+
+@keyframes wab-screen-tear {
+  0%, 91%, 100% { opacity: 0; transform: translateX(0); }
+  91.5% { opacity: 1; transform: translateX(-6px); }
+  92% { opacity: 1; transform: translateX(8px); }
+  92.5% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes wab-chroma-shift {
+  0%, 94%, 100% { transform: translate(0, 0); filter: none; }
+  94.3% { transform: translate(-2px, 0); filter: drop-shadow(2px 0 0 rgba(255,0,60,0.5)) drop-shadow(-2px 0 0 rgba(0,255,220,0.4)); }
+  94.7% { transform: translate(2px, 1px); filter: drop-shadow(-2px 0 0 rgba(255,0,60,0.5)) drop-shadow(2px 0 0 rgba(0,255,220,0.4)); }
+  95.1% { transform: translate(0, 0); filter: none; }
+}
+
+/* Перемешанные подвкладки и заголовки во время Breach подсвечиваются красным */
+body.wild-ai-breach .subtab,
+body.wild-ai-breach .contracts-tab,
+body.wild-ai-breach .page-title-cn,
+body.wild-ai-breach .diary-section-title {
+  color: #ff6666 !important;
+  text-shadow: 0 0 4px rgba(255,40,40,0.5);
 }
 
 .lb-corrupted-badge {

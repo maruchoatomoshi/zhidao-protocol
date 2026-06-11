@@ -27,9 +27,15 @@ function applyWildAiBreachState(settings) {
   if (active) {
     renderWildAiBreachBanner(settings);
     scrambleNavLabels(settings.breach_seed || 0);
+    scrambleSubtabLabels(settings.breach_seed || 0);
+    scramblePageTitles(settings.breach_seed || 0);
+    startWildAiChaosLoop();
   } else {
     removeWildAiBreachBanner();
     restoreNavLabels();
+    restoreSubtabLabels();
+    restorePageTitles();
+    stopWildAiChaosLoop();
   }
 
   if (typeof applyWildAiProfileOverride === 'function') applyWildAiProfileOverride();
@@ -110,6 +116,98 @@ function restoreNavLabels() {
   if (!_wildAiBreachNavOriginal) return;
   const spans = Array.from(document.querySelectorAll('.bottom-nav .nav-cn'));
   spans.forEach((s, i) => { s.textContent = _wildAiBreachNavOriginal[i]; });
+}
+
+// ===== Перемешивание подвкладок и заголовков страниц =====
+
+let _wildAiSubtabGroups = null;
+
+function scrambleSubtabLabels(seed) {
+  if (!_wildAiSubtabGroups) {
+    const groups = [];
+    const seen = new Set();
+    document.querySelectorAll('.subtab, .contracts-tab').forEach(el => {
+      const parent = el.parentElement;
+      if (!parent || seen.has(parent)) return;
+      const siblings = Array.from(parent.children).filter(c => c.matches('.subtab, .contracts-tab'));
+      if (siblings.length < 2) return;
+      seen.add(parent);
+      groups.push(siblings.map(s => s.textContent));
+    });
+    _wildAiSubtabGroups = groups;
+  }
+  let groupIndex = 0;
+  const seen = new Set();
+  document.querySelectorAll('.subtab, .contracts-tab').forEach(el => {
+    const parent = el.parentElement;
+    if (!parent || seen.has(parent)) return;
+    const siblings = Array.from(parent.children).filter(c => c.matches('.subtab, .contracts-tab'));
+    if (siblings.length < 2) return;
+    seen.add(parent);
+    const original = _wildAiSubtabGroups[groupIndex];
+    groupIndex++;
+    if (!original) return;
+    const shuffled = seededShuffle(original, seed + groupIndex);
+    siblings.forEach((s, i) => { s.textContent = shuffled[i]; });
+  });
+}
+
+function restoreSubtabLabels() {
+  if (!_wildAiSubtabGroups) return;
+  let groupIndex = 0;
+  const seen = new Set();
+  document.querySelectorAll('.subtab, .contracts-tab').forEach(el => {
+    const parent = el.parentElement;
+    if (!parent || seen.has(parent)) return;
+    const siblings = Array.from(parent.children).filter(c => c.matches('.subtab, .contracts-tab'));
+    if (siblings.length < 2) return;
+    seen.add(parent);
+    const original = _wildAiSubtabGroups[groupIndex];
+    groupIndex++;
+    if (!original) return;
+    siblings.forEach((s, i) => { s.textContent = original[i]; });
+  });
+  _wildAiSubtabGroups = null;
+}
+
+let _wildAiPageTitleOriginal = null;
+
+function scramblePageTitles(seed) {
+  const titles = Array.from(document.querySelectorAll('.page-title-cn, .diary-section-title'));
+  if (!titles.length) return;
+  if (!_wildAiPageTitleOriginal) {
+    _wildAiPageTitleOriginal = titles.map(el => el.textContent);
+  }
+  const shuffled = seededShuffle(_wildAiPageTitleOriginal, seed);
+  titles.forEach((el, i) => { el.textContent = shuffled[i]; });
+}
+
+function restorePageTitles() {
+  if (!_wildAiPageTitleOriginal) return;
+  const titles = Array.from(document.querySelectorAll('.page-title-cn, .diary-section-title'));
+  titles.forEach((el, i) => { el.textContent = _wildAiPageTitleOriginal[i]; });
+  _wildAiPageTitleOriginal = null;
+}
+
+// ===== Постоянный цикл хаоса (периодическое перемешивание) =====
+
+let _wildAiChaosInterval = null;
+
+function startWildAiChaosLoop() {
+  if (_wildAiChaosInterval) return;
+  _wildAiChaosInterval = setInterval(() => {
+    const tick = Math.floor(Date.now() / 1000 / 7);
+    scrambleNavLabels(_wildAiBreachSeed + tick);
+    scrambleSubtabLabels(_wildAiBreachSeed + tick);
+    scramblePageTitles(_wildAiBreachSeed + tick);
+  }, 7000);
+}
+
+function stopWildAiChaosLoop() {
+  if (_wildAiChaosInterval) {
+    clearInterval(_wildAiChaosInterval);
+    _wildAiChaosInterval = null;
+  }
 }
 
 // ===== "Профиль дикого ИИ" =====
