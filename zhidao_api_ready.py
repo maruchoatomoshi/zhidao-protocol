@@ -2110,6 +2110,18 @@ def refresh_event_state(c, event_row: dict):
             time_expired = started and (now - started).total_seconds() > WILD_AI_BREACH_TIME_LIMIT_SECONDS
             infection_critical = event_row["overload_pressure"] >= WILD_AI_BREACH_INFECTION_THRESHOLD
 
+            hp_ratio = event_row["current_hp"] / event_row["max_hp"] if event_row["max_hp"] else 0
+
+            if event_row["phase"] == 1 and hp_ratio <= ARCHITECT_PHASE2_THRESHOLD:
+                event_row["phase"] = 2
+                c.execute("UPDATE events SET phase=2 WHERE id=?", (event_row["id"],))
+                add_event_log(c, event_row["id"], "boss", "WILD AI BREACH: вторичный периметр пробит. Дикий ИИ усиливает атаку.")
+
+            if event_row["phase"] == 2 and hp_ratio <= ARCHITECT_PHASE3_THRESHOLD:
+                event_row["phase"] = 3
+                c.execute("UPDATE events SET phase=3 WHERE id=?", (event_row["id"],))
+                add_event_log(c, event_row["id"], "boss", "WILD AI BREACH: критическая зона. Дикий ИИ обходит последние защиты.")
+
             if event_row["current_hp"] > 0 and (time_expired or infection_critical):
                 event_row["state"] = "FAILED"
                 event_row["ended_at"] = now_iso()

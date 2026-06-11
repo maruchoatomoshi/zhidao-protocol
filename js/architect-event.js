@@ -82,6 +82,7 @@ function getArchitectPhaseImage(eventData) {
   if (state === 'REGISTRATION') return isWildAi ? WILD_AI_BREACH_LOBBY_IMAGE : ARCHITECT_LOBBY_IMAGE;
   const terminalImages = isWildAi ? WILD_AI_BREACH_TERMINAL_IMAGES : ARCHITECT_TERMINAL_IMAGES;
   if (terminalImages[state]) return terminalImages[state];
+  if (isWildAi) return WILD_AI_BREACH_LOBBY_IMAGE;
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_IMAGES[2];
   if (phase >= 3) return ARCHITECT_PHASE_IMAGES[3];
@@ -638,6 +639,7 @@ function updateArchitectPhaseFxState(eventData) {
   overlay.classList.toggle('event-state-finished', state === 'FINISHED');
   overlay.classList.toggle('event-state-failed', state === 'FAILED');
   overlay.classList.toggle('event-wildai-lobby', isWildAi && state === 'REGISTRATION');
+  overlay.classList.toggle('event-wildai', isWildAi);
 
   if (isActive) {
     overlay.classList.add(`event-phase-${phase}`);
@@ -1192,11 +1194,13 @@ function updateArchitectBattleVisibility(eventData) {
   hpText.textContent = `${currentHp} / ${maxHp}`;
   hpFill.style.width = `${hpPercent}%`;
   if (isWildAi) {
+    const roman = {1: 'I', 2: 'II', 3: 'III'};
+    const phase = eventData.phase || 1;
     phaseText.textContent = eventData.state === 'ACTIVE'
-      ? 'BREACH'
+      ? `BREACH ${phase}`
       : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
     phaseLabel.textContent = eventData.state === 'ACTIVE'
-      ? 'ВТОРЖЕНИЕ'
+      ? `ВТОРЖЕНИЕ ${roman[phase] || phase}`
       : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
   } else {
     phaseText.textContent = eventData.state === 'ACTIVE'
@@ -1742,6 +1746,13 @@ const EVENT_COMBAT_ITEM_CATALOG = {
 async function loadEventActiveBonuses() {
   const box = document.getElementById('eventActiveBonuses');
   if (!box || !currentUserId) return;
+
+  if (currentArchitectEvent && currentArchitectEvent.code === 'wildai_breach') {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
   try {
     const [implantsRes, cardsRes] = await Promise.all([
       fetch(`${API_URL}/api/casino/implants/${currentUserId}`),

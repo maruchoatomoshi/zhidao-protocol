@@ -12741,6 +12741,33 @@ body.is-architect .profile-card-spark.spark-bl {
   50%      { filter: brightness(1.35); }
 }
 
+/* — Wild AI Breach HUD: drop the Architect avatar, recolor the bar — */
+.event-overlay.event-wildai .boss-hud__stack {
+  display: none !important;
+}
+
+.event-overlay.event-wildai .event-hp-bar {
+  border-color: rgba(120, 255, 140, 0.28) !important;
+}
+
+.event-overlay.event-wildai .event-hp-fill {
+  background: linear-gradient(90deg, #2bff7a 0%, #8cff4d 60%, #d4ff2a 100%) !important;
+  box-shadow:
+    0 0 12px rgba(80, 255, 110, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.event-overlay.event-wildai.event-phase-2 .event-hp-fill {
+  background: linear-gradient(90deg, #ffd23a 0%, #ff8a2a 100%) !important;
+  box-shadow: 0 0 12px rgba(255, 170, 30, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.event-overlay.event-wildai.event-phase-3 .event-hp-fill {
+  background: linear-gradient(90deg, #ff3a3a 0%, #ff2ad4 100%) !important;
+  box-shadow: 0 0 16px rgba(255, 58, 58, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  animation: hpCriticalPulse 0.9s ease-in-out infinite;
+}
+
 /* — Question modal premium cyber — */
 .event-question-modal {
   border-radius: 16px !important;
