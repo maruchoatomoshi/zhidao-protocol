@@ -66,6 +66,10 @@ function openEventOverlay(tabHint) {
 
   eventLobbyTabHint = (tabHint === 'wildai_breach') ? 'wildai_breach' : 'architect';
 
+  if (typeof closeCreateEventModal === 'function') {
+    closeCreateEventModal();
+  }
+
   overlay.style.display = 'block';
 
   const nav = document.querySelector('.bottom-nav');
