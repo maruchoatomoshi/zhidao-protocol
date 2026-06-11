@@ -2057,6 +2057,10 @@ def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wil
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', ?)", (until,))
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', ?)", (str(seed),))
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '1')")
+    phrase = WILD_AI_BREACH_PHRASES[seed % len(WILD_AI_BREACH_PHRASES)]
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_glitch', ?)", (phrase["glitch"],))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_translation', ?)", (phrase["translation"],))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_pending', '1')")
     c.execute(
         '''INSERT INTO admin_action_logs
            (admin_id, target_id, action_type, points_delta, reason, created_at)

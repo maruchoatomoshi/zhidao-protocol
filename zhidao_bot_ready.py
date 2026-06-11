@@ -20,6 +20,7 @@ from aiogram.types import (
 from aiogram import F
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 import pytz
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
@@ -272,6 +273,23 @@ def get_all_users():
 
 def get_all_telegram_ids():
     return [row[0] for row in get_all_users()]
+
+
+def get_setting(key, default=None):
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key=?", (key,))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else default
+
+
+def set_setting(key, value):
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
+    conn.commit()
+    conn.close()
 
 
 def is_admin(user_id):
@@ -1225,6 +1243,25 @@ async def list_users(message: types.Message):
     await message.answer(text)
 
 
+async def check_wildai_breach_broadcast():
+    if get_setting("breach_broadcast_pending") != "1":
+        return
+    glitch = get_setting("breach_broadcast_phrase_glitch", "")
+    translation = get_setting("breach_broadcast_phrase_translation", "")
+    text = (
+        "⚠️ SYSTEM ERROR // BLACKWALL: ОФФЛАЙН\n\n"
+        "Операция по вытеснению Дикого ИИ провалена. Заслон пал — система захвачена на 3 дня.\n\n"
+        f"{glitch}\n— \"{translation}\""
+    )
+    for tg_id in get_all_telegram_ids():
+        try:
+            await bot.send_message(tg_id, text)
+        except Exception:
+            pass
+        await asyncio.sleep(0.05)
+    set_setting("breach_broadcast_pending", "0")
+
+
 @dp.message(Command("broadcast", "рассылка"))
 async def broadcast(message: types.Message):
     if not is_admin(message.from_user.id):
@@ -1674,6 +1711,7 @@ async def main():
     scheduler.add_job(caishen_morning, CronTrigger(hour=8, minute=2, timezone=BEIJING_TZ))
     scheduler.add_job(qilin_morning, CronTrigger(hour=8, minute=3, timezone=BEIJING_TZ))
     scheduler.add_job(moon_morning, CronTrigger(hour=8, minute=4, timezone=BEIJING_TZ))
+    scheduler.add_job(check_wildai_breach_broadcast, IntervalTrigger(minutes=1))
     scheduler.start()
     await dp.start_polling(bot)
 
