@@ -2061,7 +2061,7 @@ def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wil
         '''INSERT INTO admin_action_logs
            (admin_id, target_id, action_type, points_delta, reason, created_at)
            VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
-        (admin_id, reason, now_iso()),
+        (admin_id if admin_id is not None else 0, reason, now_iso()),
     )
 
 
