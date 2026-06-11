@@ -994,6 +994,12 @@ function renderArchitectLobby(eventData, errorText = '') {
                    (teamCount >= minPlayers || adminSoloReady);
 
   createBtn.style.display = (isAdmin && isTerminal) ? 'inline-flex' : 'none';
+  if (isAdmin && isTerminal) {
+    // The inline onclick in index.html is hardcoded to createArchitectEvent();
+    // on a WildAI result screen it must create a WildAI event instead.
+    createBtn.onclick = isWildAi ? createWildAiEvent : createArchitectEvent;
+    createBtn.textContent = isWildAi ? 'Новая операция' : 'Создать';
+  }
   joinBtn.style.display = canJoin ? 'inline-flex' : 'none';
   leaveBtn.style.display = canLeave ? 'inline-flex' : 'none';
   startBtn.style.display = canStart ? 'inline-flex' : 'none';
