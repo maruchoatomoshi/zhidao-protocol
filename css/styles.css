@@ -9817,6 +9817,22 @@ body.tg-ios .event-overlay.event-terminal .event-log {
   object-position: center center;
 }
 
+/* Wild AI Breach defeat: play the loss video instead of the static image */
+.event-overlay.event-wildai.event-state-failed #eventBossImage {
+  display: none !important;
+}
+
+.event-overlay.event-wildai.event-state-failed #eventBossVideo {
+  display: block !important;
+  top: max(56px, env(safe-area-inset-top, 0px));
+  bottom: 53vh;
+  height: auto;
+  max-height: none;
+  width: 100vw;
+  object-fit: contain;
+  object-position: center center;
+}
+
 .event-overlay.event-state-finished .event-hero-glow {
   background:
     radial-gradient(circle at 50% 38%, rgba(0, 230, 255, 0.16), transparent 34%),
