@@ -13373,14 +13373,16 @@ body.is-architect .profile-card-spark.spark-bl {
    backdrop-filters cause sustained paint/composite jank on Android.
    These overrides keep the look but cut the most expensive bits. */
 
-/* Drop expensive screen-blend overlay over the boss video/image */
-.event-hero::before {
+/* Drop expensive screen-blend overlay over the boss video/image
+   (the WildAI lobby keeps its glitch-noise overlay — it's the whole point
+   of that screen, and steps() flicker is cheap to composite) */
+.event-overlay:not(.event-wildai-lobby) .event-hero::before {
   mix-blend-mode: normal !important;
   opacity: 0.32 !important;
 }
 
 /* Disable always-on decorative infinite animations on the event overlay */
-.event-overlay .event-hero::before,
+.event-overlay:not(.event-wildai-lobby) .event-hero::before,
 .event-overlay .event-hero-glow,
 .event-overlay::before {
   animation: none !important;

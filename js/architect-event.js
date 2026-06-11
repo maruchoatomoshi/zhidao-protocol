@@ -623,6 +623,8 @@ function updateArchitectPhaseFxState(eventData) {
     if (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach') {
       overlay.classList.add('event-wildai-lobby');
     }
+    const standbyImg = document.getElementById('eventBossImage');
+    if (standbyImg) standbyImg.classList.remove('result-image-reveal');
     architectLastRenderedPhase = null;
     architectLastLogCount = 0;
     updateArchitectFinalTimer(null);
@@ -635,6 +637,14 @@ function updateArchitectPhaseFxState(eventData) {
   const isTerminal = state === 'FAILED' || state === 'FINISHED';
   const phase = Math.max(1, Math.min(3, Number(eventData.phase || 1)));
   const overload = Number(eventData.overload_pressure || 0);
+
+  // The result screen tags the boss image with result-image-reveal whose
+  // animation is !important and one-shot — if it lingers into a new lobby it
+  // freezes the image and kills the lobby glitch FX. Strip it outside results.
+  if (!isTerminal) {
+    const bossImg = document.getElementById('eventBossImage');
+    if (bossImg) bossImg.classList.remove('result-image-reveal');
+  }
 
   const isWildAi = eventData.code === 'wildai_breach';
 
@@ -1780,11 +1790,16 @@ const EVENT_COMBAT_ITEM_CATALOG = {
   implant_netwatch:   { icon: '🔴', name: 'Сетевой Дозор', desc: 'Удачная Синхронизация продлевает окно уязвимости на +30с' },
 };
 
+// The implant/card combat-bonus backend is not deployed yet — keep the HUD
+// badge strip hidden everywhere until it is, it just covers the boss HUD.
+const EVENT_COMBAT_BONUSES_ENABLED = false;
+
 async function loadEventActiveBonuses() {
   const box = document.getElementById('eventActiveBonuses');
   if (!box || !currentUserId) return;
 
-  if (currentArchitectEvent && currentArchitectEvent.code === 'wildai_breach') {
+  if (!EVENT_COMBAT_BONUSES_ENABLED ||
+      (currentArchitectEvent && currentArchitectEvent.code === 'wildai_breach')) {
     box.style.display = 'none';
     box.innerHTML = '';
     return;
