@@ -4536,6 +4536,9 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   gap: 8px;
   margin-bottom: 14px;
 }
+.admin-bw-btn-wide {
+  grid-column: 1 / -1;
+}
 .admin-bw-btn {
   padding: 12px;
   border-radius: 10px;
