@@ -598,6 +598,7 @@ function updateArchitectPhaseFxState(eventData) {
     'event-state-terminal',
     'event-state-finished',
     'event-state-failed',
+    'event-wildai-lobby',
     'event-phase-1',
     'event-phase-2',
     'event-phase-3',
@@ -620,12 +621,15 @@ function updateArchitectPhaseFxState(eventData) {
   const phase = Math.max(1, Math.min(3, Number(eventData.phase || 1)));
   const overload = Number(eventData.overload_pressure || 0);
 
+  const isWildAi = eventData.code === 'wildai_breach';
+
   overlay.classList.toggle('event-state-lobby', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-active', isActive);
   overlay.classList.toggle('event-state-registration', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-terminal', isTerminal);
   overlay.classList.toggle('event-state-finished', state === 'FINISHED');
   overlay.classList.toggle('event-state-failed', state === 'FAILED');
+  overlay.classList.toggle('event-wildai-lobby', isWildAi && state === 'REGISTRATION');
 
   if (isActive) {
     overlay.classList.add(`event-phase-${phase}`);

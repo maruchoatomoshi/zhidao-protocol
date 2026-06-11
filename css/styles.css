@@ -12121,6 +12121,111 @@ body.is-architect .profile-card-spark.spark-bl {
   opacity: 0.6;
 }
 
+/* ── WildAI Breach lobby — BlackWall about to fail: heavier glitches/freezes ── */
+
+@keyframes wildaiLobbyBossGlitch {
+  /* Mostly clean, but jittery */
+  0%, 100% { filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; transform: translate(0); }
+  6%   { transform: translate(-3px, 1px); filter: saturate(2.4) hue-rotate(14deg) brightness(1.3); clip-path: inset(12% 0 61% 0); }
+  6.4% { transform: translate(3px, -1px); filter: saturate(2.4) hue-rotate(-14deg) brightness(1.3); clip-path: inset(54% 0 18% 0); }
+  6.8% { transform: translate(0); filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; }
+  /* Freeze: image holds, screen briefly desaturates like a frozen frame */
+  22%, 24.5% { filter: saturate(0) contrast(1.4) brightness(0.7); transform: translate(0); clip-path: none; }
+  24.6% { filter: saturate(2.6) contrast(1.8) brightness(1.6); transform: translate(-8px, 0); clip-path: inset(35% 0 35% 0); }
+  25%  { filter: saturate(1.15) contrast(1.1) brightness(0.9); transform: translate(0); clip-path: none; }
+  /* Hard tear burst */
+  41%   { transform: translate(12px, -2px); filter: saturate(3) hue-rotate(24deg) brightness(1.7); clip-path: inset(8% 0 70% 0); }
+  41.4% { transform: translate(-12px, 2px); filter: saturate(3) hue-rotate(-24deg) brightness(1.7); clip-path: inset(66% 0 10% 0); }
+  41.8% { transform: translate(4px, 0); filter: saturate(0.2) contrast(2.4) brightness(2.4); clip-path: inset(0); }
+  42.2% { transform: translate(0); filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; }
+  /* Quick flicker stutter */
+  58%   { filter: saturate(1.15) contrast(1.1) brightness(0.9); }
+  58.2% { filter: saturate(0.1) brightness(2.6) contrast(2); }
+  58.4% { filter: saturate(1.15) contrast(1.1) brightness(0.4); }
+  58.6% { filter: saturate(0.1) brightness(2.6) contrast(2); }
+  58.8% { filter: saturate(1.15) contrast(1.1) brightness(0.9); }
+  /* Second freeze, longer */
+  74%, 78% { filter: saturate(0) contrast(1.5) brightness(0.65); transform: translate(0); clip-path: none; }
+  78.3% { filter: saturate(3) contrast(1.9) brightness(1.7); transform: translate(7px, -1px); clip-path: inset(20% 0 50% 0); }
+  78.6% { filter: saturate(1.15) contrast(1.1) brightness(0.9); transform: translate(0); clip-path: none; }
+  /* Final pre-collapse tear */
+  90%   { transform: translate(-10px, 2px); filter: saturate(2.8) hue-rotate(-20deg) brightness(1.6); clip-path: inset(15% 0 55% 0); }
+  90.4% { transform: translate(10px, -2px); filter: saturate(2.8) hue-rotate(20deg) brightness(1.6); clip-path: inset(60% 0 14% 0); }
+  90.8% { transform: translate(0); filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; }
+}
+
+/* Subtle constant jitter layered on top of the glitch keyframes */
+@keyframes wildaiLobbyJitter {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(1px, 0); }
+  20% { transform: translate(-1px, 1px); }
+  30% { transform: translate(0, -1px); }
+  40% { transform: translate(1px, 1px); }
+  50% { transform: translate(-1px, 0); }
+  60% { transform: translate(0, 1px); }
+  70% { transform: translate(1px, -1px); }
+  80% { transform: translate(-1px, -1px); }
+  90% { transform: translate(0, 0); }
+}
+
+.event-overlay.event-wildai-lobby #eventBossImage {
+  animation:
+    wildaiLobbyBossGlitch 11s steps(1, end) infinite,
+    wildaiLobbyJitter 0.18s steps(2, end) infinite;
+  will-change: transform, filter;
+}
+
+/* Static-noise overlay flickers in during freezes/glitches */
+@keyframes wildaiLobbyNoiseFlicker {
+  0%, 5%, 21%, 26%, 40%, 43%, 57%, 60%, 73%, 79%, 89%, 92%, 100% { opacity: 0; }
+  6%, 24.5%, 41.5%, 58.3%, 76%, 90.5% { opacity: 0.5; }
+}
+
+.event-overlay.event-wildai-lobby .event-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: wildaiLobbyNoiseFlicker 11s steps(1, end) infinite;
+}
+
+.event-overlay.event-wildai-lobby .event-hero::after {
+  animation: eventScanSweep 4.2s linear infinite, wildaiLobbyNoiseFlicker 11s steps(1, end) infinite;
+  opacity: 0.75;
+}
+
+/* "BlackWall integrity failing" warning text flicker over the lobby */
+.event-wildai-lobby-warning {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ff4040;
+  text-shadow: 0 0 10px rgba(255,40,40,0.7);
+  pointer-events: none;
+  opacity: 0;
+  animation: wildaiLobbyWarningFlicker 11s steps(1, end) infinite;
+}
+
+@keyframes wildaiLobbyWarningFlicker {
+  0%, 5%, 21%, 26%, 40%, 43%, 57%, 60%, 73%, 79%, 89%, 92%, 100% { opacity: 0; }
+  6%, 24.5%, 41.5%, 58.3%, 76%, 90.5% { opacity: 1; }
+}
+
 /* ── Lobby card redesign ────────────────────────────────────── */
 
 .event-overlay.event-state-lobby .event-lobby-card {
