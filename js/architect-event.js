@@ -36,7 +36,7 @@ const WILD_AI_BREACH_PHASE_VIDEOS = {
 const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
 // Defeat sting: upload a file with this exact name to the repo root and it
 // will play automatically when the loss video starts. Missing file = silent no-op.
-const WILD_AI_BREACH_LOSE_SOUND = 'wildai_lose_sound.mp3';
+const WILD_AI_BREACH_LOSE_SOUND = 'wildai_losetheme.mp3';
 let wildAiLoseSoundPlayedFor = null;
 
 const ARCHITECT_PHASE_MUSIC = {
@@ -687,13 +687,18 @@ function playWildAiLoseSound(eventData) {
   if (!eventData || eventData.code !== 'wildai_breach' || eventData.state !== 'FAILED') return;
   const key = `${eventData.id}_${eventData.state}`;
   if (wildAiLoseSoundPlayedFor === key) return;
-  wildAiLoseSoundPlayedFor = key;
   try {
     const audio = new Audio(WILD_AI_BREACH_LOSE_SOUND);
     audio.volume = 0.9;
     const maybePromise = audio.play();
-    if (maybePromise && typeof maybePromise.catch === 'function') {
-      maybePromise.catch(() => {});
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      maybePromise.then(() => {
+        wildAiLoseSoundPlayedFor = key;
+      }).catch(() => {
+        // playback blocked (e.g. autoplay policy) — retry on next render
+      });
+    } else {
+      wildAiLoseSoundPlayedFor = key;
     }
   } catch (e) {}
 }
