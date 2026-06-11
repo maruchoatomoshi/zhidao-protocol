@@ -82,6 +82,7 @@ function openEventOverlay() {
 
   setEventExplanation('');
   loadCurrentArchitectEvent();
+  if (typeof loadEventActiveBonuses === 'function') loadEventActiveBonuses();
 }
 
 function closeEventOverlay() {
