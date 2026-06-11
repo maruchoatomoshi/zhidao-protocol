@@ -14789,6 +14789,9 @@ body.lite-mode .profile-card-home::after { display: none; }
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 6px;
+  max-height: 60px;
+  overflow-y: auto;
+  pointer-events: auto;
 }
 .event-bonus-badge {
   display: inline-flex;

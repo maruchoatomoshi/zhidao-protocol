@@ -821,12 +821,16 @@ function renderArchitectLobby(eventData, errorText = '') {
     return;
   }
 
+  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+  if (eventData && (eventData.code === 'wildai_breach') !== hintIsWildAi) {
+    eventData = null;
+  }
+
   if (!eventData) {
     if (overlay) overlay.classList.remove('event-terminal');
     lobbyCard.classList.remove('event-result-card', 'event-result-win', 'event-result-lose');
     lobbyCard.style.display = 'block';
 
-    const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
     if (hintIsWildAi) {
       lobbyCard.innerHTML = `
         <div class="event-standby-screen">
