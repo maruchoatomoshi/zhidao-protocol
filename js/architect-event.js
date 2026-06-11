@@ -1,3 +1,7 @@
+const WILD_AI_BREACH_INFECTION_THRESHOLD = 100;
+const WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION = 5;
+const WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2;
+
 const ARCHITECT_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lobby.png';
 
 const ARCHITECT_PHASE_IMAGES = {
@@ -426,34 +430,62 @@ function renderArchitectActionResult(actionType, data) {
   const hp = Number(data.current_hp || 0);
   const phase = Number(data.phase || 1);
   const pressure = Number(data.overload_pressure || 0);
+  const isWildAi = data.code === 'wildai_breach';
 
   let title = 'ДЕЙСТВИЕ ПРИНЯТО';
   let value = '';
-  if (!isCorrect) {
-    title = 'ОШИБКА ПРОТОКОЛА';
-    value = 'урон не прошёл';
-  } else if (actionType === 'attack' || actionType === 'protocol') {
-    title = actionType === 'protocol' ? 'ПРОТОКОЛ ПРОБИТ' : 'АТАКА ПРОШЛА';
-    value = `-${damage} HP`;
-  } else if (actionType === 'stabilize') {
-    title = 'СТАБИЛИЗАЦИЯ';
-    value = `+${support} SUPPORT`;
-  } else if (actionType === 'sync') {
-    title = 'СИНХРОНИЗАЦИЯ';
-    value = `+${support} SUPPORT`;
-  }
+  if (isWildAi) {
+    if (!isCorrect) {
+      title = 'СБОЙ ОПЕРАЦИИ';
+      value = damage > 0 ? `+${damage} ЦЕЛОСТНОСТЬ` : 'эффект не применён';
+    } else if (actionType === 'attack' || actionType === 'protocol') {
+      title = actionType === 'protocol' ? 'ПРОТОКОЛ СРАБОТАЛ' : 'УЗЕЛ ПОРАЖЁН';
+      value = `+${damage} ЦЕЛОСТНОСТЬ`;
+    } else if (actionType === 'stabilize') {
+      title = 'СЕКТОР ЗАЛАТАН';
+      value = `−${WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION} ЗАРАЖЕНИЕ`;
+    } else if (actionType === 'sync') {
+      title = 'СКАНИРОВАНИЕ';
+      value = `−${WILD_AI_BREACH_INFECTION_SYNC_REDUCTION} ЗАРАЖЕНИЕ`;
+    }
 
-  host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
-  host.style.display = 'block';
-  host.innerHTML = `
-    <div class="event-action-result-title">${escapeHtml(title)}</div>
-    <div class="event-action-result-value">${escapeHtml(value)}</div>
-    <div class="event-action-result-meta">
-      <span>HP: ${hp}</span>
-      <span>PHASE: ${phase}</span>
-      <span>OVR: ${pressure}</span>
-    </div>
-  `;
+    host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
+    host.style.display = 'block';
+    host.innerHTML = `
+      <div class="event-action-result-title">${escapeHtml(title)}</div>
+      <div class="event-action-result-value">${escapeHtml(value)}</div>
+      <div class="event-action-result-meta">
+        <span>ЦЕЛОСТНОСТЬ: ${hp}</span>
+        <span>ЗАРАЖЕНИЕ: ${pressure}/${WILD_AI_BREACH_INFECTION_THRESHOLD}</span>
+      </div>
+    `;
+  } else {
+    if (!isCorrect) {
+      title = 'ОШИБКА ПРОТОКОЛА';
+      value = 'урон не прошёл';
+    } else if (actionType === 'attack' || actionType === 'protocol') {
+      title = actionType === 'protocol' ? 'ПРОТОКОЛ ПРОБИТ' : 'АТАКА ПРОШЛА';
+      value = `-${damage} HP`;
+    } else if (actionType === 'stabilize') {
+      title = 'СТАБИЛИЗАЦИЯ';
+      value = `+${support} SUPPORT`;
+    } else if (actionType === 'sync') {
+      title = 'СИНХРОНИЗАЦИЯ';
+      value = `+${support} SUPPORT`;
+    }
+
+    host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
+    host.style.display = 'block';
+    host.innerHTML = `
+      <div class="event-action-result-title">${escapeHtml(title)}</div>
+      <div class="event-action-result-value">${escapeHtml(value)}</div>
+      <div class="event-action-result-meta">
+        <span>HP: ${hp}</span>
+        <span>PHASE: ${phase}</span>
+        <span>OVR: ${pressure}</span>
+      </div>
+    `;
+  }
 
   architectActionResultTimer = setTimeout(() => {
     if (host.classList.contains('event-action-result')) {
@@ -756,6 +788,7 @@ function renderArchitectLobby(eventData, errorText = '') {
         <div class="event-standby-title">${errorText || 'СИСТЕМА ГОТОВА'}</div>
         <div class="event-standby-sub">Ивент не активен. Дождитесь запуска Архитектора.</div>
         ${isAdmin ? `<button class="event-standby-create-btn" onclick="createArchitectEvent()">⚡ ИНИЦИИРОВАТЬ ПРОТОКОЛ</button>` : ''}
+        ${isAdmin ? `<button class="event-standby-create-btn" onclick="createWildAiEvent()">⚠ WILD AI BREACH // ОПЕРАЦИЯ ВЫТЕСНЕНИЯ</button>` : ''}
       </div>`;
     updateArchitectBattleVisibility(null);
     return;
@@ -1022,6 +1055,10 @@ function updateArchitectBattleVisibility(eventData) {
 
   if (!eventData) {
     applyArchitectMedia(null);
+    const kickerEl = document.getElementById('eventKicker');
+    const bossNameEl = document.getElementById('eventBossName');
+    if (kickerEl) kickerEl.textContent = 'ARCHITECT PROTOCOL';
+    if (bossNameEl) bossNameEl.textContent = 'АРХИТЕКТОР';
     hpText.textContent = '-- / ----';
     hpFill.style.width = '0%';
     phaseText.textContent = 'NO SIGNAL';
@@ -1047,17 +1084,32 @@ function updateArchitectBattleVisibility(eventData) {
   const maxHp = eventData.max_hp || 1;
   const currentHp = Math.max(0, eventData.current_hp || 0);
   const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+  const isWildAi = eventData.code === 'wildai_breach';
 
   applyArchitectMedia(eventData);
 
+  const kickerEl = document.getElementById('eventKicker');
+  const bossNameEl = document.getElementById('eventBossName');
+  if (kickerEl) kickerEl.textContent = isWildAi ? 'WILD AI BREACH' : 'ARCHITECT PROTOCOL';
+  if (bossNameEl) bossNameEl.textContent = isWildAi ? (eventData.boss_name || 'ДИКИЙ ИИ') : 'АРХИТЕКТОР';
+
   hpText.textContent = `${currentHp} / ${maxHp}`;
   hpFill.style.width = `${hpPercent}%`;
-  phaseText.textContent = eventData.state === 'ACTIVE'
-    ? `PHASE ${eventData.phase || 1}`
-    : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
-  phaseLabel.textContent = eventData.state === 'ACTIVE'
-    ? `ФАЗА ${eventData.phase || 1}`
-    : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+  if (isWildAi) {
+    phaseText.textContent = eventData.state === 'ACTIVE'
+      ? 'BREACH'
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+    phaseLabel.textContent = eventData.state === 'ACTIVE'
+      ? 'ВТОРЖЕНИЕ'
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+  } else {
+    phaseText.textContent = eventData.state === 'ACTIVE'
+      ? `PHASE ${eventData.phase || 1}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+    phaseLabel.textContent = eventData.state === 'ACTIVE'
+      ? `ФАЗА ${eventData.phase || 1}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+  }
 
      if (stateBadge) {
     const state = String(eventData.state || '').toUpperCase();
@@ -1071,14 +1123,20 @@ function updateArchitectBattleVisibility(eventData) {
 
   if (vulnerabilityBadge) {
     const vulnerable = !!eventData.vulnerability_active && eventData.state === 'ACTIVE';
-    vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
+    if (isWildAi) {
+      vulnerabilityBadge.textContent = vulnerable ? 'НОДА ВСКРЫТА' : 'СКРЫТА';
+    } else {
+      vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
+    }
     vulnerabilityBadge.className = 'event-status-badge';
     vulnerabilityBadge.classList.add(vulnerable ? 'gold' : 'hot');
   }
 
   if (overloadBadge) {
     const overload = Number(eventData.overload_pressure || 0);
-    overloadBadge.textContent = `OVR ${overload}`;
+    overloadBadge.textContent = isWildAi
+      ? `ЗАРАЖЕНИЕ ${overload}/${WILD_AI_BREACH_INFECTION_THRESHOLD}`
+      : `OVR ${overload}`;
   }
 
   const logs = Array.isArray(eventData.logs) ? eventData.logs : [];
@@ -1225,6 +1283,36 @@ async function _doCreateArchitectEvent(rewardText) {
 
     if (!res.ok) {
       showToast(data.detail || 'Не удалось создать ивент');
+      return;
+    }
+
+    currentArchitectEvent = data;
+    currentArchitectEventId = data.id;
+    renderArchitectLobby(data);
+
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function createWildAiEvent() {
+  if (!currentUserId || !isAdmin) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/wildai/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Id': String(currentUserId || 0)
+      },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.detail || 'Не удалось создать операцию');
       return;
     }
 

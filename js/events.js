@@ -5,7 +5,8 @@ function isArchitectEventPublicEnabled() {
 }
 
 function canOpenArchitectEvent() {
-  return isAdmin || isArchitect || isArchitectEventPublicEnabled();
+  const wildAiBreach = typeof isWildAiBreachActive === 'function' && isWildAiBreachActive();
+  return isAdmin || isArchitect || isArchitectEventPublicEnabled() || wildAiBreach;
 }
 
 function syncArchitectEventAvailability(enabled) {

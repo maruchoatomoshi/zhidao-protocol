@@ -8579,6 +8579,7 @@ async def resolve_event_action(data: dict):
         snapshot = get_event_snapshot(int(event_id))
         return {
             "event_id": int(event_id),
+            "code": event_row["code"],
             "action_type": action_type,
             "is_correct": bool(is_correct),
             "damage_dealt": result["final_value"],

@@ -45,6 +45,20 @@ function applyWildAiBreachState(settings) {
     status.textContent = active ? 'STATUS // BREACH ACTIVE (3 ДНЯ)' : 'STATUS // CONTAINED';
     status.classList.toggle('enabled', active);
   }
+
+  if (typeof syncArchitectEventAvailability === 'function') syncArchitectEventAvailability();
+
+  const homeCardTitle = document.querySelector('#homeArchitectEventCard .home-event-card-title');
+  const homeCardCopy = document.querySelector('#homeArchitectEventCard .home-event-card-copy');
+  if (homeCardTitle && homeCardCopy) {
+    if (active) {
+      homeCardTitle.textContent = 'WILD AI BREACH';
+      homeCardCopy.textContent = 'Операция вытеснения дикого ИИ из системы';
+    } else {
+      homeCardTitle.textContent = 'АРХИТЕКТОР';
+      homeCardCopy.textContent = 'Полноэкранный командный бой против босса';
+    }
+  }
 }
 
 function isWildAiBreachActive() {
