@@ -831,7 +831,12 @@ function renderArchitectLobby(eventData, errorText = '') {
   const verdictRow = document.getElementById('eventResultHeader');
   if (verdictEl && verdictRow) {
     if (isTerminal) {
-      verdictEl.textContent = eventData.state === 'FINISHED' ? 'ПРОТОКОЛ ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
+      const isWildAi = eventData.code === 'wildai_breach';
+      if (isWildAi) {
+        verdictEl.textContent = eventData.state === 'FINISHED' ? 'ЦЕЛОСТНОСТЬ ВОССТАНОВЛЕНА' : 'СИСТЕМА ЗАРАЖЕНА';
+      } else {
+        verdictEl.textContent = eventData.state === 'FINISHED' ? 'ПРОТОКОЛ ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
+      }
       verdictRow.style.display = 'block';
     } else {
       verdictRow.style.display = 'none';
