@@ -1,5 +1,5 @@
 const ARCHITECT_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lobby.png';
-const WILD_AI_BREACH_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_win.png';
+const WILD_AI_BREACH_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wild_ai_lobby_picture.png';
 
 const ARCHITECT_PHASE_IMAGES = {
   1: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png',
