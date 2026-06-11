@@ -2051,7 +2051,7 @@ def apply_architect_phase_transitions(c, event_row: dict):
     return changed
 
 
-def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wild AI Breach auto-triggered (system integrity restoration failed)'):
+def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wild AI Breach auto-triggered (system integrity restoration failed)', send_broadcast: bool = True):
     until = (datetime.utcnow() + timedelta(days=WILD_AI_BREACH_DURATION_DAYS)).isoformat()
     seed = random.randint(0, 999999)
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', ?)", (until,))
@@ -2060,7 +2060,8 @@ def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wil
     phrase = WILD_AI_BREACH_PHRASES[seed % len(WILD_AI_BREACH_PHRASES)]
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_glitch', ?)", (phrase["glitch"],))
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_translation', ?)", (phrase["translation"],))
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_pending', '1')")
+    if send_broadcast:
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_pending', '1')")
     c.execute(
         '''INSERT INTO admin_action_logs
            (admin_id, target_id, action_type, points_delta, reason, created_at)
@@ -2117,7 +2118,7 @@ def refresh_event_state(c, event_row: dict):
                 )
                 reason = "заражение достигло критического уровня" if infection_critical else "время истекло"
                 add_event_log(c, event_row["id"], "system", f"WILD AI BREACH: операция провалена — {reason}. Дикий ИИ закрепился в системе.")
-                activate_wildai_breach(c)
+                activate_wildai_breach(c, send_broadcast=False)
 
             if event_row["current_hp"] <= 0:
                 event_row["current_hp"] = 0
