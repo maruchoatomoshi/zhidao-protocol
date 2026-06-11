@@ -70,6 +70,8 @@ let architectVideoStartTimer = null;
 let architectActionResultTimer = null;
 const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
 const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
+// WildAI loss video runs ~10s; reveal the defeat banner right after it ends
+const WILD_AI_LOSE_REVEAL_DELAY = 10500;
 
 function getArchitectPhaseImage(eventData) {
   if (!eventData) {
@@ -798,14 +800,17 @@ function scheduleArchitectResultReveal(lobbyCard, eventData) {
     img.classList.add('result-image-reveal');
   }
 
-  // Reveal banner after delay
+  // Reveal banner after delay; the WildAI defeat plays a ~10s loss video,
+  // so the banner waits for it to finish instead of cutting in mid-playback.
+  const isWildAiFail = eventData.code === 'wildai_breach' && eventData.state === 'FAILED';
+  const revealDelay = isWildAiFail ? WILD_AI_LOSE_REVEAL_DELAY : ARCHITECT_RESULT_REVEAL_DELAY;
   architectResultRevealTimer = setTimeout(() => {
     lobbyCard.classList.remove('result-banner-hidden');
     lobbyCard.classList.add('result-banner-reveal');
     sessionStorage.setItem(revealKey, '1');
     architectResultRevealTimer = null;
     architectResultRevealEventKey = null;
-  }, ARCHITECT_RESULT_REVEAL_DELAY);
+  }, revealDelay);
 }
 
 function renderArchitectLobby(eventData, errorText = '') {
