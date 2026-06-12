@@ -592,6 +592,14 @@ body::before {
   100% { transform: translateY(240vh); }
 }
 
+/* On light themes the dark-red matrix kanji is too opaque against light
+   cards/backgrounds and makes text behind it unreadable — tone it way down. */
+body.theme-nw-light .matrix-kanji,
+body.theme-genshin-light .matrix-kanji {
+  color: rgba(180, 0, 30, 0.10) !important;
+  text-shadow: none !important;
+}
+
 /* Horizontal data stream rows — architect green only */
 .matrix-col {
   position: absolute;
