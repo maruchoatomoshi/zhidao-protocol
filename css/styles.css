@@ -14362,6 +14362,16 @@ body.theme-genshin-light .contracts-tabs {
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.38);
 }
 
+/* Belt-and-braces: force the rules banner itself onto the light card
+   look — relying only on the --contract-card-bg variable left this box
+   dark/illegible on light themes. */
+body.theme-nw-light .contracts-rules-card,
+body.theme-genshin-light .contracts-rules-card {
+  background: linear-gradient(135deg, rgba(255,250,238,0.92), rgba(238,230,210,0.82)) !important;
+  border-color: rgba(149, 117, 70, 0.22) !important;
+  box-shadow: 0 14px 28px rgba(85,61,28,0.12) !important;
+}
+
 body.theme-nw-light .contracts-rules-text,
 body.theme-nw-light .contract-description,
 body.theme-genshin-light .contracts-rules-text,
