@@ -1790,9 +1790,7 @@ const EVENT_COMBAT_ITEM_CATALOG = {
   implant_netwatch:   { icon: '🔴', name: 'Сетевой Дозор', desc: 'Удачная Синхронизация продлевает окно уязвимости на +30с' },
 };
 
-// The implant/card combat-bonus backend is not deployed yet — keep the HUD
-// badge strip hidden everywhere until it is, it just covers the boss HUD.
-const EVENT_COMBAT_BONUSES_ENABLED = false;
+const EVENT_COMBAT_BONUSES_ENABLED = true;
 
 async function loadEventActiveBonuses() {
   const box = document.getElementById('eventActiveBonuses');
