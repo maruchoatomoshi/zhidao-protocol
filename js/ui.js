@@ -650,7 +650,7 @@ async function loadWeather() {
 
 async function loadYuanRate() {
   try {
-    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-28/v1/currencies/cny.json');
+    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/cny.json');
     const data = await r.json();
     const rub = data.cny.rub;
     if (rub) {
