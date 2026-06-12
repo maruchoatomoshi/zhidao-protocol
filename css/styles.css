@@ -728,8 +728,28 @@ body.theme-nw-light .launch-gate-kicker,
 body.theme-nw-light .demo-lock-kicker,
 body.theme-nw-light .event-lobby-card .event-lobby-reward::before,
 body.theme-nw-light .event-result-card .event-lobby-reward::before,
-body.theme-nw-light .diary-star
-{ color: #7a5010 !important; }
+body.theme-nw-light .diary-star,
+body.theme-genshin-light .alpha-boss-kicker,
+body.theme-genshin-light .alpha-boss-pts,
+body.theme-genshin-light .alpha-boss-raid-cost,
+body.theme-genshin-light .page-title-cn,
+body.theme-genshin-light .main-pinyin,
+body.theme-genshin-light .stat-cn,
+body.theme-genshin-light .implant-py,
+body.theme-genshin-light .profile-card-kicker,
+body.theme-genshin-light .lb-leaders-label,
+body.theme-genshin-light .more-stat-lbl span,
+body.theme-genshin-light .more-item-cn,
+body.theme-genshin-light .shop-cat .cn,
+body.theme-genshin-light .shop-item-cn,
+body.theme-genshin-light .case-cn.g,
+body.theme-genshin-light .event-lobby-count,
+body.theme-genshin-light .launch-gate-kicker,
+body.theme-genshin-light .demo-lock-kicker,
+body.theme-genshin-light .event-lobby-card .event-lobby-reward::before,
+body.theme-genshin-light .event-result-card .event-lobby-reward::before,
+body.theme-genshin-light .diary-star
+{ color: #a07028 !important; }
 
 body.theme-genshin-light .page-title,
 body.theme-genshin-light .lb-name,
@@ -6538,62 +6558,62 @@ body.theme-genshin-light .diary-select {
     font-size: 10px;
 }
 
-body.theme-genshin .diary-hero {
+body.theme-genshin-light .diary-hero {
     border-color: rgba(219,177,101,0.28);
     background:
         radial-gradient(circle at top right, rgba(219,177,101,0.16), transparent 42%),
         linear-gradient(145deg, rgba(240, 235, 225, 0.96), rgba(232, 224, 210, 0.98));
 }
 
-body.theme-genshin .diary-kicker,
-body.theme-genshin .diary-status-badge,
-body.theme-genshin .diary-day-chip.active {
+body.theme-genshin-light .diary-kicker,
+body.theme-genshin-light .diary-status-badge,
+body.theme-genshin-light .diary-day-chip.active {
     border-color: rgba(75,83,102,0.14);
     background: rgba(75,83,102,0.08);
     color: #4b5366;
 }
 
-body.theme-genshin .diary-kicker::before {
+body.theme-genshin-light .diary-kicker::before {
     background: #dbb165;
     box-shadow: 0 0 12px rgba(219,177,101,0.45);
 }
 
-body.theme-genshin .diary-title {
+body.theme-genshin-light .diary-title {
     color: #3d4555;
 }
 
-body.theme-genshin .diary-title-cn {
+body.theme-genshin-light .diary-title-cn {
     color: #dbb165;
 }
 
-body.theme-genshin .diary-subtitle,
-body.theme-genshin .diary-note,
-body.theme-genshin .diary-section-sub,
-body.theme-genshin .diary-label,
-body.theme-genshin .diary-day-chip,
-body.theme-genshin .diary-word-index {
+body.theme-genshin-light .diary-subtitle,
+body.theme-genshin-light .diary-note,
+body.theme-genshin-light .diary-section-sub,
+body.theme-genshin-light .diary-label,
+body.theme-genshin-light .diary-day-chip,
+body.theme-genshin-light .diary-word-index {
     color: #6b7180;
 }
 
-body.theme-genshin .diary-card,
-body.theme-genshin .diary-input,
-body.theme-genshin .diary-select,
-body.theme-genshin .diary-textarea,
-body.theme-genshin .diary-word-index,
-body.theme-genshin .diary-day-chip,
-body.theme-genshin .diary-back-btn {
+body.theme-genshin-light .diary-card,
+body.theme-genshin-light .diary-input,
+body.theme-genshin-light .diary-select,
+body.theme-genshin-light .diary-textarea,
+body.theme-genshin-light .diary-word-index,
+body.theme-genshin-light .diary-day-chip,
+body.theme-genshin-light .diary-back-btn {
     background: rgba(255,255,255,0.55);
     border-color: rgba(75,83,102,0.14);
     color: #3d4555;
 }
 
-body.theme-genshin .diary-star {
+body.theme-genshin-light .diary-star {
     border-color: rgba(219,177,101,0.25);
     color: rgba(219,177,101,0.6);
     background: rgba(255,255,255,0.5);
 }
 
-body.theme-genshin .diary-star.active {
+body.theme-genshin-light .diary-star.active {
     color: #8a6820;
     background: linear-gradient(135deg, rgba(219,177,101,0.26), rgba(255,255,255,0.72));
     border-color: rgba(219,177,101,0.4);
