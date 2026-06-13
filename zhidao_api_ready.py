@@ -5229,6 +5229,28 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
         penalized = []
         now = now_iso()
         for telegram_id, full_name, previous_points, previous_rep in targets:
+            if try_block_penalty_with_immunity(c, telegram_id, f"presence: {check_type} {check_date}"):
+                c.execute(
+                    '''UPDATE daily_checks
+                       SET status='penalized',
+                           penalized_at=?,
+                           penalty_points=0,
+                           note=TRIM(COALESCE(note, '') || ' // immunity blocked penalty'),
+                           updated_at=?
+                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                    (now, now, check_type, check_date, telegram_id),
+                )
+                penalized.append({
+                    "telegram_id": telegram_id,
+                    "full_name": full_name or str(telegram_id),
+                    "previous_points": previous_points or 0,
+                    "new_points": previous_points or 0,
+                    "new_rep_score": previous_rep or 0,
+                    "delta": 0,
+                    "rep_delta": 0,
+                    "blocked_by_immunity": True,
+                })
+                continue
             if (
                 try_block_penalty_with_terracota(c, telegram_id, f"presence: {check_type} {check_date}")
             ):
