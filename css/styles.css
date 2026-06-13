@@ -14358,8 +14358,7 @@ body.theme-genshin-light #page-contracts {
   --contract-danger: #b4564b;
 }
 
-body.theme-genshin-dark #page-contracts,
-body.theme-genshin #page-contracts {
+body.theme-genshin-dark #page-contracts {
   --contract-accent: #d7b36a;
   --contract-accent-soft: rgba(215, 179, 106, 0.13);
   --contract-accent-border: rgba(215, 179, 106, 0.36);
