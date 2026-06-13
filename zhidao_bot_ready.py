@@ -1559,8 +1559,7 @@ async def netwatch_strike_cmd(message: types.Message):
         ) as r:
             if r.status == 200:
                 data = await r.json()
-                collateral_line = "\nПобочный урон: 1 игрок рядом (-5★)" if data.get('collateral') else ""
-                await message.answer(f"⚡ Скрипт запущен!\nЦель: {data['target']} (-{points}★){collateral_line}")
+                await message.answer(f"⚡ Скрипт запущен!\nЦель: {data['target']} (-{points}★)\nПобочный урон: {data['collateral']} игрока (-15★)")
             elif r.status == 403:
                 await message.answer("❌ У тебя нет импланта Сетевой Дозор")
             elif r.status == 429:
@@ -1585,7 +1584,7 @@ async def netwatch_blackwall_cmd(message: types.Message):
         ) as r:
             if r.status == 200:
                 data = await r.json()
-                await message.answer(f"🔴 Blackwall активирован!\nЦель: {data['target']}\nМагазин заблокирован на 12 часов")
+                await message.answer(f"🔴 Blackwall активирован!\nЦель: {data['target']}\nМагазин заблокирован на 24 часа")
             elif r.status == 403:
                 await message.answer("❌ У тебя нет импланта Сетевой Дозор")
             elif r.status == 429:
