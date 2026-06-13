@@ -9751,5 +9751,5 @@ async def admin_resolve_contract(contract_id: int, data: dict,
 
         conn.commit()
         conn.close()
+        return {"success": True, "action": action}
     return await db_write(_run)
-    return {"success": True, "action": action}
