@@ -110,7 +110,7 @@ function renderDiaryStarsList(entries, date) {
   const rows = entries.map(entry => {
     const stars = entry.stars || 0;
     const bonus = entry.bonus || false;
-    const starsHtml = stars ? '⭐'.repeat(stars) : '—';
+    const starsHtml = stars ? '💎'.repeat(stars) : '—';
     const bonusHtml = bonus ? ' <span style="color:#2ecc71;font-size:10px;">+✨</span>' : '';
     const pointsEarned = stars ? STAR_POINTS[stars] + (bonus ? 20 : 0) : 0;
     const canRate = isAdmin;
@@ -152,7 +152,7 @@ function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus)
 
   const currentEl = document.getElementById('diaryStarsPopupCurrent');
   if (currentEl) {
-    const starsStr = hasStars ? '⭐'.repeat(currentStars) : '';
+    const starsStr = hasStars ? '💎'.repeat(currentStars) : '';
     const bonusStr = hasBonus ? ' +✨бонус' : '';
     currentEl.textContent = hasRating ? `Сейчас: ${starsStr}${bonusStr}` : 'Оценки нет';
   }
@@ -206,7 +206,7 @@ function selectDiaryStarsAction(value) {
     document.getElementById('diaryStarsConfirmBtn').style.background = 'rgba(212,175,55,0.15)';
   } else {
     const pts = STAR_POINTS[value] || 0;
-    title = `${'⭐'.repeat(value)} Выставить ${value}★?`;
+    title = `${'💎'.repeat(value)} Выставить ${value}★?`;
     sub = `+${pts}★ для ${name}`;
     document.getElementById('diaryStarsConfirmBtn').textContent = 'ДА, ВЫСТАВИТЬ';
     document.getElementById('diaryStarsConfirmBtn').style.color = 'var(--gold)';

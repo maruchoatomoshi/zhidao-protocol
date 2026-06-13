@@ -418,7 +418,7 @@ async function loadDiaryStarsLeaderboardRating() {
             ${row.total_bonus ? `<span>BONUS x${row.total_bonus}</span>` : ''}
           </div>
         </div>
-        <div class="diary-rank-score">${stars} ⭐</div>
+        <div class="diary-rank-score">${stars} 💎</div>
       </div>`;
     }).join('');
     container.innerHTML = `${warning ? `<div class="diary-rank-note">${escapeHtml(warning)}</div>` : ''}${cards}`;
