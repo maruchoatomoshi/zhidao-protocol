@@ -2312,6 +2312,18 @@ def grant_card_scan_once(c, telegram_id: int, card_id: str, use_key: str,
     return 1
 
 
+def try_block_penalty_with_immunity(c, telegram_id: int, use_key: str) -> bool:
+    c.execute("SELECT immunity FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    if not row or not row[0]:
+        return False
+    c.execute("UPDATE user_status SET immunity=0 WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+    balance_after = (c.fetchone() or [0])[0] or 0
+    log_economy(c, telegram_id, "immunity_block", 0, balance_after, None, "shop", use_key)
+    return True
+
+
 def try_block_penalty_with_terracota(c, telegram_id: int, use_key: str) -> bool:
     if not has_active_implant(c, telegram_id, "implant_terracota"):
         return False
@@ -3701,8 +3713,9 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
 
             previous_points = row[1] or 0
             local_delta = delta
-            blocked_by_implant = local_delta < 0 and try_block_penalty_with_terracota(c, target_id, f"admin_points: {reason}")
-            if not blocked_by_implant:
+            blocked_by_immunity = local_delta < 0 and try_block_penalty_with_immunity(c, target_id, f"admin_points: {reason}")
+            blocked_by_implant = not blocked_by_immunity and local_delta < 0 and try_block_penalty_with_terracota(c, target_id, f"admin_points: {reason}")
+            if not blocked_by_immunity and not blocked_by_implant:
                 if local_delta < 0:
                     armor_reduction = consume_terracota_armor(c, target_id)
                     card_reduction = consume_card_penalty_reduction(c, target_id, f"admin_points: {reason}")
@@ -3735,6 +3748,7 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
                 "previous_points": previous_points,
                 "new_points": new_points,
                 "actual_delta": actual_delta,
+                "blocked_by_immunity": blocked_by_immunity,
                 "blocked_by_implant": blocked_by_implant,
                 "pyro_bonus": pyro_bonus,
             }
