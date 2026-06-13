@@ -349,14 +349,9 @@ let diaryViewedUserId = null;   // whose diary is open (null = currentUserId)
 let diaryIsSaving     = false;
 
 // ── UTILS ─────────────────────────────────────────────────────
-
-function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g,  '&lt;')
-    .replace(/>/g,  '&gt;')
-    .replace(/"/g,  '&quot;');
-}
+// escapeHtml is defined globally in ui.js (escapes & < > " and the
+// apostrophe '). Do not redefine it here — a copy that skips the
+// apostrophe would win by load order and break single-quoted onclick args.
 
 function getDiaryStorageKey() {
   return `zhidao_diary_v1_${currentUserId || 'guest'}`;
