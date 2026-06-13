@@ -8939,6 +8939,12 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
         reward = int(data.get("reward_stars"))
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Укажи сумму награды")
+    try:
+        expires_hours = int(data.get("expires_hours", CONTRACT_EXPIRY_HOURS))
+    except (TypeError, ValueError):
+        expires_hours = CONTRACT_EXPIRY_HOURS
+    if expires_hours < 1 or expires_hours > CONTRACT_EXPIRY_HOURS:
+        expires_hours = CONTRACT_EXPIRY_HOURS
 
     if len(title) < 3:
         raise HTTPException(status_code=400, detail="Название слишком короткое (минимум 3 символа)")
@@ -8993,7 +8999,7 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
             is_susp, susp_reason = detect_suspicious(c, x_telegram_id, reward, title, description, category)
             now = datetime.now(BEIJING_TZ)
             now_str = now.strftime('%Y-%m-%d %H:%M:%S')
-            expires_at = (now + timedelta(hours=CONTRACT_EXPIRY_HOURS)).strftime('%Y-%m-%d %H:%M:%S')
+            expires_at = (now + timedelta(hours=expires_hours)).strftime('%Y-%m-%d %H:%M:%S')
 
             c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (reward, x_telegram_id))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))

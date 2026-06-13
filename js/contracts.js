@@ -534,12 +534,14 @@ function closeCreateContractModal() {
   const catEl   = document.getElementById('contractCategory');
   const rewEl   = document.getElementById('contractReward');
   const anonEl  = document.getElementById('contractAnonymous');
+  const expEl   = document.getElementById('contractExpiryHours');
   const errEl   = document.getElementById('contractCreateError');
   if (titleEl) titleEl.value = '';
   if (descEl)  descEl.value  = '';
   if (catEl)   catEl.value   = 'other';
   if (rewEl)   rewEl.value   = '20';
   if (anonEl)  anonEl.checked = false;
+  if (expEl)   expEl.value   = '24';
   if (errEl)   errEl.style.display = 'none';
   updateContractFeePreview();
 }
@@ -567,6 +569,7 @@ async function submitCreateContract() {
   const category = document.getElementById('contractCategory')?.value || 'other';
   const reward   = parseInt(document.getElementById('contractReward')?.value) || 0;
   const isAnonymous = !!document.getElementById('contractAnonymous')?.checked;
+  const expiresHours = parseInt(document.getElementById('contractExpiryHours')?.value) || 24;
   const errEl    = document.getElementById('contractCreateError');
 
   const showErr = (msg) => {
@@ -583,7 +586,7 @@ async function submitCreateContract() {
     const r = await contractFetch(`${API_URL}/api/contracts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Telegram-Id': String(currentUserId) },
-      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous }),
+      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous, expires_hours: expiresHours }),
     });
     const data = await r.json();
     if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
@@ -610,6 +613,7 @@ async function submitCreateContract() {
       is_suspicious: false,
       suspicious_reason: null,
       created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + expiresHours * 3600000).toISOString(),
       role: 'creator',
     };
     contractsMyCache.unshift(localContract);
@@ -737,6 +741,7 @@ async function submitCreateContract() {
   const category = document.getElementById('contractCategory')?.value || 'other';
   const reward   = parseInt(document.getElementById('contractReward')?.value) || 0;
   const isAnonymous = !!document.getElementById('contractAnonymous')?.checked;
+  const expiresHours = parseInt(document.getElementById('contractExpiryHours')?.value) || 24;
   const errEl    = document.getElementById('contractCreateError');
 
   const showErr = (msg) => {
@@ -753,7 +758,7 @@ async function submitCreateContract() {
     const r = await contractFetch(`${API_URL}/api/contracts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Telegram-Id': String(currentUserId) },
-      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous }),
+      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous, expires_hours: expiresHours }),
     });
     const data = await r.json();
     if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
@@ -780,6 +785,7 @@ async function submitCreateContract() {
       is_suspicious: false,
       suspicious_reason: null,
       created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + expiresHours * 3600000).toISOString(),
       role: 'creator',
     };
     contractsMyCache.unshift(localContract);
