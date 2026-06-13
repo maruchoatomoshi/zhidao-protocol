@@ -14529,6 +14529,32 @@ body.theme-genshin-light .contract-card.status-disputed {
   border-color: rgba(231,76,60,0.30);
 }
 
+body.theme-genshin-light .contract-card.admin-contract {
+  border-color: rgba(184, 134, 59, 0.42);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(184,134,59,0.16), transparent 42%),
+    radial-gradient(circle at 100% 0%, rgba(184,134,59,0.10), transparent 38%),
+    var(--contract-card-bg);
+  box-shadow:
+    0 0 0 1px rgba(184,134,59,0.10),
+    0 14px 30px rgba(85,61,28,0.14),
+    0 0 18px rgba(184,134,59,0.10);
+}
+
+body.theme-genshin-light .contract-card.admin-contract::before {
+  background: linear-gradient(180deg, #b8863b, #8a6820 72%, transparent);
+}
+
+body.theme-genshin-light .contract-admin-badge {
+  border: 1px solid rgba(184, 134, 59, 0.45);
+  background:
+    linear-gradient(90deg, rgba(184,134,59,0.18), rgba(184,134,59,0.08)),
+    rgba(255,250,238,0.85);
+  color: #8a6028;
+  text-shadow: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
+}
+
 body.theme-nw-light .contract-modal-title,
 body.theme-genshin-light .contract-modal-title,
 body.theme-nw-light .contract-field label,
