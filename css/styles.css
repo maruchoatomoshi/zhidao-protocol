@@ -14133,6 +14133,13 @@ body.is-architect .profile-card-spark.spark-bl {
   opacity: 0.92;
 }
 
+.contract-countdown {
+  color: #e67e22;
+  font-size: 9px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
 .contract-privacy-toggle {
   display: flex;
   align-items: flex-start;

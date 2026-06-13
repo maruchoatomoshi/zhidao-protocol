@@ -46,6 +46,7 @@ const CONTRACT_STATUS_COLORS = {
 
 let contractsActiveTab = 'open';
 let contractsRefreshTimer = null;
+let contractsCountdownTimer = null;
 let contractsOpenLoading = false;
 let contractsMyLoading = false;
 let contractsCategoryFilter = 'all';
@@ -163,9 +164,22 @@ function startContractsAutoRefresh() {
     }
     refreshContractsActiveTab({ silent: true });
   }, 6000);
+  if (!contractsCountdownTimer) {
+    contractsCountdownTimer = window.setInterval(() => {
+      if (!isContractsPageActive()) {
+        stopContractsAutoRefresh();
+        return;
+      }
+      renderContractsFromCache();
+    }, 60000);
+  }
 }
 
 function stopContractsAutoRefresh() {
+  if (contractsCountdownTimer) {
+    window.clearInterval(contractsCountdownTimer);
+    contractsCountdownTimer = null;
+  }
   if (!contractsRefreshTimer) return;
   window.clearInterval(contractsRefreshTimer);
   contractsRefreshTimer = null;
@@ -409,6 +423,39 @@ function showContractsBlackwall(msg) {
   syncContractsBlackwallVisible(true, msg);
 }
 
+// Server stores Beijing-local timestamps without a timezone suffix (e.g.
+// "2026-06-13 14:00:00"); local optimistic updates use ISO strings with one.
+function parseContractServerDate(value) {
+  if (!value) return null;
+  const s = String(value);
+  const hasTz = /Z$|[+-]\d{2}:\d{2}$/.test(s);
+  const d = new Date(hasTz ? s : s.replace(' ', 'T') + '+08:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatContractCountdown(value) {
+  const target = parseContractServerDate(value);
+  if (!target) return null;
+  const diffMs = target.getTime() - Date.now();
+  if (diffMs <= 0) return null;
+  const totalMin = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h > 0 ? `${h}ч ${m}м` : `${m}м`;
+}
+
+function getContractCountdownHtml(c) {
+  if (c.status === 'open' && c.expires_at) {
+    const left = formatContractCountdown(c.expires_at);
+    if (left) return `<span class="contract-countdown">⏳ Сгорит через ${left}</span>`;
+  }
+  if (c.status === 'submitted' && c.auto_confirm_at) {
+    const left = formatContractCountdown(c.auto_confirm_at);
+    if (left) return `<span class="contract-countdown">⏳ Автовыплата через ${left}</span>`;
+  }
+  return '';
+}
+
 function renderContractCard(c, showActions) {
   const isMe = currentUserId && c.creator_telegram_id === currentUserId;
   const isAssignee = currentUserId && c.assignee_telegram_id === currentUserId;
@@ -510,6 +557,7 @@ function renderContractCard(c, showActions) {
       <span class="contract-status-hint">${escapeHtml(statusHint)}</span>
       <span class="contract-person">${escapeHtml(creatorName)}${isMe ? ' · ты' : ''}</span>
       ${assigneeHtml}
+      ${getContractCountdownHtml(c)}
     </div>
     ${flowHtml}
     ${suspHtml}
