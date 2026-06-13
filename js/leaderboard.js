@@ -553,10 +553,17 @@ async function loadLeaderboard() {
     const medals = ['🥇','🥈','🥉'];
     let myRank = '—', html = '';
 
-    // Wild AI Breach: данные рейтинга визуально повреждены и перемешаны
+    // Wild AI Breach: личности (имя/аватар/титул) перемешаны между местами рейтинга
     const breachActive = typeof isWildAiBreachActive === 'function' && isWildAiBreachActive();
     if (breachActive && typeof seededShuffle === 'function') {
-      data = seededShuffle(data, getWildAiBreachSeed());
+      const identities = data.map(item => ({
+        name: item.name,
+        avatar_url: item.avatar_url,
+        telegram_id: item.telegram_id,
+        has_title: item.has_title,
+      }));
+      const shuffled = seededShuffle(identities, getWildAiBreachSeed());
+      data = data.map((item, i) => ({ ...item, ...shuffled[i] }));
       html += '<div class="lb-corrupted-badge">⚠ ДАННЫЕ ПОВРЕЖДЕНЫ // ОТОБРАЖЕНИЕ НЕДОСТОВЕРНО</div>';
     }
 
