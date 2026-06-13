@@ -509,6 +509,10 @@ function gsBuildCard(cardId, cardInfo) {
 async function openGenshinCase() {
   if (gsAnimating) return;
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    showToast('⛔ Святилище отрезано диким ИИ. Молитвы недоступны.');
+    return;
+  }
   if (!isAdmin && scanAttempts <= 0) { showToast('Нет попыток сканирования. Зарабатывай на переличках и дневнике!'); return; }
   // Проверяем заморозку
   try {
@@ -839,6 +843,10 @@ function initRoulette(caseType = null, targetIdx = null) {
 async function openCase() {
   if (isSpinning) return;
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    showToast('⛔ ГачаКор захвачен диким ИИ. Доступ заблокирован.');
+    return;
+  }
   if (!isAdmin && scanAttempts <= 0) { showToast('Нет попыток сканирования. Зарабатывай на перекличках и дневнике!'); return; }
 
   // Lock immediately — before any async work
@@ -1252,6 +1260,12 @@ function updateCasinoButtonState(data) {
   const btn = document.getElementById('openCaseBtn');
   if (!btn) return;
   const scans = data.scan_attempts != null ? data.scan_attempts : scanAttempts;
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    btn.disabled = true;
+    btn.classList.add('case-btn-disabled');
+    btn.textContent = '⛔ ГАЧАКОР ЗАХВАЧЕН ДИКИМ ИИ';
+    return;
+  }
   if (data.frozen && !isAdmin) {
     btn.disabled = true;
     btn.classList.add('case-btn-disabled');

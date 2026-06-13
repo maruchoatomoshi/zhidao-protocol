@@ -264,6 +264,7 @@ async function loadShop() {
     }
 
     document.getElementById('shopStoreContent').innerHTML = html || '<div class="empty-state">Магазин пуст</div>';
+    if (typeof applyWildAiShopDisguise === 'function') applyWildAiShopDisguise();
   } catch(e) {
     document.getElementById('shopStoreContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
   }

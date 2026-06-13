@@ -29,12 +29,15 @@ function applyWildAiBreachState(settings) {
     scrambleNavLabels(settings.breach_seed || 0);
     scrambleSubtabLabels(settings.breach_seed || 0);
     scramblePageTitles(settings.breach_seed || 0);
+    scrambleImplantCatalog(settings.breach_seed || 0);
+    applyWildAiShopDisguise();
     startWildAiChaosLoop();
   } else {
     removeWildAiBreachBanner();
     restoreNavLabels();
     restoreSubtabLabels();
     restorePageTitles();
+    restoreImplantCatalog();
     stopWildAiChaosLoop();
   }
 
@@ -48,6 +51,18 @@ function applyWildAiBreachState(settings) {
 
   if (typeof syncArchitectEventAvailability === 'function') syncArchitectEventAvailability();
   if (typeof syncWildAiEventAvailability === 'function') syncWildAiEventAvailability();
+
+  const genshinBtn = document.getElementById('genshinOpenBtn');
+  if (genshinBtn) {
+    if (active && !isAdmin) {
+      genshinBtn.disabled = true;
+      genshinBtn.textContent = '⛔ Святилище отрезано';
+    } else if (genshinBtn.textContent.includes('отрезано')) {
+      genshinBtn.disabled = false;
+      genshinBtn.textContent = '✦ Молитва ✦';
+    }
+  }
+  if (typeof updateCasinoButtonState === 'function') updateCasinoButtonState({});
 
   const wildAiCardCopy = document.querySelector('#homeWildAiEventCard .home-event-card-copy');
   if (wildAiCardCopy) {
@@ -210,6 +225,8 @@ function startWildAiChaosLoop() {
     scrambleNavLabels(_wildAiBreachSeed + tick);
     scrambleSubtabLabels(_wildAiBreachSeed + tick);
     scramblePageTitles(_wildAiBreachSeed + tick);
+    scrambleImplantCatalog(_wildAiBreachSeed + tick);
+    applyWildAiShopDisguise(_wildAiBreachSeed + tick);
   }, 7000);
 }
 
@@ -264,4 +281,62 @@ function applyWildAiProfileOverride() {
   setProfileText('profileStatusLine', '状态：失控 // 权限：未知 // 同步率：???%');
   ['profileStatCases','profileStatPrayers','profileStatCards','profileStatImplants','profileStatDiaries','profileStatRaids']
     .forEach(id => setProfileText(id, '???'));
+}
+
+// ===== Каталог имплантов — перетасовка названий между карточками =====
+
+let _wildAiImplantTitlesOriginal = null;
+
+function scrambleImplantCatalog(seed) {
+  const titles = Array.from(document.querySelectorAll('.implant-catalog-title'));
+  if (titles.length < 2) return;
+  if (!_wildAiImplantTitlesOriginal) {
+    _wildAiImplantTitlesOriginal = titles.map(el => el.textContent);
+  }
+  const shuffled = seededShuffle(_wildAiImplantTitlesOriginal, seed);
+  titles.forEach((el, i) => { el.textContent = shuffled[i]; });
+}
+
+function restoreImplantCatalog() {
+  if (!_wildAiImplantTitlesOriginal) return;
+  const titles = Array.from(document.querySelectorAll('.implant-catalog-title'));
+  titles.forEach((el, i) => { el.textContent = _wildAiImplantTitlesOriginal[i]; });
+  _wildAiImplantTitlesOriginal = null;
+}
+
+// ===== Магазин — товары "перехватывают личность" друг друга =====
+// Карточка перерисовывается заново при каждой loadShop(), поэтому она всегда
+// содержит настоящие данные с сервера — маскируем только отображение
+// (имя/иконку/описание/кнопку), реальный data-item-code и покупка не меняются.
+
+function applyWildAiShopDisguise(seed) {
+  if (!isWildAiBreachActive()) return;
+  const items = Array.from(document.querySelectorAll('#shopStoreContent .shop-item'));
+  if (items.length < 2) return;
+  const useSeed = (seed != null) ? seed : _wildAiBreachSeed;
+
+  const originals = items.map(el => ({
+    name: el.querySelector('.shop-item-name')?.innerHTML || '',
+    desc: el.querySelector('.shop-item-cn')?.innerHTML || '',
+    icon: el.querySelector('.shop-item-icon')?.innerHTML || '',
+    onclick: el.querySelector('.shop-item-buy')?.getAttribute('onclick') || null,
+  }));
+  const shuffled = seededShuffle(originals, useSeed);
+
+  items.forEach((el, i) => {
+    const src = shuffled[i];
+    const nameEl = el.querySelector('.shop-item-name');
+    const descEl = el.querySelector('.shop-item-cn');
+    const iconEl = el.querySelector('.shop-item-icon');
+    const btnEl = el.querySelector('.shop-item-buy');
+    if (nameEl) nameEl.innerHTML = src.name;
+    if (descEl) descEl.innerHTML = src.desc;
+    if (iconEl) iconEl.innerHTML = src.icon;
+    if (btnEl && src.onclick) {
+      const disguisedName = (nameEl ? nameEl.textContent : '').trim();
+      const escaped = disguisedName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const newOnclick = src.onclick.replace(/buyItem\('([^']*)','[^']*',/, (m, code) => `buyItem('${code}','${escaped}',`);
+      btnEl.setAttribute('onclick', newOnclick);
+    }
+  });
 }
