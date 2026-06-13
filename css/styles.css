@@ -6050,7 +6050,7 @@ body.theme-genshin #raid-action-btn {
     min-width: 130px;
     background: var(--bg2);
     border: 1px solid var(--border);
-    color: var(--text1);
+    color: var(--text);
     border-radius: 8px;
     padding: 8px 10px;
     font-family: monospace;
@@ -6094,7 +6094,7 @@ body.theme-genshin #raid-action-btn {
 .diary-student-name {
     flex: 1;
     font-size: 12px;
-    color: var(--text1);
+    color: var(--text);
     font-family: monospace;
 }
 .diary-student-words {
