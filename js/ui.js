@@ -242,6 +242,12 @@ function openMore(section) {
   } else {
     el.style.display = 'block';
     currentMoreSection = section;
+    if (section === 'themes' && isAdmin) {
+      ['theme-btn-genshin-light', 'theme-btn-genshin-dark'].forEach(id => {
+        const cardEl = document.getElementById(id);
+        if (cardEl) cardEl.style.display = '';
+      });
+    }
     if (section === 'achievements') loadAchievements();
     if (section === 'news') loadAnnouncements();
     if (section === 'laundry') { initLaundry(); }
