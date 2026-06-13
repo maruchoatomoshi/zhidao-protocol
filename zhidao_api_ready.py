@@ -8823,9 +8823,11 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
     }
 
 
-def expire_stale_open_contracts(c):
+def expire_stale_open_contracts():
     """Marks 'open' contracts past their expires_at as 'expired' and refunds the
     creator's frozen reward in full."""
+    conn = get_conn()
+    c = conn.cursor()
     now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
     c.execute(
         "SELECT id, creator_telegram_id, reward_stars FROM contracts "
@@ -8840,6 +8842,8 @@ def expire_stale_open_contracts(c):
         c.execute("UPDATE contracts SET status='expired', cancelled_at=? WHERE id=?", (now_str, cid))
         log_economy(c, creator_id, 'contract_expired_refund', reward, bal, cid, 'contract',
                     f"Контракт #{cid} сгорел, возврат")
+    conn.commit()
+    conn.close()
 
 
 def _resolve_names(c, creator_id, assignee_id):
