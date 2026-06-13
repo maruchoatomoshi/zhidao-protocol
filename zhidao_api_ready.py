@@ -3069,6 +3069,8 @@ LEGENDARY_ACTION_COOLDOWNS = {
     "star_ward": timedelta(days=7),
     "earth_contract": timedelta(hours=72),
     "okamenenie": timedelta(days=7),
+    "strike": timedelta(hours=72),
+    "blackwall": timedelta(days=7),
 }
 
 
@@ -6520,6 +6522,104 @@ async def netwatch_veil_breach(data: dict):
     await send_telegram_message(
         target_id,
         "🔴 NetWatch активировал «Взлом Заслона».\n"
+        "Магазин и кейсы временно недоступны на 12 часов.",
+    )
+    return {"success": True, "target": target_name, "locked_until": locked_until}
+
+
+@app.post("/api/netwatch/strike")
+async def netwatch_strike(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    if actor_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Admin only")
+    try:
+        points = int(data.get("points") or 0)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="points must be a number")
+    if points <= 0:
+        raise HTTPException(status_code=400, detail="points must be positive")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "strike")
+            tid, tname, _ = find_action_target(c, actor_id, None, target_name)
+            c.execute(
+                '''SELECT telegram_id, full_name, COALESCE(points, 0)
+                   FROM users
+                   WHERE telegram_id NOT IN (?, ?)
+                     AND telegram_id NOT IN ({})
+                     AND COALESCE(points, 0) >= 15
+                   ORDER BY RANDOM()
+                   LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS)) or 'NULL'),
+                [actor_id, tid] + ADMIN_IDS,
+            )
+            secondary = c.fetchone()
+            secondary_id = secondary[0] if secondary else None
+            secondary_name = secondary[1] if secondary else None
+            c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (points, tid))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
+            target_balance = c.fetchone()[0] or 0
+            log_economy(c, tid, "netwatch_strike", -points, target_balance, actor_id, "implant", "Боевой скрипт")
+            secondary_delta = 0
+            if secondary_id:
+                c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
+                secondary_balance = c.fetchone()[0] or 0
+                log_economy(c, secondary_id, "netwatch_strike_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
+                secondary_delta = -5
+            log_legendary_action(c, actor_id, tid, secondary_id, "implant_netwatch", "strike", -points, secondary_delta, tname)
+            conn.commit()
+            return tid, tname, secondary_id, secondary_name
+        finally:
+            conn.close()
+
+    target_id, target_name, secondary_id, secondary_name = await db_write(_run)
+    await send_telegram_message(target_id, f"🔴 NetWatch выполнил боевой скрипт.\nС вашего баланса снято {points}★.")
+    if secondary_id:
+        await send_telegram_message(secondary_id, "🔴 Побочный импульс NetWatch.\nС вашего баланса снято 5★.")
+    return {
+        "success": True,
+        "target": target_name,
+        "collateral": 1 if secondary_id else 0,
+    }
+
+
+@app.post("/api/netwatch/blackwall")
+async def netwatch_blackwall(data: dict):
+    actor_id = int(data.get("telegram_id") or 0)
+    target_name = data.get("target_name")
+    if not actor_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    if actor_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "blackwall")
+            tid, tname, _ = find_action_target(c, actor_id, None, target_name)
+            lu = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
+                   ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
+                (tid, lu),
+            )
+            log_legendary_action(c, actor_id, tid, None, "implant_netwatch", "blackwall", 0, 0, tname)
+            conn.commit()
+            return tid, tname, lu
+        finally:
+            conn.close()
+
+    target_id, target_name, locked_until = await db_write(_run)
+    await send_telegram_message(
+        target_id,
+        "🔴 NetWatch активировал Blackwall.\n"
         "Магазин и кейсы временно недоступны на 12 часов.",
     )
     return {"success": True, "target": target_name, "locked_until": locked_until}
