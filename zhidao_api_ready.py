@@ -573,6 +573,7 @@ CONTRACT_MAX_COMPLETED_PER_DAY = 5
 CONTRACT_MAX_DAILY_SPEND = 150
 CONTRACT_MAX_DAILY_EARN = 150
 CONTRACT_MIN_COMPLETE_SECONDS = 300
+CONTRACT_EXPIRY_HOURS = 24
 CONTRACT_CATEGORIES = {'living', 'chinese', 'app', 'reminder', 'trade', 'other'}
 LATIN_RE = re.compile(r'[A-Za-z]')
 PINYIN_RE = re.compile(r"^(?:[A-Za-züÜvV:]+[1-5])+(?:[ '\\-](?:[A-Za-züÜvV:]+[1-5])+)*$")
@@ -1344,6 +1345,8 @@ def migrate_db():
     contract_columns = {row[1] for row in c.fetchall()}
     if 'is_anonymous' not in contract_columns:
         c.execute("ALTER TABLE contracts ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0")
+    if 'expires_at' not in contract_columns:
+        c.execute("ALTER TABLE contracts ADD COLUMN expires_at TEXT DEFAULT NULL")
     c.execute('''CREATE TABLE IF NOT EXISTS economy_log
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER NOT NULL,
@@ -8814,9 +8817,29 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
         "completed_at": row[13],
         "cancelled_at": row[14],
         "disputed_at": row[15],
+        "expires_at": row[16],
         "role": ("creator" if viewer_id and row[6] == viewer_id else
                  "assignee" if viewer_id and row[7] == viewer_id else None),
     }
+
+
+def expire_stale_open_contracts(c):
+    """Marks 'open' contracts past their expires_at as 'expired' and refunds the
+    creator's frozen reward in full."""
+    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        "SELECT id, creator_telegram_id, reward_stars FROM contracts "
+        "WHERE status='open' AND expires_at IS NOT NULL AND expires_at < ?",
+        (now_str,),
+    )
+    rows = c.fetchall()
+    for cid, creator_id, reward in rows:
+        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
+        c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
+        bal = c.fetchone()[0] or 0
+        c.execute("UPDATE contracts SET status='expired', cancelled_at=? WHERE id=?", (now_str, cid))
+        log_economy(c, creator_id, 'contract_expired_refund', reward, bal, cid, 'contract',
+                    f"Контракт #{cid} сгорел, возврат")
 
 
 def _resolve_names(c, creator_id, assignee_id):
@@ -8842,7 +8865,9 @@ def _check_blackwall(c, user_id):
 
 
 @app.get("/api/contracts")
-def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
+async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
+    await db_write(expire_stale_open_contracts, label="expire_stale_open_contracts")
+
     conn = get_conn()
     c = conn.cursor()
     _check_blackwall(c, x_telegram_id)
@@ -8851,7 +8876,7 @@ def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
                   created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  is_anonymous
+                  expires_at, is_anonymous
            FROM contracts
            WHERE status='open'
            ORDER BY created_at DESC
@@ -8861,15 +8886,18 @@ def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:16], cn, an, ca, aa, x_telegram_id, bool(row[16]), True))
+        result.append(_contract_to_dict(row[:17], cn, an, ca, aa, x_telegram_id, bool(row[17]), True))
     conn.close()
     return result
 
 
 @app.get("/api/contracts/my")
-def my_contracts(x_telegram_id: Optional[int] = Header(None)):
+async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     if not x_telegram_id:
         raise HTTPException(status_code=401, detail="Not authorized")
+
+    await db_write(expire_stale_open_contracts, label="expire_stale_open_contracts")
+
     conn = get_conn()
     c = conn.cursor()
     _check_blackwall(c, x_telegram_id)
@@ -8878,7 +8906,7 @@ def my_contracts(x_telegram_id: Optional[int] = Header(None)):
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
                   created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  is_anonymous
+                  expires_at, is_anonymous
            FROM contracts
            WHERE creator_telegram_id=? OR assignee_telegram_id=?
            ORDER BY created_at DESC
@@ -8889,7 +8917,7 @@ def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:16], cn, an, ca, aa, x_telegram_id, bool(row[16]), False))
+        result.append(_contract_to_dict(row[:17], cn, an, ca, aa, x_telegram_id, bool(row[17]), False))
     conn.close()
     return result
 
@@ -8959,7 +8987,9 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
                 return {"error": f"Дневной лимит расходов через контракты: {CONTRACT_MAX_DAILY_SPEND} ★", "status": 400}
 
             is_susp, susp_reason = detect_suspicious(c, x_telegram_id, reward, title, description, category)
-            now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+            now = datetime.now(BEIJING_TZ)
+            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            expires_at = (now + timedelta(hours=CONTRACT_EXPIRY_HOURS)).strftime('%Y-%m-%d %H:%M:%S')
 
             c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (reward, x_telegram_id))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
@@ -8968,9 +8998,9 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
             c.execute(
                 '''INSERT INTO contracts
                    (title, description, category, reward_stars, fee_stars,
-                    creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)''',
-                (title, description, category, reward, local_fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str),
+                    creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at, expires_at)
+                   VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?)''',
+                (title, description, category, reward, local_fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str, expires_at),
             )
             contract_id = c.lastrowid
             log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
@@ -9186,6 +9216,7 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
+                      c.expires_at,
                       u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
@@ -9200,6 +9231,7 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
+                      c.expires_at,
                       u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
@@ -9209,11 +9241,11 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
     rows = c.fetchall()
     conn.close()
     return [
-        {**_contract_to_dict(row[:16], row[16], row[17], row[18], row[19], None, bool(row[20]), False),
-         "creator_name": row[16], "assignee_name": row[17],
-         "creator_avatar_url": _safe_contract_avatar_url(row[18]),
-         "assignee_avatar_url": _safe_contract_avatar_url(row[19]),
-         "is_anonymous": bool(row[20])}
+        {**_contract_to_dict(row[:17], row[17], row[18], row[19], row[20], None, bool(row[21]), False),
+         "creator_name": row[17], "assignee_name": row[18],
+         "creator_avatar_url": _safe_contract_avatar_url(row[19]),
+         "assignee_avatar_url": _safe_contract_avatar_url(row[20]),
+         "is_anonymous": bool(row[21])}
         for row in rows
     ]
 

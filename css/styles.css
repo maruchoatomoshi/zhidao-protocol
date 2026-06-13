@@ -13989,6 +13989,7 @@ body.is-architect .profile-card-spark.spark-bl {
 .contract-card.status-completed::before { background: linear-gradient(180deg, #2ecc71, transparent); }
 .contract-card.status-disputed::before { background: linear-gradient(180deg, #e74c3c, transparent); }
 .contract-card.status-cancelled::before { background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent); }
+.contract-card.status-expired::before { background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent); }
 
 .contract-card.status-accepted {
   background: linear-gradient(135deg, rgba(52,152,219,0.06), rgba(255,255,255,0.018));
@@ -14006,6 +14007,7 @@ body.is-architect .profile-card-spark.spark-bl {
 }
 
 .contract-card.status-cancelled { opacity: 0.62; }
+.contract-card.status-expired { opacity: 0.62; }
 
 .contract-card.admin-contract {
   border-color: rgba(96, 180, 212, 0.42);

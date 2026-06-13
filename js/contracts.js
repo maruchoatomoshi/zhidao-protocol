@@ -19,6 +19,7 @@ const CONTRACT_STATUS_LABELS = {
   completed: 'Завершено',
   cancelled: 'Отменён',
   disputed:  'Спор',
+  expired:   'Сгорел',
 };
 
 const CONTRACT_STATUS_HINTS = {
@@ -27,6 +28,7 @@ const CONTRACT_STATUS_HINTS = {
   completed: 'Награда выплачена',
   cancelled: 'Поручение закрыто',
   disputed:  'Нужна помощь администратора',
+  expired:   'Никто не взял за 24 часа · комиссия возвращена',
 };
 
 const CONTRACT_STATUS_COLORS = {
@@ -35,6 +37,7 @@ const CONTRACT_STATUS_COLORS = {
   completed: '#2ecc71',
   cancelled: 'var(--text3)',
   disputed:  '#e74c3c',
+  expired:   'var(--text3)',
 };
 
 let contractsActiveTab = 'open';
