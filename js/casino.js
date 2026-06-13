@@ -30,14 +30,14 @@ const IMPLANT_DISPLAY_INFO = {
   implant_linguasoft: { name: 'Linguasoft \u53e3\u624d', desc: '+30\u2605 \u0437\u0430 3\u2605 \u0432 \u0434\u043d\u0435\u0432\u043d\u0438\u043a\u0435 \u00b7 \u0441\u0442\u0440\u0438\u043a \u00d73 \u0435\u0449\u0451 +20\u2605', icon: '\ud83c\udf99' },
   implant_caishen: { name: '\u0426\u0430\u0439\u0448\u044d\u043d\u044c \u8d22\u795e', desc: '+15\u2605 \u043a\u0430\u0436\u0434\u044b\u0435 24 \u0447\u0430\u0441\u0430', icon: '\ud83d\udcb0' },
   implant_qilin: { name: '\u0426\u0438\u043b\u0438\u043d\u044c \u9e92\u9e9f', desc: '+10\u2605 \u0437\u0430 \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 \u0426\u0438\u043b\u0438\u043d\u044f', icon: '\ud83d\udc09' },
-  implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u0431\u0430\u043b\u043b\u043e\u0432 \u00b7 \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442 \u00b7 \u0441\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0438\u043c\u043f\u0443\u043b\u044c\u0441', icon: '\ud83d\udc09' },
+  implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u043d\u0430\u0433\u0440\u0430\u0434\u043d\u044b\u0445 \u00b7 \u0432\u0434\u0432\u043e\u0435 \u0432 \u0432\u043e\u0441\u043a\u0440\u0435\u0441\u0435\u043d\u044c\u0435 \u00b7 \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442 \u00b7 \u0441\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0438\u043c\u043f\u0443\u043b\u044c\u0441', icon: '\ud83d\udc09' },
   implant_netwatch: { name: '\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0414\u043e\u0437\u043e\u0440 \u7f51\u7edc\u5b88\u536b', desc: 'NetWatch: \u0443\u0434\u0430\u0440, Blackwall \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0441\u0435\u0442\u0438', icon: '\ud83d\udd34' },
 };
 const LEGENDARY_IMPLANT_INFO = {
   implant_red_dragon: {
     title: 'ПРОТОКОЛ КРАСНЫЙ ДРАКОН',
     glyph: '龍',
-    passive: 'Воскресная зарплата удваивается автоматически.',
+    passive: 'Воскресная зарплата удваивается автоматически. +20% к наградным начислениям и урону в ивентах (Атака/Протокол).',
     actions: [
       { code: 'intercept', label: 'ПЕРЕХВАТ', hint: 'Забрать 10★ у цели' },
       { code: 'impulse_reset', label: 'СБРОСИТЬ ИМПУЛЬС', hint: 'Отменить игровой штраф до 20★' },
@@ -48,7 +48,7 @@ const LEGENDARY_IMPLANT_INFO = {
     glyph: '衛',
     passive: 'Каждое утро узел получает +25★ восполнения памяти.',
     actions: [
-      { code: 'formatting', label: 'ФОРМАТИРОВАНИЕ', hint: 'Цель -15★, побочный урон -5★' },
+      { code: 'formatting', label: 'ФОРМАТИРОВАНИЕ', hint: 'Цель -15★, побочный урон -5★ случайному игроку рядом' },
       { code: 'veil_breach', label: 'ВЗЛОМ ЗАСЛОНА', hint: 'Блок магазина и кейсов на 12 часов' },
     ],
   },
