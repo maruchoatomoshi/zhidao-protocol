@@ -2168,6 +2168,15 @@ DIARY_STAR_POINTS = {1: 15, 2: 30, 3: 50}
 DIARY_STAR_BONUS_POINTS = 20
 
 
+def award_achievement(c, telegram_id: int, code: str) -> bool:
+    """Awards an achievement if not already earned. Returns True if newly granted."""
+    c.execute(
+        "INSERT OR IGNORE INTO user_achievements (telegram_id, achievement_code) VALUES (?,?)",
+        (telegram_id, code),
+    )
+    return c.rowcount > 0
+
+
 def log_economy(c, telegram_id: int, operation: str, amount: int,
                 balance_after=None, reference_id=None, reference_type=None, note=None):
     now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
@@ -5113,7 +5122,7 @@ def get_leaderboard():
 
 
 @app.get("/api/achievements/{telegram_id}")
-def get_user_achievements(telegram_id: int):
+async def get_user_achievements(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT code, name, description, icon, secret FROM achievements")
@@ -5121,6 +5130,25 @@ def get_user_achievements(telegram_id: int):
     c.execute("SELECT achievement_code, earned_at FROM user_achievements WHERE telegram_id=?", (telegram_id,))
     earned = {row[0]: row[1] for row in c.fetchall()}
     conn.close()
+
+    if "legend" not in earned:
+        def _check_legend():
+            conn2 = get_conn()
+            c2 = conn2.cursor()
+            try:
+                c2.execute("SELECT rep_score FROM users WHERE telegram_id=?", (telegram_id,))
+                row = c2.fetchone()
+                rep_score = (row[0] or 0) if row else 0
+                if rep_score >= 600 and award_achievement(c2, telegram_id, "legend"):
+                    conn2.commit()
+                    return datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+                return None
+            finally:
+                conn2.close()
+        legend_earned_at = await db_write(_check_legend)
+        if legend_earned_at:
+            earned["legend"] = legend_earned_at
+
     result = []
     for code, name, description, icon, secret in all_achievements:
         is_earned = code in earned
@@ -5260,6 +5288,12 @@ async def open_case(data: dict):
             c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
             scan_row = c.fetchone()
             log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
+
+            award_achievement(c, telegram_id, "gambler")
+            if prize["code"] in ("jackpot", "implant_red_dragon"):
+                award_achievement(c, telegram_id, "lucky")
+            if prize["code"] == "implant_red_dragon":
+                award_achievement(c, telegram_id, "dragon")
             if doubled_win:
                 log_economy(c, telegram_id, 'double_win_consumed', 0, new_points, None, "shop_item", "Двойной выигрыш")
             conn.commit()
@@ -6071,6 +6105,7 @@ async def gift_item(data: dict):
         if gift_tax < 20:
             log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
         log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
+        award_achievement(c, from_id, "helper")
         conn.commit()
         conn.close()
         return {"success": True}
@@ -6672,6 +6707,13 @@ async def open_genshin_case(data: dict):
         c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
         sc_row = c.fetchone()
         log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
+
+        award_achievement(c, telegram_id, "gambler")
+        if pool_name == "gold" and not result.get("duplicate"):
+            award_achievement(c, telegram_id, "lucky")
+        if result.get("card_id") == "card_zhongli" and not result.get("duplicate"):
+            award_achievement(c, telegram_id, "dragon")
+
         conn.commit()
         conn.close()
         result["new_points"] = new_points
