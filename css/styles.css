@@ -16387,7 +16387,7 @@ body.theme-admin-light .campus-map-search i {
 }
 
 body.theme-admin-light .campus-map-search input {
-  color: var(--text1);
+  color: var(--text);
 }
 
 body.theme-admin-light .campus-map-search input::placeholder {
