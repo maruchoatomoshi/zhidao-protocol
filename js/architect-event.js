@@ -1421,8 +1421,8 @@ async function _doCreateArchitectEvent(rewardText) {
       body: JSON.stringify({
         telegram_id: currentUserId,
         reward_text: rewardText,
-        min_players: 3,
-        max_players: 5
+        min_players: 5,
+        max_players: 15
       })
     });
 
