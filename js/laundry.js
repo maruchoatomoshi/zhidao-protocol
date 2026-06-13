@@ -25,11 +25,13 @@ async function bookWaterSlot(slotId) {
 }
 
 async function cancelWaterSlot(slotId) {
-  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
-    if(b!=='ok')return;
-    fetch(`${API_URL}/api/water/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
-      .then(()=>loadWaterSchedule()).catch(()=>{});
-  });
+  const ok = await showConfirmDialog({title:'Отменить запись?',message:'Слот снова станет свободным.',confirmText:'Отменить запись',danger:true});
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/water/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    showToast(r.ok ? 'Запись отменена' : 'Не удалось отменить');
+    loadWaterSchedule();
+  } catch(e) { showToast('Нет соединения'); }
 }
 
 async function loadLaundrySchedule() {
@@ -131,22 +133,23 @@ async function bookLaundrySlot(slotId) {
 }
 
 async function cancelLaundrySlot(slotId) {
-  tg.showPopup({title:'Отменить запись?',message:'Слот снова станет свободным.',buttons:[{id:'ok',type:'default',text:'Отменить запись'},{type:'cancel'}]},(b)=>{
-    if(b!=='ok')return;
-    fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})})
-      .then(()=>loadLaundrySchedule()).catch(()=>{});
-  });
+  const ok = await showConfirmDialog({title:'Отменить запись?',message:'Слот снова станет свободным.',confirmText:'Отменить запись',danger:true});
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    showToast(r.ok ? 'Запись отменена' : 'Не удалось отменить');
+    loadLaundrySchedule();
+  } catch(e) { showToast('Нет соединения'); }
 }
 
-// Старые функции — оставляем для совместимости
+// Алиас старого имени — всё ещё вызывается из admin.js и cancelLaundry().
 async function loadLaundry() { loadLaundrySchedule(); }
-function renderLaundrySlots() {}
-async function bookLaundry(time) {}
 
 async function cancelLaundry(id) {
   try {
     const r = await fetch(`${API_URL}/api/laundry/${id}`,{method:'DELETE',headers:{'x-telegram-id':currentUserId}});
-    if (r.ok) { showToast('Запись отменена'); loadLaundry(); }
+    showToast(r.ok ? 'Запись отменена' : 'Не удалось отменить');
+    loadLaundry();
   } catch(e) { showToast('Ошибка'); }
 }
 

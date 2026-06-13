@@ -257,134 +257,9 @@ function openMore(section) {
 }
 
 // ===== ДАННЫЕ =====
-
-async function loadUserData(telegramId) {
-  let r, data;
-  const _initData = (typeof getTelegramInitData === 'function') ? getTelegramInitData() : '';
-  console.log('[loadUserData] start', {
-    telegramId,
-    initDataLength: _initData ? _initData.length : 0,
-    hasInitDataUnsafeUser: Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user),
-  });
-  try {
-    r = await fetch(`${API_URL}/api/user/${telegramId}`);
-  } catch(e) {
-    console.error('[loadUserData] network error', telegramId, e && e.stack || e);
-    document.getElementById('status').textContent = '● ОФЛАЙН';
-    document.getElementById('username').textContent = 'Ошибка связи';
-    hideStartupCover();
-    return;
-  }
-
-  console.log('[loadUserData] response', {
-    status: r.status,
-    requestId: r.headers.get('X-Request-ID') || r.headers.get('x-request-id'),
-    processTimeMs: r.headers.get('X-Process-Time-ms') || r.headers.get('x-process-time-ms'),
-  });
-
-  if (!r.ok) {
-    console.warn('[loadUserData] non-OK response', r.status, r.statusText);
-    document.getElementById('status').textContent = '● НЕ НАЙДЕН';
-    document.getElementById('username').textContent = 'Нет подписки';
-    hideStartupCover();
-    return;
-  }
-
-  try {
-    data = await r.json();
-  } catch(e) {
-    console.error('[loadUserData] JSON parse error', e && e.stack || e);
-    document.getElementById('status').textContent = '● ОФЛАЙН';
-    document.getElementById('username').textContent = 'Ошибка связи';
-    hideStartupCover();
-    return;
-  }
-
-  try {
-    {
-      document.getElementById('status').textContent = '● АКТИВЕН';
-      document.getElementById('status').style.color = '#cc4444';
-      document.getElementById('username').textContent = data.full_name || data.username;
-
-      isAdmin = !!data.is_admin;
-      isArchitect = !!data.is_architect;
-      document.body.classList.toggle('is-architect', isArchitect);
-      document.querySelectorAll('.architect-only-block').forEach(el => {
-        el.style.display = isArchitect ? '' : 'none';
-      });
-      if (isArchitect) {
-        localStorage.setItem('zhidao_architect', '1');
-        const badge = document.querySelector('.profile-admin-badge');
-        if (badge) badge.textContent = '架构师 // ARCHITECT';
-        const kicker = document.getElementById('profileKicker');
-        if (kicker) kicker.textContent = 'ARCHITECT // PROTOCOL';
-        const afterIntro = () => {
-          const nameEl = document.getElementById('profileDisplayName');
-          cipherDecode(nameEl);
-        };
-        if (!playAdminIntroIfNeeded(data, afterIntro)) {
-          startBlackwallBoot(afterIntro);
-        }
-        setupProfileTilt();
-      } else {
-        // Clear flag — not architect (covers account change / stale localStorage)
-        localStorage.removeItem('zhidao_architect');
-        // Abort boot overlay if it was pre-shown from stale localStorage
-        // Also hide overlay if it was pre-shown by inline script (stale localStorage)
-        const _ov = document.getElementById('blackwall-boot');
-        if (_ov) _ov.style.display = 'none';
-        if (_bootRunning) {
-          _bootRunning = false;
-          _bootCbs = [];
-        }
-      }
-      if (!isArchitect && document.body.classList.contains('theme-architect')) {
-        if (typeof setTheme === 'function') setTheme('');
-        try { tg.CloudStorage.setItem('zhidao_theme', ''); } catch(e) {}
-        localStorage.setItem('zhidao_theme', '');
-      }
-      if (isAdmin && !isArchitect) {
-        const badge = document.querySelector('.profile-admin-badge');
-        if (badge) badge.textContent = '系统架构师';
-        playAdminIntroIfNeeded(data);
-      }
-      if (isAdmin && typeof syncAdminThemeMode === 'function') {
-        syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
-      }
-      // Re-apply path so admin-specific catalog visibility is correct even if
-      // loadPoints() ran before isAdmin was set (race condition fix).
-      if (isAdmin && currentThemePath && typeof applyThemePath === 'function') {
-        applyThemePath(currentThemePath);
-      }
-      syncAdminUiVisibility();
-      // MVP badge on profile
-      const mvpBadge = document.getElementById('profileMvpBadge');
-      if (mvpBadge) mvpBadge.style.display = data.is_last_mvp ? 'inline-flex' : 'none';
-      userConfig = data.link;
-      currentAvatarUrl = data.avatar_url || null;
-      if (typeof renderProfileAvatarCard === 'function') {
-        renderProfileAvatarCard(data);
-      }
-      if (typeof syncDiaryAccessVisibility === 'function') {
-        syncDiaryAccessVisibility();
-      }
-      document.getElementById('serverTag').textContent = data.has_vpn === false
-        ? 'STUDENT NODE // VPN не привязан'
-        : 'HK NODE // ' + ((data.used_traffic || 0) / 1024/1024/1024).toFixed(2) + ' GB';
-      const used = data.used_traffic || 0;
-      const usedGB = (used / 1024/1024/1024).toFixed(2);
-      document.getElementById('trafficValue').textContent = data.has_vpn === false ? '— GB' : usedGB + ' GB';
-      const percent = Math.min((used / (10*1024*1024*1024)) * 100, 100);
-      setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
-      if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
-    }
-  } catch(e) {
-    // Profile data was fetched successfully — a UI render error here must not
-    // blank out a valid profile with a false "ОФЛАЙН" state.
-    console.error('[loadUserData] UI render error after successful fetch', e && e.stack || e);
-    hideStartupCover();
-  }
-}
+// loadUserData() живёт ниже как обёртка с ретраями над zFetchUserProfile /
+// zApplyUserProfile. Старая inline-реализация удалена как мёртвый код:
+// две function-декларации с одним именем — побеждала вторая.
 
 // ── ADMIN EXCLUSIVE INTRO VIDEOS ─────────────────────────────
 
@@ -578,9 +453,15 @@ function startBlackwallBoot(cb) {
   });
 }
 
+let _profileTiltBound = false;
 function setupProfileTilt() {
   const card = document.getElementById('profileCard');
   if (!card) return;
+  // The card is a singleton element; binding listeners more than once (e.g. on
+  // every profile reload for an architect) would stack duplicate pointer and
+  // global deviceorientation handlers. Bind exactly once.
+  if (_profileTiltBound) return;
+  _profileTiltBound = true;
   const MAX = 10;
 
   function applyTilt(rx, ry) {
