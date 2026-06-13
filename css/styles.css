@@ -14100,6 +14100,7 @@ body.is-architect .profile-card-spark.spark-bl {
 }
 
 .contract-flow-accepted span.done { border-color: rgba(52,152,219,0.42); background: linear-gradient(90deg, #3498db, rgba(52,152,219,0.28)); }
+.contract-flow-submitted span.done { border-color: rgba(155,89,182,0.42); background: linear-gradient(90deg, #9b59b6, rgba(155,89,182,0.28)); }
 .contract-flow-completed span.done { border-color: rgba(46,204,113,0.42); background: linear-gradient(90deg, #2ecc71, rgba(46,204,113,0.26)); }
 .contract-flow-disputed span.done { border-color: rgba(231,76,60,0.42); background: linear-gradient(90deg, #e74c3c, rgba(231,76,60,0.25)); }
 .contract-flow-cancelled span { opacity: 0.5; }

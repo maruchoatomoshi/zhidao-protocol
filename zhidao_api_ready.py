@@ -574,6 +574,7 @@ CONTRACT_MAX_DAILY_SPEND = 150
 CONTRACT_MAX_DAILY_EARN = 150
 CONTRACT_MIN_COMPLETE_SECONDS = 300
 CONTRACT_EXPIRY_HOURS = 24
+CONTRACT_AUTO_CONFIRM_HOURS = 24
 CONTRACT_CATEGORIES = {'living', 'chinese', 'app', 'reminder', 'trade', 'other'}
 LATIN_RE = re.compile(r'[A-Za-z]')
 PINYIN_RE = re.compile(r"^(?:[A-Za-züÜvV:]+[1-5])+(?:[ '\\-](?:[A-Za-züÜvV:]+[1-5])+)*$")
@@ -1347,6 +1348,10 @@ def migrate_db():
         c.execute("ALTER TABLE contracts ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0")
     if 'expires_at' not in contract_columns:
         c.execute("ALTER TABLE contracts ADD COLUMN expires_at TEXT DEFAULT NULL")
+    if 'submitted_at' not in contract_columns:
+        c.execute("ALTER TABLE contracts ADD COLUMN submitted_at TEXT DEFAULT NULL")
+    if 'auto_confirm_at' not in contract_columns:
+        c.execute("ALTER TABLE contracts ADD COLUMN auto_confirm_at TEXT DEFAULT NULL")
     c.execute('''CREATE TABLE IF NOT EXISTS economy_log
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER NOT NULL,
@@ -3193,7 +3198,8 @@ def get_contract_row(c, contract_id: int):
         '''SELECT id, title, description, category, reward_stars, fee_stars,
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
-                  created_at, accepted_at, completed_at, cancelled_at, disputed_at
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                  submitted_at, auto_confirm_at
            FROM contracts WHERE id=?''',
         (contract_id,),
     )
@@ -8818,6 +8824,8 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
         "cancelled_at": row[14],
         "disputed_at": row[15],
         "expires_at": row[16],
+        "submitted_at": row[17],
+        "auto_confirm_at": row[18],
         "role": ("creator" if viewer_id and row[6] == viewer_id else
                  "assignee" if viewer_id and row[7] == viewer_id else None),
     }
@@ -8880,7 +8888,7 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
                   created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  expires_at, is_anonymous
+                  expires_at, submitted_at, auto_confirm_at, is_anonymous
            FROM contracts
            WHERE status='open'
            ORDER BY created_at DESC
@@ -8890,7 +8898,7 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:17], cn, an, ca, aa, x_telegram_id, bool(row[17]), True))
+        result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), True))
     conn.close()
     return result
 
@@ -8901,6 +8909,7 @@ async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
         raise HTTPException(status_code=401, detail="Not authorized")
 
     await db_write(expire_stale_open_contracts, label="expire_stale_open_contracts")
+    await db_write(auto_confirm_submitted_contracts, label="auto_confirm_submitted_contracts")
 
     conn = get_conn()
     c = conn.cursor()
@@ -8910,7 +8919,7 @@ async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
                   created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  expires_at, is_anonymous
+                  expires_at, submitted_at, auto_confirm_at, is_anonymous
            FROM contracts
            WHERE creator_telegram_id=? OR assignee_telegram_id=?
            ORDER BY created_at DESC
@@ -8921,7 +8930,7 @@ async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:17], cn, an, ca, aa, x_telegram_id, bool(row[17]), False))
+        result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), False))
     conn.close()
     return result
 
@@ -9086,6 +9095,104 @@ async def accept_contract(contract_id: int, x_telegram_id: Optional[int] = Heade
     return {"success": True}
 
 
+def _finalize_contract_payout(c, contract_id, row, now, auto=False):
+    """Pays out an accepted/submitted contract: assignee gets the reward minus
+    fee, creator's frozen fee is burned, contract becomes 'completed'."""
+    creator_id, assignee_id, reward, fee = row[6], row[7], row[4], row[5]
+    now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+    payout = reward - fee
+    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
+    assignee_bal = c.fetchone()[0] or 0
+    payout_reason = 'contract_auto_payout' if auto else 'contract_payout'
+    payout_note = 'Автовыплата' if auto else 'Выплата'
+    log_economy(c, assignee_id, payout_reason, payout, assignee_bal, contract_id, 'contract',
+                f"{payout_note} за контракт #{contract_id}")
+    sea_bonus = grant_card_points_once(
+        c, assignee_id, "card_sea", "contract_current", 5,
+        "card_sea_current", f"контракт #{contract_id}", now.strftime('%Y-%m-%d'),
+        contract_id, "contract",
+    )
+    c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
+    log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
+                f"Комиссия Сетевого Дозора: контракт #{contract_id}")
+    return {"success": True, "payout": payout, "fee_burned": fee, "card_sea_bonus": sea_bonus}
+
+
+def auto_confirm_submitted_contracts():
+    """Auto-confirms 'submitted' contracts whose auto_confirm_at has passed,
+    paying out the assignee as if the creator had confirmed."""
+    conn = get_conn()
+    c = conn.cursor()
+    now = datetime.now(BEIJING_TZ)
+    now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''SELECT id, title, description, category, reward_stars, fee_stars,
+                  creator_telegram_id, assignee_telegram_id, status,
+                  is_suspicious, suspicious_reason,
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                  submitted_at, auto_confirm_at
+           FROM contracts
+           WHERE status='submitted' AND auto_confirm_at IS NOT NULL AND auto_confirm_at < ?''',
+        (now_str,),
+    )
+    rows = c.fetchall()
+    for row in rows:
+        _finalize_contract_payout(c, row[0], row, now, auto=True)
+    conn.commit()
+    conn.close()
+
+
+@app.post("/api/contracts/{contract_id}/submit")
+async def submit_contract(contract_id: int, x_telegram_id: Optional[int] = Header(None)):
+    if not x_telegram_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            row = get_contract_row(c, contract_id)
+            if not row:
+                return {"error": "Контракт не найден", "status": 404}
+            assignee_id, status, accepted_at = row[7], row[8], row[12]
+            susp_reason = row[10]
+            if status != 'accepted':
+                return {"error": "Контракт не в работе", "status": 400}
+            if x_telegram_id != assignee_id:
+                return {"error": "Только исполнитель может отметить выполнение", "status": 403}
+
+            now = datetime.now(BEIJING_TZ)
+            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            if accepted_at:
+                try:
+                    accepted_dt = datetime.strptime(accepted_at, '%Y-%m-%d %H:%M:%S')
+                    elapsed = (now.replace(tzinfo=None) - accepted_dt).total_seconds()
+                    if elapsed < CONTRACT_MIN_COMPLETE_SECONDS:
+                        new_reason = ((susp_reason or '') + '; слишком быстрое завершение').lstrip('; ')
+                        c.execute("UPDATE contracts SET is_suspicious=1, suspicious_reason=? WHERE id=?",
+                                  (new_reason, contract_id))
+                except Exception:
+                    pass
+
+            auto_confirm_at = (now + timedelta(hours=CONTRACT_AUTO_CONFIRM_HOURS)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                "UPDATE contracts SET status='submitted', submitted_at=?, auto_confirm_at=? WHERE id=?",
+                (now_str, auto_confirm_at, contract_id),
+            )
+            log_economy(c, x_telegram_id, 'contract_submit', 0, None, contract_id, 'contract',
+                        f"Исполнитель отметил выполнение: контракт #{contract_id}")
+            conn.commit()
+            return {"success": True, "auto_confirm_at": auto_confirm_at}
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+    return result
+
+
 @app.post("/api/contracts/{contract_id}/complete")
 async def complete_contract(contract_id: int,
                              x_telegram_id: Optional[int] = Header(None),
@@ -9100,18 +9207,19 @@ async def complete_contract(contract_id: int,
         if not row:
             conn.close()
             raise HTTPException(status_code=404, detail="Контракт не найден")
-        creator_id, assignee_id, reward, fee, status, accepted_at = row[6], row[7], row[4], row[5], row[8], row[12]
-        is_susp, susp_reason = bool(row[9]), row[10]
-        if status != 'accepted':
+        creator_id, status, accepted_at = row[6], row[8], row[12]
+        susp_reason = row[10]
+        if status not in ('accepted', 'submitted'):
             conn.close()
-            raise HTTPException(status_code=400, detail="Можно завершить только принятый контракт")
+            raise HTTPException(status_code=400, detail="Можно завершить только принятый или сданный на проверку контракт")
         if x_admin_id not in ADMIN_IDS and acting_id != creator_id:
             conn.close()
             raise HTTPException(status_code=403, detail="Только заказчик или администратор может подтвердить выполнение")
 
         now = datetime.now(BEIJING_TZ)
-        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
-        if accepted_at:
+        # Creator confirmed straight from 'accepted' (skipping the assignee's
+        # submit step) — keep the existing too-fast-completion suspicion check.
+        if status == 'accepted' and accepted_at:
             try:
                 accepted_dt = datetime.strptime(accepted_at, '%Y-%m-%d %H:%M:%S')
                 elapsed = (now.replace(tzinfo=None) - accepted_dt).total_seconds()
@@ -9122,23 +9230,10 @@ async def complete_contract(contract_id: int,
             except Exception:
                 pass
 
-        payout = reward - fee
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
-        assignee_bal = c.fetchone()[0] or 0
-        log_economy(c, assignee_id, 'contract_payout', payout, assignee_bal, contract_id, 'contract',
-                    f"Выплата за контракт #{contract_id}")
-        sea_bonus = grant_card_points_once(
-            c, assignee_id, "card_sea", "contract_current", 5,
-            "card_sea_current", f"контракт #{contract_id}", now.strftime('%Y-%m-%d'),
-            contract_id, "contract",
-        )
-        c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
-        log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
-                    f"Комиссия Сетевого Дозора: контракт #{contract_id}")
+        result = _finalize_contract_payout(c, contract_id, row, now, auto=False)
         conn.commit()
         conn.close()
-        return {"success": True, "payout": payout, "fee_burned": fee, "card_sea_bonus": sea_bonus}
+        return result
     return await db_write(_run)
 
 
@@ -9157,13 +9252,13 @@ async def cancel_contract(contract_id: int,
             conn.close()
             raise HTTPException(status_code=404, detail="Контракт не найден")
         creator_id, reward, status = row[6], row[4], row[8]
-        if status not in ('open', 'accepted', 'disputed'):
+        if status not in ('open', 'accepted', 'submitted', 'disputed'):
             conn.close()
             raise HTTPException(status_code=400, detail="Контракт нельзя отменить в текущем статусе")
         if status == 'open' and acting_id != creator_id and x_admin_id not in ADMIN_IDS:
             conn.close()
             raise HTTPException(status_code=403, detail="Только заказчик может отменить открытый контракт")
-        if status in ('accepted', 'disputed') and x_admin_id not in ADMIN_IDS:
+        if status in ('accepted', 'submitted', 'disputed') and x_admin_id not in ADMIN_IDS:
             conn.close()
             raise HTTPException(status_code=403, detail="Только администратор может отменить принятый контракт")
 
@@ -9197,9 +9292,9 @@ async def dispute_contract(contract_id: int,
             conn.close()
             raise HTTPException(status_code=404, detail="Контракт не найден")
         creator_id, assignee_id, status = row[6], row[7], row[8]
-        if status != 'accepted':
+        if status not in ('accepted', 'submitted'):
             conn.close()
-            raise HTTPException(status_code=400, detail="Спор можно открыть только для принятого контракта")
+            raise HTTPException(status_code=400, detail="Спор можно открыть только для принятого или сданного на проверку контракта")
         if acting_id not in (creator_id, assignee_id) and x_admin_id not in ADMIN_IDS:
             conn.close()
             raise HTTPException(status_code=403, detail="Только участники контракта могут открыть спор")
@@ -9226,7 +9321,7 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
-                      c.expires_at,
+                      c.expires_at, c.submitted_at, c.auto_confirm_at,
                       u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
@@ -9241,7 +9336,7 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
-                      c.expires_at,
+                      c.expires_at, c.submitted_at, c.auto_confirm_at,
                       u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
@@ -9251,11 +9346,11 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
     rows = c.fetchall()
     conn.close()
     return [
-        {**_contract_to_dict(row[:17], row[17], row[18], row[19], row[20], None, bool(row[21]), False),
-         "creator_name": row[17], "assignee_name": row[18],
-         "creator_avatar_url": _safe_contract_avatar_url(row[19]),
-         "assignee_avatar_url": _safe_contract_avatar_url(row[20]),
-         "is_anonymous": bool(row[21])}
+        {**_contract_to_dict(row[:19], row[19], row[20], row[21], row[22], None, bool(row[23]), False),
+         "creator_name": row[19], "assignee_name": row[20],
+         "creator_avatar_url": _safe_contract_avatar_url(row[21]),
+         "assignee_avatar_url": _safe_contract_avatar_url(row[22]),
+         "is_anonymous": bool(row[23])}
         for row in rows
     ]
 

@@ -12,10 +12,12 @@ const CONTRACT_CATEGORY_LABELS = {
 const CONTRACT_MIN_REWARD = 5;
 const CONTRACT_MAX_REWARD = 50;
 const CONTRACT_ADMIN_MAX_REWARD = 100;
+const CONTRACT_AUTO_CONFIRM_HOURS = 24;
 
 const CONTRACT_STATUS_LABELS = {
   open:      'Ждёт исполнителя',
   accepted:  'В работе',
+  submitted: 'На проверке',
   completed: 'Завершено',
   cancelled: 'Отменён',
   disputed:  'Спор',
@@ -25,6 +27,7 @@ const CONTRACT_STATUS_LABELS = {
 const CONTRACT_STATUS_HINTS = {
   open:      'Можно принять поручение',
   accepted:  'Исполнитель взял задачу',
+  submitted: 'Исполнитель отметил выполнение',
   completed: 'Награда выплачена',
   cancelled: 'Поручение закрыто',
   disputed:  'Нужна помощь администратора',
@@ -34,6 +37,7 @@ const CONTRACT_STATUS_HINTS = {
 const CONTRACT_STATUS_COLORS = {
   open:      '#e67e22',
   accepted:  '#3498db',
+  submitted: '#9b59b6',
   completed: '#2ecc71',
   cancelled: 'var(--text3)',
   disputed:  '#e74c3c',
@@ -429,6 +433,20 @@ function renderContractCard(c, showActions) {
     </button>`;
   }
   if (c.status === 'accepted' && isMe) {
+    actionsHtml = `<button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
+      Открыть спор
+    </button>`;
+  }
+  if (c.status === 'accepted' && isAssignee && !isMe) {
+    actionsHtml = `
+      <button class="contract-action-btn complete" onclick="submitContractDone(${c.id})">
+        ✓ Отметить выполненным
+      </button>
+      <button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
+        Открыть спор
+      </button>`;
+  }
+  if (c.status === 'submitted' && isMe) {
     actionsHtml = `
       <button class="contract-action-btn complete" onclick="completeContract(${c.id})">
         ✓ Подтвердить выполнение
@@ -437,7 +455,7 @@ function renderContractCard(c, showActions) {
         Открыть спор
       </button>`;
   }
-  if (c.status === 'accepted' && isAssignee && !isMe) {
+  if (c.status === 'submitted' && isAssignee && !isMe) {
     actionsHtml = `<button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
       Открыть спор
     </button>`;
@@ -459,7 +477,7 @@ function renderContractCard(c, showActions) {
     ? '<span class="contract-admin-badge">ADMIN ORDER</span>'
     : '';
   const flowSteps = ['open', 'accepted', 'completed'];
-  const flowIndex = c.status === 'disputed'
+  const flowIndex = (c.status === 'disputed' || c.status === 'submitted')
     ? 1
     : (c.status === 'cancelled' ? -1 : flowSteps.indexOf(c.status));
   const flowHtml = `<div class="contract-flow-block">
@@ -500,16 +518,20 @@ function renderContractCard(c, showActions) {
 }
 
 function getContractStatusLabel(contract, isCreator, isAssignee) {
-  if (contract.status === 'accepted' && isCreator) return 'Ждёт подтверждения';
+  if (contract.status === 'accepted' && isCreator) return 'Исполнитель работает';
   if (contract.status === 'accepted' && isAssignee) return 'Ты выполняешь';
+  if (contract.status === 'submitted' && isCreator) return 'Ждёт подтверждения';
+  if (contract.status === 'submitted' && isAssignee) return 'Сдано на проверку';
   return CONTRACT_STATUS_LABELS[contract.status] || contract.status || 'Статус неизвестен';
 }
 
 function getContractStatusHint(contract, isCreator, isAssignee) {
   if (contract.status === 'open' && isCreator) return 'Ты создал поручение, ждём исполнителя';
   if (contract.status === 'open') return 'Можно принять и выполнить';
-  if (contract.status === 'accepted' && isCreator) return 'Проверь результат и подтверди';
-  if (contract.status === 'accepted' && isAssignee) return 'Выполни задачу и жди подтверждения';
+  if (contract.status === 'accepted' && isCreator) return 'Исполнитель выполняет задачу';
+  if (contract.status === 'accepted' && isAssignee) return 'Выполни задачу и отметь готовность';
+  if (contract.status === 'submitted' && isCreator) return 'Проверь результат и подтверди';
+  if (contract.status === 'submitted' && isAssignee) return `Жди подтверждения — иначе выплата произойдёт автоматически через ${CONTRACT_AUTO_CONFIRM_HOURS} ч.`;
   return CONTRACT_STATUS_HINTS[contract.status] || '';
 }
 
@@ -820,6 +842,35 @@ async function acceptContract(id) {
   } catch (e) {
     await recoverContractsAfterUncertainMutation('Проверяю, было ли поручение принято.');
   }
+}
+
+async function submitContractDone(id) {
+  if (!currentUserId) return;
+  tg.showPopup({
+    title: 'Отметить как выполненное?',
+    message: `Заказчик проверит работу и подтвердит выплату. Если не ответит за ${CONTRACT_AUTO_CONFIRM_HOURS} ч, выплата произойдёт автоматически.`,
+    buttons: [{ id: 'ok', type: 'default', text: '✓ Готово' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/submit`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось отметить выполнение', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      updateContractInCaches(id, {
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+        auto_confirm_at: data.auto_confirm_at || null,
+      });
+    } catch (e) {
+      await recoverContractsAfterUncertainMutation('Проверяю, было ли поручение отмечено выполненным.');
+    }
+  });
 }
 
 async function completeContract(id) {
