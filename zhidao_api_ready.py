@@ -62,6 +62,13 @@ try:
     RATE_LIMIT_MAX_REQUESTS_PER_SECOND = int(os.getenv("RATE_LIMIT_MAX_REQUESTS_PER_SECOND", "20") or "0")
 except ValueError:
     RATE_LIMIT_MAX_REQUESTS_PER_SECOND = 20
+# Many students share one campus Wi-Fi NAT, so a single client IP can carry
+# dozens of distinct users. This caps total traffic per IP, separate from the
+# per-user limit above.
+try:
+    RATE_LIMIT_MAX_REQUESTS_PER_IP = int(os.getenv("RATE_LIMIT_MAX_REQUESTS_PER_IP", "300") or "0")
+except ValueError:
+    RATE_LIMIT_MAX_REQUESTS_PER_IP = 300
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 REQUEST_LOG_SLOW_MS = int(os.getenv("REQUEST_LOG_SLOW_MS", "1500") or "1500")
 REQUEST_LOG_ALL = os.getenv("REQUEST_LOG_ALL", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -444,10 +451,30 @@ async def telegram_auth_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# Per-IP sliding-window rate limit. nginx does not front this port (uvicorn
+# Sliding-window rate limit. nginx does not front this port (uvicorn
 # terminates TLS directly on 8443), so this is the only request-volume guard.
+#
+# Limits are applied at two levels:
+#  - per (IP, user) bucket — RATE_LIMIT_MAX_REQUESTS_PER_SECOND, catches a
+#    single misbehaving client.
+#  - per IP bucket — RATE_LIMIT_MAX_REQUESTS_PER_IP, catches abuse from one
+#    address while still allowing many students behind one campus NAT.
 _rate_limit_buckets: dict[str, deque] = {}
+_rate_limit_ip_buckets: dict[str, deque] = {}
 _rate_limit_lock = threading.Lock()
+
+
+def _rate_limit_identity(request: Request) -> Optional[str]:
+    header_id = request.headers.get("x-telegram-id") or request.headers.get("x-admin-id")
+    if header_id:
+        return str(header_id)
+    path_id = extract_path_telegram_id(request.url.path)
+    if path_id is not None:
+        return str(path_id)
+    query_id = request.query_params.get("telegram_id")
+    if query_id:
+        return str(query_id)
+    return None
 
 
 @app.middleware("http")
@@ -456,14 +483,29 @@ async def rate_limit_middleware(request: Request, call_next):
         return await call_next(request)
 
     client_ip = request.client.host if request.client else "unknown"
+    identity = _rate_limit_identity(request)
     now = time.monotonic()
     with _rate_limit_lock:
-        bucket = _rate_limit_buckets.setdefault(client_ip, deque())
-        while bucket and now - bucket[0] > 1.0:
-            bucket.popleft()
-        if len(bucket) >= RATE_LIMIT_MAX_REQUESTS_PER_SECOND:
-            return JSONResponse({"detail": "Too many requests"}, status_code=429)
-        bucket.append(now)
+        # Per-user limit only applies when we can identify the user. Requests
+        # without an identity (e.g. /api/leaderboard, /api/settings) are
+        # shared by everyone behind the same NAT, so they're governed solely
+        # by the higher per-IP limit below.
+        if identity:
+            bucket_key = f"{client_ip}:{identity}"
+            bucket = _rate_limit_buckets.setdefault(bucket_key, deque())
+            while bucket and now - bucket[0] > 1.0:
+                bucket.popleft()
+            if len(bucket) >= RATE_LIMIT_MAX_REQUESTS_PER_SECOND:
+                return JSONResponse({"detail": "Too many requests"}, status_code=429)
+            bucket.append(now)
+
+        if RATE_LIMIT_MAX_REQUESTS_PER_IP > 0:
+            ip_bucket = _rate_limit_ip_buckets.setdefault(client_ip, deque())
+            while ip_bucket and now - ip_bucket[0] > 1.0:
+                ip_bucket.popleft()
+            if len(ip_bucket) >= RATE_LIMIT_MAX_REQUESTS_PER_IP:
+                return JSONResponse({"detail": "Too many requests"}, status_code=429)
+            ip_bucket.append(now)
 
     return await call_next(request)
 
