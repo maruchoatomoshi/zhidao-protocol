@@ -560,7 +560,7 @@ SHOP_ITEM_SEEDS = [
     ("snack",       "Снэк",               "Награда из специального меню",                  "🍦", 200,  5, "food"),
     ("no_report",   "Без доклада",        "Пропуск одного доклада по согласованию",        "📄", 400,  5, "vip"),
     ("poizon",      "Poizon",             "Премиальная награда",                           "👕", 600,  3, "vip"),
-    ("double_win",  "Двойной выигрыш",    "Удваивает очки первой кртуки кейса или молитвы — после использования сгорает", "🎴", 130, 10, "privilege"),
+    ("double_win",  "Двойной сигнал",     "Удваивает очки первого открытия кейса или молитвы — после использования сгорает", "🎴", 130, 10, "privilege"),
     ("title_player","Титул дня",          "Особый титул профиля на сегодня",               "👑", 150, -1, "vip"),
     (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня",                        "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
     ("path_switch", "Смена пути 转换",    "Переключиться между NetWatch и Genshin",        "🔁", 500, -1, "vip"),
@@ -594,7 +594,7 @@ ACHIEVEMENT_SEEDS = [
     ("dragon", "Драконий след", "Получить редкий имплант, карту или отличиться в особом событии.", "🐉", 0),
     ("night_watch", "Ночной дозор", "Ответственно закрыть вечернюю отметку или помочь проверить группу.", "🦉", 0),
     ("master", "Мастер системы", "Уверенно пользоваться ключевыми разделами ZHIDAO Protocol.", "⚙", 0),
-    ("gambler", "Игрок вероятности", "Открыть кейсы или молитвы и пережить результат достойно.", "♦", 0),
+    ("gambler", "Исследователь вероятности", "Открыть кейсы или молитвы и принять результат достойно.", "♦", 0),
     ("lucky", "Счастливый сигнал", "Получить редкий удачный исход в системе.", "✦", 0),
 ]
 SHOP_GIFT_DAILY_LIMIT = 5
@@ -6268,7 +6268,7 @@ async def open_case(data: dict):
             if prize["code"] == "implant_red_dragon":
                 award_achievement(c, telegram_id, "dragon")
             if doubled_win:
-                log_economy(c, telegram_id, 'double_win_consumed', 0, new_points, None, "shop_item", "Двойной выигрыш")
+                log_economy(c, telegram_id, 'double_win_consumed', 0, new_points, None, "shop_item", "Двойной сигнал")
             conn.commit()
             return {
                 "new_points": new_points,
@@ -7847,7 +7847,7 @@ async def open_genshin_case(data: dict):
             if doubled_win:
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                 balance_after = c.fetchone()[0] or 0
-                log_economy(c, telegram_id, "double_win_consumed", 0, balance_after, None, "shop_item", "Двойной выигрыш")
+                log_economy(c, telegram_id, "double_win_consumed", 0, balance_after, None, "shop_item", "Двойной сигнал")
             result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★" + (" ×2" if doubled_win else ""), "rarity": 0, "card_bonus": fox_bonus, "doubled_win": doubled_win}
         elif item['type'] == 'immunity':
             c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
