@@ -1645,7 +1645,9 @@ async def start_background_tasks():
             conn = sqlite3.connect('/root/zhidao.db', timeout=5)
             try:
                 conn.execute("PRAGMA busy_timeout=1000")
-                row = conn.execute("PRAGMA wal_checkpoint(RESTART)").fetchone()
+                # PASSIVE only — RESTART/TRUNCATE compete with writers and were
+                # observed taking 49-72s on production (hard rule, 2026-06-09).
+                row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
                 print(
                     "ZHIDAO_STARTUP_CHECKPOINT busy=%s log_frames=%s checkpointed_frames=%s" % (
                         row[0] if row else "?",
@@ -7325,24 +7327,29 @@ def get_wild_ai_breach_state(c) -> dict:
 
 
 @app.get("/api/settings")
-def get_settings():
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT value FROM settings WHERE key='blackwall'")
-    blackwall = c.fetchone()
-    c.execute("SELECT value FROM settings WHERE key='architect_event'")
-    architect_event = c.fetchone()
-    c.execute("SELECT value FROM settings WHERE key='wildai_event'")
-    wildai_event = c.fetchone()
-    breach = get_wild_ai_breach_state(c)
-    conn.commit()
-    conn.close()
-    return {
-        "blackwall": blackwall[0] == '1' if blackwall else False,
-        "architect_event": architect_event[0] == '1' if architect_event else False,
-        "wildai_event": wildai_event[0] == '1' if wildai_event else False,
-        **breach,
-    }
+async def get_settings():
+    # Routed through the single-writer executor: get_wild_ai_breach_state() does
+    # INSERT OR REPLACE writes when a breach expires. A sync GET would run in
+    # FastAPI's default threadpool and race the writer thread (hard rule 3).
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT value FROM settings WHERE key='blackwall'")
+        blackwall = c.fetchone()
+        c.execute("SELECT value FROM settings WHERE key='architect_event'")
+        architect_event = c.fetchone()
+        c.execute("SELECT value FROM settings WHERE key='wildai_event'")
+        wildai_event = c.fetchone()
+        breach = get_wild_ai_breach_state(c)
+        conn.commit()
+        conn.close()
+        return {
+            "blackwall": blackwall[0] == '1' if blackwall else False,
+            "architect_event": architect_event[0] == '1' if architect_event else False,
+            "wildai_event": wildai_event[0] == '1' if wildai_event else False,
+            **breach,
+        }
+    return await db_write(_run)
 
 
 @app.get("/api/campus-map")

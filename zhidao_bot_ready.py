@@ -103,7 +103,7 @@ def db_connect():
     conn = sqlite3.connect("/root/zhidao.db", timeout=30)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA wal_autocheckpoint=1000")
+    conn.execute("PRAGMA wal_autocheckpoint=0")  # bot must not auto-checkpoint; the API owns WAL maintenance (hard rule, 2026-06-09)
     return conn
 
 
@@ -310,7 +310,7 @@ async def api_request(method, path, json_data=None, params=None, admin=False):
     if admin:
         headers["x-admin-id"] = str(PRESENCE_ADMIN_ID)
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.request(
             method,
             f"{API_URL}{path}",
@@ -494,28 +494,38 @@ def find_user_by_name(query):
 
 
 async def get_token():
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            f"{MARZBAN_URL}/api/admin/token",
-            data={"username": MARZBAN_USER, "password": MARZBAN_PASS},
-        ) as r:
-            data = await r.json()
-            return data.get("access_token")
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            async with session.post(
+                f"{MARZBAN_URL}/api/admin/token",
+                data={"username": MARZBAN_USER, "password": MARZBAN_PASS},
+            ) as r:
+                data = await r.json()
+                return data.get("access_token")
+    except Exception as exc:
+        print("ZHIDAO_MARZBAN_TOKEN_ERROR %r" % (exc,), flush=True)
+        return None
 
 
 async def get_user_link(marzban_username):
     token = await get_token()
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"{MARZBAN_URL}/api/user/{marzban_username}",
-            headers={"Authorization": f"Bearer {token}"},
-        ) as r:
-            data = await r.json()
-            links = data.get("links") or []
-            if links:
-                return links[0]
-            subscription_url = data.get("subscription_url") or data.get("subscriptionUrl")
-            return str(subscription_url).strip() if subscription_url else None
+    if not token:
+        return None
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            async with session.get(
+                f"{MARZBAN_URL}/api/user/{marzban_username}",
+                headers={"Authorization": f"Bearer {token}"},
+            ) as r:
+                data = await r.json()
+                links = data.get("links") or []
+                if links:
+                    return links[0]
+                subscription_url = data.get("subscription_url") or data.get("subscriptionUrl")
+                return str(subscription_url).strip() if subscription_url else None
+    except Exception as exc:
+        print("ZHIDAO_MARZBAN_LINK_ERROR %r" % (exc,), flush=True)
+        return None
 
 
 def get_mini_app_keyboard():
@@ -1078,7 +1088,7 @@ async def bug_reports_list(message: types.Message):
 @dp.message(Command("weather", "погода"))
 async def weather(message: types.Message):
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
             async with session.get(
                 "http://api.openweathermap.org/data/2.5/weather",
                 params={
@@ -1498,7 +1508,7 @@ async def gift_item_cmd(message: types.Message):
         await message.answer(f"❌ Пользователь '{args[1]}' не найден")
         return
     to_id, to_name, _ = recipient
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.post(
             f"{API_URL}/api/shop/gift",
             json={"purchase_id": purchase_id, "from_id": message.from_user.id, "to_id": to_id},
@@ -1550,7 +1560,7 @@ async def netwatch_strike_cmd(message: types.Message):
     except Exception:
         await message.answer("❌ Баллы должны быть числом")
         return
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.post(
             f"{API_URL}/api/netwatch/strike",
             json={"telegram_id": message.from_user.id, "target_name": args[1], "points": points},
@@ -1575,7 +1585,7 @@ async def netwatch_blackwall_cmd(message: types.Message):
     if len(args) < 2:
         await message.answer("Использование: /netwatch_blackwall ИМЯ")
         return
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.post(
             f"{API_URL}/api/netwatch/blackwall",
             json={"telegram_id": message.from_user.id, "target_name": args[1]},
@@ -1623,7 +1633,7 @@ def _genshin_active_owners(c, card_id: str):
 
 
 async def moon_morning():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     owners = _genshin_active_owners(c, 'card_moon')
     conn.close()
