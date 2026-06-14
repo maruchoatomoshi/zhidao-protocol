@@ -11281,6 +11281,168 @@ body.theme-genshin .raid-result-text {
     color: #3d4555;
 }
 
+/* ===== GENSHIN DARK: night-palette overrides for raid overlay =====
+   body.theme-genshin's raid-content uses a cream/parchment "Liyue day"
+   palette that clashes with the dark theme's background. Re-skin to the
+   genshin-dark "Liyue night" palette (#1a1628 + gold), same structure. */
+body.theme-genshin-dark .raid-overlay {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(219,177,101,0.16), transparent 34%),
+      radial-gradient(circle at 100% 100%, rgba(80,90,154,0.18), transparent 42%),
+      rgba(10, 8, 16, 0.82);
+}
+
+body.theme-genshin-dark .raid-content {
+    border-color: rgba(219,177,101,0.28);
+    background:
+      radial-gradient(circle at 18% 0%, rgba(60,52,80,0.6), transparent 34%),
+      radial-gradient(circle at 100% 16%, rgba(80,90,154,0.22), transparent 38%),
+      linear-gradient(145deg, rgba(34,28,46,0.97), rgba(20,16,30,0.98));
+    box-shadow:
+      0 28px 70px rgba(0,0,0,0.5),
+      inset 0 0 0 1px rgba(255,255,255,0.05);
+    color: #e8e0d0;
+}
+
+body.theme-genshin-dark .raid-content::before {
+    background:
+      linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.06) 18%, transparent 36%),
+      repeating-linear-gradient(90deg, rgba(219,177,101,0.03) 0 1px, transparent 1px 10px);
+    opacity: 0.82;
+}
+
+body.theme-genshin-dark .raid-content::after {
+    border-color: rgba(219,177,101,0.12);
+}
+
+body.theme-genshin-dark .btn-close-raid {
+    color: rgba(232,224,208,0.5);
+}
+
+body.theme-genshin-dark .btn-close-raid:hover {
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .boss-frame::before {
+    border-color: rgba(219,177,101,0.22);
+    background:
+      radial-gradient(circle at center, rgba(219,177,101,0.08), transparent 66%),
+      linear-gradient(180deg, rgba(219,177,101,0.08), rgba(80,90,154,0.06));
+    box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+}
+
+body.theme-genshin-dark .boss-frame::after {
+    background: radial-gradient(circle, rgba(219,177,101,0.18), transparent 70%);
+}
+
+body.theme-genshin-dark .boss-img {
+    border-color: rgba(219,177,101,0.32);
+    background:
+      radial-gradient(circle at 50% 16%, rgba(255,255,255,0.08), transparent 52%),
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(219,177,101,0.05));
+    box-shadow:
+      0 16px 40px rgba(0,0,0,0.4),
+      inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+body.theme-genshin-dark .boss-name {
+    color: #e8e0d0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+body.theme-genshin-dark .boss-title {
+    color: #dbb165;
+    opacity: 0.95;
+}
+
+body.theme-genshin-dark .raid-kicker {
+    border-color: rgba(219,177,101,0.26);
+    background: rgba(219,177,101,0.08);
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-kicker-dot {
+    background: #dbb165;
+    box-shadow: 0 0 14px rgba(219,177,101,0.85);
+}
+
+body.theme-genshin-dark .raid-chip {
+    border-color: rgba(219,177,101,0.16);
+    background: rgba(255,255,255,0.04);
+    color: #a09880;
+}
+
+body.theme-genshin-dark .raid-status-block {
+    border-color: rgba(219,177,101,0.16);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
+      rgba(219,177,101,0.05);
+}
+
+body.theme-genshin-dark .raid-status-block::before {
+    background: linear-gradient(90deg, transparent, rgba(219,177,101,0.16), transparent);
+}
+
+body.theme-genshin-dark .raid-meter-eyebrow,
+body.theme-genshin-dark .raid-progress-hint,
+body.theme-genshin-dark .raid-progress-percent,
+body.theme-genshin-dark .raid-roster-head,
+body.theme-genshin-dark .raid-brief-card span {
+    color: rgba(232,224,208,0.6);
+}
+
+body.theme-genshin-dark .raid-meter-state {
+    border-color: rgba(219,177,101,0.22);
+    background: rgba(219,177,101,0.1);
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-progress-container {
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.03) 0 8%, transparent 8% 10%, rgba(255,255,255,0.03) 10% 18%, transparent 18% 20%, rgba(255,255,255,0.03) 20% 28%, transparent 28% 30%, rgba(255,255,255,0.03) 30% 38%, transparent 38% 40%, rgba(255,255,255,0.03) 40% 48%, transparent 48% 50%, rgba(255,255,255,0.03) 50% 58%, transparent 58% 60%, rgba(255,255,255,0.03) 60% 68%, transparent 68% 70%, rgba(255,255,255,0.03) 70% 78%, transparent 78% 80%, rgba(255,255,255,0.03) 80% 88%, transparent 88% 90%, rgba(255,255,255,0.03) 90% 100%),
+      rgba(255,255,255,0.02);
+    border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-dark .raid-progress-bar {
+    background: linear-gradient(90deg, #5a6aa0, #dbb165 64%, #f0d89a);
+    box-shadow: 0 0 16px rgba(219,177,101,0.35);
+}
+
+body.theme-genshin-dark .raid-result-panel.success {
+    border-color: rgba(86,150,106,0.32);
+    background: rgba(86,150,106,0.12);
+}
+
+body.theme-genshin-dark .raid-result-panel.danger {
+    border-color: rgba(200,100,80,0.32);
+    background: rgba(200,100,80,0.12);
+}
+
+body.theme-genshin-dark .raid-result-title,
+body.theme-genshin-dark .raid-count-label,
+body.theme-genshin-dark .raid-result-text {
+    color: #e8e0d0;
+}
+
+/* ===== NETWATCH LIGHT: keep the raid overlay on its dark "night raid"
+   palette. The overlay background stays dark regardless of theme, but
+   --text/--gold/--red flip to light-theme (dark-on-light) values in
+   theme-nw-light, making boss name/labels nearly invisible on the dark
+   overlay. Re-pin those variables to their dark-theme values, scoped to
+   the overlay only. */
+body.theme-nw-light .raid-overlay {
+    --text: #ffffff;
+    --text2: #cccccc;
+    --text3: #888888;
+    --gold: #d4af37;
+    --gold-dim: rgba(212,175,55,0.1);
+    --gold-border: rgba(212,175,55,0.25);
+    --red: #cc2200;
+    --red-dim: rgba(180,20,20,0.15);
+    --red-border: rgba(180,20,20,0.35);
+}
+
 /* ===== RAID VISUAL ENHANCEMENTS ===== */
 
 /* Result panel: center layout + icon */
