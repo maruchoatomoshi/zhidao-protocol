@@ -349,6 +349,124 @@ function skipAdminIntro() {
   finishAdminIntro();
 }
 
+// ── THEME SELECTION SPLASH (для всех игроков) ────────────────
+// При первом входе после выбора темы NetWatch/Genshin показываем
+// соответствующую видео-заставку (тот же ролик, что у admin intro).
+// Для Михаил Юрьевича (Альфабосс, 244487659) NetWatch-заставка
+// показывается при каждом запуске приложения.
+
+const THEME_INTRO_ASSETS = {
+  cyberpunk: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/cyberpunktheme_intro.mp4',
+  genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_intro.mp4',
+};
+
+const THEME_INTRO_CAPTIONS = {
+  cyberpunk: 'NETWATCH ACCESS',
+  genshin: 'GENSHIN ACCESS',
+};
+
+const PERMANENT_THEME_INTRO_IDS = {
+  cyberpunk: [244487659], // Михаил Юрьевич // Альфабосс
+};
+
+let themeIntroPlaying = false;
+let themeIntroDoneCallback = null;
+
+function themeIntroVariant(theme) {
+  if (theme === 'genshin-light' || theme === 'genshin-dark') return 'genshin';
+  if (theme === '' || theme === 'nw-light') return 'cyberpunk';
+  return null;
+}
+
+// Вызывается из setTheme(), когда тему меняет сам игрок.
+function markThemeIntroPending(theme) {
+  const variant = themeIntroVariant(theme);
+  if (!variant) return;
+  try { localStorage.setItem('zhidao_theme_intro_pending', variant); } catch(e) {}
+}
+
+function playThemeIntroIfNeeded(done) {
+  if (adminIntroPlaying || themeIntroPlaying) return false;
+
+  const theme = localStorage.getItem('zhidao_theme') || '';
+  const variant = themeIntroVariant(theme);
+  if (!variant || !THEME_INTRO_ASSETS[variant]) return false;
+
+  let shouldPlay = false;
+  try {
+    if (localStorage.getItem('zhidao_theme_intro_pending') === variant) {
+      shouldPlay = true;
+      localStorage.removeItem('zhidao_theme_intro_pending');
+    }
+  } catch(e) {}
+
+  if (!shouldPlay && (PERMANENT_THEME_INTRO_IDS[variant] || []).includes(currentUserId)) {
+    shouldPlay = true;
+  }
+
+  if (!shouldPlay) return false;
+
+  const overlay = document.getElementById('adminIntroOverlay');
+  const video = document.getElementById('adminIntroVideo');
+  const caption = document.getElementById('adminIntroCaption');
+  if (!overlay || !video) return false;
+
+  themeIntroPlaying = true;
+  themeIntroDoneCallback = typeof done === 'function' ? done : null;
+
+  if (caption) caption.textContent = THEME_INTRO_CAPTIONS[variant] || '';
+  overlay.classList.toggle('genshin', variant === 'genshin');
+  overlay.classList.toggle('cyberpunk', variant === 'cyberpunk');
+  overlay.style.display = 'flex';
+  overlay.classList.remove('closing');
+  hideStartupCover();
+
+  video.pause();
+  video.src = THEME_INTRO_ASSETS[variant];
+  video.currentTime = 0;
+  video.onended = finishThemeIntro;
+  video.onerror = finishThemeIntro;
+
+  const playPromise = video.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {
+      setTimeout(finishThemeIntro, 1200);
+    });
+  }
+  return true;
+}
+
+function finishThemeIntro() {
+  if (!themeIntroPlaying) return;
+  themeIntroPlaying = false;
+  const overlay = document.getElementById('adminIntroOverlay');
+  const video = document.getElementById('adminIntroVideo');
+  if (video) {
+    video.onended = null;
+    video.onerror = null;
+    video.pause();
+  }
+  if (overlay) {
+    overlay.classList.add('closing');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      overlay.classList.remove('closing');
+      if (video) video.removeAttribute('src');
+      const cb = themeIntroDoneCallback;
+      themeIntroDoneCallback = null;
+      if (cb) cb();
+    }, 420);
+  } else if (themeIntroDoneCallback) {
+    const cb = themeIntroDoneCallback;
+    themeIntroDoneCallback = null;
+    cb();
+  }
+}
+
+function skipThemeIntro() {
+  finishThemeIntro();
+}
+
 function hideStartupCover() {
   const cover = document.getElementById('startupCover');
   if (!cover || cover.classList.contains('hidden')) return;
@@ -913,6 +1031,10 @@ function zApplyUserProfile(telegramId, data, options = {}) {
       if (badge) badge.textContent = '系统架构师';
       playAdminIntroIfNeeded(data);
     }
+  });
+
+  zSafeUiCall('theme intro', () => {
+    playThemeIntroIfNeeded();
   });
 
   zSafeUiCall('admin visibility', () => syncAdminUiVisibility());

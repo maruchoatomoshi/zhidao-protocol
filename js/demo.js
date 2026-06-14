@@ -33,7 +33,7 @@
 
   function applyDemoTheme() {
     try {
-      if (demoVisualTheme && typeof setTheme === 'function') setTheme(demoVisualTheme);
+      if (demoVisualTheme && typeof setTheme === 'function') setTheme(demoVisualTheme, false);
       if (typeof applyThemePath === 'function') applyThemePath(demoThemePath);
     } catch (e) {}
   }

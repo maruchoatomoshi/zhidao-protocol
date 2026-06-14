@@ -43,10 +43,10 @@
 </script>
 
 <!-- Эксклюзивные видео-заставки админов -->
-<div id="adminIntroOverlay" class="admin-intro-overlay" style="display:none;" onclick="skipAdminIntro()">
+<div id="adminIntroOverlay" class="admin-intro-overlay" style="display:none;" onclick="skipAdminIntro(); skipThemeIntro();">
   <video id="adminIntroVideo" class="admin-intro-video" muted playsinline preload="auto"></video>
   <div class="admin-intro-vignette"></div>
-  <button class="admin-intro-skip" onclick="event.stopPropagation(); skipAdminIntro();">ПРОПУСТИТЬ</button>
+  <button class="admin-intro-skip" onclick="event.stopPropagation(); skipAdminIntro(); skipThemeIntro();">ПРОПУСТИТЬ</button>
   <div class="admin-intro-caption" id="adminIntroCaption">ADMIN ACCESS</div>
 </div>
 
@@ -2476,9 +2476,9 @@
 <script src="./js/config.js?v=20260614freeze1"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260613cleanup1"></script>
+<script src="./js/ui.js?v=20260614themeintro1"></script>
 <script src="./js/telegram-compat.js"></script>
-<script src="./js/themes.js?v=20260604b"></script>
+<script src="./js/themes.js?v=20260614themeintro1"></script>
 <script src="./js/blackwall.js"></script>
 <script src="./js/schedule.js"></script>
 <script src="./js/announcements.js"></script>
@@ -2496,7 +2496,7 @@
 <script src="./js/wild-ai-breach.js?v=20260614fix1"></script>
 <script src="./js/events.js?v=20260611wildai11"></script>
 <script src="./js/architect-event.js?v=20260613cleanup1"></script>
-<script src="./js/demo.js?v=20260605a"></script>
+<script src="./js/demo.js?v=20260614themeintro1"></script>
 <script src="./js/main.js?v=20260515a"></script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->

@@ -16,7 +16,7 @@ function applyThemePath(path) {
     // Admins may use any theme regardless of path — don't force their theme back.
     if (!isAdmin) {
       const t = localStorage.getItem('zhidao_theme') || '';
-      if (t.startsWith('genshin')) setTheme('');
+      if (t.startsWith('genshin')) setTheme('', false);
     }
     // Показываем импланты, скрываем карточки
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
@@ -33,7 +33,7 @@ function applyThemePath(path) {
     // Admins may use any theme regardless of path — don't force their theme.
     if (!isAdmin) {
       const t = localStorage.getItem('zhidao_theme') || '';
-      if (!t.startsWith('genshin')) setTheme('genshin-light');
+      if (!t.startsWith('genshin')) setTheme('genshin-light', false);
     }
     // Показываем карточки, скрываем импланты
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
@@ -104,7 +104,7 @@ function syncAdminThemeMode(theme) {
   }
 }
 
-function setTheme(theme) {
+function setTheme(theme, isUserAction = true) {
   // Убираем все классы тем
   THEMES.forEach(t => {
     if (t) document.body.classList.remove('theme-' + t);
@@ -152,18 +152,22 @@ function setTheme(theme) {
   syncAdminThemeMode(theme);
   if (typeof buildMatrixRain === 'function') buildMatrixRain();
   try { try{tg.HapticFeedback.impactOccurred('light');}catch(e){} } catch(e) {}
+
+  if (isUserAction && typeof markThemeIntroPending === 'function') {
+    markThemeIntroPending(theme);
+  }
 }
 
 function loadSavedTheme() {
   try {
     if(window.Telegram?.WebApp?.CloudStorage) {
       tg.CloudStorage.getItem('zhidao_theme', (err, val) => {
-        setTheme(val || localStorage.getItem('zhidao_theme') || '');
+        setTheme(val || localStorage.getItem('zhidao_theme') || '', false);
       });
     } else {
-      setTheme(localStorage.getItem('zhidao_theme') || '');
+      setTheme(localStorage.getItem('zhidao_theme') || '', false);
     }
-  } catch(e) { setTheme(''); }
+  } catch(e) { setTheme('', false); }
 }
 
 function toggleLiteMode() {
