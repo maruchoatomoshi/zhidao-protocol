@@ -24,7 +24,7 @@ const TEAM_DATA = [
     status: "HOST",
     statusText: "ERROR // ERROR",
     color: "#00ff66",
-    avatar: "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/file_000000004784720a8c151f4c50a357d9.png?raw=true",
+    avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architector_logo.png",
     tgLink: "https://t.me/christianpastor"
   },
   {
@@ -67,7 +67,7 @@ const TEAM_DATA = [
 
 function _buildTeamCard(member) {
   const avatarHtml = member.avatar.startsWith('http')
-    ? `<img src="${member.avatar}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='⬡'">`
+    ? `<div class="no-leak-bg" style="width:100%;height:100%;background-image:url('${member.avatar}')" oncontextmenu="return false"></div>`
     : member.avatar;
 
   return `
