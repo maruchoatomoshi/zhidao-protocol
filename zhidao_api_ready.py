@@ -8408,16 +8408,20 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
 
 @app.get("/api/events/current")
 async def get_current_event(code: Optional[str] = None):
-    event_id = get_current_or_latest_event_id(code)
-    return {"event": get_event_snapshot(event_id) if event_id else None}
+    def _run():
+        event_id = get_current_or_latest_event_id(code)
+        return {"event": get_event_snapshot(event_id) if event_id else None}
+    return await db_write(_run)
 
 
 @app.get("/api/events/{event_id}")
 async def get_event_details(event_id: int):
-    snapshot = get_event_snapshot(event_id)
-    if not snapshot:
-        raise HTTPException(status_code=404, detail="Event not found")
-    return snapshot
+    def _run():
+        snapshot = get_event_snapshot(event_id)
+        if not snapshot:
+            raise HTTPException(status_code=404, detail="Event not found")
+        return snapshot
+    return await db_write(_run)
 
 
 @app.post("/api/events/{event_id}/join")
@@ -8497,20 +8501,22 @@ async def leave_event_team(event_id: int, data: dict):
 
 @app.get("/api/events/{event_id}/team")
 async def get_event_team(event_id: int):
-    snapshot = get_event_snapshot(event_id)
-    if not snapshot:
-        raise HTTPException(status_code=404, detail="Event not found")
-    return {
-        "event_id": snapshot["id"],
-        "title": snapshot["title"],
-        "boss_name": snapshot["boss_name"],
-        "reward_text": snapshot.get("reward_text"),
-        "state": snapshot["state"],
-        "min_players": snapshot.get("min_players", 3),
-        "max_players": snapshot.get("max_players", 5),
-        "team_count": snapshot.get("team_count", 0),
-        "team_members": snapshot.get("team_members", []),
-    }
+    def _run():
+        snapshot = get_event_snapshot(event_id)
+        if not snapshot:
+            raise HTTPException(status_code=404, detail="Event not found")
+        return {
+            "event_id": snapshot["id"],
+            "title": snapshot["title"],
+            "boss_name": snapshot["boss_name"],
+            "reward_text": snapshot.get("reward_text"),
+            "state": snapshot["state"],
+            "min_players": snapshot.get("min_players", 3),
+            "max_players": snapshot.get("max_players", 5),
+            "team_count": snapshot.get("team_count", 0),
+            "team_members": snapshot.get("team_members", []),
+        }
+    return await db_write(_run)
 
 
 @app.post("/api/events/{event_id}/extra")
