@@ -42,6 +42,28 @@ function updateLaunchGateCountdowns() {
   document.querySelectorAll('[data-freeze-countdown]').forEach(el => {
     el.textContent = freezeText;
   });
+  const shopResetText = formatShopResetCountdown();
+  document.querySelectorAll('[data-shop-reset-countdown]').forEach(el => {
+    el.textContent = shopResetText;
+  });
+}
+
+// Дневные лимиты магазина сбрасываются в полночь по Пекину (UTC+8).
+function formatShopResetCountdown() {
+  const now = new Date();
+  const beijingMs = now.getTime() + 8 * 3600 * 1000;
+  const beijingDate = new Date(beijingMs);
+  const msIntoDay = beijingDate.getUTCHours() * 3600000
+    + beijingDate.getUTCMinutes() * 60000
+    + beijingDate.getUTCSeconds() * 1000
+    + beijingDate.getUTCMilliseconds();
+  const msLeft = 24 * 3600000 - msIntoDay;
+  const totalSeconds = Math.floor(msLeft / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 function syncLaunchGateVisibility() {

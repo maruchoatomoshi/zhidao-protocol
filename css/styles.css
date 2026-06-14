@@ -2117,6 +2117,12 @@ body.is-admin .profile-card-kicker {
 }
 .shop-balance { font-size: 9px; color: var(--text3); font-family: monospace; }
 .shop-balance span { color: var(--gold); font-weight: 700; }
+.shop-reset-timer {
+  margin: 4px 14px 0;
+  font-size: 9px; color: var(--text3); font-family: monospace;
+  text-align: right;
+}
+.shop-reset-timer span { color: var(--gold); font-weight: 700; }
 .frozen-banner {
   background: rgba(180,20,20,0.1);
   border: 1px solid var(--red-border);
