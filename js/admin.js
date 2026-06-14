@@ -897,79 +897,6 @@ async function adminAdjustPointsFromForm(direction) {
   await adminSubmitPointAdjustment(targetId, delta, reason);
 }
 
-async function adminSubmitPointAdjustment(targetId, delta, reason) {
-  try {
-    const r = await fetch(`${API_URL}/api/admin/points`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-      body: JSON.stringify({telegram_id: targetId, delta, reason}),
-    });
-    const data = await r.json();
-    if (!r.ok) {
-      showToast(data.detail || 'Ошибка операции');
-      return;
-    }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    const actualDelta = Number(data.delta || delta);
-    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta}★\nБаланс: ${data.new_points}★`);
-    document.getElementById('awardPoints').value = '';
-    document.getElementById('awardReason').value = '';
-    if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
-      adminSelectedUser.points = data.new_points;
-      adminSelectUser(targetId, data.full_name, data.new_points, adminSelectedUser);
-      adminLoadUserDossier(targetId);
-    }
-    adminSearchUsers();
-    adminLoadActionLog();
-    if (targetId === currentUserId) {
-      currentPoints = data.new_points;
-      updatePoints();
-    }
-  } catch (e) {
-    showToast('Ошибка соединения');
-  }
-}
-
-async function adminGrantScanAttempt() {
-  if (!isArchitect) return;
-  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
-  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
-  if (!targetId) { showToast('Укажи Telegram ID'); return; }
-  try {
-    const r = await fetch(`${API_URL}/api/admin/scan-attempt`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
-      body: JSON.stringify({telegram_id: targetId}),
-    });
-    const data = await r.json();
-    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    showToast(`📡 +1 попытка сканирования\nИтого: ${data.scan_attempts}/7`);
-  } catch(e) { showToast('Ошибка соединения'); }
-}
-
-async function adminGrantFragments() {
-  if (!isArchitect) return;
-  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
-  const amount = parseInt(document.getElementById('fragmentAmount')?.value, 10);
-  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
-  if (!targetId || !amount || amount < 1) {
-    showToast('Укажи Telegram ID и количество'); return;
-  }
-  try {
-    const r = await fetch(`${API_URL}/api/admin/fragments`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
-      body: JSON.stringify({telegram_id: targetId, amount}),
-    });
-    const data = await r.json();
-    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    showToast(`✅ Выдано ${amount} фрагментов\nИтого у игрока: ${data.protocol_fragments}`);
-    document.getElementById('fragmentAmount').value = '';
-  } catch(e) { showToast('Ошибка соединения'); }
-}
-
 async function adminAdjustRepFromForm(direction) {
   const targetId = adminResolveTargetId();
   const amount = Math.abs(parseInt(document.getElementById('awardPoints')?.value, 10));
@@ -990,36 +917,6 @@ async function adminAdjustRepFromForm(direction) {
   });
   if (!ok) return;
   await adminSubmitRepAdjustment(targetId, delta, reason);
-}
-
-async function adminSubmitRepAdjustment(targetId, delta, reason) {
-  try {
-    const r = await fetch(`${API_URL}/api/admin/rep`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-      body: JSON.stringify({telegram_id: targetId, delta, reason}),
-    });
-    const data = await r.json();
-    if (!r.ok) {
-      showToast(data.detail || 'Ошибка операции');
-      return;
-    }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    const actualDelta = Number(data.delta || delta);
-    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta} REP\nРепутация: ${data.new_rep_score}`);
-    document.getElementById('awardPoints').value = '';
-    document.getElementById('awardReason').value = '';
-    if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
-      adminSelectedUser.rep_score = data.new_rep_score;
-      adminSelectUser(targetId, data.full_name, data.points, adminSelectedUser);
-      adminLoadUserDossier(targetId);
-    }
-    adminSearchUsers();
-    adminLoadActionLog();
-    if (typeof loadLeaderboard === 'function') loadLeaderboard();
-  } catch (e) {
-    showToast('Ошибка соединения');
-  }
 }
 
 const ADMIN_PRESENCE_LABELS = {
