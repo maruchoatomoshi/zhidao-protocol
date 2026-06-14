@@ -33,7 +33,7 @@ window.APP_FROZEN_FEATURES = {
   laundry:       false, // стирка / вода
   achievements:  true,  // ачивки
   'diary-stars': true,  // дневник ★
-  rating:        false, // рейтинг
+  rating:        true,  // рейтинг
 };
 // Таймер обратного отсчёта в окне заморозки: открытие утром 5 июля (по Пекину).
 window.APP_FREEZE_TARGET_AT = '2026-07-05T00:00:00+08:00';
