@@ -376,7 +376,164 @@ function useItem(id, name) {
     } catch(e) { showToast('Ошибка соединения'); }
   });
 }
-function giftItem(id, name) { safeShowPopup({title:`Подарить ${name}?`,message:'Введи имя получателя в чате бота командой /подарить ИМЯ\n\nНалог на дарение: 20 баллов. Лимит: 5 подарков в день.',buttons:[{type:'ok'}]}); }
+let _giftItemId = null, _giftItemName = null, _giftSelectedUser = null;
+let _giftSearchTimer = null, _giftSearchSeq = 0;
+
+function giftItem(id, name) {
+  _giftItemId = id;
+  _giftItemName = name;
+  _giftSelectedUser = null;
+
+  let modal = document.getElementById('giftUserModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'giftUserModal';
+    modal.className = 'gift-modal-overlay';
+    modal.innerHTML = `
+      <div class="gift-modal">
+        <div class="gift-modal-header">
+          <div>
+            <div class="gift-modal-kicker">TRANSFER // 转让</div>
+            <div class="gift-modal-title">🎁 Подарить</div>
+          </div>
+          <button class="gift-modal-close" onclick="closeGiftModal()">✕</button>
+        </div>
+        <div class="gift-modal-item" id="giftModalItemLabel"></div>
+        <div class="gift-modal-tax">Налог на дарение: <b>20★</b> &nbsp;·&nbsp; Лимит: <b>5</b> подарков в день</div>
+        <input class="gift-modal-search" id="giftUserSearchInput" placeholder="Поиск по имени..." oninput="giftSearchDebounced()" autocomplete="off" spellcheck="false">
+        <div class="gift-modal-results" id="giftUserResults"></div>
+        <div class="gift-modal-selected" id="giftSelectedDisplay" style="display:none"></div>
+        <div class="gift-modal-actions">
+          <button class="inv-btn" style="flex:0 0 auto;padding:9px 18px;" onclick="closeGiftModal()">Отмена</button>
+          <button class="inv-btn inv-btn-use gift-modal-confirm" id="giftConfirmBtn" onclick="confirmGift()" disabled>🎁 Подарить</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeGiftModal(); });
+  }
+
+  document.getElementById('giftModalItemLabel').textContent = name;
+  const input = document.getElementById('giftUserSearchInput');
+  input.value = '';
+  document.getElementById('giftUserResults').innerHTML = '';
+  document.getElementById('giftSelectedDisplay').style.display = 'none';
+  document.getElementById('giftConfirmBtn').disabled = true;
+  _giftSelectedUser = null;
+  modal.classList.add('show');
+  _giftSearchUsers('');
+  setTimeout(() => input.focus(), 120);
+}
+
+function closeGiftModal() {
+  const m = document.getElementById('giftUserModal');
+  if (m) m.classList.remove('show');
+}
+
+function giftSearchDebounced() {
+  clearTimeout(_giftSearchTimer);
+  _giftSearchTimer = setTimeout(() => {
+    _giftSearchUsers(document.getElementById('giftUserSearchInput')?.value || '');
+  }, 280);
+}
+
+async function _giftSearchUsers(q) {
+  const container = document.getElementById('giftUserResults');
+  if (!container || !currentUserId) return;
+  const seq = ++_giftSearchSeq;
+  container.innerHTML = '<div class="gift-modal-hint">Поиск...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/users/search?q=${encodeURIComponent(q)}&caller_id=${currentUserId}`);
+    if (seq !== _giftSearchSeq) return;
+    const data = await r.json();
+    const users = Array.isArray(data.users) ? data.users : [];
+    if (!users.length) {
+      container.innerHTML = '<div class="gift-modal-hint">Никого не найдено</div>';
+      return;
+    }
+    container.innerHTML = users.map(u => {
+      const initials = (u.full_name || '?')[0].toUpperCase();
+      const avatarHtml = u.avatar_url
+        ? `<img src="${escapeHtml(u.avatar_url)}" class="gift-user-img" onerror="this.style.display='none'">`
+        : `<span class="gift-user-initials">${initials}</span>`;
+      const _gn = JSON.stringify(u.full_name).replace(/"/g, '&quot;');
+      const _ga = JSON.stringify(u.avatar_url || '').replace(/"/g, '&quot;');
+      return `<div class="gift-user-row" onclick="giftSelectUser(${u.telegram_id},${_gn},${_ga})">
+        <div class="gift-user-ava">${avatarHtml}</div>
+        <div class="gift-user-info">
+          <div class="gift-user-name">${u.full_name}</div>
+        </div>
+        <div class="gift-user-pts">${u.points||0}★</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    if (seq !== _giftSearchSeq) return;
+    container.innerHTML = '<div class="gift-modal-hint">Ошибка соединения</div>';
+  }
+}
+
+function giftSelectUser(id, name, avatar) {
+  _giftSelectedUser = {id, name, avatar};
+  document.getElementById('giftUserResults').innerHTML = '';
+  document.getElementById('giftUserSearchInput').value = name;
+  const display = document.getElementById('giftSelectedDisplay');
+  display.style.display = 'flex';
+  const initials = (name || '?')[0].toUpperCase();
+  const avatarHtml = avatar
+    ? `<img src="${escapeHtml(avatar)}" class="gift-user-img" onerror="this.style.display='none'">`
+    : `<span class="gift-user-initials">${initials}</span>`;
+  display.innerHTML = `
+    <div class="gift-user-ava">${avatarHtml}</div>
+    <div class="gift-user-info" style="flex:1">
+      <div class="gift-user-name">${name}</div>
+      <div class="gift-modal-hint" style="margin:0">Выбран получатель</div>
+    </div>
+    <button class="gift-clear-btn" onclick="giftClearUser()" title="Изменить">✕</button>
+  `;
+  document.getElementById('giftConfirmBtn').disabled = false;
+}
+
+function giftClearUser() {
+  _giftSelectedUser = null;
+  document.getElementById('giftSelectedDisplay').style.display = 'none';
+  document.getElementById('giftUserSearchInput').value = '';
+  document.getElementById('giftConfirmBtn').disabled = true;
+  _giftSearchUsers('');
+}
+
+async function confirmGift() {
+  if (!_giftSelectedUser || !_giftItemId || !currentUserId) return;
+  const btn = document.getElementById('giftConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const r = await fetch(`${API_URL}/api/shop/gift`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({purchase_id: _giftItemId, from_id: currentUserId, to_id: _giftSelectedUser.id})
+    });
+    const data = await r.json();
+    if (r.ok && data.success) {
+      closeGiftModal();
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      showToast(`🎁 Подарено: ${_giftItemName} → ${_giftSelectedUser.name}`);
+      setTimeout(loadInventory, 500);
+    } else {
+      btn.disabled = false;
+      btn.textContent = '🎁 Подарить';
+      const msg = data.detail || '';
+      showToast(
+        msg === 'Daily gift limit reached' ? 'Лимит подарков на сегодня исчерпан' :
+        msg === 'Not enough points for tax' ? 'Не хватает очков для налога (20★)' :
+        msg || 'Ошибка при отправке подарка'
+      );
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🎁 Подарить';
+    showToast('Ошибка соединения');
+  }
+}
 
 async function sellItem(id, name, price) {
   const pandaActive = typeof hasPandaImplant !== 'undefined' && hasPandaImplant;

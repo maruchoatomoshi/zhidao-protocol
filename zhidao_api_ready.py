@@ -3772,6 +3772,48 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
     }
 
 
+@app.post("/api/internal/points/add")
+async def internal_add_points(data: dict, request: Request):
+    if not request_has_internal_token(request):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        target_id = int(data.get("telegram_id"))
+        delta = int(data.get("delta"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    if delta == 0:
+        raise HTTPException(status_code=400, detail="Delta must not be zero")
+    if abs(delta) > 5000:
+        raise HTTPException(status_code=400, detail="Delta too large")
+
+    operation = str(data.get("operation") or "bot_manual")
+    note = data.get("note")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("UPDATE users SET points = MAX(0, COALESCE(points, 0) + ?) WHERE telegram_id=?", (delta, target_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+            row = c.fetchone()
+            if not row:
+                return None
+            new_points = row[0]
+            log_economy(c, target_id, operation, delta, new_points, reference_type='bot', note=note)
+            conn.commit()
+            return new_points
+        finally:
+            conn.close()
+
+    new_points = await db_write(_run)
+    if new_points is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"success": True, "telegram_id": target_id, "new_points": new_points}
+
+
 @app.post("/api/admin/rep")
 async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
@@ -6104,47 +6146,46 @@ async def gift_item(data: dict):
         to_id = data.get("to_id")
         today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
         conn = get_conn()
-        c = conn.cursor()
-        c.execute("SELECT item_code FROM shop_purchases WHERE id=? AND telegram_id=? AND status='active'", (purchase_id, from_id))
-        purchase = c.fetchone()
-        if not purchase:
-            conn.close()
-            raise HTTPException(status_code=404, detail="Purchase not found")
-        if from_id not in ADMIN_IDS:
-            c.execute(
-                """SELECT COUNT(*) FROM shop_purchases
-                   WHERE given_to=? AND date(gifted_at)=?""",
-                (from_id, today),
+        try:
+            c = conn.cursor()
+            c.execute("SELECT item_code FROM shop_purchases WHERE id=? AND telegram_id=? AND status='active'", (purchase_id, from_id))
+            purchase = c.fetchone()
+            if not purchase:
+                raise HTTPException(status_code=404, detail="Purchase not found")
+            if from_id not in ADMIN_IDS:
+                c.execute(
+                    """SELECT COUNT(*) FROM shop_purchases
+                       WHERE given_to=? AND date(gifted_at)=?""",
+                    (from_id, today),
+                )
+                gifts_today = c.fetchone()[0] or 0
+                if gifts_today >= SHOP_GIFT_DAILY_LIMIT:
+                    raise HTTPException(status_code=400, detail="Daily gift limit reached")
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
+            user = c.fetchone()
+            fox_gift_trick = (
+                has_active_card(c, from_id, "card_fox")
+                and not has_used_card_today(c, from_id, "card_fox", "gift_tax_trick", today)
             )
-            gifts_today = c.fetchone()[0] or 0
-            if gifts_today >= SHOP_GIFT_DAILY_LIMIT:
-                conn.close()
-                raise HTTPException(status_code=400, detail="Daily gift limit reached")
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
-        user = c.fetchone()
-        fox_gift_trick = (
-            has_active_card(c, from_id, "card_fox")
-            and not has_used_card_today(c, from_id, "card_fox", "gift_tax_trick", today)
-        )
-        gift_tax = 15 if fox_gift_trick else 20
-        if not user or (user[0] or 0) < gift_tax:
+            gift_tax = 15 if fox_gift_trick else 20
+            if not user or (user[0] or 0) < gift_tax:
+                raise HTTPException(status_code=400, detail="Not enough points for tax")
+            if fox_gift_trick:
+                mark_card_used_today(c, from_id, "card_fox", "gift_tax_trick", today)
+            c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (gift_tax, from_id))
+            now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, gifted_at=?, status='active' WHERE id=?", (to_id, from_id, now_str, purchase_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
+            new_points = c.fetchone()[0] or 0
+            log_economy(c, from_id, 'gift_tax', -gift_tax, new_points, purchase_id, 'shop_gift', purchase[0])
+            if gift_tax < 20:
+                log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
+            log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
+            award_achievement(c, from_id, "helper")
+            conn.commit()
+            return {"success": True}
+        finally:
             conn.close()
-            raise HTTPException(status_code=400, detail="Not enough points for tax")
-        if fox_gift_trick:
-            mark_card_used_today(c, from_id, "card_fox", "gift_tax_trick", today)
-        c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (gift_tax, from_id))
-        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-        c.execute("UPDATE shop_purchases SET telegram_id=?, given_to=?, gifted_at=?, status='active' WHERE id=?", (to_id, from_id, now_str, purchase_id))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (from_id,))
-        new_points = c.fetchone()[0] or 0
-        log_economy(c, from_id, 'gift_tax', -gift_tax, new_points, purchase_id, 'shop_gift', purchase[0])
-        if gift_tax < 20:
-            log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
-        log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
-        award_achievement(c, from_id, "helper")
-        conn.commit()
-        conn.close()
-        return {"success": True}
     return await db_write(_run)
 
 
@@ -6154,24 +6195,25 @@ async def sell_item(data: dict):
         purchase_id = data.get("purchase_id")
         telegram_id = data.get("telegram_id")
         conn = get_conn()
-        c = conn.cursor()
-        c.execute("""SELECT sp.item_code, si.price FROM shop_purchases sp
-                     JOIN shop_items si ON sp.item_code = si.code
-                     WHERE sp.id=? AND sp.telegram_id=? AND sp.status='active'""", (purchase_id, telegram_id))
-        purchase = c.fetchone()
-        if not purchase:
+        try:
+            c = conn.cursor()
+            c.execute("""SELECT sp.item_code, si.price FROM shop_purchases sp
+                         JOIN shop_items si ON sp.item_code = si.code
+                         WHERE sp.id=? AND sp.telegram_id=? AND sp.status='active'""", (purchase_id, telegram_id))
+            purchase = c.fetchone()
+            if not purchase:
+                raise HTTPException(status_code=404, detail="Not found")
+            sell_rate = 0.6 if has_active_implant(c, telegram_id, "implant_panda") else 0.5
+            refund = int(purchase[1] * sell_rate)
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, telegram_id))
+            c.execute("UPDATE shop_purchases SET status='sold' WHERE id=?", (purchase_id,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+            new_points = c.fetchone()[0]
+            log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
+            conn.commit()
+            return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
+        finally:
             conn.close()
-            raise HTTPException(status_code=404, detail="Not found")
-        sell_rate = 0.6 if has_active_implant(c, telegram_id, "implant_panda") else 0.5
-        refund = int(purchase[1] * sell_rate)
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, telegram_id))
-        c.execute("UPDATE shop_purchases SET status='sold' WHERE id=?", (purchase_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-        new_points = c.fetchone()[0]
-        log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
-        conn.commit()
-        conn.close()
-        return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
     return await db_write(_run)
 
 
@@ -7734,6 +7776,31 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
         "role": ("creator" if viewer_id and row[6] == viewer_id else
                  "assignee" if viewer_id and row[7] == viewer_id else None),
     }
+
+
+def expire_stale_open_contracts():
+    """Marks 'open' contracts past their expires_at as 'expired' and refunds the
+    creator's frozen reward in full."""
+    conn = get_conn()
+    try:
+        c = conn.cursor()
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            "SELECT id, creator_telegram_id, reward_stars FROM contracts "
+            "WHERE status='open' AND expires_at IS NOT NULL AND expires_at < ?",
+            (now_str,),
+        )
+        rows = c.fetchall()
+        for cid, creator_id, reward in rows:
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (reward, creator_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (creator_id,))
+            bal = c.fetchone()[0] or 0
+            c.execute("UPDATE contracts SET status='expired', cancelled_at=? WHERE id=?", (now_str, cid))
+            log_economy(c, creator_id, 'contract_expired_refund', reward, bal, cid, 'contract',
+                        f"Контракт #{cid} сгорел, возврат")
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def _resolve_names(c, creator_id, assignee_id):
