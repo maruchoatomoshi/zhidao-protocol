@@ -235,20 +235,8 @@ function renderInstructionTourStep() {
 
   setTimeout(() => instructionSetHighlight(step.highlight), 80);
 
-  const overlay = document.getElementById('instructionTourOverlay');
   const avatar = document.getElementById('instructionTourAvatar');
-  const box = overlay ? overlay.querySelector('.instruction-popup-box') : null;
-  if (avatar) {
-    avatar.style.backgroundImage = `url('${INSTRUCTION_IMG_BASE}${step.image}')`;
-    avatar.style.animation = 'none';
-    void avatar.offsetWidth;
-    avatar.style.animation = '';
-  }
-  if (box) {
-    box.style.animation = 'none';
-    void box.offsetWidth;
-    box.style.animation = '';
-  }
+  if (avatar) avatar.style.backgroundImage = `url('${INSTRUCTION_IMG_BASE}${step.image}')`;
 
   const title = document.getElementById('instructionTourTitle');
   if (title) title.textContent = step.title;
@@ -270,7 +258,7 @@ function typeInstructionTourText(text) {
     instructionTypeTimer = null;
   }
 
-  bubble.innerHTML = '<span class="instruction-tour-typed"></span><span class="instruction-popup-cursor">▌</span>';
+  bubble.innerHTML = '<span class="instruction-tour-typed"></span><span class="instruction-tour-cursor">▌</span>';
   const typedEl = bubble.querySelector('.instruction-tour-typed');
   let i = 0;
   instructionTypeTimer = setInterval(() => {
@@ -279,7 +267,7 @@ function typeInstructionTourText(text) {
     if (i >= text.length) {
       clearInterval(instructionTypeTimer);
       instructionTypeTimer = null;
-      const cursor = bubble.querySelector('.instruction-popup-cursor');
+      const cursor = bubble.querySelector('.instruction-tour-cursor');
       if (cursor) cursor.remove();
     }
   }, 22);
