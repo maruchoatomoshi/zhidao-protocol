@@ -143,6 +143,7 @@
         <button class="profile-mini-btn" onclick="openProfileShowcaseModal()">ВИТРИНА</button>
         <button class="profile-mini-btn" onclick="openProfileFrameModal()">РАМКИ</button>
         <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">СБРОС</button>
+        <button class="profile-mini-btn" onclick="openInstructionModal()">📖 ИНСТРУКЦИЯ</button>
       </div>
     </div>
   </div>
@@ -2498,6 +2499,7 @@
 <script src="./js/events.js?v=20260611wildai11"></script>
 <script src="./js/architect-event.js?v=20260613cleanup1"></script>
 <script src="./js/demo.js?v=20260614themeintro1"></script>
+<script src="./js/instruction.js?v=20260615a"></script>
 <script src="./js/main.js?v=20260515a"></script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
@@ -2774,6 +2776,29 @@
 
 <audio id="architectMusicA" preload="auto" loop style="display:none;"></audio>
 <audio id="architectMusicB" preload="auto" loop style="display:none;"></audio>
+
+<div class="instruction-modal" id="instructionModal" style="display:none;" onclick="closeInstructionModal(event)">
+  <div class="instruction-modal-inner" onclick="event.stopPropagation()">
+    <button class="instruction-modal-close" onclick="closeInstructionModal()">✕</button>
+    <div id="instructionModalBody"></div>
+  </div>
+</div>
+
+<div class="instruction-tour-overlay" id="instructionTourOverlay" style="display:none;">
+  <div class="instruction-tour-card">
+    <button class="instruction-tour-close" onclick="closeInstructionTour()">✕</button>
+    <div class="instruction-tour-avatar" id="instructionTourAvatar"></div>
+    <div class="instruction-tour-body">
+      <div class="instruction-tour-title" id="instructionTourTitle">ЮЛЯ</div>
+      <div class="instruction-tour-bubble" id="instructionTourBubble"></div>
+      <div class="instruction-tour-progress" id="instructionTourProgress">1 / 8</div>
+      <div class="instruction-tour-actions">
+        <button class="ghost" onclick="instructionTourSkip()">ПРОПУСТИТЬ</button>
+        <button id="instructionTourNextBtn" onclick="instructionTourNext()">ДАЛЕЕ →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="toastContainer"></div>
 
