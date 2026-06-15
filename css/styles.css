@@ -3399,6 +3399,31 @@ body.is-admin .more-item.admin-only-item::before {
   50% { transform: translateY(4px); opacity: 1; }
 }
 
+.mju-popup-theme .architect-popup-box {
+  border-color: rgba(255,0,60,0.4);
+  box-shadow: 0 0 20px rgba(255,0,60,0.15), 0 -6px 20px rgba(0,0,0,0.4);
+}
+.mju-popup-theme .architect-popup-title {
+  color: #ff003c; border-color: rgba(255,0,60,0.4); background: rgba(255,0,60,0.08);
+}
+.mju-popup-theme .architect-popup-close {
+  color: #ff003c; border-color: rgba(255,0,60,0.3); background: rgba(255,0,60,0.06);
+}
+.mju-popup-theme .architect-popup-cursor {
+  color: #ff003c;
+}
+.mju-popup-theme .architect-popup-arrow {
+  color: rgba(255,0,60,0.5);
+}
+
+.gift-code-msg {
+  margin-top: 10px; font-size: 11px; line-height: 1.5; color: var(--text2);
+  min-height: 14px;
+}
+.gift-code-msg-error {
+  color: #ff4d6a;
+}
+
 .architect-diary-card {
   border-left: 3px solid #00ff66;
 }

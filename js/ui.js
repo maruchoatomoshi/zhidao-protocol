@@ -252,7 +252,7 @@ function openMore(section) {
   }
 
   // Скрываем все субстраницы
-  ['themes','map','weather','laundry','news','achievements','team','admin','stats'].forEach(s => {
+  ['themes','map','weather','laundry','news','achievements','team','admin','stats','giftcode'].forEach(s => {
     const el = document.getElementById('more-' + s);
     if (el) el.style.display = 'none';
   });

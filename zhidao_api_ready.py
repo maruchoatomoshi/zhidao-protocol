@@ -1417,6 +1417,22 @@ def migrate_db():
                   unlocked_at TEXT NOT NULL,
                   PRIMARY KEY (telegram_id, entry_code))''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS gift_codes
+                 (code TEXT PRIMARY KEY,
+                  reward_stars INTEGER NOT NULL,
+                  max_uses INTEGER NOT NULL DEFAULT 1,
+                  used_count INTEGER NOT NULL DEFAULT 0,
+                  expires_at TEXT DEFAULT NULL,
+                  created_at TEXT NOT NULL,
+                  note TEXT DEFAULT NULL)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS gift_code_redemptions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  code TEXT NOT NULL,
+                  redeemed_at TEXT NOT NULL,
+                  UNIQUE(telegram_id, code))''')
+
     c.execute("CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_economy_log_telegram_id ON economy_log(telegram_id, created_at)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_user_implants_tid ON user_implants(telegram_id, implant_id)")
@@ -4635,7 +4651,113 @@ async def internal_add_points(data: dict, request: Request):
     return {"success": True, "telegram_id": target_id, "new_points": new_points}
 
 
-@app.post("/api/admin/rep")
+@app.post("/api/gift-code/redeem")
+async def redeem_gift_code(data: dict):
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    code = str(data.get("code") or "").strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="Code required")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT reward_stars, max_uses, used_count, expires_at FROM gift_codes WHERE code=?", (code,))
+            row = c.fetchone()
+            if not row:
+                return {"error": "Code not found", "status": 404}
+            reward_stars, max_uses, used_count, expires_at = row
+
+            expires_dt = parse_iso(expires_at)
+            if expires_dt and datetime.utcnow() > expires_dt:
+                return {"error": "Code expired", "status": 410}
+            if used_count >= max_uses:
+                return {"error": "Code exhausted", "status": 410}
+
+            c.execute(
+                "INSERT OR IGNORE INTO gift_code_redemptions (telegram_id, code, redeemed_at) VALUES (?,?,?)",
+                (telegram_id, code, now_iso()),
+            )
+            if c.rowcount == 0:
+                return {"error": "Already redeemed", "status": 409}
+
+            c.execute("UPDATE gift_codes SET used_count = used_count + 1 WHERE code=?", (code,))
+            c.execute("UPDATE users SET points = COALESCE(points, 0) + ? WHERE telegram_id=?", (reward_stars, telegram_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+            urow = c.fetchone()
+            if not urow:
+                return {"error": "User not found", "status": 404}
+            new_points = urow[0]
+            log_economy(c, telegram_id, 'gift_code', reward_stars, new_points, reference_type='gift_code', note=code)
+            conn.commit()
+            return {"reward_stars": reward_stars, "new_points": new_points}
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+
+    return {"success": True, "reward_stars": result["reward_stars"], "new_points": result["new_points"]}
+
+
+@app.post("/api/admin/gift-code")
+async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    code = str(data.get("code") or "").strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="Code required")
+    try:
+        reward_stars = int(data.get("reward_stars"))
+        max_uses = int(data.get("max_uses") or 1)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    if reward_stars <= 0 or max_uses <= 0:
+        raise HTTPException(status_code=400, detail="Invalid values")
+
+    expires_at = data.get("expires_at") or None
+    note = data.get("note") or None
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute(
+                '''INSERT OR REPLACE INTO gift_codes (code, reward_stars, max_uses, used_count, expires_at, created_at, note)
+                   VALUES (?, ?, ?, COALESCE((SELECT used_count FROM gift_codes WHERE code=?), 0), ?, ?, ?)''',
+                (code, reward_stars, max_uses, code, expires_at, now_iso(), note),
+            )
+            conn.commit()
+            return {"success": True}
+        finally:
+            conn.close()
+
+    return await db_write(_run)
+
+
+@app.get("/api/admin/gift-code")
+def admin_list_gift_codes(x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT code, reward_stars, max_uses, used_count, expires_at, created_at, note FROM gift_codes ORDER BY created_at DESC")
+    rows = c.fetchall()
+
+    return {"codes": [
+        {"code": r[0], "reward_stars": r[1], "max_uses": r[2], "used_count": r[3], "expires_at": r[4], "created_at": r[5], "note": r[6]}
+        for r in rows
+    ]}
+
+
+
 async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")

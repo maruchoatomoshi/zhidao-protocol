@@ -200,7 +200,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','presence','blackwall','contracts','report'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -223,6 +223,7 @@ function showAdminSection(name, btn) {
   if (name==='blackwall' && typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
   if (name==='contracts') adminLoadContracts();
   if (name==='report') adminLoadEconomyReport(7);
+  if (name==='giftcode') adminLoadGiftCodes();
 }
 
 async function loadAdminLaundry() {
@@ -1694,4 +1695,56 @@ function adminRenderEconomyReport(data) {
   }).join('');
 
   return `<div class="contract-monitor-stats">${cards}</div><div class="contract-monitor-grid">${rows}</div>`;
+}
+
+async function adminCreateGiftCode() {
+  const code = (document.getElementById('adminGiftCode').value || '').trim().toUpperCase();
+  const rewardStars = parseInt(document.getElementById('adminGiftCodeStars').value);
+  const maxUses = parseInt(document.getElementById('adminGiftCodeUses').value) || 1;
+  const note = (document.getElementById('adminGiftCodeNote').value || '').trim();
+
+  if (!code) { showToast('Укажи код'); return; }
+  if (!rewardStars || rewardStars <= 0) { showToast('Укажи награду в ★'); return; }
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/gift-code`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({code, reward_stars: rewardStars, max_uses: maxUses, note: note || null})
+    });
+    if (r.ok) {
+      showToast(`✅ Код ${code} создан`);
+      document.getElementById('adminGiftCode').value = '';
+      document.getElementById('adminGiftCodeStars').value = '';
+      document.getElementById('adminGiftCodeUses').value = '1';
+      document.getElementById('adminGiftCodeNote').value = '';
+      adminLoadGiftCodes();
+    } else {
+      showToast('Ошибка создания кода');
+    }
+  } catch (e) { showToast('Ошибка соединения'); }
+}
+
+async function adminLoadGiftCodes() {
+  const el = document.getElementById('adminGiftCodeList');
+  if (!el) return;
+  el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/gift-code`, {headers: {'x-admin-id': currentUserId}});
+    const data = await r.json();
+    const codes = data.codes || [];
+    if (!codes.length) {
+      el.innerHTML = '<div class="empty-state">Кодов пока нет</div>';
+      return;
+    }
+    el.innerHTML = codes.map(c => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-family:monospace;font-size:13px;font-weight:700;color:#ff003c;letter-spacing:0.08em;">${escapeHtml(c.code)}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px;">+${c.reward_stars} ★ · использован ${c.used_count}/${c.max_uses}${c.note ? ' · ' + escapeHtml(c.note) : ''}</div>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
 }
