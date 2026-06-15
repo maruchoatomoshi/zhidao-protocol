@@ -136,20 +136,54 @@ async function unlockArchitectDiaryEntry(entryCode) {
   } catch (e) {}
 }
 
+let architectPopupTypeTimer = null;
+
 function showArchitectPopup(entry) {
   const overlay = document.getElementById('architectPopupOverlay');
   const imageEl = document.getElementById('architectPopupImage');
+  const box = overlay ? overlay.querySelector('.architect-popup-box') : null;
   const textEl = document.getElementById('architectPopupText');
   if (!overlay || !textEl) return;
 
   if (imageEl) {
     imageEl.style.backgroundImage = entry.image ? `url('${ARCHITECT_DIARY_IMG_BASE}${entry.image}')` : '';
+    imageEl.style.animation = 'none';
+    void imageEl.offsetWidth;
+    imageEl.style.animation = '';
   }
-  textEl.textContent = entry.text;
+  if (box) {
+    box.style.animation = 'none';
+    void box.offsetWidth;
+    box.style.animation = '';
+  }
 
   document.body.classList.add('architect-popup-open');
   overlay.style.display = 'flex';
+  typeArchitectPopupText(entry.text);
   try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+}
+
+function typeArchitectPopupText(text) {
+  const textEl = document.getElementById('architectPopupText');
+  if (!textEl) return;
+  if (architectPopupTypeTimer) {
+    clearInterval(architectPopupTypeTimer);
+    architectPopupTypeTimer = null;
+  }
+
+  textEl.innerHTML = '<span class="architect-popup-typed"></span><span class="architect-popup-cursor">▌</span>';
+  const typedEl = textEl.querySelector('.architect-popup-typed');
+  let i = 0;
+  architectPopupTypeTimer = setInterval(() => {
+    i++;
+    typedEl.textContent = text.slice(0, i);
+    if (i >= text.length) {
+      clearInterval(architectPopupTypeTimer);
+      architectPopupTypeTimer = null;
+      const cursor = textEl.querySelector('.architect-popup-cursor');
+      if (cursor) cursor.remove();
+    }
+  }, 22);
 }
 
 function closeArchitectPopup(e) {
@@ -157,4 +191,8 @@ function closeArchitectPopup(e) {
   const overlay = document.getElementById('architectPopupOverlay');
   if (overlay) overlay.style.display = 'none';
   document.body.classList.remove('architect-popup-open');
+  if (architectPopupTypeTimer) {
+    clearInterval(architectPopupTypeTimer);
+    architectPopupTypeTimer = null;
+  }
 }

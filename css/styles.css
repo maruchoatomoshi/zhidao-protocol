@@ -3344,6 +3344,8 @@ body.is-admin .more-item.admin-only-item::before {
   -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
   mask-image: linear-gradient(180deg, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
   pointer-events: none;
+  opacity: 0; transform: translateX(60px);
+  animation: architectPopupSlideInRight 0.45s ease 0.05s forwards;
 }
 .architect-popup-box {
   width: 100%; box-sizing: border-box; margin: 0 10px 10px;
@@ -3351,6 +3353,24 @@ body.is-admin .more-item.admin-only-item::before {
   border: 1px solid rgba(0,255,102,0.4);
   border-radius: 14px; padding: 12px 14px;
   box-shadow: 0 0 20px rgba(0,255,102,0.15), 0 -6px 20px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateX(-60px);
+  animation: architectPopupSlideInLeft 0.45s ease 0.15s forwards;
+}
+@keyframes architectPopupSlideInRight {
+  from { opacity: 0; transform: translateX(60px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes architectPopupSlideInLeft {
+  from { opacity: 0; transform: translateX(-60px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.architect-popup-cursor {
+  display: inline-block;
+  animation: architectPopupBlink 0.9s step-end infinite;
+  color: #00ff66;
+}
+@keyframes architectPopupBlink {
+  50% { opacity: 0; }
 }
 .architect-popup-header {
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
