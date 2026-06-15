@@ -550,6 +550,7 @@ async function openGenshinCase() {
     currentPoints = data.new_points; updatePoints();
     if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; protocolFragments = data.protocol_fragments || protocolFragments; }
     loadCasinoStatus();
+    if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
     curGsCardId = data.card_id || null;
     const cfg = GS_CARD_CONFIGS[data.card_id] || GS_PRIZE_CONFIGS[data.type] || GS_PRIZE_CONFIGS.points;
 
@@ -900,6 +901,7 @@ async function openCase() {
     else try{tg.HapticFeedback.impactOccurred('medium');}catch(e){}
     
     if (prize.code.startsWith('implant_')) loadImplants(currentUserId);
+    if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
   } catch(e) {
     showToast('Ошибка соединения');
     isSpinning = false;

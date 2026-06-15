@@ -136,6 +136,17 @@ async function unlockArchitectDiaryEntry(entryCode) {
   } catch (e) {}
 }
 
+function handleDiaryUnlocks(diaryUnlocked) {
+  if (!Array.isArray(diaryUnlocked) || !diaryUnlocked.length) return;
+  const entries = diaryUnlocked
+    .map(code => ARCHITECT_DIARY_ENTRIES.find(e => e.code === code))
+    .filter(Boolean);
+  entries.forEach((entry, idx) => {
+    setTimeout(() => showArchitectPopup(entry), idx * 400);
+  });
+}
+window.handleDiaryUnlocks = handleDiaryUnlocks;
+
 let architectPopupTypeTimer = null;
 
 function showArchitectPopup(entry) {

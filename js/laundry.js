@@ -127,7 +127,12 @@ async function bookLaundrySlot(slotId) {
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
-    if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} showToast('✅ Записаны на стирку!'); loadLaundrySchedule(); }
+    if (r.ok) {
+      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+      const data = await r.json();
+      if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
+      showToast('✅ Записаны на стирку!'); loadLaundrySchedule();
+    }
     else { const e=await r.json(); showToast(e.detail==='Slot full'?'Мест нет':'Слот занят'); }
   } catch(e) { showToast('Ошибка'); }
 }

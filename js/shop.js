@@ -287,6 +287,7 @@ async function buyItem(code, name, price) {
         const data = await r.json();
         currentPoints = data.new_points;
         updatePoints();
+        if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
         const itemEl = document.querySelector(`.shop-item[data-item-code="${code}"]`);
         if (itemEl) {
@@ -539,6 +540,7 @@ async function confirmGift() {
     if (r.ok && data.success) {
       closeGiftModal();
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
       showToast(`🎁 Подарено: ${_giftItemName} → ${_giftSelectedUser.name}`);
       setTimeout(loadInventory, 500);
     } else {
@@ -576,6 +578,7 @@ async function sellItem(id, name, price) {
         currentPoints = data.new_points;
         updatePoints();
         const pandaNote = data.sell_rate === 0.6 ? ' · Панда 🐼' : '';
+        if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
         showToast(`✅ Продано! +${data.refund} ★${pandaNote}`);
         loadInventory();
       }

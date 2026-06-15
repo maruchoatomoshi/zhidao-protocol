@@ -432,6 +432,8 @@ async function _executeRaidJoin(answer, questionId) {
             updatePoints();
         }
 
+        if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
+
         const correct = data.answer_correct;
         if (answer) {
             setRaidStatusText(

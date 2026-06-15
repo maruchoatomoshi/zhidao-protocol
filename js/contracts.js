@@ -665,6 +665,7 @@ async function submitCreateContract() {
     closeCreateContractModal();
     currentPoints = (data.new_points != null) ? data.new_points : Math.max(0, currentPoints - reward);
     updatePoints();
+    if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
     const localContract = {
       id: data.id,
       title,

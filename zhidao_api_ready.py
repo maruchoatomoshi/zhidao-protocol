@@ -4052,10 +4052,12 @@ async def book_laundry(item: LaundryBook):
             conn.close()
             raise HTTPException(status_code=409, detail="Already booked for this day")
         c.execute("INSERT INTO laundry (date, time, telegram_id, username) VALUES (?,?,?,?)", (item.date, item.time, item.telegram_id, item.username))
-        unlock_diary_entry(c, item.telegram_id, "first_laundry")
+        diary_unlocked = []
+        if unlock_diary_entry(c, item.telegram_id, "first_laundry"):
+            diary_unlocked.append("first_laundry")
         conn.commit()
         conn.close()
-        return {"success": True}
+        return {"success": True, "diary_unlocked": diary_unlocked}
     return await db_write(_run)
 
 
@@ -6337,9 +6339,12 @@ async def open_case(data: dict):
             scan_row = c.fetchone()
             log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
 
-            unlock_diary_entry(c, telegram_id, "first_spin")
+            diary_unlocked = []
+            if unlock_diary_entry(c, telegram_id, "first_spin"):
+                diary_unlocked.append("first_spin")
             if prize["code"].startswith("implant_"):
-                unlock_diary_entry(c, telegram_id, "first_item")
+                if unlock_diary_entry(c, telegram_id, "first_item"):
+                    diary_unlocked.append("first_item")
 
             award_achievement(c, telegram_id, "gambler")
             if prize["code"] in ("jackpot", "implant_red_dragon"):
@@ -6354,6 +6359,7 @@ async def open_case(data: dict):
                 "scan_attempts": scan_row[0] if scan_row else 0,
                 "protocol_fragments": scan_row[1] if scan_row else 0,
                 "doubled_win": doubled_win,
+                "diary_unlocked": diary_unlocked,
             }
         finally:
             conn.close()
@@ -6368,6 +6374,7 @@ async def open_case(data: dict):
         "scan_attempts": result["scan_attempts"],
         "protocol_fragments": result["protocol_fragments"],
         "doubled_win": result["doubled_win"],
+        "diary_unlocked": result["diary_unlocked"],
     }
 
 
@@ -7078,7 +7085,9 @@ async def buy_item(data: dict):
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
-            unlock_diary_entry(c, telegram_id, "first_shop_tx")
+            diary_unlocked = []
+            if unlock_diary_entry(c, telegram_id, "first_shop_tx"):
+                diary_unlocked.append("first_shop_tx")
             if has_active_implant(c, telegram_id, "implant_panda"):
                 # Cap cashback so it can never make a buy+resell cycle profitable
                 # (resale rate 60% + cashback must stay <= 100% of price).
@@ -7101,6 +7110,7 @@ async def buy_item(data: dict):
                 "guanxi_discount": base_price - price_after_guanxi,
                 "zhongli_discount": price_after_guanxi - price,
                 "zhongli_scan_bonus": zhongli_scan_bonus,
+                "diary_unlocked": diary_unlocked,
             }
         finally:
             conn.close()
@@ -7119,6 +7129,7 @@ async def buy_item(data: dict):
         "zhongli_discount": result["zhongli_discount"],
         "total_discount": result["base_price"] - result["price_paid"],
         "zhongli_scan_bonus": result["zhongli_scan_bonus"],
+        "diary_unlocked": result["diary_unlocked"],
     }
 
 
@@ -7220,10 +7231,12 @@ async def gift_item(data: dict):
             if gift_tax < 20:
                 log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
             log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
-            unlock_diary_entry(c, from_id, "first_shop_tx")
+            diary_unlocked = []
+            if unlock_diary_entry(c, from_id, "first_shop_tx"):
+                diary_unlocked.append("first_shop_tx")
             award_achievement(c, from_id, "helper")
             conn.commit()
-            return {"success": True}
+            return {"success": True, "diary_unlocked": diary_unlocked}
         finally:
             conn.close()
     return await db_write(_run)
@@ -7250,9 +7263,11 @@ async def sell_item(data: dict):
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
-            unlock_diary_entry(c, telegram_id, "first_shop_tx")
+            diary_unlocked = []
+            if unlock_diary_entry(c, telegram_id, "first_shop_tx"):
+                diary_unlocked.append("first_shop_tx")
             conn.commit()
-            return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
+            return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate, "diary_unlocked": diary_unlocked}
         finally:
             conn.close()
     return await db_write(_run)
@@ -7684,7 +7699,9 @@ async def join_raid(data: dict):
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
         raid_entry_balance = c.fetchone()[0] or 0
         log_economy(c, telegram_id, 'raid_entry', -RAID_ENTRY_COST, raid_entry_balance, raid_id, 'raid', f"Raid {today}")
-        unlock_diary_entry(c, telegram_id, "first_raid")
+        diary_unlocked = []
+        if unlock_diary_entry(c, telegram_id, "first_raid"):
+            diary_unlocked.append("first_raid")
         c.execute("SELECT COUNT(*) FROM raid_participants WHERE raid_id=?", (raid_id,))
         count = c.fetchone()[0]
 
@@ -7749,6 +7766,7 @@ async def join_raid(data: dict):
             "consumed_extra_attempt": consumed_extra_attempt,
             "card_raid_bonus": card_raid_bonus,
             "answer_correct": answer_correct,
+            "diary_unlocked": diary_unlocked,
             "points_change": ((RAID_SUCCESS_REWARD - RAID_ENTRY_COST) if (launched and result == 'success') else -RAID_ENTRY_COST) + card_raid_bonus,
             "message": (
                 f"🏆 РЕЙД УСПЕШЕН! +{RAID_SUCCESS_REWARD}★ каждому!" if (launched and result == 'success') else
@@ -7969,9 +7987,12 @@ async def open_genshin_case(data: dict):
         sc_row = c.fetchone()
         log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
 
-        unlock_diary_entry(c, telegram_id, "first_spin")
+        diary_unlocked = []
+        if unlock_diary_entry(c, telegram_id, "first_spin"):
+            diary_unlocked.append("first_spin")
         if result.get("type") == "card" and not result.get("duplicate"):
-            unlock_diary_entry(c, telegram_id, "first_item")
+            if unlock_diary_entry(c, telegram_id, "first_item"):
+                diary_unlocked.append("first_item")
 
         award_achievement(c, telegram_id, "gambler")
         if pool_name == "gold" and not result.get("duplicate"):
@@ -7986,6 +8007,7 @@ async def open_genshin_case(data: dict):
             result["sea_bonus"] = sea_bonus
         result["scan_attempts"] = sc_row[0] if sc_row else 0
         result["protocol_fragments"] = sc_row[1] if sc_row else 0
+        result["diary_unlocked"] = diary_unlocked
         return result
     return await db_write(_run)
 
@@ -8238,10 +8260,12 @@ async def book_laundry_slot(slot_id: int, data: dict):
             (slot_id, telegram_id),
         )
         c.execute("UPDATE laundry_schedule SET taken_by=NULL")
-        unlock_diary_entry(c, telegram_id, "first_laundry")
+        diary_unlocked = []
+        if unlock_diary_entry(c, telegram_id, "first_laundry"):
+            diary_unlocked.append("first_laundry")
         conn.commit()
         conn.close()
-        return {"success": True}
+        return {"success": True, "diary_unlocked": diary_unlocked}
     return await db_write(_run)
 
 
@@ -9248,9 +9272,11 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
             if zhongli_fee_reduction:
                 log_economy(c, x_telegram_id, 'card_zhongli_contract_seal', 0, balance_after,
                             contract_id, 'card', f"Комиссия снижена на {zhongli_fee_reduction}★")
-            unlock_diary_entry(c, x_telegram_id, "first_contract")
+            diary_unlocked = []
+            if unlock_diary_entry(c, x_telegram_id, "first_contract"):
+                diary_unlocked.append("first_contract")
             conn.commit()
-            return {"contract_id": contract_id, "fee_stars": local_fee, "new_points": balance_after}
+            return {"contract_id": contract_id, "fee_stars": local_fee, "new_points": balance_after, "diary_unlocked": diary_unlocked}
         finally:
             conn.close()
 
@@ -9259,7 +9285,8 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
         raise HTTPException(status_code=result["status"], detail=result["error"])
 
     return {"success": True, "id": result["contract_id"], "fee_stars": result["fee_stars"],
-            "payout_stars": reward - result["fee_stars"], "new_points": result["new_points"]}
+            "payout_stars": reward - result["fee_stars"], "new_points": result["new_points"],
+            "diary_unlocked": result["diary_unlocked"]}
 
 
 @app.post("/api/contracts/{contract_id}/accept")
