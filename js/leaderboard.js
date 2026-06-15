@@ -83,6 +83,16 @@ function renderProfileAvatarCard(profile = {}) {
   }
 }
 
+const FRAME_IDS = ['bronze','silver','gold','diamond','dragon','netwatch-legend','zhongli','raider','scholar','path-netwatch','path-genshin'];
+
+function applyAvatarFrame(el, frameId) {
+  if (!el) return;
+  el.classList.remove('has-frame', ...FRAME_IDS.map(f => `frame-${f}`));
+  if (frameId && FRAME_IDS.includes(frameId)) {
+    el.classList.add('has-frame', `frame-${frameId}`);
+  }
+}
+
 function updateProfilePathBadge(path = currentThemePath) {
   const badge = document.getElementById('profilePathBadge');
   if (!badge) return;
@@ -109,6 +119,8 @@ function renderProfileDossier(profile = {}) {
   setProfileText('profileLeaderboardPlace', place);
   updateProfilePathBadge(profile.theme_path || currentThemePath);
 
+  applyAvatarFrame(document.getElementById('profileAvatarWrap'), profile.equipped_frame);
+
   setProfileText('profileStatusLine', profile.status_line || '状态：在线 // 权限：学生节点 // 同步率：0%');
   setProfileText('profileTitleBadge', profile.title || '协议执行者 / Исполнитель');
   setProfileText('profileStatCases', stats.case_opens || 0);
@@ -127,10 +139,12 @@ function renderProfileDossier(profile = {}) {
   }
   if (showcase) {
     const sourceTag = showcase.source === 'manual' ? ' · ★' : '';
-    setProfileText('profileShowcaseText', `${showcase.name || showcase.code || '—'} · ${showcase.detail || 'active'}${sourceTag}`);
+    setProfileText('profileShowcaseText', `${showcase.name || showcase.code || '—'} · ${showcase.detail || 'активно'}${sourceTag}`);
   } else {
-    setProfileText('profileShowcaseText', 'SHOWCASE: AUTO // no active item');
+    setProfileText('profileShowcaseText', 'ВИТРИНА: АВТО // нет активного предмета');
   }
+
+  if (typeof applyWildAiProfileOverride === 'function') applyWildAiProfileOverride();
 }
 
 async function loadProfileDossier() {
@@ -196,18 +210,18 @@ async function openProfileShowcaseModal() {
       kind: 'auto',
       code: '',
       glyph: '自',
-      label: 'AUTO MODE',
-      name: 'Automatic showcase',
-      detail: 'System selects the strongest active item',
+      label: 'АВТО',
+      name: 'Автоматическая витрина',
+      detail: 'Система сама выбирает самый сильный активный предмет',
     }];
     (Array.isArray(implants) ? implants : []).forEach(item => {
       options.push({
         kind: 'implant',
         code: item.implant_id,
         glyph: getProfileShowcaseGlyph('implant', item.implant_id, item.icon),
-        label: 'IMPLANT',
+        label: 'ИМПЛАНТ',
         name: item.name || item.implant_id,
-        detail: item.desc || `durability ${item.durability || 0}`,
+        detail: item.desc || `прочность ${item.durability || 0}`,
       });
     });
     (Array.isArray(cards) ? cards : []).forEach(item => {
@@ -215,14 +229,14 @@ async function openProfileShowcaseModal() {
         kind: 'card',
         code: item.card_id,
         glyph: getProfileShowcaseGlyph('card', item.card_id),
-        label: `${item.rarity || 4}★ CARD`,
+        label: `${item.rarity || 4}★ КАРТА`,
         name: item.name || item.card_id,
-        detail: item.passive || `durability ${item.durability || 0}`,
+        detail: item.passive || `прочность ${item.durability || 0}`,
       });
     });
     renderProfileShowcaseOptions(options);
   } catch (e) {
-    box.innerHTML = '<div class="empty-state">Showcase loading error</div>';
+    box.innerHTML = '<div class="empty-state">Ошибка загрузки витрины</div>';
   }
 }
 
@@ -246,6 +260,73 @@ async function selectProfileShowcase(kind, code) {
     try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
   } catch (e) {
     showToast('Showcase save failed');
+  }
+}
+
+function renderProfileFrameOptions(data) {
+  const box = document.getElementById('profileFrameOptions');
+  if (!box) return;
+  const equipped = data.equipped || null;
+  let html = `
+    <button class="profile-showcase-option ${!equipped ? 'equipped' : ''}" onclick="selectProfileFrame(null)">
+      <span class="profile-frame-swatch frame-none"></span>
+      <span class="profile-showcase-option-copy">
+        <span>NO FRAME</span>
+        <strong>Без рамки</strong>
+        <em>Стандартный аватар</em>
+      </span>
+    </button>`;
+  html += (data.frames || []).map(f => `
+    <button class="profile-showcase-option ${f.unlocked ? '' : 'locked'} ${equipped === f.id ? 'equipped' : ''}"
+      onclick="${f.unlocked ? `selectProfileFrame('${f.id}')` : 'void(0)'}">
+      <span class="profile-frame-swatch frame-${f.id}"></span>
+      <span class="profile-showcase-option-copy">
+        <span>${f.unlocked ? 'РАЗБЛОКИРОВАНО' : 'ЗАБЛОКИРОВАНО'}</span>
+        <strong>${escapeHtml(f.name)}</strong>
+        <em>${escapeHtml(f.desc)}</em>
+      </span>
+      ${f.unlocked ? '' : '<span class="profile-frame-lock">🔒</span>'}
+    </button>`).join('');
+  box.innerHTML = html;
+}
+
+async function openProfileFrameModal() {
+  const modal = document.getElementById('profileFrameModal');
+  const box = document.getElementById('profileFrameOptions');
+  if (!modal || !box || !currentUserId) return;
+  modal.style.display = 'flex';
+  box.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/frames/${currentUserId}`);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Frames load failed');
+    renderProfileFrameOptions(data);
+  } catch (e) {
+    box.innerHTML = '<div class="empty-state">Frames loading error</div>';
+  }
+}
+
+function closeProfileFrameModal() {
+  const modal = document.getElementById('profileFrameModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function selectProfileFrame(frameId) {
+  if (!currentUserId) return;
+  try {
+    const r = await fetch(`${API_URL}/api/frames/equip`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId, frame_id: frameId})
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Frame save failed');
+    applyAvatarFrame(document.getElementById('profileAvatarWrap'), data.equipped);
+    await openProfileFrameModal();
+    loadLeaderboard();
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+  } catch (e) {
+    showToast('Не удалось сохранить рамку');
   }
 }
 
@@ -340,7 +421,9 @@ async function loadDiaryStarsLeaderboardRating() {
         const parsed = await diaryResponse.json();
         if (Array.isArray(parsed)) diaryRows = parsed;
       } else {
-        warning = `Дневниковый API ответил ${diaryResponse.status}; показываю общий список.`;
+        let detail = '';
+        try { const d = await diaryResponse.json(); if (d.detail) detail = `: ${d.detail}`; } catch(e) {}
+        warning = `Дневниковый API ответил ${diaryResponse.status}${detail}; показываю общий список.`;
       }
     } catch(e) {
       warning = 'Дневниковый API недоступен; показываю общий список.';
@@ -458,11 +541,31 @@ async function loadLeaderboard() {
   ];
   try {
     const r = await fetch(`${API_URL}/api/leaderboard`);
-    const data = await r.json();
     const container = document.getElementById('leaderboardContent');
+    if (!r.ok) {
+      let detail = '';
+      try { const d = await r.json(); if (d.detail) detail = `: ${d.detail}`; } catch(e) {}
+      container.innerHTML = `<div class="empty-state">Ошибка загрузки (${r.status}${detail})</div>`;
+      return;
+    }
+    let data = await r.json();
     if (!data.length) { container.innerHTML = '<div class="empty-state">Рейтинг пока пуст</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
     let myRank = '—', html = '';
+
+    // Wild AI Breach: личности (имя/аватар/титул) перемешаны между местами рейтинга
+    const breachActive = typeof isWildAiBreachActive === 'function' && isWildAiBreachActive();
+    if (breachActive && typeof seededShuffle === 'function') {
+      const identities = data.map(item => ({
+        name: item.name,
+        avatar_url: item.avatar_url,
+        telegram_id: item.telegram_id,
+        has_title: item.has_title,
+      }));
+      const shuffled = seededShuffle(identities, getWildAiBreachSeed());
+      data = data.map((item, i) => ({ ...item, ...shuffled[i] }));
+      html += '<div class="lb-corrupted-badge">⚠ ДАННЫЕ ПОВРЕЖДЕНЫ // ОТОБРАЖЕНИЕ НЕДОСТОВЕРНО</div>';
+    }
 
     data.forEach((item, i) => {
       const medal = medals[i] || (i+1)+'.';
@@ -493,19 +596,12 @@ async function loadLeaderboard() {
       const pathClass = item.theme_path === 'genshin' ? 'genshin' : item.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
       const rankSignal = i === 0 ? 'ALPHA' : i < 3 ? 'ELITE' : i < 10 ? 'TOP-10' : 'OPERATOR';
 
-      // Иероглиф импланта
-      let glyphHtml = '';
+      // Сигнал импланта/карты для подстроки
       let signalLabel = 'NO IMPLANT';
       if (item.implant && IMPLANT_GLYPHS[item.implant]) {
-        const [glyph, color, label] = IMPLANT_GLYPHS[item.implant];
-        signalLabel = label;
-        glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
-      } else if (item.card) {
-        if (CARD_GLYPHS[item.card]) {
-          const [glyph, color, label] = CARD_GLYPHS[item.card];
-          signalLabel = label;
-          glyphHtml = `<span class="lb-implant-glyph" style="color:${color};">${glyph}</span>`;
-        }
+        signalLabel = IMPLANT_GLYPHS[item.implant][2];
+      } else if (item.card && CARD_GLYPHS[item.card]) {
+        signalLabel = CARD_GLYPHS[item.card][2];
       }
 
       // Титул
@@ -527,12 +623,23 @@ async function loadLeaderboard() {
       // Разделитель после топ-3
       const divider = i === 3 ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
 
+      // Рамка аватара — за топ-3 фиксированная, для остальных по выбору пользователя
+      const frameClass = (!topClass && item.equipped_frame) ? `has-frame frame-${item.equipped_frame}` : '';
+
+      // Динамика места в рейтинге со вчера
+      let rankChangeHtml = '';
+      if (item.rank_delta > 0) {
+        rankChangeHtml = `<span class="lb-rank-change up">▲${item.rank_delta}</span>`;
+      } else if (item.rank_delta < 0) {
+        rankChangeHtml = `<span class="lb-rank-change down">▼${Math.abs(item.rank_delta)}</span>`;
+      }
+
       html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''}" style="${animDelay}">
-        <div class="lb-rank">${medal}</div>
-        <div class="lb-avatar">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
+        <div class="lb-rank">${medal}${rankChangeHtml}</div>
+        <div class="lb-avatar ${frameClass}">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
           <div class="lb-name-row">
-            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${glyphHtml}${isMe?' 👈':''}</div>
+            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${isMe?' 👈':''}</div>
             <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
           </div>
           <div class="lb-subline">
@@ -548,7 +655,7 @@ async function loadLeaderboard() {
     container.innerHTML = html;
     const placeEl = document.getElementById('profileLeaderboardPlace');
     if (placeEl) placeEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '—');
-  } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
+  } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Нет соединения</div>'; }
 }
 
 // ===== МАГАЗИН =====

@@ -38,6 +38,32 @@ function updateLaunchGateCountdowns() {
   document.querySelectorAll('[data-launch-countdown]').forEach(el => {
     el.textContent = text;
   });
+  const freezeText = formatFeatureFreezeCountdown();
+  document.querySelectorAll('[data-freeze-countdown]').forEach(el => {
+    el.textContent = freezeText;
+  });
+  const shopResetText = formatShopResetCountdown();
+  document.querySelectorAll('[data-shop-reset-countdown]').forEach(el => {
+    el.textContent = shopResetText;
+  });
+}
+
+// Дневные лимиты магазина сбрасываются в полночь по Пекину (UTC+8).
+function formatShopResetCountdown() {
+  const now = new Date();
+  const beijingMs = now.getTime() + 8 * 3600 * 1000;
+  const beijingDate = new Date(beijingMs);
+  const msIntoDay = beijingDate.getUTCHours() * 3600000
+    + beijingDate.getUTCMinutes() * 60000
+    + beijingDate.getUTCSeconds() * 1000
+    + beijingDate.getUTCMilliseconds();
+  const msLeft = 24 * 3600000 - msIntoDay;
+  const totalSeconds = Math.floor(msLeft / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 function syncLaunchGateVisibility() {
@@ -64,11 +90,72 @@ function closeLaunchGateOverlay() {
   if (overlay) overlay.classList.remove('show');
 }
 
+// === ЗАМОРОЗКА ОТДЕЛЬНЫХ РАЗДЕЛОВ ===
+// Ключи совпадают с именами страниц (showPage) и секций (openMore).
+const FEATURE_FREEZE_LABELS = {
+  casino:        'КЕЙСЫ / МОЛИТВЫ',
+  shop:          'МАГАЗИН',
+  implants:      'ИМПЛАНТЫ / КАРТОЧКИ',
+  laundry:       'СТИРКА / ВОДА',
+  achievements:  'АЧИВКИ',
+  'diary-stars': 'ДНЕВНИК ★',
+  rating:        'РЕЙТИНГ',
+};
+
+function isFeatureFrozen(name) {
+  if (!window.APP_FEATURE_FREEZE_ENABLED) return false;
+  if (!currentUserId || isAdmin || isArchitect) return false;
+  return !!(window.APP_FROZEN_FEATURES || {})[name];
+}
+
+function formatFeatureFreezeCountdown() {
+  const target = new Date(window.APP_FREEZE_TARGET_AT || '');
+  if (Number.isNaN(target.getTime())) return '';
+  const diff = target.getTime() - Date.now();
+  if (diff <= 0) return 'Скоро открытие';
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${days}д ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
+function showFeatureFreezeOverlay(name) {
+  const overlay = document.getElementById('featureFreezeOverlay');
+  if (!overlay) return;
+  const titleEl = document.getElementById('featureFreezeTitle');
+  if (titleEl) titleEl.textContent = FEATURE_FREEZE_LABELS[name] || 'ЭТОТ РАЗДЕЛ';
+  const cd = formatFeatureFreezeCountdown();
+  const timerEl = document.getElementById('featureFreezeTimer');
+  if (timerEl) { timerEl.textContent = cd; timerEl.style.display = cd ? 'block' : 'none'; }
+  overlay.classList.add('show');
+  try { tg.HapticFeedback.notificationOccurred('warning'); } catch(e) {}
+}
+
+function closeFeatureFreezeOverlay() {
+  const overlay = document.getElementById('featureFreezeOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
+// Помечает замочком пункты навигации/меню с data-feature, если раздел заморожен.
+function syncFeatureFreezeBadges() {
+  document.querySelectorAll('[data-feature]').forEach(el => {
+    el.classList.toggle('feature-frozen', isFeatureFrozen(el.getAttribute('data-feature')));
+  });
+}
+
 let _currentPage = 'home';
 
 function showPage(name, btn) {
   if (isLaunchGateActive() && name !== 'home') {
     showLaunchGateOverlay();
+    return;
+  }
+
+  if (isFeatureFrozen(name)) {
+    showFeatureFreezeOverlay(name);
     return;
   }
 
@@ -139,7 +226,9 @@ function showPage(name, btn) {
 function syncAdminUiVisibility() {
   document.body.classList.toggle('is-admin', !!isAdmin);
   syncLaunchGateVisibility();
+  syncFeatureFreezeBadges();
   if (typeof syncArchitectEventAvailability === 'function') syncArchitectEventAvailability();
+  if (typeof syncWildAiEventAvailability === 'function') syncWildAiEventAvailability();
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? 'block' : 'none';
@@ -157,8 +246,13 @@ function openMore(section) {
     return;
   }
 
+  if (isFeatureFrozen(section)) {
+    showFeatureFreezeOverlay(section);
+    return;
+  }
+
   // Скрываем все субстраницы
-  ['themes','weather','laundry','news','achievements','team','admin','stats'].forEach(s => {
+  ['themes','map','weather','laundry','news','achievements','team','architect-diary','admin','stats'].forEach(s => {
     const el = document.getElementById('more-' + s);
     if (el) el.style.display = 'none';
   });
@@ -170,137 +264,25 @@ function openMore(section) {
   } else {
     el.style.display = 'block';
     currentMoreSection = section;
+    if (section === 'themes' && isAdmin) {
+      ['theme-btn-genshin-light', 'theme-btn-genshin-dark'].forEach(id => {
+        const cardEl = document.getElementById(id);
+        if (cardEl) cardEl.style.display = '';
+      });
+    }
     if (section === 'achievements') loadAchievements();
     if (section === 'news') loadAnnouncements();
     if (section === 'laundry') { initLaundry(); }
     if (section === 'team' && typeof renderTeamCards === 'function') renderTeamCards();
+    if (section === 'architect-diary' && typeof renderArchitectDiary === 'function') renderArchitectDiary();
+    if (section === 'map' && typeof initCampusMap === 'function') initCampusMap();
   }
 }
 
 // ===== ДАННЫЕ =====
-
-async function loadUserData(telegramId) {
-  let r, data;
-  const _initData = (typeof getTelegramInitData === 'function') ? getTelegramInitData() : '';
-  console.log('[loadUserData] start', {
-    telegramId,
-    initDataLength: _initData ? _initData.length : 0,
-    hasInitDataUnsafeUser: Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user),
-  });
-  try {
-    r = await fetch(`${API_URL}/api/user/${telegramId}`);
-  } catch(e) {
-    console.error('[loadUserData] network error', telegramId, e && e.stack || e);
-    document.getElementById('status').textContent = '● ОФЛАЙН';
-    document.getElementById('username').textContent = 'Ошибка связи';
-    hideStartupCover();
-    return;
-  }
-
-  console.log('[loadUserData] response', {
-    status: r.status,
-    requestId: r.headers.get('X-Request-ID') || r.headers.get('x-request-id'),
-    processTimeMs: r.headers.get('X-Process-Time-ms') || r.headers.get('x-process-time-ms'),
-  });
-
-  if (!r.ok) {
-    console.warn('[loadUserData] non-OK response', r.status, r.statusText);
-    document.getElementById('status').textContent = '● НЕ НАЙДЕН';
-    document.getElementById('username').textContent = 'Нет подписки';
-    hideStartupCover();
-    return;
-  }
-
-  try {
-    data = await r.json();
-  } catch(e) {
-    console.error('[loadUserData] JSON parse error', e && e.stack || e);
-    document.getElementById('status').textContent = '● ОФЛАЙН';
-    document.getElementById('username').textContent = 'Ошибка связи';
-    hideStartupCover();
-    return;
-  }
-
-  try {
-    {
-      document.getElementById('status').textContent = '● АКТИВЕН';
-      document.getElementById('status').style.color = '#cc4444';
-      document.getElementById('username').textContent = data.full_name || data.username;
-
-      isAdmin = !!data.is_admin;
-      isArchitect = !!data.is_architect;
-      document.body.classList.toggle('is-architect', isArchitect);
-      document.querySelectorAll('.architect-only-block').forEach(el => {
-        el.style.display = isArchitect ? '' : 'none';
-      });
-      if (isArchitect) {
-        localStorage.setItem('zhidao_architect', '1');
-        const badge = document.querySelector('.profile-admin-badge');
-        if (badge) badge.textContent = '架构师 // ARCHITECT';
-        const kicker = document.getElementById('profileKicker');
-        if (kicker) kicker.textContent = 'ARCHITECT // PROTOCOL';
-        const afterIntro = () => {
-          const nameEl = document.getElementById('profileDisplayName');
-          cipherDecode(nameEl);
-        };
-        if (!playAdminIntroIfNeeded(data, afterIntro)) {
-          startBlackwallBoot(afterIntro);
-        }
-        setupProfileTilt();
-      } else {
-        // Clear flag — not architect (covers account change / stale localStorage)
-        localStorage.removeItem('zhidao_architect');
-        // Abort boot overlay if it was pre-shown from stale localStorage
-        // Also hide overlay if it was pre-shown by inline script (stale localStorage)
-        const _ov = document.getElementById('blackwall-boot');
-        if (_ov) _ov.style.display = 'none';
-        if (_bootRunning) {
-          _bootRunning = false;
-          _bootCbs = [];
-        }
-      }
-      if (!isArchitect && document.body.classList.contains('theme-architect')) {
-        if (typeof setTheme === 'function') setTheme('');
-        try { tg.CloudStorage.setItem('zhidao_theme', ''); } catch(e) {}
-        localStorage.setItem('zhidao_theme', '');
-      }
-      if (isAdmin && !isArchitect) {
-        const badge = document.querySelector('.profile-admin-badge');
-        if (badge) badge.textContent = '系统架构师';
-        playAdminIntroIfNeeded(data);
-      }
-      if (isAdmin && typeof syncAdminThemeMode === 'function') {
-        syncAdminThemeMode(localStorage.getItem('zhidao_theme') || '');
-      }
-      syncAdminUiVisibility();
-      // MVP badge on profile
-      const mvpBadge = document.getElementById('profileMvpBadge');
-      if (mvpBadge) mvpBadge.style.display = data.is_last_mvp ? 'inline-flex' : 'none';
-      userConfig = data.link;
-      currentAvatarUrl = data.avatar_url || null;
-      if (typeof renderProfileAvatarCard === 'function') {
-        renderProfileAvatarCard(data);
-      }
-      if (typeof syncDiaryAccessVisibility === 'function') {
-        syncDiaryAccessVisibility();
-      }
-      document.getElementById('serverTag').textContent = data.has_vpn === false
-        ? 'STUDENT NODE // VPN не привязан'
-        : 'HK NODE // ' + ((data.used_traffic || 0) / 1024/1024/1024).toFixed(2) + ' GB';
-      const used = data.used_traffic || 0;
-      const usedGB = (used / 1024/1024/1024).toFixed(2);
-      document.getElementById('trafficValue').textContent = data.has_vpn === false ? '— GB' : usedGB + ' GB';
-      const percent = Math.min((used / (10*1024*1024*1024)) * 100, 100);
-      setTimeout(() => { document.getElementById('progressFill').style.width = percent + '%'; }, 300);
-      if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
-    }
-  } catch(e) {
-    // Profile data was fetched successfully — a UI render error here must not
-    // blank out a valid profile with a false "ОФЛАЙН" state.
-    console.error('[loadUserData] UI render error after successful fetch', e && e.stack || e);
-    hideStartupCover();
-  }
-}
+// loadUserData() живёт ниже как обёртка с ретраями над zFetchUserProfile /
+// zApplyUserProfile. Старая inline-реализация удалена как мёртвый код:
+// две function-декларации с одним именем — побеждала вторая.
 
 // ── ADMIN EXCLUSIVE INTRO VIDEOS ─────────────────────────────
 
@@ -390,6 +372,124 @@ function skipAdminIntro() {
   finishAdminIntro();
 }
 
+// ── THEME SELECTION SPLASH (для всех игроков) ────────────────
+// При первом входе после выбора темы NetWatch/Genshin показываем
+// соответствующую видео-заставку (тот же ролик, что у admin intro).
+// Для Михаил Юрьевича (Альфабосс, 244487659) NetWatch-заставка
+// показывается при каждом запуске приложения.
+
+const THEME_INTRO_ASSETS = {
+  cyberpunk: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/cyberpunktheme_intro.mp4',
+  genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_intro.mp4',
+};
+
+const THEME_INTRO_CAPTIONS = {
+  cyberpunk: 'NETWATCH ACCESS',
+  genshin: 'GENSHIN ACCESS',
+};
+
+const PERMANENT_THEME_INTRO_IDS = {
+  cyberpunk: [244487659], // Михаил Юрьевич // Альфабосс
+};
+
+let themeIntroPlaying = false;
+let themeIntroDoneCallback = null;
+
+function themeIntroVariant(theme) {
+  if (theme === 'genshin-light' || theme === 'genshin-dark') return 'genshin';
+  if (theme === '' || theme === 'nw-light') return 'cyberpunk';
+  return null;
+}
+
+// Вызывается из setTheme(), когда тему меняет сам игрок.
+function markThemeIntroPending(theme) {
+  const variant = themeIntroVariant(theme);
+  if (!variant) return;
+  try { localStorage.setItem('zhidao_theme_intro_pending', variant); } catch(e) {}
+}
+
+function playThemeIntroIfNeeded(done) {
+  if (adminIntroPlaying || themeIntroPlaying) return false;
+
+  const theme = localStorage.getItem('zhidao_theme') || '';
+  const variant = themeIntroVariant(theme);
+  if (!variant || !THEME_INTRO_ASSETS[variant]) return false;
+
+  let shouldPlay = false;
+  try {
+    if (localStorage.getItem('zhidao_theme_intro_pending') === variant) {
+      shouldPlay = true;
+      localStorage.removeItem('zhidao_theme_intro_pending');
+    }
+  } catch(e) {}
+
+  if (!shouldPlay && (PERMANENT_THEME_INTRO_IDS[variant] || []).includes(currentUserId)) {
+    shouldPlay = true;
+  }
+
+  if (!shouldPlay) return false;
+
+  const overlay = document.getElementById('adminIntroOverlay');
+  const video = document.getElementById('adminIntroVideo');
+  const caption = document.getElementById('adminIntroCaption');
+  if (!overlay || !video) return false;
+
+  themeIntroPlaying = true;
+  themeIntroDoneCallback = typeof done === 'function' ? done : null;
+
+  if (caption) caption.textContent = THEME_INTRO_CAPTIONS[variant] || '';
+  overlay.classList.toggle('genshin', variant === 'genshin');
+  overlay.classList.toggle('cyberpunk', variant === 'cyberpunk');
+  overlay.style.display = 'flex';
+  overlay.classList.remove('closing');
+  hideStartupCover();
+
+  video.pause();
+  video.src = THEME_INTRO_ASSETS[variant];
+  video.currentTime = 0;
+  video.onended = finishThemeIntro;
+  video.onerror = finishThemeIntro;
+
+  const playPromise = video.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {
+      setTimeout(finishThemeIntro, 1200);
+    });
+  }
+  return true;
+}
+
+function finishThemeIntro() {
+  if (!themeIntroPlaying) return;
+  themeIntroPlaying = false;
+  const overlay = document.getElementById('adminIntroOverlay');
+  const video = document.getElementById('adminIntroVideo');
+  if (video) {
+    video.onended = null;
+    video.onerror = null;
+    video.pause();
+  }
+  if (overlay) {
+    overlay.classList.add('closing');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      overlay.classList.remove('closing');
+      if (video) video.removeAttribute('src');
+      const cb = themeIntroDoneCallback;
+      themeIntroDoneCallback = null;
+      if (cb) cb();
+    }, 420);
+  } else if (themeIntroDoneCallback) {
+    const cb = themeIntroDoneCallback;
+    themeIntroDoneCallback = null;
+    cb();
+  }
+}
+
+function skipThemeIntro() {
+  finishThemeIntro();
+}
+
 function hideStartupCover() {
   const cover = document.getElementById('startupCover');
   if (!cover || cover.classList.contains('hidden')) return;
@@ -452,7 +552,7 @@ function startBlackwallBoot(cb) {
   hideStartupCover();
 
   const LINES = [
-    { text: '> ZHIDAO PROTOCOL v2.9.0', delay: 0 },
+    { text: '> ZHIDAO PROTOCOL v3.0.0', delay: 0 },
     { text: '> INITIALIZING BLACKWALL...', delay: 260 },
     { text: '> ARCHITECT ACCESS CONFIRMED', delay: 280 },
     { text: '> CLEARANCE LEVEL: OMEGA', delay: 240 },
@@ -494,9 +594,15 @@ function startBlackwallBoot(cb) {
   });
 }
 
+let _profileTiltBound = false;
 function setupProfileTilt() {
   const card = document.getElementById('profileCard');
   if (!card) return;
+  // The card is a singleton element; binding listeners more than once (e.g. on
+  // every profile reload for an architect) would stack duplicate pointer and
+  // global deviceorientation handlers. Bind exactly once.
+  if (_profileTiltBound) return;
+  _profileTiltBound = true;
   const MAX = 10;
 
   function applyTilt(rx, ry) {
@@ -554,14 +660,7 @@ function showHelp() {
   tg.showPopup({ title: '📖 Инструкция', message: '1. Нажми "КОНФИГ"\n2. Нажми "СКОПИРОВАТЬ"\n3. Открой Happ → + → вставь ссылку\n4. Подключись!', buttons: [{type:'ok'}] });
 }
 
-function contactAdmin() {
-  const url = window.ADMIN_CONTACT_URL || '';
-  if (!url) {
-    showToast('Контакт администратора настраивается на сервере', 'info');
-    return;
-  }
-  tg.openTelegramLink(url);
-}
+
 
 async function loadWeather() {
   try {
@@ -579,7 +678,7 @@ async function loadWeather() {
 
 async function loadYuanRate() {
   try {
-    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-28/v1/currencies/cny.json');
+    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/cny.json');
     const data = await r.json();
     const rub = data.cny.rub;
     if (rub) {
@@ -706,7 +805,10 @@ function showToast(msg, type) {
 
   const msgEl = document.createElement('span');
   msgEl.className = 'toast-msg';
-  msgEl.innerHTML = msg
+  // Strip a leading emoji from the message text — the toast already shows
+  // its own type icon on the left, so an embedded emoji would duplicate it.
+  const cleanMsg = msg.replace(/^[\p{Extended_Pictographic}‍️]+\s*/u, '');
+  msgEl.innerHTML = cleanMsg
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -954,6 +1056,10 @@ function zApplyUserProfile(telegramId, data, options = {}) {
     }
   });
 
+  zSafeUiCall('theme intro', () => {
+    playThemeIntroIfNeeded();
+  });
+
   zSafeUiCall('admin visibility', () => syncAdminUiVisibility());
   zSafeUiCall('mvp badge', () => {
     const mvpBadge = document.getElementById('profileMvpBadge');
@@ -964,6 +1070,9 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   });
   zSafeUiCall('diary access', () => {
     if (typeof syncDiaryAccessVisibility === 'function') syncDiaryAccessVisibility();
+  });
+  zSafeUiCall('feature freeze', () => {
+    if (typeof syncFeatureFreezeBadges === 'function') syncFeatureFreezeBadges();
   });
 
   if (!adminIntroPlaying && !_bootRunning) hideStartupCover();

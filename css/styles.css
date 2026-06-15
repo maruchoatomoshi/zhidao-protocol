@@ -59,6 +59,9 @@ body.theme-nw-light {
   --text2: #333333;
   --text3: #5a5a5a;
   --scan-opacity: 0.01;
+  --contract-card-bg: rgba(255,255,255,0.78);
+  --contract-card-border: rgba(0,0,0,0.09);
+  --contract-card-shadow: 0 4px 16px rgba(0,0,0,0.07);
 }
 
 /* ===== GENSHIN LIGHT ===== */
@@ -589,6 +592,14 @@ body::before {
   100% { transform: translateY(240vh); }
 }
 
+/* On light themes the dark-red matrix kanji is too opaque against light
+   cards/backgrounds and makes text behind it unreadable — tone it way down. */
+body.theme-nw-light .matrix-kanji,
+body.theme-genshin-light .matrix-kanji {
+  color: rgba(180, 0, 30, 0.10) !important;
+  text-shadow: none !important;
+}
+
 /* Horizontal data stream rows — architect green only */
 .matrix-col {
   position: absolute;
@@ -694,6 +705,51 @@ body.theme-nw-light .team-role,
 body.theme-nw-light .shop-item-desc,
 body.theme-nw-light .announcement-date
 { color: #444444 !important; }
+
+/* Low-opacity gold "kicker" labels and headers are illegible on the light
+   background — darken them to the same readable gold used elsewhere in
+   theme-nw-light (#7a5010). */
+body.theme-nw-light .alpha-boss-kicker,
+body.theme-nw-light .alpha-boss-pts,
+body.theme-nw-light .alpha-boss-raid-cost,
+body.theme-nw-light .page-title-cn,
+body.theme-nw-light .main-pinyin,
+body.theme-nw-light .stat-cn,
+body.theme-nw-light .implant-py,
+body.theme-nw-light .profile-card-kicker,
+body.theme-nw-light .lb-leaders-label,
+body.theme-nw-light .more-stat-lbl span,
+body.theme-nw-light .more-item-cn,
+body.theme-nw-light .shop-cat .cn,
+body.theme-nw-light .shop-item-cn,
+body.theme-nw-light .case-cn.g,
+body.theme-nw-light .event-lobby-count,
+body.theme-nw-light .launch-gate-kicker,
+body.theme-nw-light .demo-lock-kicker,
+body.theme-nw-light .event-lobby-card .event-lobby-reward::before,
+body.theme-nw-light .event-result-card .event-lobby-reward::before,
+body.theme-nw-light .diary-star,
+body.theme-genshin-light .alpha-boss-kicker,
+body.theme-genshin-light .alpha-boss-pts,
+body.theme-genshin-light .alpha-boss-raid-cost,
+body.theme-genshin-light .page-title-cn,
+body.theme-genshin-light .main-pinyin,
+body.theme-genshin-light .stat-cn,
+body.theme-genshin-light .implant-py,
+body.theme-genshin-light .profile-card-kicker,
+body.theme-genshin-light .lb-leaders-label,
+body.theme-genshin-light .more-stat-lbl span,
+body.theme-genshin-light .more-item-cn,
+body.theme-genshin-light .shop-cat .cn,
+body.theme-genshin-light .shop-item-cn,
+body.theme-genshin-light .case-cn.g,
+body.theme-genshin-light .event-lobby-count,
+body.theme-genshin-light .launch-gate-kicker,
+body.theme-genshin-light .demo-lock-kicker,
+body.theme-genshin-light .event-lobby-card .event-lobby-reward::before,
+body.theme-genshin-light .event-result-card .event-lobby-reward::before,
+body.theme-genshin-light .diary-star
+{ color: #a07028 !important; }
 
 body.theme-genshin-light .page-title,
 body.theme-genshin-light .lb-name,
@@ -1693,6 +1749,32 @@ body.is-admin .profile-card-kicker {
   font-family: monospace;
   font-style: normal;
 }
+.profile-frame-swatch {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  background: var(--frame-gradient, conic-gradient(#888,#444,#888));
+  box-shadow: 0 0 8px var(--frame-glow, transparent);
+}
+.profile-frame-swatch.frame-none {
+  background: rgba(255,255,255,0.06);
+  border: 1px dashed rgba(255,255,255,0.18);
+  box-shadow: none;
+}
+.profile-showcase-option.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.profile-showcase-option.equipped {
+  border-color: rgba(212,175,55,0.5);
+  background: rgba(212,175,55,0.1);
+}
+.profile-frame-lock {
+  flex: 0 0 auto;
+  font-size: 14px;
+  color: var(--text3);
+}
 .lb-item {
   position: relative;
   display: flex;
@@ -1745,6 +1827,15 @@ body.is-admin .profile-card-kicker {
   min-width: 28px;
   text-align: center;
 }
+.lb-rank-change {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 2px;
+  letter-spacing: 0;
+}
+.lb-rank-change.up { color: #2ecc71; }
+.lb-rank-change.down { color: #e74c3c; }
 .lb-avatar {
   position: relative;
   z-index: 1;
@@ -1773,9 +1864,70 @@ body.is-admin .profile-card-kicker {
   font-family: monospace;
   white-space: nowrap;
 }
-.lb-implant-glyph {
-  font-size: 16px; font-family: serif;
-  margin-left: 4px; vertical-align: middle;
+/* Top-3 avatar frames — CSS-only "mini achievement" cosmetics */
+.lb-item.top1 .lb-avatar,
+.lb-item.top2 .lb-avatar,
+.lb-item.top3 .lb-avatar {
+  border-radius: 50%;
+}
+.lb-item.top1 .lb-avatar::before,
+.lb-item.top2 .lb-avatar::before,
+.lb-item.top3 .lb-avatar::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--lb-frame-gradient);
+  box-shadow: 0 0 10px var(--lb-frame-glow);
+  animation: lb-frame-spin 4s linear infinite;
+}
+.lb-item.top1 .lb-avatar { --lb-frame-gradient: conic-gradient(from 0deg, #d4af37, #fff3b0, #d4af37, #fff3b0, #d4af37); --lb-frame-glow: rgba(212,175,55,0.55); }
+.lb-item.top2 .lb-avatar { --lb-frame-gradient: conic-gradient(from 0deg, #b0b0b0, #f0f0f0, #b0b0b0, #f0f0f0, #b0b0b0); --lb-frame-glow: rgba(200,200,200,0.4); }
+.lb-item.top3 .lb-avatar { --lb-frame-gradient: conic-gradient(from 0deg, #b87333, #e8a050, #b87333, #e8a050, #b87333); --lb-frame-glow: rgba(184,115,51,0.4); }
+.lb-item.top1 .lb-avatar-img,
+.lb-item.top1 .lb-avatar-fallback,
+.lb-item.top2 .lb-avatar-img,
+.lb-item.top2 .lb-avatar-fallback,
+.lb-item.top3 .lb-avatar-img,
+.lb-item.top3 .lb-avatar-fallback {
+  border-radius: 50%;
+}
+
+/* Equipped avatar frames — unlockable cosmetic "mini-achievements" */
+.has-frame {
+  border-radius: 50% !important;
+  overflow: visible !important;
+}
+.has-frame::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--frame-gradient);
+  box-shadow: 0 0 10px var(--frame-glow);
+  animation: lb-frame-spin 4s linear infinite;
+}
+.has-frame .lb-avatar-img,
+.has-frame .lb-avatar-fallback,
+.has-frame .profile-avatar-img,
+.has-frame .profile-avatar-fallback {
+  border-radius: 50%;
+}
+.frame-bronze    { --frame-gradient: conic-gradient(from 0deg, #b87333, #e8a050, #b87333, #e8a050, #b87333); --frame-glow: rgba(184,115,51,0.4); }
+.frame-silver    { --frame-gradient: conic-gradient(from 0deg, #b0b0b0, #f0f0f0, #b0b0b0, #f0f0f0, #b0b0b0); --frame-glow: rgba(200,200,200,0.4); }
+.frame-gold      { --frame-gradient: conic-gradient(from 0deg, #d4af37, #fff3b0, #d4af37, #fff3b0, #d4af37); --frame-glow: rgba(212,175,55,0.55); }
+.frame-diamond   { --frame-gradient: conic-gradient(from 0deg, #7fdbff, #ffffff, #7fdbff, #ffffff, #7fdbff); --frame-glow: rgba(127,219,255,0.55); }
+.frame-dragon    { --frame-gradient: conic-gradient(from 0deg, #cc2200, #ff6644, #cc2200, #ff6644, #cc2200); --frame-glow: rgba(204,34,0,0.55); }
+.frame-netwatch-legend { --frame-gradient: conic-gradient(from 0deg, #00fff7, #0a3d3d, #00fff7, #0a3d3d, #00fff7); --frame-glow: rgba(0,255,247,0.45); }
+.frame-zhongli   { --frame-gradient: conic-gradient(from 0deg, #d4af37, #5a3e1b, #d4af37, #5a3e1b, #d4af37); --frame-glow: rgba(212,175,55,0.45); }
+.frame-raider    { --frame-gradient: conic-gradient(from 0deg, #ff8800, #ff3300, #ff8800, #ff3300, #ff8800); --frame-glow: rgba(255,102,0,0.45); }
+.frame-scholar   { --frame-gradient: conic-gradient(from 0deg, #3498db, #ffffff, #3498db, #ffffff, #3498db); --frame-glow: rgba(52,152,219,0.45); }
+.frame-path-netwatch { --frame-gradient: conic-gradient(from 0deg, #cc2200, #330000, #cc2200, #330000, #cc2200); --frame-glow: rgba(204,34,0,0.35); }
+.frame-path-genshin  { --frame-gradient: conic-gradient(from 0deg, #9b59b6, #e91e8c, #9b59b6, #e91e8c, #9b59b6); --frame-glow: rgba(155,89,182,0.4); }
+@keyframes lb-frame-spin {
+  to { transform: rotate(360deg); }
 }
 .lb-progress {
   height: 2px; border-radius: 1px;
@@ -1965,6 +2117,12 @@ body.is-admin .profile-card-kicker {
 }
 .shop-balance { font-size: 9px; color: var(--text3); font-family: monospace; }
 .shop-balance span { color: var(--gold); font-weight: 700; }
+.shop-reset-timer {
+  margin: 4px 14px 0;
+  font-size: 9px; color: var(--text3); font-family: monospace;
+  text-align: right;
+}
+.shop-reset-timer span { color: var(--gold); font-weight: 700; }
 .frozen-banner {
   background: rgba(180,20,20,0.1);
   border: 1px solid var(--red-border);
@@ -2502,7 +2660,7 @@ body.is-admin .profile-card-kicker {
 .inventory-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .inv-btn { flex:1; padding: 7px 6px; border-radius: var(--radius-md); font-size: 9px; font-weight: 700; cursor: pointer; border: 1px solid transparent; font-family: monospace; }
 .inv-btn-use { flex: 0 0 100%; background: rgba(46,204,113,0.15); color: #2ecc71; border-color: rgba(46,204,113,0.18); }
-.inv-btn-gift { background: rgba(212,175,55,0.08); color: var(--gold); opacity: 0.72; }
+.inv-btn-gift { background: rgba(212,175,55,0.08); color: var(--gold); border-color: rgba(212,175,55,0.18); }
 .inv-btn-sell { background: rgba(180,20,20,0.10); color: var(--red); border-color: rgba(180,20,20,0.18); }
 .inv-btn-legendary {
   background: rgba(180,20,20,0.14);
@@ -3138,6 +3296,12 @@ body.is-admin .more-item.admin-only-item::before {
   filter: drop-shadow(0 0 3px rgba(212,175,55,0.6));
 }
 .achievement-earned-badge svg { width: 100%; height: 100%; display: block; }
+.achievement-earned-badge.is-demo-label {
+  width: auto; height: auto; padding: 1px 5px;
+  font-size: 8px; font-family: monospace; letter-spacing: 1px;
+  background: rgba(212,175,55,0.18); border-radius: 4px;
+  filter: none;
+}
 .achievement-locked-badge {
   position: absolute; top: 4px; right: 4px;
   width: 14px; height: 14px; color: var(--text3);
@@ -3147,6 +3311,62 @@ body.is-admin .more-item.admin-only-item::before {
 .cn-divider-icon svg { width: 100%; height: 100%; display: block; stroke: currentColor; }
 
 /* ===== КОМАНДА ===== */
+.team-card-item {
+  background: rgba(10,10,18,0.7);
+}
+.team-card-avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+  border: 2px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; overflow: hidden; flex-shrink: 0;
+}
+.team-card-avatar .no-leak-bg { background-size: cover; }
+.team-card-name {
+  font-size: 15px; font-weight: 800; color: #fff; margin-top: 2px;
+}
+.team-card-desc {
+  margin-top: 8px; font-size: 11px; color: #bbb; line-height: 1.5;
+}
+.architect-diary-card {
+  border-left: 3px solid #00ff66;
+}
+.architect-diary-card-title {
+  font-size: 11px; font-family: monospace; color: #00ff66;
+  letter-spacing: 1px; font-weight: 700; margin-bottom: 6px;
+}
+.architect-diary-card-text {
+  font-size: 12px; color: var(--text2); line-height: 1.6;
+}
+.architect-diary-card-meta {
+  margin-top: 8px; font-size: 9px; font-family: monospace; color: var(--text3);
+}
+.architect-diary-card-locked {
+  border-left-color: var(--text3); opacity: 0.55;
+}
+.architect-diary-card-locked .architect-diary-card-title {
+  color: var(--text3);
+}
+body.theme-nw-light .architect-diary-card-text { color: #444; }
+body.theme-genshin-light .architect-diary-card-text { color: #565e6e; }
+.team-card-status-badge {
+  font-size: 8px; font-family: monospace; color: var(--text3);
+  background: rgba(255,255,255,0.05); padding: 1px 5px;
+  border-radius: 4px; white-space: nowrap;
+}
+.team-card-btn {
+  margin-top: 10px; width: 100%; padding: 7px;
+  background: rgba(255,255,255,0.04); border: 1px solid;
+  border-radius: 8px; font-size: 10px; font-family: monospace;
+  letter-spacing: 1px; cursor: pointer;
+}
+body.theme-nw-light .team-card-item { background: rgba(255,255,255,0.75); }
+body.theme-nw-light .team-card-avatar { background: rgba(0,0,0,0.04); }
+body.theme-nw-light .team-card-name  { color: #1a1a1a; }
+body.theme-nw-light .team-card-desc  { color: #444; }
+body.theme-nw-light .team-card-status-badge { background: rgba(0,0,0,0.06); color: #666; }
+body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
+
 .team-card {
   display: flex; align-items: flex-start; gap: 12px;
   padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -3970,6 +4190,75 @@ body.is-admin .more-item.admin-only-item::before {
   background: rgba(231,76,60,0.12);
   color: #e74c3c;
 }
+
+/* Economy report: compact, expandable player rows */
+.economy-report-row {
+  margin-bottom: 7px;
+  padding: 9px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 11px;
+  background: rgba(0,0,0,0.10);
+  cursor: pointer;
+}
+.economy-report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.economy-report-head strong {
+  display: inline;
+  color: var(--text);
+  font-size: 12px;
+}
+.economy-report-id {
+  display: block;
+  margin-top: 1px;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 9px;
+}
+.economy-report-net {
+  flex-shrink: 0;
+  font-family: monospace;
+  font-weight: 900;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.economy-report-net.pos { color: var(--gold); }
+.economy-report-net.neg { color: #e74c3c; }
+.economy-report-details {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.economy-report-row.expanded .economy-report-details { display: block; }
+.economy-report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.economy-report-stat {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+}
+.economy-report-stat span {
+  display: block;
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+}
+.economy-report-stat b {
+  display: block;
+  margin-top: 2px;
+  color: var(--text2);
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
 .admin-console-note {
   color: var(--text3);
   font-family: monospace;
@@ -4303,6 +4592,9 @@ body.is-admin .more-item.admin-only-item::before {
   gap: 8px;
   margin-bottom: 14px;
 }
+.admin-bw-btn-wide {
+  grid-column: 1 / -1;
+}
 .admin-bw-btn {
   padding: 12px;
   border-radius: 10px;
@@ -4395,6 +4687,28 @@ body.is-admin .more-item.admin-only-item::before {
 @keyframes cyberPartFloat{0%{opacity:0;transform:translate(0,0) scale(0)}15%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0.3)}}
 @keyframes cyberBlink{0%,100%{opacity:0.2}50%{opacity:0.6}}
 @keyframes fadeUpAnim{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+
+/* ===== ВЫПАДЕНИЕ ПРИЗА: золотой кейс (голо-карта) ===== */
+@keyframes prizeFlipGold{0%{transform:rotateY(180deg) scale(0.4);opacity:0}60%{transform:rotateY(0deg) scale(1.12);opacity:1}100%{transform:rotateY(0deg) scale(1)}}
+@keyframes prizeShineSweep{0%{left:-150%}100%{left:200%}}
+@keyframes prizeRingPulseGold{0%{transform:scale(0.4);opacity:0.9;border-width:3px}100%{transform:scale(2.6);opacity:0;border-width:1px}}
+
+/* ===== ВЫПАДЕНИЕ ПРИЗА: фиолетовый кейс (слот-дроп) ===== */
+@keyframes prizeDropPurple{0%{transform:translateY(-260px) scale(0.6);opacity:0}80%{transform:translateY(0) scale(1.15);opacity:1}100%{transform:translateY(0) scale(1)}}
+@keyframes prizeShakePurple{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) translateY(2px)}40%{transform:translateX(8px) translateY(-2px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes prizeFlashPurple{0%{opacity:0}30%{opacity:.8}100%{opacity:0}}
+@keyframes prizeRingExpandPurple{0%{transform:scale(0.3);opacity:1}100%{transform:scale(7);opacity:0}}
+
+/* ===== ВЫПАДЕНИЕ ПРИЗА: чёрный кейс (глитч-расшифровка) ===== */
+@keyframes prizeGlitchBlack{
+  0%{transform:translate(0,0);clip-path:inset(0 0 0 0)}
+  25%{transform:translate(-4px,2px);clip-path:inset(20% 0 30% 0);filter:hue-rotate(90deg)}
+  50%{transform:translate(4px,-2px);clip-path:inset(60% 0 5% 0);filter:hue-rotate(-90deg)}
+  75%{transform:translate(-2px,0);clip-path:inset(10% 0 50% 0)}
+  100%{transform:translate(0,0);clip-path:inset(0 0 0 0)}
+}
+@keyframes prizeScanLineBlack{0%{top:-10%;opacity:1}100%{top:110%;opacity:0}}
+@keyframes prizeTypewriter{from{width:0;border-right-color:rgba(255,255,255,.6)}to{width:100%;border-right-color:transparent}}
 @keyframes gsBlinkHint{0%,100%{opacity:0.3}50%{opacity:0.8}}
 @keyframes gsCardInNew{0%{transform:scale(0.2) translateY(50px);opacity:0}60%{transform:scale(1.08) translateY(-4px)}100%{transform:scale(1) translateY(0);opacity:1}}
 @keyframes gsVortexSpin{0%{transform:rotate(0deg) scale(0.3);opacity:0}30%{opacity:1}100%{transform:rotate(720deg) scale(1.5);opacity:0}}
@@ -4800,437 +5114,250 @@ body.is-admin .more-item.admin-only-item::before {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(255,80,40,0.13), transparent 22%),
-    radial-gradient(circle at 50% 50%, rgba(170,20,20,0.28), transparent 40%),
-    linear-gradient(180deg, rgba(22,0,0,0.44), rgba(0,0,0,0.58)),
-    rgba(0,0,0,0.92);
-  backdrop-filter: blur(14px);
+  background: rgba(40,0,0,0.32);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
 }
 
 .architect-banner-overlay.show {
   display: flex;
+  animation: architectScreenShake 2.6s 0.4s infinite linear;
+}
+
+.architect-banner-redflash {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(255,0,0,0.5);
+  mix-blend-mode: hard-light;
+  opacity: 0;
+  animation: architectRedFlash 2.6s infinite steps(1);
+}
+
+.architect-banner-glitchbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: rgba(255,30,30,0.55);
+  mix-blend-mode: difference;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+}
+
+.architect-banner-glitchbar-1 {
+  top: 22%;
+  animation: architectGlitchBar1 1.8s infinite steps(1);
+}
+
+.architect-banner-glitchbar-2 {
+  top: 64%;
+  height: 10px;
+  animation: architectGlitchBar2 2.2s infinite steps(1);
+}
+
+.architect-banner-glitchbar-3 {
+  top: 42%;
+  height: 6px;
+  animation: architectGlitchBar2 1.5s infinite steps(1) reverse;
 }
 
 .architect-banner-card {
   position: relative;
-  width: 100%;
-  max-width: 410px;
-  border-radius: 24px;
-  border: 1px solid rgba(210,26,26,0.42);
-  background:
-    linear-gradient(180deg, rgba(18,0,2,0.98), rgba(10,4,10,0.98) 42%, rgba(8,8,16,0.97));
-  box-shadow:
-    0 32px 120px rgba(0,0,0,0.65),
-    0 0 50px rgba(180,18,18,0.18),
-    0 0 0 1px rgba(255,80,40,0.08),
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    inset 0 0 60px rgba(120,0,0,0.12);
-  overflow: hidden;
-  transform: perspective(1200px) rotateX(2deg);
-}
-
-.architect-banner-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
-    repeating-linear-gradient(
-      180deg,
-      rgba(255,255,255,0.022) 0,
-      rgba(255,255,255,0.022) 1px,
-      transparent 1px,
-      transparent 4px
-    );
-  opacity: 0.62;
-  pointer-events: none;
-}
-
-.architect-banner-card::after {
-  content: '';
-  position: absolute;
-  inset: -30% -10% auto -10%;
-  height: 180px;
-  background: radial-gradient(circle, rgba(255,20,20,0.34), transparent 70%);
-  filter: blur(24px);
-  pointer-events: none;
-  animation: architectPulseGlow 2.6s ease-in-out infinite;
-}
-
-.architect-banner-card .architect-banner-frame {
-  position: absolute;
-  inset: 12px;
-  border: 1px solid rgba(255,40,40,0.14);
-  border-radius: 18px;
-  pointer-events: none;
-  box-shadow: inset 0 0 30px rgba(255,0,0,0.06);
-}
-
-.architect-banner-card .architect-banner-frame::before,
-.architect-banner-card .architect-banner-frame::after {
-  content: '';
-  position: absolute;
-  width: 38px;
-  height: 38px;
-  border-color: rgba(255,90,60,0.55);
-  border-style: solid;
-}
-
-.architect-banner-card .architect-banner-frame::before {
-  top: -1px;
-  left: -1px;
-  border-width: 2px 0 0 2px;
-  border-top-left-radius: 12px;
-}
-
-.architect-banner-card .architect-banner-frame::after {
-  right: -1px;
-  bottom: -1px;
-  border-width: 0 2px 2px 0;
-  border-bottom-right-radius: 12px;
-}
-
-.architect-banner-card .architect-banner-noise {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, transparent, rgba(255,255,255,0.035), transparent),
-    linear-gradient(180deg, transparent 0%, rgba(255,0,0,0.05) 48%, transparent 100%);
-  mix-blend-mode: screen;
-  opacity: 0.38;
-  pointer-events: none;
-  animation: architectNoiseShift 0.22s steps(2) infinite;
-}
-
-.architect-banner-head {
-  position: relative;
-  z-index: 1;
-  padding: 16px 18px 0;
-  color: rgba(255,140,80,0.9);
-  font-size: 10px;
-  letter-spacing: 3px;
-  font-family: monospace;
-}
-
-.architect-banner-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.architect-banner-topline::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255,80,40,0.75), rgba(255,80,40,0));
-}
-
-.architect-banner-authority {
-  position: relative;
-  z-index: 1;
-  margin: 10px 18px 0;
-  padding: 10px 12px;
-  border: 1px solid rgba(255,70,40,0.24);
-  border-radius: 12px;
-  background:
-    linear-gradient(90deg, rgba(120,0,0,0.28), rgba(255,255,255,0.02));
-  color: #ff996f;
-  font-family: monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    0 0 24px rgba(180,0,0,0.10);
-}
-
-.architect-banner-authority::before {
-  content: 'SYSTEM OWNER DETECTED';
-}
-
-.architect-banner-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
   z-index: 2;
-  width: 38px;
-  height: 38px;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  color: rgba(255,255,255,0.82);
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 24px rgba(255,0,0,0.10);
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 24px;
+  color: #fff;
+  font-family: monospace;
+  text-align: center;
 }
 
-.architect-banner-visual {
+.architect-banner-overlay.show .architect-banner-card {
+  animation: architectBannerEnter 0.4s steps(8, end);
+}
+
+.architect-banner-eye {
   position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px 18px 10px;
-  min-height: 168px;
-}
-
-.architect-banner-grid {
-  position: absolute;
-  inset: 10px 18px 0;
-  border-radius: 18px;
+  width: 96px;
+  height: 52px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(40,0,0,0.9), #000 70%);
+  box-shadow:
+    0 0 30px rgba(255,20,20,0.55),
+    inset 0 0 20px rgba(255,0,0,0.4);
   overflow: hidden;
-  pointer-events: none;
-  opacity: 0.55;
+  animation: architectEyeBlink 4.4s infinite;
 }
 
-.architect-banner-grid::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(90deg, rgba(255,0,0,0.08) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(180deg, rgba(255,0,0,0.08) 0 1px, transparent 1px 18px);
-}
-
-.architect-banner-grid::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent, rgba(255,0,0,0.10), transparent);
-  animation: architectScanSweep 2.2s linear infinite;
-}
-
-.architect-banner-grid .architect-banner-grid-pulse {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, transparent 0%, rgba(255,40,40,0.10) 50%, transparent 100%);
-  mix-blend-mode: screen;
-  animation: architectGridPulse 1.8s linear infinite;
-}
-
-.architect-banner-sigil {
+.architect-banner-eye-iris {
   position: absolute;
   left: 50%;
-  bottom: 6px;
-  transform: translateX(-50%);
-  color: rgba(255,110,90,0.92);
-  font-size: 10px;
-  letter-spacing: 3px;
-  font-family: monospace;
-  text-transform: uppercase;
-  white-space: nowrap;
-  opacity: 0.85;
-  text-shadow: 0 0 18px rgba(255,40,40,0.55);
-}
-
-.architect-banner-core {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,70,50,0.25);
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255,120,80,0.22), rgba(180,0,0,0.14) 42%, transparent 72%),
-    rgba(255,255,255,0.02);
-  box-shadow:
-    0 0 50px rgba(180,20,20,0.26),
-    inset 0 0 35px rgba(255,255,255,0.03);
-  animation: architectPulseCore 1.9s ease-in-out infinite;
-}
-
-.architect-banner-core::before,
-.architect-banner-core::after {
-  content: '';
-  position: absolute;
-  inset: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #ff5050 0%, #ff1010 45%, #4a0000 100%);
+  box-shadow: 0 0 18px rgba(255,30,30,0.85);
+  animation: architectEyePulse 1.6s ease-in-out infinite;
 }
 
-.architect-banner-core::before {
-  width: 76px;
-  height: 76px;
-  border: 1px solid rgba(255,70,50,0.55);
-  box-shadow: 0 0 18px rgba(255,70,50,0.28);
+.architect-banner-eye-iris::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #1a0000;
 }
 
-.architect-banner-core::after {
-  width: 20px;
-  height: 20px;
-  background: radial-gradient(circle, rgba(255,180,140,0.95), rgba(255,20,20,0.52));
-  box-shadow: 0 0 24px rgba(255,40,40,0.52);
+.architect-banner-eye-scan {
+  position: absolute;
+  inset: -10% 0;
+  background: linear-gradient(180deg, transparent, rgba(255,80,80,0.55), transparent);
+  animation: architectEyeScan 2.6s linear infinite;
 }
 
 .architect-banner-title {
   position: relative;
-  z-index: 1;
-  padding: 2px 18px 0;
-  color: #fff;
+  margin: 12px 0 0;
+  padding: 0;
+  color: #ff2b2b;
   font-size: 32px;
   font-weight: 900;
-  line-height: 1;
-  letter-spacing: 1.5px;
+  line-height: 1.15;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  text-shadow:
-    0 0 36px rgba(255, 60, 40, 0.42),
-    -2px 0 rgba(255,0,0,0.34),
-    1px 0 rgba(255,255,255,0.08);
-  animation: architectTextGlitch 2.3s steps(2) infinite;
+  text-shadow: 0 0 32px rgba(255,30,30,0.55);
+}
+
+.architect-banner-title::before,
+.architect-banner-title::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.architect-banner-title::before {
+  color: #fff;
+  z-index: -1;
+  animation: architectGlitchTop 1.4s infinite linear alternate-reverse;
 }
 
 .architect-banner-title::after {
-  content: 'ROOT PRIORITY';
-  display: block;
-  margin-top: 8px;
-  color: rgba(255,125,90,0.72);
-  font-family: monospace;
+  color: #ff8a6a;
+  z-index: -2;
+  animation: architectGlitchBottom 1.7s infinite linear alternate-reverse;
+}
+
+.architect-banner-subtitle {
+  margin-top: 12px;
+  color: #ff8a6a;
   font-size: 11px;
   letter-spacing: 3px;
-  text-shadow: none;
-}
-
-.architect-banner-copy {
-  position: relative;
-  z-index: 1;
-  margin: 12px 18px 0;
-  padding: 12px 14px 12px;
-  border-left: 2px solid rgba(255,40,40,0.52);
-  background: rgba(255,255,255,0.02);
-  color: #ddd6d6;
-  font-size: 13px;
-  line-height: 1.65;
-}
-
-.architect-banner-meta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 16px 18px 0;
-}
-
-.architect-banner-chip {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,50,50,0.20);
-  background:
-    linear-gradient(180deg, rgba(90,8,8,0.38), rgba(35,4,4,0.72));
-  color: #ffb37a;
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  font-family: monospace;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-}
-
-.architect-banner-status {
-  position: relative;
-  z-index: 1;
-  margin: 16px 18px 0;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,80,40,0.28);
-  background:
-    linear-gradient(90deg, rgba(130,20,20,0.34), rgba(255,255,255,0.02));
-  color: #ffd3ae;
-  font-size: 11px;
-  letter-spacing: 1.8px;
-  font-family: monospace;
   text-transform: uppercase;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-}
-
-.architect-banner-status::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 10px;
-  border-radius: 50%;
-  background: #ff3b20;
-  box-shadow: 0 0 12px rgba(255,59,32,0.75);
-  animation: architectAlertBlink 0.9s ease-in-out infinite;
 }
 
 .architect-banner-actions {
-  position: relative;
-  z-index: 1;
-  padding: 18px;
-  border-top: 1px solid rgba(255,50,50,0.10);
+  margin-top: 22px;
 }
 
 .architect-banner-dismiss {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid rgba(210,26,26,0.44);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(160,10,10,0.44), rgba(38,4,10,0.96));
-  color: #fff;
+  padding: 14px;
+  border: none;
+  background: transparent;
+  color: #ff2b2b;
   font-family: monospace;
-  font-size: 12px;
-  letter-spacing: 2px;
+  font-size: 13px;
+  letter-spacing: 3px;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    0 0 24px rgba(180,0,0,0.16);
 }
 
 .architect-banner-dismiss:hover {
-  border-color: rgba(255,70,40,0.56);
-  background:
-    linear-gradient(180deg, rgba(185,16,16,0.56), rgba(38,4,10,0.98));
+  color: #ff8a6a;
 }
 
-@keyframes architectPulseGlow {
-  0%, 100% { opacity: 0.70; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(8px); }
+@keyframes architectScreenShake {
+  0%, 96%, 100% { transform: translate(0, 0); }
+  96.5% { transform: translate(-4px, 2px); }
+  97% { transform: translate(3px, -2px); }
+  97.5% { transform: translate(-2px, 3px); }
+  98% { transform: translate(2px, -1px); }
+  98.5% { transform: translate(0, 0); }
 }
 
-@keyframes architectPulseCore {
-  0%, 100% { transform: scale(1); filter: saturate(1); }
-  50% { transform: scale(1.05); filter: saturate(1.2); }
+@keyframes architectEyeBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+  97% { transform: scaleY(1); }
 }
 
-@keyframes architectNoiseShift {
-  0% { transform: translate(0, 0); opacity: 0.28; }
-  50% { transform: translate(1px, -1px); opacity: 0.42; }
-  100% { transform: translate(-1px, 1px); opacity: 0.30; }
+@keyframes architectEyePulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.12); opacity: 0.85; }
 }
 
-@keyframes architectScanSweep {
-  0% { transform: translateY(-120%); opacity: 0; }
-  10% { opacity: 0.10; }
-  50% { opacity: 0.28; }
-  100% { transform: translateY(130%); opacity: 0; }
+@keyframes architectEyeScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 }
 
-@keyframes architectGridPulse {
-  0% { transform: translateX(-100%); opacity: 0; }
-  25% { opacity: 0.18; }
-  50% { opacity: 0.24; }
-  100% { transform: translateX(100%); opacity: 0; }
+@keyframes architectGlitchTop {
+  0% { clip-path: inset(0 0 85% 0); transform: translate(-2px, -1px); }
+  20% { clip-path: inset(10% 0 60% 0); transform: translate(2px, 1px); }
+  40% { clip-path: inset(40% 0 30% 0); transform: translate(-2px, 1px); }
+  60% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+  80% { clip-path: inset(20% 0 70% 0); transform: translate(-1px, 2px); }
+  100% { clip-path: inset(0 0 90% 0); transform: translate(1px, -2px); }
 }
 
-@keyframes architectTextGlitch {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-1px); }
-  21% { transform: translateX(1px); }
-  22% { transform: translateX(0); }
-  58% { transform: translateX(0); }
-  59% { transform: translateX(2px); }
-  60% { transform: translateX(-1px); }
-  61% { transform: translateX(0); }
+@keyframes architectGlitchBottom {
+  0% { clip-path: inset(85% 0 0 0); transform: translate(2px, 1px); }
+  20% { clip-path: inset(60% 0 10% 0); transform: translate(-2px, -1px); }
+  40% { clip-path: inset(30% 0 40% 0); transform: translate(2px, -1px); }
+  60% { clip-path: inset(10% 0 60% 0); transform: translate(-2px, 1px); }
+  80% { clip-path: inset(70% 0 20% 0); transform: translate(1px, -2px); }
+  100% { clip-path: inset(90% 0 0 0); transform: translate(-1px, 2px); }
 }
 
-@keyframes architectAlertBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+@keyframes architectGlitchBar1 {
+  0%, 91%, 100% { opacity: 0; transform: translateX(0); }
+  92% { opacity: 1; transform: translateX(-6%); }
+  94% { opacity: 0.6; transform: translateX(4%); }
+  96% { opacity: 1; transform: translateX(-3%); }
+  98% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes architectGlitchBar2 {
+  0%, 70%, 100% { opacity: 0; transform: translateX(0); }
+  71% { opacity: 1; transform: translateX(8%); }
+  73% { opacity: 0.5; transform: translateX(-5%); }
+  75% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes architectRedFlash {
+  0%, 90%, 100% { opacity: 0; }
+  91% { opacity: 0.55; }
+  92% { opacity: 0.1; }
+  93% { opacity: 0.4; }
+  94% { opacity: 0; }
+}
+
+@keyframes architectBannerEnter {
+  0% { opacity: 0; filter: brightness(3) contrast(2); }
+  30% { opacity: 1; filter: brightness(0.4); }
+  45% { opacity: 0.6; filter: brightness(2); }
+  60% { opacity: 1; filter: brightness(0.8); }
+  100% { opacity: 1; filter: brightness(1); }
 }
 
 /* --- КРИТИЧЕСКИЙ CSS ДЛЯ РЕЙДА --- */
@@ -5657,62 +5784,119 @@ body.is-admin .more-item.admin-only-item::before {
 
 /* --- СТИЛИЗАЦИЯ ПОД ТЕМЫ --- */
 
-/* GENSHIN (theme-genshin) */
-body.theme-genshin .raid-content {
+/* GENSHIN LIGHT (theme-genshin-light) */
+body.theme-genshin-light .raid-content {
     border-color: #d3bc8e; /* Золото Ли Юэ */
     box-shadow: 0 0 35px rgba(211, 188, 142, 0.3);
     background: #f0ebe1; /* Фон свитка */
     color: #3d4555;
 }
 
-body.theme-genshin .boss-img {
+body.theme-genshin-light .boss-img {
     border-color: #4b5366; /* Глубокий синий */
     box-shadow: 0 0 20px rgba(75, 83, 102, 0.3);
     border-radius: 20px; /* Прямоугольная карточка */
 }
 
-body.theme-genshin .boss-name { color: #3d4555; }
-body.theme-genshin .boss-title { color: #dbb165; } /* Светлое золото */
+body.theme-genshin-light .boss-name { color: #3d4555; }
+body.theme-genshin-light .boss-title { color: #dbb165; } /* Светлое золото */
 
-body.theme-genshin .raid-progress-container {
+body.theme-genshin-light .raid-progress-container {
     background: rgba(0,0,0,0.05);
     border-color: rgba(0,0,0,0.1);
 }
 
-body.theme-genshin .raid-progress-bar {
+body.theme-genshin-light .raid-progress-bar {
     background: linear-gradient(90deg, #dbb165, #f0ebe1);
     box-shadow: 0 0 15px rgba(219, 177, 101, 0.4);
 }
 
-body.theme-genshin .raid-kicker,
-body.theme-genshin .raid-meter-state {
+body.theme-genshin-light .raid-kicker,
+body.theme-genshin-light .raid-meter-state {
     border-color: rgba(75,83,102,0.18);
     background: rgba(75,83,102,0.08);
     color: #4b5366;
 }
 
-body.theme-genshin .raid-brief-card,
-body.theme-genshin .raid-roster-box,
-body.theme-genshin .raid-result-panel {
+body.theme-genshin-light .raid-brief-card,
+body.theme-genshin-light .raid-roster-box,
+body.theme-genshin-light .raid-result-panel {
     border-color: rgba(75,83,102,0.14);
     background: rgba(255,255,255,0.48);
 }
 
-body.theme-genshin .raid-brief-card strong,
-body.theme-genshin .raid-roster-chip b {
+body.theme-genshin-light .raid-brief-card strong,
+body.theme-genshin-light .raid-roster-chip b {
     color: #9b6f2c;
 }
 
-body.theme-genshin .raid-roster-chip {
+body.theme-genshin-light .raid-roster-chip {
     background: rgba(75,83,102,0.07);
     border-color: rgba(75,83,102,0.12);
     color: #4b5366;
 }
 
-body.theme-genshin #raid-action-btn {
+body.theme-genshin-light #raid-action-btn {
     background: #dbb165;
     color: #3d4555;
-}  
+}
+
+/* GENSHIN DARK (theme-genshin-dark) */
+body.theme-genshin-dark .raid-content {
+    border-color: rgba(219,177,101,0.35);
+    box-shadow: 0 0 35px rgba(219,177,101,0.18);
+    background: #1a1628;
+    color: #e8e0d0;
+}
+
+body.theme-genshin-dark .boss-img {
+    border-color: rgba(219,177,101,0.4);
+    box-shadow: 0 0 20px rgba(219,177,101,0.2);
+    border-radius: 20px;
+}
+
+body.theme-genshin-dark .boss-name { color: #e8e0d0; }
+body.theme-genshin-dark .boss-title { color: #dbb165; }
+
+body.theme-genshin-dark .raid-progress-container {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(219,177,101,0.15);
+}
+
+body.theme-genshin-dark .raid-progress-bar {
+    background: linear-gradient(90deg, #dbb165, #c8975a);
+    box-shadow: 0 0 15px rgba(219, 177, 101, 0.4);
+}
+
+body.theme-genshin-dark .raid-kicker,
+body.theme-genshin-dark .raid-meter-state {
+    border-color: rgba(219,177,101,0.2);
+    background: rgba(219,177,101,0.08);
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-brief-card,
+body.theme-genshin-dark .raid-roster-box,
+body.theme-genshin-dark .raid-result-panel {
+    border-color: rgba(219,177,101,0.14);
+    background: rgba(255,255,255,0.04);
+}
+
+body.theme-genshin-dark .raid-brief-card strong,
+body.theme-genshin-dark .raid-roster-chip b {
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-roster-chip {
+    background: rgba(219,177,101,0.07);
+    border-color: rgba(219,177,101,0.12);
+    color: #e8e0d0;
+}
+
+body.theme-genshin-dark #raid-action-btn {
+    background: #dbb165;
+    color: #1a1628;
+}
 
 /* DIARY */
 .diary-shell {
@@ -6402,62 +6586,62 @@ body.theme-genshin-light .diary-select {
     font-size: 10px;
 }
 
-body.theme-genshin .diary-hero {
+body.theme-genshin-light .diary-hero {
     border-color: rgba(219,177,101,0.28);
     background:
         radial-gradient(circle at top right, rgba(219,177,101,0.16), transparent 42%),
         linear-gradient(145deg, rgba(240, 235, 225, 0.96), rgba(232, 224, 210, 0.98));
 }
 
-body.theme-genshin .diary-kicker,
-body.theme-genshin .diary-status-badge,
-body.theme-genshin .diary-day-chip.active {
+body.theme-genshin-light .diary-kicker,
+body.theme-genshin-light .diary-status-badge,
+body.theme-genshin-light .diary-day-chip.active {
     border-color: rgba(75,83,102,0.14);
     background: rgba(75,83,102,0.08);
     color: #4b5366;
 }
 
-body.theme-genshin .diary-kicker::before {
+body.theme-genshin-light .diary-kicker::before {
     background: #dbb165;
     box-shadow: 0 0 12px rgba(219,177,101,0.45);
 }
 
-body.theme-genshin .diary-title {
+body.theme-genshin-light .diary-title {
     color: #3d4555;
 }
 
-body.theme-genshin .diary-title-cn {
+body.theme-genshin-light .diary-title-cn {
     color: #dbb165;
 }
 
-body.theme-genshin .diary-subtitle,
-body.theme-genshin .diary-note,
-body.theme-genshin .diary-section-sub,
-body.theme-genshin .diary-label,
-body.theme-genshin .diary-day-chip,
-body.theme-genshin .diary-word-index {
+body.theme-genshin-light .diary-subtitle,
+body.theme-genshin-light .diary-note,
+body.theme-genshin-light .diary-section-sub,
+body.theme-genshin-light .diary-label,
+body.theme-genshin-light .diary-day-chip,
+body.theme-genshin-light .diary-word-index {
     color: #6b7180;
 }
 
-body.theme-genshin .diary-card,
-body.theme-genshin .diary-input,
-body.theme-genshin .diary-select,
-body.theme-genshin .diary-textarea,
-body.theme-genshin .diary-word-index,
-body.theme-genshin .diary-day-chip,
-body.theme-genshin .diary-back-btn {
+body.theme-genshin-light .diary-card,
+body.theme-genshin-light .diary-input,
+body.theme-genshin-light .diary-select,
+body.theme-genshin-light .diary-textarea,
+body.theme-genshin-light .diary-word-index,
+body.theme-genshin-light .diary-day-chip,
+body.theme-genshin-light .diary-back-btn {
     background: rgba(255,255,255,0.55);
     border-color: rgba(75,83,102,0.14);
     color: #3d4555;
 }
 
-body.theme-genshin .diary-star {
+body.theme-genshin-light .diary-star {
     border-color: rgba(219,177,101,0.25);
     color: rgba(219,177,101,0.6);
     background: rgba(255,255,255,0.5);
 }
 
-body.theme-genshin .diary-star.active {
+body.theme-genshin-light .diary-star.active {
     color: #8a6820;
     background: linear-gradient(135deg, rgba(219,177,101,0.26), rgba(255,255,255,0.72));
     border-color: rgba(219,177,101,0.4);
@@ -6600,6 +6784,73 @@ body.theme-nw-light #toastContainer .toast {
 body.theme-nw-light .toast.toast-success { background: rgba(240,252,245,0.97); }
 body.theme-nw-light .toast.toast-error   { background: rgba(252,240,240,0.97); }
 body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
+
+/* --- nw-light: admin dossier modal --- */
+body.theme-nw-light .admin-dossier-sheet {
+  background:
+    radial-gradient(circle at top left, rgba(180,130,60,0.08), transparent 42%),
+    linear-gradient(145deg, rgba(255,252,245,0.98), rgba(250,246,238,0.96));
+  border-color: rgba(160,110,40,0.22);
+  box-shadow: 0 14px 50px rgba(0,0,0,0.14);
+}
+body.theme-nw-light .admin-dossier-stat {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.07);
+}
+body.theme-nw-light .admin-dossier-stat span,
+body.theme-nw-light .admin-dossier-panel-title {
+  color: rgba(100,60,10,0.7);
+}
+body.theme-nw-light .admin-dossier-stat strong { color: #1a1a1a; }
+body.theme-nw-light .admin-dossier-stat em     { color: #3a3a3a; }
+body.theme-nw-light .admin-dossier-panel {
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(0,0,0,0.07);
+}
+body.theme-nw-light .admin-dossier-row { border-color: rgba(0,0,0,0.06); }
+body.theme-nw-light .admin-dossier-row strong { color: #1a1a1a; }
+body.theme-nw-light .admin-dossier-row span   { color: #4a4a4a; }
+body.theme-nw-light .admin-dossier-room {
+  background: rgba(255,255,255,0.6);
+  border-color: rgba(0,0,0,0.08);
+}
+body.theme-nw-light .admin-dossier-empty { color: #888; }
+
+/* --- nw-light: admin blackwall / architect event cards --- */
+body.theme-nw-light .admin-blackwall-card {
+  background: linear-gradient(135deg, rgba(60,20,90,0.07), rgba(100,50,140,0.05));
+  border: 1px solid rgba(120,60,160,0.22);
+  box-shadow: 0 4px 16px rgba(80,30,120,0.07);
+}
+body.theme-nw-light .admin-blackwall-glyph {
+  color: rgba(100,40,140,0.45);
+  text-shadow: none;
+}
+body.theme-nw-light .admin-blackwall-title { color: #2a1a3a; }
+body.theme-nw-light .admin-blackwall-desc  { color: #5a4a6a; }
+
+/* --- nw-light: diary star rating buttons --- */
+body.theme-nw-light .diary-star {
+  border-color: rgba(140,90,10,0.28);
+  background: rgba(255,255,255,0.6);
+  color: rgba(140,90,10,0.5);
+}
+body.theme-nw-light .diary-star.active {
+  background: linear-gradient(135deg, rgba(200,155,40,0.18), rgba(220,175,60,0.12));
+  color: #8a5a10;
+  border-color: rgba(160,110,20,0.45);
+  box-shadow: 0 0 10px rgba(180,130,30,0.18);
+}
+body.theme-nw-light .diary-admin-date {
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(0,0,0,0.12);
+  color: #2a2a2a;
+}
+body.theme-nw-light .diary-admin-refresh {
+  border-color: rgba(0,0,0,0.12);
+  color: #555;
+}
+body.theme-nw-light .diary-admin-refresh:hover { background: rgba(0,0,0,0.05); }
 
 /* Ripple на кнопках */
 .btn, .btn-primary, .shop-item-buy, .subtab, .nav-item {
@@ -8417,7 +8668,12 @@ body.theme-genshin-light .schedule-subject,
 body.theme-genshin-light .rules-title,
 body.theme-genshin-light .inventory-name,
 body.theme-genshin-light .prize-result-name,
-body.theme-genshin-light .profile-card-name {
+body.theme-genshin-light .profile-card-name,
+body.theme-admin-light .schedule-subject,
+body.theme-admin-light .rules-title,
+body.theme-admin-light .inventory-name,
+body.theme-admin-light .prize-result-name,
+body.theme-admin-light .profile-card-name {
   color: var(--text) !important;
 }
 
@@ -8430,7 +8686,12 @@ body.theme-genshin-light .schedule-location,
 body.theme-genshin-light .rules-desc,
 body.theme-genshin-light .inventory-date,
 body.theme-genshin-light .prize-result-desc,
-body.theme-genshin-light .profile-card-sub {
+body.theme-genshin-light .profile-card-sub,
+body.theme-admin-light .schedule-location,
+body.theme-admin-light .rules-desc,
+body.theme-admin-light .inventory-date,
+body.theme-admin-light .prize-result-desc,
+body.theme-admin-light .profile-card-sub {
   color: var(--text2) !important;
 }
 
@@ -9333,7 +9594,7 @@ body.theme-genshin-dark #page-home .home-event-card {
   z-index: 18;
   display: block;
   min-height: 44vh;
-  max-height: 62vh;
+  max-height: 52vh;
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -9527,11 +9788,13 @@ body.theme-genshin-dark #page-home .home-event-card {
 
 .event-result-card .event-team-list {
   margin-top: 6px;
-  max-height: 120px;
+  /* The result sheet itself scrolls — don't squash the MVP card and damage
+     board into a tiny inner scroll window (the crown was getting clipped). */
+  max-height: none;
   padding: 0;
   border: none;
   background: transparent;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .event-result-row {
@@ -9599,9 +9862,31 @@ body.tg-ios .event-overlay.event-terminal .event-log {
 .event-overlay.event-state-finished #eventBossImage,
 .event-overlay.event-state-failed #eventBossImage {
   display: block !important;
-  width: 100%;
-  max-height: 55vh;
+  /* Fit the artwork into the zone above the bottom result sheet:
+     the sheet is capped at 52vh, so the image box ends at 53vh from the bottom. */
+  top: max(56px, env(safe-area-inset-top, 0px));
+  bottom: 53vh;
+  height: auto;
+  max-height: none;
+  width: 100vw;
   object-fit: contain;
+  object-position: center center;
+}
+
+/* Wild AI Breach defeat: play the loss video instead of the static image */
+.event-overlay.event-wildai.event-state-failed #eventBossImage {
+  display: none !important;
+}
+
+.event-overlay.event-wildai.event-state-failed #eventBossVideo {
+  display: block !important;
+  top: max(56px, env(safe-area-inset-top, 0px));
+  bottom: 53vh;
+  height: auto;
+  max-height: none;
+  width: 100vw;
+  object-fit: contain;
+  object-position: center center;
 }
 
 .event-overlay.event-state-finished .event-hero-glow {
@@ -11024,6 +11309,168 @@ body.theme-genshin .raid-result-text {
     color: #3d4555;
 }
 
+/* ===== GENSHIN DARK: night-palette overrides for raid overlay =====
+   body.theme-genshin's raid-content uses a cream/parchment "Liyue day"
+   palette that clashes with the dark theme's background. Re-skin to the
+   genshin-dark "Liyue night" palette (#1a1628 + gold), same structure. */
+body.theme-genshin-dark .raid-overlay {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(219,177,101,0.16), transparent 34%),
+      radial-gradient(circle at 100% 100%, rgba(80,90,154,0.18), transparent 42%),
+      rgba(10, 8, 16, 0.82);
+}
+
+body.theme-genshin-dark .raid-content {
+    border-color: rgba(219,177,101,0.28);
+    background:
+      radial-gradient(circle at 18% 0%, rgba(60,52,80,0.6), transparent 34%),
+      radial-gradient(circle at 100% 16%, rgba(80,90,154,0.22), transparent 38%),
+      linear-gradient(145deg, rgba(34,28,46,0.97), rgba(20,16,30,0.98));
+    box-shadow:
+      0 28px 70px rgba(0,0,0,0.5),
+      inset 0 0 0 1px rgba(255,255,255,0.05);
+    color: #e8e0d0;
+}
+
+body.theme-genshin-dark .raid-content::before {
+    background:
+      linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.06) 18%, transparent 36%),
+      repeating-linear-gradient(90deg, rgba(219,177,101,0.03) 0 1px, transparent 1px 10px);
+    opacity: 0.82;
+}
+
+body.theme-genshin-dark .raid-content::after {
+    border-color: rgba(219,177,101,0.12);
+}
+
+body.theme-genshin-dark .btn-close-raid {
+    color: rgba(232,224,208,0.5);
+}
+
+body.theme-genshin-dark .btn-close-raid:hover {
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .boss-frame::before {
+    border-color: rgba(219,177,101,0.22);
+    background:
+      radial-gradient(circle at center, rgba(219,177,101,0.08), transparent 66%),
+      linear-gradient(180deg, rgba(219,177,101,0.08), rgba(80,90,154,0.06));
+    box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+}
+
+body.theme-genshin-dark .boss-frame::after {
+    background: radial-gradient(circle, rgba(219,177,101,0.18), transparent 70%);
+}
+
+body.theme-genshin-dark .boss-img {
+    border-color: rgba(219,177,101,0.32);
+    background:
+      radial-gradient(circle at 50% 16%, rgba(255,255,255,0.08), transparent 52%),
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(219,177,101,0.05));
+    box-shadow:
+      0 16px 40px rgba(0,0,0,0.4),
+      inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+body.theme-genshin-dark .boss-name {
+    color: #e8e0d0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+body.theme-genshin-dark .boss-title {
+    color: #dbb165;
+    opacity: 0.95;
+}
+
+body.theme-genshin-dark .raid-kicker {
+    border-color: rgba(219,177,101,0.26);
+    background: rgba(219,177,101,0.08);
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-kicker-dot {
+    background: #dbb165;
+    box-shadow: 0 0 14px rgba(219,177,101,0.85);
+}
+
+body.theme-genshin-dark .raid-chip {
+    border-color: rgba(219,177,101,0.16);
+    background: rgba(255,255,255,0.04);
+    color: #a09880;
+}
+
+body.theme-genshin-dark .raid-status-block {
+    border-color: rgba(219,177,101,0.16);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
+      rgba(219,177,101,0.05);
+}
+
+body.theme-genshin-dark .raid-status-block::before {
+    background: linear-gradient(90deg, transparent, rgba(219,177,101,0.16), transparent);
+}
+
+body.theme-genshin-dark .raid-meter-eyebrow,
+body.theme-genshin-dark .raid-progress-hint,
+body.theme-genshin-dark .raid-progress-percent,
+body.theme-genshin-dark .raid-roster-head,
+body.theme-genshin-dark .raid-brief-card span {
+    color: rgba(232,224,208,0.6);
+}
+
+body.theme-genshin-dark .raid-meter-state {
+    border-color: rgba(219,177,101,0.22);
+    background: rgba(219,177,101,0.1);
+    color: #dbb165;
+}
+
+body.theme-genshin-dark .raid-progress-container {
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.03) 0 8%, transparent 8% 10%, rgba(255,255,255,0.03) 10% 18%, transparent 18% 20%, rgba(255,255,255,0.03) 20% 28%, transparent 28% 30%, rgba(255,255,255,0.03) 30% 38%, transparent 38% 40%, rgba(255,255,255,0.03) 40% 48%, transparent 48% 50%, rgba(255,255,255,0.03) 50% 58%, transparent 58% 60%, rgba(255,255,255,0.03) 60% 68%, transparent 68% 70%, rgba(255,255,255,0.03) 70% 78%, transparent 78% 80%, rgba(255,255,255,0.03) 80% 88%, transparent 88% 90%, rgba(255,255,255,0.03) 90% 100%),
+      rgba(255,255,255,0.02);
+    border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-dark .raid-progress-bar {
+    background: linear-gradient(90deg, #5a6aa0, #dbb165 64%, #f0d89a);
+    box-shadow: 0 0 16px rgba(219,177,101,0.35);
+}
+
+body.theme-genshin-dark .raid-result-panel.success {
+    border-color: rgba(86,150,106,0.32);
+    background: rgba(86,150,106,0.12);
+}
+
+body.theme-genshin-dark .raid-result-panel.danger {
+    border-color: rgba(200,100,80,0.32);
+    background: rgba(200,100,80,0.12);
+}
+
+body.theme-genshin-dark .raid-result-title,
+body.theme-genshin-dark .raid-count-label,
+body.theme-genshin-dark .raid-result-text {
+    color: #e8e0d0;
+}
+
+/* ===== NETWATCH LIGHT: keep the raid overlay on its dark "night raid"
+   palette. The overlay background stays dark regardless of theme, but
+   --text/--gold/--red flip to light-theme (dark-on-light) values in
+   theme-nw-light, making boss name/labels nearly invisible on the dark
+   overlay. Re-pin those variables to their dark-theme values, scoped to
+   the overlay only. */
+body.theme-nw-light .raid-overlay {
+    --text: #ffffff;
+    --text2: #cccccc;
+    --text3: #888888;
+    --gold: #d4af37;
+    --gold-dim: rgba(212,175,55,0.1);
+    --gold-border: rgba(212,175,55,0.25);
+    --red: #cc2200;
+    --red-dim: rgba(180,20,20,0.15);
+    --red-border: rgba(180,20,20,0.35);
+}
+
 /* ===== RAID VISUAL ENHANCEMENTS ===== */
 
 /* Result panel: center layout + icon */
@@ -11660,6 +12107,23 @@ body.launch-locked .home-event-card {
   82% { opacity: 0.65; }
   to { transform: translateY(360px); opacity: 0; }
 }
+
+/* Заморозка отдельных разделов — замок на пунктах навигации/меню */
+.feature-frozen { position: relative; }
+.feature-frozen::after {
+  content: "\1F512"; /* 🔒 */
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.85;
+  pointer-events: none;
+  filter: grayscale(0.2);
+}
+.more-item.feature-frozen { opacity: 0.5; }
+.nav-item.feature-frozen { opacity: 0.62; }
+.nav-item.feature-frozen::after { top: 2px; right: 50%; transform: translateX(14px); }
 /* ═══════════════════════════════════════════════════════════════
    ARCHITECT // WOW LAYER II — Holographic · Neon · Boot · Tilt
    ═══════════════════════════════════════════════════════════════ */
@@ -11892,6 +12356,111 @@ body.is-architect .profile-card-spark.spark-bl {
 .event-overlay.event-state-lobby .event-hero::after {
   animation: eventScanSweep 5.5s linear infinite, lobbyScanFlicker 14s linear infinite;
   opacity: 0.6;
+}
+
+/* ── WildAI Breach lobby — BlackWall about to fail: heavier glitches/freezes ── */
+
+@keyframes wildaiLobbyBossGlitch {
+  /* Mostly clean, but jittery */
+  0%, 100% { filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; transform: translate(0); }
+  6%   { transform: translate(-3px, 1px); filter: saturate(2.4) hue-rotate(14deg) brightness(1.3); clip-path: inset(12% 0 61% 0); }
+  6.4% { transform: translate(3px, -1px); filter: saturate(2.4) hue-rotate(-14deg) brightness(1.3); clip-path: inset(54% 0 18% 0); }
+  6.8% { transform: translate(0); filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; }
+  /* Freeze: image holds, screen briefly desaturates like a frozen frame */
+  22%, 24.5% { filter: saturate(0) contrast(1.4) brightness(0.7); transform: translate(0); clip-path: none; }
+  24.6% { filter: saturate(2.6) contrast(1.8) brightness(1.6); transform: translate(-8px, 0); clip-path: inset(35% 0 35% 0); }
+  25%  { filter: saturate(1.15) contrast(1.1) brightness(0.9); transform: translate(0); clip-path: none; }
+  /* Hard tear burst */
+  41%   { transform: translate(12px, -2px); filter: saturate(3) hue-rotate(24deg) brightness(1.7); clip-path: inset(8% 0 70% 0); }
+  41.4% { transform: translate(-12px, 2px); filter: saturate(3) hue-rotate(-24deg) brightness(1.7); clip-path: inset(66% 0 10% 0); }
+  41.8% { transform: translate(4px, 0); filter: saturate(0.2) contrast(2.4) brightness(2.4); clip-path: inset(0); }
+  42.2% { transform: translate(0); filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; }
+  /* Quick flicker stutter */
+  58%   { filter: saturate(1.15) contrast(1.1) brightness(0.9); }
+  58.2% { filter: saturate(0.1) brightness(2.6) contrast(2); }
+  58.4% { filter: saturate(1.15) contrast(1.1) brightness(0.4); }
+  58.6% { filter: saturate(0.1) brightness(2.6) contrast(2); }
+  58.8% { filter: saturate(1.15) contrast(1.1) brightness(0.9); }
+  /* Second freeze, longer */
+  74%, 78% { filter: saturate(0) contrast(1.5) brightness(0.65); transform: translate(0); clip-path: none; }
+  78.3% { filter: saturate(3) contrast(1.9) brightness(1.7); transform: translate(7px, -1px); clip-path: inset(20% 0 50% 0); }
+  78.6% { filter: saturate(1.15) contrast(1.1) brightness(0.9); transform: translate(0); clip-path: none; }
+  /* Final pre-collapse tear */
+  90%   { transform: translate(-10px, 2px); filter: saturate(2.8) hue-rotate(-20deg) brightness(1.6); clip-path: inset(15% 0 55% 0); }
+  90.4% { transform: translate(10px, -2px); filter: saturate(2.8) hue-rotate(20deg) brightness(1.6); clip-path: inset(60% 0 14% 0); }
+  90.8% { transform: translate(0); filter: saturate(1.15) contrast(1.1) brightness(0.9); clip-path: none; }
+}
+
+/* Subtle constant jitter layered on top of the glitch keyframes */
+@keyframes wildaiLobbyJitter {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(1px, 0); }
+  20% { transform: translate(-1px, 1px); }
+  30% { transform: translate(0, -1px); }
+  40% { transform: translate(1px, 1px); }
+  50% { transform: translate(-1px, 0); }
+  60% { transform: translate(0, 1px); }
+  70% { transform: translate(1px, -1px); }
+  80% { transform: translate(-1px, -1px); }
+  90% { transform: translate(0, 0); }
+}
+
+.event-overlay.event-wildai-lobby #eventBossImage {
+  animation:
+    wildaiLobbyBossGlitch 11s steps(1, end) infinite,
+    wildaiLobbyJitter 0.18s steps(2, end) infinite;
+  will-change: transform, filter;
+}
+
+/* Static-noise overlay flickers in during freezes/glitches */
+@keyframes wildaiLobbyNoiseFlicker {
+  0%, 5%, 21%, 26%, 40%, 43%, 57%, 60%, 73%, 79%, 89%, 92%, 100% { opacity: 0; }
+  6%, 24.5%, 41.5%, 58.3%, 76%, 90.5% { opacity: 0.5; }
+}
+
+.event-overlay.event-wildai-lobby .event-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255,255,255,0.08) 0px,
+    rgba(255,255,255,0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: wildaiLobbyNoiseFlicker 11s steps(1, end) infinite;
+}
+
+.event-overlay.event-wildai-lobby .event-hero::after {
+  animation: eventScanSweep 4.2s linear infinite, wildaiLobbyNoiseFlicker 11s steps(1, end) infinite;
+  opacity: 0.75;
+}
+
+/* "BlackWall integrity failing" warning text flicker over the lobby */
+.event-wildai-lobby-warning {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ff4040;
+  text-shadow: 0 0 10px rgba(255,40,40,0.7);
+  pointer-events: none;
+  opacity: 0;
+  animation: wildaiLobbyWarningFlicker 11s steps(1, end) infinite;
+}
+
+@keyframes wildaiLobbyWarningFlicker {
+  0%, 5%, 21%, 26%, 40%, 43%, 57%, 60%, 73%, 79%, 89%, 92%, 100% { opacity: 0; }
+  6%, 24.5%, 41.5%, 58.3%, 76%, 90.5% { opacity: 1; }
 }
 
 /* ── Lobby card redesign ────────────────────────────────────── */
@@ -12404,6 +12973,33 @@ body.is-architect .profile-card-spark.spark-bl {
 @keyframes hpCriticalPulse {
   0%, 100% { filter: brightness(1); }
   50%      { filter: brightness(1.35); }
+}
+
+/* — Wild AI Breach HUD: drop the Architect avatar, recolor the bar — */
+.event-overlay.event-wildai .boss-hud__stack {
+  display: none !important;
+}
+
+.event-overlay.event-wildai .event-hp-bar {
+  border-color: rgba(120, 255, 140, 0.28) !important;
+}
+
+.event-overlay.event-wildai .event-hp-fill {
+  background: linear-gradient(90deg, #2bff7a 0%, #8cff4d 60%, #d4ff2a 100%) !important;
+  box-shadow:
+    0 0 12px rgba(80, 255, 110, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.event-overlay.event-wildai.event-phase-2 .event-hp-fill {
+  background: linear-gradient(90deg, #ffd23a 0%, #ff8a2a 100%) !important;
+  box-shadow: 0 0 12px rgba(255, 170, 30, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.event-overlay.event-wildai.event-phase-3 .event-hp-fill {
+  background: linear-gradient(90deg, #ff3a3a 0%, #ff2ad4 100%) !important;
+  box-shadow: 0 0 16px rgba(255, 58, 58, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  animation: hpCriticalPulse 0.9s ease-in-out infinite;
 }
 
 /* — Question modal premium cyber — */
@@ -12995,14 +13591,16 @@ body.is-architect .profile-card-spark.spark-bl {
    backdrop-filters cause sustained paint/composite jank on Android.
    These overrides keep the look but cut the most expensive bits. */
 
-/* Drop expensive screen-blend overlay over the boss video/image */
-.event-hero::before {
+/* Drop expensive screen-blend overlay over the boss video/image
+   (the WildAI lobby keeps its glitch-noise overlay — it's the whole point
+   of that screen, and steps() flicker is cheap to composite) */
+.event-overlay:not(.event-wildai-lobby) .event-hero::before {
   mix-blend-mode: normal !important;
   opacity: 0.32 !important;
 }
 
 /* Disable always-on decorative infinite animations on the event overlay */
-.event-overlay .event-hero::before,
+.event-overlay:not(.event-wildai-lobby) .event-hero::before,
 .event-overlay .event-hero-glow,
 .event-overlay::before {
   animation: none !important;
@@ -13581,6 +14179,7 @@ body.is-architect .profile-card-spark.spark-bl {
 .contract-card.status-completed::before { background: linear-gradient(180deg, #2ecc71, transparent); }
 .contract-card.status-disputed::before { background: linear-gradient(180deg, #e74c3c, transparent); }
 .contract-card.status-cancelled::before { background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent); }
+.contract-card.status-expired::before { background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent); }
 
 .contract-card.status-accepted {
   background: linear-gradient(135deg, rgba(52,152,219,0.06), rgba(255,255,255,0.018));
@@ -13598,6 +14197,7 @@ body.is-architect .profile-card-spark.spark-bl {
 }
 
 .contract-card.status-cancelled { opacity: 0.62; }
+.contract-card.status-expired { opacity: 0.62; }
 
 .contract-card.admin-contract {
   border-color: rgba(96, 180, 212, 0.42);
@@ -13690,6 +14290,7 @@ body.is-architect .profile-card-spark.spark-bl {
 }
 
 .contract-flow-accepted span.done { border-color: rgba(52,152,219,0.42); background: linear-gradient(90deg, #3498db, rgba(52,152,219,0.28)); }
+.contract-flow-submitted span.done { border-color: rgba(155,89,182,0.42); background: linear-gradient(90deg, #9b59b6, rgba(155,89,182,0.28)); }
 .contract-flow-completed span.done { border-color: rgba(46,204,113,0.42); background: linear-gradient(90deg, #2ecc71, rgba(46,204,113,0.26)); }
 .contract-flow-disputed span.done { border-color: rgba(231,76,60,0.42); background: linear-gradient(90deg, #e74c3c, rgba(231,76,60,0.25)); }
 .contract-flow-cancelled span { opacity: 0.5; }
@@ -13720,6 +14321,13 @@ body.is-architect .profile-card-spark.spark-bl {
   color: var(--text3);
   font-size: 9px;
   opacity: 0.92;
+}
+
+.contract-countdown {
+  color: #e67e22;
+  font-size: 9px;
+  opacity: 0.85;
+  white-space: nowrap;
 }
 
 .contract-privacy-toggle {
@@ -13950,8 +14558,7 @@ body.theme-genshin-light #page-contracts {
   --contract-danger: #b4564b;
 }
 
-body.theme-genshin-dark #page-contracts,
-body.theme-genshin #page-contracts {
+body.theme-genshin-dark #page-contracts {
   --contract-accent: #d7b36a;
   --contract-accent-soft: rgba(215, 179, 106, 0.13);
   --contract-accent-border: rgba(215, 179, 106, 0.36);
@@ -13972,6 +14579,16 @@ body.theme-nw-light .contracts-tabs,
 body.theme-genshin-light .contracts-tabs {
   background: rgba(255,255,255,0.62);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.38);
+}
+
+/* Belt-and-braces: force the rules banner itself onto the light card
+   look — relying only on the --contract-card-bg variable left this box
+   dark/illegible on light themes. */
+body.theme-nw-light .contracts-rules-card,
+body.theme-genshin-light .contracts-rules-card {
+  background: linear-gradient(135deg, rgba(255,250,238,0.92), rgba(238,230,210,0.82)) !important;
+  border-color: rgba(149, 117, 70, 0.22) !important;
+  box-shadow: 0 14px 28px rgba(85,61,28,0.12) !important;
 }
 
 body.theme-nw-light .contracts-rules-text,
@@ -14109,6 +14726,32 @@ body.theme-nw-light .contract-card.status-disputed,
 body.theme-genshin-light .contract-card.status-disputed {
   background: linear-gradient(135deg, rgba(231,76,60,0.13), rgba(255,255,255,0.78));
   border-color: rgba(231,76,60,0.30);
+}
+
+body.theme-genshin-light .contract-card.admin-contract {
+  border-color: rgba(184, 134, 59, 0.42);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(184,134,59,0.16), transparent 42%),
+    radial-gradient(circle at 100% 0%, rgba(184,134,59,0.10), transparent 38%),
+    var(--contract-card-bg);
+  box-shadow:
+    0 0 0 1px rgba(184,134,59,0.10),
+    0 14px 30px rgba(85,61,28,0.14),
+    0 0 18px rgba(184,134,59,0.10);
+}
+
+body.theme-genshin-light .contract-card.admin-contract::before {
+  background: linear-gradient(180deg, #b8863b, #8a6820 72%, transparent);
+}
+
+body.theme-genshin-light .contract-admin-badge {
+  border: 1px solid rgba(184, 134, 59, 0.45);
+  background:
+    linear-gradient(90deg, rgba(184,134,59,0.18), rgba(184,134,59,0.08)),
+    rgba(255,250,238,0.85);
+  color: #8a6028;
+  text-shadow: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
 }
 
 body.theme-nw-light .contract-modal-title,
@@ -14409,12 +15052,14 @@ body.theme-genshin-light .demo-mode-banner span {
 body.theme-nw-light .demo-note,
 body.theme-nw-light .demo-catalog-lock,
 body.theme-nw-light .demo-card,
+body.theme-nw-light .demo-raid-locked,
 body.theme-genshin-light .demo-note,
 body.theme-genshin-light .demo-catalog-lock,
-body.theme-genshin-light .demo-card {
+body.theme-genshin-light .demo-card,
+body.theme-genshin-light .demo-raid-locked {
   background:
     radial-gradient(circle at 0% 0%, rgba(184,134,59,0.14), transparent 44%),
-    rgba(255,255,255,0.82);
+    rgba(255,255,255,0.82) !important;
   color: #33281d;
 }
 
@@ -14449,14 +15094,24 @@ body.lite-mode .profile-card-home::after { display: none; }
 /* ===== EVENT CREATE MODAL ===== */
 .event-active-bonuses {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
   margin-top: 6px;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  pointer-events: auto;
+}
+.event-active-bonuses::-webkit-scrollbar {
+  display: none;
 }
 .event-bonus-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex: 0 0 auto;
   background: rgba(0,255,136,0.08);
   border: 1px solid rgba(0,255,136,0.25);
   border-radius: 12px;
@@ -14715,7 +15370,7 @@ body.lite-mode .profile-card-home::after { display: none; }
 
 .event-finale-mvp-crown {
   font-size: 26px;
-  line-height: 1;
+  line-height: 1.25;
   color: var(--gold, #d4af37);
   text-shadow: 0 0 14px rgba(212,175,55,0.5);
   margin-bottom: 4px;
@@ -14897,4 +15552,2240 @@ body.lite-mode .profile-card-home::after { display: none; }
 @keyframes finaleVerdictPulse {
   0%, 100% { filter: brightness(1); }
   50%      { filter: brightness(1.25); }
+}
+
+/* Campus map */
+.campus-map-root {
+  padding: 0 12px 16px;
+}
+
+.campus-map-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(0, 212, 255, 0.16), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(204, 34, 0, 0.18), transparent 32%),
+    rgba(5, 8, 14, 0.88);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.campus-map-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0,255,136,0.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.35;
+}
+
+.campus-map-head,
+.campus-map-search,
+.campus-map-filters,
+.campus-map-list {
+  position: relative;
+  z-index: 2;
+}
+
+.campus-map-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 14px 8px;
+}
+
+.campus-map-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.campus-map-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(0, 212, 255, 0.86);
+}
+
+.campus-map-title {
+  margin-top: 3px;
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+body.theme-genshin-light .campus-map-title,
+body.theme-genshin-dark .campus-map-title {
+  font-family: 'Noto Serif SC', Georgia, serif;
+  letter-spacing: 2px;
+}
+
+.campus-map-mode {
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(0, 212, 255, 0.08);
+  color: rgba(0, 212, 255, 0.95);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+
+.campus-map-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 14px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 13px;
+  background: rgba(0,0,0,0.22);
+}
+
+.campus-map-search i {
+  color: rgba(0, 212, 255, 0.75);
+}
+
+.campus-map-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.campus-map-search input::placeholder {
+  color: var(--text3);
+}
+
+.campus-map-filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 14px 12px;
+  scrollbar-width: none;
+}
+
+.campus-map-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.campus-map-filters button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+}
+
+.campus-map-filters button.active {
+  border-color: rgba(0, 212, 255, 0.55);
+  background: rgba(0, 212, 255, 0.14);
+  color: #8ff4ff;
+  box-shadow: 0 0 18px rgba(0, 212, 255, 0.18);
+}
+
+/* Category filter chips match their map-pin colour:
+   study #00d4ff, food #d4af37, dorm #e887ff, sport #42e88f,
+   important #ff3b3b, meeting #ffffff. Resting state is a muted tint,
+   active state lights up like the pin on the map. */
+.campus-map-filters button.cat-study   { color: rgba(143, 244, 255, 0.78); border-color: rgba(0, 212, 255, 0.22); }
+.campus-map-filters button.cat-food    { color: rgba(232, 200, 110, 0.82); border-color: rgba(212, 175, 55, 0.24); }
+.campus-map-filters button.cat-dorm    { color: rgba(232, 170, 255, 0.82); border-color: rgba(232, 135, 255, 0.24); }
+.campus-map-filters button.cat-sport   { color: rgba(120, 240, 175, 0.82); border-color: rgba(66, 232, 143, 0.24); }
+.campus-map-filters button.cat-important{ color: rgba(255, 130, 130, 0.85); border-color: rgba(255, 59, 59, 0.26); }
+.campus-map-filters button.cat-meeting { color: rgba(235, 235, 235, 0.85); border-color: rgba(255, 255, 255, 0.22); }
+
+.campus-map-filters button.cat-study.active {
+  border-color: rgba(0, 212, 255, 0.55); background: rgba(0, 212, 255, 0.14);
+  color: #8ff4ff; box-shadow: 0 0 18px rgba(0, 212, 255, 0.20);
+}
+.campus-map-filters button.cat-food.active {
+  border-color: rgba(212, 175, 55, 0.60); background: rgba(212, 175, 55, 0.15);
+  color: #ffdf8a; box-shadow: 0 0 18px rgba(212, 175, 55, 0.22);
+}
+.campus-map-filters button.cat-dorm.active {
+  border-color: rgba(232, 135, 255, 0.60); background: rgba(232, 135, 255, 0.15);
+  color: #f3c2ff; box-shadow: 0 0 18px rgba(232, 135, 255, 0.22);
+}
+.campus-map-filters button.cat-sport.active {
+  border-color: rgba(66, 232, 143, 0.60); background: rgba(66, 232, 143, 0.15);
+  color: #9bffce; box-shadow: 0 0 18px rgba(66, 232, 143, 0.22);
+}
+.campus-map-filters button.cat-important.active {
+  border-color: rgba(255, 59, 59, 0.62); background: rgba(255, 59, 59, 0.15);
+  color: #ff9b9b; box-shadow: 0 0 18px rgba(255, 59, 59, 0.24);
+}
+.campus-map-filters button.cat-meeting.active {
+  border-color: rgba(255, 255, 255, 0.60); background: rgba(255, 255, 255, 0.16);
+  color: #ffffff; box-shadow: 0 0 18px rgba(255, 255, 255, 0.22);
+}
+
+.campus-map-mode.active {
+  border-color: rgba(0, 212, 255, 0.6);
+  background: rgba(0, 212, 255, 0.16);
+  color: #8ff4ff;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.2);
+}
+
+.campus-map-route-bar {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 6px;
+  margin: 0 14px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  border-radius: 13px;
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.campus-map-route-points {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.campus-map-route-chip {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+}
+
+.campus-map-route-chip.set {
+  border-color: rgba(0, 212, 255, 0.4);
+  color: #8ff4ff;
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.campus-map-route-arrow {
+  color: var(--text3);
+  font-size: 11px;
+}
+
+.campus-map-route-estimate {
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.campus-map-route-estimate.hint {
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.campus-map-route-clear {
+  justify-self: start;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.campus-map-route-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.campus-map-route-line line {
+  stroke: rgba(0, 212, 255, 0.85);
+  stroke-width: 0.4;
+  stroke-dasharray: 1.6 1.2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.6));
+}
+
+.campus-map-pin.route-from span,
+.campus-map-pin.route-to span {
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 22px rgba(0, 212, 255, 0.95);
+}
+
+.campus-map-pin.route-from span { background: #00ffaa; }
+.campus-map-pin.route-to span { background: #ff8a00; }
+
+.campus-map-row.route-from,
+.campus-map-row.route-to {
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.14);
+}
+
+.campus-map-row-fav {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: rgba(255,255,255,0.22);
+  font-size: 14px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.campus-map-row-fav.on {
+  color: #ffd24a;
+  text-shadow: 0 0 10px rgba(255, 210, 74, 0.7);
+}
+
+.campus-map-row-fav:active {
+  transform: scale(0.85);
+}
+
+.campus-map-popup-fav {
+  position: absolute;
+  top: 10px;
+  right: 50px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.3);
+  font-size: 16px;
+}
+
+.campus-map-popup-fav.on {
+  color: #ffd24a;
+  border-color: rgba(255, 210, 74, 0.4);
+  background: rgba(255, 210, 74, 0.1);
+  text-shadow: 0 0 10px rgba(255, 210, 74, 0.7);
+}
+
+.campus-map-editor {
+  position: relative;
+  z-index: 2;
+  margin: 0 14px 12px;
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(0, 10, 16, 0.62);
+  overflow: hidden;
+}
+
+.campus-map-editor.active {
+  border-color: rgba(0, 212, 255, 0.46);
+  box-shadow: 0 0 24px rgba(0, 212, 255, 0.12);
+}
+
+.campus-map-editor-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 11px;
+}
+
+.campus-map-editor-top b {
+  display: block;
+  color: #8ff4ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.campus-map-editor-top small {
+  display: block;
+  margin-top: 3px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+}
+
+.campus-map-editor-top button,
+.campus-map-editor-actions button {
+  border: 1px solid rgba(0, 212, 255, 0.32);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(0, 212, 255, 0.08);
+  color: #8ff4ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.campus-map-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 11px 10px;
+}
+
+.campus-map-editor label {
+  display: grid;
+  gap: 4px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.campus-map-editor input,
+.campus-map-editor select,
+.campus-map-editor textarea {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px 9px;
+  background: rgba(0,0,0,0.24);
+  color: var(--text);
+  font-size: 11px;
+  outline: 0;
+}
+
+.campus-map-editor-description {
+  padding: 0 11px 10px;
+}
+
+.campus-map-editor textarea {
+  resize: vertical;
+  min-height: 48px;
+}
+
+.campus-map-editor-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  padding: 0 11px 11px;
+}
+
+.campus-map-scroll {
+  position: relative;
+  z-index: 1;
+  overflow: auto;
+  margin: 0 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.24);
+  -webkit-overflow-scrolling: touch;
+}
+
+.campus-map-stage {
+  position: relative;
+  width: 980px;
+  max-width: none;
+}
+
+.campus-map-stage.editing {
+  cursor: crosshair;
+}
+
+.campus-map-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.campus-map-pin {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.campus-map-pin span {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(0,212,255,0.8);
+}
+
+.campus-map-pin::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(0, 212, 255, 0.7);
+  border-radius: 50%;
+  animation: campusPinPulse 2s ease-out infinite;
+}
+
+.campus-map-pin.selected span {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+.campus-map-pin em {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  transform: translate(calc(-50% + var(--label-dx, 0px)), var(--label-dy, 0px));
+  min-width: max-content;
+  max-width: 104px;
+  padding: 3px 6px;
+  border: 1px solid rgba(0, 212, 255, 0.38);
+  border-radius: 999px;
+  background: rgba(3, 8, 14, 0.86);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(0, 212, 255, 0.18);
+  color: #e8fdff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.campus-map-pin.label-up em {
+  top: auto;
+  bottom: 22px;
+  transform: translate(calc(-50% + var(--label-dx, 0px)), var(--label-dy, 0px));
+}
+
+.campus-map-pin.label-left em {
+  left: auto;
+  right: 22px;
+  top: 50%;
+  transform: translate(var(--label-dx, 0px), calc(-50% + var(--label-dy, 0px)));
+}
+
+.campus-map-pin.label-right em {
+  left: 22px;
+  top: 50%;
+  transform: translate(var(--label-dx, 0px), calc(-50% + var(--label-dy, 0px)));
+}
+
+.campus-map-pin.food span { background: #d4af37; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(212,175,55,0.8); }
+.campus-map-pin.dorm span { background: #e887ff; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(232,135,255,0.75); }
+.campus-map-pin.sport span { background: #42e88f; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(66,232,143,0.75); }
+.campus-map-pin.important span { background: #ff3b3b; box-shadow: 0 0 0 2px rgba(0,0,0,0.6), 0 0 18px rgba(255,59,59,0.8); }
+.campus-map-pin.meeting span { background: #ffffff; box-shadow: 0 0 0 2px rgba(0,0,0,0.7), 0 0 20px rgba(255,255,255,0.8); }
+
+.campus-map-pin.food em { border-color: rgba(212,175,55,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(212,175,55,0.2); }
+.campus-map-pin.dorm em { border-color: rgba(232,135,255,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(232,135,255,0.18); }
+.campus-map-pin.sport em { border-color: rgba(66,232,143,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(66,232,143,0.18); }
+.campus-map-pin.important em { border-color: rgba(255,59,59,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(255,59,59,0.2); }
+.campus-map-pin.meeting em { border-color: rgba(255,255,255,0.5); box-shadow: 0 8px 18px rgba(0,0,0,0.45), 0 0 16px rgba(255,255,255,0.18); }
+
+body.theme-genshin-light .campus-map-pin em,
+body.theme-genshin-dark .campus-map-pin em,
+body.theme-genshin .campus-map-pin em {
+  border-color: rgba(154, 110, 39, 0.45);
+  background: rgba(255, 247, 226, 0.92);
+  box-shadow: 0 8px 16px rgba(88, 56, 16, 0.22);
+  color: #624018;
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.02em;
+}
+
+body.theme-nw-light .campus-map-pin em {
+  border-color: rgba(21, 82, 116, 0.24);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 16px rgba(25, 40, 56, 0.18);
+  color: #143044;
+}
+
+@keyframes campusPinPulse {
+  0% { opacity: 0.7; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+.campus-map-list {
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px 14px;
+}
+
+.campus-map-row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 13px;
+  padding: 10px;
+  background: rgba(255,255,255,0.035);
+  color: var(--text);
+}
+
+.campus-map-row b {
+  display: block;
+  font-size: 12px;
+}
+
+.campus-map-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--text3);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.campus-map-row-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 12px rgba(0,212,255,0.7);
+}
+
+.campus-map-row.food .campus-map-row-dot { background: #d4af37; box-shadow: 0 0 12px rgba(212,175,55,0.7); }
+.campus-map-row.dorm .campus-map-row-dot { background: #e887ff; box-shadow: 0 0 12px rgba(232,135,255,0.7); }
+.campus-map-row.sport .campus-map-row-dot { background: #42e88f; box-shadow: 0 0 12px rgba(66,232,143,0.7); }
+.campus-map-row.important .campus-map-row-dot { background: #ff3b3b; box-shadow: 0 0 12px rgba(255,59,59,0.7); }
+.campus-map-row.meeting .campus-map-row-dot { background: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.7); }
+
+.campus-map-empty {
+  padding: 14px;
+  color: var(--text3);
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+
+.campus-map-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 9200;
+}
+
+.campus-map-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+}
+
+.campus-map-popup-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(420px, calc(100vw - 28px));
+  max-height: min(620px, calc(100vh - 42px));
+  overflow-y: auto;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(0, 212, 255, 0.28);
+  border-radius: 18px;
+  padding: 18px;
+  background: rgba(8, 12, 20, 0.96);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+
+.campus-map-popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  color: var(--text2);
+  font-size: 20px;
+}
+
+.campus-map-popup-category {
+  margin-bottom: 6px;
+  color: rgba(0, 212, 255, 0.85);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.campus-map-popup-card h3 {
+  margin: 0;
+  padding-right: 34px;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.campus-map-popup-cn {
+  margin-top: 5px;
+  color: var(--gold);
+  font-size: 11px;
+}
+
+.campus-map-popup-card p {
+  margin: 12px 0 0;
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.campus-map-popup-note {
+  margin-top: 12px;
+  border: 1px solid rgba(212,175,55,0.22);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(212,175,55,0.08);
+  color: var(--gold);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+body.theme-genshin-light .campus-map-panel,
+body.theme-genshin-dark .campus-map-panel {
+  border-color: rgba(219,177,101,0.35);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(219,177,101,0.22), transparent 36%),
+    radial-gradient(circle at 100% 20%, rgba(75,83,102,0.18), transparent 34%),
+    var(--bg2);
+}
+
+body.theme-genshin-light .campus-map-kicker,
+body.theme-genshin-dark .campus-map-kicker,
+body.theme-genshin-light .campus-map-popup-category,
+body.theme-genshin-dark .campus-map-popup-category {
+  color: var(--gold);
+  font-family: Georgia, serif;
+}
+
+body.theme-genshin-light .campus-map-mode,
+body.theme-genshin-dark .campus-map-mode,
+body.theme-genshin-light .campus-map-filters button.active,
+body.theme-genshin-dark .campus-map-filters button.active {
+  border-color: rgba(219,177,101,0.45);
+  background: rgba(219,177,101,0.14);
+  color: var(--gold);
+}
+
+/* ===== CAMPUS MAP — LIGHT THEME ADAPTATION ===== */
+
+body.theme-nw-light .campus-map-panel {
+  border-color: rgba(21, 82, 116, 0.2);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(21, 82, 116, 0.08), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(153, 51, 51, 0.07), transparent 32%),
+    var(--bg2);
+}
+
+body.theme-nw-light .campus-map-panel::before {
+  background:
+    linear-gradient(90deg, rgba(21, 82, 116, 0.07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(21, 82, 116, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.4;
+}
+
+body.theme-nw-light .campus-map-kicker {
+  color: rgba(21, 82, 116, 0.78);
+}
+
+body.theme-nw-light .campus-map-mode,
+body.theme-nw-light .campus-map-filters button.active {
+  border-color: rgba(21, 82, 116, 0.35);
+  background: rgba(21, 82, 116, 0.1);
+  color: #15526a;
+}
+
+body.theme-nw-light .campus-map-search {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.theme-nw-light .campus-map-search i {
+  color: rgba(21, 82, 116, 0.7);
+}
+
+body.theme-nw-light .campus-map-filters button {
+  background: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--text2);
+}
+
+body.theme-nw-light .campus-map-scroll {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-nw-light .campus-map-row {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-nw-light .campus-map-popup-card {
+  border-color: rgba(21, 82, 116, 0.28);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 20px 60px rgba(25, 40, 56, 0.22);
+}
+
+body.theme-nw-light .campus-map-popup-backdrop {
+  background: rgba(20, 30, 40, 0.35);
+}
+
+body.theme-nw-light .campus-map-popup-close {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-nw-light .campus-map-popup-category {
+  color: #15526a;
+}
+
+body.theme-nw-light .campus-map-mode.active {
+  border-color: rgba(21, 82, 116, 0.55);
+  background: rgba(21, 82, 116, 0.16);
+  color: #15526a;
+  box-shadow: 0 0 14px rgba(21, 82, 116, 0.16);
+}
+
+body.theme-nw-light .campus-map-route-bar {
+  border-color: rgba(21, 82, 116, 0.22);
+  background: rgba(21, 82, 116, 0.06);
+}
+
+body.theme-nw-light .campus-map-route-chip {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--text2);
+}
+
+body.theme-nw-light .campus-map-route-chip.set {
+  border-color: rgba(21, 82, 116, 0.4);
+  color: #15526a;
+  background: rgba(21, 82, 116, 0.1);
+}
+
+body.theme-nw-light .campus-map-route-clear {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text2);
+}
+
+body.theme-nw-light .campus-map-route-line line {
+  stroke: rgba(21, 82, 116, 0.8);
+  filter: drop-shadow(0 0 3px rgba(21, 82, 116, 0.45));
+}
+
+body.theme-nw-light .campus-map-row-fav {
+  color: rgba(0, 0, 0, 0.18);
+}
+
+body.theme-nw-light .campus-map-popup-fav {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.25);
+}
+
+body.theme-genshin-light .campus-map-search,
+body.theme-genshin-dark .campus-map-search {
+  background: rgba(219,177,101,0.08);
+  border-color: rgba(219,177,101,0.22);
+}
+
+body.theme-genshin-light .campus-map-search i,
+body.theme-genshin-dark .campus-map-search i {
+  color: var(--gold);
+}
+
+body.theme-genshin-light .campus-map-filters button,
+body.theme-genshin-dark .campus-map-filters button {
+  background: rgba(219,177,101,0.08);
+  border-color: rgba(219,177,101,0.18);
+  color: var(--text2);
+}
+
+body.theme-genshin-light .campus-map-scroll,
+body.theme-genshin-dark .campus-map-scroll {
+  background: rgba(219,177,101,0.05);
+  border-color: rgba(219,177,101,0.18);
+}
+
+body.theme-genshin-light .campus-map-row,
+body.theme-genshin-dark .campus-map-row {
+  background: rgba(219,177,101,0.06);
+  border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-light .campus-map-popup-card,
+body.theme-genshin-dark .campus-map-popup-card {
+  border-color: rgba(219,177,101,0.32);
+  background: var(--bg3);
+  box-shadow: 0 20px 60px rgba(88, 56, 16, 0.22);
+}
+
+body.theme-genshin-light .campus-map-popup-close,
+body.theme-genshin-dark .campus-map-popup-close {
+  border-color: rgba(219,177,101,0.3);
+  background: rgba(219,177,101,0.12);
+}
+
+body.theme-genshin-light .campus-map-route-bar,
+body.theme-genshin-dark .campus-map-route-bar {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.08);
+}
+
+body.theme-genshin-light .campus-map-route-chip,
+body.theme-genshin-dark .campus-map-route-chip {
+  border-color: rgba(219,177,101,0.2);
+  color: var(--text2);
+}
+
+body.theme-genshin-light .campus-map-route-chip.set,
+body.theme-genshin-dark .campus-map-route-chip.set {
+  border-color: rgba(219,177,101,0.45);
+  color: var(--gold);
+  background: rgba(219,177,101,0.14);
+}
+
+body.theme-genshin-light .campus-map-route-clear,
+body.theme-genshin-dark .campus-map-route-clear {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.1);
+  color: var(--text2);
+}
+
+body.theme-genshin-light .campus-map-route-line line,
+body.theme-genshin-dark .campus-map-route-line line {
+  stroke: rgba(154, 110, 39, 0.7);
+  filter: drop-shadow(0 0 3px rgba(154, 110, 39, 0.4));
+}
+
+body.theme-genshin-light .campus-map-row-fav,
+body.theme-genshin-dark .campus-map-row-fav {
+  color: rgba(154, 110, 39, 0.25);
+}
+
+body.theme-genshin-light .campus-map-popup-fav,
+body.theme-genshin-dark .campus-map-popup-fav {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.1);
+  color: rgba(154, 110, 39, 0.4);
+}
+
+body.theme-nw-light .campus-map-editor {
+  border-color: rgba(21, 82, 116, 0.22);
+  background: rgba(21, 82, 116, 0.05);
+}
+
+body.theme-nw-light .campus-map-editor.active {
+  border-color: rgba(21, 82, 116, 0.5);
+  box-shadow: 0 0 24px rgba(21, 82, 116, 0.14);
+}
+
+body.theme-nw-light .campus-map-editor-top b {
+  color: #15526a;
+}
+
+body.theme-nw-light .campus-map-editor-top button,
+body.theme-nw-light .campus-map-editor-actions button {
+  border-color: rgba(21, 82, 116, 0.35);
+  background: rgba(21, 82, 116, 0.1);
+  color: #15526a;
+}
+
+body.theme-nw-light .campus-map-editor input,
+body.theme-nw-light .campus-map-editor select,
+body.theme-nw-light .campus-map-editor textarea {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+body.theme-genshin-light .campus-map-editor,
+body.theme-genshin-dark .campus-map-editor {
+  border-color: rgba(219,177,101,0.25);
+  background: rgba(219,177,101,0.06);
+}
+
+body.theme-genshin-light .campus-map-editor.active,
+body.theme-genshin-dark .campus-map-editor.active {
+  border-color: rgba(219,177,101,0.5);
+  box-shadow: 0 0 24px rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-light .campus-map-editor-top b,
+body.theme-genshin-dark .campus-map-editor-top b,
+body.theme-genshin-light .campus-map-editor-top button,
+body.theme-genshin-dark .campus-map-editor-top button,
+body.theme-genshin-light .campus-map-editor-actions button,
+body.theme-genshin-dark .campus-map-editor-actions button {
+  color: var(--gold);
+  border-color: rgba(219,177,101,0.35);
+  background: rgba(219,177,101,0.1);
+}
+
+body.theme-genshin-light .campus-map-editor input,
+body.theme-genshin-dark .campus-map-editor input,
+body.theme-genshin-light .campus-map-editor select,
+body.theme-genshin-dark .campus-map-editor select,
+body.theme-genshin-light .campus-map-editor textarea,
+body.theme-genshin-dark .campus-map-editor textarea {
+  border-color: rgba(219,177,101,0.22);
+  background: var(--bg3);
+}
+
+/* ===== CAMPUS MAP — ADMIN LIGHT THEME ===== */
+
+body.theme-admin-light .campus-map-panel {
+  border-color: rgba(68, 86, 224, 0.2);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(68, 86, 224, 0.07), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(0, 153, 204, 0.06), transparent 32%),
+    var(--bg2);
+}
+
+body.theme-admin-light .campus-map-panel::before {
+  background:
+    linear-gradient(90deg, rgba(68, 86, 224, 0.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(68, 86, 224, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.4;
+}
+
+body.theme-admin-light .campus-map-kicker {
+  color: rgba(68, 86, 224, 0.78);
+}
+
+body.theme-admin-light .campus-map-mode,
+body.theme-admin-light .campus-map-filters button.active {
+  border-color: rgba(68, 86, 224, 0.35);
+  background: rgba(68, 86, 224, 0.1);
+  color: #4456e0;
+}
+
+body.theme-admin-light .campus-map-search {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.theme-admin-light .campus-map-search i {
+  color: rgba(68, 86, 224, 0.7);
+}
+
+body.theme-admin-light .campus-map-search input {
+  color: var(--text);
+}
+
+body.theme-admin-light .campus-map-search input::placeholder {
+  color: var(--text3);
+}
+
+body.theme-admin-light .campus-map-filters button {
+  background: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: var(--text2);
+}
+
+body.theme-admin-light .campus-map-scroll {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-admin-light .campus-map-row {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.theme-admin-light .campus-map-popup-card {
+  border-color: rgba(68, 86, 224, 0.28);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 20px 60px rgba(30, 40, 80, 0.22);
+}
+
+body.theme-admin-light .campus-map-popup-backdrop {
+  background: rgba(20, 25, 60, 0.35);
+}
+
+body.theme-admin-light .campus-map-popup-close {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.theme-admin-light .campus-map-popup-category {
+  color: #4456e0;
+}
+
+body.theme-admin-light .campus-map-mode.active {
+  border-color: rgba(68, 86, 224, 0.55);
+  background: rgba(68, 86, 224, 0.16);
+  color: #4456e0;
+  box-shadow: 0 0 14px rgba(68, 86, 224, 0.16);
+}
+
+body.theme-admin-light .campus-map-route-bar {
+  border-color: rgba(68, 86, 224, 0.22);
+  background: rgba(68, 86, 224, 0.06);
+}
+
+body.theme-admin-light .campus-map-route-chip {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--text2);
+}
+
+body.theme-admin-light .campus-map-route-chip.set {
+  border-color: rgba(68, 86, 224, 0.4);
+  color: #4456e0;
+  background: rgba(68, 86, 224, 0.1);
+}
+
+body.theme-admin-light .campus-map-route-clear {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text2);
+}
+
+body.theme-admin-light .campus-map-route-line line {
+  stroke: rgba(68, 86, 224, 0.8);
+  filter: drop-shadow(0 0 3px rgba(68, 86, 224, 0.45));
+}
+
+body.theme-admin-light .campus-map-row-fav {
+  color: rgba(0, 0, 0, 0.18);
+}
+
+body.theme-admin-light .campus-map-popup-fav {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.25);
+}
+
+body.theme-admin-light .campus-map-editor {
+  border-color: rgba(68, 86, 224, 0.22);
+  background: rgba(68, 86, 224, 0.05);
+}
+
+body.theme-admin-light .campus-map-editor.active {
+  border-color: rgba(68, 86, 224, 0.5);
+  box-shadow: 0 0 24px rgba(68, 86, 224, 0.14);
+}
+
+body.theme-admin-light .campus-map-editor-top b {
+  color: #4456e0;
+}
+
+body.theme-admin-light .campus-map-editor-top button,
+body.theme-admin-light .campus-map-editor-actions button {
+  border-color: rgba(68, 86, 224, 0.35);
+  background: rgba(68, 86, 224, 0.1);
+  color: #4456e0;
+}
+
+body.theme-admin-light .campus-map-editor input,
+body.theme-admin-light .campus-map-editor select,
+body.theme-admin-light .campus-map-editor textarea {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== CASINO + HOME EVENT CARD — ADMIN LIGHT THEME ===== */
+
+body.theme-admin-light .casino-balance,
+body.theme-admin-light .prize-result {
+  background: rgba(255,255,255,0.78);
+  border-color: rgba(68,86,224,0.16);
+  box-shadow: 0 8px 24px rgba(40,50,120,0.06);
+}
+
+body.theme-admin-light .case-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.8), rgba(232,235,248,0.72));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 8px 18px rgba(40,50,120,0.045);
+}
+
+body.theme-admin-light .case-card.gold {
+  border-color: rgba(0,153,204,0.28);
+}
+
+body.theme-admin-light .case-card.purple {
+  border-color: rgba(120,76,140,0.24);
+}
+
+body.theme-admin-light .case-card.black {
+  border-color: rgba(68,86,224,0.26);
+}
+
+body.theme-admin-light .case-cn.g { color: rgba(0,120,160,0.78); }
+body.theme-admin-light .case-cn.p { color: rgba(110,70,132,0.72); }
+body.theme-admin-light .case-cn.b { color: rgba(68,86,224,0.72); }
+
+body.theme-admin-light .roulette-track {
+  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(230,233,246,0.84));
+  border-color: rgba(68,86,224,0.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.55), 0 10px 28px rgba(40,50,120,0.08);
+}
+
+body.theme-admin-light .roulette-track::before {
+  background: linear-gradient(to right, rgba(238,240,250,0.98), rgba(238,240,250,0));
+}
+
+body.theme-admin-light .roulette-track::after {
+  background: linear-gradient(to left, rgba(238,240,250,0.98), rgba(238,240,250,0));
+}
+
+body.theme-admin-light .roulette-item {
+  background: linear-gradient(145deg, rgba(255,255,255,0.94), rgba(228,231,244,0.92));
+  border-color: rgba(68,86,224,0.14);
+  color: #1a1f40;
+}
+
+body.theme-admin-light .roulette-item-gold {
+  border-color: rgba(0,153,204,0.26);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(0,153,204,0.14), transparent 48%),
+    linear-gradient(145deg, rgba(255,255,255,0.94), rgba(228,231,244,0.92));
+}
+
+body.theme-admin-light .roulette-item-purple {
+  border-color: rgba(120,76,140,0.28);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(155,89,182,0.16), transparent 50%),
+    linear-gradient(145deg, rgba(250,246,255,0.94), rgba(230,222,238,0.92));
+}
+
+body.theme-admin-light .roulette-item-black {
+  border-color: rgba(68,86,224,0.32);
+  background:
+    radial-gradient(circle at 50% 10%, rgba(68,86,224,0.14), transparent 52%),
+    linear-gradient(145deg, rgba(246,247,255,0.92), rgba(222,226,242,0.9));
+}
+
+body.theme-admin-light .roulette-item-name {
+  color: #3a4070;
+}
+
+body.theme-admin-light .roulette-case-label {
+  color: rgba(40,46,90,0.55);
+}
+
+body.theme-admin-light .roulette-item.opened {
+  background: linear-gradient(145deg, rgba(240,248,255,0.96), rgba(208,228,248,0.92));
+}
+
+body.theme-admin-light .home-event-card {
+  border-color: rgba(68,86,224,0.24) !important;
+  background:
+    linear-gradient(135deg, rgba(68,86,224,0.08), rgba(255,255,255,0.78)),
+    rgba(255,255,255,0.74) !important;
+  box-shadow: 0 10px 26px rgba(40,50,120,0.08) !important;
+}
+
+body.theme-admin-light .home-event-card-kicker {
+  color: rgba(0,120,160,0.85) !important;
+}
+
+body.theme-admin-light .home-event-card-title {
+  color: #1a1f40 !important;
+}
+
+body.theme-admin-light .home-event-card-copy {
+  color: #3a4070 !important;
+}
+
+/* ===== TEAM CARDS — GENSHIN LIGHT + ADMIN LIGHT ===== */
+
+body.theme-genshin-light .team-card-item { background: rgba(255,250,238,0.8); }
+body.theme-genshin-light .team-card-avatar { background: rgba(219,177,101,0.1); }
+body.theme-genshin-light .team-card-name  { color: #3d4555; }
+body.theme-genshin-light .team-card-desc  { color: #565e6e; }
+body.theme-genshin-light .team-card-status-badge { background: rgba(219,177,101,0.14); color: #6b6050; }
+body.theme-genshin-light .team-card-btn   { background: rgba(219,177,101,0.08); }
+
+body.theme-admin-light .team-card-item { background: rgba(255,255,255,0.78); }
+body.theme-admin-light .team-card-avatar { background: rgba(68,86,224,0.06); }
+body.theme-admin-light .team-card-name  { color: #1a1f40; }
+body.theme-admin-light .team-card-desc  { color: #3a4070; }
+body.theme-admin-light .team-card-status-badge { background: rgba(68,86,224,0.08); color: #5a62a0; }
+body.theme-admin-light .team-card-btn   { background: rgba(68,86,224,0.05); }
+
+/* ===== CONTRACTS — ADMIN LIGHT THEME ===== */
+
+body.theme-admin-light #page-contracts {
+  --contract-accent: #4456e0;
+  --contract-accent-soft: rgba(68, 86, 224, 0.1);
+  --contract-accent-border: rgba(68, 86, 224, 0.32);
+  --contract-card-bg: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(235,238,250,0.7));
+  --contract-card-border: rgba(50, 60, 130, 0.16);
+  --contract-card-shadow: 0 12px 26px rgba(40,50,120,0.1);
+  --contract-muted-bg: rgba(255,255,255,0.72);
+  --contract-danger: #b83f3f;
+}
+
+body.theme-admin-light .contracts-tabs {
+  background: rgba(255,255,255,0.62);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.38);
+}
+
+body.theme-admin-light .contracts-rules-text,
+body.theme-admin-light .contract-description {
+  color: #272d55;
+}
+
+body.theme-admin-light .contract-card-title,
+body.theme-admin-light .contracts-empty-title {
+  color: #14182f;
+}
+
+body.theme-admin-light .contract-person,
+body.theme-admin-light .contract-reward-sub,
+body.theme-admin-light .contracts-empty-hint,
+body.theme-admin-light .contracts-rule-muted {
+  color: #4a5188;
+}
+
+body.theme-admin-light .contracts-filter-chip,
+body.theme-admin-light .contract-category-badge {
+  background: rgba(255,255,255,0.72);
+  color: #3e4578;
+}
+
+body.theme-admin-light .contract-reward {
+  background: rgba(255,255,255,0.72);
+}
+
+body.theme-admin-light .contract-modal {
+  background: rgba(14,16,34,0.6);
+}
+
+body.theme-admin-light .contract-modal-sheet {
+  background:
+    radial-gradient(circle at 100% 0%, var(--contract-accent-soft), transparent 42%),
+    linear-gradient(180deg, rgba(250,251,255,0.98), rgba(234,237,250,0.98));
+}
+
+body.theme-admin-light .contract-field input,
+body.theme-admin-light .contract-field textarea,
+body.theme-admin-light .contract-field select {
+  background: rgba(255,255,255,0.88);
+  color: #14182f;
+}
+
+body.theme-admin-light .contract-submit-btn {
+  background: color-mix(in srgb, var(--contract-accent) 13%, #fff);
+}
+
+body.theme-admin-light .contracts-tab {
+  color: #4a5188;
+}
+
+body.theme-admin-light .contracts-tab.active,
+body.theme-admin-light .contracts-filter-chip.active {
+  color: var(--contract-accent);
+  background: color-mix(in srgb, var(--contract-accent) 13%, #fff);
+}
+
+body.theme-admin-light .contract-status {
+  background: rgba(255,255,255,0.78);
+  opacity: 1;
+}
+
+body.theme-admin-light .contract-status-hint,
+body.theme-admin-light .contract-flow-labels,
+body.theme-admin-light .contract-privacy-toggle small {
+  color: #4a5188;
+  opacity: 1;
+}
+
+/* ===== LEADERBOARD — ADMIN LIGHT THEME ===== */
+
+body.theme-admin-light .lb-points {
+  color: #4456e0 !important;
+}
+
+body.theme-admin-light .lb-name {
+  color: #1a1f40 !important;
+}
+
+body.theme-admin-light .lb-item {
+  background:
+    radial-gradient(circle at 0% 50%, rgba(68,86,224,0.07), transparent 38%),
+    rgba(255,255,255,0.52);
+  border-color: rgba(68,86,224,0.12);
+}
+
+body.theme-admin-light .lb-item.top1 {
+  border-color: rgba(0,153,204,0.44);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(0,153,204,0.18), transparent 46%),
+    linear-gradient(90deg, rgba(210,240,255,0.96), rgba(255,255,255,0.74));
+}
+
+body.theme-admin-light .lb-item.top2 {
+  border-color: rgba(120, 128, 140, 0.36);
+  background: linear-gradient(90deg, rgba(220,226,236,0.92), rgba(255,255,255,0.70));
+}
+
+body.theme-admin-light .lb-item.top3 {
+  border-color: rgba(68,86,224,0.28);
+  background: linear-gradient(90deg, rgba(210,216,248,0.92), rgba(255,255,255,0.70));
+}
+
+body.theme-admin-light .lb-subline,
+body.theme-admin-light .diary-rank-sub {
+  color: var(--text2);
+}
+
+body.theme-admin-light .lb-path-badge {
+  background: rgba(255,255,255,0.78);
+  color: #3a4070;
+  border-color: rgba(68,86,224,0.24);
+}
+
+body.theme-admin-light .alpha-boss-block {
+  background: rgba(255,255,255,0.50);
+  border-color: rgba(68,86,224,0.22);
+}
+
+body.theme-admin-light .alpha-boss-pts {
+  color: #4456e0;
+}
+
+body.theme-admin-light .alpha-boss-raid-cost {
+  color: rgba(68,86,224,0.65);
+}
+
+/* Same low-opacity gold "kicker" labels are illegible on the admin light
+   background too — darken them to the admin-light accent. */
+body.theme-admin-light .alpha-boss-kicker,
+body.theme-admin-light .page-title-cn,
+body.theme-admin-light .main-pinyin,
+body.theme-admin-light .stat-cn,
+body.theme-admin-light .implant-py,
+body.theme-admin-light .lb-leaders-label,
+body.theme-admin-light .more-stat-lbl span,
+body.theme-admin-light .more-item-cn,
+body.theme-admin-light .shop-cat .cn,
+body.theme-admin-light .shop-item-cn,
+body.theme-admin-light .case-cn.g,
+body.theme-admin-light .event-lobby-count,
+body.theme-admin-light .launch-gate-kicker,
+body.theme-admin-light .demo-lock-kicker,
+body.theme-admin-light .event-lobby-card .event-lobby-reward::before,
+body.theme-admin-light .event-result-card .event-lobby-reward::before,
+body.theme-admin-light .diary-star
+{ color: #4456e0 !important; }
+
+body.theme-admin-light .alpha-boss-raid-btn {
+  background: rgba(68,86,224,0.08);
+  border-top-color: rgba(68,86,224,0.15);
+  color: #4456e0;
+}
+
+body.theme-admin-light .demo-note,
+body.theme-admin-light .demo-catalog-lock,
+body.theme-admin-light .demo-card,
+body.theme-admin-light .demo-raid-locked {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(68,86,224,0.10), transparent 44%),
+    rgba(255,255,255,0.82) !important;
+  color: #1a1f40;
+}
+
+body.theme-admin-light .demo-card-title,
+body.theme-admin-light .demo-lock-title {
+  color: #1a1f40;
+}
+
+body.theme-admin-light .demo-card-body,
+body.theme-admin-light .demo-lock-copy {
+  color: #4a5188;
+}
+
+body.theme-admin-light .diary-rank-card {
+  border-color: rgba(68,86,224,0.14);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(68,86,224,0.07), transparent 38%),
+    rgba(255,255,255,0.52);
+}
+
+body.theme-admin-light .diary-rank-card.top1 {
+  border-color: rgba(0,153,204,0.44);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(0,153,204,0.18), transparent 46%),
+    linear-gradient(90deg, rgba(210,240,255,0.96), rgba(255,255,255,0.74));
+}
+
+/* ===== GIFT USER MODAL ===== */
+.gift-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: none;
+  align-items: flex-end;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.gift-modal-overlay.show { display: flex; }
+.gift-modal {
+  width: 100%;
+  background: var(--bg);
+  border-top: 1px solid var(--gold-border);
+  border-radius: 18px 18px 0 0;
+  padding: 20px 16px 32px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gift-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.gift-modal-kicker {
+  font-family: monospace;
+  font-size: 8px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  opacity: 0.65;
+  margin-bottom: 2px;
+}
+.gift-modal-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.gift-modal-close {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  font-family: inherit;
+}
+.gift-modal-item {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  font-family: monospace;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  padding: 7px 12px;
+}
+.gift-modal-tax {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: monospace;
+}
+.gift-modal-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg3);
+  border: 1px solid var(--gold-border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  padding: 10px 13px;
+  font-family: inherit;
+  outline: none;
+}
+.gift-modal-search:focus { border-color: var(--gold); }
+.gift-modal-search::placeholder { color: var(--text3); }
+.gift-modal-results {
+  overflow-y: auto;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gift-modal-hint {
+  font-size: 11px;
+  color: var(--text3);
+  padding: 6px 0;
+  font-family: monospace;
+}
+.gift-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.12s;
+}
+.gift-user-row:active { background: var(--gold-dim); }
+.gift-user-ava {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--gold-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gift-user-img { width: 100%; height: 100%; object-fit: cover; }
+.gift-user-initials {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gold);
+  font-family: monospace;
+}
+.gift-user-info { flex: 1; min-width: 0; }
+.gift-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gift-user-pts {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--gold);
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+.gift-modal-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-border);
+  border-radius: 10px;
+}
+.gift-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.gift-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.gift-modal-confirm { flex: 1; opacity: 1; }
+.gift-modal-confirm:disabled { opacity: 0.4; cursor: default; }
+body.lite-mode .gift-modal-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+/* Light themes: search input needs a visible fill since --bg3 is transparent in some themes */
+body.theme-nw-light .gift-modal-search,
+body.theme-genshin-light .gift-modal-search,
+body.theme-genshin-dark .gift-modal-search {
+  background: rgba(0,0,0,0.06);
+}
+
+/* ===== INVENTORY EXPIRY LABELS ===== */
+.inventory-expiry-warn {
+  color: #e05050;
+  font-weight: 700;
+}
+.inventory-expiry-soon {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ARCHITECT PROTOCOL THEME — recolor BlackWall FX to green/cyan
+   The BlackWall decoration system (body.is-architect) defaults
+   to red/orange/purple regardless of active theme. When the
+   Architect Protocol theme itself is active, recolor it to match
+   the theme's green/cyan/lime palette instead of clashing.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Heartbeat glow + border cycle on profile card */
+@keyframes architectHeartbeatGreen {
+  0%,  100% { box-shadow: 0 0 12px rgba(0,255,136,0.12), inset 0 0 16px rgba(0,255,136,0.05); }
+  6%         { box-shadow: 0 0 55px rgba(0,255,136,0.45), 0 0 110px rgba(0,255,136,0.18), 0 0 0 2px rgba(0,229,255,0.5), inset 0 0 36px rgba(0,255,136,0.16); }
+  12%        { box-shadow: 0 0 16px rgba(0,255,136,0.15), inset 0 0 18px rgba(0,255,136,0.06); }
+  18%        { box-shadow: 0 0 38px rgba(0,255,136,0.30), 0 0 80px rgba(0,229,255,0.12), 0 0 0 1px rgba(0,229,255,0.35), inset 0 0 26px rgba(0,255,136,0.11); }
+  24%        { box-shadow: 0 0 12px rgba(0,255,136,0.12), inset 0 0 16px rgba(0,255,136,0.05); }
+  36%        { box-shadow: 0 0 14px rgba(57,255,20,0.10), inset 0 0 18px rgba(0,255,136,0.04); }
+}
+@keyframes architectBorderCycleGreen {
+  0%   { border-color: rgba(0,255,136,0.95); }
+  20%  { border-color: rgba(0,229,255,0.9);  }
+  40%  { border-color: rgba(57,255,20,0.9);  }
+  60%  { border-color: rgba(0,229,255,0.85); }
+  80%  { border-color: rgba(0,255,136,0.85); }
+  100% { border-color: rgba(0,255,136,0.95); }
+}
+body.theme-architect.is-architect .profile-card-home {
+  border: 2px solid rgba(0,255,136,0.95);
+  animation: architectHeartbeatGreen 3.5s ease-in-out infinite,
+             architectBorderCycleGreen 5s linear infinite !important;
+}
+
+/* Profile name flicker */
+@keyframes architectNeonFlickerGreen {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    color: #f0fff8;
+    text-shadow:
+      0 0 8px rgba(0,255,136,0.95),
+      0 0 20px rgba(0,255,136,0.6),
+      0 0 45px rgba(0,255,136,0.25);
+    filter: brightness(1);
+  }
+  19%, 23%, 54% {
+    color: rgba(240,255,248,0.25);
+    text-shadow: none;
+    filter: brightness(0.35);
+  }
+  68% {
+    color: #e0fcff;
+    text-shadow:
+      0 0 12px rgba(0,229,255,0.9),
+      0 0 28px rgba(0,229,255,0.45);
+  }
+  84% {
+    color: #eaffe0;
+    text-shadow:
+      0 0 10px rgba(57,255,20,0.9),
+      0 0 24px rgba(57,255,20,0.45);
+  }
+}
+body.theme-architect.is-architect .profile-card-name {
+  animation: architectNeonFlickerGreen 9s ease-in-out infinite;
+}
+
+/* Scan line + neural grid overlay */
+body.theme-architect.is-architect .blackwall-overlay::before {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0,255,136,0.7) 20%,
+    rgba(0,229,255,0.95) 50%,
+    rgba(0,255,136,0.7) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px rgba(0,255,136,0.6), 0 0 20px rgba(0,255,136,0.2);
+}
+body.theme-architect.is-architect .blackwall-overlay::after {
+  background-image:
+    linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+}
+
+/* Nav beacon */
+@keyframes architectNavBeaconGreen {
+  0%, 100% { text-shadow: 0 0 4px rgba(0,255,136,0.3); }
+  5%        { text-shadow: 0 0 14px rgba(0,255,136,1), 0 0 28px rgba(0,229,255,0.5); }
+  10%       { text-shadow: 0 0 4px rgba(0,255,136,0.3); }
+  16%       { text-shadow: 0 0 10px rgba(0,255,136,0.8), 0 0 22px rgba(0,255,136,0.3); }
+  22%       { text-shadow: 0 0 4px rgba(0,255,136,0.3); }
+}
+body.theme-architect.is-architect .nav-item.active,
+body.theme-architect.is-architect .nav-item.active .ti {
+  animation: architectNavBeaconGreen 3s ease-in-out infinite;
+}
+
+/* LED indicator on badge */
+@keyframes architectLEDGreen {
+  0%, 100% { opacity: 0.35; text-shadow: none; }
+  50%       { opacity: 1;    text-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0,255,136,0.4); }
+}
+body.theme-architect.is-architect .profile-admin-badge::before {
+  color: #00ff88;
+  animation: architectLEDGreen 1.4s ease-in-out infinite;
+}
+
+/* Page title glitch */
+@keyframes architectTitleGlitchGreen {
+  0%, 88%, 100% {
+    text-shadow: 0 0 30px rgba(0,255,136,0.7), 0 0 70px rgba(0,255,136,0.25);
+    filter: none;
+    transform: none;
+  }
+  89% {
+    text-shadow: 5px 0 rgba(0,255,136,0.95), -5px 0 rgba(0,229,255,0.95), 0 0 50px rgba(0,255,136,0.9);
+    filter: brightness(1.3);
+    transform: skewX(-2deg);
+  }
+  90% {
+    text-shadow: -3px 0 rgba(57,255,20,0.9), 4px 0 rgba(0,229,255,0.7);
+    filter: none;
+    transform: none;
+  }
+  91% {
+    text-shadow: 0 0 30px rgba(0,255,136,0.7), 0 0 70px rgba(0,255,136,0.25);
+    filter: none;
+  }
+  95% {
+    text-shadow: 2px 0 rgba(0,229,255,0.5), 0 0 40px rgba(0,255,136,0.8);
+    transform: translateX(1px);
+  }
+  96% {
+    text-shadow: 0 0 30px rgba(0,255,136,0.7), 0 0 70px rgba(0,255,136,0.25);
+    transform: none;
+  }
+}
+body.theme-architect.is-architect .page-title {
+  animation: architectTitleGlitchGreen 11s ease-in-out infinite;
+}
+
+/* Status line */
+body.theme-architect.is-architect .profile-status-line {
+  color: rgba(0,255,136,0.55);
+}
+
+/* Avatar scan ring */
+@keyframes architectAvatarRingGreen {
+  0%, 100% { box-shadow: 0 0 0 0px rgba(0,255,136,0.5), 0 0 0 0px rgba(0,229,255,0); }
+  40%       { box-shadow: 0 0 0 6px rgba(0,255,136,0.2), 0 0 0 12px rgba(0,229,255,0.08); }
+  60%       { box-shadow: 0 0 0 8px rgba(0,255,136,0.0), 0 0 0 16px rgba(0,255,136,0.0); }
+}
+body.theme-architect.is-architect .profile-avatar-wrap {
+  animation: architectAvatarRingGreen 3.5s ease-out infinite;
+}
+
+/* Architect theme card pulse (in theme picker) */
+@keyframes architectCardPulseGreen {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,255,136,0.15), inset 0 0 20px rgba(0,255,136,0.03); border-color: rgba(0,255,136,0.55); }
+  50%       { box-shadow: 0 0 40px rgba(0,255,136,0.35), 0 0 80px rgba(0,229,255,0.08), inset 0 0 30px rgba(0,255,136,0.07); border-color: rgba(0,229,255,0.75); }
+}
+body.theme-architect.is-architect .architect-theme-card {
+  border-color: rgba(0,255,136,0.7);
+  box-shadow: 0 0 20px rgba(0,255,136,0.2), inset 0 0 30px rgba(0,255,136,0.04);
+  animation: architectCardPulseGreen 3s ease-in-out infinite;
+}
+
+/* Corner sparks */
+body.theme-architect.is-architect .profile-card-spark.spark-tl { background: #00e5ff; }
+body.theme-architect.is-architect .profile-card-spark.spark-br { background: #39ff14; }
+body.theme-architect.is-architect .profile-card-spark.spark-tr { background: #00ff88; }
+body.theme-architect.is-architect .profile-card-spark.spark-bl { background: #00e5ff; }
+
+/* ===== WILD AI BREACH (野生AI入侵) ===== */
+.wild-ai-breach-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10000;
+  background: rgba(20,0,0,0.92);
+  border-bottom: 1px solid #cc2222;
+  font-family: monospace;
+  text-align: center;
+  padding: 6px 8px 5px;
+  pointer-events: none;
+  animation: wab-flicker 4s infinite;
+}
+.wild-ai-breach-banner .wab-line1 {
+  color: #ff3b3b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-shadow: 0 0 6px rgba(255,40,40,0.8);
+}
+.wild-ai-breach-banner .wab-line2 {
+  color: #ff6666;
+  font-size: 9px;
+  letter-spacing: 1px;
+  margin-top: 2px;
+  word-break: break-word;
+}
+.wild-ai-breach-banner .wab-translation {
+  color: #999;
+}
+.wild-ai-breach-banner .wab-timer {
+  color: #ff8888;
+  font-size: 9px;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+body.wild-ai-breach {
+  padding-top: 46px;
+}
+
+/* "Повреждённая" тема — перебивает текущую тему испорченной палитрой */
+body.wild-ai-breach {
+  --bg: #0a0604 !important;
+  --bg2: rgba(255,40,40,0.05) !important;
+  --bg3: rgba(255,40,40,0.09) !important;
+  --border: rgba(255,60,60,0.25) !important;
+  --text: #d8f0e0 !important;
+  --text2: #9fcdb8 !important;
+  --text3: #6a8a7c !important;
+  --gold: #7cff9e !important;
+  --gold-dim: rgba(124,255,158,0.1) !important;
+  --gold-border: rgba(124,255,158,0.3) !important;
+  --purple: #ff5577 !important;
+  --purple-dim: rgba(255,85,119,0.15) !important;
+  --purple-border: rgba(255,85,119,0.3) !important;
+  background: var(--bg) !important;
+  animation: wab-hue-shift 12s linear infinite;
+}
+
+@keyframes wab-hue-shift {
+  0%   { filter: hue-rotate(0deg) saturate(1); }
+  25%  { filter: hue-rotate(25deg) saturate(1.3); }
+  50%  { filter: hue-rotate(-15deg) saturate(1.1) contrast(1.1); }
+  75%  { filter: hue-rotate(10deg) saturate(1.4); }
+  100% { filter: hue-rotate(0deg) saturate(1); }
+}
+
+/* Глитч-оверлей поверх всего интерфейса */
+body.wild-ai-breach::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,0,0,0.04) 0px,
+      rgba(255,0,0,0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  animation: wab-static-flash 6s infinite;
+}
+
+/* Полосы "разрыва экрана", периодически проезжающие по всему интерфейсу */
+body.wild-ai-breach::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background:
+    linear-gradient(transparent 0%, transparent 38%, rgba(255,40,40,0.18) 38%, rgba(0,255,200,0.12) 39%, transparent 40%, transparent 70%, rgba(255,40,40,0.14) 70%, transparent 71%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: wab-screen-tear 9s infinite;
+}
+
+/* Хромо-аберрация и дрожание интерфейса целиком */
+body.wild-ai-breach .page.active {
+  animation: wab-chroma-shift 8s infinite;
+}
+
+@keyframes wab-flicker {
+  0%, 92%, 100% { opacity: 1; }
+  93% { opacity: 0.4; }
+  94% { opacity: 1; }
+  95% { opacity: 0.6; }
+  96% { opacity: 1; }
+}
+
+@keyframes wab-static-flash {
+  0%, 96%, 100% { opacity: 0.3; }
+  97% { opacity: 0.9; background-color: rgba(255,0,0,0.08); }
+  98% { opacity: 0.2; }
+  99% { opacity: 0.7; background-color: rgba(255,0,0,0.05); }
+}
+
+@keyframes wab-screen-tear {
+  0%, 91%, 100% { opacity: 0; transform: translateX(0); }
+  91.5% { opacity: 1; transform: translateX(-6px); }
+  92% { opacity: 1; transform: translateX(8px); }
+  92.5% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes wab-chroma-shift {
+  0%, 94%, 100% { transform: translate(0, 0); filter: none; }
+  94.3% { transform: translate(-2px, 0); filter: drop-shadow(2px 0 0 rgba(255,0,60,0.5)) drop-shadow(-2px 0 0 rgba(0,255,220,0.4)); }
+  94.7% { transform: translate(2px, 1px); filter: drop-shadow(-2px 0 0 rgba(255,0,60,0.5)) drop-shadow(2px 0 0 rgba(0,255,220,0.4)); }
+  95.1% { transform: translate(0, 0); filter: none; }
+}
+
+/* Перемешанные подвкладки и заголовки во время Breach подсвечиваются красным */
+body.wild-ai-breach .subtab,
+body.wild-ai-breach .contracts-tab,
+body.wild-ai-breach .page-title-cn,
+body.wild-ai-breach .diary-section-title {
+  color: #ff6666 !important;
+  text-shadow: 0 0 4px rgba(255,40,40,0.5);
+}
+
+.lb-corrupted-badge {
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #ff6666;
+  text-align: center;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  border: 1px dashed rgba(255,60,60,0.4);
+  background: rgba(255,0,0,0.05);
+  animation: wab-flicker 4s infinite;
+}
+
+/* Профиль во время Wild AI Breach — карточка показывает "профиль дикого ИИ" */
+.profile-card.wild-ai-profile {
+  border-color: rgba(255,40,40,0.5) !important;
+  filter: hue-rotate(-20deg) saturate(1.3);
+  animation: wab-flicker 4s infinite;
+}
+.profile-card.wild-ai-profile .profile-avatar-wrap {
+  filter: grayscale(1) contrast(1.4) sepia(1) hue-rotate(-50deg) saturate(4);
+}
+.profile-card.wild-ai-profile #profileDisplayName {
+  color: #ff3b3b;
+  text-shadow: 0 0 8px rgba(255,40,40,0.7);
+}
+.profile-card.wild-ai-profile #profileKicker {
+  color: #ff6666;
+}
+
+/* ===== ИНСТРУКЦИЯ (Юля) ===== */
+.instruction-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.instruction-modal-inner {
+  position: relative;
+  width: min(92vw, 380px);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #0a0e14;
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: 14px;
+  padding: 24px 16px 18px;
+  box-sizing: border-box;
+}
+.instruction-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  cursor: pointer;
+}
+.instruction-modal-title {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 800;
+  color: #00e5ff;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+  padding-right: 26px;
+}
+.instruction-option-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,229,255,0.25);
+  background: rgba(0,229,255,0.06);
+  color: rgba(230,247,255,0.85);
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.instruction-option-btn strong {
+  display: block;
+  font-size: 13px;
+  color: #00e5ff;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.instruction-back-btn {
+  text-align: center;
+  color: rgba(230,247,255,0.6);
+}
+.instruction-text-section {
+  border-left: 2px solid rgba(0,229,255,0.25);
+  padding-left: 10px;
+  margin-bottom: 14px;
+}
+.instruction-text-section h4 {
+  font-family: monospace;
+  font-size: 11px;
+  color: #00e5ff;
+  letter-spacing: 0.05em;
+  margin: 0 0 4px;
+}
+.instruction-text-section p {
+  font-size: 11px;
+  color: rgba(230,247,255,0.8);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.instruction-tour-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 210;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.instruction-tour-card {
+  position: relative;
+  pointer-events: auto;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 0 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+.instruction-tour-close {
+  position: absolute;
+  top: -32px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(4,4,12,0.7);
+  color: rgba(255,255,255,0.8);
+  font-size: 13px;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 2;
+}
+.instruction-tour-portrait {
+  position: relative;
+  flex: 0 0 104px;
+  width: 104px;
+  height: 134px;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-color: rgba(0,229,255,0.05);
+  border-radius: 14px;
+  border: 1px solid rgba(0,229,255,0.35);
+  box-shadow: 0 0 16px rgba(0,229,255,0.25), 0 6px 18px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+.instruction-tour-portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4,4,12,0) 62%, rgba(4,4,12,0.88) 100%);
+}
+.instruction-tour-name {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 5px;
+  z-index: 1;
+  font-family: monospace;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  color: #00e5ff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+.instruction-tour-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: linear-gradient(180deg, rgba(8,8,18,0.96), rgba(4,4,12,0.99));
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 -6px 20px rgba(0,0,0,0.4);
+}
+.instruction-tour-title {
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #00e5ff;
+}
+.instruction-tour-bubble {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #e6f7ff;
+  max-height: 26vh;
+  overflow-y: auto;
+}
+.instruction-tour-cursor {
+  display: inline-block;
+  animation: instructionTourBlink 0.9s step-end infinite;
+  color: #00e5ff;
+}
+@keyframes instructionTourBlink {
+  50% { opacity: 0; }
+}
+.instruction-tour-progress {
+  font-family: monospace;
+  font-size: 9px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.1em;
+}
+.instruction-tour-actions {
+  display: flex;
+  gap: 8px;
+}
+.instruction-tour-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,229,255,0.25);
+  background: rgba(0,229,255,0.08);
+  color: #00e5ff;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.instruction-tour-actions button.ghost {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.6);
+  border-color: rgba(255,255,255,0.12);
+}
+
+.instruction-highlight {
+  outline: 2px solid #00e5ff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(0,229,255,0.18), 0 0 20px rgba(0,229,255,0.45);
+  border-radius: 12px;
+  animation: instructionHighlightPulse 1.4s ease-in-out infinite;
+  position: relative;
+  z-index: 6;
+}
+@keyframes instructionHighlightPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(0,229,255,0.18), 0 0 16px rgba(0,229,255,0.4); }
+  50% { box-shadow: 0 0 0 9px rgba(0,229,255,0.05), 0 0 28px rgba(0,229,255,0.8); }
 }

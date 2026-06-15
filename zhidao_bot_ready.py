@@ -20,6 +20,7 @@ from aiogram.types import (
 from aiogram import F
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 import pytz
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
@@ -93,13 +94,27 @@ ADMIN_CONTACT_USERNAME = os.getenv("ADMIN_CONTACT_USERNAME", "admin")
 pending_codes = {}
 
 
+def db_connect():
+    # Match the API's connection settings. Without these PRAGMAs the bot ran at
+    # synchronous=FULL, fsyncing on every commit; on this high-latency storage
+    # that holds SQLite's single write lock for 100ms+ per commit and starves
+    # the API's writes (observed as 15-27s stalls / black screen). NORMAL + WAL
+    # means commits no longer fsync, so the bot releases the write lock fast.
+    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA wal_autocheckpoint=0")  # bot must not auto-checkpoint; the API owns WAL maintenance (hard rule, 2026-06-09)
+    return conn
+
+
 class Form(StatesGroup):
     waiting_name = State()
     waiting_bug_report = State()
 
 
 def init_db():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
+    conn.execute("PRAGMA journal_mode=WAL")
     c = conn.cursor()
     c.execute(
         """CREATE TABLE IF NOT EXISTS users
@@ -142,7 +157,7 @@ def init_db():
 
 
 def get_marzban_user(code):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT marzban_username FROM users WHERE code=?", (code,))
     result = c.fetchone()
@@ -153,7 +168,7 @@ def get_marzban_user(code):
 
 
 def code_exists(code):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT 1 FROM users WHERE code=?", (code,))
     result = c.fetchone()
@@ -162,7 +177,7 @@ def code_exists(code):
 
 
 def add_user(code, marzban_username):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute(
         "INSERT OR REPLACE INTO users (code, marzban_username) VALUES (?,?)",
@@ -173,7 +188,7 @@ def add_user(code, marzban_username):
 
 
 def save_telegram_id(code, telegram_id, full_name):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute(
         "UPDATE users SET telegram_id=?, full_name=? WHERE code=?",
@@ -201,7 +216,7 @@ def validate_expected_student_name(full_name, telegram_id):
         return False, full_name, "ФИО нужно ввести кириллицей: Фамилия Имя."
 
     normalized = normalize_registration_name(full_name)
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expected_students'")
     if not c.fetchone():
@@ -231,7 +246,7 @@ def validate_expected_student_name(full_name, telegram_id):
 
 def link_expected_student(full_name, telegram_id):
     normalized = normalize_registration_name(full_name)
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expected_students'")
     if not c.fetchone():
@@ -248,7 +263,7 @@ def link_expected_student(full_name, telegram_id):
 
 
 def get_all_users():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT telegram_id, full_name FROM users WHERE telegram_id IS NOT NULL")
     result = c.fetchall()
@@ -258,6 +273,23 @@ def get_all_users():
 
 def get_all_telegram_ids():
     return [row[0] for row in get_all_users()]
+
+
+def get_setting(key, default=None):
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key=?", (key,))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else default
+
+
+def set_setting(key, value):
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
+    conn.commit()
+    conn.close()
 
 
 def is_admin(user_id):
@@ -278,7 +310,7 @@ async def api_request(method, path, json_data=None, params=None, admin=False):
     if admin:
         headers["x-admin-id"] = str(PRESENCE_ADMIN_ID)
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.request(
             method,
             f"{API_URL}{path}",
@@ -400,7 +432,7 @@ async def presence_reject(telegram_id, check_type, admin_id, reason="leave rejec
 
 
 def has_dragon(telegram_id):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute(
         "SELECT id FROM user_implants WHERE telegram_id=? AND implant_id='implant_red_dragon' AND durability > 0",
@@ -411,35 +443,22 @@ def has_dragon(telegram_id):
     return bool(result)
 
 
-def bot_log_economy(c, telegram_id: int, operation: str, amount: int,
-                    balance_after=None, note=None):
-    now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-    try:
-        c.execute(
-            '''INSERT INTO economy_log
-               (telegram_id, operation, amount, balance_after, reference_type, note, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (telegram_id, operation, amount, balance_after, 'bot', note, now_str),
-        )
-    except Exception:
-        pass  # economy_log may not exist on older DB; fail silently
-
-
-def change_points(telegram_id, delta, operation='bot_manual', note=None):
-    conn = sqlite3.connect("/root/zhidao.db")
-    c = conn.cursor()
-    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (delta, telegram_id))
-    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
-    row = c.fetchone()
-    new_points = row[0] if row else 0
-    bot_log_economy(c, telegram_id, operation, delta, new_points, note=note)
-    conn.commit()
-    conn.close()
-    return new_points
+async def change_points(telegram_id, delta, operation='bot_manual', note=None):
+    result = await api_request(
+        "POST",
+        "/api/internal/points/add",
+        {
+            "telegram_id": telegram_id,
+            "delta": delta,
+            "operation": operation,
+            "note": note,
+        },
+    )
+    return result["new_points"]
 
 
 def get_points(telegram_id):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
     result = c.fetchone()
@@ -448,7 +467,7 @@ def get_points(telegram_id):
 
 
 def get_leaderboard():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     placeholders = ",".join("?" for _ in ADMIN_IDS)
     c.execute(
@@ -463,7 +482,7 @@ def get_leaderboard():
 
 
 def find_user_by_name(query):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute(
         "SELECT telegram_id, full_name, points FROM users WHERE full_name LIKE ?",
@@ -475,28 +494,38 @@ def find_user_by_name(query):
 
 
 async def get_token():
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            f"{MARZBAN_URL}/api/admin/token",
-            data={"username": MARZBAN_USER, "password": MARZBAN_PASS},
-        ) as r:
-            data = await r.json()
-            return data.get("access_token")
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            async with session.post(
+                f"{MARZBAN_URL}/api/admin/token",
+                data={"username": MARZBAN_USER, "password": MARZBAN_PASS},
+            ) as r:
+                data = await r.json()
+                return data.get("access_token")
+    except Exception as exc:
+        print("ZHIDAO_MARZBAN_TOKEN_ERROR %r" % (exc,), flush=True)
+        return None
 
 
 async def get_user_link(marzban_username):
     token = await get_token()
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"{MARZBAN_URL}/api/user/{marzban_username}",
-            headers={"Authorization": f"Bearer {token}"},
-        ) as r:
-            data = await r.json()
-            links = data.get("links") or []
-            if links:
-                return links[0]
-            subscription_url = data.get("subscription_url") or data.get("subscriptionUrl")
-            return str(subscription_url).strip() if subscription_url else None
+    if not token:
+        return None
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            async with session.get(
+                f"{MARZBAN_URL}/api/user/{marzban_username}",
+                headers={"Authorization": f"Bearer {token}"},
+            ) as r:
+                data = await r.json()
+                links = data.get("links") or []
+                if links:
+                    return links[0]
+                subscription_url = data.get("subscription_url") or data.get("subscriptionUrl")
+                return str(subscription_url).strip() if subscription_url else None
+    except Exception as exc:
+        print("ZHIDAO_MARZBAN_LINK_ERROR %r" % (exc,), flush=True)
+        return None
 
 
 def get_mini_app_keyboard():
@@ -603,7 +632,7 @@ def save_bug_report(message: types.Message, text: str) -> int:
         message.from_user.last_name or "",
     ]
     fallback_name = " ".join(part for part in full_name_parts if part).strip()
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute(
         "SELECT full_name FROM users WHERE telegram_id=?",
@@ -626,7 +655,7 @@ def save_bug_report(message: types.Message, text: str) -> int:
 
 
 def get_recent_bug_reports(limit: int = 10):
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute(
         """SELECT id, telegram_id, full_name, username, text, status, created_at
@@ -686,7 +715,7 @@ def get_presence_message(check_type, attempt_no=1):
 
     return (
         "🌙 Вечерняя отметка\n\n"
-        f"Попытка {attempt_no}/3. 21:00 — нужно быть в комнате.\n"
+        f"Попытка {attempt_no}/3. 22:00 — нужно быть в комнате.\n"
         "Если у тебя разрешение от админа или активное «Свободное время», выбери нужную кнопку."
     )
 
@@ -1057,7 +1086,7 @@ async def bug_reports_list(message: types.Message):
 @dp.message(Command("weather", "погода"))
 async def weather(message: types.Message):
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
             async with session.get(
                 "http://api.openweathermap.org/data/2.5/weather",
                 params={
@@ -1144,9 +1173,9 @@ async def toggle_reminders(message: types.Message):
     if reminders_enabled:
         await message.answer(
             "✅ Напоминания включены!\n\n"
-            "• 07:30/07:40/07:50 — подъём\n"
-            "• 21:00/21:15/21:30 — вечерняя отметка\n"
-            "• 22:00 — отбой"
+            "• 07:00/07:10/07:30 — подъём\n"
+            "• 21:00/21:15/22:00 — вечерняя отметка\n"
+            "• 22:30 — отбой"
         )
     else:
         await message.answer("❌ Напоминания выключены.")
@@ -1205,7 +1234,7 @@ async def list_users(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT code, marzban_username, telegram_id, full_name, points FROM users")
     users = c.fetchall()
@@ -1220,6 +1249,25 @@ async def list_users(message: types.Message):
         pts = points if points else 0
         text += f"• {name} | {pts}⭐ | TG: {tg}\n"
     await message.answer(text)
+
+
+async def check_wildai_breach_broadcast():
+    if get_setting("breach_broadcast_pending") != "1":
+        return
+    glitch = get_setting("breach_broadcast_phrase_glitch", "")
+    translation = get_setting("breach_broadcast_phrase_translation", "")
+    text = (
+        "⚠️ SYSTEM ERROR // BLACKWALL: ОФФЛАЙН\n\n"
+        "Операция по вытеснению Дикого ИИ провалена. Заслон пал — система захвачена на 3 дня.\n\n"
+        f"{glitch}\n— \"{translation}\""
+    )
+    for tg_id in get_all_telegram_ids():
+        try:
+            await bot.send_message(tg_id, text)
+        except Exception:
+            pass
+        await asyncio.sleep(0.05)
+    set_setting("breach_broadcast_pending", "0")
 
 
 @dp.message(Command("broadcast", "рассылка"))
@@ -1325,7 +1373,7 @@ async def award_points(message: types.Message):
     if has_dragon(tg_id):
         points = int(points * 1.2)
         dragon_bonus = " (+20% 🐉)"
-    new_points = change_points(tg_id, points, operation='bot_award', note=reason)
+    new_points = await change_points(tg_id, points, operation='bot_award', note=reason)
     await message.answer(f"✅ {full_name}: +{points} баллов{dragon_bonus} ({reason})\nИтого: {new_points} баллов")
     try:
         await bot.send_message(tg_id, f"⭐ Вам начислено +{points} баллов!{dragon_bonus}\nПричина: {reason}\nВсего баллов: {new_points}")
@@ -1353,7 +1401,7 @@ async def penalize_points(message: types.Message):
         await message.answer(f"❌ Пользователь '{name_query}' не найден")
         return
     tg_id, full_name, current_points = user
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     c.execute("SELECT immunity FROM user_status WHERE telegram_id=?", (tg_id,))
     status = c.fetchone()
@@ -1369,7 +1417,7 @@ async def penalize_points(message: types.Message):
         await message.answer(f"🛡 {full_name} использовал иммунитет! Штраф -{points}★ отменён.")
         return
     conn.close()
-    new_points = change_points(tg_id, -points, operation='bot_penalize', note=reason)
+    new_points = await change_points(tg_id, -points, operation='bot_penalize', note=reason)
     await message.answer(f"⚠️ {full_name}: -{points}★ ({reason})\nИтого: {new_points}★")
     try:
         await bot.send_message(tg_id, f"⚠️ У вас снято -{points}★\nПричина: {reason}\nВсего баллов: {new_points}")
@@ -1391,7 +1439,10 @@ async def salary(message: types.Message):
             continue
         dragon = has_dragon(tg_id)
         final = amount * 2 if dragon else amount
-        change_points(tg_id, final, operation='bot_salary', note=f'зп {amount}★' + (' x2 dragon' if dragon else ''))
+        try:
+            await change_points(tg_id, final, operation='bot_salary', note=f'зп {amount}★' + (' x2 dragon' if dragon else ''))
+        except Exception:
+            continue
         try:
             bonus_text = " (x2 🐉 Красный Дракон!)" if dragon else ""
             await bot.send_message(tg_id, f"💰 Воскресная зарплата: +{final}★{bonus_text}")
@@ -1455,7 +1506,7 @@ async def gift_item_cmd(message: types.Message):
         await message.answer(f"❌ Пользователь '{args[1]}' не найден")
         return
     to_id, to_name, _ = recipient
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.post(
             f"{API_URL}/api/shop/gift",
             json={"purchase_id": purchase_id, "from_id": message.from_user.id, "to_id": to_id},
@@ -1507,7 +1558,7 @@ async def netwatch_strike_cmd(message: types.Message):
     except Exception:
         await message.answer("❌ Баллы должны быть числом")
         return
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.post(
             f"{API_URL}/api/netwatch/strike",
             json={"telegram_id": message.from_user.id, "target_name": args[1], "points": points},
@@ -1532,7 +1583,7 @@ async def netwatch_blackwall_cmd(message: types.Message):
     if len(args) < 2:
         await message.answer("Использование: /netwatch_blackwall ИМЯ")
         return
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.post(
             f"{API_URL}/api/netwatch/blackwall",
             json={"telegram_id": message.from_user.id, "target_name": args[1]},
@@ -1580,100 +1631,95 @@ def _genshin_active_owners(c, card_id: str):
 
 
 async def moon_morning():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
-    owners = [(tg_id,) for tg_id in _genshin_active_owners(c, 'card_moon')]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + 12 WHERE telegram_id=?", (tg_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'card_moon_passive', 12, row[0] if row else None, note='утренний пассив Богини Луны')
+    owners = _genshin_active_owners(c, 'card_moon')
+    conn.close()
+    for tg_id in owners:
+        try:
+            await change_points(tg_id, 12, operation='card_moon_passive', note='утренний пассив Богини Луны')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, "🌙 +12★ // лунный свет Чанъэ 嫦娥")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def netwatch_morning():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
-    owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_netwatch')]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + 25 WHERE telegram_id=?", (tg_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'netwatch_passive', 25, row[0] if row else None, note='утренний пассив NetWatch')
+    owners = _cyberpunk_active_owners(c, 'implant_netwatch')
+    conn.close()
+    for tg_id in owners:
+        try:
+            await change_points(tg_id, 25, operation='netwatch_passive', note='утренний пассив NetWatch')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, "🔴 +25★ // восполнение памяти NetWatch")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def caishen_morning():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
-    owners = [(tg_id,) for tg_id in _cyberpunk_active_owners(c, 'implant_caishen')]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + 15 WHERE telegram_id=?", (tg_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'caishen_passive', 15, row[0] if row else None, note='утренний пассив Цайшэнь')
+    owners = _cyberpunk_active_owners(c, 'implant_caishen')
+    conn.close()
+    for tg_id in owners:
+        try:
+            await change_points(tg_id, 15, operation='caishen_passive', note='утренний пассив Цайшэнь')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, "💰 +15★ // пассивный доход Цайшэня 财神")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def qilin_morning():
-    conn = sqlite3.connect("/root/zhidao.db")
+    conn = db_connect()
     c = conn.cursor()
     active_owners = _cyberpunk_active_owners(c, 'implant_qilin')
+    conn.close()
     total_owners = len(active_owners)
     if total_owners == 0:
-        conn.close()
         return
     # Diminishing returns: 40★ за 1 владельца, -6★ за каждого следующего, минимум 8★
     bonus = max(8, 40 - (total_owners - 1) * 6)
-    owners = [(tg_id,) for tg_id in active_owners]
-    for (tg_id,) in owners:
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (bonus, tg_id))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (tg_id,))
-        row = c.fetchone()
-        bot_log_economy(c, tg_id, 'qilin_passive', bonus, row[0] if row else None,
-                        note=f'Цилинь: {total_owners} владельцев → {bonus}★')
+    for tg_id in active_owners:
+        try:
+            await change_points(tg_id, bonus, operation='qilin_passive',
+                                note=f'Цилинь: {total_owners} владельцев → {bonus}★')
+        except Exception:
+            continue
         try:
             await bot.send_message(tg_id, f"🦄 +{bonus}★ // Цилинь麒麟 ({total_owners} вл. → {bonus}★/чел.)")
         except Exception:
             pass
-    conn.commit()
-    conn.close()
 
 
 async def main():
     init_db()
     scheduler.add_job(send_checkin, CronTrigger(hour=21, minute=0, timezone=BEIJING_TZ))
     scheduler.add_job(retry_evening_presence, CronTrigger(hour=21, minute=15, timezone=BEIJING_TZ), args=[2])
-    scheduler.add_job(retry_evening_presence, CronTrigger(hour=21, minute=30, timezone=BEIJING_TZ), args=[3])
-    scheduler.add_job(check_missing, CronTrigger(hour=21, minute=45, timezone=BEIJING_TZ))
-    scheduler.add_job(send_goodnight, CronTrigger(hour=22, minute=0, timezone=BEIJING_TZ))
-    scheduler.add_job(penalize_presence, CronTrigger(hour=22, minute=10, timezone=BEIJING_TZ), args=["evening"])
+    scheduler.add_job(retry_evening_presence, CronTrigger(hour=22, minute=0, timezone=BEIJING_TZ), args=[3])
+    scheduler.add_job(check_missing, CronTrigger(hour=22, minute=15, timezone=BEIJING_TZ))
+    scheduler.add_job(send_goodnight, CronTrigger(hour=22, minute=30, timezone=BEIJING_TZ))
+    scheduler.add_job(penalize_presence, CronTrigger(hour=22, minute=45, timezone=BEIJING_TZ), args=["evening"])
 
-    scheduler.add_job(send_morning_presence, CronTrigger(hour=7, minute=30, timezone=BEIJING_TZ))
-    scheduler.add_job(retry_morning_presence, CronTrigger(hour=7, minute=40, timezone=BEIJING_TZ), args=[2])
-    scheduler.add_job(retry_morning_presence, CronTrigger(hour=7, minute=50, timezone=BEIJING_TZ), args=[3])
-    scheduler.add_job(check_wakeup_missing, CronTrigger(hour=8, minute=0, timezone=BEIJING_TZ))
-    scheduler.add_job(penalize_presence, CronTrigger(hour=8, minute=15, timezone=BEIJING_TZ), args=["morning"])
+    scheduler.add_job(send_morning_presence, CronTrigger(hour=7, minute=0, timezone=BEIJING_TZ))
+    scheduler.add_job(retry_morning_presence, CronTrigger(hour=7, minute=10, timezone=BEIJING_TZ), args=[2])
+    scheduler.add_job(retry_morning_presence, CronTrigger(hour=7, minute=30, timezone=BEIJING_TZ), args=[3])
+    scheduler.add_job(check_wakeup_missing, CronTrigger(hour=7, minute=40, timezone=BEIJING_TZ))
+    scheduler.add_job(penalize_presence, CronTrigger(hour=7, minute=50, timezone=BEIJING_TZ), args=["morning"])
 
     scheduler.add_job(netwatch_morning, CronTrigger(hour=8, minute=1, timezone=BEIJING_TZ))
     scheduler.add_job(caishen_morning, CronTrigger(hour=8, minute=2, timezone=BEIJING_TZ))
     scheduler.add_job(qilin_morning, CronTrigger(hour=8, minute=3, timezone=BEIJING_TZ))
     scheduler.add_job(moon_morning, CronTrigger(hour=8, minute=4, timezone=BEIJING_TZ))
+    scheduler.add_job(check_wildai_breach_broadcast, IntervalTrigger(minutes=1))
     scheduler.start()
     await dp.start_polling(bot)
 

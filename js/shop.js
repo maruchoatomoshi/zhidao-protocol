@@ -148,7 +148,7 @@ async function loadShop() {
       const remaining = item.daily_limit > 0 ? Math.max(0, item.daily_limit - item.sold_today) : Infinity;
       return item.available && remaining > 0;
     });
-    const suggestionPriority = ['immunity', 'extra_case', 'extra_raid_attempt', 'amnesty', 'double_win', 'laundry_vip', 'title_player'];
+    const suggestionPriority = ['immunity', 'extra_raid_attempt', 'amnesty', 'double_win', 'laundry_vip', 'title_player'];
     const priorityIndex = (item) => {
       const index = suggestionPriority.indexOf(item.code);
       return index === -1 ? 99 : index;
@@ -264,6 +264,7 @@ async function loadShop() {
     }
 
     document.getElementById('shopStoreContent').innerHTML = html || '<div class="empty-state">Магазин пуст</div>';
+    if (typeof applyWildAiShopDisguise === 'function') applyWildAiShopDisguise();
   } catch(e) {
     document.getElementById('shopStoreContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
   }
@@ -310,6 +311,28 @@ const SHOP_CATEGORY_LABEL = {
   reminder: '🔔 НАПОМИНАНИЕ', trade: '🔄 ОБМЕН', privilege: '⚡ ПРИВИЛЕГИЯ', other: '📦 ПРОЧЕЕ',
 };
 
+function _bjDateStr(d) {
+  // Shift to Beijing (UTC+8) then take the date portion
+  const bj = new Date(d.getTime() + (8 * 60 + d.getTimezoneOffset()) * 60000);
+  return bj.toISOString().slice(0, 10);
+}
+
+function _inventoryExpiryLine(item, sellValue) {
+  const bought = new Date(item.purchased_at).toLocaleDateString('ru-RU');
+  const base = `Куплено: ${bought} · продажа ${sellValue}★`;
+  if (!item.expires_at) return base;
+  const now = new Date();
+  const todayStr = _bjDateStr(now);
+  const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = _bjDateStr(tomorrow);
+  const expDate = item.expires_at.slice(0, 10);
+  if (expDate === todayStr)
+    return `<span class="inventory-expiry-warn">⚠ Сгорает сегодня в 23:59</span> · продажа ${sellValue}★`;
+  if (expDate === tomorrowStr)
+    return `<span class="inventory-expiry-soon">↯ Истекает завтра в 23:59</span> · продажа ${sellValue}★`;
+  return `${base} · до ${expDate}`;
+}
+
 async function loadInventory() {
   try {
     const r = await fetch(`${API_URL}/api/shop/inventory/${currentUserId}`);
@@ -331,7 +354,7 @@ async function loadInventory() {
             <div class="inventory-kicker">${tier} · ${catLabel}</div>
             <div class="inventory-name">${item.name}</div>
             ${descHtml}
-            <div class="inventory-date">Куплено: ${new Date(item.purchased_at).toLocaleDateString('ru-RU')} · продажа ${sellValue}★</div>
+            <div class="inventory-date">${_inventoryExpiryLine(item, sellValue)}</div>
           </div>
           <div class="inventory-side">
             <div class="inventory-pill">${item.price}★</div>

@@ -12,33 +12,41 @@ const CONTRACT_CATEGORY_LABELS = {
 const CONTRACT_MIN_REWARD = 5;
 const CONTRACT_MAX_REWARD = 50;
 const CONTRACT_ADMIN_MAX_REWARD = 100;
+const CONTRACT_AUTO_CONFIRM_HOURS = 24;
 
 const CONTRACT_STATUS_LABELS = {
   open:      'Ждёт исполнителя',
   accepted:  'В работе',
+  submitted: 'На проверке',
   completed: 'Завершено',
   cancelled: 'Отменён',
   disputed:  'Спор',
+  expired:   'Сгорел',
 };
 
 const CONTRACT_STATUS_HINTS = {
   open:      'Можно принять поручение',
   accepted:  'Исполнитель взял задачу',
+  submitted: 'Исполнитель отметил выполнение',
   completed: 'Награда выплачена',
   cancelled: 'Поручение закрыто',
   disputed:  'Нужна помощь администратора',
+  expired:   'Никто не взял за 24 часа · комиссия возвращена',
 };
 
 const CONTRACT_STATUS_COLORS = {
   open:      '#e67e22',
   accepted:  '#3498db',
+  submitted: '#9b59b6',
   completed: '#2ecc71',
   cancelled: 'var(--text3)',
   disputed:  '#e74c3c',
+  expired:   'var(--text3)',
 };
 
 let contractsActiveTab = 'open';
 let contractsRefreshTimer = null;
+let contractsCountdownTimer = null;
 let contractsOpenLoading = false;
 let contractsMyLoading = false;
 let contractsCategoryFilter = 'all';
@@ -156,9 +164,22 @@ function startContractsAutoRefresh() {
     }
     refreshContractsActiveTab({ silent: true });
   }, 6000);
+  if (!contractsCountdownTimer) {
+    contractsCountdownTimer = window.setInterval(() => {
+      if (!isContractsPageActive()) {
+        stopContractsAutoRefresh();
+        return;
+      }
+      renderContractsFromCache();
+    }, 60000);
+  }
 }
 
 function stopContractsAutoRefresh() {
+  if (contractsCountdownTimer) {
+    window.clearInterval(contractsCountdownTimer);
+    contractsCountdownTimer = null;
+  }
   if (!contractsRefreshTimer) return;
   window.clearInterval(contractsRefreshTimer);
   contractsRefreshTimer = null;
@@ -402,6 +423,39 @@ function showContractsBlackwall(msg) {
   syncContractsBlackwallVisible(true, msg);
 }
 
+// Server stores Beijing-local timestamps without a timezone suffix (e.g.
+// "2026-06-13 14:00:00"); local optimistic updates use ISO strings with one.
+function parseContractServerDate(value) {
+  if (!value) return null;
+  const s = String(value);
+  const hasTz = /Z$|[+-]\d{2}:\d{2}$/.test(s);
+  const d = new Date(hasTz ? s : s.replace(' ', 'T') + '+08:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatContractCountdown(value) {
+  const target = parseContractServerDate(value);
+  if (!target) return null;
+  const diffMs = target.getTime() - Date.now();
+  if (diffMs <= 0) return null;
+  const totalMin = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h > 0 ? `${h}ч ${m}м` : `${m}м`;
+}
+
+function getContractCountdownHtml(c) {
+  if (c.status === 'open' && c.expires_at) {
+    const left = formatContractCountdown(c.expires_at);
+    if (left) return `<span class="contract-countdown">⏳ Сгорит через ${left}</span>`;
+  }
+  if (c.status === 'submitted' && c.auto_confirm_at) {
+    const left = formatContractCountdown(c.auto_confirm_at);
+    if (left) return `<span class="contract-countdown">⏳ Автовыплата через ${left}</span>`;
+  }
+  return '';
+}
+
 function renderContractCard(c, showActions) {
   const isMe = currentUserId && c.creator_telegram_id === currentUserId;
   const isAssignee = currentUserId && c.assignee_telegram_id === currentUserId;
@@ -426,6 +480,20 @@ function renderContractCard(c, showActions) {
     </button>`;
   }
   if (c.status === 'accepted' && isMe) {
+    actionsHtml = `<button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
+      Открыть спор
+    </button>`;
+  }
+  if (c.status === 'accepted' && isAssignee && !isMe) {
+    actionsHtml = `
+      <button class="contract-action-btn complete" onclick="submitContractDone(${c.id})">
+        ✓ Отметить выполненным
+      </button>
+      <button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
+        Открыть спор
+      </button>`;
+  }
+  if (c.status === 'submitted' && isMe) {
     actionsHtml = `
       <button class="contract-action-btn complete" onclick="completeContract(${c.id})">
         ✓ Подтвердить выполнение
@@ -434,7 +502,7 @@ function renderContractCard(c, showActions) {
         Открыть спор
       </button>`;
   }
-  if (c.status === 'accepted' && isAssignee && !isMe) {
+  if (c.status === 'submitted' && isAssignee && !isMe) {
     actionsHtml = `<button class="contract-action-btn dispute" onclick="disputeContract(${c.id})">
       Открыть спор
     </button>`;
@@ -456,7 +524,7 @@ function renderContractCard(c, showActions) {
     ? '<span class="contract-admin-badge">ADMIN ORDER</span>'
     : '';
   const flowSteps = ['open', 'accepted', 'completed'];
-  const flowIndex = c.status === 'disputed'
+  const flowIndex = (c.status === 'disputed' || c.status === 'submitted')
     ? 1
     : (c.status === 'cancelled' ? -1 : flowSteps.indexOf(c.status));
   const flowHtml = `<div class="contract-flow-block">
@@ -489,6 +557,7 @@ function renderContractCard(c, showActions) {
       <span class="contract-status-hint">${escapeHtml(statusHint)}</span>
       <span class="contract-person">${escapeHtml(creatorName)}${isMe ? ' · ты' : ''}</span>
       ${assigneeHtml}
+      ${getContractCountdownHtml(c)}
     </div>
     ${flowHtml}
     ${suspHtml}
@@ -497,16 +566,20 @@ function renderContractCard(c, showActions) {
 }
 
 function getContractStatusLabel(contract, isCreator, isAssignee) {
-  if (contract.status === 'accepted' && isCreator) return 'Ждёт подтверждения';
+  if (contract.status === 'accepted' && isCreator) return 'Исполнитель работает';
   if (contract.status === 'accepted' && isAssignee) return 'Ты выполняешь';
+  if (contract.status === 'submitted' && isCreator) return 'Ждёт подтверждения';
+  if (contract.status === 'submitted' && isAssignee) return 'Сдано на проверку';
   return CONTRACT_STATUS_LABELS[contract.status] || contract.status || 'Статус неизвестен';
 }
 
 function getContractStatusHint(contract, isCreator, isAssignee) {
   if (contract.status === 'open' && isCreator) return 'Ты создал поручение, ждём исполнителя';
   if (contract.status === 'open') return 'Можно принять и выполнить';
-  if (contract.status === 'accepted' && isCreator) return 'Проверь результат и подтверди';
-  if (contract.status === 'accepted' && isAssignee) return 'Выполни задачу и жди подтверждения';
+  if (contract.status === 'accepted' && isCreator) return 'Исполнитель выполняет задачу';
+  if (contract.status === 'accepted' && isAssignee) return 'Выполни задачу и отметь готовность';
+  if (contract.status === 'submitted' && isCreator) return 'Проверь результат и подтверди';
+  if (contract.status === 'submitted' && isAssignee) return `Жди подтверждения — иначе выплата произойдёт автоматически через ${CONTRACT_AUTO_CONFIRM_HOURS} ч.`;
   return CONTRACT_STATUS_HINTS[contract.status] || '';
 }
 
@@ -531,12 +604,14 @@ function closeCreateContractModal() {
   const catEl   = document.getElementById('contractCategory');
   const rewEl   = document.getElementById('contractReward');
   const anonEl  = document.getElementById('contractAnonymous');
+  const expEl   = document.getElementById('contractExpiryHours');
   const errEl   = document.getElementById('contractCreateError');
   if (titleEl) titleEl.value = '';
   if (descEl)  descEl.value  = '';
   if (catEl)   catEl.value   = 'other';
   if (rewEl)   rewEl.value   = '20';
   if (anonEl)  anonEl.checked = false;
+  if (expEl)   expEl.value   = '24';
   if (errEl)   errEl.style.display = 'none';
   updateContractFeePreview();
 }
@@ -558,178 +633,15 @@ function updateContractFeePreview() {
   }
 }
 
-async function submitCreateContract() {
-  const title    = (document.getElementById('contractTitle')?.value || '').trim();
-  const desc     = (document.getElementById('contractDesc')?.value || '').trim();
-  const category = document.getElementById('contractCategory')?.value || 'other';
-  const reward   = parseInt(document.getElementById('contractReward')?.value) || 0;
-  const isAnonymous = !!document.getElementById('contractAnonymous')?.checked;
-  const errEl    = document.getElementById('contractCreateError');
-
-  const showErr = (msg) => {
-    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
-  };
-
-  if (!currentUserId) { showErr('Войди в систему'); return; }
-  if (title.length < 3) { showErr('Название слишком короткое'); return; }
-  if (desc.length < 5)  { showErr('Описание слишком короткое'); return; }
-  const maxReward = getContractMaxReward();
-  if (reward < CONTRACT_MIN_REWARD || reward > maxReward) { showErr(`Награда: от ${CONTRACT_MIN_REWARD} до ${maxReward} ★`); return; }
-
-  try {
-    const r = await contractFetch(`${API_URL}/api/contracts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Telegram-Id': String(currentUserId) },
-      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous }),
-    });
-    const data = await r.json();
-    if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
-    closeCreateContractModal();
-    currentPoints = Math.max(0, currentPoints - reward);
-    updatePoints();
-    const localContract = {
-      id: data.id,
-      title,
-      description: desc,
-      category,
-      reward_stars: reward,
-      fee_stars: data.fee_stars,
-      payout_stars: data.payout_stars,
-      creator_telegram_id: currentUserId,
-      assignee_telegram_id: null,
-      creator_is_admin: !!isAdmin,
-      creator_name: getCurrentContractUserName(),
-      assignee_name: null,
-      creator_avatar_url: null,
-      assignee_avatar_url: null,
-      is_anonymous: isAnonymous,
-      status: 'open',
-      is_suspicious: false,
-      suspicious_reason: null,
-      created_at: new Date().toISOString(),
-      role: 'creator',
-    };
-    contractsMyCache.unshift(localContract);
-    contractsOpenCache.unshift(localContract);
-    switchContractsTabLocal('my');
-  } catch (e) {
-    showErr('Нет соединения');
-  }
-}
-
 // ===== CONTRACT ACTIONS =====
 
-async function acceptContract(id) {
-  if (!currentUserId) return;
-  try {
-    const r = await contractFetch(`${API_URL}/api/contracts/${id}/accept`, {
-      method: 'POST',
-      headers: { 'X-Telegram-Id': String(currentUserId) },
-    });
-    const data = await r.json();
-    if (!r.ok) {
-      tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось принять', buttons: [{ type: 'ok' }] });
-      return;
-    }
-    updateContractInCaches(id, {
-      status: 'accepted',
-      assignee_telegram_id: currentUserId,
-      assignee_name: getCurrentContractUserName(),
-      accepted_at: new Date().toISOString(),
-      role: 'assignee',
-    });
-    switchContractsTabLocal('my');
-  } catch (e) {
-    tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
-  }
-}
-
-async function completeContract(id) {
-  if (!currentUserId) return;
-  tg.showPopup({
-    title: 'Подтвердить выполнение?',
-    message: 'Исполнитель получит ★ на баланс.',
-    buttons: [{ id: 'ok', type: 'default', text: '✓ Подтвердить' }, { type: 'cancel' }],
-  }, async (btn) => {
-    if (btn !== 'ok') return;
-    try {
-      const r = await contractFetch(`${API_URL}/api/contracts/${id}/complete`, {
-        method: 'POST',
-        headers: { 'X-Telegram-Id': String(currentUserId) },
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось завершить', buttons: [{ type: 'ok' }] });
-        return;
-      }
-      updateContractInCaches(id, { status: 'completed', completed_at: new Date().toISOString() });
-    } catch (e) {
-      tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
-    }
-  });
-}
-
-async function cancelContract(id) {
-  if (!currentUserId) return;
-  tg.showPopup({
-    title: 'Отменить поручение?',
-    message: 'Замороженные ★ вернутся на твой баланс.',
-    buttons: [{ id: 'ok', type: 'destructive', text: 'Отменить' }, { type: 'cancel' }],
-  }, async (btn) => {
-    if (btn !== 'ok') return;
-    try {
-      const r = await contractFetch(`${API_URL}/api/contracts/${id}/cancel`, {
-        method: 'POST',
-        headers: { 'X-Telegram-Id': String(currentUserId) },
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось отменить', buttons: [{ type: 'ok' }] });
-        return;
-      }
-      if (data.refunded) {
-        currentPoints += data.refunded;
-        updatePoints();
-      }
-      removeContractFromCaches(id);
-    } catch (e) {
-      tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
-    }
-  });
-}
-
-async function disputeContract(id) {
-  if (!currentUserId) return;
-  tg.showPopup({
-    title: 'Открыть спор?',
-    message: 'Администратор рассмотрит ситуацию и вынесет решение.',
-    buttons: [{ id: 'ok', type: 'default', text: '⚠ Открыть спор' }, { type: 'cancel' }],
-  }, async (btn) => {
-    if (btn !== 'ok') return;
-    try {
-      const r = await contractFetch(`${API_URL}/api/contracts/${id}/dispute`, {
-        method: 'POST',
-        headers: { 'X-Telegram-Id': String(currentUserId) },
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось открыть спор', buttons: [{ type: 'ok' }] });
-        return;
-      }
-      updateContractInCaches(id, { status: 'disputed', disputed_at: new Date().toISOString() });
-      switchContractsTabLocal('disputed');
-    } catch (e) {
-      tg.showPopup({ title: 'Ошибка', message: 'Нет соединения', buttons: [{ type: 'ok' }] });
-    }
-  });
-}
-
 async function submitCreateContract() {
   const title    = (document.getElementById('contractTitle')?.value || '').trim();
   const desc     = (document.getElementById('contractDesc')?.value || '').trim();
   const category = document.getElementById('contractCategory')?.value || 'other';
   const reward   = parseInt(document.getElementById('contractReward')?.value) || 0;
   const isAnonymous = !!document.getElementById('contractAnonymous')?.checked;
+  const expiresHours = parseInt(document.getElementById('contractExpiryHours')?.value) || 24;
   const errEl    = document.getElementById('contractCreateError');
 
   const showErr = (msg) => {
@@ -746,12 +658,12 @@ async function submitCreateContract() {
     const r = await contractFetch(`${API_URL}/api/contracts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Telegram-Id': String(currentUserId) },
-      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous }),
+      body: JSON.stringify({ title, description: desc, category, reward_stars: reward, is_anonymous: isAnonymous, expires_hours: expiresHours }),
     });
     const data = await r.json();
     if (!r.ok) { showErr(data.detail || 'Ошибка создания'); return; }
     closeCreateContractModal();
-    currentPoints = Math.max(0, currentPoints - reward);
+    currentPoints = (data.new_points != null) ? data.new_points : Math.max(0, currentPoints - reward);
     updatePoints();
     const localContract = {
       id: data.id,
@@ -773,6 +685,7 @@ async function submitCreateContract() {
       is_suspicious: false,
       suspicious_reason: null,
       created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + expiresHours * 3600000).toISOString(),
       role: 'creator',
     };
     contractsMyCache.unshift(localContract);
@@ -807,6 +720,35 @@ async function acceptContract(id) {
   } catch (e) {
     await recoverContractsAfterUncertainMutation('Проверяю, было ли поручение принято.');
   }
+}
+
+async function submitContractDone(id) {
+  if (!currentUserId) return;
+  tg.showPopup({
+    title: 'Отметить как выполненное?',
+    message: `Заказчик проверит работу и подтвердит выплату. Если не ответит за ${CONTRACT_AUTO_CONFIRM_HOURS} ч, выплата произойдёт автоматически.`,
+    buttons: [{ id: 'ok', type: 'default', text: '✓ Готово' }, { type: 'cancel' }],
+  }, async (btn) => {
+    if (btn !== 'ok') return;
+    try {
+      const r = await contractFetch(`${API_URL}/api/contracts/${id}/submit`, {
+        method: 'POST',
+        headers: { 'X-Telegram-Id': String(currentUserId) },
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        tg.showPopup({ title: 'Ошибка', message: data.detail || 'Не удалось отметить выполнение', buttons: [{ type: 'ok' }] });
+        return;
+      }
+      updateContractInCaches(id, {
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+        auto_confirm_at: data.auto_confirm_at || null,
+      });
+    } catch (e) {
+      await recoverContractsAfterUncertainMutation('Проверяю, было ли поручение отмечено выполненным.');
+    }
+  });
 }
 
 async function completeContract(id) {
@@ -853,8 +795,12 @@ async function cancelContract(id) {
         return;
       }
       if (data.refunded) {
-        currentPoints += data.refunded;
-        updatePoints();
+        // Возврат идёт заказчику; админ может отменять чужой контракт — тогда его баланс не трогаем.
+        const refundIsMine = data.creator_telegram_id == null || Number(data.creator_telegram_id) === Number(currentUserId);
+        if (refundIsMine) {
+          currentPoints = (data.new_points != null) ? data.new_points : currentPoints + data.refunded;
+          updatePoints();
+        }
       }
       removeContractFromCaches(id);
     } catch (e) {

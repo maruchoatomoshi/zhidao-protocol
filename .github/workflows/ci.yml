@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax:
+    name: Syntax checks (py_compile + node --check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Python syntax — API and bot
+        run: python -m py_compile zhidao_api_ready.py zhidao_bot_ready.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: JavaScript syntax — all frontend modules
+        run: |
+          status=0
+          for f in js/*.js; do
+            if ! node --check "$f"; then
+              status=1
+            fi
+          done
+          exit $status
+
+      - name: Git whitespace check
+        run: git diff --check HEAD~1 HEAD || true

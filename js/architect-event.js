@@ -1,3 +1,7 @@
+const WILD_AI_BREACH_INFECTION_THRESHOLD = 100;
+const WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION = 5;
+const WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2;
+
 const ARCHITECT_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lobby.png';
 const WILD_AI_BREACH_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wild_ai_lobby_picture.png';
 
@@ -14,7 +18,7 @@ const ARCHITECT_TERMINAL_IMAGES = {
 
 const WILD_AI_BREACH_TERMINAL_IMAGES = {
   FINISHED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_win.png',
-  FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lose.png'
+  FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_lose.png'
 };
 
 const ARCHITECT_PHASE_VIDEOS = {
@@ -30,6 +34,10 @@ const WILD_AI_BREACH_PHASE_VIDEOS = {
 };
 
 const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
+// Defeat sting: upload a file with this exact name to the repo root and it
+// will play automatically when the loss video starts. Missing file = silent no-op.
+const WILD_AI_BREACH_LOSE_SOUND = 'wildai_losetheme.mp3';
+let wildAiLoseSoundPlayedFor = null;
 
 const ARCHITECT_PHASE_MUSIC = {
   1: 'architect_phase1_music.mp3',
@@ -66,14 +74,21 @@ let architectVideoStartTimer = null;
 let architectActionResultTimer = null;
 const ARCHITECT_ANSWER_FEEDBACK_MS = 1800;
 const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
+// WildAI loss video runs ~10s; reveal the defeat banner right after it ends
+const WILD_AI_LOSE_REVEAL_DELAY = 10500;
 
 function getArchitectPhaseImage(eventData) {
-  if (!eventData) return ARCHITECT_LOBBY_IMAGE;
+  if (!eventData) {
+    return (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach')
+      ? WILD_AI_BREACH_LOBBY_IMAGE
+      : ARCHITECT_LOBBY_IMAGE;
+  }
   const isWildAi = eventData.code === 'wildai_breach';
   const state = String(eventData.state || '').toUpperCase();
   if (state === 'REGISTRATION') return isWildAi ? WILD_AI_BREACH_LOBBY_IMAGE : ARCHITECT_LOBBY_IMAGE;
   const terminalImages = isWildAi ? WILD_AI_BREACH_TERMINAL_IMAGES : ARCHITECT_TERMINAL_IMAGES;
   if (terminalImages[state]) return terminalImages[state];
+  if (isWildAi) return WILD_AI_BREACH_LOBBY_IMAGE;
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_IMAGES[2];
   if (phase >= 3) return ARCHITECT_PHASE_IMAGES[3];
@@ -95,7 +110,8 @@ function getArchitectPhaseVideo(eventData) {
 }
 
 function getArchitectPhaseMusic(eventData) {
-  const isWildAi = eventData && eventData.code === 'wildai_breach';
+  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+  const isWildAi = eventData ? eventData.code === 'wildai_breach' : hintIsWildAi;
   const state = eventData ? String(eventData.state || '').toUpperCase() : '';
   if (state === 'REGISTRATION' || (!eventData && ARCHITECT_LOBBY_MUSIC)) {
     return isWildAi ? WILD_AI_BREACH_LOBBY_MUSIC : ARCHITECT_LOBBY_MUSIC;
@@ -457,34 +473,62 @@ function renderArchitectActionResult(actionType, data) {
   const hp = Number(data.current_hp || 0);
   const phase = Number(data.phase || 1);
   const pressure = Number(data.overload_pressure || 0);
+  const isWildAi = data.code === 'wildai_breach';
 
   let title = 'ДЕЙСТВИЕ ПРИНЯТО';
   let value = '';
-  if (!isCorrect) {
-    title = 'ОШИБКА ПРОТОКОЛА';
-    value = 'урон не прошёл';
-  } else if (actionType === 'attack' || actionType === 'protocol') {
-    title = actionType === 'protocol' ? 'ПРОТОКОЛ ПРОБИТ' : 'АТАКА ПРОШЛА';
-    value = `-${damage} HP`;
-  } else if (actionType === 'stabilize') {
-    title = 'СТАБИЛИЗАЦИЯ';
-    value = `+${support} SUPPORT`;
-  } else if (actionType === 'sync') {
-    title = 'СИНХРОНИЗАЦИЯ';
-    value = `+${support} SUPPORT`;
-  }
+  if (isWildAi) {
+    if (!isCorrect) {
+      title = 'СБОЙ ОПЕРАЦИИ';
+      value = damage > 0 ? `+${damage} ЦЕЛОСТНОСТЬ` : 'эффект не применён';
+    } else if (actionType === 'attack' || actionType === 'protocol') {
+      title = actionType === 'protocol' ? 'ПРОТОКОЛ СРАБОТАЛ' : 'УЗЕЛ ПОРАЖЁН';
+      value = `+${damage} ЦЕЛОСТНОСТЬ`;
+    } else if (actionType === 'stabilize') {
+      title = 'СЕКТОР ЗАЛАТАН';
+      value = `−${WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION} ЗАРАЖЕНИЕ`;
+    } else if (actionType === 'sync') {
+      title = 'СКАНИРОВАНИЕ';
+      value = `−${WILD_AI_BREACH_INFECTION_SYNC_REDUCTION} ЗАРАЖЕНИЕ`;
+    }
 
-  host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
-  host.style.display = 'block';
-  host.innerHTML = `
-    <div class="event-action-result-title">${escapeHtml(title)}</div>
-    <div class="event-action-result-value">${escapeHtml(value)}</div>
-    <div class="event-action-result-meta">
-      <span>HP: ${hp}</span>
-      <span>PHASE: ${phase}</span>
-      <span>OVR: ${pressure}</span>
-    </div>
-  `;
+    host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
+    host.style.display = 'block';
+    host.innerHTML = `
+      <div class="event-action-result-title">${escapeHtml(title)}</div>
+      <div class="event-action-result-value">${escapeHtml(value)}</div>
+      <div class="event-action-result-meta">
+        <span>ЦЕЛОСТНОСТЬ: ${hp}</span>
+        <span>ЗАРАЖЕНИЕ: ${pressure}/${WILD_AI_BREACH_INFECTION_THRESHOLD}</span>
+      </div>
+    `;
+  } else {
+    if (!isCorrect) {
+      title = 'ОШИБКА ПРОТОКОЛА';
+      value = 'урон не прошёл';
+    } else if (actionType === 'attack' || actionType === 'protocol') {
+      title = actionType === 'protocol' ? 'ПРОТОКОЛ ПРОБИТ' : 'АТАКА ПРОШЛА';
+      value = `-${damage} HP`;
+    } else if (actionType === 'stabilize') {
+      title = 'СТАБИЛИЗАЦИЯ';
+      value = `+${support} SUPPORT`;
+    } else if (actionType === 'sync') {
+      title = 'СИНХРОНИЗАЦИЯ';
+      value = `+${support} SUPPORT`;
+    }
+
+    host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
+    host.style.display = 'block';
+    host.innerHTML = `
+      <div class="event-action-result-title">${escapeHtml(title)}</div>
+      <div class="event-action-result-value">${escapeHtml(value)}</div>
+      <div class="event-action-result-meta">
+        <span>HP: ${hp}</span>
+        <span>PHASE: ${phase}</span>
+        <span>OVR: ${pressure}</span>
+      </div>
+    `;
+  }
 
   architectActionResultTimer = setTimeout(() => {
     if (host.classList.contains('event-action-result')) {
@@ -566,6 +610,7 @@ function updateArchitectPhaseFxState(eventData) {
     'event-state-terminal',
     'event-state-finished',
     'event-state-failed',
+    'event-wildai-lobby',
     'event-phase-1',
     'event-phase-2',
     'event-phase-3',
@@ -575,6 +620,11 @@ function updateArchitectPhaseFxState(eventData) {
 
   if (!eventData) {
     overlay.classList.add('event-state-lobby');
+    if (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach') {
+      overlay.classList.add('event-wildai-lobby');
+    }
+    const standbyImg = document.getElementById('eventBossImage');
+    if (standbyImg) standbyImg.classList.remove('result-image-reveal');
     architectLastRenderedPhase = null;
     architectLastLogCount = 0;
     updateArchitectFinalTimer(null);
@@ -588,12 +638,24 @@ function updateArchitectPhaseFxState(eventData) {
   const phase = Math.max(1, Math.min(3, Number(eventData.phase || 1)));
   const overload = Number(eventData.overload_pressure || 0);
 
+  // The result screen tags the boss image with result-image-reveal whose
+  // animation is !important and one-shot — if it lingers into a new lobby it
+  // freezes the image and kills the lobby glitch FX. Strip it outside results.
+  if (!isTerminal) {
+    const bossImg = document.getElementById('eventBossImage');
+    if (bossImg) bossImg.classList.remove('result-image-reveal');
+  }
+
+  const isWildAi = eventData.code === 'wildai_breach';
+
   overlay.classList.toggle('event-state-lobby', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-active', isActive);
   overlay.classList.toggle('event-state-registration', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-terminal', isTerminal);
   overlay.classList.toggle('event-state-finished', state === 'FINISHED');
   overlay.classList.toggle('event-state-failed', state === 'FAILED');
+  overlay.classList.toggle('event-wildai-lobby', isWildAi && state === 'REGISTRATION');
+  overlay.classList.toggle('event-wildai', isWildAi);
 
   if (isActive) {
     overlay.classList.add(`event-phase-${phase}`);
@@ -629,6 +691,26 @@ function setArchitectAmbientVisibility(isVisible) {
   document.querySelectorAll('.bg-kanji').forEach((node) => {
     node.style.display = isVisible ? '' : 'none';
   });
+}
+
+function playWildAiLoseSound(eventData) {
+  if (!eventData || eventData.code !== 'wildai_breach' || eventData.state !== 'FAILED') return;
+  const key = `${eventData.id}_${eventData.state}`;
+  if (wildAiLoseSoundPlayedFor === key) return;
+  try {
+    const audio = new Audio(WILD_AI_BREACH_LOSE_SOUND);
+    audio.volume = 0.9;
+    const maybePromise = audio.play();
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      maybePromise.then(() => {
+        wildAiLoseSoundPlayedFor = key;
+      }).catch(() => {
+        // playback blocked (e.g. autoplay policy) — retry on next render
+      });
+    } else {
+      wildAiLoseSoundPlayedFor = key;
+    }
+  } catch (e) {}
 }
 
 function applyArchitectMedia(eventData) {
@@ -670,6 +752,7 @@ function applyArchitectMedia(eventData) {
             bossVideo.removeEventListener('playing', onPlaying);
             bossVideo.style.display = 'block';
             if (bossImage) bossImage.style.display = 'none';
+            playWildAiLoseSound(eventData);
           });
         }, 450);
       } else {
@@ -679,6 +762,7 @@ function applyArchitectMedia(eventData) {
         if (maybePromise && typeof maybePromise.catch === 'function') {
           maybePromise.catch(() => {});
         }
+        playWildAiLoseSound(eventData);
       }
     } else {
       clearTimeout(architectVideoStartTimer);
@@ -699,7 +783,10 @@ function applyArchitectMedia(eventData) {
 
 async function loadCurrentArchitectEvent() {
   try {
-    const res = await fetch(`${API_URL}/api/events/current`);
+    const code = (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach')
+      ? 'wildai_breach'
+      : 'architect';
+    const res = await fetch(`${API_URL}/api/events/current?code=${encodeURIComponent(code)}`);
     const data = await res.json();
 
     currentArchitectEvent = data.event || null;
@@ -749,19 +836,67 @@ function scheduleArchitectResultReveal(lobbyCard, eventData) {
     img.classList.add('result-image-reveal');
   }
 
-  // Reveal banner after delay
+  // Reveal banner after delay; the WildAI defeat plays a ~10s loss video,
+  // so the banner waits for it to finish instead of cutting in mid-playback.
+  const isWildAiFail = eventData.code === 'wildai_breach' && eventData.state === 'FAILED';
+  const revealDelay = isWildAiFail ? WILD_AI_LOSE_REVEAL_DELAY : ARCHITECT_RESULT_REVEAL_DELAY;
   architectResultRevealTimer = setTimeout(() => {
     lobbyCard.classList.remove('result-banner-hidden');
     lobbyCard.classList.add('result-banner-reveal');
     sessionStorage.setItem(revealKey, '1');
     architectResultRevealTimer = null;
     architectResultRevealEventKey = null;
-  }, ARCHITECT_RESULT_REVEAL_DELAY);
+  }, revealDelay);
 }
 
 function renderArchitectLobby(eventData, errorText = '') {
   const lobbyCard = document.getElementById('eventLobbyCard');
   const overlay = document.getElementById('eventOverlay');
+  if (!lobbyCard) return;
+
+  // The standby screen below replaces lobbyCard.innerHTML and destroys the
+  // lobby elements (status, team list, buttons). Keep the original markup so
+  // it can be restored when a real event needs to render afterwards.
+  if (!window._eventLobbyMarkup && document.getElementById('eventStatusText')) {
+    window._eventLobbyMarkup = lobbyCard.innerHTML;
+  }
+
+  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+  if (eventData && (eventData.code === 'wildai_breach') !== hintIsWildAi) {
+    eventData = null;
+  }
+
+  if (!eventData) {
+    if (overlay) overlay.classList.remove('event-terminal');
+    lobbyCard.classList.remove('event-result-card', 'event-result-win', 'event-result-lose');
+    lobbyCard.style.display = 'block';
+
+    if (hintIsWildAi) {
+      lobbyCard.innerHTML = `
+        <div class="event-standby-screen">
+          <div class="event-standby-kicker">⚠ WILD AI BREACH // STANDBY</div>
+          <div class="event-standby-title">${errorText || 'BLACKWALL ОНЛАЙН'}</div>
+          <div class="event-standby-sub">Операция не активна. Вторжение Дикого ИИ пока не зафиксировано.</div>
+          ${isAdmin ? `<button class="event-standby-create-btn" onclick="createWildAiEvent()">⚠ WILD AI BREACH // ОПЕРАЦИЯ ВЫТЕСНЕНИЯ</button>` : ''}
+        </div>`;
+    } else {
+      lobbyCard.innerHTML = `
+        <div class="event-standby-screen">
+          <div class="event-standby-kicker">⬡ ARCHITECT PROTOCOL // STANDBY</div>
+          <div class="event-standby-title">${errorText || 'СИСТЕМА ГОТОВА'}</div>
+          <div class="event-standby-sub">Ивент не активен. Дождитесь запуска Архитектора.</div>
+          ${isAdmin ? `<button class="event-standby-create-btn" onclick="createArchitectEvent()">⚡ ИНИЦИИРОВАТЬ ПРОТОКОЛ</button>` : ''}
+        </div>`;
+    }
+    updateArchitectBattleVisibility(null);
+    return;
+  }
+
+  // Standby screen wiped the lobby markup earlier — restore it before rendering
+  if (!document.getElementById('eventStatusText') && window._eventLobbyMarkup) {
+    lobbyCard.innerHTML = window._eventLobbyMarkup;
+  }
+
   const statusEl = document.getElementById('eventStatusText');
   const rewardEl = document.getElementById('eventRewardText');
   const teamCountEl = document.getElementById('eventTeamCount');
@@ -770,25 +905,10 @@ function renderArchitectLobby(eventData, errorText = '') {
   const joinBtn = document.getElementById('eventJoinBtn');
   const leaveBtn = document.getElementById('eventLeaveBtn');
   const startBtn = document.getElementById('eventStartBtn');
-  const kickerEl = lobbyCard ? lobbyCard.querySelector('.event-lobby-kicker') : null;
-  const labelEls = lobbyCard ? lobbyCard.querySelectorAll('.event-lobby-label') : [];
+  const kickerEl = lobbyCard.querySelector('.event-lobby-kicker');
+  const labelEls = lobbyCard.querySelectorAll('.event-lobby-label');
 
-  if (!lobbyCard || !statusEl || !rewardEl || !teamCountEl || !teamListEl || !createBtn || !joinBtn || !leaveBtn || !startBtn) {
-    return;
-  }
-
-  if (!eventData) {
-    if (overlay) overlay.classList.remove('event-terminal');
-    lobbyCard.classList.remove('event-result-card', 'event-result-win', 'event-result-lose');
-    lobbyCard.style.display = 'block';
-    lobbyCard.innerHTML = `
-      <div class="event-standby-screen">
-        <div class="event-standby-kicker">⬡ ARCHITECT PROTOCOL // STANDBY</div>
-        <div class="event-standby-title">${errorText || 'СИСТЕМА ГОТОВА'}</div>
-        <div class="event-standby-sub">Ивент не активен. Дождитесь запуска Архитектора.</div>
-        ${isAdmin ? `<button class="event-standby-create-btn" onclick="createArchitectEvent()">⚡ ИНИЦИИРОВАТЬ ПРОТОКОЛ</button>` : ''}
-      </div>`;
-    updateArchitectBattleVisibility(null);
+  if (!statusEl || !rewardEl || !teamCountEl || !teamListEl || !createBtn || !joinBtn || !leaveBtn || !startBtn) {
     return;
   }
 
@@ -801,6 +921,16 @@ function renderArchitectLobby(eventData, errorText = '') {
 
   statusEl.textContent = stateMap[eventData.state] || eventData.state || '—';
   rewardEl.textContent = eventData.reward_text || 'Приз не указан';
+
+  if (eventData.code !== 'wildai_breach' && typeof unlockArchitectDiaryEntry === 'function') {
+    if (eventData.state === 'REGISTRATION') {
+      unlockArchitectDiaryEntry('architect_intro');
+    } else if (eventData.state === 'FINISHED') {
+      unlockArchitectDiaryEntry('architect_victory');
+    } else if (eventData.state === 'FAILED') {
+      unlockArchitectDiaryEntry('architect_defeat');
+    }
+  }
 
   const minPlayers = eventData.min_players || 0;
   const maxPlayers = eventData.max_players || 0;
@@ -831,10 +961,10 @@ function renderArchitectLobby(eventData, errorText = '') {
   const subtextEl = document.getElementById('eventResultSubtext');
   if (verdictEl && verdictRow) {
     if (isTerminal) {
-      if (eventData.state === 'FINISHED') {
-        verdictEl.textContent = isWildAi ? 'ДИКИЙ ИИ ВЫТЕСНЕН' : 'ПРОТОКОЛ ПРОБИТ';
+      if (isWildAi) {
+        verdictEl.textContent = eventData.state === 'FINISHED' ? 'ЦЕЛОСТНОСТЬ ВОССТАНОВЛЕНА' : 'СИСТЕМА ЗАРАЖЕНА';
       } else {
-        verdictEl.textContent = isWildAi ? 'ЗАСЛОН ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
+        verdictEl.textContent = eventData.state === 'FINISHED' ? 'ПРОТОКОЛ ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
       }
       verdictRow.style.display = 'block';
 
@@ -915,6 +1045,12 @@ function renderArchitectLobby(eventData, errorText = '') {
                    (teamCount >= minPlayers || adminSoloReady);
 
   createBtn.style.display = (isAdmin && isTerminal) ? 'inline-flex' : 'none';
+  if (isAdmin && isTerminal) {
+    // The inline onclick in index.html is hardcoded to createArchitectEvent();
+    // on a WildAI result screen it must create a WildAI event instead.
+    createBtn.onclick = isWildAi ? createWildAiEvent : createArchitectEvent;
+    createBtn.textContent = isWildAi ? 'Новая операция' : 'Создать';
+  }
   joinBtn.style.display = canJoin ? 'inline-flex' : 'none';
   leaveBtn.style.display = canLeave ? 'inline-flex' : 'none';
   startBtn.style.display = canStart ? 'inline-flex' : 'none';
@@ -1073,6 +1209,11 @@ function updateArchitectBattleVisibility(eventData) {
 
   if (!eventData) {
     applyArchitectMedia(null);
+    const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+    const kickerEl = document.getElementById('eventKicker');
+    const bossNameEl = document.getElementById('eventBossName');
+    if (kickerEl) kickerEl.textContent = hintIsWildAi ? 'WILD AI BREACH' : 'ARCHITECT PROTOCOL';
+    if (bossNameEl) bossNameEl.textContent = hintIsWildAi ? 'ДИКИЙ ИИ' : 'АРХИТЕКТОР';
     hpText.textContent = '-- / ----';
     hpFill.style.width = '0%';
     phaseText.textContent = 'NO SIGNAL';
@@ -1098,17 +1239,34 @@ function updateArchitectBattleVisibility(eventData) {
   const maxHp = eventData.max_hp || 1;
   const currentHp = Math.max(0, eventData.current_hp || 0);
   const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+  const isWildAi = eventData.code === 'wildai_breach';
 
   applyArchitectMedia(eventData);
 
+  const kickerEl = document.getElementById('eventKicker');
+  const bossNameEl = document.getElementById('eventBossName');
+  if (kickerEl) kickerEl.textContent = isWildAi ? 'WILD AI BREACH' : 'ARCHITECT PROTOCOL';
+  if (bossNameEl) bossNameEl.textContent = isWildAi ? (eventData.boss_name || 'ДИКИЙ ИИ') : 'АРХИТЕКТОР';
+
   hpText.textContent = `${currentHp} / ${maxHp}`;
   hpFill.style.width = `${hpPercent}%`;
-  phaseText.textContent = eventData.state === 'ACTIVE'
-    ? `PHASE ${eventData.phase || 1}`
-    : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
-  phaseLabel.textContent = eventData.state === 'ACTIVE'
-    ? `ФАЗА ${eventData.phase || 1}`
-    : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+  if (isWildAi) {
+    const roman = {1: 'I', 2: 'II', 3: 'III'};
+    const phase = eventData.phase || 1;
+    phaseText.textContent = eventData.state === 'ACTIVE'
+      ? `BREACH ${phase}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+    phaseLabel.textContent = eventData.state === 'ACTIVE'
+      ? `ВТОРЖЕНИЕ ${roman[phase] || phase}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+  } else {
+    phaseText.textContent = eventData.state === 'ACTIVE'
+      ? `PHASE ${eventData.phase || 1}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+    phaseLabel.textContent = eventData.state === 'ACTIVE'
+      ? `ФАЗА ${eventData.phase || 1}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+  }
 
      if (stateBadge) {
     const state = String(eventData.state || '').toUpperCase();
@@ -1122,14 +1280,20 @@ function updateArchitectBattleVisibility(eventData) {
 
   if (vulnerabilityBadge) {
     const vulnerable = !!eventData.vulnerability_active && eventData.state === 'ACTIVE';
-    vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
+    if (isWildAi) {
+      vulnerabilityBadge.textContent = vulnerable ? 'НОДА ВСКРЫТА' : 'СКРЫТА';
+    } else {
+      vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
+    }
     vulnerabilityBadge.className = 'event-status-badge';
     vulnerabilityBadge.classList.add(vulnerable ? 'gold' : 'hot');
   }
 
   if (overloadBadge) {
     const overload = Number(eventData.overload_pressure || 0);
-    overloadBadge.textContent = `OVR ${overload}`;
+    overloadBadge.textContent = isWildAi
+      ? `ЗАРАЖЕНИЕ ${overload}/${WILD_AI_BREACH_INFECTION_THRESHOLD}`
+      : `OVR ${overload}`;
   }
 
   const logs = Array.isArray(eventData.logs) ? eventData.logs : [];
@@ -1276,6 +1440,36 @@ async function _doCreateArchitectEvent(rewardText) {
 
     if (!res.ok) {
       showToast(data.detail || 'Не удалось создать ивент');
+      return;
+    }
+
+    currentArchitectEvent = data;
+    currentArchitectEventId = data.id;
+    renderArchitectLobby(data);
+
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function createWildAiEvent() {
+  if (!currentUserId || !isAdmin) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/wildai/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Id': String(currentUserId || 0)
+      },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.detail || 'Не удалось создать операцию');
       return;
     }
 
@@ -1606,9 +1800,19 @@ const EVENT_COMBAT_ITEM_CATALOG = {
   implant_netwatch:   { icon: '🔴', name: 'Сетевой Дозор', desc: 'Удачная Синхронизация продлевает окно уязвимости на +30с' },
 };
 
+const EVENT_COMBAT_BONUSES_ENABLED = true;
+
 async function loadEventActiveBonuses() {
   const box = document.getElementById('eventActiveBonuses');
   if (!box || !currentUserId) return;
+
+  if (!EVENT_COMBAT_BONUSES_ENABLED ||
+      (currentArchitectEvent && currentArchitectEvent.code === 'wildai_breach')) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
   try {
     const [implantsRes, cardsRes] = await Promise.all([
       fetch(`${API_URL}/api/casino/implants/${currentUserId}`),

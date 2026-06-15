@@ -1,11 +1,22 @@
 let architectEventPublicEnabled = !!window.ARCHITECT_EVENT_ENABLED;
+let wildAiEventPublicEnabled = !!window.WILDAI_EVENT_ENABLED;
+let eventLobbyTabHint = 'architect';
 
 function isArchitectEventPublicEnabled() {
   return !!architectEventPublicEnabled;
 }
 
+function isWildAiEventPublicEnabled() {
+  return !!wildAiEventPublicEnabled;
+}
+
 function canOpenArchitectEvent() {
   return isAdmin || isArchitect || isArchitectEventPublicEnabled();
+}
+
+function canOpenWildAiEvent() {
+  const wildAiBreach = typeof isWildAiBreachActive === 'function' && isWildAiBreachActive();
+  return isAdmin || isArchitect || isWildAiEventPublicEnabled() || wildAiBreach;
 }
 
 function syncArchitectEventAvailability(enabled) {
@@ -30,30 +41,62 @@ function syncArchitectEventAvailability(enabled) {
   }
 }
 
+function syncWildAiEventAvailability(enabled) {
+  if (typeof enabled === 'boolean') {
+    wildAiEventPublicEnabled = enabled;
+    window.WILDAI_EVENT_ENABLED = enabled;
+  }
+
+  const visible = canOpenWildAiEvent();
+  const wildAiCard = document.getElementById('homeWildAiEventCard');
+  if (wildAiCard) {
+    wildAiCard.style.display = visible ? 'block' : 'none';
+    wildAiCard.classList.toggle('event-disabled-admin-view', !isWildAiEventPublicEnabled() && (isAdmin || isArchitect));
+  }
+
+  const status = document.getElementById('adminWildAiEventStatus');
+  if (status) {
+    status.textContent = isWildAiEventPublicEnabled()
+      ? 'STATUS // PUBLIC ACCESS ENABLED'
+      : 'STATUS // HIDDEN FROM STUDENTS';
+    status.classList.toggle('enabled', isWildAiEventPublicEnabled());
+  }
+}
+
 async function loadArchitectEventAvailability() {
   try {
     const r = await fetch(`${API_URL}/api/settings`);
     if (!r.ok) throw new Error('settings');
     const settings = await r.json();
     syncArchitectEventAvailability(!!settings.architect_event);
+    syncWildAiEventAvailability(!!settings.wildai_event);
+    if (typeof applyWildAiBreachState === 'function') applyWildAiBreachState(settings);
   } catch (e) {
     syncArchitectEventAvailability(!!window.ARCHITECT_EVENT_ENABLED);
+    syncWildAiEventAvailability(!!window.WILDAI_EVENT_ENABLED);
   }
 }
 
-function openEventOverlay() {
+function openEventOverlay(tabHint) {
   if (typeof isLaunchGateActive === 'function' && isLaunchGateActive()) {
     showLaunchGateOverlay();
     return;
   }
 
-  if (!canOpenArchitectEvent()) {
-    showToast('Architect Protocol пока закрыт.');
+  const wantWildAi = (tabHint === 'wildai_breach');
+  if (wantWildAi ? !canOpenWildAiEvent() : !canOpenArchitectEvent()) {
+    showToast(wantWildAi ? 'WILD AI BREACH пока закрыт.' : 'Architect Protocol пока закрыт.');
     return;
   }
 
   const overlay = document.getElementById('eventOverlay');
   if (!overlay) return;
+
+  eventLobbyTabHint = (tabHint === 'wildai_breach') ? 'wildai_breach' : 'architect';
+
+  if (typeof closeCreateEventModal === 'function') {
+    closeCreateEventModal();
+  }
 
   overlay.style.display = 'block';
 
@@ -68,8 +111,11 @@ function openEventOverlay() {
     architectMusicUnlocked = true;
   }
   // Start lobby music synchronously in gesture context — iOS blocks autoplay on async calls
-  if (typeof switchArchitectMusic === 'function' && typeof ARCHITECT_LOBBY_MUSIC !== 'undefined') {
-    switchArchitectMusic(ARCHITECT_LOBBY_MUSIC);
+  const lobbyMusic = (eventLobbyTabHint === 'wildai_breach' && typeof WILD_AI_BREACH_LOBBY_MUSIC !== 'undefined')
+    ? WILD_AI_BREACH_LOBBY_MUSIC
+    : (typeof ARCHITECT_LOBBY_MUSIC !== 'undefined' ? ARCHITECT_LOBBY_MUSIC : '');
+  if (typeof switchArchitectMusic === 'function' && lobbyMusic) {
+    switchArchitectMusic(lobbyMusic);
   }
   openArchitectEventEntryBanner();
 

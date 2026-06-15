@@ -15,7 +15,8 @@ function syncDiaryAccessVisibility() {
   }
 
   const archiveItem = document.getElementById('diaryArchiveItem');
-  if (archiveItem) archiveItem.style.display = isAdmin ? '' : 'none';
+  // Tab hidden for everyone (incl. admins) per 2026-06-15 request; system kept intact, toggle here to restore.
+  if (archiveItem) archiveItem.style.display = 'none';
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? '' : 'none';
@@ -257,7 +258,12 @@ async function loadDiaryOverview(dateOverride) {
     const r = await fetch(`${API_URL}/api/diary/admin/overview?entry_date=${date}`, {
       headers: diaryHeaders()
     });
-    if (!r.ok) { list.innerHTML = '<div class="diary-day-chip-empty">Ошибка загрузки.</div>'; return; }
+    if (!r.ok) {
+      let detail = '';
+      try { const d = await r.json(); if (d.detail) detail = `: ${d.detail}`; } catch(e) {}
+      list.innerHTML = `<div class="diary-day-chip-empty">Ошибка загрузки (${r.status}${detail})</div>`;
+      return;
+    }
     const data = await r.json();
     const entries = data.entries || [];
     if (!entries.length) {

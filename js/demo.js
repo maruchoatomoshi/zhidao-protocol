@@ -33,7 +33,7 @@
 
   function applyDemoTheme() {
     try {
-      if (demoVisualTheme && typeof setTheme === 'function') setTheme(demoVisualTheme);
+      if (demoVisualTheme && typeof setTheme === 'function') setTheme(demoVisualTheme, false);
       if (typeof applyThemePath === 'function') applyThemePath(demoThemePath);
     } catch (e) {}
   }
@@ -305,7 +305,7 @@
       <div class="achievements-grid">${items.map(([code, name, desc, earned]) => {
         const svgIcon = ACHIEVEMENT_ICONS[code] || `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="20" fill="rgba(212,175,55,0.3)"/></svg>`;
         return `<div class="achievement-card ${earned ? '' : 'locked'}" onclick="showAchievementInfo(${JSON.stringify(name)},${JSON.stringify(desc)},${earned})">
-          ${earned ? '<div class="achievement-earned-badge">DEMO</div>' : ''}
+          ${earned ? '<div class="achievement-earned-badge is-demo-label">DEMO</div>' : ''}
           <div class="achievement-svg">${svgIcon}</div>
           <div class="achievement-name">${escapeHtml(name)}</div>
         </div>`;

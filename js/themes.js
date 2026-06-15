@@ -7,9 +7,17 @@ function applyThemePath(path) {
 
   if (path === 'cyberpunk') {
     nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
-    if (!isAdmin) gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-    const t = localStorage.getItem('zhidao_theme') || '';
-    if (t.startsWith('genshin')) setTheme('');
+    if (!isAdmin) {
+      gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    } else {
+      // Admins always see both path catalogs regardless of current path
+      gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
+    }
+    // Admins may use any theme regardless of path — don't force their theme back.
+    if (!isAdmin) {
+      const t = localStorage.getItem('zhidao_theme') || '';
+      if (t.startsWith('genshin')) setTheme('', false);
+    }
     // Показываем импланты, скрываем карточки
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'none';
@@ -22,8 +30,11 @@ function applyThemePath(path) {
   } else if (path === 'genshin') {
     if (!isAdmin) nwCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     gsCards.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
-    const t = localStorage.getItem('zhidao_theme') || '';
-    if (!t.startsWith('genshin')) setTheme('genshin-light');
+    // Admins may use any theme regardless of path — don't force their theme.
+    if (!isAdmin) {
+      const t = localStorage.getItem('zhidao_theme') || '';
+      if (!t.startsWith('genshin')) setTheme('genshin-light', false);
+    }
     // Показываем карточки, скрываем импланты
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'block';
@@ -93,7 +104,7 @@ function syncAdminThemeMode(theme) {
   }
 }
 
-function setTheme(theme) {
+function setTheme(theme, isUserAction = true) {
   // Убираем все классы тем
   THEMES.forEach(t => {
     if (t) document.body.classList.remove('theme-' + t);
@@ -115,13 +126,17 @@ function setTheme(theme) {
   });
 
   // Обновляем логотип под тему
-  const logoImg = document.querySelector('.main-logo img');
+  const logoBg = document.querySelector('.main-logo .no-leak-bg');
   const isG = theme === 'genshin-light' || theme === 'genshin-dark';
+  const isA = theme === 'architect';
   document.body.classList.toggle('theme-genshin', isG);
-  if (logoImg) {
-    logoImg.src = isG
+  if (logoBg) {
+    const logoUrl = isG
       ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo_genshintheme_nobackground.png'
-      : 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/logo.png?raw=true';
+      : isA
+        ? 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_logo.png'
+        : 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png';
+    logoBg.style.backgroundImage = `url('${logoUrl}')`;
   }
   // Переименовываем разделы под тему
   const el = (id) => document.getElementById(id);
@@ -130,25 +145,29 @@ function setTheme(theme) {
   if (el('nav-implants-label'))  el('nav-implants-label').textContent = isG ? '卡片' : '植入物';
   if (el('nav-implants-icon'))   el('nav-implants-icon').className  = isG ? 'ti ti-cards' : 'ti ti-cpu';
   if (el('casino-page-cn'))      el('casino-page-cn').textContent   = isG ? '祈愿' : '箱子';
-  if (el('casino-page-title'))   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
+  if (el('casino-page-title') && el('casino-page-title').firstChild)   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
   if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';
-  if (el('implants-page-title')) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
+  if (el('implants-page-title') && el('implants-page-title').firstChild) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
   if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
   syncAdminThemeMode(theme);
   if (typeof buildMatrixRain === 'function') buildMatrixRain();
   try { try{tg.HapticFeedback.impactOccurred('light');}catch(e){} } catch(e) {}
+
+  if (isUserAction && typeof markThemeIntroPending === 'function') {
+    markThemeIntroPending(theme);
+  }
 }
 
 function loadSavedTheme() {
   try {
     if(window.Telegram?.WebApp?.CloudStorage) {
       tg.CloudStorage.getItem('zhidao_theme', (err, val) => {
-        setTheme(val || localStorage.getItem('zhidao_theme') || '');
+        setTheme(val || localStorage.getItem('zhidao_theme') || '', false);
       });
     } else {
-      setTheme(localStorage.getItem('zhidao_theme') || '');
+      setTheme(localStorage.getItem('zhidao_theme') || '', false);
     }
-  } catch(e) { setTheme(''); }
+  } catch(e) { setTheme('', false); }
 }
 
 function toggleLiteMode() {

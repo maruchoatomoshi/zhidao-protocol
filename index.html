@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>ZHIDAO Protocol v2.9.0</title>
-<!-- ZHIDAO Protocol // version 2.9.0 // build 2026-06-06 -->
+<title>ZHIDAO Protocol v3.0.0</title>
+<!-- ZHIDAO Protocol // version 3.0.0 // build 2026-06-08 -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 (function() {
@@ -20,7 +20,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260611wildai5">
+<link rel="stylesheet" href="./css/styles.css?v=20260615hudbonuses1">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -43,10 +43,10 @@
 </script>
 
 <!-- Эксклюзивные видео-заставки админов -->
-<div id="adminIntroOverlay" class="admin-intro-overlay" style="display:none;" onclick="skipAdminIntro()">
+<div id="adminIntroOverlay" class="admin-intro-overlay" style="display:none;" onclick="skipAdminIntro(); skipThemeIntro();">
   <video id="adminIntroVideo" class="admin-intro-video" muted playsinline preload="auto"></video>
   <div class="admin-intro-vignette"></div>
-  <button class="admin-intro-skip" onclick="event.stopPropagation(); skipAdminIntro();">ПРОПУСТИТЬ</button>
+  <button class="admin-intro-skip" onclick="event.stopPropagation(); skipAdminIntro(); skipThemeIntro();">ПРОПУСТИТЬ</button>
   <div class="admin-intro-caption" id="adminIntroCaption">ADMIN ACCESS</div>
 </div>
 
@@ -85,7 +85,7 @@
   <div class="main-logo-wrap">
     <div class="main-logo"><div class="no-leak-bg" style="width:140px;height:140px;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png');background-size:contain;background-position:center;background-repeat:no-repeat;" oncontextmenu="return false"></div></div>
     <div class="main-pinyin">智能电子解决方案</div>
-    <div class="proto-tag">🏮 PROTOCOL v2.9.0 // ACTIVE 🏮</div>
+    <div class="proto-tag">🏮 PROTOCOL v3.0.0 // ACTIVE 🏮</div>
   </div>
 
   <div class="stats-row">
@@ -111,7 +111,7 @@
     <div class="profile-card-spark spark-br"></div>
     <div class="profile-card-main">
       <div class="profile-identity-row">
-        <div class="profile-avatar-wrap">
+        <div class="profile-avatar-wrap" id="profileAvatarWrap">
           <img id="profileAvatarPreview" class="profile-avatar-img" alt="avatar" style="display:none;">
           <div id="profileAvatarFallback" class="profile-avatar-fallback">?</div>
           <div class="profile-admin-badge">架构师</div>
@@ -132,16 +132,18 @@
       <div class="profile-showcase" id="profileShowcase">
         <div class="profile-showcase-icon">?</div>
         <div class="profile-showcase-copy">
-          <span>TITLE</span>
+          <span>ТИТУЛ</span>
           <strong id="profileTitleBadge">协议执行者 / Исполнитель</strong>
           <em id="profileShowcaseText">SHOWCASE: AUTO</em>
         </div>
       </div>
       <div class="profile-card-actions">
         <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
-        <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">AVATAR</button>
-        <button class="profile-mini-btn" onclick="openProfileShowcaseModal()">SHOWCASE</button>
-        <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">RESET</button>
+        <button class="profile-mini-btn" onclick="document.getElementById('profileAvatarInput').click()">АВАТАР</button>
+        <button class="profile-mini-btn" onclick="openProfileShowcaseModal()">ВИТРИНА</button>
+        <button class="profile-mini-btn" onclick="openProfileFrameModal()">РАМКИ</button>
+        <button class="profile-mini-btn ghost" onclick="removeProfileAvatar()">СБРОС</button>
+        <button class="profile-mini-btn" onclick="openInstructionModal()">📖 ИНСТРУКЦИЯ</button>
       </div>
     </div>
   </div>
@@ -156,6 +158,21 @@
         <button class="profile-showcase-close" onclick="closeProfileShowcaseModal()">&#10005;</button>
       </div>
       <div class="profile-showcase-options" id="profileShowcaseOptions">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-showcase-modal" id="profileFrameModal" style="display:none;">
+    <div class="profile-showcase-panel">
+      <div class="profile-showcase-panel-head">
+        <div>
+          <div class="profile-card-kicker">FRAME SELECT</div>
+          <div class="profile-showcase-panel-title">&#36873;&#25321;&#26694; // Рамки аватара</div>
+        </div>
+        <button class="profile-showcase-close" onclick="closeProfileFrameModal()">&#10005;</button>
+      </div>
+      <div class="profile-showcase-options" id="profileFrameOptions">
         <div class="empty-state">Loading...</div>
       </div>
     </div>
@@ -195,11 +212,7 @@
     </div>
   </div>
 
-<div style="padding:8px 12px 4px;">
-  <button class="btn btn-primary" onclick="contactAdmin()">[ 联系管理员 // НАПИСАТЬ АДМИНИСТРАТОРУ ]</button>
-</div>
-
-<div class="home-event-card" id="homeArchitectEventCard" onclick="openEventOverlay()" style="
+<div class="home-event-card" id="homeArchitectEventCard" onclick="openEventOverlay('architect')" style="
   margin:8px 12px 12px;
   padding:14px 16px;
   border-radius:16px;
@@ -218,6 +231,28 @@
   </div>
   <div class="home-event-card-copy" style="margin-top:4px;font-size:12px;color:#bbb;line-height:1.5;">
     Полноэкранный командный бой против босса
+  </div>
+</div>
+
+<div class="home-event-card" id="homeWildAiEventCard" onclick="openEventOverlay('wildai_breach')" style="
+  margin:8px 12px 12px;
+  padding:14px 16px;
+  border-radius:16px;
+  border:1px solid rgba(255,40,40,0.28);
+  background:
+    linear-gradient(135deg, rgba(40,0,0,0.32), rgba(255,255,255,0.02)),
+    rgba(255,255,255,0.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+  cursor:pointer;
+">
+  <div class="home-event-card-kicker" style="font-size:10px;letter-spacing:1.8px;color:rgba(255,80,80,0.86);font-family:monospace;">
+    ⚠ ALERT
+  </div>
+  <div class="home-event-card-title" style="margin-top:4px;font-size:20px;font-weight:800;color:#fff;">
+    WILD AI BREACH
+  </div>
+  <div class="home-event-card-copy" style="margin-top:4px;font-size:12px;color:#bbb;line-height:1.5;">
+    Операция вытеснения дикого ИИ из системы
   </div>
 </div>
 
@@ -307,8 +342,8 @@
   </div>
   <div class="shop-header-bar">
     <div class="shop-balance">信用: <span id="shopPoints">—</span></div>
-    <button class="btn btn-sm" style="background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-family:monospace;font-size:8px;cursor:pointer;" onclick="resetShop()" id="shopResetBtn" style="display:none;">СБРОС</button>
   </div>
+  <div class="shop-reset-timer">商品 товары обновятся через <span data-shop-reset-countdown>—</span></div>
   <div class="frozen-banner" id="shopFrozenBanner">⛔ NetWatch 网络保安 — аккаунт заморожен</div>
   <div class="shop-subtabs">
     <button class="subtab active" onclick="switchShopTab('store',this)">商店 МАГАЗИН</button>
@@ -352,10 +387,6 @@
         <div class="casino-attempts-kicker">尝试 // ПОПЫТКИ</div>
         <div class="casino-attempts-pips" id="casinoAttemptsPips">— / —</div>
       </div>
-      <div style="text-align:right;">
-        <div style="font-size:8px;color:var(--text3);font-family:monospace;">费用 // СТОИМОСТЬ</div>
-        <div style="font-size:18px;font-weight:800;color:#cc3333;font-family:monospace;">50 ★</div>
-      </div>
     </div>
 
     <div class="cases-grid">
@@ -376,8 +407,6 @@
       </div>
     </div>
 
-    <div style="font-size:8px;color:var(--text3);font-family:monospace;text-align:center;margin:0 12px 6px;">⚠️ Минимум 80 ★ • Лимит 3 кейса в день</div>
-
     <div class="roulette-wrapper">
       <div class="roulette-pointer"></div>
       <div class="roulette-pointer-bottom"></div>
@@ -395,7 +424,7 @@
     </div>
 
     <div style="padding:0 12px 6px;display:flex;flex-direction:column;gap:6px;">
-      <button class="btn btn-primary" id="openCaseBtn" onclick="openCase()">🏮 [ 开箱 // КЕЙС — 50 ★ · ПОРОГ 80 ★ ] 🏮</button>
+      <button class="btn btn-primary" id="openCaseBtn" onclick="openCase()">🏮 [ 开箱 // ОТКРЫТЬ КЕЙС ] 🏮</button>
     </div>
   </div>
 
@@ -464,7 +493,7 @@
       </div>
       <div style="margin:10px 12px;padding:12px;background:rgba(180,20,20,0.06);border:1px solid rgba(180,20,20,0.2);border-radius:8px;">
         <div style="font-size:9px;color:rgba(200,50,50,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">ℹ️ КАК ЭТО РАБОТАЕТ</div>
-        <div style="font-size:11px;color:#888;line-height:1.7;">Кейсы — игровая механика, основанная на активности, а не на трате баллов. Каждое сканирование гарантирует 1 фрагмент протокола. Призы случайны, но участие бесплатное 🎲</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.7;">Кейсы — игровая механика, основанная на активности, а не на трате баллов. Каждое сканирование гарантирует 1 фрагмент протокола. Призы случайны, но участие бесплатное 🎲</div>
       </div>
     </div>
   </div>  <!-- /casinoRulesContent -->
@@ -523,16 +552,18 @@
       <div class="rules-row">
         <div class="rules-icon">💰</div>
         <div>
-          <div class="rules-title">Стоимость и лимиты</div>
+          <div class="rules-title">Попытки сканирования</div>
           <div class="rules-desc">
-            50★ за молитву · Лимит 3 молитвы в день<br>
-            Дополнительную молитву можно купить в магазине
+            Попытки бесплатны — зарабатываются активностью<br>
+            +1 за утреннюю перекличку · +1 за вечернюю<br>
+            +1 за оценку дневника 3★ · Лимит 7 попыток<br>
+            Дополнительную попытку можно купить в магазине
           </div>
         </div>
       </div>
       <div style="margin:10px 12px;padding:12px;background:rgba(219,177,101,0.08);border:1px solid rgba(219,177,101,0.25);border-radius:8px;">
         <div style="font-size:9px;color:rgba(219,177,101,0.7);font-family:Georgia,serif;letter-spacing:1px;margin-bottom:6px;">✦ ПРИМЕЧАНИЕ</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Молитвы — игровая механика для мотивации. Карточки дают пассивные бонусы на протяжении поездки. Молитва стоит 50★ и не гарантирует прибыль. Молись ради удачи, а не выгоды ✦</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Молитвы — игровая механика для мотивации. Карточки дают пассивные бонусы на протяжении поездки. Попытки зарабатываются активностью, не тратятся баллы. Молись ради удачи ✦</div>
       </div>
     </div>
   </div>
@@ -581,7 +612,7 @@
     <div class="page-sub">> gèng duō // все функции</div>
   </div>
   <div class="more-grid">
-    <div class="more-item" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
+    <div class="more-item" data-feature="diary-stars" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
       <i class="ti ti-star more-item-icon" style="color:var(--gold);"></i>
       <div class="more-item-name">ДНЕВНИК ★</div>
       <div class="more-item-cn">日记评分 rì jì píng fēn</div>
@@ -601,12 +632,17 @@
       <div class="more-item-name">ПОГОДА</div>
       <div class="more-item-cn">天气 tiān qì</div>
     </div>
-    <div class="more-item" onclick="openMore('laundry')">
+    <div class="more-item" onclick="openMore('map')">
+      <i class="ti ti-map-2 more-item-icon" style="color:#00d4ff;"></i>
+      <div class="more-item-name">КАРТА</div>
+      <div class="more-item-cn">校园地图 xiào yuán dì tú</div>
+    </div>
+    <div class="more-item" data-feature="laundry" onclick="openMore('laundry')">
       <i class="ti ti-wash more-item-icon" style="color:#60b4d4;"></i>
       <div class="more-item-name">СТИРКА</div>
       <div class="more-item-cn">洗衣 xǐ yī</div>
     </div>
-    <div class="more-item" onclick="openMore('achievements')">
+    <div class="more-item" data-feature="achievements" onclick="openMore('achievements')">
       <i class="ti ti-medal more-item-icon" style="color:var(--gold);"></i>
       <div class="more-item-name">АЧИВКИ</div>
       <div class="more-item-cn">成就 chéng jiù</div>
@@ -616,6 +652,11 @@
       <div class="more-item-name">КОМАНДА</div>
       <div class="more-item-cn">团队 tuán duì</div>
     </div>
+    <div class="more-item" onclick="openMore('architect-diary')">
+      <i class="ti ti-notebook more-item-icon" style="color:#00ff66;"></i>
+      <div class="more-item-name">ДНЕВНИК АРХИТЕКТОРА</div>
+      <div class="more-item-cn">架构师日志 jià gòu shī rì zhì</div>
+    </div>
     <div class="more-item admin-only-item" id="adminMoreBtn" onclick="openMore('admin')">
       <i class="ti ti-shield-lock more-item-icon" style="color:rgba(200,80,80,0.9);"></i>
       <div class="more-item-name">АДМИН</div>
@@ -624,6 +665,11 @@
   </div>
 
   <!-- Субстраницы More -->
+  <div id="more-map" style="display:none;">
+    <div class="cn-divider">🗺 校园地图 КАРТА КАМПУСА</div>
+    <div id="campusMapRoot" class="campus-map-root"></div>
+  </div>
+
   <div id="more-themes" style="display:none;">
     <div class="cn-divider">🎨 主题 ТЕМЫ ИНТЕРФЕЙСА</div>
     <div style="padding:0 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -696,20 +742,20 @@
         <div id="check-admin-light" style="position:absolute;top:8px;right:8px;color:#4456e0;font-size:14px;display:none;">✓</div>
       </div>
 
-      <div onclick="setTheme('architect')" id="theme-btn-architect" class="theme-card architect-theme-card" style="display:none;background:#05050a;border:2px solid rgba(232,34,0,0.55);border-radius:14px;padding:14px 14px 12px;cursor:pointer;position:relative;grid-column:1/-1;overflow:hidden;">
-        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(232,34,0,0.08) 0%,transparent 50%,rgba(255,204,0,0.05) 100%);pointer-events:none;"></div>
-        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,204,0,0.6),rgba(232,34,0,0.9),rgba(255,204,0,0.6),transparent);"></div>
-        <div style="font-size:10px;color:#e82200;font-family:monospace;letter-spacing:3px;margin-bottom:2px;font-weight:700;text-shadow:0 0 12px rgba(232,34,0,0.7);">ARCHITECT PROTOCOL</div>
-        <div style="font-size:8px;color:rgba(255,204,0,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">架构师 // jiàgòu shī</div>
+      <div onclick="setTheme('architect')" id="theme-btn-architect" class="theme-card architect-theme-card" style="display:none;background:#020a05;border:2px solid rgba(0,255,136,0.55);border-radius:14px;padding:14px 14px 12px;cursor:pointer;position:relative;grid-column:1/-1;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,255,136,0.08) 0%,transparent 50%,rgba(0,229,255,0.05) 100%);pointer-events:none;"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,0.6),rgba(0,255,136,0.9),rgba(0,229,255,0.6),transparent);"></div>
+        <div style="font-size:10px;color:#00ff88;font-family:monospace;letter-spacing:3px;margin-bottom:2px;font-weight:700;text-shadow:0 0 12px rgba(0,255,136,0.7);">ARCHITECT PROTOCOL</div>
+        <div style="font-size:8px;color:rgba(0,229,255,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">架构师 // jiàgòu shī</div>
         <div style="display:flex;gap:5px;margin-bottom:8px;align-items:center;">
-          <div style="width:20px;height:20px;background:#e82200;border-radius:4px;box-shadow:0 0 8px rgba(232,34,0,0.6);"></div>
-          <div style="width:20px;height:20px;background:#ffcc00;border-radius:4px;box-shadow:0 0 8px rgba(255,204,0,0.5);"></div>
-          <div style="width:20px;height:20px;background:#9d4edd;border-radius:4px;box-shadow:0 0 8px rgba(157,78,221,0.5);"></div>
-          <div style="width:20px;height:20px;background:#05050a;border:1px solid rgba(232,34,0,0.5);border-radius:4px;"></div>
-          <div style="margin-left:6px;font-size:8px;color:rgba(255,100,0,0.5);font-family:monospace;">TIER — ARCHITECT</div>
+          <div style="width:20px;height:20px;background:#00ff88;border-radius:4px;box-shadow:0 0 8px rgba(0,255,136,0.6);"></div>
+          <div style="width:20px;height:20px;background:#00e5ff;border-radius:4px;box-shadow:0 0 8px rgba(0,229,255,0.5);"></div>
+          <div style="width:20px;height:20px;background:#39ff14;border-radius:4px;box-shadow:0 0 8px rgba(57,255,20,0.5);"></div>
+          <div style="width:20px;height:20px;background:#020a05;border:1px solid rgba(0,255,136,0.5);border-radius:4px;"></div>
+          <div style="margin-left:6px;font-size:8px;color:rgba(0,255,136,0.5);font-family:monospace;">TIER — ARCHITECT</div>
         </div>
-        <div style="font-size:7px;color:rgba(232,34,0,0.45);font-family:monospace;letter-spacing:1.5px;">EXCLUSIVE · ACCESS LEVEL OMEGA</div>
-        <div id="check-architect" style="position:absolute;top:10px;right:12px;color:#e82200;font-size:14px;display:none;text-shadow:0 0 8px rgba(232,34,0,0.8);">✓</div>
+        <div style="font-size:7px;color:rgba(0,255,136,0.45);font-family:monospace;letter-spacing:1.5px;">EXCLUSIVE · ACCESS LEVEL OMEGA</div>
+        <div id="check-architect" style="position:absolute;top:10px;right:12px;color:#00ff88;font-size:14px;display:none;text-shadow:0 0 8px rgba(0,255,136,0.8);">✓</div>
       </div>
 
     </div>
@@ -832,6 +878,11 @@
     </div></div>
   </div>
 
+  <div id="more-architect-diary" style="display:none;">
+    <div class="cn-divider">📓 架构师日志 ДНЕВНИК АРХИТЕКТОРА</div>
+    <div id="architectDiaryContainer" style="padding:0 12px 4px;"></div>
+  </div>
+
   <div id="more-admin" style="display:none;">
     <div class="admin-panel-header">
       <div>
@@ -849,6 +900,7 @@
       <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.5"/><circle cx="12" cy="13" r="1.6"/><line x1="8" y1="6" x2="8" y2="6"/><line x1="11" y1="6" x2="11" y2="6"/></svg></span><span class="admin-nav-label">Стирка</span></button>
       <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg></span><span class="admin-nav-label">BlackWall</span></button>
       <button class="admin-sec-btn" onclick="showAdminSection('contracts',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="3.5" width="13" height="17" rx="2"/><path d="M9 3.5h6v3H9z"/><line x1="8.5" y1="11" x2="15.5" y2="11"/><line x1="8.5" y1="14.5" x2="15.5" y2="14.5"/><line x1="8.5" y1="18" x2="12.5" y2="18"/></svg></span><span class="admin-nav-label">Контракты</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('report',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg></span><span class="admin-nav-label">Отчёт</span></button>
       <button class="admin-sec-btn" onclick="triggerGlobalArchitectAlert()"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg></span><span class="admin-nav-label">Architect</span></button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
@@ -1065,6 +1117,32 @@
         <button class="admin-bw-btn bw-on" onclick="setArchitectEventEnabled(true)">⚡ ОТКРЫТЬ ИВЕНТ</button>
         <button class="admin-bw-btn bw-off" onclick="setArchitectEventEnabled(false)">⛔ СКРЫТЬ ИВЕНТ</button>
       </div>
+      <div class="admin-blackwall-card admin-architect-event-card">
+        <div class="admin-blackwall-glyph">野</div>
+        <div class="admin-blackwall-info">
+          <div class="admin-console-kicker">WILD AI EVENT // 野生AI</div>
+          <div class="admin-blackwall-title">Доступ к ивенту</div>
+          <div class="admin-blackwall-desc">Показывает или скрывает карточку WILD AI BREACH для детей.</div>
+          <div class="admin-architect-event-status" id="adminWildAiEventStatus">STATUS // CHECKING</div>
+        </div>
+      </div>
+      <div class="admin-blackwall-btns">
+        <button class="admin-bw-btn bw-on" onclick="setWildAiEventEnabled(true)">⚡ ОТКРЫТЬ ИВЕНТ</button>
+        <button class="admin-bw-btn bw-off" onclick="setWildAiEventEnabled(false)">⛔ СКРЫТЬ ИВЕНТ</button>
+      </div>
+      <div class="admin-blackwall-card admin-architect-event-card">
+        <div class="admin-blackwall-glyph">乱</div>
+        <div class="admin-blackwall-info">
+          <div class="admin-console-kicker">WILD AI BREACH // 野生AI入侵</div>
+          <div class="admin-blackwall-title">Прорыв диких ИИ</div>
+          <div class="admin-blackwall-desc">Глобальный режим хаоса на 3 дня: баннер, глитчи, перемешанный интерфейс. Включает BlackWall lockdown.</div>
+          <div class="admin-architect-event-status" id="adminWildAiBreachStatus">STATUS // CHECKING</div>
+        </div>
+      </div>
+      <div class="admin-blackwall-btns">
+        <button class="admin-bw-btn bw-on" onclick="setWildAiBreach(true)">⚠ АКТИВИРОВАТЬ</button>
+        <button class="admin-bw-btn bw-off" onclick="setWildAiBreach(false)">✅ СНЯТЬ</button>
+      </div>
 
       <div class="admin-danger-zone">
         <div class="admin-danger-label">⚠ DANGER ZONE</div>
@@ -1096,6 +1174,22 @@
       </div>
     </div>
 
+    <div id="admin-report" class="admin-section" style="display:none;padding:0 12px;">
+      <div class="admin-console-card">
+        <div class="admin-console-kicker">ЭКОНОМИЧЕСКИЙ ЖУРНАЛ</div>
+        <div class="admin-console-title">Отчёт по игрокам</div>
+        <div class="admin-filter-wrap">
+          <button class="admin-filter-btn active" onclick="adminLoadEconomyReport(7, this)">7 дней</button>
+          <button class="admin-filter-btn" onclick="adminLoadEconomyReport(30, this)">30 дней</button>
+          <button class="admin-filter-btn" onclick="adminLoadEconomyReport(0, this)">Всё время</button>
+        </div>
+        <input class="admin-input" id="adminReportSearch" placeholder="Поиск по имени или ID" oninput="adminFilterEconomyReport()" style="margin-bottom:8px;">
+        <div id="adminReportContent">
+          <div class="empty-state">Загрузка...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1123,11 +1217,11 @@
   </div>
 
   <!-- Обмен фрагментов протокола -->
-  <div class="cn-divider">🔬 协议碎片 ОБМЕН ФРАГМЕНТОВ</div>
+  <div class="cn-divider"><i class="ti ti-recycle"></i> 协议碎片 ОБМЕН ФРАГМЕНТОВ</div>
   <div class="card" style="margin:4px 12px;" id="fragment-exchange-implant-block">
     <div class="card-inner">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <span style="font-size:28px;">🧬</span>
+        <i class="ti ti-recycle" style="font-size:28px;color:var(--red);"></i>
         <div>
           <div style="font-size:13px;font-weight:700;color:var(--text);">Обмен фрагментов</div>
           <div style="font-size:11px;color:var(--text3);font-family:monospace;">10 фрагментов → случайный имплант</div>
@@ -1137,8 +1231,8 @@
           <div style="font-size:18px;font-weight:700;color:var(--gold);" id="implant-frag-count">—</div>
         </div>
       </div>
-      <button class="btn" id="fragment-exchange-implant-btn" onclick="exchangeFragments('implant')" style="width:100%;font-family:monospace;font-size:11px;letter-spacing:1px;">
-        🔬 ОБМЕНЯТЬ 10 ФРАГМЕНТОВ
+      <button class="btn btn-primary" id="fragment-exchange-implant-btn" onclick="exchangeFragments('implant')" style="width:100%;font-family:monospace;font-size:11px;letter-spacing:1px;">
+        <i class="ti ti-recycle"></i> ОБМЕНЯТЬ 10 ФРАГМЕНТОВ
       </button>
     </div>
   </div>
@@ -1156,12 +1250,12 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">关系 ГУАНЬСИ</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">关系 ГУАНЬСИ</div>
         <div style="font-size:12px;color:rgba(212,175,55,0.7);font-family:serif;font-style:italic;margin-top:3px;">guān xi — связи, отношения</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:#ccc;line-height:1.8;">Имплант разработан корпорацией Zhidao для агентов-переговорщиков. Встроенный нейрочип анализирует поведение продавца и автоматически находит оптимальную точку давления на цену. В народе называют «Гуаньси» — потому что с ним у тебя есть связи везде.</div>
+        <div style="font-size:12px;color:#ccc;line-height:1.8;">Имплант разработан корпорацией Zhidao для агентов-переговорщиков. Встроенный нейрочип анализирует поведение продавца и автоматически находит оптимальную точку давления на цену. В народе называют «Гуаньси» — потому что с ним у тебя есть связи везде</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1186,12 +1280,12 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:#fff;">兵马俑 ТЕРРАКОТА</div>
+        <div style="font-size:20px;font-weight:900;color:#fff;" class="implant-catalog-title">兵马俑 ТЕРРАКОТА</div>
         <div style="font-size:12px;color:rgba(212,175,55,0.7);font-family:serif;font-style:italic;margin-top:3px;">bīng mǎ yǒng — терракотовая армия</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:#ccc;line-height:1.8;"> Военный имплант оборонного отдела корпорации Zhidao, представляющий собой субдермальную бронеплиту, вдохновлённую терракотовыми воинами династии Цинь. Имплант создаёт нейроэкран, который перехватывает один штрафной импульс в день и рассеивает его. NetWatch называет таких носителей «фарфоровыми» — снаружи хрупкие, внутри несокрушимые.</div>
+        <div style="font-size:12px;color:#ccc;line-height:1.8;"> Военный имплант оборонного отдела корпорации Zhidao, представляющий собой субдермальную бронеплиту, вдохновлённую терракотовыми воинами династии Цинь. Имплант создаёт нейроэкран, который перехватывает один штрафной импульс в день и рассеивает его. NetWatch называет таких носителей «фарфоровыми» — снаружи хрупкие, внутри несокрушимые</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1220,12 +1314,12 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">熊猫 ПАНДА</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">熊猫 ПАНДА</div>
         <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">xióng māo — медведь-кошка</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан биотех-лабораторией корпорации Zhidao в сотрудничестве с Пекинским институтом адаптивных систем. Чип имитирует нейронную архитектуру панды — существа, которое тысячелетиями умело получать максимум при минимуме усилий. Каждая транзакция в протоколе автоматически проходит через алгоритм возврата микроплатежей. Панда ничего не делает зря.</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан биотех-лабораторией корпорации Zhidao в сотрудничестве с Пекинским институтом адаптивных систем. Чип имитирует нейронную архитектуру панды — существа, которое тысячелетиями умело получать максимум при минимуме усилий. Каждая транзакция в протоколе автоматически проходит через алгоритм возврата микроплатежей. Панда ничего не делает зря</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1254,12 +1348,12 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">少林 ШАОЛИНЬ</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">少林 ШАОЛИНЬ</div>
         <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">shào lín — молодой лес</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Нейроимплант военного класса, разработанный оборонным отделом корпорации Zhidao по заказу монастыря Шаолинь для бойцов нового поколения. Встроенный модуль синхронизации отслеживает биоритмы носителя и автоматически фиксирует моменты максимальной собранности. Протокол активируется в момент переклички — чип посылает импульс точности в двигательную кору, обеспечивая идеальное время реакции. Дисциплина — это не привычка. Это прошивка.</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Нейроимплант военного класса, разработанный оборонным отделом корпорации Zhidao по заказу монастыря Шаолинь для бойцов нового поколения. Встроенный модуль синхронизации отслеживает биоритмы носителя и автоматически фиксирует моменты максимальной собранности. Протокол активируется в момент переклички — чип посылает импульс точности в двигательную кору, обеспечивая идеальное время реакции. Дисциплина — это не привычка. Это прошивка</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1288,12 +1382,12 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">口才 LINGUASOFT</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">口才 LINGUASOFT</div>
         <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">kǒu cái — красноречие, дар слова</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан лингвистическим отделом Zhidao совместно с Пекинским университетом языков и культуры. Чип анализирует речевые паттерны носителя в реальном времени, отслеживая точность тонов, плотность лексики и структуру предложений. При достижении эталонного уровня произношения система автоматически генерирует сигнал подтверждения в протоколе. Язык — это не инструмент. Это оружие.</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Разработан лингвистическим отделом Zhidao совместно с Пекинским университетом языков и культуры. Чип анализирует речевые паттерны носителя в реальном времени, отслеживая точность тонов, плотность лексики и структуру предложений. При достижении эталонного уровня произношения система автоматически генерирует сигнал подтверждения в протоколе. Язык — это не инструмент. Это оружие</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1322,12 +1416,12 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">财神 ЦАЙШЭНЬ</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">财神 ЦАЙШЭНЬ</div>
         <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">cái shén — бог богатства</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Пассивный экономический модуль, созданный финансовым отделом корпорации Zhidao на основе древних алгоритмов даосской математики. Чип непрерывно сканирует цифровое пространство протокола в поисках незамеченных транзакций и микропотоков данных, конвертируя их в звёзды на счёт носителя. Работает пока ты спишь. Работает пока ты ешь. Бог богатства не берёт выходных.</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Пассивный экономический модуль, созданный финансовым отделом корпорации Zhidao на основе древних алгоритмов даосской математики. Чип непрерывно сканирует цифровое пространство протокола в поисках незамеченных транзакций и микропотоков данных, конвертируя их в звёзды на счёт носителя. Работает пока ты спишь. Работает пока ты ешь. Бог богатства не берёт выходных</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1352,12 +1446,12 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">紫色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">麒麟 ЦИЛИНЬ</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">麒麟 ЦИЛИНЬ</div>
         <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">qí lín — единорог, символ процветания</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Кооперативный модуль связи, разработанный корпорацией Zhidao на основе легенды о Цилине — существе, появляющемся только в эпоху процветания. Чип постоянно сканирует протокол на наличие других носителей Цилиня и при обнаружении устанавливает зашифрованный канал синхронизации. Чем больше владельцев в группе — тем сильнее сигнал. Единорог силён не рогом. А стадом.</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Кооперативный модуль связи, разработанный корпорацией Zhidao на основе легенды о Цилине — существе, появляющемся только в эпоху процветания. Чип постоянно сканирует протокол на наличие других носителей Цилиня и при обнаружении устанавливает зашифрованный канал синхронизации. Чем больше владельцев в группе — тем сильнее сигнал. Единорог силён не рогом. А стадом</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1382,19 +1476,19 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">红龙 КРАСНЫЙ ДРАКОН</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">红龙 КРАСНЫЙ ДРАКОН</div>
         <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">hóng lóng — красный дракон</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Чёрный Заслон. Носители получают статус <span style="color:rgba(212,175,55,0.8);font-weight:600;">红龙节点</span> — «Узел Красного Дракона». Использовать с осторожностью. Один из ста тысяч.</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Чёрный Заслон. Носители получают статус <span style="color:rgba(212,175,55,0.8);font-weight:600;">红龙节点</span> — «Узел Красного Дракона». Использовать с осторожностью. Один из ста тысяч</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
         
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-trending-up" style="font-size:28px;min-width:30px;text-align:center;color:rgba(200,80,80,0.9);"></i>
-          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Доминирование</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+20% ко всем начислениям баллов</div></div>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Доминирование</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">+20% к баллам от наградных начислений и +20% урона в ивентах (Атака/Протокол)</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-arrows-exchange" style="font-size:28px;min-width:30px;text-align:center;color:var(--gold);"></i>
@@ -1428,27 +1522,19 @@
         <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--text);">网络守卫 СЕТЕВОЙ ДОЗОР</div>
+        <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">网络守卫 СЕТЕВОЙ ДОЗОР</div>
         <div style="font-size:12px;color:var(--text3);font-family:serif;font-style:italic;margin-top:3px;">wǎng luò shǒu wèi — страж сети</div>
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Боевой имплант пятого поколения, разработанный секретным отделом NetWatch при финансировании корпорации Zhidao. На сегодняшний момент является самым мощным из всех ходовых имплантов. Из-за своих крайне опасных характеристик был запрещён в использовании. Информации про изделие практически отсутствует: известно, что имплант интегрируется в нейронную сеть носителя и предоставляет прямой доступ к управляющим протоколам системы. Классифицирован как потенциально опасный. Пользователь берёт весь риск на себя. Сообщите NetWatch, если имплант оказался у вас в руках </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Боевой имплант пятого поколения, разработанный секретным отделом NetWatch при финансировании корпорации Zhidao. На сегодняшний момент является самым мощным из всех ходовых имплантов. Из-за своих крайне опасных характеристик был запрещён в использовании. Информация про изделие практически отсутствует: известно, что имплант интегрируется в нейронную сеть носителя и предоставляет прямой доступ к управляющим протоколам системы. Классифицирован как потенциально опасный. Пользователь берёт весь риск на себя. Сообщите NetWatch, если имплант оказался у вас в руках </div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
         
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-          <i class="ti ti-sword" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
-          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Боевые скрипты</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в 3 дня наложить штраф любому игроку от имени системы</div></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-          <i class="ti ti-broadcast" style="font-size:28px;min-width:30px;text-align:center;color:#cc4444;"></i>
-          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Радиус поражения</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Штраф задевает ещё 2 случайных игрока рядом (-15★)</div></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-bolt" style="font-size:28px;min-width:30px;text-align:center;color:#f39c12;"></i>
-          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Форматирование</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в 72 часа: цель -15★, побочный импульс -5★</div></div>
+          <div><div style="font-size:13px;color:var(--text);font-weight:600;">Форматирование</div><div style="font-size:11px;color:var(--text2);margin-top:2px;">Раз в 72 часа: цель -15★, побочный импульс -5★ (1 случайный игрок рядом)</div></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
           <i class="ti ti-coin" style="font-size:28px;min-width:30px;text-align:center;color:#2ecc71;"></i>
@@ -1481,11 +1567,11 @@
     </div>
 
     <!-- Обмен фрагментов протокола -->
-    <div class="cn-divider">🔬 协议碎片 ОБМЕН ФРАГМЕНТОВ</div>
+    <div class="cn-divider"><i class="ti ti-recycle"></i> 协议碎片 ОБМЕН ФРАГМЕНТОВ</div>
     <div class="card" style="margin:4px 12px;" id="fragment-exchange-card-block">
       <div class="card-inner">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span style="font-size:28px;">✦</span>
+          <i class="ti ti-recycle" style="font-size:28px;color:var(--red);"></i>
           <div>
             <div style="font-size:13px;font-weight:700;color:var(--text);">Обмен фрагментов</div>
             <div style="font-size:11px;color:var(--text3);font-family:monospace;">10 фрагментов → случайная карточка</div>
@@ -1495,8 +1581,8 @@
             <div style="font-size:18px;font-weight:700;color:var(--gold);" id="card-frag-count">—</div>
           </div>
         </div>
-        <button class="btn" id="fragment-exchange-card-btn" onclick="exchangeFragments('card')" style="width:100%;font-family:monospace;font-size:11px;letter-spacing:1px;">
-          ✦ ОБМЕНЯТЬ 10 ФРАГМЕНТОВ
+        <button class="btn btn-primary" id="fragment-exchange-card-btn" onclick="exchangeFragments('card')" style="width:100%;font-family:monospace;font-size:11px;letter-spacing:1px;">
+          <i class="ti ti-recycle"></i> ОБМЕНЯТЬ 10 ФРАГМЕНТОВ
         </button>
       </div>
     </div>
@@ -1507,7 +1593,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner" style="background:linear-gradient(135deg,rgba(192,160,64,0.06),rgba(219,177,101,0.03));">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:2px solid rgba(192,160,64,0.6);box-shadow:0 0 28px rgba(192,160,64,0.25);background:rgba(192,160,64,0.05);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:2px solid rgba(192,160,64,0.6);box-shadow:0 0 28px rgba(192,160,64,0.25);background-color:rgba(192,160,64,0.05);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(192,160,64,0.85);border:1px solid rgba(192,160,64,0.9);color:#2a1800;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★★ ЛЕГЕНД.</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
         </div>
@@ -1544,7 +1630,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner" style="background:linear-gradient(135deg,rgba(155,89,182,0.06),rgba(192,160,64,0.03));">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:2px solid rgba(155,89,182,0.5);box-shadow:0 0 28px rgba(155,89,182,0.2);background:rgba(155,89,182,0.05);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:2px solid rgba(155,89,182,0.5);box-shadow:0 0 28px rgba(155,89,182,0.2);background-color:rgba(155,89,182,0.05);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★★ ЛЕГЕНД.</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
         </div>
@@ -1581,7 +1667,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(155,89,182,0.15);background:rgba(155,89,182,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(155,89,182,0.15);background-color:rgba(155,89,182,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
         </div>
@@ -1615,7 +1701,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(200,80,40,0.2);background:rgba(155,89,182,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(200,80,40,0.2);background-color:rgba(155,89,182,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
         </div>
@@ -1649,7 +1735,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
         </div>
@@ -1683,7 +1769,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
         </div>
@@ -1717,7 +1803,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,150,74,0.15);background:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,150,74,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
         </div>
@@ -1751,7 +1837,7 @@
     <div class="card" style="margin:6px 12px;">
       <div class="card-inner">
         <div style="text-align:center;margin-bottom:14px;position:relative;">
-          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png')" oncontextmenu="return false"></div>
+          <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
           <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
         </div>
@@ -2032,11 +2118,25 @@
         </div>
       </div>
 
+      <div class="contract-field">
+        <label for="contractExpiryHours">СРОК ИСПОЛНЕНИЯ</label>
+        <select id="contractExpiryHours">
+          <option value="1">1 час</option>
+          <option value="2">2 часа</option>
+          <option value="3">3 часа</option>
+          <option value="6">6 часов</option>
+          <option value="12">12 часов</option>
+          <option value="24" selected>24 часа</option>
+        </select>
+        <div class="contract-fee-preview">
+          Если за это время никто не возьмётся — поручение сгорит, комиссия вернётся
+        </div>
+      </div>
+
       <label class="contract-privacy-toggle">
         <input id="contractAnonymous" type="checkbox">
         <span>
           <b>Опубликовать анонимно</b>
-          <small>Дети увидят “Анонимный заказчик”. Админы всё равно видят автора.</small>
         </span>
       </label>
 
@@ -2247,19 +2347,19 @@
     <i class="ti ti-layout-list"></i>
     <span class="nav-cn">日程</span>
   </button>
-  <button class="nav-item" onclick="showPage('rating',this)">
+  <button class="nav-item" data-feature="rating" onclick="showPage('rating',this)">
     <i class="ti ti-trophy"></i>
     <span class="nav-cn">排名</span>
   </button>
-  <button class="nav-item" id="nav-shop-btn" onclick="showPage('shop',this)">
+  <button class="nav-item" id="nav-shop-btn" data-feature="shop" onclick="showPage('shop',this)">
     <i class="ti ti-building-store"></i>
     <span class="nav-cn">商店</span>
   </button>
-  <button class="nav-item" onclick="showPage('casino',this)">
+  <button class="nav-item" data-feature="casino" onclick="showPage('casino',this)">
     <i class="ti ti-package" id="nav-casino-icon"></i>
     <span class="nav-cn" id="nav-casino-label">箱子</span>
   </button>
-  <button class="nav-item" onclick="showPage('implants',this)">
+  <button class="nav-item" data-feature="implants" onclick="showPage('implants',this)">
     <i class="ti ti-cpu" id="nav-implants-icon"></i>
     <span class="nav-cn" id="nav-implants-label">植入物</span>
   </button>
@@ -2275,16 +2375,16 @@
         <button onclick="closeRaid()" class="btn-close-raid">×</button>
         <div class="raid-kicker">
             <span class="raid-kicker-dot"></span>
-            <span>MU RAID // 夜间行动</span>
+            <span>ALPHABOSS RAID // 夜间行动</span>
         </div>
-        
+
         <div class="boss-frame">
             <img id="boss-img" src="" class="boss-img" alt="BOSS">
             <div class="boss-scan-overlay"></div>
         </div>
-        
+
         <div class="boss-name-wrap">
-            <div class="boss-name">М. Ю.</div>
+            <div class="boss-name">АЛЬФАБОСС</div>
             <div id="boss-title" class="boss-title">// ADAM SMASHER PROTOCOL</div>
         </div>
         <div class="raid-threat-strip">
@@ -2370,28 +2470,47 @@
   </div>
 </div>
 
-<script src="./js/config.js"></script>
+<div id="featureFreezeOverlay" class="launch-gate-overlay" onclick="closeFeatureFreezeOverlay()">
+  <div class="launch-gate-panel" onclick="event.stopPropagation()">
+    <div class="launch-gate-scan"></div>
+    <button class="launch-gate-close" onclick="closeFeatureFreezeOverlay()">×</button>
+    <div class="launch-gate-kicker">SYSTEM // MODULE LOCKED</div>
+    <div class="launch-gate-big">即将开放</div>
+    <div class="launch-gate-panel-title">Раздел <span id="featureFreezeTitle">—</span> заморожен</div>
+    <div class="launch-gate-panel-copy">
+      Этот модуль откроется ближе к старту. Следи за объявлениями — доступ включат всем сразу.
+    </div>
+    <div class="launch-gate-panel-timer" id="featureFreezeTimer" data-freeze-countdown style="display:none;"></div>
+    <button class="launch-gate-return" onclick="closeFeatureFreezeOverlay()">Понятно</button>
+  </div>
+</div>
+
+<script src="./js/config.js?v=20260614freeze1"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260608a"></script>
+<script src="./js/ui.js?v=20260614shoptimer1"></script>
 <script src="./js/telegram-compat.js"></script>
-<script src="./js/themes.js?v=20260604b"></script>
+<script src="./js/themes.js?v=20260614themeintro1"></script>
 <script src="./js/blackwall.js"></script>
 <script src="./js/schedule.js"></script>
 <script src="./js/announcements.js"></script>
-<script src="./js/laundry.js?v=20260604a"></script>
+<script src="./js/laundry.js?v=20260613cleanup1"></script>
 <script src="./js/achievements.js?v=20260607e"></script>
-<script src="./js/leaderboard.js?v=20260502a"></script>
-<script src="./js/shop.js?v=20260607a"></script>
-<script src="./js/casino.js?v=20260607a"></script>
-<script src="./js/diary.js?v=20260608a"></script>
-<script src="./js/team.js?v=20260604a"></script>
-<script src="./js/contracts.js?v=20260607b"></script>
-<script src="./js/admin.js?v=20260608a"></script>
-<script src="./js/raid.js"></script>
-<script src="./js/events.js?v=20260611wildai3"></script>
-<script src="./js/architect-event.js?v=20260611wildai5"></script>
-<script src="./js/demo.js?v=20260605a"></script>
+<script src="./js/leaderboard.js?v=20260613cleanup1"></script>
+<script src="./js/shop.js?v=20260613chaos1"></script>
+<script src="./js/casino.js?v=20260613chaos1"></script>
+<script src="./js/diary.js?v=20260613cleanup1"></script>
+<script src="./js/team.js?v=20260614avatar1"></script>
+<script src="./js/architect-diary.js?v=20260615"></script>
+<script src="./js/contracts.js?v=20260614cleanup1"></script>
+<script src="./js/admin.js?v=20260614cleanup1"></script>
+<script src="./js/campus-map.js?v=20260609b"></script>
+<script src="./js/raid.js?v=20260614raid1"></script>
+<script src="./js/wild-ai-breach.js?v=20260614fix1"></script>
+<script src="./js/events.js?v=20260611wildai11"></script>
+<script src="./js/architect-event.js?v=20260613cleanup1"></script>
+<script src="./js/demo.js?v=20260614themeintro1"></script>
+<script src="./js/instruction.js?v=20260615a"></script>
 <script src="./js/main.js?v=20260515a"></script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
@@ -2442,7 +2561,7 @@
   <div class="event-shell">
     <div class="event-topbar">
       <div class="event-topbar-left">
-        <div class="event-kicker">ARCHITECT PROTOCOL</div>
+        <div class="event-kicker" id="eventKicker">ARCHITECT PROTOCOL</div>
         <div class="event-phase" id="eventPhaseLabel">ФАЗА I</div>
       </div>
       <div class="event-topbar-right">
@@ -2453,6 +2572,7 @@
     </div>
 
     <div class="event-hero" id="eventHero">
+      <div class="event-wildai-lobby-warning">SYSTEM ERROR // BLACKWALL INTEGRITY: CRITICAL</div>
       <video
         id="eventBossVideo"
         class="event-hero-video"
@@ -2478,7 +2598,7 @@
           <div class="boss-hud__caption">HEALTH INDICATOR</div>
 
           <div class="boss-hud__topline">
-            <div class="event-boss-name">АРХИТЕКТОР</div>
+            <div class="event-boss-name" id="eventBossName">АРХИТЕКТОР</div>
 
             <div class="event-meta-row">
               <div class="event-status-badge" id="eventStateBadge">ACTIVE</div>
@@ -2640,40 +2760,25 @@
 </div>
 
 <div id="architectArrivalBanner" class="architect-banner-overlay" onclick="closeArchitectArrivalBanner()">
+  <div class="architect-banner-redflash"></div>
+  <div class="architect-banner-glitchbar architect-banner-glitchbar-1"></div>
+  <div class="architect-banner-glitchbar architect-banner-glitchbar-2"></div>
+  <div class="architect-banner-glitchbar architect-banner-glitchbar-3"></div>
   <div class="architect-banner-card" onclick="event.stopPropagation()">
-    <div class="architect-banner-frame"></div>
-    <div class="architect-banner-noise"></div>
-    <button class="architect-banner-close" onclick="closeArchitectArrivalBanner()">×</button>
-    <div class="architect-banner-head">
-      <div class="architect-banner-topline">CRITICAL OVERRIDE</div>
+    <div class="architect-banner-eye">
+      <div class="architect-banner-eye-iris"></div>
+      <div class="architect-banner-eye-scan"></div>
     </div>
-    <div class="architect-banner-authority"></div>
-    <div class="architect-banner-visual">
-      <div class="architect-banner-grid">
-        <div class="architect-banner-grid-pulse"></div>
-      </div>
-      <div class="architect-banner-core"></div>
-      <div class="architect-banner-sigil">SYSTEM BREACH // PRIORITY OMEGA</div>
-    </div>
-    <div class="architect-banner-title">АРХИТЕКТОР В СЕТИ</div>
-    <div class="architect-banner-copy">
-      Обнаружен вход управляющей сущности. Внешний контур активирован,
-      управляющий канал захвачен, системный фон переведён в режим наблюдения.
-    </div>
-    <div class="architect-banner-meta">
-      <div class="architect-banner-chip">SIGNAL // LIVE</div>
-      <div class="architect-banner-chip">CHANNEL // LOCKED</div>
-      <div class="architect-banner-chip">LEVEL // CRITICAL</div>
-    </div>
-    <div class="architect-banner-status">STATUS // ARCHITECT ONLINE</div>
+    <div class="architect-banner-title" data-text="АРХИТЕКТОР В СЕТИ">АРХИТЕКТОР В СЕТИ</div>
+    <div class="architect-banner-subtitle">BLACKWALL // КАНАЛ ОТКРЫТ</div>
     <div class="architect-banner-actions">
-      <button class="architect-banner-dismiss" onclick="closeArchitectArrivalBanner()">ПРИНЯТО</button>
+      <button class="architect-banner-dismiss" onclick="closeArchitectArrivalBanner()">[ ПРИНЯТО ]</button>
     </div>
   </div>
 </div>
 
 <audio id="architectArrivalAudio" preload="auto">
-  <source src="architect-arrival.ogg" type="audio/ogg">
+  <source src="Architect_1_watching.mp3" type="audio/mpeg">
 </audio>
 
 <audio id="architectEventEntryAudio" preload="auto">
@@ -2682,6 +2787,31 @@
 
 <audio id="architectMusicA" preload="auto" loop style="display:none;"></audio>
 <audio id="architectMusicB" preload="auto" loop style="display:none;"></audio>
+
+<div class="instruction-modal" id="instructionModal" style="display:none;" onclick="closeInstructionModal(event)">
+  <div class="instruction-modal-inner" onclick="event.stopPropagation()">
+    <button class="instruction-modal-close" onclick="closeInstructionModal()">✕</button>
+    <div id="instructionModalBody"></div>
+  </div>
+</div>
+
+<div class="instruction-tour-overlay" id="instructionTourOverlay" style="display:none;">
+  <div class="instruction-tour-card">
+    <button class="instruction-tour-close" onclick="closeInstructionTour()">✕</button>
+    <div class="instruction-tour-portrait" id="instructionTourAvatar">
+      <div class="instruction-tour-name">ЮЛИЯ ВИТАЛЬЕВНА</div>
+    </div>
+    <div class="instruction-tour-body">
+      <div class="instruction-tour-title" id="instructionTourTitle"></div>
+      <div class="instruction-tour-bubble" id="instructionTourBubble"></div>
+      <div class="instruction-tour-progress" id="instructionTourProgress">1 / 17</div>
+      <div class="instruction-tour-actions">
+        <button class="ghost" onclick="instructionTourSkip()">ПРОПУСТИТЬ</button>
+        <button id="instructionTourNextBtn" onclick="instructionTourNext()">ДАЛЕЕ →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="toastContainer"></div>
 

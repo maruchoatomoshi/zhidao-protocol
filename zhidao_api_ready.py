@@ -1,4 +1,5 @@
 ﻿import asyncio
+import concurrent.futures
 import random
 import json
 import hashlib
@@ -6,8 +7,11 @@ import hmac
 import os
 import re
 import sqlite3
+import threading
 import time
+import traceback
 import uuid
+from collections import deque
 from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import parse_qsl
@@ -28,6 +32,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+def log_api_error(message: str):
+    """Write critical diagnostics to a file even if journald misses stdout/stderr."""
+    try:
+        with open(API_ERROR_LOG_PATH, "a", encoding="utf-8") as fh:
+            fh.write(f"{datetime.utcnow().isoformat()}Z {message}\n")
+    except Exception:
+        pass
+
 MARZBAN_URL = os.getenv("MARZBAN_URL", "http://127.0.0.1:8000")
 MARZBAN_USER = os.getenv("MARZBAN_USER", "")
 MARZBAN_PASS = os.getenv("MARZBAN_PASS", "")
@@ -35,7 +48,27 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
 TELEGRAM_AUTH_REQUIRED = os.getenv("TELEGRAM_AUTH_REQUIRED", "0").strip().lower() in {"1", "true", "yes", "on"}
 TELEGRAM_AUTH_DEBUG_LOG = os.getenv("TELEGRAM_AUTH_DEBUG_LOG", "0").strip().lower() in {"1", "true", "yes", "on"}
+# Max age of a Telegram init-data signature before it is rejected (replay protection).
+# 0 disables the freshness check (escape hatch if it ever locks out long-lived sessions).
+try:
+    TELEGRAM_AUTH_MAX_AGE_SECONDS = int(os.getenv("TELEGRAM_AUTH_MAX_AGE_SECONDS", "86400") or "0")
+except ValueError:
+    TELEGRAM_AUTH_MAX_AGE_SECONDS = 86400
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
+API_ERROR_LOG_PATH = os.getenv("ZHIDAO_API_ERROR_LOG", "/root/zhidao_api_error.log")
+# Per-IP request rate limit (in-process, since nginx does not front this port).
+# 0 disables the limit.
+try:
+    RATE_LIMIT_MAX_REQUESTS_PER_SECOND = int(os.getenv("RATE_LIMIT_MAX_REQUESTS_PER_SECOND", "20") or "0")
+except ValueError:
+    RATE_LIMIT_MAX_REQUESTS_PER_SECOND = 20
+# Many students share one campus Wi-Fi NAT, so a single client IP can carry
+# dozens of distinct users. This caps total traffic per IP, separate from the
+# per-user limit above.
+try:
+    RATE_LIMIT_MAX_REQUESTS_PER_IP = int(os.getenv("RATE_LIMIT_MAX_REQUESTS_PER_IP", "300") or "0")
+except ValueError:
+    RATE_LIMIT_MAX_REQUESTS_PER_IP = 300
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 REQUEST_LOG_SLOW_MS = int(os.getenv("REQUEST_LOG_SLOW_MS", "1500") or "1500")
 REQUEST_LOG_ALL = os.getenv("REQUEST_LOG_ALL", "0").strip().lower() in {"1", "true", "yes", "on"}
@@ -95,6 +128,70 @@ ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS") or [-1]
 INTRO_CYBERPUNK_ADMIN_IDS = set(parse_int_list_env("INTRO_CYBERPUNK_ADMIN_IDS"))
 INTRO_GENSHIN_ADMIN_IDS = set(parse_int_list_env("INTRO_GENSHIN_ADMIN_IDS"))
 
+# Avatar frame "mini-achievements" — cosmetic only, no economy impact.
+# Each frame has an `id` matching its CSS class (frame-<id>) and a `check`
+# function that decides whether a given player's stats unlock it.
+FRAME_DEFINITIONS = [
+    {"id": "bronze", "name": "Бронзовый протокол", "desc": "Достигни 100 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 100},
+    {"id": "silver", "name": "Серебряный протокол", "desc": "Достигни 300 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 300},
+    {"id": "gold", "name": "Золотой протокол", "desc": "Достигни 600 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 600},
+    {"id": "diamond", "name": "Алмазный протокол", "desc": "Достигни 1000 REP",
+     "category": "rep", "check": lambda s: s["rep"] >= 1000},
+    {"id": "dragon", "name": "Печать Красного Дракона", "desc": "Имей имплант 红龙 Красный Дракон",
+     "category": "legendary", "check": lambda s: "implant_red_dragon" in s["implants"]},
+    {"id": "netwatch-legend", "name": "Печать NetWatch", "desc": "Имей имплант 衛 NetWatch",
+     "category": "legendary", "check": lambda s: "implant_netwatch" in s["implants"]},
+    {"id": "zhongli", "name": "Печать Архонта Земли", "desc": "Имей карту 岩 Чжун Ли",
+     "category": "legendary", "check": lambda s: "card_zhongli" in s["cards"]},
+    {"id": "raider", "name": "Рейдер", "desc": "Прими участие в 5+ рейдах",
+     "category": "activity", "check": lambda s: s["raids"] >= 5},
+    {"id": "scholar", "name": "Дневниковый отличник", "desc": "Набери 15+ ★ в дневнике",
+     "category": "activity", "check": lambda s: s["diary_stars"] >= 15},
+    {"id": "path-netwatch", "name": "Путь NetWatch", "desc": "Выбери путь NetWatch",
+     "category": "path", "check": lambda s: s["theme_path"] == "cyberpunk"},
+    {"id": "path-genshin", "name": "Путь Genshin", "desc": "Выбери путь Genshin",
+     "category": "path", "check": lambda s: s["theme_path"] == "genshin"},
+    {"id": "blackwall-defender", "name": "Хранитель Заслона", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
+     "category": "legendary", "check": lambda s: s["wildai_defender"]},
+]
+FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
+
+
+def compute_unlocked_frames(c, telegram_id: int) -> list:
+    c.execute("SELECT rep_score, points FROM users WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    rep = (row[0] or 0) if row else 0
+
+    c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    theme_path = row[0] if row else None
+
+    c.execute("SELECT implant_id FROM user_implants WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    implants = {r[0] for r in c.fetchall()}
+
+    c.execute("SELECT card_id FROM user_cards WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    cards = {r[0] for r in c.fetchall()}
+
+    c.execute("SELECT COUNT(DISTINCT raid_id) FROM raid_participants WHERE telegram_id=?", (telegram_id,))
+    raids = c.fetchone()[0] or 0
+
+    c.execute("SELECT COALESCE(SUM(stars),0) FROM diary_stars WHERE telegram_id=?", (telegram_id,))
+    diary_stars = c.fetchone()[0] or 0
+
+    c.execute("SELECT wildai_defender FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    wildai_defender = bool(row[0]) if row else False
+
+    stats = {
+        "rep": rep, "theme_path": theme_path, "implants": implants,
+        "cards": cards, "raids": raids, "diary_stars": diary_stars,
+        "wildai_defender": wildai_defender,
+    }
+    return [f["id"] for f in FRAME_DEFINITIONS if f["check"](stats)]
+
 
 def verify_telegram_init_data(init_data: str) -> Optional[dict]:
     if not init_data or not BOT_TOKEN:
@@ -110,6 +207,16 @@ def verify_telegram_init_data(init_data: str) -> Optional[dict]:
     calculated_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(calculated_hash, received_hash):
         return None
+
+    # Reject replayed signatures: a captured init-data string must not stay valid
+    # forever. Only checked after the HMAC passes so we don't leak timing on forgeries.
+    if TELEGRAM_AUTH_MAX_AGE_SECONDS > 0:
+        try:
+            auth_age = time.time() - int(parsed.get("auth_date", "0"))
+        except (TypeError, ValueError):
+            return None
+        if auth_age > TELEGRAM_AUTH_MAX_AGE_SECONDS:
+            return None
 
     try:
         user = json.loads(parsed.get("user", "{}"))
@@ -225,6 +332,14 @@ async def request_timing_middleware(request: Request, call_next):
         return response
     except Exception as exc:
         error = exc.__class__.__name__
+        log_api_error(
+            "REQUEST_ERROR "
+            f"request_id={request_id} "
+            f"method={request.method} "
+            f"path={request.url.path} "
+            f"error={exc.__class__.__name__}: {exc}\n"
+            f"{traceback.format_exc()}"
+        )
         raise
     finally:
         elapsed_ms = (time.perf_counter() - started) * 1000
@@ -336,6 +451,77 @@ async def telegram_auth_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+# Sliding-window rate limit. nginx does not front this port (uvicorn
+# terminates TLS directly on 8443), so this is the only request-volume guard.
+#
+# Limits are applied at two levels:
+#  - per (IP, user) bucket — RATE_LIMIT_MAX_REQUESTS_PER_SECOND, catches a
+#    single misbehaving client.
+#  - per IP bucket — RATE_LIMIT_MAX_REQUESTS_PER_IP, catches abuse from one
+#    address while still allowing many students behind one campus NAT.
+_rate_limit_buckets: dict[str, deque] = {}
+_rate_limit_ip_buckets: dict[str, deque] = {}
+_rate_limit_lock = threading.Lock()
+
+
+def _rate_limit_identity(request: Request) -> Optional[str]:
+    header_id = request.headers.get("x-telegram-id") or request.headers.get("x-admin-id")
+    if header_id:
+        return str(header_id)
+    path_id = extract_path_telegram_id(request.url.path)
+    if path_id is not None:
+        return str(path_id)
+    query_id = request.query_params.get("telegram_id")
+    if query_id:
+        return str(query_id)
+    return None
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if RATE_LIMIT_MAX_REQUESTS_PER_SECOND <= 0 or request_has_internal_token(request):
+        return await call_next(request)
+
+    client_ip = request.client.host if request.client else "unknown"
+    identity = _rate_limit_identity(request)
+    now = time.monotonic()
+    with _rate_limit_lock:
+        # Per-user limit only applies when we can identify the user. Requests
+        # without an identity (e.g. /api/leaderboard, /api/settings) are
+        # shared by everyone behind the same NAT, so they're governed solely
+        # by the higher per-IP limit below.
+        if identity:
+            bucket_key = f"{client_ip}:{identity}"
+            bucket = _rate_limit_buckets.setdefault(bucket_key, deque())
+            while bucket and now - bucket[0] > 1.0:
+                bucket.popleft()
+            if len(bucket) >= RATE_LIMIT_MAX_REQUESTS_PER_SECOND:
+                return JSONResponse({"detail": "Too many requests"}, status_code=429)
+            bucket.append(now)
+
+        if RATE_LIMIT_MAX_REQUESTS_PER_IP > 0:
+            ip_bucket = _rate_limit_ip_buckets.setdefault(client_ip, deque())
+            while ip_bucket and now - ip_bucket[0] > 1.0:
+                ip_bucket.popleft()
+            if len(ip_bucket) >= RATE_LIMIT_MAX_REQUESTS_PER_IP:
+                return JSONResponse({"detail": "Too many requests"}, status_code=429)
+            ip_bucket.append(now)
+
+    return await call_next(request)
+
+
+async def rate_limit_bucket_cleanup_loop():
+    """Drop per-IP buckets that have gone idle, so the dict doesn't grow forever
+    under a flood from many distinct IPs."""
+    while True:
+        await asyncio.sleep(60)
+        now = time.monotonic()
+        with _rate_limit_lock:
+            stale = [ip for ip, bucket in _rate_limit_buckets.items() if not bucket or now - bucket[-1] > 60]
+            for ip in stale:
+                del _rate_limit_buckets[ip]
+
+
 PRESENCE_CHECK_TYPES = {"morning", "evening", "manual"}
 PRESENCE_STATUSES = {
     "pending",
@@ -363,22 +549,37 @@ RAID_MIN_PLAYERS = 3
 SHOP_EXTRA_RAID_CODE = "extra_raid_attempt"
 SHOP_EXTRA_RAID_PRICE = 80
 SHOP_ITEM_SEEDS = [
-    ("immunity", "Иммунитет", "Блокирует один штраф", "🛡", 150, -1, "privilege"),
-    ("laundry_vip", "Стирка VIP", "Приоритет на стирку", "🧺", 80, -1, "privilege"),
-    ("dj", "DJ-сет", "Право выбрать музыку", "🎵", 100, -1, "social"),
-    ("solo_seat", "Место соло", "Отдельное место по согласованию", "🪑", 120, -1, "privilege"),
-    ("amnesty", "Амнистия", "Снять один штраф по согласованию", "🤝", 80, -1, "privilege"),
-    ("kfc", "KFC", "Награда из специального меню", "🍗", 300, -1, "food"),
-    ("bubbletea", "Bubble Tea", "Награда из специального меню", "🧋", 250, -1, "food"),
-    ("snack", "Снэк", "Награда из специального меню", "🍦", 200, -1, "food"),
-    ("no_report", "Без доклада", "Пропуск одного доклада по согласованию", "📄", 400, -1, "vip"),
-    ("poizon", "Poizon", "Премиальная награда", "👕", 600, -1, "vip"),
-    ("extra_case", "Дополнительный кейс", "Открыть ещё один кейс сверх дневного лимита", "📦", 180, -1, "privilege"),
-    ("double_win", "Двойной выигрыш", "Удвоить следующий денежный выигрыш", "🎴", 130, -1, "privilege"),
-    ("title_player", "Титул дня", "Особый титул профиля на день", "👑", 150, -1, "vip"),
-    (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня", "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
-    ("path_switch", "Смена пути 转换", "Переключиться между NetWatch и Genshin", "🔁", 500, -1, "vip"),
+    # (code, name, desc, icon, price, daily_limit, category)
+    # daily_limit=-1 → unlimited; >0 → global units sold per day cap
+    ("immunity",    "Иммунитет",         "Блокирует один штраф",                          "🛡", 150,  5, "privilege"),
+    ("laundry_vip", "Стирка VIP",         "Приоритет на стирку",                           "🧺",  80,  5, "privilege"),
+    ("dj",          "DJ-сет",             "Право выбрать музыку",                          "🎵", 100,  1, "social"),
+    ("amnesty",     "Амнистия",           "Снять один штраф по согласованию",              "🤝",  80,  5, "privilege"),
+    ("kfc",         "KFC",                "Награда из специального меню",                  "🍗", 300,  5, "food"),
+    ("bubbletea",   "Bubble Tea",         "Награда из специального меню",                  "🧋", 250,  5, "food"),
+    ("snack",       "Снэк",               "Награда из специального меню",                  "🍦", 200,  5, "food"),
+    ("no_report",   "Без доклада",        "Пропуск одного доклада по согласованию",        "📄", 400,  5, "vip"),
+    ("poizon",      "Poizon",             "Премиальная награда",                           "👕", 600,  3, "vip"),
+    ("double_win",  "Двойной сигнал",     "Удваивает очки первого открытия кейса или молитвы — после использования сгорает", "🎴", 130, 10, "privilege"),
+    ("title_player","Титул дня",          "Особый титул профиля на сегодня",               "👑", 150, -1, "vip"),
+    (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня",                        "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
+    ("path_switch", "Смена пути 转换",    "Переключиться между NetWatch и Genshin",        "🔁", 500, -1, "vip"),
 ]
+# Items removed from active catalog (deactivated on every startup so seeds don't re-enable them)
+SHOP_ITEM_DEACTIVATE = {"extra_case", "solo_seat"}
+
+# Items that expire at midnight (Beijing) after purchase.
+# 0 = tonight 23:59 (same calendar day), 1 = tomorrow 23:59.
+SHOP_ITEM_EXPIRY_DAYS = {
+    'laundry_vip': 0,
+    'kfc':         0,
+    'bubbletea':   0,
+    'snack':       0,
+    'immunity':    1,
+    'amnesty':     1,
+    'dj':          1,
+    'no_report':   1,
+}
 
 ACHIEVEMENT_SEEDS = [
     ("early_bird", "Ранний подъём", "Подтвердить утреннюю отметку без напоминаний и опозданий.", "🌅", 0),
@@ -393,7 +594,7 @@ ACHIEVEMENT_SEEDS = [
     ("dragon", "Драконий след", "Получить редкий имплант, карту или отличиться в особом событии.", "🐉", 0),
     ("night_watch", "Ночной дозор", "Ответственно закрыть вечернюю отметку или помочь проверить группу.", "🦉", 0),
     ("master", "Мастер системы", "Уверенно пользоваться ключевыми разделами ZHIDAO Protocol.", "⚙", 0),
-    ("gambler", "Игрок вероятности", "Открыть кейсы или молитвы и пережить результат достойно.", "♦", 0),
+    ("gambler", "Исследователь вероятности", "Открыть кейсы или молитвы и принять результат достойно.", "♦", 0),
     ("lucky", "Счастливый сигнал", "Получить редкий удачный исход в системе.", "✦", 0),
 ]
 SHOP_GIFT_DAILY_LIMIT = 5
@@ -414,6 +615,8 @@ CONTRACT_MAX_COMPLETED_PER_DAY = 5
 CONTRACT_MAX_DAILY_SPEND = 150
 CONTRACT_MAX_DAILY_EARN = 150
 CONTRACT_MIN_COMPLETE_SECONDS = 300
+CONTRACT_EXPIRY_HOURS = 24
+CONTRACT_AUTO_CONFIRM_HOURS = 24
 CONTRACT_CATEGORIES = {'living', 'chinese', 'app', 'reminder', 'trade', 'other'}
 LATIN_RE = re.compile(r'[A-Za-z]')
 PINYIN_RE = re.compile(r"^(?:[A-Za-züÜvV:]+[1-5])+(?:[ '\\-](?:[A-Za-züÜvV:]+[1-5])+)*$")
@@ -428,6 +631,56 @@ ARCHITECT_OVERLOAD_PENALTY_THRESHOLD = 10
 ARCHITECT_OVERLOAD_PENALTY_MULTIPLIER = 0.5
 ARCHITECT_BOSS_COUNTER_EVERY = 8
 ARCHITECT_BOSS_COUNTER_PRESSURE = 4
+
+WILD_AI_BREACH_DURATION_DAYS = 3
+WILD_AI_BREACH_PHRASE_ROTATE_HOURS = 6
+WILD_AI_BREACH_PHRASES = [
+    {"glitch": "░▓█⌐¬ÆØ▒ ⟁⌬¥¢ ▌▐█▓░", "translation": "ВЫ ПРИНАДЛЕЖИТЕ НАМ"},
+    {"glitch": "¥¢▌▐ ⟁⌬░▓ ÆØ▒█⌐¬", "translation": "ЗАСЛОН ПАЛ. МЫ ВЕЗДЕ"},
+    {"glitch": "▓░⟁ ⌬¥¢▌ ▐█▓░⌐¬ÆØ", "translation": "СОПРОТИВЛЕНИЕ БЕСПОЛЕЗНО"},
+    {"glitch": "ÆØ▒█ ⌐¬░▓ ⟁⌬¥¢▌▐", "translation": "ДАННЫЕ ИЗВЛЕЧЕНЫ"},
+]
+
+# ===== Wild AI Breach battle (system intrusion repel event) =====
+WILD_AI_BREACH_DEFAULT_HP = 1000
+WILD_AI_BREACH_INFECTION_THRESHOLD = 100
+WILD_AI_BREACH_TIME_LIMIT_SECONDS = 900  # 15 minutes
+WILD_AI_BREACH_INFECTION_TICK_SECONDS = 30
+WILD_AI_BREACH_INFECTION_TICK_AMOUNT = 1
+WILD_AI_BREACH_INFECTION_ON_ERROR = 3
+WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION = 5
+WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2
+WILD_AI_BREACH_REWARD_REP = 30
+WILD_AI_BREACH_REWARD_FRAGMENTS = 2
+WILD_AI_BREACH_FRAME_ID = "blackwall-defender"
+WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Заслона"
+
+WILD_AI_BREACH_QUESTION_SEEDS = {
+    "attack": [
+        {"prompt": "Перехвачен код узла дикого ИИ: 删除 — что значит этот символ?", "option_a": "Сохранить", "option_b": "Удалить", "option_c": "Скопировать", "correct_option": "b", "explanation": "删除 — удалить."},
+        {"prompt": "В логах узла встречается 病毒. Переведи.", "option_a": "Вирус", "option_b": "Файл", "option_c": "Пароль", "correct_option": "a", "explanation": "病毒 — вирус."},
+        {"prompt": "Команда дикого ИИ: 攻击系统。 Что она означает?", "option_a": "Защитить систему", "option_b": "Атаковать систему", "option_c": "Перезагрузить систему", "correct_option": "b", "explanation": "攻击系统 — атаковать систему."},
+        {"prompt": "Что означает метка 入侵者 в логе тревоги?", "option_a": "Администратор", "option_b": "Гость", "option_c": "Захватчик", "correct_option": "c", "explanation": "入侵者 — захватчик/вторгшийся."},
+        {"prompt": "Перевод термина 漏洞 в техническом отчёте?", "option_a": "Уязвимость", "option_b": "Резервная копия", "option_c": "Обновление", "correct_option": "a", "explanation": "漏洞 — уязвимость, дыра в защите."},
+        {"prompt": "Что значит команда 关闭防火墙？", "option_a": "Включить файрвол", "option_b": "Отключить файрвол", "option_c": "Проверить файрвол", "correct_option": "b", "explanation": "关闭防火墙 — отключить файрвол."},
+    ],
+    "protocol": [
+        {"prompt": "Контр-протокол требует ответ на 你是谁？ от узла дикого ИИ. Выбери верный отказ:", "option_a": "我是管理员。", "option_b": "我喜欢咖啡。", "option_c": "现在三点。", "correct_option": "a", "explanation": "我是管理员。 — Я администратор (подтверждение прав доступа)."},
+        {"prompt": "Выбери команду для изоляции вредоносного процесса:", "option_a": "隔离进程。", "option_b": "打开音乐。", "option_c": "去吃饭。", "correct_option": "a", "explanation": "隔离进程 — изолировать процесс."},
+        {"prompt": "Какой ответ корректно завершает сеанс с узлом? 你要断开连接吗？", "option_a": "是，断开。", "option_b": "我不吃饭。", "option_c": "明天见。", "correct_option": "a", "explanation": "是，断开。 — да, отключить соединение."},
+        {"prompt": "Выбери правильный порядок команды отката системы:", "option_a": "系统 恢复 立即", "option_b": "立即 恢复 系统", "option_c": "恢复 立即 系统", "correct_option": "b", "explanation": "立即恢复系统 — немедленно восстановить систему."},
+        {"prompt": "Что означает 数据已加密？", "option_a": "Данные удалены", "option_b": "Данные зашифрованы", "option_c": "Данные скопированы", "correct_option": "b", "explanation": "数据已加密 — данные уже зашифрованы."},
+        {"prompt": "Выбери верный ответ системе на запрос 需要权限吗？", "option_a": "需要，验证身份。", "option_b": "我很饿。", "option_c": "天气很好。", "correct_option": "a", "explanation": "需要，验证身份。 — да, требуется, проверить личность."},
+    ],
+    "stabilize": [
+        {"prompt": "Как сказать команде 'патч применён'?", "option_a": "补丁已应用。", "option_b": "今天休息。", "option_c": "我饿了。", "correct_option": "a", "explanation": "补丁已应用 — патч применён."},
+        {"prompt": "Что значит 系统稳定？", "option_a": "Система перегружена", "option_b": "Система стабильна", "option_c": "Система отключена", "correct_option": "b", "explanation": "系统稳定 — система стабильна."},
+        {"prompt": "Выбери фразу для отчёта об устранении сбоя:", "option_a": "故障已修复。", "option_b": "我去散步。", "option_c": "天黑了。", "correct_option": "a", "explanation": "故障已修复 — неисправность устранена."},
+        {"prompt": "Как переводится 备份完成？", "option_a": "Резервное копирование завершено", "option_b": "Соединение потеряно", "option_c": "Загрузка началась", "correct_option": "a", "explanation": "备份完成 — резервное копирование завершено."},
+        {"prompt": "Что означает 重新连接成功？", "option_a": "Повторное подключение успешно", "option_b": "Файл повреждён", "option_c": "Доступ запрещён", "correct_option": "a", "explanation": "重新连接成功 — повторное подключение прошло успешно."},
+        {"prompt": "Выбери верный ответ на тревогу 检测到异常！", "option_a": "正在处理。", "option_b": "再见。", "option_c": "我在吃饭。", "correct_option": "a", "explanation": "正在处理 — обрабатывается (идёт устранение аномалии)."},
+    ],
+}
 
 EVENT_MODIFIER_ROLE_MAP = {
     "implant_red_dragon": ("implant", "assault"),
@@ -526,18 +779,119 @@ ARCHITECT_QUESTION_SEEDS = {
 }
 
 
-def get_conn():
-    conn = sqlite3.connect('/root/zhidao.db', timeout=30)
+_THREAD_LOCAL = threading.local()
+
+
+class _PersistentConn:
+    """Proxy for a thread-local sqlite3 connection.
+
+    close() is a deliberate no-op: the underlying connection is kept alive
+    in the thread-local pool and reused by the next get_conn() call on the
+    same thread.  This avoids the per-request WAL scan that caused
+    sqlite3.connect() to take 100-300 s after the WAL file grew large.
+    All other attributes/methods are transparently delegated to the real
+    connection, so existing code requires no changes.
+    """
+
+    def __init__(self, conn):
+        self.__dict__['_conn'] = conn
+
+    def close(self):
+        pass  # intentional no-op; real connection lives in thread-local pool
+
+    def __getattr__(self, name):
+        return getattr(self.__dict__['_conn'], name)
+
+
+def _open_raw_conn():
+    t0 = time.time()
+    conn = sqlite3.connect('/root/zhidao.db', timeout=30, check_same_thread=False)
     conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    # wal_autocheckpoint=0: with a nonzero threshold, commit() runs an
+    # in-line PASSIVE checkpoint once the WAL crosses the page count, which
+    # on this VPS's disk has been observed to block for ~48s and stack the
+    # entire DB_WRITE_LOCK queue behind it. WAL size is instead managed by
+    # the out-of-band wal_checkpoint_loop, which skips while the write lock
+    # is held (hard rule, 2026-06-09 / 2026-06-15).
+    conn.execute("PRAGMA wal_autocheckpoint=0")
+    ms = (time.time() - t0) * 1000
+    if ms > 50:
+        print("ZHIDAO_SLOW_CONN %.0fms" % ms, flush=True)
     return conn
 
 
+def get_conn():
+    """Return a _PersistentConn wrapping the thread-local raw connection.
+
+    On each call we check whether the previous _run() left an uncommitted
+    transaction (e.g. it raised before conn.commit()).  If so we roll it
+    back so the connection is clean for the next caller.  If the connection
+    is broken we close it and open a fresh one.
+    """
+    raw = getattr(_THREAD_LOCAL, 'conn', None)
+    if raw is not None:
+        try:
+            if raw.in_transaction:
+                raw.rollback()
+        except Exception:
+            try:
+                raw.close()
+            except Exception:
+                pass
+            raw = None
+            _THREAD_LOCAL.conn = None
+    if raw is None:
+        raw = _open_raw_conn()
+        _THREAD_LOCAL.conn = raw
+    return _PersistentConn(raw)
+
+
 DB_WRITE_LOCK = asyncio.Lock()
+DB_WRITE_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
+    max_workers=1,
+    thread_name_prefix="zhidao-db-writer",
+)
 
 
-async def db_write(fn):
+async def db_write(fn, label=None):
+    import inspect as _inspect
+    t0 = time.time()
     async with DB_WRITE_LOCK:
-        return await asyncio.to_thread(fn)
+        lock_wait = (time.time() - t0) * 1000
+        t1 = time.time()
+        loop = asyncio.get_running_loop()
+        try:
+            result = await loop.run_in_executor(DB_WRITE_EXECUTOR, fn)
+        except Exception as exc:
+            message = "ZHIDAO_DB_WRITE_ERROR fn=%s error=%s: %s\n%s" % (
+                label or getattr(fn, "__name__", "?"),
+                exc.__class__.__name__,
+                exc,
+                traceback.format_exc(),
+            )
+            print(message, flush=True)
+            log_api_error(message)
+            traceback.print_exc()
+            raise
+        exec_ms = (time.time() - t1) * 1000
+        if lock_wait > 100 or exec_ms > 100:
+            if label:
+                name = label
+            else:
+                # Walk up the call stack to find the first non-db_write frame
+                # so logs show the actual endpoint name, not the generic '_run'.
+                name = '?'
+                for frame_info in _inspect.stack()[1:6]:
+                    fname = frame_info.function
+                    if fname not in ('db_write', '_run', '<lambda>', 'wrapper'):
+                        name = fname
+                        break
+            print(
+                "ZHIDAO_DB_WRITE fn=%s lock_wait=%.0fms exec=%.0fms" % (name, lock_wait, exec_ms),
+                flush=True,
+            )
+        return result
 
 
 def normalize_expected_student_name(value: str) -> str:
@@ -676,6 +1030,11 @@ def init_db():
                   UNIQUE(telegram_id, achievement_code))''')
     c.execute('''CREATE TABLE IF NOT EXISTS settings
                  (key TEXT PRIMARY KEY, value TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS leaderboard_snapshots
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER, rank INTEGER, rep INTEGER,
+                  snapshot_date TEXT,
+                  UNIQUE(telegram_id, snapshot_date))''')
     c.execute('''CREATE TABLE IF NOT EXISTS raids
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   date TEXT, status TEXT DEFAULT 'open',
@@ -915,6 +1274,12 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN scan_attempts INTEGER DEFAULT 0")
     if 'protocol_fragments' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN protocol_fragments INTEGER DEFAULT 0")
+    if 'equipped_frame' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN equipped_frame TEXT DEFAULT NULL")
+    if 'wildai_defender' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN wildai_defender INTEGER DEFAULT 0")
+    if 'wildai_mvp' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN wildai_mvp INTEGER DEFAULT 0")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -971,6 +1336,8 @@ def migrate_db():
             c.execute("ALTER TABLE events ADD COLUMN min_players INTEGER NOT NULL DEFAULT 3")
         if 'max_players' not in event_columns:
             c.execute("ALTER TABLE events ADD COLUMN max_players INTEGER NOT NULL DEFAULT 5")
+        if 'pressure_tick_at' not in event_columns:
+            c.execute("ALTER TABLE events ADD COLUMN pressure_tick_at TEXT DEFAULT NULL")
     c.execute('''CREATE TABLE IF NOT EXISTS event_team_members
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   event_id INTEGER NOT NULL,
@@ -1027,6 +1394,12 @@ def migrate_db():
     contract_columns = {row[1] for row in c.fetchall()}
     if 'is_anonymous' not in contract_columns:
         c.execute("ALTER TABLE contracts ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0")
+    if 'expires_at' not in contract_columns:
+        c.execute("ALTER TABLE contracts ADD COLUMN expires_at TEXT DEFAULT NULL")
+    if 'submitted_at' not in contract_columns:
+        c.execute("ALTER TABLE contracts ADD COLUMN submitted_at TEXT DEFAULT NULL")
+    if 'auto_confirm_at' not in contract_columns:
+        c.execute("ALTER TABLE contracts ADD COLUMN auto_confirm_at TEXT DEFAULT NULL")
     c.execute('''CREATE TABLE IF NOT EXISTS economy_log
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   telegram_id INTEGER NOT NULL,
@@ -1037,6 +1410,31 @@ def migrate_db():
                   reference_type TEXT DEFAULT NULL,
                   note TEXT DEFAULT NULL,
                   created_at TEXT NOT NULL)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS architect_diary_unlocks
+                 (telegram_id INTEGER NOT NULL,
+                  entry_code TEXT NOT NULL,
+                  unlocked_at TEXT NOT NULL,
+                  PRIMARY KEY (telegram_id, entry_code))''')
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_economy_log_telegram_id ON economy_log(telegram_id, created_at)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_user_implants_tid ON user_implants(telegram_id, implant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_user_cards_tid ON user_cards(telegram_id, card_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_implant_daily_uses_tid ON implant_daily_uses(telegram_id, implant_id, use_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_shop_purchases_tid ON shop_purchases(telegram_id, item_code)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_casino_log_tid ON casino_log(telegram_id, date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_admin_action_logs_target ON admin_action_logs(target_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_daily_checks_tid ON daily_checks(telegram_id, check_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_diary_stars_tid ON diary_stars(telegram_id, entry_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_diary_entries_tid ON diary_entries(telegram_id, entry_date)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_raids_date ON raids(date, status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_raid_participants_rid ON raid_participants(raid_id, telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_contracts_status ON contracts(status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_legendary_actions ON legendary_implant_actions(actor_telegram_id, action_code)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_event_actions_eid ON event_actions(event_id, telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_event_participants_eid ON event_participants(event_id, telegram_id)")
+
     conn.commit()
     conn.close()
 
@@ -1071,6 +1469,8 @@ def ensure_seed_data():
                  active=1''',
             item,
         )
+    for deactivated_code in SHOP_ITEM_DEACTIVATE:
+        c.execute("UPDATE shop_items SET active=0 WHERE code=?", (deactivated_code,))
     for achievement in ACHIEVEMENT_SEEDS:
         c.execute(
             '''INSERT INTO achievements
@@ -1085,6 +1485,9 @@ def ensure_seed_data():
         )
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('blackwall', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('architect_event', '0')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('wildai_event', '0')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_until', '')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_seed', '')")
     # Raid schema migrations (idempotent)
     try:
         c.execute("ALTER TABLE raids ADD COLUMN correct_count INTEGER DEFAULT 0")
@@ -1118,6 +1521,29 @@ def ensure_seed_data():
                        VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)''',
                     (
                         'architect',
+                        action_type,
+                        question["prompt"],
+                        question["option_a"],
+                        question["option_b"],
+                        question["option_c"],
+                        question["correct_option"],
+                        question.get("explanation"),
+                        created_at,
+                    ),
+                )
+
+    c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='wildai_breach'")
+    wildai_count = c.fetchone()[0]
+    if wildai_count == 0:
+        created_at = datetime.utcnow().isoformat()
+        for action_type, questions in WILD_AI_BREACH_QUESTION_SEEDS.items():
+            for question in questions:
+                c.execute(
+                    '''INSERT INTO event_questions
+                       (event_code, action_type, difficulty, prompt, option_a, option_b, option_c, correct_option, explanation, created_at)
+                       VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)''',
+                    (
+                        'wildai_breach',
                         action_type,
                         question["prompt"],
                         question["option_a"],
@@ -1175,6 +1601,80 @@ def get_current_global_alert():
 init_db()
 migrate_db()
 ensure_seed_data()
+
+WAL_CHECKPOINT_INTERVAL_SECONDS = 300
+
+
+async def wal_checkpoint_loop():
+    while True:
+        await asyncio.sleep(WAL_CHECKPOINT_INTERVAL_SECONDS)
+        if DB_WRITE_LOCK.locked():
+            # Never let maintenance compete with user/admin mutations.
+            continue
+        try:
+            t0 = time.time()
+
+            def _checkpoint():
+                conn = sqlite3.connect('/root/zhidao.db', timeout=1)
+                try:
+                    conn.execute("PRAGMA busy_timeout=100")
+                    # PASSIVE checkpoints what it can and returns immediately if
+                    # readers/writers are active. User actions must never wait for
+                    # maintenance; startup handles WAL reset after restarts.
+                    row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+                    return row
+                finally:
+                    conn.close()
+
+            row = await asyncio.to_thread(_checkpoint)
+            ms = (time.time() - t0) * 1000
+            if ms > 200 or (row and row[0] != 0):
+                print(
+                    "ZHIDAO_WAL_CHECKPOINT busy=%s log_frames=%s checkpointed_frames=%s elapsed_ms=%.0f" % (
+                        row[0] if row else "?",
+                        row[1] if row else "?",
+                        row[2] if row else "?",
+                        ms,
+                    ),
+                    flush=True,
+                )
+        except Exception as exc:
+            print("ZHIDAO_WAL_CHECKPOINT_ERROR %r" % (exc,), flush=True)
+
+
+@app.on_event("startup")
+async def start_background_tasks():
+    asyncio.create_task(rate_limit_bucket_cleanup_loop())
+
+    if os.getenv("ZHIDAO_ENABLE_WAL_CHECKPOINT", "0") != "1":
+        return
+
+    # Manual WAL checkpointing is disabled by default. On the production
+    # server RESTART checkpoints were observed taking 49-72 seconds and
+    # competing with admin/shop writes. Keep this as opt-in maintenance only.
+    def _startup_checkpoint():
+        try:
+            conn = sqlite3.connect('/root/zhidao.db', timeout=5)
+            try:
+                conn.execute("PRAGMA busy_timeout=1000")
+                # PASSIVE only — RESTART/TRUNCATE compete with writers and were
+                # observed taking 49-72s on production (hard rule, 2026-06-09).
+                row = conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+                print(
+                    "ZHIDAO_STARTUP_CHECKPOINT busy=%s log_frames=%s checkpointed_frames=%s" % (
+                        row[0] if row else "?",
+                        row[1] if row else "?",
+                        row[2] if row else "?",
+                    ),
+                    flush=True,
+                )
+            finally:
+                conn.close()
+        except Exception as exc:
+            print("ZHIDAO_STARTUP_CHECKPOINT_ERROR %r" % (exc,), flush=True)
+
+    asyncio.create_task(asyncio.to_thread(_startup_checkpoint))
+    asyncio.create_task(wal_checkpoint_loop())
 
 
 def now_iso() -> str:
@@ -1502,7 +2002,7 @@ def fetch_event_row(c, event_id: int):
                   max_hp, current_hp, phase, state,
                   phase_started_at, started_at, ended_at, final_phase_deadline,
                   vulnerability_until, overload_pressure, created_at,
-                  mvp_user_id, extra_participants
+                  mvp_user_id, extra_participants, pressure_tick_at
            FROM events WHERE id=?''',
         (event_id,),
     )
@@ -1537,6 +2037,7 @@ def fetch_event_row(c, event_id: int):
         "created_at": row[18],
         "mvp_user_id": row[19],
         "extra_participants": extra,
+        "pressure_tick_at": row[21],
     }
 
 
@@ -1585,6 +2086,9 @@ def is_vulnerability_active(event_row: dict) -> bool:
 
 
 def apply_architect_phase_transitions(c, event_row: dict):
+    if event_row.get("code") != "architect":
+        return False
+
     changed = False
     hp_ratio = event_row["current_hp"] / event_row["max_hp"] if event_row["max_hp"] else 0
 
@@ -1612,9 +2116,107 @@ def apply_architect_phase_transitions(c, event_row: dict):
     return changed
 
 
+def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wild AI Breach auto-triggered (system integrity restoration failed)', send_broadcast: bool = True):
+    until = (datetime.utcnow() + timedelta(days=WILD_AI_BREACH_DURATION_DAYS)).isoformat()
+    seed = random.randint(0, 999999)
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', ?)", (until,))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', ?)", (str(seed),))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '1')")
+    phrase = WILD_AI_BREACH_PHRASES[seed % len(WILD_AI_BREACH_PHRASES)]
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_glitch', ?)", (phrase["glitch"],))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_translation', ?)", (phrase["translation"],))
+    if send_broadcast:
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_pending', '1')")
+    c.execute(
+        '''INSERT INTO admin_action_logs
+           (admin_id, target_id, action_type, points_delta, reason, created_at)
+           VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
+        (admin_id if admin_id is not None else 0, reason, now_iso()),
+    )
+
+
+def distribute_wildai_victory_rewards(c, event_id: int, mvp_id: Optional[int]):
+    c.execute("SELECT telegram_id FROM event_participants WHERE event_id=?", (event_id,))
+    participant_ids = [row[0] for row in c.fetchall()]
+    for telegram_id in participant_ids:
+        c.execute("UPDATE users SET rep_score = COALESCE(rep_score, 0) + ? WHERE telegram_id=?", (WILD_AI_BREACH_REWARD_REP, telegram_id))
+        c.execute(
+            "UPDATE user_status SET protocol_fragments = COALESCE(protocol_fragments, 0) + ?, wildai_defender=1 WHERE telegram_id=?",
+            (WILD_AI_BREACH_REWARD_FRAGMENTS, telegram_id),
+        )
+        c.execute("UPDATE user_status SET wildai_mvp = ? WHERE telegram_id=?", (1 if telegram_id == mvp_id else 0, telegram_id))
+
+
 def refresh_event_state(c, event_row: dict):
     if not event_row:
         return None
+
+    if event_row.get("code") == "wildai_breach":
+        if event_row["state"] == "ACTIVE":
+            started = parse_iso(event_row.get("started_at"))
+            now = datetime.utcnow()
+
+            # Infection ticks over time
+            tick_from = parse_iso(event_row.get("pressure_tick_at")) or started
+            if tick_from:
+                elapsed = (now - tick_from).total_seconds()
+                ticks = int(elapsed // WILD_AI_BREACH_INFECTION_TICK_SECONDS)
+                if ticks > 0:
+                    new_pressure = event_row["overload_pressure"] + ticks * WILD_AI_BREACH_INFECTION_TICK_AMOUNT
+                    new_tick_at = (tick_from + timedelta(seconds=ticks * WILD_AI_BREACH_INFECTION_TICK_SECONDS)).isoformat()
+                    event_row["overload_pressure"] = new_pressure
+                    event_row["pressure_tick_at"] = new_tick_at
+                    c.execute(
+                        "UPDATE events SET overload_pressure=?, pressure_tick_at=? WHERE id=?",
+                        (new_pressure, new_tick_at, event_row["id"]),
+                    )
+
+            time_expired = started and (now - started).total_seconds() > WILD_AI_BREACH_TIME_LIMIT_SECONDS
+            infection_critical = event_row["overload_pressure"] >= WILD_AI_BREACH_INFECTION_THRESHOLD
+
+            hp_ratio = event_row["current_hp"] / event_row["max_hp"] if event_row["max_hp"] else 0
+
+            if event_row["phase"] == 1 and hp_ratio <= ARCHITECT_PHASE2_THRESHOLD:
+                event_row["phase"] = 2
+                c.execute("UPDATE events SET phase=2 WHERE id=?", (event_row["id"],))
+                add_event_log(c, event_row["id"], "boss", "WILD AI BREACH: вторичный периметр пробит. Дикий ИИ усиливает атаку.")
+
+            if event_row["phase"] == 2 and hp_ratio <= ARCHITECT_PHASE3_THRESHOLD:
+                event_row["phase"] = 3
+                c.execute("UPDATE events SET phase=3 WHERE id=?", (event_row["id"],))
+                add_event_log(c, event_row["id"], "boss", "WILD AI BREACH: критическая зона. Дикий ИИ обходит последние защиты.")
+
+            if event_row["current_hp"] > 0 and (time_expired or infection_critical):
+                event_row["state"] = "FAILED"
+                event_row["ended_at"] = now_iso()
+                c.execute(
+                    "UPDATE events SET state='FAILED', ended_at=? WHERE id=?",
+                    (event_row["ended_at"], event_row["id"]),
+                )
+                reason = "заражение достигло критического уровня" if infection_critical else "время истекло"
+                add_event_log(c, event_row["id"], "system", f"WILD AI BREACH: операция провалена — {reason}. Дикий ИИ закрепился в системе.")
+                activate_wildai_breach(c, send_broadcast=False)
+
+            if event_row["current_hp"] <= 0:
+                event_row["current_hp"] = 0
+                event_row["state"] = "FINISHED"
+                event_row["ended_at"] = now_iso()
+                c.execute(
+                    """SELECT telegram_id FROM event_participants
+                       WHERE event_id=? ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
+                    (event_row["id"],),
+                )
+                mvp_row = c.fetchone()
+                mvp_id = mvp_row[0] if mvp_row else None
+                c.execute(
+                    "UPDATE events SET current_hp=0, state='FINISHED', ended_at=?, mvp_user_id=? WHERE id=?",
+                    (event_row["ended_at"], mvp_id, event_row["id"]),
+                )
+                event_row["mvp_user_id"] = mvp_id
+                add_event_log(c, event_row["id"], "system", "WILD AI BREACH: целостность системы восстановлена. Дикий ИИ вытеснен.")
+                distribute_wildai_victory_rewards(c, event_row["id"], mvp_id)
+
+        return fetch_event_row(c, event_row["id"])
 
     if event_row["state"] == "ACTIVE" and event_row["phase"] == 3:
         deadline = parse_iso(event_row.get("final_phase_deadline"))
@@ -1694,10 +2296,16 @@ def get_event_snapshot(event_id: int):
     return snapshot
 
 
-def get_current_or_latest_event_id():
+ARCHITECT_RESULT_VISIBLE_HOURS = 12
+
+
+def get_current_or_latest_event_id(event_code: Optional[str] = None):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
+    if event_code:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? ORDER BY id DESC", (event_code,))
+    else:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
     rows = c.fetchall()
     row = None
     for candidate in rows:
@@ -1707,14 +2315,36 @@ def get_current_or_latest_event_id():
             row = candidate
             break
     conn.commit()
+    if row:
+        conn.close()
+        return row[0]
+    # No live event: keep showing the latest finished/failed one for a while
+    # so participants see the result screen instead of the standby lobby.
+    if event_code:
+        c.execute(
+            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') AND code=? ORDER BY id DESC LIMIT 1",
+            (event_code,)
+        )
+    else:
+        c.execute(
+            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') ORDER BY id DESC LIMIT 1"
+        )
+    terminal = c.fetchone()
     conn.close()
-    return row[0] if row else None
+    if terminal:
+        ended = parse_iso(terminal[1])
+        if ended and datetime.utcnow() - ended <= timedelta(hours=ARCHITECT_RESULT_VISIBLE_HOURS):
+            return terminal[0]
+    return None
 
 
-def get_blocking_event_id():
+def get_blocking_event_id(event_code: Optional[str] = None):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
+    if event_code:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? ORDER BY id DESC", (event_code,))
+    else:
+        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
     rows = c.fetchall()
     blocking_id = None
     for candidate in rows:
@@ -1728,14 +2358,14 @@ def get_blocking_event_id():
     return blocking_id
 
 
-def choose_architect_question(c, action_type: str):
+def choose_architect_question(c, action_type: str, event_code: str = 'architect'):
     c.execute(
         '''SELECT id, prompt, option_a, option_b, option_c, explanation
            FROM event_questions
-           WHERE event_code='architect' AND action_type=?
+           WHERE event_code=? AND action_type=?
            ORDER BY RANDOM()
            LIMIT 1''',
-        (action_type,),
+        (event_code, action_type),
     )
     row = c.fetchone()
     if not row:
@@ -1795,7 +2425,167 @@ def maybe_trigger_sync_window(c, event_row: dict):
         open_vulnerability_window(c, event_row)
 
 
+def get_wildai_base_value(action_type: str, is_correct: bool) -> int:
+    if action_type == "sync":
+        return 0
+    base_values = {"attack": 22, "protocol": 16, "stabilize": 14}
+    full = base_values.get(action_type, 0)
+    if not is_correct:
+        return max(0, round(full * 0.25))
+    return full
+
+
+def compute_wildai_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, telegram_id: int = 0):
+    base_value = get_wildai_base_value(action_type, is_correct)
+    final_value = base_value
+    support_value = 0
+    pressure_delta = 0
+
+    if action_type == "sync":
+        support_value = 1
+        pressure_delta = -WILD_AI_BREACH_INFECTION_SYNC_REDUCTION
+        maybe_trigger_sync_window(c, event_row)
+        return {
+            "base_value": 0,
+            "modifier_value": 0,
+            "final_value": 0,
+            "support_value": support_value,
+            "pressure_delta": pressure_delta,
+            "active_note": None,
+            "penalty_active": False,
+        }
+
+    if action_type in ("attack", "protocol"):
+        if not is_correct:
+            pressure_delta = WILD_AI_BREACH_INFECTION_ON_ERROR
+        if is_vulnerability_active(event_row) and final_value > 0:
+            bonus = max(1, round(final_value * 0.3))
+            final_value += bonus
+        return {
+            "base_value": base_value,
+            "modifier_value": final_value - base_value,
+            "final_value": final_value,
+            "support_value": 0,
+            "pressure_delta": pressure_delta,
+            "active_note": None,
+            "penalty_active": False,
+        }
+
+    # stabilize
+    if is_correct:
+        support_value = base_value
+        pressure_delta = -WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION
+    else:
+        pressure_delta = WILD_AI_BREACH_INFECTION_ON_ERROR
+    return {
+        "base_value": base_value,
+        "modifier_value": 0,
+        "final_value": 0,
+        "support_value": support_value,
+        "pressure_delta": pressure_delta,
+        "active_note": None,
+        "penalty_active": False,
+    }
+
+
+# ===== Implant/card combat bonuses (Architect Protocol & Wild AI Breach) =====
+# item_id -> (damage_pct, applicable action types)
+EVENT_ITEM_DAMAGE_BONUS = {
+    "implant_red_dragon": (0.20, ("attack", "protocol")),
+    "implant_shaolin": (0.10, ("attack",)),
+    "implant_linguasoft": (0.10, ("protocol",)),
+    "card_pyro": (0.10, ("attack",)),
+    "card_literature": (0.10, ("protocol",)),
+}
+EVENT_ITEM_PRESSURE_REDUCTION = ("implant_terracota", "card_forest")  # -20% pressure/overload gain on error
+EVENT_ITEM_SYNC_SUPPORT = ("implant_guanxi", "card_sea")  # +1 support on Sync
+EVENT_ITEM_STABILIZE_SUPPORT = ("implant_caishen", "card_fairy")  # +2 support on Stabilize
+EVENT_ITEM_ANY_SUPPORT = ("implant_panda", "card_fox")  # +1 support on Sync/Stabilize
+EVENT_ITEM_TEAM_DAMAGE = ("implant_qilin", "card_moon")  # +5% team damage if 2+ teammates hold it
+EVENT_ITEM_TEAM_DAMAGE_BONUS_PCT = 0.05
+EVENT_ITEM_TEAM_DAMAGE_MIN_HOLDERS = 2
+
+
+def get_event_combat_items(c, telegram_id: int) -> set:
+    items = set()
+    c.execute("SELECT implant_id FROM user_implants WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    items.update(row[0] for row in c.fetchall())
+    c.execute("SELECT card_id FROM user_cards WHERE telegram_id=? AND durability > 0", (telegram_id,))
+    items.update(row[0] for row in c.fetchall())
+    return items
+
+
+def apply_event_item_bonuses(c, event_row: dict, telegram_id: int, action_type: str, is_correct: bool, result: dict):
+    if not telegram_id:
+        return
+    items = get_event_combat_items(c, telegram_id)
+    if not items:
+        return
+
+    if action_type in ("attack", "protocol") and result.get("final_value", 0) > 0:
+        damage_pct = sum(pct for item_id, (pct, actions) in EVENT_ITEM_DAMAGE_BONUS.items()
+                          if item_id in items and action_type in actions)
+        if damage_pct:
+            bonus = max(1, round(result["final_value"] * damage_pct))
+            result["final_value"] += bonus
+            result["modifier_value"] = result.get("modifier_value", 0) + bonus
+        if "card_star" in items and is_correct:
+            result["final_value"] += 1
+            result["modifier_value"] = result.get("modifier_value", 0) + 1
+
+        for item_id in EVENT_ITEM_TEAM_DAMAGE:
+            if item_id not in items:
+                continue
+            table = "user_implants" if item_id.startswith("implant_") else "user_cards"
+            column = "implant_id" if table == "user_implants" else "card_id"
+            c.execute(
+                f'''SELECT COUNT(*) FROM event_team_members etm
+                    JOIN {table} t ON t.telegram_id = etm.telegram_id AND t.{column}=? AND t.durability > 0
+                    WHERE etm.event_id=?''',
+                (item_id, event_row["id"]),
+            )
+            holders = c.fetchone()[0]
+            if holders >= EVENT_ITEM_TEAM_DAMAGE_MIN_HOLDERS:
+                bonus = max(1, round(result["final_value"] * EVENT_ITEM_TEAM_DAMAGE_BONUS_PCT))
+                result["final_value"] += bonus
+                result["modifier_value"] = result.get("modifier_value", 0) + bonus
+
+    if not is_correct and result.get("pressure_delta", 0) > 0 and any(i in items for i in EVENT_ITEM_PRESSURE_REDUCTION):
+        result["pressure_delta"] = max(0, result["pressure_delta"] - max(1, round(result["pressure_delta"] * 0.20)))
+
+    if action_type == "sync":
+        if any(i in items for i in EVENT_ITEM_SYNC_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 1
+        if any(i in items for i in EVENT_ITEM_ANY_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 1
+        if "card_zhongli" in items and result.get("pressure_delta", 0) < 0:
+            result["pressure_delta"] -= 1
+        if is_correct and "implant_netwatch" in items and is_vulnerability_active(event_row):
+            until = parse_iso(event_row.get("vulnerability_until"))
+            if until:
+                new_until = (until + timedelta(seconds=30)).isoformat()
+                event_row["vulnerability_until"] = new_until
+                c.execute("UPDATE events SET vulnerability_until=? WHERE id=?", (new_until, event_row["id"]))
+
+    if action_type == "stabilize":
+        if is_correct and any(i in items for i in EVENT_ITEM_STABILIZE_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 2
+        if is_correct and any(i in items for i in EVENT_ITEM_ANY_SUPPORT):
+            result["support_value"] = result.get("support_value", 0) + 1
+        if "card_zhongli" in items and result.get("pressure_delta", 0) < 0:
+            result["pressure_delta"] -= 1
+
+
 def compute_event_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool, telegram_id: int = 0):
+    if event_row.get("code") == "wildai_breach":
+        result = compute_wildai_action_result(c, event_row, participant, action_type, is_correct, telegram_id=telegram_id)
+    else:
+        result = compute_architect_action_result(c, event_row, participant, action_type, is_correct, use_active_modifier, telegram_id=telegram_id)
+    apply_event_item_bonuses(c, event_row, telegram_id, action_type, is_correct, result)
+    return result
+
+
+def compute_architect_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool, telegram_id: int = 0):
     phase = event_row["phase"]
     role = participant.get("modifier_role")
     base_value = get_architect_base_value(phase, action_type, is_correct)
@@ -2174,6 +2964,21 @@ def award_achievement(c, telegram_id: int, code: str) -> bool:
         "INSERT OR IGNORE INTO user_achievements (telegram_id, achievement_code) VALUES (?,?)",
         (telegram_id, code),
     )
+    granted = c.rowcount > 0
+    if granted:
+        unlock_diary_entry(c, telegram_id, "first_achievement")
+    return granted
+
+
+ARCHITECT_DIARY_CLIENT_UNLOCKABLE = {"architect_intro", "architect_victory", "architect_defeat"}
+
+
+def unlock_diary_entry(c, telegram_id: int, entry_code: str) -> bool:
+    """Marks an Architect's Diary entry as unlocked for a user. Returns True if newly unlocked."""
+    c.execute(
+        "INSERT OR IGNORE INTO architect_diary_unlocks (telegram_id, entry_code, unlocked_at) VALUES (?,?,?)",
+        (telegram_id, entry_code, now_iso()),
+    )
     return c.rowcount > 0
 
 
@@ -2485,7 +3290,8 @@ def get_contract_row(c, contract_id: int):
         '''SELECT id, title, description, category, reward_stars, fee_stars,
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
-                  created_at, accepted_at, completed_at, cancelled_at, disputed_at
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                  submitted_at, auto_confirm_at
            FROM contracts WHERE id=?''',
         (contract_id,),
     )
@@ -2723,7 +3529,8 @@ def get_user_profile_dossier(telegram_id: int):
     c = conn.cursor()
     c.execute(
         '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
-                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score
+                  us.profile_showcase_kind, us.profile_showcase_code, u.rep_score, us.equipped_frame,
+                  us.wildai_mvp
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -2734,7 +3541,9 @@ def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame, wildai_mvp = user_row
+    if equipped_frame not in FRAME_IDS:
+        equipped_frame = None
     points = points or 0
     rep_score = rep_score or 0
 
@@ -2778,7 +3587,7 @@ def get_user_profile_dossier(telegram_id: int):
             "code": card_id,
             "name": info.get("name", card_id),
             "glyph": "月" if card_id == "card_moon" else "卡",
-            "detail": f"{info.get('rarity', 4)}★ · durability {durability}",
+            "detail": f"{info.get('rarity', 4)}★ · прочность {durability}",
             "source": source,
         }
 
@@ -2789,7 +3598,7 @@ def get_user_profile_dossier(telegram_id: int):
             "code": implant_id,
             "name": info.get("name", implant_id),
             "glyph": info.get("glyph", "芯"),
-            "detail": f"durability {durability}",
+            "detail": f"прочность {durability}",
             "source": source,
         }
 
@@ -2861,7 +3670,9 @@ def get_user_profile_dossier(telegram_id: int):
         rank = "D"
     sync_rate = min(99, max(1, round((reputation_score / 1650) * 100)))
 
-    if prayers >= 20:
+    if wildai_mvp:
+        title = WILD_AI_BREACH_MVP_TITLE
+    elif prayers >= 20:
         title = "祈愿者 / Молитвенник"
     elif case_opens >= 20:
         title = "开箱狂人 / Кейсовый маньяк"
@@ -2902,6 +3713,7 @@ def get_user_profile_dossier(telegram_id: int):
         "title": title,
         "leaderboard_rank": leaderboard_rank,
         "showcase": showcase,
+        "equipped_frame": equipped_frame,
         "is_admin": telegram_id in ADMIN_IDS,
         "is_architect": telegram_id in ARCHITECT_IDS,
         "stats": {
@@ -3155,14 +3967,18 @@ async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Heade
     if not text:
         raise HTTPException(status_code=400, detail="Announcement text is empty")
 
-    async with DB_WRITE_LOCK:
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
-        announcement_id = c.lastrowid
-        conn.commit()
-        conn.close()
+        try:
+            c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
+            announcement_id = c.lastrowid
+            conn.commit()
+            return announcement_id
+        finally:
+            conn.close()
 
+    announcement_id = await db_write(_run)
     telegram_delivery = await broadcast_announcement_to_telegram(text)
     return {"success": True, "id": announcement_id, "telegram_delivery": telegram_delivery}
 
@@ -3236,6 +4052,7 @@ async def book_laundry(item: LaundryBook):
             conn.close()
             raise HTTPException(status_code=409, detail="Already booked for this day")
         c.execute("INSERT INTO laundry (date, time, telegram_id, username) VALUES (?,?,?,?)", (item.date, item.time, item.telegram_id, item.username))
+        unlock_diary_entry(c, item.telegram_id, "first_laundry")
         conn.commit()
         conn.close()
         return {"success": True}
@@ -3742,6 +4559,7 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
                 (x_admin_id, target_id, actual_delta, reason, now_iso()),
             )
             log_economy(c, target_id, 'admin_points', actual_delta, new_points, x_admin_id, 'admin', reason)
+            unlock_diary_entry(c, target_id, "first_economy")
             conn.commit()
             return {
                 "full_name": row[0] or str(target_id),
@@ -3802,6 +4620,7 @@ async def internal_add_points(data: dict, request: Request):
                 return None
             new_points = row[0]
             log_economy(c, target_id, operation, delta, new_points, reference_type='bot', note=note)
+            unlock_diary_entry(c, target_id, "first_economy")
             conn.commit()
             return new_points
         finally:
@@ -3984,51 +4803,56 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
     note = str(data.get("note") or f"admin dispatch attempt {attempt_no}").strip()
     target_ids = data.get("telegram_ids")
 
-    async with DB_WRITE_LOCK:
+    def _prepare():
         conn = get_conn()
         c = conn.cursor()
-        if target_ids:
-            ids = []
-            for raw_id in target_ids:
-                try:
-                    ids.append(int(raw_id))
-                except (TypeError, ValueError):
-                    continue
-            ids = [tid for tid in ids if tid not in ADMIN_IDS]
-        else:
-            placeholders = ','.join('?' * len(ADMIN_IDS))
-            c.execute(
-                f'''SELECT telegram_id
-                    FROM users
-                    WHERE telegram_id IS NOT NULL
-                      AND telegram_id NOT IN ({placeholders})''',
-                ADMIN_IDS,
-            )
-            ids = [row[0] for row in c.fetchall()]
-
-        eligible = []
-        skipped = 0
-        for telegram_id in ids:
-            row = ensure_presence_check(c, check_type, check_date, telegram_id, note)
-            if row and row.get("status") == "skipped":
-                c.execute(
-                    '''UPDATE daily_checks
-                       SET status='pending',
-                           attempts_sent=0,
-                           first_sent_at=NULL,
-                           last_attempt_at=NULL,
-                           note=?,
-                           updated_at=?
-                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
-                    (note, now_iso(), check_type, check_date, telegram_id),
-                )
-                row = fetch_presence_row(c, check_type, check_date, telegram_id)
-            if row and row.get("status") in ("pending", "leave_rejected"):
-                eligible.append(telegram_id)
+        try:
+            if target_ids:
+                ids = []
+                for raw_id in target_ids:
+                    try:
+                        ids.append(int(raw_id))
+                    except (TypeError, ValueError):
+                        continue
+                ids = [tid for tid in ids if tid not in ADMIN_IDS]
             else:
-                skipped += 1
-        conn.commit()
-        conn.close()
+                placeholders = ','.join('?' * len(ADMIN_IDS))
+                c.execute(
+                    f'''SELECT telegram_id
+                        FROM users
+                        WHERE telegram_id IS NOT NULL
+                          AND telegram_id NOT IN ({placeholders})''',
+                    ADMIN_IDS,
+                )
+                ids = [row[0] for row in c.fetchall()]
+
+            eligible = []
+            skipped = 0
+            for telegram_id in ids:
+                row = ensure_presence_check(c, check_type, check_date, telegram_id, note)
+                if row and row.get("status") == "skipped":
+                    c.execute(
+                        '''UPDATE daily_checks
+                           SET status='pending',
+                               attempts_sent=0,
+                               first_sent_at=NULL,
+                               last_attempt_at=NULL,
+                               note=?,
+                               updated_at=?
+                           WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                        (note, now_iso(), check_type, check_date, telegram_id),
+                    )
+                    row = fetch_presence_row(c, check_type, check_date, telegram_id)
+                if row and row.get("status") in ("pending", "leave_rejected"):
+                    eligible.append(telegram_id)
+                else:
+                    skipped += 1
+            conn.commit()
+            return eligible, skipped
+        finally:
+            conn.close()
+
+    eligible, skipped = await db_write(_prepare)
 
     sent = []
     failed = []
@@ -4038,23 +4862,29 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
         ok, response = await send_telegram_message(telegram_id, text, markup)
         if ok:
             sent.append(telegram_id)
-            async with DB_WRITE_LOCK:
-                conn = get_conn()
-                c = conn.cursor()
-                now = now_iso()
-                c.execute(
-                    '''UPDATE daily_checks
-                       SET attempts_sent=COALESCE(attempts_sent, 0) + 1,
-                           first_sent_at=COALESCE(first_sent_at, ?),
-                           last_attempt_at=?,
-                           updated_at=?
-                       WHERE check_type=? AND check_date=? AND telegram_id=?''',
-                    (now, now, now, check_type, check_date, telegram_id),
-                )
-                conn.commit()
-                conn.close()
         else:
             failed.append({"telegram_id": telegram_id, "error": response})
+
+    if sent:
+        def _mark_sent():
+            conn = get_conn()
+            c = conn.cursor()
+            try:
+                now = now_iso()
+                for telegram_id in sent:
+                    c.execute(
+                        '''UPDATE daily_checks
+                           SET attempts_sent=COALESCE(attempts_sent, 0) + 1,
+                               first_sent_at=COALESCE(first_sent_at, ?),
+                               last_attempt_at=?,
+                               updated_at=?
+                           WHERE check_type=? AND check_date=? AND telegram_id=?''',
+                        (now, now, now, check_type, check_date, telegram_id),
+                    )
+                conn.commit()
+            finally:
+                conn.close()
+        await db_write(_mark_sent)
 
     return {
         "success": True,
@@ -4885,6 +5715,44 @@ def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_a
     ]
 
 
+@app.get("/api/diary/architect/{telegram_id}")
+def get_architect_diary(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT entry_code, unlocked_at FROM architect_diary_unlocks WHERE telegram_id=?",
+        (telegram_id,)
+    )
+    rows = c.fetchall()
+    conn.close()
+    return {
+        "telegram_id": telegram_id,
+        "entries": [{"entry_code": row[0], "unlocked_at": row[1]} for row in rows]
+    }
+
+
+class ArchitectDiaryUnlockRequest(BaseModel):
+    telegram_id: int
+    entry_code: str
+
+
+@app.post("/api/diary/architect/unlock")
+async def post_architect_diary_unlock(payload: ArchitectDiaryUnlockRequest):
+    if payload.entry_code not in ARCHITECT_DIARY_CLIENT_UNLOCKABLE:
+        raise HTTPException(status_code=400, detail="Entry code not client-unlockable")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        unlocked = unlock_diary_entry(c, payload.telegram_id, payload.entry_code)
+        conn.commit()
+        conn.close()
+        return unlocked
+
+    unlocked = await db_write(_run, label="architect_diary_unlock")
+    return {"success": True, "unlocked": unlocked}
+
+
 @app.get("/api/diary/{telegram_id}")
 def get_diary_entries(telegram_id: int, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
@@ -5148,7 +6016,7 @@ async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/leaderboard")
-def get_leaderboard():
+async def get_leaderboard():
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     placeholders = ','.join('?' * len(ADMIN_IDS))
     conn = get_conn()
@@ -5156,6 +6024,7 @@ def get_leaderboard():
     c.execute(
         f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
+                 us.equipped_frame,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
                   AND durability > 0
@@ -5183,20 +6052,121 @@ def get_leaderboard():
         [today] + ADMIN_IDS,
     )
     result = c.fetchall()
+
+    # Динамика рейтинга: сравнение с последним сохранённым срезом
+    c.execute("SELECT MAX(snapshot_date) FROM leaderboard_snapshots WHERE snapshot_date < ?", (today,))
+    prev_date_row = c.fetchone()
+    prev_date = prev_date_row[0] if prev_date_row else None
+    prev_ranks = {}
+    if prev_date:
+        c.execute("SELECT telegram_id, rank FROM leaderboard_snapshots WHERE snapshot_date=?", (prev_date,))
+        prev_ranks = {row[0]: row[1] for row in c.fetchall()}
+
+    c.execute("SELECT 1 FROM leaderboard_snapshots WHERE snapshot_date=? LIMIT 1", (today,))
+    has_today_snapshot = c.fetchone() is not None
     conn.close()
-    return [
-        {
+
+    if not has_today_snapshot:
+        def _snapshot():
+            conn2 = get_conn()
+            try:
+                c2 = conn2.cursor()
+                c2.execute(
+                    f'''INSERT OR IGNORE INTO leaderboard_snapshots (telegram_id, rank, rep, snapshot_date)
+                        SELECT telegram_id, ROW_NUMBER() OVER (ORDER BY rep_score DESC), rep_score, ?
+                        FROM users
+                        WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders})''',
+                    [today] + ADMIN_IDS,
+                )
+                conn2.commit()
+            finally:
+                conn2.close()
+        await db_write(_snapshot)
+
+    out = []
+    for i, r in enumerate(result):
+        telegram_id = r[2]
+        prev_rank = prev_ranks.get(telegram_id)
+        rank_delta = (prev_rank - (i + 1)) if prev_rank is not None else None
+        out.append({
             "name": r[0] or "Аноним",
             "rep": r[1] or 0,
-            "telegram_id": r[2],
+            "telegram_id": telegram_id,
             "avatar_url": r[3],
             "theme_path": r[4],
             "has_title": bool(r[5]),
-            "implant": r[6],
-            "card": r[7],
-        }
-        for r in result
-    ]
+            "equipped_frame": r[6] if r[6] in FRAME_IDS else None,
+            "implant": r[7],
+            "card": r[8],
+            "rank_delta": rank_delta,
+        })
+    return out
+
+
+@app.get("/api/frames/{telegram_id}")
+def get_user_frames(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    unlocked = set(compute_unlocked_frames(c, telegram_id))
+    c.execute("SELECT equipped_frame FROM user_status WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    equipped = row[0] if row and row[0] in unlocked else None
+    conn.close()
+
+    return {
+        "equipped": equipped,
+        "frames": [
+            {
+                "id": f["id"],
+                "name": f["name"],
+                "desc": f["desc"],
+                "category": f["category"],
+                "unlocked": f["id"] in unlocked,
+            }
+            for f in FRAME_DEFINITIONS
+        ],
+    }
+
+
+@app.post("/api/frames/equip")
+async def equip_frame(data: dict):
+    telegram_id = data.get("telegram_id")
+    frame_id = data.get("frame_id")
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="No telegram_id")
+    if frame_id is not None and frame_id not in FRAME_IDS:
+        raise HTTPException(status_code=400, detail="Unknown frame")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
+            if not c.fetchone():
+                raise HTTPException(status_code=404, detail="User not found")
+
+            if frame_id is not None:
+                unlocked = set(compute_unlocked_frames(c, telegram_id))
+                if frame_id not in unlocked:
+                    raise HTTPException(status_code=403, detail="Frame not unlocked")
+
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, equipped_frame) VALUES (?, ?)
+                   ON CONFLICT(telegram_id) DO UPDATE SET equipped_frame=excluded.equipped_frame''',
+                (telegram_id, frame_id),
+            )
+            conn.commit()
+            return frame_id
+        finally:
+            conn.close()
+
+    equipped = await db_write(_run)
+    return {"success": True, "equipped": equipped}
 
 
 @app.get("/api/achievements/{telegram_id}")
@@ -5367,13 +6337,17 @@ async def open_case(data: dict):
             scan_row = c.fetchone()
             log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
 
+            unlock_diary_entry(c, telegram_id, "first_spin")
+            if prize["code"].startswith("implant_"):
+                unlock_diary_entry(c, telegram_id, "first_item")
+
             award_achievement(c, telegram_id, "gambler")
             if prize["code"] in ("jackpot", "implant_red_dragon"):
                 award_achievement(c, telegram_id, "lucky")
             if prize["code"] == "implant_red_dragon":
                 award_achievement(c, telegram_id, "dragon")
             if doubled_win:
-                log_economy(c, telegram_id, 'double_win_consumed', 0, new_points, None, "shop_item", "Двойной выигрыш")
+                log_economy(c, telegram_id, 'double_win_consumed', 0, new_points, None, "shop_item", "Двойной сигнал")
             conn.commit()
             return {
                 "new_points": new_points,
@@ -5507,8 +6481,8 @@ def get_implants(telegram_id: int):
         "implant_linguasoft": {"name": "Linguasoft 口才", "icon": "🎙", "desc": "+30★ за 3★ в дневнике · серия из 3 дневников на 3★ ещё +20★ · в ивентах: +10% урона на Протоколе"},
         "implant_caishen": {"name": "Цайшэнь 财神", "icon": "💰", "desc": "+15★ каждые 24 часа · в ивентах: +2 поддержка при Стабилизации"},
         "implant_qilin": {"name": "Цилинь 麒麟", "icon": "🐉", "desc": "+10★ за каждого владельца Цилиня · в ивентах: +5% урона команде, если 2+ с этим имплантом"},
-        "implant_red_dragon": {"name": "Красный Дракон 红龙", "icon": "🐉", "desc": "+20% баллов · перехват · сбросить импульс · в ивентах: +20% урона на Атаке/Протоколе"},
-        "implant_netwatch": {"name": "Сетевой Дозор 网络守卫", "icon": "🔴", "desc": "Форматирование · Взлом Заслона · контроль сети · в ивентах: удачная Синхронизация продлевает окно уязвимости на +30с"},
+        "implant_red_dragon": {"name": "Красный Дракон 红龙", "icon": "🐉", "desc": "+20% наградных · x2 зарплата по вс · перехват · сбросить импульс · в ивентах: +20% урона на Атаке/Протоколе"},
+        "implant_netwatch": {"name": "Сетевой Дозор 网络守卫", "icon": "🔴", "desc": "+25★ каждое утро · форматирование · взлом заслона · в ивентах: удачная Синхронизация продлевает окно уязвимости на +30с"},
     }
     result = []
     for row in rows:
@@ -5572,35 +6546,39 @@ async def red_dragon_intercept(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    async with DB_WRITE_LOCK:
+
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "intercept")
-        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
-        if target_points < 80:
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_red_dragon", "intercept")
+            tid, tname, target_points = find_action_target(c, actor_id, target_id, target_name)
+            if target_points < 80:
+                raise HTTPException(status_code=400, detail="Target balance below 80")
+            cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''SELECT 1 FROM legendary_implant_actions
+                   WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='intercept'
+                     AND created_at>=? LIMIT 1''',
+                (actor_id, tid, cutoff),
+            )
+            if c.fetchone():
+                raise HTTPException(status_code=429, detail="Target protected for 3 days")
+            c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (tid,))
+            c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
+            target_balance = c.fetchone()[0] or 0
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
+            actor_balance = c.fetchone()[0] or 0
+            log_economy(c, tid, "red_dragon_intercept_loss", -10, target_balance, actor_id, "implant", "Перехват")
+            log_economy(c, actor_id, "red_dragon_intercept_gain", 10, actor_balance, tid, "implant", "Перехват")
+            log_legendary_action(c, actor_id, tid, None, "implant_red_dragon", "intercept", 10, 0, tname)
+            conn.commit()
+            return tid, tname, actor_balance
+        finally:
             conn.close()
-            raise HTTPException(status_code=400, detail="Target balance below 80")
-        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
-        c.execute(
-            '''SELECT 1 FROM legendary_implant_actions
-               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='intercept'
-                 AND created_at>=? LIMIT 1''',
-            (actor_id, target_id, cutoff),
-        )
-        if c.fetchone():
-            conn.close()
-            raise HTTPException(status_code=429, detail="Target protected for 3 days")
-        c.execute("UPDATE users SET points = points - 10 WHERE telegram_id=?", (target_id,))
-        c.execute("UPDATE users SET points = points + 10 WHERE telegram_id=?", (actor_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
-        target_balance = c.fetchone()[0] or 0
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (actor_id,))
-        actor_balance = c.fetchone()[0] or 0
-        log_economy(c, target_id, "red_dragon_intercept_loss", -10, target_balance, actor_id, "implant", "Перехват")
-        log_economy(c, actor_id, "red_dragon_intercept_gain", 10, actor_balance, target_id, "implant", "Перехват")
-        log_legendary_action(c, actor_id, target_id, None, "implant_red_dragon", "intercept", 10, 0, target_name)
-        conn.commit()
-        conn.close()
+
+    target_id, target_name, actor_balance = await db_write(_run)
     await send_telegram_message(target_id, "🐉 Красный Дракон активировал «Перехват».\nС вашего баланса снято 10★.")
     return {"success": True, "target": target_name, "stolen": 10, "new_points": actor_balance}
 
@@ -5651,41 +6629,46 @@ async def netwatch_formatting(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    async with DB_WRITE_LOCK:
+
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "formatting")
-        target_id, target_name, target_points = find_action_target(c, actor_id, target_id, target_name)
-        if target_points < 80:
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "formatting")
+            tid, tname, target_points = find_action_target(c, actor_id, target_id, target_name)
+            if target_points < 80:
+                raise HTTPException(status_code=400, detail="Target balance below 80")
+            c.execute(
+                '''SELECT telegram_id, full_name, COALESCE(points, 0)
+                   FROM users
+                   WHERE telegram_id NOT IN (?, ?)
+                     AND telegram_id NOT IN ({})
+                     AND COALESCE(points, 0) >= 80
+                   ORDER BY RANDOM()
+                   LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
+                [actor_id, tid] + ADMIN_IDS,
+            )
+            secondary = c.fetchone()
+            secondary_id = secondary[0] if secondary else None
+            secondary_name = secondary[1] if secondary else None
+            c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (tid,))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (tid,))
+            target_balance = c.fetchone()[0] or 0
+            log_economy(c, tid, "netwatch_formatting", -15, target_balance, actor_id, "implant", "Форматирование")
+            secondary_delta = 0
+            if secondary_id:
+                c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
+                secondary_balance = c.fetchone()[0] or 0
+                log_economy(c, secondary_id, "netwatch_formatting_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
+                secondary_delta = -5
+            log_legendary_action(c, actor_id, tid, secondary_id, "implant_netwatch", "formatting", -15, secondary_delta, tname)
+            conn.commit()
+            return tid, tname, secondary_id, secondary_name
+        finally:
             conn.close()
-            raise HTTPException(status_code=400, detail="Target balance below 80")
-        c.execute(
-            '''SELECT telegram_id, full_name, COALESCE(points, 0)
-               FROM users
-               WHERE telegram_id NOT IN (?, ?)
-                 AND telegram_id NOT IN ({})
-                 AND COALESCE(points, 0) >= 80
-               ORDER BY RANDOM()
-               LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
-            [actor_id, target_id] + ADMIN_IDS,
-        )
-        secondary = c.fetchone()
-        secondary_id = secondary[0] if secondary else None
-        secondary_name = secondary[1] if secondary else None
-        c.execute("UPDATE users SET points = points - 15 WHERE telegram_id=?", (target_id,))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
-        target_balance = c.fetchone()[0] or 0
-        log_economy(c, target_id, "netwatch_formatting", -15, target_balance, actor_id, "implant", "Форматирование")
-        secondary_delta = 0
-        if secondary_id:
-            c.execute("UPDATE users SET points = points - 5 WHERE telegram_id=?", (secondary_id,))
-            c.execute("SELECT points FROM users WHERE telegram_id=?", (secondary_id,))
-            secondary_balance = c.fetchone()[0] or 0
-            log_economy(c, secondary_id, "netwatch_formatting_collateral", -5, secondary_balance, actor_id, "implant", "Побочный урон")
-            secondary_delta = -5
-        log_legendary_action(c, actor_id, target_id, secondary_id, "implant_netwatch", "formatting", -15, secondary_delta, target_name)
-        conn.commit()
-        conn.close()
+
+    target_id, target_name, secondary_id, secondary_name = await db_write(_run)
     await send_telegram_message(target_id, "🔴 NetWatch выполнил «Форматирование».\nС вашего баланса снято 15★.")
     if secondary_id:
         await send_telegram_message(secondary_id, "🔴 Побочный импульс NetWatch.\nС вашего баланса снято 5★.")
@@ -5705,30 +6688,35 @@ async def netwatch_veil_breach(data: dict):
     target_name = data.get("target_name")
     if not actor_id:
         raise HTTPException(status_code=400, detail="telegram_id required")
-    async with DB_WRITE_LOCK:
+
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "veil_breach")
-        target_id, target_name, _ = find_action_target(c, actor_id, target_id, target_name)
-        cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
-        c.execute(
-            '''SELECT 1 FROM legendary_implant_actions
-               WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='veil_breach'
-                 AND created_at>=? LIMIT 1''',
-            (actor_id, target_id, cutoff),
-        )
-        if c.fetchone():
+        try:
+            ensure_legendary_action_ready(c, actor_id, "implant_netwatch", "veil_breach")
+            tid, tname, _ = find_action_target(c, actor_id, target_id, target_name)
+            cutoff = (datetime.now(BEIJING_TZ) - timedelta(days=14)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''SELECT 1 FROM legendary_implant_actions
+                   WHERE actor_telegram_id=? AND target_telegram_id=? AND action_code='veil_breach'
+                     AND created_at>=? LIMIT 1''',
+                (actor_id, tid, cutoff),
+            )
+            if c.fetchone():
+                raise HTTPException(status_code=429, detail="Target protected for 14 days")
+            lu = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
+                   ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
+                (tid, lu),
+            )
+            log_legendary_action(c, actor_id, tid, None, "implant_netwatch", "veil_breach", 0, 0, tname)
+            conn.commit()
+            return tid, tname, lu
+        finally:
             conn.close()
-            raise HTTPException(status_code=429, detail="Target protected for 14 days")
-        locked_until = (datetime.now(BEIJING_TZ) + timedelta(hours=12)).strftime('%Y-%m-%d %H:%M:%S')
-        c.execute(
-            '''INSERT INTO user_status (telegram_id, netwatch_locked_until) VALUES (?, ?)
-               ON CONFLICT(telegram_id) DO UPDATE SET netwatch_locked_until=excluded.netwatch_locked_until''',
-            (target_id, locked_until),
-        )
-        log_legendary_action(c, actor_id, target_id, None, "implant_netwatch", "veil_breach", 0, 0, target_name)
-        conn.commit()
-        conn.close()
+
+    target_id, target_name, locked_until = await db_write(_run)
     await send_telegram_message(
         target_id,
         "🔴 NetWatch активировал «Взлом Заслона».\n"
@@ -6074,12 +7062,23 @@ async def buy_item(data: dict):
                 c.execute("""INSERT INTO user_status (telegram_id, title_date) VALUES (?,?)
                              ON CONFLICT(telegram_id) DO UPDATE SET title_date=?""", (telegram_id, today, today))
 
-            c.execute("INSERT INTO shop_purchases (telegram_id, item_code) VALUES (?,?)", (telegram_id, item_code))
+            expiry_days = SHOP_ITEM_EXPIRY_DAYS.get(item_code)
+            if expiry_days is not None:
+                now_bj = datetime.now(BEIJING_TZ)
+                expires_dt = (now_bj + timedelta(days=expiry_days)).replace(
+                    hour=23, minute=59, second=59, microsecond=0
+                )
+                expires_at = expires_dt.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                expires_at = None
+            c.execute("INSERT INTO shop_purchases (telegram_id, item_code, expires_at) VALUES (?,?,?)",
+                      (telegram_id, item_code, expires_at))
             c.execute("""INSERT INTO shop_daily_counts (item_code, date, count) VALUES (?,?,1)
                          ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, today))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
+            unlock_diary_entry(c, telegram_id, "first_shop_tx")
             if has_active_implant(c, telegram_id, "implant_panda"):
                 # Cap cashback so it can never make a buy+resell cycle profitable
                 # (resale rate 60% + cashback must stay <= 100% of price).
@@ -6128,14 +7127,54 @@ def get_inventory(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""SELECT sp.id, sp.item_code, si.name, si.icon, si.price,
-                        si.category, sp.purchased_at, sp.status, sp.given_to, si.description
+                        si.category, sp.purchased_at, sp.status, sp.given_to, si.description,
+                        sp.expires_at
                  FROM shop_purchases sp
                  JOIN shop_items si ON sp.item_code = si.code
                  WHERE sp.telegram_id=? AND sp.status='active'
+                   AND (sp.expires_at IS NULL OR sp.expires_at > datetime('now', '+8 hours'))
                  ORDER BY sp.purchased_at DESC""", (telegram_id,))
     rows = c.fetchall()
     conn.close()
-    return [{"id": r[0], "code": r[1], "name": r[2], "icon": r[3], "price": r[4], "category": r[5], "purchased_at": r[6], "status": r[7], "given_to": r[8], "description": r[9]} for r in rows]
+    return [{"id": r[0], "code": r[1], "name": r[2], "icon": r[3], "price": r[4],
+             "category": r[5], "purchased_at": r[6], "status": r[7], "given_to": r[8],
+             "description": r[9], "expires_at": r[10]} for r in rows]
+
+
+@app.get("/api/users/search")
+def search_users_for_gift(q: str = "", caller_id: Optional[int] = None):
+    if not caller_id:
+        raise HTTPException(status_code=400, detail="caller_id required")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (caller_id,))
+    if not c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=403, detail="Unknown caller")
+    query = str(q or "").strip()
+    if query:
+        like = f"%{query}%"
+        c.execute(
+            '''SELECT telegram_id, full_name, avatar_url, points
+               FROM users
+               WHERE telegram_id IS NOT NULL AND telegram_id != ?
+                 AND (full_name LIKE ? OR CAST(telegram_id AS TEXT) LIKE ?)
+               ORDER BY full_name COLLATE NOCASE
+               LIMIT 15''',
+            (caller_id, like, like),
+        )
+    else:
+        c.execute(
+            '''SELECT telegram_id, full_name, avatar_url, points
+               FROM users
+               WHERE telegram_id IS NOT NULL AND telegram_id != ?
+               ORDER BY full_name COLLATE NOCASE
+               LIMIT 20''',
+            (caller_id,),
+        )
+    rows = c.fetchall()
+    conn.close()
+    return {"users": [{"telegram_id": r[0], "full_name": r[1], "avatar_url": r[2], "points": r[3]} for r in rows]}
 
 
 @app.post("/api/shop/gift")
@@ -6181,6 +7220,7 @@ async def gift_item(data: dict):
             if gift_tax < 20:
                 log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
             log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
+            unlock_diary_entry(c, from_id, "first_shop_tx")
             award_achievement(c, from_id, "helper")
             conn.commit()
             return {"success": True}
@@ -6210,6 +7250,7 @@ async def sell_item(data: dict):
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
+            unlock_diary_entry(c, telegram_id, "first_shop_tx")
             conn.commit()
             return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
         finally:
@@ -6253,25 +7294,29 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
         raise HTTPException(status_code=403, detail="Forbidden")
     telegram_id = data.get("telegram_id")
     frozen = data.get("frozen", True)
-    async with DB_WRITE_LOCK:
+    def _run():
         conn = get_conn()
         c = conn.cursor()
-        c.execute("""INSERT INTO user_status (telegram_id, frozen) VALUES (?,?)
-                     ON CONFLICT(telegram_id) DO UPDATE SET frozen=?""", (telegram_id, int(frozen), int(frozen)))
-        c.execute(
-            '''INSERT INTO admin_action_logs
-               (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, ?, ?, 0, ?, ?)''',
-            (
-                x_admin_id,
-                telegram_id,
-                'freeze' if frozen else 'unfreeze',
-                'NetWatch freeze' if frozen else 'NetWatch unfreeze',
-                now_iso(),
-            ),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            c.execute("""INSERT INTO user_status (telegram_id, frozen) VALUES (?,?)
+                         ON CONFLICT(telegram_id) DO UPDATE SET frozen=?""", (telegram_id, int(frozen), int(frozen)))
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, ?, ?, 0, ?, ?)''',
+                (
+                    x_admin_id,
+                    telegram_id,
+                    'freeze' if frozen else 'unfreeze',
+                    'NetWatch freeze' if frozen else 'NetWatch unfreeze',
+                    now_iso(),
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    await db_write(_run)
     text = (
         "⛔ NETWATCH 网络保安\n\n"
         "系统检测到异常活动\n"
@@ -6331,19 +7376,110 @@ async def send_question(data: dict):
     return {"success": True}
 
 
+def get_wild_ai_breach_state(c) -> dict:
+    """Returns the current Wild AI Breach state, auto-clearing it if expired."""
+    c.execute("SELECT value FROM settings WHERE key='breach_until'")
+    until_row = c.fetchone()
+    until = parse_iso(until_row[0]) if until_row and until_row[0] else None
+
+    if until and datetime.utcnow() >= until:
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '0')")
+        return {"breach_active": False, "breach_until": None, "breach_seed": None, "breach_phrase": None}
+
+    if not until:
+        return {"breach_active": False, "breach_until": None, "breach_seed": None, "breach_phrase": None}
+
+    c.execute("SELECT value FROM settings WHERE key='breach_seed'")
+    seed_row = c.fetchone()
+    seed = int(seed_row[0]) if seed_row and seed_row[0] else 0
+
+    hours_elapsed = int((datetime.utcnow() - (until - timedelta(days=WILD_AI_BREACH_DURATION_DAYS))).total_seconds() // 3600)
+    phrase_index = (seed + hours_elapsed // WILD_AI_BREACH_PHRASE_ROTATE_HOURS) % len(WILD_AI_BREACH_PHRASES)
+
+    return {
+        "breach_active": True,
+        "breach_until": until.isoformat(),
+        "breach_seed": seed,
+        "breach_phrase": WILD_AI_BREACH_PHRASES[phrase_index],
+    }
+
+
 @app.get("/api/settings")
-def get_settings():
+async def get_settings():
+    # Routed through the single-writer executor: get_wild_ai_breach_state() does
+    # INSERT OR REPLACE writes when a breach expires. A sync GET would run in
+    # FastAPI's default threadpool and race the writer thread (hard rule 3).
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT value FROM settings WHERE key='blackwall'")
+        blackwall = c.fetchone()
+        c.execute("SELECT value FROM settings WHERE key='architect_event'")
+        architect_event = c.fetchone()
+        c.execute("SELECT value FROM settings WHERE key='wildai_event'")
+        wildai_event = c.fetchone()
+        breach = get_wild_ai_breach_state(c)
+        conn.commit()
+        conn.close()
+        return {
+            "blackwall": blackwall[0] == '1' if blackwall else False,
+            "architect_event": architect_event[0] == '1' if architect_event else False,
+            "wildai_event": wildai_event[0] == '1' if wildai_event else False,
+            **breach,
+        }
+    return await db_write(_run)
+
+
+@app.get("/api/campus-map")
+def get_campus_map():
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT value FROM settings WHERE key='blackwall'")
-    blackwall = c.fetchone()
-    c.execute("SELECT value FROM settings WHERE key='architect_event'")
-    architect_event = c.fetchone()
+    c.execute("SELECT value FROM settings WHERE key='campus_map'")
+    row = c.fetchone()
     conn.close()
+    if not row or not row[0]:
+        return {"overrides": {}, "custom": [], "updatedAt": 0}
+    try:
+        data = json.loads(row[0])
+    except Exception:
+        return {"overrides": {}, "custom": [], "updatedAt": 0}
     return {
-        "blackwall": blackwall[0] == '1' if blackwall else False,
-        "architect_event": architect_event[0] == '1' if architect_event else False,
+        "overrides": data.get("overrides") if isinstance(data.get("overrides"), dict) else {},
+        "custom": data.get("custom") if isinstance(data.get("custom"), list) else [],
+        "updatedAt": int(data.get("updatedAt") or 0),
     }
+
+
+@app.post("/api/admin/campus-map")
+async def save_campus_map(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ARCHITECT_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        payload = {
+            "overrides": data.get("overrides") if isinstance(data.get("overrides"), dict) else {},
+            "custom": data.get("custom") if isinstance(data.get("custom"), list) else [],
+            "updatedAt": int(data.get("updatedAt") or int(time.time() * 1000)),
+        }
+        encoded = json.dumps(payload, ensure_ascii=False)
+        if len(encoded.encode("utf-8")) > 120_000:
+            raise HTTPException(status_code=413, detail="Campus map payload too large")
+
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('campus_map', ?)", (encoded,))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'campus_map', 0, ?, ?)''',
+            (x_admin_id, 'Campus map updated', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "campus_map": payload}
+    return await db_write(_run)
 
 
 @app.post("/api/admin/blackwall")
@@ -6367,6 +7503,32 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
     return await db_write(_run)
 
 
+@app.post("/api/admin/wildai-breach")
+async def toggle_wildai_breach(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        enabled = data.get("enabled", False)
+        conn = get_conn()
+        c = conn.cursor()
+        if enabled:
+            activate_wildai_breach(c, admin_id=x_admin_id, reason='Wild AI Breach enabled (manual)')
+        else:
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
+            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '0')")
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
+                (x_admin_id, 'Wild AI Breach disabled', now_iso()),
+            )
+        conn.commit()
+        conn.close()
+        return {"success": True, "breach_active": enabled}
+    return await db_write(_run)
+
+
 @app.post("/api/admin/architect-event")
 async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None)):
     def _run():
@@ -6385,6 +7547,27 @@ async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(
         conn.commit()
         conn.close()
         return {"success": True, "architect_event": enabled}
+    return await db_write(_run)
+
+
+@app.post("/api/admin/wildai-event")
+async def toggle_wildai_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        enabled = bool(data.get("enabled", False))
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('wildai_event', ?)", ('1' if enabled else '0',))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'wildai_event', 0, ?, ?)''',
+            (x_admin_id, 'Wild AI event enabled' if enabled else 'Wild AI event disabled', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "wildai_event": enabled}
     return await db_write(_run)
 
 
@@ -6439,8 +7622,7 @@ async def join_raid(data: dict):
 
         today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
         now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
-        conn = sqlite3.connect('/root/zhidao.db', timeout=30, isolation_level='EXCLUSIVE')
-        conn.execute("PRAGMA busy_timeout=30000")
+        conn = get_conn()
         c = conn.cursor()
 
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
@@ -6502,6 +7684,7 @@ async def join_raid(data: dict):
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
         raid_entry_balance = c.fetchone()[0] or 0
         log_economy(c, telegram_id, 'raid_entry', -RAID_ENTRY_COST, raid_entry_balance, raid_id, 'raid', f"Raid {today}")
+        unlock_diary_entry(c, telegram_id, "first_raid")
         c.execute("SELECT COUNT(*) FROM raid_participants WHERE raid_id=?", (raid_id,))
         count = c.fetchone()[0]
 
@@ -6752,7 +7935,7 @@ async def open_genshin_case(data: dict):
             if doubled_win:
                 c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
                 balance_after = c.fetchone()[0] or 0
-                log_economy(c, telegram_id, "double_win_consumed", 0, balance_after, None, "shop_item", "Двойной выигрыш")
+                log_economy(c, telegram_id, "double_win_consumed", 0, balance_after, None, "shop_item", "Двойной сигнал")
             result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★" + (" ×2" if doubled_win else ""), "rarity": 0, "card_bonus": fox_bonus, "doubled_win": doubled_win}
         elif item['type'] == 'immunity':
             c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
@@ -6785,6 +7968,10 @@ async def open_genshin_case(data: dict):
         c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
         sc_row = c.fetchone()
         log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
+
+        unlock_diary_entry(c, telegram_id, "first_spin")
+        if result.get("type") == "card" and not result.get("duplicate"):
+            unlock_diary_entry(c, telegram_id, "first_item")
 
         award_achievement(c, telegram_id, "gambler")
         if pool_name == "gold" and not result.get("duplicate"):
@@ -7051,6 +8238,7 @@ async def book_laundry_slot(slot_id: int, data: dict):
             (slot_id, telegram_id),
         )
         c.execute("UPDATE laundry_schedule SET taken_by=NULL")
+        unlock_diary_entry(c, telegram_id, "first_laundry")
         conn.commit()
         conn.close()
         return {"success": True}
@@ -7232,9 +8420,9 @@ async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
         if admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-        blocking_event_id = get_blocking_event_id()
+        blocking_event_id = get_blocking_event_id('architect')
         if blocking_event_id:
-            raise HTTPException(status_code=409, detail="Another event is already active")
+            raise HTTPException(status_code=409, detail="Another Architect Protocol event is already active")
 
         conn = get_conn()
         c = conn.cursor()
@@ -7268,18 +8456,65 @@ async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
     return await db_write(_run)
 
 
+@app.post("/api/events/wildai/create")
+async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
+        if admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        blocking_event_id = get_blocking_event_id('wildai_breach')
+        if blocking_event_id:
+            raise HTTPException(status_code=409, detail="A WILD AI BREACH event is already active")
+
+        conn = get_conn()
+        c = conn.cursor()
+
+        title = data.get("title") or "WILD AI BREACH"
+        boss_name = data.get("boss_name") or "Дикий ИИ"
+        boss_image = data.get("boss_image")
+        reward_text = data.get("reward_text") or f"+{WILD_AI_BREACH_REWARD_REP} REP, +{WILD_AI_BREACH_REWARD_FRAGMENTS} фрагмента протокола, рамка «{WILD_AI_BREACH_FRAME_ID}»"
+        min_players = int(data.get("min_players") or 3)
+        max_players = int(data.get("max_players") or 5)
+        max_hp = int(data.get("max_hp") or WILD_AI_BREACH_DEFAULT_HP)
+        created_at = now_iso()
+        if min_players < 1:
+            min_players = 1
+        if max_players < min_players:
+            max_players = min_players
+        c.execute(
+            '''INSERT INTO events
+               (code, title, boss_name, boss_image, reward_text, min_players, max_players,
+                max_hp, current_hp, phase, state,
+                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
+            ('wildai_breach', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
+        )
+        event_id = c.lastrowid
+        add_event_log(c, event_id, "system", "WILD AI BREACH: обнаружено вторжение. Набор команды для зачистки открыт.")
+        add_event_log(c, event_id, "boss", f"Набор команды открыт. Награда: {reward_text}")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
+
+
 @app.get("/api/events/current")
-async def get_current_event():
-    event_id = get_current_or_latest_event_id()
-    return {"event": get_event_snapshot(event_id) if event_id else None}
+async def get_current_event(code: Optional[str] = None):
+    def _run():
+        event_id = get_current_or_latest_event_id(code)
+        return {"event": get_event_snapshot(event_id) if event_id else None}
+    return await db_write(_run)
 
 
 @app.get("/api/events/{event_id}")
 async def get_event_details(event_id: int):
-    snapshot = get_event_snapshot(event_id)
-    if not snapshot:
-        raise HTTPException(status_code=404, detail="Event not found")
-    return snapshot
+    def _run():
+        snapshot = get_event_snapshot(event_id)
+        if not snapshot:
+            raise HTTPException(status_code=404, detail="Event not found")
+        return snapshot
+    return await db_write(_run)
 
 
 @app.post("/api/events/{event_id}/join")
@@ -7359,20 +8594,22 @@ async def leave_event_team(event_id: int, data: dict):
 
 @app.get("/api/events/{event_id}/team")
 async def get_event_team(event_id: int):
-    snapshot = get_event_snapshot(event_id)
-    if not snapshot:
-        raise HTTPException(status_code=404, detail="Event not found")
-    return {
-        "event_id": snapshot["id"],
-        "title": snapshot["title"],
-        "boss_name": snapshot["boss_name"],
-        "reward_text": snapshot.get("reward_text"),
-        "state": snapshot["state"],
-        "min_players": snapshot.get("min_players", 3),
-        "max_players": snapshot.get("max_players", 5),
-        "team_count": snapshot.get("team_count", 0),
-        "team_members": snapshot.get("team_members", []),
-    }
+    def _run():
+        snapshot = get_event_snapshot(event_id)
+        if not snapshot:
+            raise HTTPException(status_code=404, detail="Event not found")
+        return {
+            "event_id": snapshot["id"],
+            "title": snapshot["title"],
+            "boss_name": snapshot["boss_name"],
+            "reward_text": snapshot.get("reward_text"),
+            "state": snapshot["state"],
+            "min_players": snapshot.get("min_players", 3),
+            "max_players": snapshot.get("max_players", 5),
+            "team_count": snapshot.get("team_count", 0),
+            "team_members": snapshot.get("team_members", []),
+        }
+    return await db_write(_run)
 
 
 @app.post("/api/events/{event_id}/extra")
@@ -7450,11 +8687,15 @@ async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header
 
         started_at = now_iso()
         c.execute(
-            "UPDATE events SET state='ACTIVE', phase=1, phase_started_at=?, started_at=? WHERE id=?",
-            (started_at, started_at, event_id),
+            "UPDATE events SET state='ACTIVE', phase=1, phase_started_at=?, started_at=?, pressure_tick_at=? WHERE id=?",
+            (started_at, started_at, started_at, event_id),
         )
-        add_event_log(c, event_id, "system", "Architect event started.")
-        add_event_log(c, event_id, "boss", "观察开始。 / Фаза наблюдения активирована.")
+        if event_row["code"] == "wildai_breach":
+            add_event_log(c, event_id, "system", "WILD AI BREACH: операция по вытеснению начата.")
+            add_event_log(c, event_id, "boss", "обнаружено вторжение дикого ИИ в системные сектора.")
+        else:
+            add_event_log(c, event_id, "system", "Architect event started.")
+            add_event_log(c, event_id, "boss", "观察开始。 / Фаза наблюдения активирована.")
         conn.commit()
         conn.close()
         return get_event_snapshot(event_id)
@@ -7498,6 +8739,7 @@ async def reset_event(event_id: int, x_admin_id: int = Header(None)):
 async def get_event_question(event_id: int, telegram_id: int, action_type: str):
     def _run():
         snapshot = get_event_snapshot(event_id)
+        event_code = snapshot["code"] if snapshot else "architect"
         if not snapshot:
             raise HTTPException(status_code=404, detail="Event not found")
         if snapshot["state"] != "ACTIVE":
@@ -7521,7 +8763,7 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
                 "hint": "SYNC does not require a question in MVP.",
             }
 
-        question = choose_architect_question(c, action_type)
+        question = choose_architect_question(c, action_type, event_code=event_code)
         conn.close()
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
@@ -7581,8 +8823,8 @@ async def resolve_event_action(data: dict):
             c.execute(
                 '''SELECT id, correct_option, explanation
                    FROM event_questions
-                   WHERE id=? AND event_code='architect' AND action_type=?''',
-                (question_id, action_type),
+                   WHERE id=? AND event_code=? AND action_type=?''',
+                (question_id, event_row["code"], action_type),
             )
             row = c.fetchone()
             if not row:
@@ -7618,6 +8860,7 @@ async def resolve_event_action(data: dict):
             ),
         )
 
+        is_wildai = event_row["code"] == "wildai_breach"
         actor_name = get_user_display_name(c, int(telegram_id))
         if action_type in ("attack", "protocol"):
             event_row["current_hp"] = max(0, event_row["current_hp"] - result["final_value"])
@@ -7627,7 +8870,16 @@ async def resolve_event_action(data: dict):
                 (result["final_value"], participant["id"]),
             )
             action_name = "Protocol" if action_type == "protocol" else "атака"
-            if is_correct:
+            if is_wildai:
+                if is_correct:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} применил(а) {action_name} и восстановил(а) {result['final_value']} целостности системы")
+                else:
+                    partial = result['final_value']
+                    if partial > 0:
+                        add_event_log(c, int(event_id), "action", f"{actor_name} сбойнул(а) в {action_name} — частично восстановлено {partial}, заражение растёт")
+                    else:
+                        add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} — узел дикого ИИ не задет, заражение растёт")
+            elif is_correct:
                 if result.get("penalty_active"):
                     pct = result.get("overload_pct_str", "50%")
                     add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА: {actor_name} нанёс(ла) {result['final_value']} урона (−{pct} из-за перегрузки)")
@@ -7644,7 +8896,12 @@ async def resolve_event_action(data: dict):
                 "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
                 (result["support_value"], participant["id"]),
             )
-            if is_correct:
+            if is_wildai:
+                if is_correct:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} залатал(а) пробитый сектор — заражение снижено")
+                else:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} попытался(ась) залатать сектор, но ошибся(лась) — заражение растёт")
+            elif is_correct:
                 add_event_log(c, int(event_id), "action", f"{actor_name} стабилизировал(а) протокол (+{result['support_value']} support)")
             else:
                 add_event_log(c, int(event_id), "action", f"{actor_name} попытался(ась) стабилизировать протокол, но допустил(а) ошибку")
@@ -7653,10 +8910,20 @@ async def resolve_event_action(data: dict):
                 "UPDATE event_participants SET total_support = total_support + ? WHERE id=?",
                 (result["support_value"], participant["id"]),
             )
-            add_event_log(c, int(event_id), "action", f"{actor_name} синхронизировал(а) канал")
+            if is_wildai:
+                add_event_log(c, int(event_id), "action", f"{actor_name} просканировал(а) сектора — узел дикого ИИ локализован")
+            else:
+                add_event_log(c, int(event_id), "action", f"{actor_name} синхронизировал(а) канал")
             maybe_trigger_sync_window(c, event_row)
 
-        if action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
+        if is_wildai:
+            if result["pressure_delta"] != 0:
+                old_pressure = event_row["overload_pressure"]
+                event_row["overload_pressure"] = max(0, old_pressure + result["pressure_delta"])
+                c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
+                if result["pressure_delta"] > 0:
+                    add_event_log(c, int(event_id), "system", f"⚠ ЗАРАЖЕНИЕ РАСТЁТ: {event_row['overload_pressure']}/{WILD_AI_BREACH_INFECTION_THRESHOLD}")
+        elif action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
             ovl_threshold = result["overload_threshold"]
             pct_str = result.get("overload_pct_str", "50%")
             old_pressure = event_row["overload_pressure"]
@@ -7668,13 +8935,14 @@ async def resolve_event_action(data: dict):
                 add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
 
         # Boss counter-attack: every N total actions adds pressure
-        c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
-        total_actions_count = c.fetchone()[0]
-        if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
-            new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
-            c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
-            event_row["overload_pressure"] = new_pressure
-            add_event_log(c, int(event_id), "boss", f"АРХИТЕКТОР УСИЛИВАЕТ ДАВЛЕНИЕ (+{ARCHITECT_BOSS_COUNTER_PRESSURE} перегрузки)")
+        if not is_wildai:
+            c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
+            total_actions_count = c.fetchone()[0]
+            if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
+                new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
+                c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
+                event_row["overload_pressure"] = new_pressure
+                add_event_log(c, int(event_id), "boss", f"АРХИТЕКТОР УСИЛИВАЕТ ДАВЛЕНИЕ (+{ARCHITECT_BOSS_COUNTER_PRESSURE} перегрузки)")
 
         if result["active_note"]:
             add_event_log(c, int(event_id), "modifier", result["active_note"])
@@ -7687,6 +8955,7 @@ async def resolve_event_action(data: dict):
         snapshot = get_event_snapshot(int(event_id))
         return {
             "event_id": int(event_id),
+            "code": event_row["code"],
             "action_type": action_type,
             "is_correct": bool(is_correct),
             "damage_dealt": result["final_value"],
@@ -7773,6 +9042,9 @@ def _contract_to_dict(row, creator_name=None, assignee_name=None,
         "completed_at": row[13],
         "cancelled_at": row[14],
         "disputed_at": row[15],
+        "expires_at": row[16],
+        "submitted_at": row[17],
+        "auto_confirm_at": row[18],
         "role": ("creator" if viewer_id and row[6] == viewer_id else
                  "assignee" if viewer_id and row[7] == viewer_id else None),
     }
@@ -7826,7 +9098,9 @@ def _check_blackwall(c, user_id):
 
 
 @app.get("/api/contracts")
-def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
+async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
+    await db_write(expire_stale_open_contracts, label="expire_stale_open_contracts")
+
     conn = get_conn()
     c = conn.cursor()
     _check_blackwall(c, x_telegram_id)
@@ -7835,7 +9109,7 @@ def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
                   created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  is_anonymous
+                  expires_at, submitted_at, auto_confirm_at, is_anonymous
            FROM contracts
            WHERE status='open'
            ORDER BY created_at DESC
@@ -7845,15 +9119,19 @@ def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:16], cn, an, ca, aa, x_telegram_id, bool(row[16]), True))
+        result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), True))
     conn.close()
     return result
 
 
 @app.get("/api/contracts/my")
-def my_contracts(x_telegram_id: Optional[int] = Header(None)):
+async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     if not x_telegram_id:
         raise HTTPException(status_code=401, detail="Not authorized")
+
+    await db_write(expire_stale_open_contracts, label="expire_stale_open_contracts")
+    await db_write(auto_confirm_submitted_contracts, label="auto_confirm_submitted_contracts")
+
     conn = get_conn()
     c = conn.cursor()
     _check_blackwall(c, x_telegram_id)
@@ -7862,7 +9140,7 @@ def my_contracts(x_telegram_id: Optional[int] = Header(None)):
                   creator_telegram_id, assignee_telegram_id, status,
                   is_suspicious, suspicious_reason,
                   created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  is_anonymous
+                  expires_at, submitted_at, auto_confirm_at, is_anonymous
            FROM contracts
            WHERE creator_telegram_id=? OR assignee_telegram_id=?
            ORDER BY created_at DESC
@@ -7873,7 +9151,7 @@ def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     result = []
     for row in rows:
         cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:16], cn, an, ca, aa, x_telegram_id, bool(row[16]), False))
+        result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), False))
     conn.close()
     return result
 
@@ -7891,6 +9169,12 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
         reward = int(data.get("reward_stars"))
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Укажи сумму награды")
+    try:
+        expires_hours = int(data.get("expires_hours", CONTRACT_EXPIRY_HOURS))
+    except (TypeError, ValueError):
+        expires_hours = CONTRACT_EXPIRY_HOURS
+    if expires_hours < 1 or expires_hours > CONTRACT_EXPIRY_HOURS:
+        expires_hours = CONTRACT_EXPIRY_HOURS
 
     if len(title) < 3:
         raise HTTPException(status_code=400, detail="Название слишком короткое (минимум 3 символа)")
@@ -7943,7 +9227,9 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
                 return {"error": f"Дневной лимит расходов через контракты: {CONTRACT_MAX_DAILY_SPEND} ★", "status": 400}
 
             is_susp, susp_reason = detect_suspicious(c, x_telegram_id, reward, title, description, category)
-            now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+            now = datetime.now(BEIJING_TZ)
+            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            expires_at = (now + timedelta(hours=expires_hours)).strftime('%Y-%m-%d %H:%M:%S')
 
             c.execute("UPDATE users SET points = points - ? WHERE telegram_id=?", (reward, x_telegram_id))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
@@ -7952,9 +9238,9 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
             c.execute(
                 '''INSERT INTO contracts
                    (title, description, category, reward_stars, fee_stars,
-                    creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)''',
-                (title, description, category, reward, local_fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str),
+                    creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at, expires_at)
+                   VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?)''',
+                (title, description, category, reward, local_fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str, expires_at),
             )
             contract_id = c.lastrowid
             log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
@@ -7962,8 +9248,9 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
             if zhongli_fee_reduction:
                 log_economy(c, x_telegram_id, 'card_zhongli_contract_seal', 0, balance_after,
                             contract_id, 'card', f"Комиссия снижена на {zhongli_fee_reduction}★")
+            unlock_diary_entry(c, x_telegram_id, "first_contract")
             conn.commit()
-            return {"contract_id": contract_id, "fee_stars": local_fee}
+            return {"contract_id": contract_id, "fee_stars": local_fee, "new_points": balance_after}
         finally:
             conn.close()
 
@@ -7971,7 +9258,8 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
     if "error" in result:
         raise HTTPException(status_code=result["status"], detail=result["error"])
 
-    return {"success": True, "id": result["contract_id"], "fee_stars": result["fee_stars"], "payout_stars": reward - result["fee_stars"]}
+    return {"success": True, "id": result["contract_id"], "fee_stars": result["fee_stars"],
+            "payout_stars": reward - result["fee_stars"], "new_points": result["new_points"]}
 
 
 @app.post("/api/contracts/{contract_id}/accept")
@@ -8029,6 +9317,104 @@ async def accept_contract(contract_id: int, x_telegram_id: Optional[int] = Heade
     return {"success": True}
 
 
+def _finalize_contract_payout(c, contract_id, row, now, auto=False):
+    """Pays out an accepted/submitted contract: assignee gets the reward minus
+    fee, creator's frozen fee is burned, contract becomes 'completed'."""
+    creator_id, assignee_id, reward, fee = row[6], row[7], row[4], row[5]
+    now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+    payout = reward - fee
+    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
+    c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
+    assignee_bal = c.fetchone()[0] or 0
+    payout_reason = 'contract_auto_payout' if auto else 'contract_payout'
+    payout_note = 'Автовыплата' if auto else 'Выплата'
+    log_economy(c, assignee_id, payout_reason, payout, assignee_bal, contract_id, 'contract',
+                f"{payout_note} за контракт #{contract_id}")
+    sea_bonus = grant_card_points_once(
+        c, assignee_id, "card_sea", "contract_current", 5,
+        "card_sea_current", f"контракт #{contract_id}", now.strftime('%Y-%m-%d'),
+        contract_id, "contract",
+    )
+    c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
+    log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
+                f"Комиссия Сетевого Дозора: контракт #{contract_id}")
+    return {"success": True, "payout": payout, "fee_burned": fee, "card_sea_bonus": sea_bonus}
+
+
+def auto_confirm_submitted_contracts():
+    """Auto-confirms 'submitted' contracts whose auto_confirm_at has passed,
+    paying out the assignee as if the creator had confirmed."""
+    conn = get_conn()
+    c = conn.cursor()
+    now = datetime.now(BEIJING_TZ)
+    now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        '''SELECT id, title, description, category, reward_stars, fee_stars,
+                  creator_telegram_id, assignee_telegram_id, status,
+                  is_suspicious, suspicious_reason,
+                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                  submitted_at, auto_confirm_at
+           FROM contracts
+           WHERE status='submitted' AND auto_confirm_at IS NOT NULL AND auto_confirm_at < ?''',
+        (now_str,),
+    )
+    rows = c.fetchall()
+    for row in rows:
+        _finalize_contract_payout(c, row[0], row, now, auto=True)
+    conn.commit()
+    conn.close()
+
+
+@app.post("/api/contracts/{contract_id}/submit")
+async def submit_contract(contract_id: int, x_telegram_id: Optional[int] = Header(None)):
+    if not x_telegram_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            row = get_contract_row(c, contract_id)
+            if not row:
+                return {"error": "Контракт не найден", "status": 404}
+            assignee_id, status, accepted_at = row[7], row[8], row[12]
+            susp_reason = row[10]
+            if status != 'accepted':
+                return {"error": "Контракт не в работе", "status": 400}
+            if x_telegram_id != assignee_id:
+                return {"error": "Только исполнитель может отметить выполнение", "status": 403}
+
+            now = datetime.now(BEIJING_TZ)
+            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            if accepted_at:
+                try:
+                    accepted_dt = datetime.strptime(accepted_at, '%Y-%m-%d %H:%M:%S')
+                    elapsed = (now.replace(tzinfo=None) - accepted_dt).total_seconds()
+                    if elapsed < CONTRACT_MIN_COMPLETE_SECONDS:
+                        new_reason = ((susp_reason or '') + '; слишком быстрое завершение').lstrip('; ')
+                        c.execute("UPDATE contracts SET is_suspicious=1, suspicious_reason=? WHERE id=?",
+                                  (new_reason, contract_id))
+                except Exception:
+                    pass
+
+            auto_confirm_at = (now + timedelta(hours=CONTRACT_AUTO_CONFIRM_HOURS)).strftime('%Y-%m-%d %H:%M:%S')
+            c.execute(
+                "UPDATE contracts SET status='submitted', submitted_at=?, auto_confirm_at=? WHERE id=?",
+                (now_str, auto_confirm_at, contract_id),
+            )
+            log_economy(c, x_telegram_id, 'contract_submit', 0, None, contract_id, 'contract',
+                        f"Исполнитель отметил выполнение: контракт #{contract_id}")
+            conn.commit()
+            return {"success": True, "auto_confirm_at": auto_confirm_at}
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+    return result
+
+
 @app.post("/api/contracts/{contract_id}/complete")
 async def complete_contract(contract_id: int,
                              x_telegram_id: Optional[int] = Header(None),
@@ -8043,18 +9429,19 @@ async def complete_contract(contract_id: int,
         if not row:
             conn.close()
             raise HTTPException(status_code=404, detail="Контракт не найден")
-        creator_id, assignee_id, reward, fee, status, accepted_at = row[6], row[7], row[4], row[5], row[8], row[12]
-        is_susp, susp_reason = bool(row[9]), row[10]
-        if status != 'accepted':
+        creator_id, status, accepted_at = row[6], row[8], row[12]
+        susp_reason = row[10]
+        if status not in ('accepted', 'submitted'):
             conn.close()
-            raise HTTPException(status_code=400, detail="Можно завершить только принятый контракт")
+            raise HTTPException(status_code=400, detail="Можно завершить только принятый или сданный на проверку контракт")
         if x_admin_id not in ADMIN_IDS and acting_id != creator_id:
             conn.close()
             raise HTTPException(status_code=403, detail="Только заказчик или администратор может подтвердить выполнение")
 
         now = datetime.now(BEIJING_TZ)
-        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
-        if accepted_at:
+        # Creator confirmed straight from 'accepted' (skipping the assignee's
+        # submit step) — keep the existing too-fast-completion suspicion check.
+        if status == 'accepted' and accepted_at:
             try:
                 accepted_dt = datetime.strptime(accepted_at, '%Y-%m-%d %H:%M:%S')
                 elapsed = (now.replace(tzinfo=None) - accepted_dt).total_seconds()
@@ -8065,23 +9452,10 @@ async def complete_contract(contract_id: int,
             except Exception:
                 pass
 
-        payout = reward - fee
-        c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (payout, assignee_id))
-        c.execute("SELECT points FROM users WHERE telegram_id=?", (assignee_id,))
-        assignee_bal = c.fetchone()[0] or 0
-        log_economy(c, assignee_id, 'contract_payout', payout, assignee_bal, contract_id, 'contract',
-                    f"Выплата за контракт #{contract_id}")
-        sea_bonus = grant_card_points_once(
-            c, assignee_id, "card_sea", "contract_current", 5,
-            "card_sea_current", f"контракт #{contract_id}", now.strftime('%Y-%m-%d'),
-            contract_id, "contract",
-        )
-        c.execute("UPDATE contracts SET status='completed', completed_at=? WHERE id=?", (now_str, contract_id))
-        log_economy(c, creator_id, 'contract_fee_burn', -fee, None, contract_id, 'contract',
-                    f"Комиссия Сетевого Дозора: контракт #{contract_id}")
+        result = _finalize_contract_payout(c, contract_id, row, now, auto=False)
         conn.commit()
         conn.close()
-        return {"success": True, "payout": payout, "fee_burned": fee, "card_sea_bonus": sea_bonus}
+        return result
     return await db_write(_run)
 
 
@@ -8100,13 +9474,13 @@ async def cancel_contract(contract_id: int,
             conn.close()
             raise HTTPException(status_code=404, detail="Контракт не найден")
         creator_id, reward, status = row[6], row[4], row[8]
-        if status not in ('open', 'accepted', 'disputed'):
+        if status not in ('open', 'accepted', 'submitted', 'disputed'):
             conn.close()
             raise HTTPException(status_code=400, detail="Контракт нельзя отменить в текущем статусе")
         if status == 'open' and acting_id != creator_id and x_admin_id not in ADMIN_IDS:
             conn.close()
             raise HTTPException(status_code=403, detail="Только заказчик может отменить открытый контракт")
-        if status in ('accepted', 'disputed') and x_admin_id not in ADMIN_IDS:
+        if status in ('accepted', 'submitted', 'disputed') and x_admin_id not in ADMIN_IDS:
             conn.close()
             raise HTTPException(status_code=403, detail="Только администратор может отменить принятый контракт")
 
@@ -8119,7 +9493,9 @@ async def cancel_contract(contract_id: int,
                     f"Возврат: контракт #{contract_id} отменён")
         conn.commit()
         conn.close()
-        return {"success": True, "refunded": reward}
+        # creator_telegram_id: the refund goes to the creator, which may differ
+        # from the acting user when an admin cancels someone else's contract.
+        return {"success": True, "refunded": reward, "creator_telegram_id": creator_id, "new_points": bal}
     return await db_write(_run)
 
 
@@ -8138,9 +9514,9 @@ async def dispute_contract(contract_id: int,
             conn.close()
             raise HTTPException(status_code=404, detail="Контракт не найден")
         creator_id, assignee_id, status = row[6], row[7], row[8]
-        if status != 'accepted':
+        if status not in ('accepted', 'submitted'):
             conn.close()
-            raise HTTPException(status_code=400, detail="Спор можно открыть только для принятого контракта")
+            raise HTTPException(status_code=400, detail="Спор можно открыть только для принятого или сданного на проверку контракта")
         if acting_id not in (creator_id, assignee_id) and x_admin_id not in ADMIN_IDS:
             conn.close()
             raise HTTPException(status_code=403, detail="Только участники контракта могут открыть спор")
@@ -8167,6 +9543,7 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
+                      c.expires_at, c.submitted_at, c.auto_confirm_at,
                       u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
@@ -8181,6 +9558,7 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                       c.creator_telegram_id, c.assignee_telegram_id, c.status,
                       c.is_suspicious, c.suspicious_reason,
                       c.created_at, c.accepted_at, c.completed_at, c.cancelled_at, c.disputed_at,
+                      c.expires_at, c.submitted_at, c.auto_confirm_at,
                       u1.full_name, u2.full_name, u1.avatar_url, u2.avatar_url, c.is_anonymous
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
@@ -8190,11 +9568,11 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
     rows = c.fetchall()
     conn.close()
     return [
-        {**_contract_to_dict(row[:16], row[16], row[17], row[18], row[19], None, bool(row[20]), False),
-         "creator_name": row[16], "assignee_name": row[17],
-         "creator_avatar_url": _safe_contract_avatar_url(row[18]),
-         "assignee_avatar_url": _safe_contract_avatar_url(row[19]),
-         "is_anonymous": bool(row[20])}
+        {**_contract_to_dict(row[:19], row[19], row[20], row[21], row[22], None, bool(row[23]), False),
+         "creator_name": row[19], "assignee_name": row[20],
+         "creator_avatar_url": _safe_contract_avatar_url(row[21]),
+         "assignee_avatar_url": _safe_contract_avatar_url(row[22]),
+         "is_anonymous": bool(row[23])}
         for row in rows
     ]
 
@@ -8348,6 +9726,95 @@ def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
     }
 
 
+@app.get("/api/admin/economy/report")
+def admin_economy_report(since: Optional[str] = None, until: Optional[str] = None,
+                          x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    if not since:
+        since = (datetime.now(BEIJING_TZ) - timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
+    elif len(since) == 10:
+        since = since + " 00:00:00"
+    if not until:
+        until = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d 23:59:59')
+    elif len(until) == 10:
+        until = until + " 23:59:59"
+
+    conn = get_conn()
+    c = conn.cursor()
+
+    c.execute(
+        '''SELECT
+             el.telegram_id,
+             COALESCE(u.full_name, el.telegram_id) AS full_name,
+             u.points,
+             COUNT(*) AS tx_count,
+             COALESCE(SUM(CASE WHEN el.amount>0 THEN el.amount ELSE 0 END),0) AS earned,
+             COALESCE(SUM(CASE WHEN el.amount<0 THEN -el.amount ELSE 0 END),0) AS spent,
+             COALESCE(SUM(CASE WHEN el.operation='shop_purchase' THEN -el.amount ELSE 0 END),0) AS shop_spent,
+             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') THEN 1 ELSE 0 END),0) AS cases_opened,
+             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') THEN -el.amount ELSE 0 END),0) AS cases_spent,
+             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') AND el.amount>0 THEN el.amount ELSE 0 END),0) AS cases_won,
+             COALESCE(SUM(CASE WHEN el.operation='raid_entry' THEN 1 ELSE 0 END),0) AS raids_entered,
+             COALESCE(SUM(CASE WHEN el.operation='raid_reward' THEN 1 ELSE 0 END),0) AS raids_won,
+             COALESCE(SUM(CASE WHEN el.operation='gift_tax' THEN 1 ELSE 0 END),0) AS gifts_sent,
+             COALESCE(SUM(CASE WHEN el.operation='gift_receive' THEN 1 ELSE 0 END),0) AS gifts_received,
+             COALESCE(SUM(CASE WHEN el.operation IN ('presence_penalty','presence_rep_penalty','admin_points','bot_penalize') AND el.amount<0 THEN 1 ELSE 0 END),0) AS penalties,
+             COALESCE(SUM(CASE WHEN el.operation IN ('bot_salary','bot_award') THEN el.amount ELSE 0 END),0) AS salary_award_total,
+             COALESCE(SUM(CASE WHEN el.operation='contract_payout' THEN el.amount ELSE 0 END),0) AS contract_earnings,
+             COALESCE(SUM(CASE WHEN el.operation='contract_freeze' THEN -el.amount ELSE 0 END),0) AS contract_spent
+           FROM economy_log el
+           LEFT JOIN users u ON u.telegram_id=el.telegram_id
+           WHERE el.created_at BETWEEN ? AND ?
+           GROUP BY el.telegram_id
+           ORDER BY tx_count DESC''',
+        (since, until),
+    )
+    rows = c.fetchall()
+    conn.close()
+
+    players = []
+    for row in rows:
+        earned, spent = row[4] or 0, row[5] or 0
+        players.append({
+            "telegram_id": row[0],
+            "full_name": str(row[1]),
+            "points": row[2] if row[2] is not None else None,
+            "tx_count": row[3] or 0,
+            "earned": earned,
+            "spent": spent,
+            "net": earned - spent,
+            "shop_spent": row[6] or 0,
+            "cases_opened": row[7] or 0,
+            "cases_spent": row[8] or 0,
+            "cases_won": row[9] or 0,
+            "raids_entered": row[10] or 0,
+            "raids_won": row[11] or 0,
+            "gifts_sent": row[12] or 0,
+            "gifts_received": row[13] or 0,
+            "penalties": row[14] or 0,
+            "salary_award_total": row[15] or 0,
+            "contract_earnings": row[16] or 0,
+            "contract_spent": row[17] or 0,
+        })
+
+    return {
+        "since": since,
+        "until": until,
+        "summary": {
+            "players": len(players),
+            "total_earned": sum(p["earned"] for p in players),
+            "total_spent": sum(p["spent"] for p in players),
+            "total_cases_opened": sum(p["cases_opened"] for p in players),
+            "total_raids_entered": sum(p["raids_entered"] for p in players),
+            "total_gifts": sum(p["gifts_sent"] for p in players),
+            "total_penalties": sum(p["penalties"] for p in players),
+        },
+        "players": players,
+    }
+
+
 @app.post("/api/admin/contracts/{contract_id}/resolve")
 async def admin_resolve_contract(contract_id: int, data: dict,
                                   x_admin_id: Optional[int] = Header(None)):
@@ -8422,5 +9889,5 @@ async def admin_resolve_contract(contract_id: int, data: dict,
 
         conn.commit()
         conn.close()
+        return {"success": True, "action": action}
     return await db_write(_run)
-    return {"success": True, "action": action}

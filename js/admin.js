@@ -127,6 +127,7 @@ async function triggerGlobalArchitectAlert() {
 
 async function checkGlobalAlert() {
   if (!currentUserId) return;
+  if (document.hidden) return;
 
   try {
     const r = await fetch(`${API_URL}/api/global-alert/current`);
@@ -154,7 +155,11 @@ async function checkGlobalAlert() {
 function startGlobalAlertPolling() {
   if (globalAlertPollingHandle) return;
   checkGlobalAlert();
-  globalAlertPollingHandle = setInterval(checkGlobalAlert, 4000);
+  // 10s + skip when hidden: ~85 одновременных клиентов не должны давать лавину GET'ов.
+  globalAlertPollingHandle = setInterval(checkGlobalAlert, 10000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkGlobalAlert();
+  });
 }
 
 function openArchitectArrivalBanner() {
@@ -195,7 +200,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','presence','blackwall','contracts'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall','contracts','report'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -217,6 +222,7 @@ function showAdminSection(name, btn) {
   if (name==='presence') adminLoadPresenceAll();
   if (name==='blackwall' && typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
   if (name==='contracts') adminLoadContracts();
+  if (name==='report') adminLoadEconomyReport(7);
 }
 
 async function loadAdminLaundry() {
@@ -555,6 +561,8 @@ function adminDossierActionLabel(action) {
     reset_shop: 'Сброс магазина',
     blackwall: 'BlackWall',
     architect_event: 'Architect Event',
+    wildai_event: 'Wild AI Event',
+    wildai_breach: 'Wild AI Breach',
   };
   return labels[action] || String(action || 'Операция').replace(/_/g, ' ');
 }
@@ -889,79 +897,6 @@ async function adminAdjustPointsFromForm(direction) {
   await adminSubmitPointAdjustment(targetId, delta, reason);
 }
 
-async function adminSubmitPointAdjustment(targetId, delta, reason) {
-  try {
-    const r = await fetch(`${API_URL}/api/admin/points`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-      body: JSON.stringify({telegram_id: targetId, delta, reason}),
-    });
-    const data = await r.json();
-    if (!r.ok) {
-      showToast(data.detail || 'Ошибка операции');
-      return;
-    }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    const actualDelta = Number(data.delta || delta);
-    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta}★\nБаланс: ${data.new_points}★`);
-    document.getElementById('awardPoints').value = '';
-    document.getElementById('awardReason').value = '';
-    if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
-      adminSelectedUser.points = data.new_points;
-      adminSelectUser(targetId, data.full_name, data.new_points, adminSelectedUser);
-      adminLoadUserDossier(targetId);
-    }
-    adminSearchUsers();
-    adminLoadActionLog();
-    if (targetId === currentUserId) {
-      currentPoints = data.new_points;
-      updatePoints();
-    }
-  } catch (e) {
-    showToast('Ошибка соединения');
-  }
-}
-
-async function adminGrantScanAttempt() {
-  if (!isArchitect) return;
-  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
-  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
-  if (!targetId) { showToast('Укажи Telegram ID'); return; }
-  try {
-    const r = await fetch(`${API_URL}/api/admin/scan-attempt`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
-      body: JSON.stringify({telegram_id: targetId}),
-    });
-    const data = await r.json();
-    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    showToast(`📡 +1 попытка сканирования\nИтого: ${data.scan_attempts}/7`);
-  } catch(e) { showToast('Ошибка соединения'); }
-}
-
-async function adminGrantFragments() {
-  if (!isArchitect) return;
-  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
-  const amount = parseInt(document.getElementById('fragmentAmount')?.value, 10);
-  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
-  if (!targetId || !amount || amount < 1) {
-    showToast('Укажи Telegram ID и количество'); return;
-  }
-  try {
-    const r = await fetch(`${API_URL}/api/admin/fragments`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
-      body: JSON.stringify({telegram_id: targetId, amount}),
-    });
-    const data = await r.json();
-    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    showToast(`✅ Выдано ${amount} фрагментов\nИтого у игрока: ${data.protocol_fragments}`);
-    document.getElementById('fragmentAmount').value = '';
-  } catch(e) { showToast('Ошибка соединения'); }
-}
-
 async function adminAdjustRepFromForm(direction) {
   const targetId = adminResolveTargetId();
   const amount = Math.abs(parseInt(document.getElementById('awardPoints')?.value, 10));
@@ -982,36 +917,6 @@ async function adminAdjustRepFromForm(direction) {
   });
   if (!ok) return;
   await adminSubmitRepAdjustment(targetId, delta, reason);
-}
-
-async function adminSubmitRepAdjustment(targetId, delta, reason) {
-  try {
-    const r = await fetch(`${API_URL}/api/admin/rep`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-      body: JSON.stringify({telegram_id: targetId, delta, reason}),
-    });
-    const data = await r.json();
-    if (!r.ok) {
-      showToast(data.detail || 'Ошибка операции');
-      return;
-    }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    const actualDelta = Number(data.delta || delta);
-    showToast(`${data.full_name}: ${actualDelta > 0 ? '+' : ''}${actualDelta} REP\nРепутация: ${data.new_rep_score}`);
-    document.getElementById('awardPoints').value = '';
-    document.getElementById('awardReason').value = '';
-    if (adminSelectedUser && adminSelectedUser.telegram_id === targetId) {
-      adminSelectedUser.rep_score = data.new_rep_score;
-      adminSelectUser(targetId, data.full_name, data.points, adminSelectedUser);
-      adminLoadUserDossier(targetId);
-    }
-    adminSearchUsers();
-    adminLoadActionLog();
-    if (typeof loadLeaderboard === 'function') loadLeaderboard();
-  } catch (e) {
-    showToast('Ошибка соединения');
-  }
 }
 
 const ADMIN_PRESENCE_LABELS = {
@@ -1229,6 +1134,30 @@ async function setBlackwall(enabled) {
   } catch(e) { showToast('Ошибка'); }
 }
 
+async function setWildAiBreach(enabled) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/wildai-breach`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({enabled})
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка переключения Wild AI Breach');
+      return;
+    }
+    if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
+    const status = document.getElementById('adminWildAiBreachStatus');
+    if (status) {
+      status.textContent = enabled ? 'STATUS // BREACH ACTIVE (3 ДНЯ)' : 'STATUS // CONTAINED';
+      status.classList.toggle('enabled', !!enabled);
+    }
+    showToast(enabled ? '⚠ Wild AI Breach активирован!' : '✅ Wild AI Breach снят!');
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
+}
+
 async function setArchitectEventEnabled(enabled) {
   try {
     const r = await fetch(`${API_URL}/api/admin/architect-event`, {
@@ -1246,6 +1175,28 @@ async function setArchitectEventEnabled(enabled) {
       syncArchitectEventAvailability(!!data.architect_event);
     }
     showToast(enabled ? '⚡ Architect Event открыт!' : '⛔ Architect Event скрыт!');
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function setWildAiEventEnabled(enabled) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/wildai-event`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({enabled})
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка переключения ивента');
+      return;
+    }
+
+    if (typeof syncWildAiEventAvailability === 'function') {
+      syncWildAiEventAvailability(!!data.wildai_event);
+    }
+    showToast(enabled ? '⚡ Wild AI Event открыт!' : '⛔ Wild AI Event скрыт!');
   } catch(e) {
     showToast('Ошибка соединения');
   }
@@ -1482,13 +1433,15 @@ const RAID_CONFIG = {
     maxPlayers: 15,
     cyberpunk: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
+        imgLight: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme_light.png?raw=true',
         title: '// NIGHT RAID // TARGET: ALPHA',
-        kicker: 'MU RAID // 夜间行动',
+        kicker: 'ALPHABOSS RAID // 夜间行动',
         chips: ['Stealth', 'Analyse', 'Risk: Variable'],
         placeholderColor: '#ff003c'
     },
     genshin: {
         img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme.png?raw=true',
+        imgLight: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_genshintheme_light.png?raw=true',
         title: '璃月试炼 // ALPHA TRIAL',
         kicker: 'LIYUE TRIAL // 璃月试炼',
         chips: ['契约', '分析', '胜算 可变'],
@@ -1625,4 +1578,120 @@ async function adminGrantFragments() {
     await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверяю фрагменты игрока...');
   }
   });
+}
+
+async function adminLoadEconomyReport(days, btn) {
+  const el = document.getElementById('adminReportContent');
+  if (!el || !currentUserId) return;
+  if (btn) {
+    document.querySelectorAll('#admin-report .admin-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  el.innerHTML = '<div class="empty-state">Собираю данные по игрокам...</div>';
+
+  const params = new URLSearchParams();
+  if (days && days > 0) {
+    const since = new Date(Date.now() - days * 86400000);
+    params.set('since', since.toISOString().slice(0, 10));
+  } else {
+    params.set('since', '2000-01-01');
+  }
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/economy/report?${params.toString()}`, {
+      headers: {'x-admin-id': String(currentUserId)},
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка отчёта')}</div>`;
+      return;
+    }
+    window._adminEconomyReportData = data;
+    el.innerHTML = adminRenderEconomyReport(data);
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+  }
+}
+
+function adminFilterEconomyReport() {
+  const data = window._adminEconomyReportData;
+  if (!data) return;
+  const q = (document.getElementById('adminReportSearch').value || '').trim().toLowerCase();
+  document.querySelectorAll('#adminReportContent .economy-report-row').forEach(row => {
+    const match = !q || row.dataset.search.includes(q);
+    row.style.display = match ? '' : 'none';
+  });
+}
+
+function adminToggleEconomyReportRow(el) {
+  el.classList.toggle('expanded');
+}
+
+function adminRenderEconomyReport(data) {
+  const summary = data.summary || {};
+  const players = Array.isArray(data.players) ? data.players : [];
+
+  const periodLabel = `${escapeHtml(String(data.since || '').slice(0, 10))} — ${escapeHtml(String(data.until || '').slice(0, 10))}`;
+
+  const cards = [
+    ['Заработано', `${Number(summary.total_earned || 0)}★`, `${players.length} активных игроков`],
+    ['Потрачено', `${Number(summary.total_spent || 0)}★`, periodLabel],
+    ['Кейсы/молитвы', `${Number(summary.total_cases_opened || 0)}`, 'открыто за период'],
+    ['Рейды', `${Number(summary.total_raids_entered || 0)}`, 'попыток за период'],
+    ['Подарки', `${Number(summary.total_gifts || 0)}`, 'отправлено за период'],
+    ['Штрафы', `${Number(summary.total_penalties || 0)}`, 'начислено за период'],
+  ].map(([label, value, hint]) => `
+    <div class="contract-monitor-stat">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <em>${escapeHtml(hint)}</em>
+    </div>
+  `).join('');
+
+  if (!players.length) {
+    return `<div class="contract-monitor-stats">${cards}</div><div class="empty-state">Нет операций за выбранный период</div>`;
+  }
+
+  const rows = players.map(p => {
+    const flags = [];
+    if (p.cases_spent >= 200) flags.push('🎰 азартный');
+    if (p.gifts_sent + p.gifts_received >= 5) flags.push('🎁 даритель');
+    if (p.penalties >= 3) flags.push('⚠ штрафник');
+    if (p.contract_earnings + p.contract_spent >= 100) flags.push('📜 коммерсант');
+    if (p.tx_count <= 1) flags.push('💤 малоактивен');
+
+    const netSign = p.net > 0 ? '+' : '';
+    const search = `${String(p.full_name).toLowerCase()} ${p.telegram_id}`;
+
+    const stats = [
+      ['Баланс', `${p.points != null ? p.points : '—'}★`],
+      ['Операций', p.tx_count],
+      ['🛍 Магазин', `${p.shop_spent}★`],
+      ['🎰 Кейсы/молитвы', `${p.cases_opened} (−${p.cases_spent}/+${p.cases_won}★)`],
+      ['⚔ Рейды', `${p.raids_entered} (побед ${p.raids_won})`],
+      ['🎁 Подарки', `отпр. ${p.gifts_sent} / получ. ${p.gifts_received}`],
+      ['📜 Контракты', `+${p.contract_earnings}★/−${p.contract_spent}★`],
+      ['⚠ Штрафов', p.penalties],
+      ['💰 ЗП/награды', `+${p.salary_award_total}★`],
+    ].map(([label, value]) => `
+      <div class="economy-report-stat"><span>${escapeHtml(label)}</span><b>${escapeHtml(String(value))}</b></div>
+    `).join('');
+
+    return `
+    <div class="economy-report-row" data-search="${escapeHtml(search)}" onclick="adminToggleEconomyReportRow(this)">
+      <div class="economy-report-head">
+        <div>
+          <strong>${escapeHtml(p.full_name)}</strong>
+          <span class="economy-report-id">ID ${p.telegram_id}</span>
+        </div>
+        <div class="economy-report-net ${p.net >= 0 ? 'pos' : 'neg'}">${netSign}${p.net}★</div>
+      </div>
+      ${flags.length ? `<div class="contract-monitor-flags">${flags.map(f => `<span>${escapeHtml(f)}</span>`).join('')}</div>` : ''}
+      <div class="economy-report-details">
+        <div class="economy-report-grid">${stats}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="contract-monitor-stats">${cards}</div><div class="contract-monitor-grid">${rows}</div>`;
 }

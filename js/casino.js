@@ -30,14 +30,14 @@ const IMPLANT_DISPLAY_INFO = {
   implant_linguasoft: { name: 'Linguasoft \u53e3\u624d', desc: '+30\u2605 \u0437\u0430 3\u2605 \u0432 \u0434\u043d\u0435\u0432\u043d\u0438\u043a\u0435 \u00b7 \u0441\u0442\u0440\u0438\u043a \u00d73 \u0435\u0449\u0451 +20\u2605', icon: '\ud83c\udf99' },
   implant_caishen: { name: '\u0426\u0430\u0439\u0448\u044d\u043d\u044c \u8d22\u795e', desc: '+15\u2605 \u043a\u0430\u0436\u0434\u044b\u0435 24 \u0447\u0430\u0441\u0430', icon: '\ud83d\udcb0' },
   implant_qilin: { name: '\u0426\u0438\u043b\u0438\u043d\u044c \u9e92\u9e9f', desc: '+10\u2605 \u0437\u0430 \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 \u0426\u0438\u043b\u0438\u043d\u044f', icon: '\ud83d\udc09' },
-  implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u0431\u0430\u043b\u043b\u043e\u0432 \u00b7 \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442 \u00b7 \u0441\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0438\u043c\u043f\u0443\u043b\u044c\u0441', icon: '\ud83d\udc09' },
+  implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u043d\u0430\u0433\u0440\u0430\u0434\u043d\u044b\u0445 \u00b7 \u0432\u0434\u0432\u043e\u0435 \u0432 \u0432\u043e\u0441\u043a\u0440\u0435\u0441\u0435\u043d\u044c\u0435 \u00b7 \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442 \u00b7 \u0441\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0438\u043c\u043f\u0443\u043b\u044c\u0441', icon: '\ud83d\udc09' },
   implant_netwatch: { name: '\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0414\u043e\u0437\u043e\u0440 \u7f51\u7edc\u5b88\u536b', desc: 'NetWatch: \u0443\u0434\u0430\u0440, Blackwall \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0441\u0435\u0442\u0438', icon: '\ud83d\udd34' },
 };
 const LEGENDARY_IMPLANT_INFO = {
   implant_red_dragon: {
     title: 'ПРОТОКОЛ КРАСНЫЙ ДРАКОН',
     glyph: '龍',
-    passive: 'Воскресная зарплата удваивается автоматически.',
+    passive: 'Воскресная зарплата удваивается автоматически. +20% к наградным начислениям и урону в ивентах (Атака/Протокол).',
     actions: [
       { code: 'intercept', label: 'ПЕРЕХВАТ', hint: 'Забрать 10★ у цели' },
       { code: 'impulse_reset', label: 'СБРОСИТЬ ИМПУЛЬС', hint: 'Отменить игровой штраф до 20★' },
@@ -48,7 +48,7 @@ const LEGENDARY_IMPLANT_INFO = {
     glyph: '衛',
     passive: 'Каждое утро узел получает +25★ восполнения памяти.',
     actions: [
-      { code: 'formatting', label: 'ФОРМАТИРОВАНИЕ', hint: 'Цель -15★, побочный урон -5★' },
+      { code: 'formatting', label: 'ФОРМАТИРОВАНИЕ', hint: 'Цель -15★, побочный урон -5★ случайному игроку рядом' },
       { code: 'veil_breach', label: 'ВЗЛОМ ЗАСЛОНА', hint: 'Блок магазина и кейсов на 12 часов' },
     ],
   },
@@ -509,6 +509,10 @@ function gsBuildCard(cardId, cardInfo) {
 async function openGenshinCase() {
   if (gsAnimating) return;
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    showToast('⛔ Святилище отрезано диким ИИ. Молитвы недоступны.');
+    return;
+  }
   if (!isAdmin && scanAttempts <= 0) { showToast('Нет попыток сканирования. Зарабатывай на переличках и дневнике!'); return; }
   // Проверяем заморозку
   try {
@@ -839,6 +843,10 @@ function initRoulette(caseType = null, targetIdx = null) {
 async function openCase() {
   if (isSpinning) return;
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    showToast('⛔ ГачаКор захвачен диким ИИ. Доступ заблокирован.');
+    return;
+  }
   if (!isAdmin && scanAttempts <= 0) { showToast('Нет попыток сканирования. Зарабатывай на перекличках и дневнике!'); return; }
 
   // Lock immediately — before any async work
@@ -978,10 +986,10 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
 
   const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
   const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
-  const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : null;
-  const tagBg = isLegendary ? 'rgba(212,175,55,0.2)' : isPurple ? 'rgba(155,89,182,0.15)' : 'rgba(100,150,200,0.15)';
-  const tagBorder = isLegendary ? 'rgba(212,175,55,0.6)' : isPurple ? 'rgba(155,89,182,0.5)' : 'rgba(100,150,200,0.3)';
-  const tagColor = isLegendary ? '#d4af37' : isPurple ? '#9b59b6' : '#6aa0d4';
+  const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.7)';
+  const tagBg = isLegendary ? 'rgba(212,175,55,0.28)' : isPurple ? 'rgba(155,89,182,0.25)' : 'rgba(106,160,212,0.25)';
+  const tagBorder = isLegendary ? 'rgba(212,175,55,0.7)' : isPurple ? 'rgba(155,89,182,0.6)' : 'rgba(106,160,212,0.55)';
+  const tagColor = isLegendary ? '#ffe9a8' : isPurple ? '#e6c7ff' : '#bfe0ff';
   const tagText = isLegendary ? '★ ЛЕГЕНДАРНЫЙ ★' : isPurple ? 'РЕДКИЙ // ФИОЛЕТОВЫЙ' : 'ОБЫЧНЫЙ';
 
   const legendaryClass = isLegendary ? ' cyber-result-legendary' : '';
@@ -989,12 +997,48 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
     ? `<img src="${escapeHtml(prize.img)}" class="${legendaryClass.trim()}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
     : `<div class="${legendaryClass.trim()}" style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
 
+  // Анимация появления приза (зависит от типа кейса)
+  let itemHtml;
+  let extraFxHtml = '';
+  if (caseType === 'gold') {
+    // Голо-карта: 3D переворот + блик + энергетические кольца
+    itemHtml = `
+      <div style="position:relative;perspective:800px;">
+        <div style="position:relative;animation:prizeFlipGold 0.9s cubic-bezier(.34,1.56,.64,1) forwards;">
+          ${imgHtml}
+          <div style="position:absolute;inset:-6px;overflow:hidden;border-radius:50%;pointer-events:none;">
+            <div style="position:absolute;top:-50%;left:-150%;width:60%;height:200%;background:linear-gradient(75deg,transparent,rgba(255,255,255,.6),transparent);animation:prizeShineSweep 1.1s ease-in-out 0.8s 2;"></div>
+          </div>
+        </div>
+      </div>`;
+    extraFxHtml = `
+      <div style="position:absolute;width:80px;height:80px;border:2px solid rgba(212,175,55,0.7);border-radius:50%;left:50%;top:50%;margin-left:-40px;margin-top:-40px;animation:prizeRingPulseGold 1.1s ease-out 0.1s forwards;opacity:0;"></div>
+      <div style="position:absolute;width:80px;height:80px;border:2px solid rgba(255,235,150,0.6);border-radius:50%;left:50%;top:50%;margin-left:-40px;margin-top:-40px;animation:prizeRingPulseGold 1.1s ease-out 0.35s forwards;opacity:0;"></div>
+      <div style="position:absolute;width:80px;height:80px;border:2px solid rgba(212,175,55,0.5);border-radius:50%;left:50%;top:50%;margin-left:-40px;margin-top:-40px;animation:prizeRingPulseGold 1.1s ease-out 0.6s forwards;opacity:0;"></div>`;
+  } else if (isPurple) {
+    // Слот-дроп: падение сверху + удар экрана + вспышка + расходящееся кольцо
+    itemHtml = `
+      <div style="animation:prizeShakePurple 0.4s ease-out 0.55s both;">
+        <div style="animation:prizeDropPurple 0.55s cubic-bezier(.55,0,.85,.35) forwards;">${imgHtml}</div>
+      </div>`;
+    extraFxHtml = `
+      <div style="position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;animation:prizeFlashPurple 0.3s ease-out 0.5s;"></div>
+      <div style="position:absolute;width:40px;height:40px;border:3px solid #9b59b6;border-radius:50%;left:50%;top:50%;margin-left:-20px;margin-top:-20px;opacity:0;animation:prizeRingExpandPurple 0.7s ease-out 0.55s forwards;"></div>`;
+  } else {
+    // Чёрный кейс: цифровая расшифровка (глитч + скан-линия)
+    itemHtml = `<div style="position:relative;animation:cyberItemIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards, prizeGlitchBlack 0.25s steps(2) 0.6s 4;">${imgHtml}</div>`;
+    extraFxHtml = `<div style="position:absolute;left:8%;right:8%;height:2px;background:rgba(255,120,0,.85);box-shadow:0 0 12px rgba(255,120,0,.9);animation:prizeScanLineBlack 0.9s linear 0.4s 1;opacity:0;"></div>`;
+  }
+
   let contentHtml = '';
   if (prize.points > 0) {
     const doubleTag = doubledWin
       ? `<div style="font-size:13px;font-weight:800;color:#ffd700;text-shadow:0 0 10px #ffd700;letter-spacing:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;">🃏 УДВОЕНО ×2</div>`
       : '';
-    contentHtml = `${doubleTag}<div style="font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;">+${prize.points}★</div>`;
+    const pointsStyle = isLegendary
+      ? `font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};display:inline-block;overflow:hidden;white-space:nowrap;border-right:2px solid ${particleColor};animation:prizeTypewriter 0.5s steps(10) 0.6s both, fadeUpAnim 0.1s ease-out 0.6s both;`
+      : `font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;`;
+    contentHtml = `${doubleTag}<div style="${pointsStyle}">+${prize.points}★</div>`;
   } else {
     contentHtml = `<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
   }
@@ -1010,8 +1054,8 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
 
   // Частицы
   let partsHtml = '';
-  const count = isLegendary ? 40 : isPurple ? 25 : 15;
-  const symbols = isLegendary ? ['龙','★','福','✦'] : isPurple ? ['✦','★','◈'] : ['★','✦'];
+  const count = isLegendary ? 40 : isPurple ? 25 : 28;
+  const symbols = isLegendary ? ['龙','★','福','✦'] : isPurple ? ['✦','★','◈'] : ['★','✦','◆','✪'];
   for (let i = 0; i < count; i++) {
     const px = (Math.random()-0.5)*300, py = (Math.random()-0.5)*300;
     const isText = Math.random() > 0.6;
@@ -1031,10 +1075,10 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
   };
   ov.innerHTML = `
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">${raysHtml}</div>
-    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">${partsHtml}</div>
+    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">${partsHtml}${extraFxHtml}</div>
     <div style="position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;">
-      <div style="animation:cyberItemIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;">${imgHtml}</div>
-      <div style="font-size:8px;font-family:monospace;letter-spacing:2px;padding:3px 14px;background:${tagBg};border:1px solid ${tagBorder};color:${tagColor};border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
+      ${itemHtml}
+      <div style="font-size:8px;font-weight:700;font-family:monospace;letter-spacing:2px;padding:4px 14px;background:${tagBg};backdrop-filter:blur(4px);border:1px solid ${tagBorder};color:${tagColor};text-shadow:0 1px 3px rgba(0,0,0,0.8);border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
       ${contentHtml}
       <div style="font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;text-align:center;max-width:200px;line-height:1.6;animation:fadeUpAnim 0.3s ease-out 0.9s both;opacity:0;">${prize.desc||''}</div>
     </div>
@@ -1216,6 +1260,12 @@ function updateCasinoButtonState(data) {
   const btn = document.getElementById('openCaseBtn');
   if (!btn) return;
   const scans = data.scan_attempts != null ? data.scan_attempts : scanAttempts;
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    btn.disabled = true;
+    btn.classList.add('case-btn-disabled');
+    btn.textContent = '⛔ ГАЧАКОР ЗАХВАЧЕН ДИКИМ ИИ';
+    return;
+  }
   if (data.frozen && !isAdmin) {
     btn.disabled = true;
     btn.classList.add('case-btn-disabled');
