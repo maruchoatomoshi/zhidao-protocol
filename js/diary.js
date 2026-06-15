@@ -15,7 +15,8 @@ function syncDiaryAccessVisibility() {
   }
 
   const archiveItem = document.getElementById('diaryArchiveItem');
-  if (archiveItem) archiveItem.style.display = isAdmin ? '' : 'none';
+  // Tab hidden for everyone (incl. admins) per 2026-06-15 request; system kept intact, toggle here to restore.
+  if (archiveItem) archiveItem.style.display = 'none';
 
   const shopReset = document.getElementById('shopResetBtn');
   if (shopReset) shopReset.style.display = isAdmin ? '' : 'none';
