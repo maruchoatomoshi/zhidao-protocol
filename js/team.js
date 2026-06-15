@@ -12,6 +12,7 @@ const TEAM_DATA = [
     status: "ACTIVE_NODE",
     statusText: "BIG BROTHER CONTROL // АЛЬФАБОСС",
     color: "#ff003c",
+    // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_mju.png"
     avatar: "👑"
     // tgLink намеренно не указан
   },
@@ -36,6 +37,7 @@ const TEAM_DATA = [
     status: "ACTIVE_NODE",
     statusText: "EQUILIBRIUM SUPPORT // РАВНОВЕСИЕ",
     color: "#00f0ff",
+    // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_liza.png"
     avatar: "💬",
     tgLink: "https://t.me/naoayako"
   },
@@ -48,6 +50,7 @@ const TEAM_DATA = [
     status: "DEEP_WEB",
     statusText: "REMOTE ORBIT // НЕВИДИМЫЙ ОПЕРАТОР",
     color: "#fa00ff",
+    // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_yulia.png"
     avatar: "🛡️",
     tgLink: "https://t.me/Trufanova_Yulia"
   },
@@ -60,6 +63,7 @@ const TEAM_DATA = [
     status: "FIELD_PROXY",
     statusText: "PEK-NODE DISPATCH // ЛОКАЛ",
     color: "#ffaa00",
+    // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_tianhao.png"
     avatar: "🏮",
     tgLink: "https://t.me/+8617614130674"
   }
@@ -67,14 +71,14 @@ const TEAM_DATA = [
 
 function _buildTeamCard(member) {
   const avatarHtml = member.avatar.startsWith('http')
-    ? `<div class="no-leak-bg" style="width:100%;height:100%;background-image:url('${member.avatar}')" oncontextmenu="return false"></div>`
+    ? `<div class="no-leak-bg" style="width:100%;height:100%;background-image:url('${escapeHtml(member.avatar)}')" oncontextmenu="return false"></div>`
     : member.avatar;
 
   return `
     <div class="card team-card-item" style="border-left:4px solid ${member.color};margin-bottom:10px;">
       <div class="card-inner" style="padding:12px 14px;">
         <div style="display:flex;gap:12px;align-items:flex-start;">
-          <div class="team-card-avatar" style="border-color:${member.color}44;">
+          <div class="team-card-avatar" style="border-color:${member.color}88;box-shadow:0 0 10px ${member.color}33;">
             ${avatarHtml}
           </div>
           <div style="flex:1;min-width:0;">
