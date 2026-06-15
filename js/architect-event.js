@@ -922,6 +922,16 @@ function renderArchitectLobby(eventData, errorText = '') {
   statusEl.textContent = stateMap[eventData.state] || eventData.state || '—';
   rewardEl.textContent = eventData.reward_text || 'Приз не указан';
 
+  if (eventData.code !== 'wildai_breach' && typeof unlockArchitectDiaryEntry === 'function') {
+    if (eventData.state === 'REGISTRATION') {
+      unlockArchitectDiaryEntry('architect_intro');
+    } else if (eventData.state === 'FINISHED') {
+      unlockArchitectDiaryEntry('architect_victory');
+    } else if (eventData.state === 'FAILED') {
+      unlockArchitectDiaryEntry('architect_defeat');
+    }
+  }
+
   const minPlayers = eventData.min_players || 0;
   const maxPlayers = eventData.max_players || 0;
   const teamMembers = Array.isArray(eventData.team_members) ? eventData.team_members : [];

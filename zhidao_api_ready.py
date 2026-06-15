@@ -1411,6 +1411,12 @@ def migrate_db():
                   note TEXT DEFAULT NULL,
                   created_at TEXT NOT NULL)''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS architect_diary_unlocks
+                 (telegram_id INTEGER NOT NULL,
+                  entry_code TEXT NOT NULL,
+                  unlocked_at TEXT NOT NULL,
+                  PRIMARY KEY (telegram_id, entry_code))''')
+
     c.execute("CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_economy_log_telegram_id ON economy_log(telegram_id, created_at)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_user_implants_tid ON user_implants(telegram_id, implant_id)")
@@ -2958,6 +2964,21 @@ def award_achievement(c, telegram_id: int, code: str) -> bool:
         "INSERT OR IGNORE INTO user_achievements (telegram_id, achievement_code) VALUES (?,?)",
         (telegram_id, code),
     )
+    granted = c.rowcount > 0
+    if granted:
+        unlock_diary_entry(c, telegram_id, "first_achievement")
+    return granted
+
+
+ARCHITECT_DIARY_CLIENT_UNLOCKABLE = {"architect_intro", "architect_victory", "architect_defeat"}
+
+
+def unlock_diary_entry(c, telegram_id: int, entry_code: str) -> bool:
+    """Marks an Architect's Diary entry as unlocked for a user. Returns True if newly unlocked."""
+    c.execute(
+        "INSERT OR IGNORE INTO architect_diary_unlocks (telegram_id, entry_code, unlocked_at) VALUES (?,?,?)",
+        (telegram_id, entry_code, now_iso()),
+    )
     return c.rowcount > 0
 
 
@@ -4031,6 +4052,7 @@ async def book_laundry(item: LaundryBook):
             conn.close()
             raise HTTPException(status_code=409, detail="Already booked for this day")
         c.execute("INSERT INTO laundry (date, time, telegram_id, username) VALUES (?,?,?,?)", (item.date, item.time, item.telegram_id, item.username))
+        unlock_diary_entry(c, item.telegram_id, "first_laundry")
         conn.commit()
         conn.close()
         return {"success": True}
@@ -4537,6 +4559,7 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
                 (x_admin_id, target_id, actual_delta, reason, now_iso()),
             )
             log_economy(c, target_id, 'admin_points', actual_delta, new_points, x_admin_id, 'admin', reason)
+            unlock_diary_entry(c, target_id, "first_economy")
             conn.commit()
             return {
                 "full_name": row[0] or str(target_id),
@@ -4597,6 +4620,7 @@ async def internal_add_points(data: dict, request: Request):
                 return None
             new_points = row[0]
             log_economy(c, target_id, operation, delta, new_points, reference_type='bot', note=note)
+            unlock_diary_entry(c, target_id, "first_economy")
             conn.commit()
             return new_points
         finally:
@@ -5691,6 +5715,44 @@ def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_a
     ]
 
 
+@app.get("/api/diary/architect/{telegram_id}")
+def get_architect_diary(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT entry_code, unlocked_at FROM architect_diary_unlocks WHERE telegram_id=?",
+        (telegram_id,)
+    )
+    rows = c.fetchall()
+    conn.close()
+    return {
+        "telegram_id": telegram_id,
+        "entries": [{"entry_code": row[0], "unlocked_at": row[1]} for row in rows]
+    }
+
+
+class ArchitectDiaryUnlockRequest(BaseModel):
+    telegram_id: int
+    entry_code: str
+
+
+@app.post("/api/diary/architect/unlock")
+async def post_architect_diary_unlock(payload: ArchitectDiaryUnlockRequest):
+    if payload.entry_code not in ARCHITECT_DIARY_CLIENT_UNLOCKABLE:
+        raise HTTPException(status_code=400, detail="Entry code not client-unlockable")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        unlocked = unlock_diary_entry(c, payload.telegram_id, payload.entry_code)
+        conn.commit()
+        conn.close()
+        return unlocked
+
+    unlocked = await db_write(_run, label="architect_diary_unlock")
+    return {"success": True, "unlocked": unlocked}
+
+
 @app.get("/api/diary/{telegram_id}")
 def get_diary_entries(telegram_id: int, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
     viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
@@ -6274,6 +6336,10 @@ async def open_case(data: dict):
             c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
             scan_row = c.fetchone()
             log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
+
+            unlock_diary_entry(c, telegram_id, "first_spin")
+            if prize["code"].startswith("implant_"):
+                unlock_diary_entry(c, telegram_id, "first_item")
 
             award_achievement(c, telegram_id, "gambler")
             if prize["code"] in ("jackpot", "implant_red_dragon"):
@@ -7012,6 +7078,7 @@ async def buy_item(data: dict):
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
+            unlock_diary_entry(c, telegram_id, "first_shop_tx")
             if has_active_implant(c, telegram_id, "implant_panda"):
                 # Cap cashback so it can never make a buy+resell cycle profitable
                 # (resale rate 60% + cashback must stay <= 100% of price).
@@ -7153,6 +7220,7 @@ async def gift_item(data: dict):
             if gift_tax < 20:
                 log_economy(c, from_id, 'card_fox_gift_trick', 0, new_points, purchase_id, 'card', purchase[0])
             log_economy(c, to_id, 'gift_receive', 0, None, purchase_id, 'shop_gift', f"Получен подарок: {purchase[0]} от {from_id}")
+            unlock_diary_entry(c, from_id, "first_shop_tx")
             award_achievement(c, from_id, "helper")
             conn.commit()
             return {"success": True}
@@ -7182,6 +7250,7 @@ async def sell_item(data: dict):
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_refund', refund, new_points, purchase_id, 'shop_item', purchase[0])
+            unlock_diary_entry(c, telegram_id, "first_shop_tx")
             conn.commit()
             return {"success": True, "refund": refund, "new_points": new_points, "sell_rate": sell_rate}
         finally:
@@ -7615,6 +7684,7 @@ async def join_raid(data: dict):
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
         raid_entry_balance = c.fetchone()[0] or 0
         log_economy(c, telegram_id, 'raid_entry', -RAID_ENTRY_COST, raid_entry_balance, raid_id, 'raid', f"Raid {today}")
+        unlock_diary_entry(c, telegram_id, "first_raid")
         c.execute("SELECT COUNT(*) FROM raid_participants WHERE raid_id=?", (raid_id,))
         count = c.fetchone()[0]
 
@@ -7899,6 +7969,10 @@ async def open_genshin_case(data: dict):
         sc_row = c.fetchone()
         log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
 
+        unlock_diary_entry(c, telegram_id, "first_spin")
+        if result.get("type") == "card" and not result.get("duplicate"):
+            unlock_diary_entry(c, telegram_id, "first_item")
+
         award_achievement(c, telegram_id, "gambler")
         if pool_name == "gold" and not result.get("duplicate"):
             award_achievement(c, telegram_id, "lucky")
@@ -8164,6 +8238,7 @@ async def book_laundry_slot(slot_id: int, data: dict):
             (slot_id, telegram_id),
         )
         c.execute("UPDATE laundry_schedule SET taken_by=NULL")
+        unlock_diary_entry(c, telegram_id, "first_laundry")
         conn.commit()
         conn.close()
         return {"success": True}
@@ -9173,6 +9248,7 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
             if zhongli_fee_reduction:
                 log_economy(c, x_telegram_id, 'card_zhongli_contract_seal', 0, balance_after,
                             contract_id, 'card', f"Комиссия снижена на {zhongli_fee_reduction}★")
+            unlock_diary_entry(c, x_telegram_id, "first_contract")
             conn.commit()
             return {"contract_id": contract_id, "fee_stars": local_fee, "new_points": balance_after}
         finally:

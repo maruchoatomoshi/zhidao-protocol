@@ -3328,6 +3328,27 @@ body.is-admin .more-item.admin-only-item::before {
 .team-card-desc {
   margin-top: 8px; font-size: 11px; color: #bbb; line-height: 1.5;
 }
+.architect-diary-card {
+  border-left: 3px solid #00ff66;
+}
+.architect-diary-card-title {
+  font-size: 11px; font-family: monospace; color: #00ff66;
+  letter-spacing: 1px; font-weight: 700; margin-bottom: 6px;
+}
+.architect-diary-card-text {
+  font-size: 12px; color: var(--text2); line-height: 1.6;
+}
+.architect-diary-card-meta {
+  margin-top: 8px; font-size: 9px; font-family: monospace; color: var(--text3);
+}
+.architect-diary-card-locked {
+  border-left-color: var(--text3); opacity: 0.55;
+}
+.architect-diary-card-locked .architect-diary-card-title {
+  color: var(--text3);
+}
+body.theme-nw-light .architect-diary-card-text { color: #444; }
+body.theme-genshin-light .architect-diary-card-text { color: #565e6e; }
 .team-card-status-badge {
   font-size: 8px; font-family: monospace; color: var(--text3);
   background: rgba(255,255,255,0.05); padding: 1px 5px;

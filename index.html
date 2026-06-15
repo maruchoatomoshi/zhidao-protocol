@@ -652,6 +652,11 @@
       <div class="more-item-name">КОМАНДА</div>
       <div class="more-item-cn">团队 tuán duì</div>
     </div>
+    <div class="more-item" onclick="openMore('architect-diary')">
+      <i class="ti ti-notebook more-item-icon" style="color:#00ff66;"></i>
+      <div class="more-item-name">ДНЕВНИК АРХИТЕКТОРА</div>
+      <div class="more-item-cn">架构师日志 jià gòu shī rì zhì</div>
+    </div>
     <div class="more-item admin-only-item" id="adminMoreBtn" onclick="openMore('admin')">
       <i class="ti ti-shield-lock more-item-icon" style="color:rgba(200,80,80,0.9);"></i>
       <div class="more-item-name">АДМИН</div>
@@ -871,6 +876,11 @@
       <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Спамеры и шутники вычисляются по ID.</div>
       <button class="btn btn-primary" onclick="askAnonymous()">[ 发问 // ЗАДАТЬ ВОПРОС ]</button>
     </div></div>
+  </div>
+
+  <div id="more-architect-diary" style="display:none;">
+    <div class="cn-divider">📓 架构师日志 ДНЕВНИК АРХИТЕКТОРА</div>
+    <div id="architectDiaryContainer" style="padding:0 12px 4px;"></div>
   </div>
 
   <div id="more-admin" style="display:none;">
@@ -2491,6 +2501,7 @@
 <script src="./js/casino.js?v=20260613chaos1"></script>
 <script src="./js/diary.js?v=20260613cleanup1"></script>
 <script src="./js/team.js?v=20260614avatar1"></script>
+<script src="./js/architect-diary.js?v=20260615"></script>
 <script src="./js/contracts.js?v=20260614cleanup1"></script>
 <script src="./js/admin.js?v=20260614cleanup1"></script>
 <script src="./js/campus-map.js?v=20260609b"></script>
