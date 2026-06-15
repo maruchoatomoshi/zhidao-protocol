@@ -1,55 +1,145 @@
-// ===== Инструкция (Юля) =====
+// ===== Инструкция (Юлия Витальевна) =====
 
 const INSTRUCTION_IMG_BASE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/';
+
+function instructionEnsureMoreSection(section) {
+  try { showPage('more', document.getElementById('nav-more-btn')); } catch (e) {}
+  if (currentMoreSection !== section) {
+    try { openMore(section); } catch (e) {}
+  }
+}
 
 const INSTRUCTION_TOUR_STEPS = [
   {
     page: 'home',
     image: 'julia_based.png',
-    title: 'ПРОФИЛЬ // 主页',
-    text: 'Привет! Я Юля — на связи как ассистент протокола ZHIDAO. Здесь, на главной, твой профиль: баллы ★, ранг, путь развития и аватар. Жми «Далее», покажу остальное.'
+    title: 'ГЛАВНЫЙ ЭКРАН // 主页',
+    highlight: '#profileCard',
+    text: 'Привет! Я Юлия Витальевна — на связи как ассистент протокола ZHIDAO. Это главный экран: твои баллы ★ и профиль оператора — аватар, ранг, путь развития, рамки и витрина. Жми «Далее», и я покажу всё остальное'
   },
   {
     page: 'schedule',
     image: 'julia_explaining.png',
     title: 'РАСПИСАНИЕ // 日程',
-    text: 'Вкладка «日程» — расписание поездки и объявления. Здесь всегда видно, что происходит сегодня и что запланировано дальше.'
+    highlight: '#page-schedule',
+    text: 'Вкладка «日程» — расписание поездки и объявления. Здесь всегда видно, что происходит сегодня и что запланировано дальше'
   },
   {
     page: 'rating',
     image: 'julia_explaining2.png',
     title: 'РЕЙТИНГ // 排名',
-    text: '«排名» — общий рейтинг операторов по баллам, а также рейтинг по дневнику. Следи за своим местом в таблице!'
+    highlight: '#page-rating',
+    text: '«排名» — общий рейтинг операторов по баллам, а ниже отдельный рейтинг по дневнику. Следи за своим местом в таблице'
   },
   {
     page: 'shop',
     image: 'julia_based2.png',
     title: 'МАГАЗИН // 商店',
-    text: '«商店» — магазин. Трать заработанные ★ на предметы, кейсы и улучшения для профиля.'
+    highlight: '#shopStoreContent',
+    text: '«商店» — магазин. Здесь каталог товаров и призов за ★, а также твой собственный инвентарь — посмотреть, что уже куплено, использовать или подарить предмет'
+  },
+  {
+    page: 'shop',
+    action: () => { try { showPage('contracts', document.getElementById('nav-shop-btn')); } catch (e) {} },
+    image: 'julia_thinking.png',
+    title: 'ДОСКА ПОРУЧЕНИЙ // 任务板',
+    highlight: '#page-contracts',
+    text: 'Кнопка «📋 ДОСКА» открывает доску поручений — список заданий от операторов и команды. Выполняй их, чтобы получать дополнительные ★'
   },
   {
     page: 'casino',
+    action: () => { try { switchCasinoTab('play', document.getElementById('casinoPlayBtn')); } catch (e) {} },
     image: 'julia_thinking.png',
     title: 'КЕЙСЫ // 箱子',
-    text: '«箱子» — кейсы и испытания удачи. Открывай их за ★ и получай имплантанты и карточки с особыми бонусами.'
+    highlight: '#page-casino',
+    text: '«箱子» — кейсы. Открывай их за ★ и получай импланты и карточки со случайной редкостью — это твой шанс поймать что-то ценное'
+  },
+  {
+    page: 'casino',
+    action: () => { try { switchCasinoTab('genshin', document.getElementById('casinoPlayBtn')); } catch (e) {} },
+    image: 'julia_explaining2.png',
+    title: 'МОЛИТВЫ // 祈愿',
+    highlight: '#casinoGenshinContent',
+    text: 'В теме Genshin кейсы превращаются в «✦ Молитвы» — та же механика, но в стиле геншин-баннеров. Попытки на молитву зарабатываются активностью, баллы за них не списываются'
   },
   {
     page: 'implants',
+    action: () => { try { switchImplantsTab('implants'); } catch (e) {} },
+    image: 'julia_explaining.png',
+    title: 'ИМПЛАНТЫ // 植入物',
+    highlight: '#implants-tab',
+    text: '«植入物» — твои импланты с пассивными бонусами. Ниже — каталог всех имплантов, чтобы заранее знать, что можно получить и для чего оно нужно'
+  },
+  {
+    page: 'implants',
+    action: () => { try { switchImplantsTab('cards'); } catch (e) {} },
+    image: 'julia_based2.png',
+    title: 'КАРТОЧКИ // 卡片',
+    highlight: '#cards-tab',
+    text: 'Вкладка «✦ КАРТОЧКИ» — твои карточки (в теме Genshin особенно красивые). Так же есть каталог карточек ниже — у каждой свой пассивный бонус, в том числе в ивентах'
+  },
+  {
+    page: 'diary-stars',
+    action: () => { try { showPage('diary-stars', document.getElementById('nav-more-btn')); } catch (e) {} },
     image: 'julia_explaining2.png',
-    title: 'ИНВЕНТАРЬ // 植入物',
-    text: '«植入物» — твой инвентарь: имплантанты и карточки. Многие из них дают бонусы в ивентах вроде Architect Protocol.'
+    title: 'ДНЕВНИК ★ // 日记评分',
+    highlight: '#page-diary-stars',
+    text: '«ДНЕВНИК ★» — здесь видно оценки твоего дневника по дням и общий рейтинг по дневникам. Чем выше оценка — тем больше ★ ты получаешь'
   },
   {
     page: 'more',
+    action: () => instructionEnsureMoreSection('map'),
+    image: 'julia_based.png',
+    title: 'КАРТА КАМПУСА // 校园地图',
+    highlight: '#more-map',
+    text: '«КАРТА» — интерактивная карта кампуса. Помогает быстро найти нужное здание или место на территории'
+  },
+  {
+    page: 'more',
+    action: () => instructionEnsureMoreSection('laundry'),
     image: 'julia_explaining.png',
-    title: 'ЕЩЁ // 更多',
-    text: '«更多» — здесь всё остальное: дневник со звёздами, темы оформления, карта кампуса, стирка, ачивки и команда. Загляни сюда за деталями.'
+    title: 'СТИРКА И ВОДА // 洗衣饮水',
+    highlight: '#more-laundry',
+    text: '«СТИРКА» — расписание и запись на стиральные машины, а также информация про питьевую воду. Удобно, чтобы не занимать машинку зря'
+  },
+  {
+    page: 'more',
+    action: () => instructionEnsureMoreSection('weather'),
+    image: 'julia_thinking.png',
+    title: 'ПОГОДА И КУРС // 天气 / 汇率',
+    highlight: '#more-weather',
+    text: '«ПОГОДА» — прогноз в Пекине: температура, ощущения, влажность и ветер. А ниже — актуальный курс юаня, чтобы было проще считать покупки'
+  },
+  {
+    page: 'more',
+    action: () => instructionEnsureMoreSection('themes'),
+    image: 'julia_explaining2.png',
+    title: 'ТЕМЫ // 主题',
+    highlight: '#more-themes',
+    text: '«ТЕМЫ» — оформление интерфейса. NetWatch (киберпанк) или Genshin, светлая или тёмная версия — выбирай, что ближе тебе'
+  },
+  {
+    page: 'more',
+    action: () => instructionEnsureMoreSection('achievements'),
+    image: 'julia_based2.png',
+    title: 'АЧИВКИ // 成就',
+    highlight: '#more-achievements',
+    text: '«АЧИВКИ» — достижения за активность в приложении и в поездке. Часть из них можно получить только за особые действия — постарайся собрать их все'
+  },
+  {
+    page: 'more',
+    action: () => instructionEnsureMoreSection('team'),
+    image: 'julia_explaining.png',
+    title: 'КОМАНДА // 团队',
+    highlight: '#more-team',
+    text: '«КОМАНДА» — операторы контура: сопровождающие и админы поездки. Если что-то понадобится — ты теперь знаешь, к кому обратиться'
   },
   {
     page: 'home',
     image: 'julia_goodbyeing.png',
     title: 'УДАЧИ, ОПЕРАТОР',
-    text: 'Это основное! В этой поездке я не рядом, но мой протокол остаётся на связи — открой эту инструкцию снова через профиль, если понадоблюсь. Удачной поездки! 🏮'
+    highlight: null,
+    text: 'Это всё основное! В этой поездке я не рядом, но мой протокол остаётся на связи — открой эту инструкцию снова через профиль, если понадоблюсь. Удачной поездки! 🏮'
   },
 ];
 
@@ -80,7 +170,7 @@ function showInstructionChooser() {
     </button>
     <button class="instruction-option-btn" onclick="startInstructionTour()">
       <strong>Интерактивный гайд</strong>
-      Юля проведёт по разделам и всё объяснит.
+      Юлия Витальевна проведёт по разделам и всё объяснит.
     </button>
   `;
 }
@@ -117,6 +207,17 @@ function closeInstructionTour() {
     clearInterval(instructionTypeTimer);
     instructionTypeTimer = null;
   }
+  instructionSetHighlight(null);
+}
+
+function instructionSetHighlight(selector) {
+  document.querySelectorAll('.instruction-highlight').forEach(el => el.classList.remove('instruction-highlight'));
+  if (!selector) return;
+  const el = document.querySelector(selector);
+  if (el) {
+    el.classList.add('instruction-highlight');
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+  }
 }
 
 function renderInstructionTourStep() {
@@ -128,6 +229,11 @@ function renderInstructionTourStep() {
 
   const navBtn = document.querySelector(`.bottom-nav button[onclick*="showPage('${step.page}'"]`);
   try { showPage(step.page, navBtn || undefined); } catch (e) {}
+  if (typeof step.action === 'function') {
+    try { step.action(); } catch (e) {}
+  }
+
+  setTimeout(() => instructionSetHighlight(step.highlight), 80);
 
   const avatar = document.getElementById('instructionTourAvatar');
   if (avatar) avatar.style.backgroundImage = `url('${INSTRUCTION_IMG_BASE}${step.image}')`;
