@@ -125,9 +125,36 @@ async function renderArchitectDiary() {
 async function unlockArchitectDiaryEntry(entryCode) {
   if (!currentUserId) return;
   try {
-    await apiPostJson('/api/diary/architect/unlock', {
+    const { data } = await apiPostJson('/api/diary/architect/unlock', {
       telegram_id: currentUserId,
       entry_code: entryCode
     });
+    if (data && data.unlocked) {
+      const entry = ARCHITECT_DIARY_ENTRIES.find(e => e.code === entryCode);
+      if (entry) showArchitectPopup(entry);
+    }
   } catch (e) {}
+}
+
+function showArchitectPopup(entry) {
+  const overlay = document.getElementById('architectPopupOverlay');
+  const imageEl = document.getElementById('architectPopupImage');
+  const textEl = document.getElementById('architectPopupText');
+  if (!overlay || !textEl) return;
+
+  if (imageEl) {
+    imageEl.style.backgroundImage = entry.image ? `url('${ARCHITECT_DIARY_IMG_BASE}${entry.image}')` : '';
+  }
+  textEl.textContent = entry.text;
+
+  document.body.classList.add('architect-popup-open');
+  overlay.style.display = 'flex';
+  try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+}
+
+function closeArchitectPopup(e) {
+  if (e && e.target !== e.currentTarget && !e.target.closest('.architect-popup-close')) return;
+  const overlay = document.getElementById('architectPopupOverlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.classList.remove('architect-popup-open');
 }
