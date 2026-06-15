@@ -808,7 +808,13 @@ def _open_raw_conn():
     conn = sqlite3.connect('/root/zhidao.db', timeout=30, check_same_thread=False)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA wal_autocheckpoint=1000")
+    # wal_autocheckpoint=0: with a nonzero threshold, commit() runs an
+    # in-line PASSIVE checkpoint once the WAL crosses the page count, which
+    # on this VPS's disk has been observed to block for ~48s and stack the
+    # entire DB_WRITE_LOCK queue behind it. WAL size is instead managed by
+    # the out-of-band wal_checkpoint_loop, which skips while the write lock
+    # is held (hard rule, 2026-06-09 / 2026-06-15).
+    conn.execute("PRAGMA wal_autocheckpoint=0")
     ms = (time.time() - t0) * 1000
     if ms > 50:
         print("ZHIDAO_SLOW_CONN %.0fms" % ms, flush=True)
