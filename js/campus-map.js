@@ -840,7 +840,7 @@ function initCampusMap() {
       ${campusMapEditorPanel()}
       <div class="campus-map-scroll">
         <div class="campus-map-stage ${campusMapEditorEnabled && canEdit ? 'editing' : ''}" onclick="handleCampusMapStageClick(event)">
-          <img src="${CAMPUS_MAP_ASSETS[mode] || CAMPUS_MAP_ASSETS.cyberpunk}" alt="Campus map">
+          <img src="${escapeHtml(CAMPUS_MAP_ASSETS[mode] || CAMPUS_MAP_ASSETS.cyberpunk)}" alt="Campus map">
           ${routeFromPoint && routeToPoint ? `
             <svg class="campus-map-route-line" viewBox="0 0 100 100" preserveAspectRatio="none">
               <line x1="${routeFromPoint.x}" y1="${routeFromPoint.y}" x2="${routeToPoint.x}" y2="${routeToPoint.y}" />

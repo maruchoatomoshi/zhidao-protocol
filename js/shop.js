@@ -477,7 +477,7 @@ async function _giftSearchUsers(q) {
     container.innerHTML = users.map(u => {
       const initials = (u.full_name || '?')[0].toUpperCase();
       const avatarHtml = u.avatar_url
-        ? `<img src="${u.avatar_url}" class="gift-user-img" onerror="this.style.display='none'">`
+        ? `<img src="${escapeHtml(u.avatar_url)}" class="gift-user-img" onerror="this.style.display='none'">`
         : `<span class="gift-user-initials">${initials}</span>`;
       const _gn = JSON.stringify(u.full_name).replace(/"/g, '&quot;');
       const _ga = JSON.stringify(u.avatar_url || '').replace(/"/g, '&quot;');
@@ -503,7 +503,7 @@ function giftSelectUser(id, name, avatar) {
   display.style.display = 'flex';
   const initials = (name || '?')[0].toUpperCase();
   const avatarHtml = avatar
-    ? `<img src="${avatar}" class="gift-user-img" onerror="this.style.display='none'">`
+    ? `<img src="${escapeHtml(avatar)}" class="gift-user-img" onerror="this.style.display='none'">`
     : `<span class="gift-user-initials">${initials}</span>`;
   display.innerHTML = `
     <div class="gift-user-ava">${avatarHtml}</div>

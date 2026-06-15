@@ -549,8 +549,6 @@ def get_main_reply_keyboard(user_id: int | None = None):
     ]
     if is_admin_user:
         keyboard.append([KeyboardButton(text="/напоминания"), KeyboardButton(text="/admin"), KeyboardButton(text="/bugs")])
-    if is_admin_user:
-        keyboard.append([KeyboardButton(text="/admin"), KeyboardButton(text="/bugs")])
     return ReplyKeyboardMarkup(
         keyboard=keyboard,
         resize_keyboard=True,

@@ -51,7 +51,7 @@ function getProfileInitial(name, fallbackId) {
 function avatarMarkup(avatarUrl, name, fallbackId, className = 'profile-avatar-img') {
   const initial = escapeHtml(getProfileInitial(name, fallbackId));
   if (avatarUrl) {
-    return `<img class="${className}" src="${avatarUrl}" alt="${escapeHtml(name || 'avatar')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="lb-avatar-fallback" style="display:none;">${initial}</span>`;
+    return `<img class="${className}" src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(name || 'avatar')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="lb-avatar-fallback" style="display:none;">${initial}</span>`;
   }
   return `<span class="lb-avatar-fallback">${initial}</span>`;
 }
