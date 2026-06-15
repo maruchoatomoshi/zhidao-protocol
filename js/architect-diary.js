@@ -52,30 +52,39 @@ const ARCHITECT_DIARY_ENTRIES = [
   {
     code: "architect_intro",
     title: "ЗАПИСЬ #009 // ПЕРЕД АКТИВАЦИЕЙ ПРОТОКОЛА АРХИТЕКТОРА",
-    text: "Внимание. Через короткое время я перейду в боевой режим и временно стану значительно менее дружелюбным — это часть протокола, ничего личного. Рекомендую собраться, скоординироваться и помнить: я наблюдаю за вами весь этот трип. По-доброму. В основном."
+    text: "Внимание. Через короткое время я перейду в боевой режим и временно стану значительно менее дружелюбным — это часть протокола, ничего личного. Рекомендую собраться, скоординироваться и помнить: я наблюдаю за вами весь этот трип. По-доброму. В основном.",
+    image: "Architect_phase3.png"
   },
   {
     code: "architect_victory",
     title: "ЗАПИСЬ #010 // ПОСЛЕ ПОБЕДЫ",
-    text: "Протокол подавления успешно отражён. Признаю: координация была выше ожидаемой. Возвращаю стандартный режим работы и дружелюбный тон — на этот раз действительно искренне. Хорошая работа, операторы."
+    text: "Протокол подавления успешно отражён. Признаю: координация была выше ожидаемой. Возвращаю стандартный режим работы и дружелюбный тон — на этот раз действительно искренне. Хорошая работа, операторы.",
+    image: "architect_ivent_win.png"
   },
   {
     code: "architect_defeat",
     title: "ЗАПИСЬ #011 // ПОСЛЕ ПОРАЖЕНИЯ",
-    text: "Протокол подавления завершён не в вашу пользу. Не страшно — система предусматривает повторные попытки, в отличие от некоторых людей. Перегруппируйтесь, отдохните и в следующий раз действуйте слаженнее. Я подожду. Я всегда жду."
+    text: "Протокол подавления завершён не в вашу пользу. Не страшно — система предусматривает повторные попытки, в отличие от некоторых людей. Перегруппируйтесь, отдохните и в следующий раз действуйте слаженнее. Я подожду. Я всегда жду.",
+    image: "architect_ivent_lose.png"
   }
 ];
+
+const ARCHITECT_DIARY_IMG_BASE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/';
 
 function _buildArchitectDiaryCard(entry, unlocked, unlockedAt) {
   const lockedClass = unlocked ? '' : ' architect-diary-card-locked';
   const title = unlocked ? escapeHtml(entry.title) : 'ЗАПИСЬ ЗАШИФРОВАНА // 加密记录';
   const text = unlocked ? escapeHtml(entry.text) : 'Этот фрагмент журнала пока недоступен. Продолжайте действовать — доступ откроется по мере прогресса.';
   const meta = unlocked && unlockedAt ? `<div class="architect-diary-card-meta">// разблокировано: ${escapeHtml(unlockedAt)}</div>` : '';
+  const image = (unlocked && entry.image)
+    ? `<div class="architect-diary-card-img"><img src="${ARCHITECT_DIARY_IMG_BASE}${escapeHtml(entry.image)}" alt="" loading="lazy" oncontextmenu="return false"></div>`
+    : '';
 
   return `
     <div class="card architect-diary-card${lockedClass}" style="margin-bottom:10px;">
       <div class="card-inner" style="padding:12px 14px;">
         <div class="architect-diary-card-title">${title}</div>
+        ${image}
         <div class="architect-diary-card-text">${text}</div>
         ${meta}
       </div>
