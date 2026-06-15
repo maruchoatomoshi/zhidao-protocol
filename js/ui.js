@@ -1076,6 +1076,9 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   zSafeUiCall('feature freeze', () => {
     if (typeof syncFeatureFreezeBadges === 'function') syncFeatureFreezeBadges();
   });
+  zSafeUiCall('architect diary unlocks', () => {
+    if (typeof checkArchitectDiaryUnlocks === 'function') checkArchitectDiaryUnlocks();
+  });
 
   if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
 }

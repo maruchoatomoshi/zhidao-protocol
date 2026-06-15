@@ -2481,7 +2481,7 @@
 <script src="./js/config.js?v=20260614freeze1"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260614shoptimer1"></script>
+<script src="./js/ui.js?v=20260615a"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js?v=20260614themeintro1"></script>
 <script src="./js/blackwall.js"></script>
@@ -2494,7 +2494,7 @@
 <script src="./js/casino.js?v=20260615a"></script>
 <script src="./js/diary.js?v=20260613cleanup1"></script>
 <script src="./js/team.js?v=20260614avatar1"></script>
-<script src="./js/architect-diary.js?v=20260615b"></script>
+<script src="./js/architect-diary.js?v=20260615c"></script>
 <script src="./js/contracts.js?v=20260615a"></script>
 <script src="./js/admin.js?v=20260614cleanup1"></script>
 <script src="./js/campus-map.js?v=20260609b"></script>
@@ -2503,7 +2503,7 @@
 <script src="./js/events.js?v=20260611wildai11"></script>
 <script src="./js/architect-event.js?v=20260613cleanup1"></script>
 <script src="./js/demo.js?v=20260614themeintro1"></script>
-<script src="./js/instruction.js?v=20260615a"></script>
+<script src="./js/instruction.js?v=20260615b"></script>
 <script src="./js/main.js?v=20260515a"></script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
@@ -2788,20 +2788,19 @@
   </div>
 </div>
 
-<div class="instruction-tour-overlay" id="instructionTourOverlay" style="display:none;">
-  <div class="instruction-tour-card">
-    <button class="instruction-tour-close" onclick="closeInstructionTour()">✕</button>
-    <div class="instruction-tour-portrait" id="instructionTourAvatar">
-      <div class="instruction-tour-name">ЮЛИЯ ВИТАЛЬЕВНА</div>
+<div class="instruction-popup-overlay" id="instructionTourOverlay" style="display:none;">
+  <div class="instruction-popup-image" id="instructionTourAvatar"></div>
+  <div class="instruction-popup-box">
+    <div class="instruction-popup-header">
+      <div class="instruction-popup-title">ЮЛИЯ ВИТАЛЬЕВНА</div>
+      <button class="instruction-popup-close" onclick="closeInstructionTour()">✕</button>
     </div>
-    <div class="instruction-tour-body">
-      <div class="instruction-tour-title" id="instructionTourTitle"></div>
-      <div class="instruction-tour-bubble" id="instructionTourBubble"></div>
-      <div class="instruction-tour-progress" id="instructionTourProgress">1 / 17</div>
-      <div class="instruction-tour-actions">
-        <button class="ghost" onclick="instructionTourSkip()">ПРОПУСТИТЬ</button>
-        <button id="instructionTourNextBtn" onclick="instructionTourNext()">ДАЛЕЕ →</button>
-      </div>
+    <div class="instruction-popup-section-title" id="instructionTourTitle"></div>
+    <div class="instruction-popup-text" id="instructionTourBubble"></div>
+    <div class="instruction-popup-progress" id="instructionTourProgress">1 / 17</div>
+    <div class="instruction-popup-actions">
+      <button class="ghost" onclick="instructionTourSkip()">ПРОПУСТИТЬ</button>
+      <button id="instructionTourNextBtn" onclick="instructionTourNext()">ДАЛЕЕ →</button>
     </div>
   </div>
 </div>

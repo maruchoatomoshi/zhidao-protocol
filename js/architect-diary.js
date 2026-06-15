@@ -136,8 +136,46 @@ async function unlockArchitectDiaryEntry(entryCode) {
   } catch (e) {}
 }
 
+const ARCHITECT_DIARY_SEEN_KEY = 'architectDiarySeenEntries';
+
+function _getArchitectDiarySeen() {
+  try {
+    const raw = localStorage.getItem(ARCHITECT_DIARY_SEEN_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function _markArchitectDiarySeen(codes) {
+  try {
+    const seen = new Set(_getArchitectDiarySeen());
+    codes.forEach(c => seen.add(c));
+    localStorage.setItem(ARCHITECT_DIARY_SEEN_KEY, JSON.stringify([...seen]));
+  } catch (e) {}
+}
+
+async function checkArchitectDiaryUnlocks() {
+  if (!currentUserId) return;
+  try {
+    const { data } = await apiGetJson(`/api/diary/architect/${currentUserId}`);
+    const unlockedCodes = (data?.entries || []).map(e => e.entry_code);
+    const seenRaw = localStorage.getItem(ARCHITECT_DIARY_SEEN_KEY);
+    if (seenRaw === null) {
+      // First run on this device: baseline existing unlocks without popping them all.
+      _markArchitectDiarySeen(unlockedCodes);
+      return;
+    }
+    const seen = new Set(_getArchitectDiarySeen());
+    const newlyUnlocked = unlockedCodes.filter(code => !seen.has(code));
+    if (!newlyUnlocked.length) return;
+    _markArchitectDiarySeen(newlyUnlocked);
+    handleDiaryUnlocks(newlyUnlocked);
+  } catch (e) {}
+}
+window.checkArchitectDiaryUnlocks = checkArchitectDiaryUnlocks;
+
 function handleDiaryUnlocks(diaryUnlocked) {
   if (!Array.isArray(diaryUnlocked) || !diaryUnlocked.length) return;
+  _markArchitectDiarySeen(diaryUnlocked);
   const entries = diaryUnlocked
     .map(code => ARCHITECT_DIARY_ENTRIES.find(e => e.code === code))
     .filter(Boolean);
