@@ -3399,14 +3399,6 @@ body.is-admin .more-item.admin-only-item::before {
   50% { transform: translateY(4px); opacity: 1; }
 }
 
-.architect-diary-banner {
-  width: 100%; max-height: 160px; overflow: hidden;
-  border-radius: 10px; margin: 0 12px 10px; border: 1px solid rgba(0,255,102,0.25);
-}
-.architect-diary-banner img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
-  -webkit-user-drag: none; user-select: none;
-}
 .architect-diary-card {
   border-left: 3px solid #00ff66;
 }
@@ -3415,12 +3407,12 @@ body.is-admin .more-item.admin-only-item::before {
   letter-spacing: 1px; font-weight: 700; margin-bottom: 6px;
 }
 .architect-diary-card-img {
-  width: 100%; max-height: 140px; overflow: hidden;
+  width: 100%; height: 140px; overflow: hidden;
   border-radius: 6px; margin-bottom: 8px;
   border: 1px solid rgba(0,255,102,0.2);
 }
 .architect-diary-card-img img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
+  width: 100%; height: 100%; object-fit: cover; object-position: center 15%; display: block;
   -webkit-user-drag: none; user-select: none;
 }
 .architect-diary-card-text {

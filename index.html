@@ -652,11 +652,6 @@
       <div class="more-item-name">КОМАНДА</div>
       <div class="more-item-cn">团队 tuán duì</div>
     </div>
-    <div class="more-item" onclick="openMore('architect-diary')">
-      <i class="ti ti-notebook more-item-icon" style="color:#00ff66;"></i>
-      <div class="more-item-name">ДНЕВНИК АРХИТЕКТОРА</div>
-      <div class="more-item-cn">架构师日志 jià gòu shī rì zhì</div>
-    </div>
     <div class="more-item admin-only-item" id="adminMoreBtn" onclick="openMore('admin')">
       <i class="ti ti-shield-lock more-item-icon" style="color:rgba(200,80,80,0.9);"></i>
       <div class="more-item-name">АДМИН</div>
@@ -866,6 +861,9 @@
   <div id="more-achievements" style="display:none;">
     <div class="cn-divider"><span class="cn-divider-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="5"/><path d="M9.5 10.5L7.5 3h2l2.5 5 2.5-5h2l-2 7.5"/></svg></span> 成就 АЧИВКИ</div>
     <div id="achievementsContent"><div class="empty-state">Загрузка...</div></div>
+
+    <div class="cn-divider">📓 架构师日志 ДНЕВНИК АРХИТЕКТОРА</div>
+    <div id="architectDiaryContainer" style="padding:0 12px 4px;"></div>
   </div>
 
   <div id="more-team" style="display:none;">
@@ -876,14 +874,6 @@
       <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Спамеры и шутники вычисляются по ID.</div>
       <button class="btn btn-primary" onclick="askAnonymous()">[ 发问 // ЗАДАТЬ ВОПРОС ]</button>
     </div></div>
-  </div>
-
-  <div id="more-architect-diary" style="display:none;">
-    <div class="cn-divider">📓 架构师日志 ДНЕВНИК АРХИТЕКТОРА</div>
-    <div class="architect-diary-banner">
-      <img src="https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_explaining.png" alt="Архитектор" loading="lazy" oncontextmenu="return false">
-    </div>
-    <div id="architectDiaryContainer" style="padding:0 12px 4px;"></div>
   </div>
 
   <div id="more-admin" style="display:none;">

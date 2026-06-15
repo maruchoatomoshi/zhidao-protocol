@@ -252,7 +252,7 @@ function openMore(section) {
   }
 
   // Скрываем все субстраницы
-  ['themes','map','weather','laundry','news','achievements','team','architect-diary','admin','stats'].forEach(s => {
+  ['themes','map','weather','laundry','news','achievements','team','admin','stats'].forEach(s => {
     const el = document.getElementById('more-' + s);
     if (el) el.style.display = 'none';
   });
@@ -270,11 +270,13 @@ function openMore(section) {
         if (cardEl) cardEl.style.display = '';
       });
     }
-    if (section === 'achievements') loadAchievements();
+    if (section === 'achievements') {
+      loadAchievements();
+      if (typeof renderArchitectDiary === 'function') renderArchitectDiary();
+    }
     if (section === 'news') loadAnnouncements();
     if (section === 'laundry') { initLaundry(); }
     if (section === 'team' && typeof renderTeamCards === 'function') renderTeamCards();
-    if (section === 'architect-diary' && typeof renderArchitectDiary === 'function') renderArchitectDiary();
     if (section === 'map' && typeof initCampusMap === 'function') initCampusMap();
   }
 }
