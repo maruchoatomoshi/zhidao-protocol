@@ -1759,3 +1759,22 @@ function adminTestArchitectDiaryPopup() {
   const code = codes[Math.floor(Math.random() * codes.length)];
   handleDiaryUnlocks([code]);
 }
+
+function adminTestTianhaoPopup() {
+  if (typeof TIANHAO_PHRASES === 'undefined' || typeof showTianhaoPopup !== 'function') { showToast('tianhao.js не загружен'); return; }
+  const phrase = TIANHAO_PHRASES[Math.floor(Math.random() * TIANHAO_PHRASES.length)];
+  showTianhaoPopup(phrase);
+  const card = document.getElementById('tianhaoPhraseCard');
+  if (card) {
+    card.style.display = 'block';
+    card.innerHTML = `
+      <div class="card-inner" style="padding:12px 14px;cursor:pointer;" onclick="showTianhaoPopup(window._tianhaoCurrentPhrase)">
+        <div style="font-size:9px;font-family:monospace;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">天浩提示 // ФРАЗА ДНЯ · ДЕНЬ ${phrase.day} · ${phrase.period === 1 ? '13:00–16:00' : '18:00–21:00'} (тест)</div>
+        <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:4px;">${escapeHtml(phrase.chinese)}</div>
+        <div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:6px;">${escapeHtml(phrase.pinyin)}</div>
+        <div style="font-size:13px;color:var(--text2);">${escapeHtml(phrase.russian)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;border-top:1px solid var(--border);padding-top:6px;">Тяньхао: ${escapeHtml(phrase.note)}</div>
+      </div>`;
+    window._tianhaoCurrentPhrase = phrase;
+  }
+}
