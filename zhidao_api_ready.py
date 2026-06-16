@@ -4751,12 +4751,14 @@ async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(
 def get_active_gift_code():
     conn = get_conn()
     c = conn.cursor()
-    now = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+    now_dt = datetime.now(BEIJING_TZ)
+    now = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+    window_end = (now_dt - timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
     c.execute(
         "SELECT code, reward_stars, max_uses, used_count FROM gift_codes "
-        "WHERE show_at IS NOT NULL AND show_at <= ? AND used_count < max_uses "
+        "WHERE show_at IS NOT NULL AND show_at <= ? AND show_at >= ? AND used_count < max_uses "
         "AND (expires_at IS NULL OR expires_at > ?) ORDER BY show_at DESC LIMIT 1",
-        (now, now)
+        (now, window_end, now)
     )
     row = c.fetchone()
     conn.close()
