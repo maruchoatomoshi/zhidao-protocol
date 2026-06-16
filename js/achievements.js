@@ -59,6 +59,7 @@ async function loadAchievements() {
     });
     html += '</div>';
     container.innerHTML = html;
+    if (typeof checkArchitectDiaryUnlocks === 'function') checkArchitectDiaryUnlocks();
   } catch(e) { container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
@@ -93,7 +94,13 @@ function showAchievementInfo(code, name, description, earned) {
   const descEl = modal.querySelector('#achievementModalDesc');
 
   const src = ACHIEVEMENT_IMAGES[code] || '';
-  imgWrap.style.backgroundImage = src ? `url('${src}')` : '';
+  if (src) {
+    imgWrap.style.backgroundImage = `url('${src}')`;
+    imgWrap.innerHTML = '';
+  } else {
+    imgWrap.style.backgroundImage = '';
+    imgWrap.innerHTML = '<i class="ti ti-award" style="font-size:64px;color:#d4af37;"></i>';
+  }
   imgWrap.classList.toggle('locked', !earned);
   statusEl.textContent = earned ? '✓ ПОЛУЧЕНО' : '🔒 НЕДОСТУПНО';
   statusEl.className = 'achievement-modal-status ' + (earned ? 'earned' : 'locked');
