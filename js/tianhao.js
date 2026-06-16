@@ -1,6 +1,13 @@
 // ===== Тяньхао — фразы дня =====
 
-const TIANHAO_IMG = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/tianhao_phrase.png';
+const TIANHAO_IMGS = [
+  'tianhao_explaining.png',
+  'tianhao_explaining2.png',
+  'tianhao_idea.png',
+  'tianhao_smiling_explaining.png',
+  'tianhao_thinking.png',
+  'tianhao_thinking2.png',
+].map(f => 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/' + f);
 const TIANHAO_TRIP_START = '2026-07-05'; // день 1
 const TIANHAO_SEEN_KEY = 'tianhaoPhrasesSeen';
 
@@ -169,7 +176,8 @@ function showTianhaoPopup(phrase) {
   if (!overlay || !textEl) return;
 
   if (imageEl) {
-    imageEl.style.backgroundImage = `url('${TIANHAO_IMG}')`;
+    const img = TIANHAO_IMGS[Math.floor(Math.random() * TIANHAO_IMGS.length)];
+    imageEl.style.backgroundImage = `url('${img}')`;
     imageEl.style.animation = 'none';
     void imageEl.offsetWidth;
     imageEl.style.animation = '';
