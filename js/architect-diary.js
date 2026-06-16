@@ -137,6 +137,7 @@ async function unlockArchitectDiaryEntry(entryCode) {
 }
 
 const ARCHITECT_DIARY_SEEN_KEY = 'architectDiarySeenEntries';
+const ARCHITECT_DIARY_BASELINE_KEY = 'architectDiaryBaselineDone';
 
 function _getArchitectDiarySeen() {
   try {
@@ -158,10 +159,11 @@ async function checkArchitectDiaryUnlocks() {
   try {
     const { data } = await apiGetJson(`/api/diary/architect/${currentUserId}`);
     const unlockedCodes = (data?.entries || []).map(e => e.entry_code);
-    const seenRaw = localStorage.getItem(ARCHITECT_DIARY_SEEN_KEY);
-    if (seenRaw === null) {
+    const baselineDone = localStorage.getItem(ARCHITECT_DIARY_BASELINE_KEY);
+    if (!baselineDone) {
       // First run on this device: baseline existing unlocks without popping them all.
       _markArchitectDiarySeen(unlockedCodes);
+      localStorage.setItem(ARCHITECT_DIARY_BASELINE_KEY, '1');
       return;
     }
     const seen = new Set(_getArchitectDiarySeen());
