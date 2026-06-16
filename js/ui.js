@@ -252,7 +252,7 @@ function openMore(section) {
   }
 
   // Скрываем все субстраницы
-  ['themes','map','weather','laundry','news','achievements','team','admin','stats','giftcode'].forEach(s => {
+  ['themes','map','weather','laundry','news','achievements','team','admin','stats'].forEach(s => {
     const el = document.getElementById('more-' + s);
     if (el) el.style.display = 'none';
   });
@@ -1078,6 +1078,9 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   });
   zSafeUiCall('architect diary unlocks', () => {
     if (typeof checkArchitectDiaryUnlocks === 'function') checkArchitectDiaryUnlocks();
+  });
+  zSafeUiCall('gift code poller', () => {
+    if (typeof startGiftCodePoller === 'function') startGiftCodePoller();
   });
 
   if (!adminIntroPlaying && !_bootRunning) hideStartupCover();

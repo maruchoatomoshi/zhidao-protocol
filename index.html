@@ -647,11 +647,6 @@
       <div class="more-item-name">АЧИВКИ</div>
       <div class="more-item-cn">成就 chéng jiù</div>
     </div>
-    <div class="more-item" onclick="openMore('giftcode')">
-      <i class="ti ti-ticket more-item-icon" style="color:#ff003c;"></i>
-      <div class="more-item-name">КОД МЮ</div>
-      <div class="more-item-cn">礼品码 lǐ pǐn mǎ</div>
-    </div>
     <div class="more-item" onclick="openMore('team')">
       <i class="ti ti-users more-item-icon" style="color:rgba(155,89,182,0.9);"></i>
       <div class="more-item-name">КОМАНДА</div>
@@ -871,21 +866,6 @@
     <div id="architectDiaryContainer" style="padding:0 12px 4px;"></div>
   </div>
 
-  <div id="more-giftcode" style="display:none;">
-    <div class="cn-divider">🎟 礼品码 ПОДАРОЧНЫЙ КОД</div>
-    <div style="padding:0 12px 12px;">
-      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">
-        Введи код, который тебе выдал Михаил Юрьевич (МЮ) — за него начислятся ★ на счёт.
-      </div>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="giftCodeInput" placeholder="КОД" autocomplete="off" autocapitalize="characters"
-          style="flex:1;min-width:0;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,0,60,0.3);background:rgba(255,0,60,0.05);color:var(--text);font-family:monospace;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">
-        <button id="giftCodeRedeemBtn" onclick="redeemGiftCode()"
-          style="padding:10px 16px;border-radius:8px;border:1px solid rgba(255,0,60,0.4);background:rgba(255,0,60,0.08);color:#ff003c;font-family:monospace;font-size:11px;font-weight:700;letter-spacing:0.04em;cursor:pointer;">АКТИВИРОВАТЬ</button>
-      </div>
-      <div id="giftCodeMsg" class="gift-code-msg"></div>
-    </div>
-  </div>
 
   <div id="more-team" style="display:none;">
     <div class="cn-divider">🛡️ 管理团队 ОПЕРАТОРЫ КОНТУРА</div>
@@ -1214,6 +1194,7 @@
           <input class="admin-input" id="adminGiftCodeStars" type="number" placeholder="Награда ★" min="1">
           <input class="admin-input" id="adminGiftCodeUses" type="number" placeholder="Лимит использований" min="1" value="1">
           <input class="admin-input" id="adminGiftCodeNote" placeholder="Заметка (необязательно)">
+          <input class="admin-input" id="adminGiftCodeShowAt" type="datetime-local" placeholder="Время показа (необязательно)" title="Когда показать попап всем пользователям">
         </div>
         <button class="btn btn-primary" style="width:100%;padding:9px;margin-top:8px;" onclick="adminCreateGiftCode()">🎟 СОЗДАТЬ КОД</button>
         <div class="admin-console-title" style="margin-top:14px;">Активные коды</div>
@@ -2535,7 +2516,7 @@
 <script src="./js/diary.js?v=20260613cleanup1"></script>
 <script src="./js/team.js?v=20260614avatar1"></script>
 <script src="./js/architect-diary.js?v=20260615c"></script>
-<script src="./js/gift-code.js?v=20260615a"></script>
+<script src="./js/gift-code.js?v=20260616b"></script>
 <script src="./js/contracts.js?v=20260615a"></script>
 <script src="./js/admin.js?v=20260615a"></script>
 <script src="./js/campus-map.js?v=20260609b"></script>
@@ -2867,6 +2848,10 @@
       <button class="architect-popup-close" onclick="closeMjuPopup(event)">✕</button>
     </div>
     <div class="architect-popup-text" id="mjuPopupText"></div>
+    <div id="mjuCodeBlock" style="display:none;margin:10px 0 4px;padding:0 2px;">
+      <div id="mjuCodeDisplay" style="font-family:monospace;font-size:20px;font-weight:700;color:#ff003c;letter-spacing:0.12em;text-align:center;padding:10px 12px;border:1px solid rgba(255,0,60,0.35);border-radius:8px;background:rgba(255,0,60,0.07);"></div>
+    </div>
+    <button id="mjuClaimBtn" style="display:none;width:100%;margin-top:10px;padding:11px;border-radius:8px;border:1px solid rgba(255,0,60,0.4);background:rgba(255,0,60,0.08);color:#ff003c;font-family:monospace;font-size:12px;font-weight:700;letter-spacing:0.06em;cursor:pointer;" onclick="claimMjuCode()">ЗАБРАТЬ ★</button>
     <div class="architect-popup-arrow">▽</div>
   </div>
 </div>

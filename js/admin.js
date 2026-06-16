@@ -1702,6 +1702,8 @@ async function adminCreateGiftCode() {
   const rewardStars = parseInt(document.getElementById('adminGiftCodeStars').value);
   const maxUses = parseInt(document.getElementById('adminGiftCodeUses').value) || 1;
   const note = (document.getElementById('adminGiftCodeNote').value || '').trim();
+  const showAtRaw = (document.getElementById('adminGiftCodeShowAt')?.value || '').trim();
+  const showAt = showAtRaw ? showAtRaw.replace('T', ' ') + ':00' : null;
 
   if (!code) { showToast('Укажи код'); return; }
   if (!rewardStars || rewardStars <= 0) { showToast('Укажи награду в ★'); return; }
@@ -1710,7 +1712,7 @@ async function adminCreateGiftCode() {
     const r = await fetch(`${API_URL}/api/admin/gift-code`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
-      body: JSON.stringify({code, reward_stars: rewardStars, max_uses: maxUses, note: note || null})
+      body: JSON.stringify({code, reward_stars: rewardStars, max_uses: maxUses, note: note || null, show_at: showAt})
     });
     if (r.ok) {
       showToast(`✅ Код ${code} создан`);
@@ -1718,6 +1720,8 @@ async function adminCreateGiftCode() {
       document.getElementById('adminGiftCodeStars').value = '';
       document.getElementById('adminGiftCodeUses').value = '1';
       document.getElementById('adminGiftCodeNote').value = '';
+      const showAtEl = document.getElementById('adminGiftCodeShowAt');
+      if (showAtEl) showAtEl.value = '';
       adminLoadGiftCodes();
     } else {
       showToast('Ошибка создания кода');
@@ -1741,7 +1745,7 @@ async function adminLoadGiftCodes() {
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
         <div style="flex:1;">
           <div style="font-family:monospace;font-size:13px;font-weight:700;color:#ff003c;letter-spacing:0.08em;">${escapeHtml(c.code)}</div>
-          <div style="font-size:10px;color:var(--text2);margin-top:2px;">+${c.reward_stars} ★ · использован ${c.used_count}/${c.max_uses}${c.note ? ' · ' + escapeHtml(c.note) : ''}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px;">+${c.reward_stars} ★ · использован ${c.used_count}/${c.max_uses}${c.note ? ' · ' + escapeHtml(c.note) : ''}${c.show_at ? ' · 📡 ' + escapeHtml(c.show_at) : ''}</div>
         </div>
       </div>`).join('');
   } catch (e) {
