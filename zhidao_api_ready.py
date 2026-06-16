@@ -4751,7 +4751,7 @@ async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(
 def get_active_gift_code():
     conn = get_conn()
     c = conn.cursor()
-    now = now_iso()
+    now = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
     c.execute(
         "SELECT code, reward_stars, max_uses, used_count FROM gift_codes "
         "WHERE show_at IS NOT NULL AND show_at <= ? AND used_count < max_uses "
