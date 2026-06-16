@@ -1082,6 +1082,9 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   zSafeUiCall('gift code poller', () => {
     if (typeof startGiftCodePoller === 'function') startGiftCodePoller();
   });
+  zSafeUiCall('tianhao phrase poller', () => {
+    if (typeof startTianhaoPoller === 'function') startTianhaoPoller();
+  });
 
   if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
 }
