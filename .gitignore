@@ -11,3 +11,4 @@ _raid_check.js
 .env
 .env.*
 !.env.example
+.claude/
