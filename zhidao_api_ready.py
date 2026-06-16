@@ -1424,7 +1424,12 @@ def migrate_db():
                   used_count INTEGER NOT NULL DEFAULT 0,
                   expires_at TEXT DEFAULT NULL,
                   created_at TEXT NOT NULL,
-                  note TEXT DEFAULT NULL)''')
+                  note TEXT DEFAULT NULL,
+                  show_at TEXT DEFAULT NULL)''')
+    try:
+        c.execute("ALTER TABLE gift_codes ADD COLUMN show_at TEXT DEFAULT NULL")
+    except Exception:
+        pass
 
     c.execute('''CREATE TABLE IF NOT EXISTS gift_code_redemptions
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -4723,15 +4728,16 @@ async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(
 
     expires_at = data.get("expires_at") or None
     note = data.get("note") or None
+    show_at = data.get("show_at") or None
 
     def _run():
         conn = get_conn()
         try:
             c = conn.cursor()
             c.execute(
-                '''INSERT OR REPLACE INTO gift_codes (code, reward_stars, max_uses, used_count, expires_at, created_at, note)
-                   VALUES (?, ?, ?, COALESCE((SELECT used_count FROM gift_codes WHERE code=?), 0), ?, ?, ?)''',
-                (code, reward_stars, max_uses, code, expires_at, now_iso(), note),
+                '''INSERT OR REPLACE INTO gift_codes (code, reward_stars, max_uses, used_count, expires_at, created_at, note, show_at)
+                   VALUES (?, ?, ?, COALESCE((SELECT used_count FROM gift_codes WHERE code=?), 0), ?, ?, ?, ?)''',
+                (code, reward_stars, max_uses, code, expires_at, now_iso(), note, show_at),
             )
             conn.commit()
             return {"success": True}
@@ -4741,6 +4747,24 @@ async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(
     return await db_write(_run)
 
 
+@app.get("/api/gift-code/active")
+def get_active_gift_code():
+    conn = get_conn()
+    c = conn.cursor()
+    now = now_iso()
+    c.execute(
+        "SELECT code, reward_stars, max_uses, used_count FROM gift_codes "
+        "WHERE show_at IS NOT NULL AND show_at <= ? AND used_count < max_uses "
+        "AND (expires_at IS NULL OR expires_at > ?) ORDER BY show_at DESC LIMIT 1",
+        (now, now)
+    )
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return {"active": False}
+    return {"active": True, "code": row[0], "reward_stars": row[1], "max_uses": row[2], "used_count": row[3]}
+
+
 @app.get("/api/admin/gift-code")
 def admin_list_gift_codes(x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
@@ -4748,11 +4772,11 @@ def admin_list_gift_codes(x_admin_id: Optional[int] = Header(None)):
 
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT code, reward_stars, max_uses, used_count, expires_at, created_at, note FROM gift_codes ORDER BY created_at DESC")
+    c.execute("SELECT code, reward_stars, max_uses, used_count, expires_at, created_at, note, show_at FROM gift_codes ORDER BY created_at DESC")
     rows = c.fetchall()
 
     return {"codes": [
-        {"code": r[0], "reward_stars": r[1], "max_uses": r[2], "used_count": r[3], "expires_at": r[4], "created_at": r[5], "note": r[6]}
+        {"code": r[0], "reward_stars": r[1], "max_uses": r[2], "used_count": r[3], "expires_at": r[4], "created_at": r[5], "note": r[6], "show_at": r[7]}
         for r in rows
     ]}
 

@@ -1,55 +1,89 @@
-// ===== Подарочные коды (Михаил Юрьевич) =====
+// ===== Подарочные коды (Михаил Юрьевич) — живое событие =====
 
-const MJU_POPUP_IMG = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/alpha_boss_netwatchtheme.png';
+const MJU_POPUP_IMG = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/mu_givingcode.png';
+const MJU_SEEN_KEY = 'mjuSeenCodes';
 
 let mjuPopupTypeTimer = null;
+let _mjuPollInterval = null;
+let _mjuActiveCode = null;
 
-async function redeemGiftCode() {
-  const input = document.getElementById('giftCodeInput');
-  const btn = document.getElementById('giftCodeRedeemBtn');
-  const msgEl = document.getElementById('giftCodeMsg');
-  if (!input || !currentUserId) return;
+function _getMjuSeen() {
+  try { return new Set(JSON.parse(localStorage.getItem(MJU_SEEN_KEY) || '[]')); } catch (e) { return new Set(); }
+}
+function _markMjuSeen(code) {
+  try {
+    const s = _getMjuSeen(); s.add(code);
+    localStorage.setItem(MJU_SEEN_KEY, JSON.stringify([...s]));
+  } catch (e) {}
+}
 
-  const code = input.value.trim();
-  if (!code) return;
+function startGiftCodePoller() {
+  if (_mjuPollInterval) return;
+  checkActiveGiftCode();
+  _mjuPollInterval = setInterval(checkActiveGiftCode, 10000);
+}
+window.startGiftCodePoller = startGiftCodePoller;
 
+async function checkActiveGiftCode() {
+  if (!currentUserId) return;
+  try {
+    const { data } = await apiGetJson('/api/gift-code/active');
+    if (!data || !data.active) return;
+    const seen = _getMjuSeen();
+    if (seen.has(data.code)) return;
+    _markMjuSeen(data.code);
+    _mjuActiveCode = data.code;
+    showMjuPopup(
+      `Стоп. Код активен — первые ${data.max_uses} оператора берут награду. Быстро.`,
+      data.code,
+      data.reward_stars
+    );
+  } catch (e) {}
+}
+
+async function claimMjuCode() {
+  if (!_mjuActiveCode || !currentUserId) return;
+  const btn = document.getElementById('mjuClaimBtn');
   if (btn) btn.disabled = true;
-  if (msgEl) { msgEl.textContent = ''; msgEl.className = 'gift-code-msg'; }
 
   try {
-    const { response, data } = await apiPostJson('/api/gift-code/redeem', {
+    const { data } = await apiPostJson('/api/gift-code/redeem', {
       telegram_id: currentUserId,
-      code,
+      code: _mjuActiveCode,
     });
 
-    if (response.ok && data.success) {
-      input.value = '';
+    if (data.success) {
       currentPoints = data.new_points;
       updatePoints();
+      if (btn) {
+        btn.textContent = `✓ Получено! +${data.reward_stars} ★`;
+        btn.style.color = '#2ecc71';
+        btn.style.borderColor = '#2ecc71';
+      }
       try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
-      showMjuPopup(`Так, получил твой код. Награда — ${data.reward_stars} ★ на счёт. Не теряй чек, оператор`);
     } else {
-      const detail = data.detail || '';
-      let text = 'Код не подошёл. Проверь и попробуй ещё раз';
-      if (detail === 'Code not found') text = 'Такого кода в системе нет. Проверь раскладку и попробуй снова';
-      else if (detail === 'Already redeemed') text = 'Этот код ты уже использовал. Повторно не прокатит';
-      else if (detail === 'Code expired') text = 'Срок действия кода истёк';
-      else if (detail === 'Code exhausted') text = 'Лимит использований этого кода исчерпан';
-      if (msgEl) { msgEl.textContent = text; msgEl.classList.add('gift-code-msg-error'); }
+      const detail = data.detail || data.error || '';
+      let msg = 'Не удалось активировать';
+      if (detail === 'Already redeemed') msg = 'Ты уже забрал этот код';
+      else if (detail === 'Code exhausted') msg = '⚠ Лимит исчерпан — опоздал';
+      else if (detail === 'Code expired') msg = 'Код устарел';
+      if (btn) { btn.textContent = msg; btn.style.color = 'var(--text2)'; }
       try { tg.HapticFeedback.notificationOccurred('error'); } catch (e) {}
     }
   } catch (e) {
-    if (msgEl) { msgEl.textContent = 'Ошибка соединения'; msgEl.classList.add('gift-code-msg-error'); }
-  } finally {
-    if (btn) btn.disabled = false;
+    if (btn) { btn.textContent = 'Ошибка соединения'; btn.disabled = false; }
   }
 }
+window.claimMjuCode = claimMjuCode;
 
-function showMjuPopup(text) {
+function showMjuPopup(text, code, rewardStars) {
   const overlay = document.getElementById('mjuPopupOverlay');
   const imageEl = document.getElementById('mjuPopupImage');
   const box = overlay ? overlay.querySelector('.architect-popup-box') : null;
   const textEl = document.getElementById('mjuPopupText');
+  const codeBlock = document.getElementById('mjuCodeBlock');
+  const codeDisplay = document.getElementById('mjuCodeDisplay');
+  const claimBtn = document.getElementById('mjuClaimBtn');
   if (!overlay || !textEl) return;
 
   if (imageEl) {
@@ -64,6 +98,16 @@ function showMjuPopup(text) {
     box.style.animation = '';
   }
 
+  if (codeDisplay) codeDisplay.textContent = code || '';
+  if (codeBlock) codeBlock.style.display = code ? 'block' : 'none';
+  if (claimBtn) {
+    claimBtn.style.display = code ? 'block' : 'none';
+    claimBtn.disabled = false;
+    claimBtn.textContent = rewardStars ? `ЗАБРАТЬ +${rewardStars} ★` : 'ЗАБРАТЬ ★';
+    claimBtn.style.color = '#ff003c';
+    claimBtn.style.borderColor = 'rgba(255,0,60,0.4)';
+  }
+
   document.body.classList.add('architect-popup-open');
   overlay.style.display = 'flex';
   typeMjuPopupText(text);
@@ -73,11 +117,7 @@ function showMjuPopup(text) {
 function typeMjuPopupText(text) {
   const textEl = document.getElementById('mjuPopupText');
   if (!textEl) return;
-  if (mjuPopupTypeTimer) {
-    clearInterval(mjuPopupTypeTimer);
-    mjuPopupTypeTimer = null;
-  }
-
+  if (mjuPopupTypeTimer) { clearInterval(mjuPopupTypeTimer); mjuPopupTypeTimer = null; }
   textEl.innerHTML = '<span class="mju-popup-typed"></span><span class="architect-popup-cursor">▌</span>';
   const typedEl = textEl.querySelector('.mju-popup-typed');
   let i = 0;
@@ -97,9 +137,6 @@ function closeMjuPopup(e) {
   if (e && e.target !== e.currentTarget && !e.target.closest('.architect-popup-close')) return;
   const overlay = document.getElementById('mjuPopupOverlay');
   if (overlay) overlay.style.display = 'none';
-  if (mjuPopupTypeTimer) {
-    clearInterval(mjuPopupTypeTimer);
-    mjuPopupTypeTimer = null;
-  }
+  if (mjuPopupTypeTimer) { clearInterval(mjuPopupTypeTimer); mjuPopupTypeTimer = null; }
   document.body.classList.remove('architect-popup-open');
 }
