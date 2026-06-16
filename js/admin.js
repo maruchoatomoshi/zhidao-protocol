@@ -1752,3 +1752,10 @@ async function adminLoadGiftCodes() {
     el.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
   }
 }
+
+function adminTestArchitectDiaryPopup() {
+  if (typeof handleDiaryUnlocks !== 'function') { showToast('handleDiaryUnlocks не загружен'); return; }
+  const codes = ['first_spin','first_item','first_raid','first_economy','first_achievement','first_laundry','first_shop_tx','first_contract'];
+  const code = codes[Math.floor(Math.random() * codes.length)];
+  handleDiaryUnlocks([code]);
+}
