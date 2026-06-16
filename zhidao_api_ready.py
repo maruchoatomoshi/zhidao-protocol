@@ -6348,13 +6348,15 @@ async def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)
         conn = get_conn()
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO user_achievements (telegram_id, achievement_code) VALUES (?,?)", (telegram_id, code))
+            granted = award_achievement(c, telegram_id, code)
             conn.commit()
             conn.close()
-            return {"success": True}
+            if granted:
+                return {"success": True}
+            return {"success": False, "detail": "Already earned"}
         except Exception:
             conn.close()
-            return {"success": False, "detail": "Already earned"}
+            return {"success": False, "detail": "Error"}
     return await db_write(_run)
 
 @app.get("/api/user/scans/{telegram_id}")
