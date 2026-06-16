@@ -62,6 +62,12 @@ ls -lh /root/zhidao.db*
 
 Healthy state: no grep hits, WAL file ≤ 4MB.
 
+Latest launch snapshot:
+
+- `PROJECT_STATUS_2026-06-17.md` records the current repository state on commit `d01875e`.
+- The current repo implementation uses `DB_WRITE_LOCK` plus a single-worker `DB_WRITE_EXECUTOR` and thread-local persistent SQLite connections. Treat this as the known current architecture; do not remove or rewrite it without benchmarking against the live server.
+- Frontend feature freeze and launch lock are currently disabled in `js/config.js`.
+
 ## Repository Structure
 
 Main files:
