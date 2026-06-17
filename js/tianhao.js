@@ -225,3 +225,71 @@ function closeTianhaoPopup(e) {
   document.body.classList.remove('architect-popup-open');
 }
 window.closeTianhaoPopup = closeTianhaoPopup;
+
+// ===== Тяньхао — факты во время экскурсий (админ-триггер) =====
+
+const TIANHAO_FACT_SEEN_KEY = 'tianhaoFactsSeen';
+let _tianhaoFactPollInterval = null;
+
+function _getTianhaoFactSeen() {
+  try { return new Set(JSON.parse(localStorage.getItem(TIANHAO_FACT_SEEN_KEY) || '[]')); } catch (e) { return new Set(); }
+}
+function _markTianhaoFactSeen(id) {
+  try {
+    const s = _getTianhaoFactSeen(); s.add(id);
+    localStorage.setItem(TIANHAO_FACT_SEEN_KEY, JSON.stringify([...s]));
+  } catch (e) {}
+}
+
+function startTianhaoFactPoller() {
+  if (_tianhaoFactPollInterval) return;
+  checkActiveTianhaoFact();
+  _tianhaoFactPollInterval = setInterval(checkActiveTianhaoFact, 10000);
+}
+window.startTianhaoFactPoller = startTianhaoFactPoller;
+
+async function checkActiveTianhaoFact() {
+  try {
+    const r = await fetch(`${API_URL}/api/tianhao-fact/active`);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.active) return;
+    const id = String(data.id);
+    if (_getTianhaoFactSeen().has(id)) return;
+    _markTianhaoFactSeen(id);
+    showTianhaoFactPopup(data.text);
+  } catch (e) {}
+}
+window.checkActiveTianhaoFact = checkActiveTianhaoFact;
+
+function showTianhaoFactPopup(text) {
+  const overlay = document.getElementById('tianhaoPopupOverlay');
+  const imageEl = document.getElementById('tianhaoPopupImage');
+  const box = overlay ? overlay.querySelector('.architect-popup-box') : null;
+  const textEl = document.getElementById('tianhaoPopupText');
+  const chineseEl = document.getElementById('tianhaoPopupChinese');
+  const pinyinEl = document.getElementById('tianhaoPopupPinyin');
+  if (!overlay || !textEl) return;
+
+  if (imageEl) {
+    const img = TIANHAO_IMGS[Math.floor(Math.random() * TIANHAO_IMGS.length)];
+    imageEl.style.backgroundImage = `url('${img}')`;
+    imageEl.style.animation = 'none';
+    void imageEl.offsetWidth;
+    imageEl.style.animation = '';
+  }
+  if (box) {
+    box.style.animation = 'none';
+    void box.offsetWidth;
+    box.style.animation = '';
+  }
+
+  if (chineseEl) chineseEl.textContent = '';
+  if (pinyinEl) pinyinEl.textContent = '导游提示 // ФАКТ ОБ ЭКСКУРСИИ';
+
+  document.body.classList.add('architect-popup-open');
+  overlay.style.display = 'flex';
+  _typeTianhaoText(text);
+  try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+}
+window.showTianhaoFactPopup = showTianhaoFactPopup;

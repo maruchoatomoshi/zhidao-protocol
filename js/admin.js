@@ -200,7 +200,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode','tianhao-fact'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -224,6 +224,7 @@ function showAdminSection(name, btn) {
   if (name==='contracts') adminLoadContracts();
   if (name==='report') adminLoadEconomyReport(7);
   if (name==='giftcode') adminLoadGiftCodes();
+  if (name==='tianhao-fact') adminLoadTianhaoFacts();
 }
 
 async function loadAdminLaundry() {
@@ -1753,6 +1754,56 @@ async function adminLoadGiftCodes() {
   }
 }
 
+async function adminCreateTianhaoFact() {
+  const text = (document.getElementById('adminTianhaoFactText').value || '').trim();
+  const showAtRaw = (document.getElementById('adminTianhaoFactShowAt')?.value || '').trim();
+  const showAt = showAtRaw ? showAtRaw.replace('T', ' ') + ':00' : null;
+
+  if (!text) { showToast('Укажи текст факта'); return; }
+  if (!showAt) { showToast('Укажи время показа'); return; }
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/tianhao-fact`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({text, show_at: showAt})
+    });
+    if (r.ok) {
+      showToast('✅ Факт запланирован');
+      document.getElementById('adminTianhaoFactText').value = '';
+      const showAtEl = document.getElementById('adminTianhaoFactShowAt');
+      if (showAtEl) showAtEl.value = '';
+      adminLoadTianhaoFacts();
+    } else {
+      showToast('Ошибка создания факта');
+    }
+  } catch (e) { showToast('Ошибка соединения'); }
+}
+
+async function adminLoadTianhaoFacts() {
+  const el = document.getElementById('adminTianhaoFactList');
+  if (!el) return;
+  el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/tianhao-fact`, {headers: {'x-admin-id': currentUserId}});
+    const data = await r.json();
+    const facts = data.facts || [];
+    if (!facts.length) {
+      el.innerHTML = '<div class="empty-state">Фактов пока нет</div>';
+      return;
+    }
+    el.innerHTML = facts.map(f => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-size:12px;color:var(--text);">${escapeHtml(f.text)}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px;">📡 ${escapeHtml(f.show_at)}</div>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
+}
+
 function adminTestArchitectDiaryPopup() {
   if (typeof handleDiaryUnlocks !== 'function') { showToast('handleDiaryUnlocks не загружен'); return; }
   const codes = ['first_spin','first_item','first_raid','first_economy','first_achievement','first_laundry','first_shop_tx','first_contract'];
@@ -1777,6 +1828,11 @@ function adminTestTianhaoPopup() {
       </div>`;
     window._tianhaoCurrentPhrase = phrase;
   }
+}
+
+function adminTestTianhaoFactPopup() {
+  if (typeof showTianhaoFactPopup !== 'function') { showToast('tianhao.js не загружен'); return; }
+  showTianhaoFactPopup('Это тестовый факт об экскурсии — пример того, как будет выглядеть попап Тяньхао с реальным фактом о месте.');
 }
 
 function adminTestMjuTopPopup() {
