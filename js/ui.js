@@ -238,6 +238,12 @@ function syncAdminUiVisibility() {
 
   const architectThemeBtn = document.getElementById('theme-btn-architect');
   if (architectThemeBtn) architectThemeBtn.style.display = isArchitect ? '' : 'none';
+
+  const isDevOwner = Number(currentUserId) === 389741116;
+  ['adminArchitectTriggerBtn','adminTestLogBtn','adminTestTianhaoBtn','adminTestFactBtn','adminTestMjuTopBtn','adminTestLizaBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isDevOwner ? '' : 'none';
+  });
 }
 
 function openMore(section) {
