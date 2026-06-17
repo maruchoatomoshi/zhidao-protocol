@@ -3428,6 +3428,19 @@ body.is-admin .more-item.admin-only-item::before {
 .tianhao-popup-theme .architect-popup-cursor { color: #e8a800; }
 .tianhao-popup-theme .architect-popup-arrow { color: rgba(255,180,0,0.5); }
 
+.liza-popup-theme .architect-popup-box {
+  border-color: rgba(41,182,246,0.45);
+  box-shadow: 0 0 20px rgba(41,182,246,0.15), 0 -6px 20px rgba(0,0,0,0.4);
+}
+.liza-popup-theme .architect-popup-title {
+  color: #29b6f6; border-color: rgba(41,182,246,0.4); background: rgba(41,182,246,0.08);
+}
+.liza-popup-theme .architect-popup-close {
+  color: #29b6f6; border-color: rgba(41,182,246,0.3); background: rgba(41,182,246,0.06);
+}
+.liza-popup-theme .architect-popup-cursor { color: #29b6f6; }
+.liza-popup-theme .architect-popup-arrow { color: rgba(41,182,246,0.5); }
+
 .gift-code-msg {
   margin-top: 10px; font-size: 11px; line-height: 1.5; color: var(--text2);
   min-height: 14px;

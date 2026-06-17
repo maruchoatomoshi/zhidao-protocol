@@ -1085,6 +1085,9 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   zSafeUiCall('tianhao phrase poller', () => {
     if (typeof startTianhaoPoller === 'function') startTianhaoPoller();
   });
+  zSafeUiCall('liza curfew poller', () => {
+    if (typeof startLizaCurfewPoller === 'function') startLizaCurfewPoller();
+  });
 
   if (!adminIntroPlaying && !_bootRunning) hideStartupCover();
 }

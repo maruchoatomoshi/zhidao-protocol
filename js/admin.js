@@ -1778,3 +1778,13 @@ function adminTestTianhaoPopup() {
     window._tianhaoCurrentPhrase = phrase;
   }
 }
+
+function adminTestMjuTopPopup() {
+  if (typeof showMjuTopPopup !== 'function') { showToast('mju-top.js не загружен'); return; }
+  showMjuTopPopup();
+}
+
+function adminTestLizaPopup() {
+  if (typeof showLizaPopup !== 'function') { showToast('liza-curfew.js не загружен'); return; }
+  showLizaPopup();
+}

@@ -655,6 +655,7 @@ async function loadLeaderboard() {
     container.innerHTML = html;
     const placeEl = document.getElementById('profileLeaderboardPlace');
     if (placeEl) placeEl.textContent = String(myRank).startsWith('#') ? myRank : (Number(myRank) > 0 ? '#' + myRank : '—');
+    if (typeof checkMjuTopRank === 'function') checkMjuTopRank(Number(myRank) || 0);
   } catch(e) { document.getElementById('leaderboardContent').innerHTML = '<div class="empty-state">Нет соединения</div>'; }
 }
 
