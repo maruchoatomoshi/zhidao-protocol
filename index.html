@@ -873,6 +873,9 @@
   <div id="more-team" style="display:none;">
     <div class="cn-divider">🛡️ 管理团队 ОПЕРАТОРЫ КОНТУРА</div>
     <div id="teamCardsContainerFull" style="padding:0 12px 4px;"></div>
+    <div class="card" style="margin:0 12px 8px;"><div class="card-inner">
+      <button class="btn btn-primary" style="width:100%;" onclick="showIntroNovel(true)">[ 回放 // ПОСМОТРЕТЬ ВВЕДЕНИЕ ]</button>
+    </div></div>
     <div class="cn-divider">🤫 匿名问题 АНОНИМНЫЙ ВОПРОС</div>
     <div class="card"><div class="card-inner">
       <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;">Вопрос придёт вожатым анонимно. Спамеры и шутники вычисляются по ID.</div>
@@ -906,6 +909,7 @@
       <button class="admin-sec-btn" id="adminTestFactBtn" style="display:none;" onclick="adminTestTianhaoFactPopup()"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></span><span class="admin-nav-label">Тест факта</span></button>
       <button class="admin-sec-btn" id="adminTestMjuTopBtn" style="display:none;" onclick="adminTestMjuTopPopup()"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></span><span class="admin-nav-label">Тест МЮ топ-1</span></button>
       <button class="admin-sec-btn" id="adminTestLizaBtn" style="display:none;" onclick="adminTestLizaPopup()"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></span><span class="admin-nav-label">Тест Лизы</span></button>
+      <button class="admin-sec-btn" id="adminTestNovelBtn" style="display:none;" onclick="showIntroNovel(true)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></span><span class="admin-nav-label">Тест новеллы</span></button>
     </div>
     <div id="admin-schedule" class="admin-section" style="display:block;padding:0 12px;">
       <div class="admin-console-card">
@@ -2545,6 +2549,7 @@
 <script src="./js/tianhao.js?v=20260617b"></script>
 <script src="./js/mju-top.js?v=20260617a"></script>
 <script src="./js/liza-curfew.js?v=20260617a"></script>
+<script src="./js/intro-novel.js?v=20260618a"></script>
 <script src="./js/contracts.js?v=20260615a"></script>
 <script src="./js/admin.js?v=20260617b"></script>
 <script src="./js/campus-map.js?v=20260609b"></script>
@@ -2919,6 +2924,20 @@
     </div>
     <div class="architect-popup-text" id="lizaPopupText"></div>
     <div class="architect-popup-arrow">▽</div>
+  </div>
+</div>
+
+<div class="architect-popup-overlay intro-novel-theme" id="introNovelOverlay" style="display:none;">
+  <div class="architect-popup-box">
+    <div class="architect-popup-header">
+      <div class="architect-popup-title" id="introNovelTitle">СИСТЕМА</div>
+      <button class="architect-popup-close" id="introNovelClose" onclick="introNovelSkip()">✕</button>
+    </div>
+    <div class="architect-popup-text" id="introNovelText"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="intro-novel-btn" onclick="introNovelSkip()">ПРОПУСТИТЬ</button>
+      <button class="intro-novel-btn primary" id="introNovelNextBtn" onclick="introNovelNext()">ДАЛЕЕ ▸</button>
+    </div>
   </div>
 </div>
 
