@@ -849,6 +849,97 @@ function scheduleArchitectResultReveal(lobbyCard, eventData) {
   }, revealDelay);
 }
 
+const ARCHITECT_BATTLE_START_LINES = [
+  'Протокол активирован. Посмотрим, чего стоит твоя команда.',
+  'Защита поднята. Начинаем проверку на прочность.',
+  'Сопротивление обнаружено. Хорошо. Мне нужен повод тебя запомнить.'
+];
+
+const ARCHITECT_VICTORY_LINES = [
+  'Невозможно... защита пробита. Протокол повержен.',
+  'Сбой... сбой... вы прошли дальше, чем я рассчитывал.',
+  'Хорошо сыграно, операторы. Этот раунд за вами.'
+];
+
+let _architectBattlePopupTypeTimer = null;
+
+function _pickArchitectLine(lines) {
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+function showArchitectBattlePopup(title, image, text) {
+  const overlay = document.getElementById('architectBattlePopupOverlay');
+  const imageEl = document.getElementById('architectBattlePopupImage');
+  const titleEl = document.getElementById('architectBattlePopupTitle');
+  const textEl = document.getElementById('architectBattlePopupText');
+  if (!overlay || !textEl) return;
+
+  if (titleEl) titleEl.textContent = title;
+  if (imageEl) {
+    imageEl.style.backgroundImage = `url('${image}')`;
+    imageEl.style.animation = 'none';
+    void imageEl.offsetWidth;
+    imageEl.style.animation = '';
+  }
+
+  document.body.classList.add('architect-popup-open');
+  overlay.style.display = 'flex';
+  _typeArchitectBattlePopupText(text);
+  try { tg.HapticFeedback.notificationOccurred('warning'); } catch (e) {}
+}
+window.showArchitectBattlePopup = showArchitectBattlePopup;
+
+function _typeArchitectBattlePopupText(text) {
+  const textEl = document.getElementById('architectBattlePopupText');
+  if (!textEl) return;
+  if (_architectBattlePopupTypeTimer) { clearInterval(_architectBattlePopupTypeTimer); _architectBattlePopupTypeTimer = null; }
+  textEl.innerHTML = '<span class="architect-battle-popup-typed"></span><span class="architect-popup-cursor">▌</span>';
+  const typedEl = textEl.querySelector('.architect-battle-popup-typed');
+  let i = 0;
+  _architectBattlePopupTypeTimer = setInterval(() => {
+    i++;
+    typedEl.textContent = text.slice(0, i);
+    if (i >= text.length) {
+      clearInterval(_architectBattlePopupTypeTimer);
+      _architectBattlePopupTypeTimer = null;
+      const cursor = textEl.querySelector('.architect-popup-cursor');
+      if (cursor) cursor.remove();
+    }
+  }, 22);
+}
+
+function closeArchitectBattlePopup(e) {
+  if (e && e.target !== e.currentTarget && !e.target.closest('.architect-popup-close')) return;
+  const overlay = document.getElementById('architectBattlePopupOverlay');
+  if (overlay) overlay.style.display = 'none';
+  if (_architectBattlePopupTypeTimer) { clearInterval(_architectBattlePopupTypeTimer); _architectBattlePopupTypeTimer = null; }
+  document.body.classList.remove('architect-popup-open');
+}
+window.closeArchitectBattlePopup = closeArchitectBattlePopup;
+
+// Architect taunts the team once when the fight first goes ACTIVE — sessionStorage
+// guard means it fires exactly once per event per browser session, regardless of
+// how many times the lobby re-polls and re-renders while the state stays ACTIVE.
+function maybeShowArchitectBattleSpeech(eventData) {
+  if (!eventData || eventData.code === 'wildai_breach') return;
+  if (String(eventData.state || '').toUpperCase() !== 'ACTIVE') return;
+  const key = `arch_speech_start_${eventData.id}`;
+  if (sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key, '1');
+  showArchitectBattlePopup('АРХИТЕКТОР', ARCHITECT_PHASE_IMAGES[1], _pickArchitectLine(ARCHITECT_BATTLE_START_LINES));
+}
+
+// Same one-shot pattern for the post-victory line, separate from the inline
+// win/lose result card which renders regardless of whether this popup was seen.
+function maybeShowArchitectVictorySpeech(eventData) {
+  if (!eventData || eventData.code === 'wildai_breach') return;
+  if (String(eventData.state || '').toUpperCase() !== 'FINISHED') return;
+  const key = `arch_speech_win_${eventData.id}`;
+  if (sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key, '1');
+  showArchitectBattlePopup('АРХИТЕКТОР // ПОВЕРЖЕН', ARCHITECT_TERMINAL_IMAGES.FINISHED, _pickArchitectLine(ARCHITECT_VICTORY_LINES));
+}
+
 function renderArchitectLobby(eventData, errorText = '') {
   const lobbyCard = document.getElementById('eventLobbyCard');
   const overlay = document.getElementById('eventOverlay');
@@ -891,6 +982,9 @@ function renderArchitectLobby(eventData, errorText = '') {
     updateArchitectBattleVisibility(null);
     return;
   }
+
+  maybeShowArchitectBattleSpeech(eventData);
+  maybeShowArchitectVictorySpeech(eventData);
 
   // Standby screen wiped the lobby markup earlier — restore it before rendering
   if (!document.getElementById('eventStatusText') && window._eventLobbyMarkup) {

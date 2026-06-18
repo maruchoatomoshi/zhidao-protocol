@@ -2556,7 +2556,7 @@
 <script src="./js/raid.js?v=20260615a"></script>
 <script src="./js/wild-ai-breach.js?v=20260614fix1"></script>
 <script src="./js/events.js?v=20260611wildai11"></script>
-<script src="./js/architect-event.js?v=20260613cleanup1"></script>
+<script src="./js/architect-event.js?v=20260619battlepopup1"></script>
 <script src="./js/demo.js?v=20260614themeintro1"></script>
 <script src="./js/instruction.js?v=20260617a"></script>
 <script src="./js/main.js?v=20260515a"></script>
@@ -2940,6 +2940,18 @@
       <button class="intro-novel-btn" onclick="introNovelSkip()">ПРОПУСТИТЬ БРИФИНГ</button>
       <button class="intro-novel-btn primary" id="introNovelNextBtn" onclick="introNovelNext()">ПРОДОЛЖИТЬ ПОДКЛЮЧЕНИЕ ▸</button>
     </div>
+  </div>
+</div>
+
+<div class="architect-popup-overlay" id="architectBattlePopupOverlay" style="display:none;" onclick="closeArchitectBattlePopup(event)">
+  <div class="architect-popup-image" id="architectBattlePopupImage"></div>
+  <div class="architect-popup-box">
+    <div class="architect-popup-header">
+      <div class="architect-popup-title" id="architectBattlePopupTitle">АРХИТЕКТОР</div>
+      <button class="architect-popup-close" onclick="closeArchitectBattlePopup(event)">✕</button>
+    </div>
+    <div class="architect-popup-text" id="architectBattlePopupText"></div>
+    <div class="architect-popup-arrow">▽</div>
   </div>
 </div>
 
