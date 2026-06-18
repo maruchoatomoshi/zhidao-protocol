@@ -968,9 +968,9 @@ async function spinRoulette(targetPrize, caseType = 'gold', targetIdx = null) {
 function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
   const isLegendary = caseType === 'black';
   const isPurple = caseType === 'purple';
-  const isDark = !document.body.classList.contains('theme-nw-light') &&
-                 !document.body.classList.contains('theme-genshin-light') &&
-                 !document.body.classList.contains('theme-genshin-dark');
+  const isLightTheme = document.body.classList.contains('theme-nw-light') ||
+                        document.body.classList.contains('theme-admin-light') ||
+                        document.body.classList.contains('theme-genshin-light');
 
   // Создаём оверлей
   let ov = document.getElementById('cyberResultOverlay');
@@ -980,19 +980,33 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
     document.getElementById('page-casino').appendChild(ov);
   }
 
-  const bgColor = isLegendary
-    ? 'radial-gradient(ellipse at 50% 35%,#2a1800 0%,#150c00 60%,#050300 100%)'
-    : isPurple
-    ? 'radial-gradient(ellipse at 50% 35%,#1e0a30 0%,#0d0518 60%,#050310 100%)'
-    : 'radial-gradient(ellipse at 50% 35%,#0d0d20 0%,#050510 100%)';
+  const bgColor = isLightTheme
+    ? (isLegendary
+        ? 'radial-gradient(ellipse at 50% 35%,#fff3d6 0%,#ffe6b3 60%,#fad98a 100%)'
+        : isPurple
+        ? 'radial-gradient(ellipse at 50% 35%,#f3e6ff 0%,#e8d2ff 60%,#dcc0fa 100%)'
+        : 'radial-gradient(ellipse at 50% 35%,#eef3ff 0%,#dde8fb 60%,#cddcf5 100%)')
+    : (isLegendary
+        ? 'radial-gradient(ellipse at 50% 35%,#2a1800 0%,#150c00 60%,#050300 100%)'
+        : isPurple
+        ? 'radial-gradient(ellipse at 50% 35%,#1e0a30 0%,#0d0518 60%,#050310 100%)'
+        : 'radial-gradient(ellipse at 50% 35%,#0d0d20 0%,#050510 100%)');
 
   const glowColor = isLegendary ? 'rgba(255,200,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.4)';
   const particleColor = isLegendary ? '#ffd700' : isPurple ? '#9b59b6' : '#d4af37';
   const rayColor = isLegendary ? 'rgba(255,215,0,0.8)' : isPurple ? 'rgba(155,89,182,0.7)' : 'rgba(212,175,55,0.7)';
-  const tagBg = isLegendary ? 'rgba(212,175,55,0.28)' : isPurple ? 'rgba(155,89,182,0.25)' : 'rgba(106,160,212,0.25)';
+  const tagBg = isLightTheme
+    ? (isLegendary ? 'rgba(212,175,55,0.22)' : isPurple ? 'rgba(155,89,182,0.16)' : 'rgba(106,160,212,0.16)')
+    : (isLegendary ? 'rgba(212,175,55,0.28)' : isPurple ? 'rgba(155,89,182,0.25)' : 'rgba(106,160,212,0.25)');
   const tagBorder = isLegendary ? 'rgba(212,175,55,0.7)' : isPurple ? 'rgba(155,89,182,0.6)' : 'rgba(106,160,212,0.55)';
-  const tagColor = isLegendary ? '#ffe9a8' : isPurple ? '#e6c7ff' : '#bfe0ff';
+  const tagColor = isLightTheme
+    ? (isLegendary ? '#7a4f00' : isPurple ? '#5e2a82' : '#1f4a78')
+    : (isLegendary ? '#ffe9a8' : isPurple ? '#e6c7ff' : '#bfe0ff');
+  const tagShadow = isLightTheme ? 'none' : '0 1px 3px rgba(0,0,0,0.8)';
   const tagText = isLegendary ? '★ ЛЕГЕНДАРНЫЙ ★' : isPurple ? 'РЕДКИЙ // ФИОЛЕТОВЫЙ' : 'ОБЫЧНЫЙ';
+  const resultTextColor = isLightTheme ? '#1a1a1a' : '#fff';
+  const descColor = isLightTheme ? 'rgba(20,20,30,0.6)' : 'rgba(255,255,255,0.4)';
+  const hintColor = isLightTheme ? 'rgba(20,20,30,0.45)' : 'rgba(255,255,255,0.25)';
 
   const legendaryClass = isLegendary ? ' cyber-result-legendary' : '';
   let imgHtml = prize.img
@@ -1042,7 +1056,7 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
       : `font-size:36px;font-weight:900;font-family:monospace;color:${particleColor};text-shadow:0 0 20px ${particleColor};animation:fadeUpAnim 0.4s ease-out 0.5s both;`;
     contentHtml = `${doubleTag}<div style="${pointsStyle}">+${prize.points}★</div>`;
   } else {
-    contentHtml = `<div style="font-size:14px;font-weight:700;color:#fff;font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
+    contentHtml = `<div style="font-size:14px;font-weight:700;color:${resultTextColor};font-family:monospace;letter-spacing:1px;text-align:center;animation:fadeUpAnim 0.3s ease-out 0.7s both;">${prize.name}</div>`;
   }
 
   // Лучи
@@ -1080,11 +1094,11 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
     <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">${partsHtml}${extraFxHtml}</div>
     <div style="position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;">
       ${itemHtml}
-      <div style="font-size:8px;font-weight:700;font-family:monospace;letter-spacing:2px;padding:4px 14px;background:${tagBg};backdrop-filter:blur(4px);border:1px solid ${tagBorder};color:${tagColor};text-shadow:0 1px 3px rgba(0,0,0,0.8);border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
+      <div style="font-size:8px;font-weight:700;font-family:monospace;letter-spacing:2px;padding:4px 14px;background:${tagBg};backdrop-filter:blur(4px);border:1px solid ${tagBorder};color:${tagColor};text-shadow:${tagShadow};border-radius:2px;animation:fadeUpAnim 0.3s ease-out 0.5s both;opacity:0;">${tagText}</div>
       ${contentHtml}
-      <div style="font-size:9px;color:rgba(255,255,255,0.4);font-family:monospace;text-align:center;max-width:200px;line-height:1.6;animation:fadeUpAnim 0.3s ease-out 0.9s both;opacity:0;">${prize.desc||''}</div>
+      <div style="font-size:9px;color:${descColor};font-family:monospace;text-align:center;max-width:200px;line-height:1.6;animation:fadeUpAnim 0.3s ease-out 0.9s both;opacity:0;">${prize.desc||''}</div>
     </div>
-    <div style="position:absolute;bottom:24px;font-size:9px;color:rgba(255,255,255,0.25);font-family:monospace;letter-spacing:2px;animation:cyberBlink 2s ease-in-out 1.2s infinite;">нажми чтобы продолжить ▼</div>`;
+    <div style="position:absolute;bottom:24px;font-size:9px;color:${hintColor};font-family:monospace;letter-spacing:2px;animation:cyberBlink 2s ease-in-out 1.2s infinite;">нажми чтобы продолжить ▼</div>`;
 }
 
 function resetCasino() {

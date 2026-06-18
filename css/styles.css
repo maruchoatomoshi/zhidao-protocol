@@ -2753,6 +2753,54 @@ body.is-admin .profile-card-kicker {
   opacity: 0.55;
   filter: grayscale(0.3);
 }
+
+/* The implant/card "ПРОТОКОЛ" control panel is hardcoded to a dark palette
+   above, which clashes with light themes (admin-light, NetWatch light,
+   Genshin light). Re-skin it using each theme's own variables. */
+body.theme-nw-light .legendary-implant-panel,
+body.theme-admin-light .legendary-implant-panel,
+body.theme-genshin-light .legendary-implant-panel {
+  background:
+    radial-gradient(circle at 100% 0, var(--red-dim), transparent 42%),
+    var(--bg3);
+  border-color: var(--red-border);
+}
+body.theme-nw-light .legendary-implant-head,
+body.theme-admin-light .legendary-implant-head,
+body.theme-genshin-light .legendary-implant-head {
+  color: var(--red);
+}
+body.theme-nw-light .legendary-implant-head span,
+body.theme-admin-light .legendary-implant-head span,
+body.theme-genshin-light .legendary-implant-head span {
+  border-color: var(--red-border);
+  background: var(--red-dim);
+}
+body.theme-nw-light .legendary-implant-note,
+body.theme-admin-light .legendary-implant-note,
+body.theme-genshin-light .legendary-implant-note {
+  border-top-color: var(--border);
+}
+body.theme-nw-light .legendary-action-btn,
+body.theme-admin-light .legendary-action-btn,
+body.theme-genshin-light .legendary-action-btn {
+  border-color: var(--red-border);
+  background: var(--red-dim);
+  color: var(--text);
+}
+body.theme-nw-light .legendary-action-btn strong,
+body.theme-admin-light .legendary-action-btn strong,
+body.theme-genshin-light .legendary-action-btn strong {
+  color: var(--red);
+}
+body.theme-nw-light .inv-btn-legendary,
+body.theme-admin-light .inv-btn-legendary,
+body.theme-genshin-light .inv-btn-legendary {
+  background: var(--red-dim);
+  border-color: var(--red-border);
+  color: var(--red);
+}
+
 .legendary-target-modal {
   position: fixed;
   inset: 0;
