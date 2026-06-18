@@ -22,11 +22,13 @@ function _buildIntroNovelScenes() {
     s2:  { who: 'system', text: 'Ты — новый оператор ZHIDAO Protocol', next: 's3' },
     s3:  { who: 'system', text: 'До старта поездки осталось немного времени. Некоторые разделы уже активны. Некоторые ждут разрешения', next: 's4' },
     s4:  { who: 'system', text: 'Можешь спросить: почему в этот раз должно быть иначе, чем раньше', choices: [
-            { label: 'Потому что теперь всё под контролем?', next: 's5' },
-            { label: 'Потому что это не просто поездка?', next: 's5' },
-            { label: 'Пока не понимаю', next: 's5' }
+            { label: 'Потому что теперь всё под контролем?', next: 's5a' },
+            { label: 'Потому что это не просто поездка?', next: 's5b' },
+            { label: 'Пока не понимаю', next: 's5c' }
           ] },
-    s5:  { who: 'system', text: 'Почти', next: 's6' },
+    s5a: { who: 'system', text: 'Отчасти. Дело не только в контроле, но и в том, кто стоит за ним', next: 's6' },
+    s5b: { who: 'system', text: 'Именно. Это история, которая пишется здесь и сейчас', next: 's6' },
+    s5c: { who: 'system', text: 'Ничего, сейчас поймёшь', next: 's6' },
     s6:  { who: 'system', text: 'Раньше правила жили в чатах, таблицах, голосовых сообщениях и памяти взрослых', next: 's7' },
     s7:  { who: 'system', text: 'Но в поездке всё меняется быстро: сборы, занятия, маршруты, отбой, вопросы, потерянные вещи, внезапные поручения', next: 's8' },
     s8:  { who: 'system', text: 'Протокол создан, чтобы всё это не распалось на хаос', next: 's9' },
@@ -118,7 +120,10 @@ function _renderIntroNovelScene() {
   const imageEl = document.getElementById('introNovelImage');
   if (titleEl) { titleEl.textContent = cast.name; titleEl.style.color = cast.color; titleEl.style.borderColor = cast.color + '66'; titleEl.style.background = cast.color + '14'; }
   if (closeEl) { closeEl.style.color = cast.color; closeEl.style.borderColor = cast.color + '4d'; }
-  if (imageEl) imageEl.style.backgroundImage = `url('${cast.image}')`;
+  if (imageEl) {
+    imageEl.style.backgroundImage = `url('${cast.image}')`;
+    imageEl.classList.toggle('intro-novel-image-contain', scene.who === 'system');
+  }
 
   if (scene.choices && scene.choices.length) {
     if (nextBtn) nextBtn.style.display = 'none';

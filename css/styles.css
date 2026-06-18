@@ -3453,6 +3453,10 @@ body.is-admin .more-item.admin-only-item::before {
 .intro-novel-btn.primary {
   border-color: rgba(0,255,102,0.4); background: rgba(0,255,102,0.08); color: #00ff66;
 }
+.intro-novel-theme .architect-popup-image.intro-novel-image-contain {
+  width: 40%; max-width: 180px; height: 18vh; max-height: 150px;
+  background-size: contain; background-position: center; align-self: flex-end;
+}
 
 .gift-code-msg {
   margin-top: 10px; font-size: 11px; line-height: 1.5; color: var(--text2);
