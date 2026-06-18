@@ -7329,9 +7329,12 @@ body.theme-nw-light .diary-admin-refresh:hover { background: rgba(0,0,0,0.05); }
 .event-hero img,
 .event-hero-video {
   position: absolute;
-  inset: 0;
+  top: 132px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 132px);
   object-fit: contain;
   object-position: center center;
   display: block;
@@ -8323,8 +8326,9 @@ body.tg-ios .event-hero {
 
 body.tg-ios .event-hero img,
 body.tg-ios .event-hero-video {
+  top: calc(132px + var(--tg-safe-top));
   width: var(--app-width, 100vw);
-  height: var(--app-height, 100dvh);
+  height: calc(var(--app-height, 100dvh) - 132px - var(--tg-safe-top));
   max-width: none;
   max-height: none;
 }
