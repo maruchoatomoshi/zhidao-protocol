@@ -103,7 +103,8 @@ function _buildTeamCard(member) {
 }
 
 function renderTeamCards() {
-  const html = TEAM_DATA.map(_buildTeamCard).join('');
+  const visible = TEAM_DATA.filter(m => !m.hidden || (typeof isAdmin !== 'undefined' && isAdmin));
+  const html = visible.map(_buildTeamCard).join('');
   const el = document.getElementById('teamCardsContainerFull');
   if (el) el.innerHTML = html;
 }
