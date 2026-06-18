@@ -2549,7 +2549,7 @@
 <script src="./js/tianhao.js?v=20260617b"></script>
 <script src="./js/mju-top.js?v=20260617a"></script>
 <script src="./js/liza-curfew.js?v=20260617a"></script>
-<script src="./js/intro-novel.js?v=20260618b"></script>
+<script src="./js/intro-novel.js?v=20260618c"></script>
 <script src="./js/contracts.js?v=20260615a"></script>
 <script src="./js/admin.js?v=20260617b"></script>
 <script src="./js/campus-map.js?v=20260609b"></script>
@@ -2928,15 +2928,17 @@
 </div>
 
 <div class="architect-popup-overlay intro-novel-theme" id="introNovelOverlay" style="display:none;">
+  <div class="architect-popup-image" id="introNovelImage"></div>
   <div class="architect-popup-box">
     <div class="architect-popup-header">
       <div class="architect-popup-title" id="introNovelTitle">СИСТЕМА</div>
       <button class="architect-popup-close" id="introNovelClose" onclick="introNovelSkip()">✕</button>
     </div>
     <div class="architect-popup-text" id="introNovelText"></div>
+    <div id="introNovelChoices" style="display:none;flex-direction:column;gap:8px;margin-top:10px;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
-      <button class="intro-novel-btn" onclick="introNovelSkip()">ПРОПУСТИТЬ</button>
-      <button class="intro-novel-btn primary" id="introNovelNextBtn" onclick="introNovelNext()">ДАЛЕЕ ▸</button>
+      <button class="intro-novel-btn" onclick="introNovelSkip()">ПРОПУСТИТЬ БРИФИНГ</button>
+      <button class="intro-novel-btn primary" id="introNovelNextBtn" onclick="introNovelNext()">ПРОДОЛЖИТЬ ПОДКЛЮЧЕНИЕ ▸</button>
     </div>
   </div>
 </div>

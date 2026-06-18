@@ -1,43 +1,97 @@
 /**
- * ZHIDAO Protocol — Вводная новелла "КОНТУР" (онбординг при первом входе)
+ * ZHIDAO Protocol — Вводная визуальная новелла (онбординг при первом входе)
  */
 
 const INTRO_NOVEL_SEEN_KEY = 'introNovelSeen';
+const INTRO_NOVEL_GH = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/';
 
 const INTRO_NOVEL_CAST = {
-  system:    { name: 'СИСТЕМА',                 avatar: '📡', color: '#7d8a99' },
-  mju:       { name: '👑 МИХАИЛ ЮРЬЕВИЧ // МЮ',  avatar: '👑', color: '#ff003c' },
-  yulia:     { name: '🛡️ ЮЛИЯ ВИТАЛЬЕВНА',       avatar: '🛡️', color: '#fa00ff' },
-  liza:      { name: '💬 ЕЛИЗАВЕТА СЕРГЕЕВНА',   avatar: '💬', color: '#00f0ff' },
-  architect: { name: '🟢 АРХИТЕКТОР',            avatar: '🟢', color: '#00ff66' }
+  system:    { name: 'СИСТЕМА',                 color: '#7d8a99', image: INTRO_NOVEL_GH + 'logo.png' },
+  mju:       { name: 'МИХАИЛ ЮРЬЕВИЧ // МЮ',    color: '#ff003c', image: INTRO_NOVEL_GH + 'mu_happy.png' },
+  yulia:     { name: 'ЮЛИЯ ВИТАЛЬЕВНА',          color: '#fa00ff', image: INTRO_NOVEL_GH + 'julia_based.png' },
+  liza:      { name: 'ЕЛИЗАВЕТА СЕРГЕЕВНА',      color: '#00f0ff', image: INTRO_NOVEL_GH + 'liza_neutral-Photoroom.png' },
+  tianhao:   { name: '孙天昊 СУНЬ ТЯНЬХАО',       color: '#ffaa00', image: INTRO_NOVEL_GH + 'tianhao_explaining.png' },
+  architect: { name: 'АРХИТЕКТОР',               color: '#00ff66', image: INTRO_NOVEL_GH + 'architect_happy.png' }
 };
 
 function _buildIntroNovelScenes() {
   const frozen = !!window.APP_FEATURE_FREEZE_ENABLED;
-  const scenes = [
-    { who: 'system', text: 'Соединение установлено... Добро пожаловать в КОНТУР' },
-    { who: 'system', text: 'Ты — новый оператор Контура' },
-    { who: 'system', text: 'Можешь спросить — почему в этот раз должно быть иначе, чем раньше' },
-    { who: 'system', text: 'Потому что в этот раз за Контуром стоят живые люди, а не просто правила на бумаге — сейчас они выйдут на связь' },
-    { who: 'mju', text: 'Я Михаил Юрьевич. Для своих — МЮ. Я слежу, чтобы Контур не превратился в хаос: дисциплина, сборы, правила. Без этого ничего не работает' },
-    { who: 'mju', text: 'Будь на связи, не теряйся, не подводи стаю — и всё будет в порядке' },
-    { who: 'yulia', text: 'Привет! Я Юлия Витальевна, вожатая. Сейчас я на удалённой орбите — на связи дистанционно, но всё равно слежу за вами и помогаю издалека' },
-    { who: 'yulia', text: 'Если что — пиши, не бойся' },
-    { who: 'liza', text: 'А я — Елизавета Сергеевна. Запутался в правилах — спрашивай у меня. Моя задача — твой комфорт и равновесие' },
-    { who: 'liza', text: 'Контур большой, но мы рядом' }
-  ];
-  if (frozen) {
-    scenes.push({ who: 'architect', text: 'Я — Марк Альбертович, в системе я Архитектор, который выстроил эту систему. Сейчас часть разделов ещё закрыта, но они будут открываться один за другим перед самой поездкой' });
-    scenes.push({ who: 'architect', text: 'Заходи, смотри, что уже доступно сейчас. Остальное появится само — просто будь на связи. Контур запущен. Удачи, оператор' });
-  } else {
-    scenes.push({ who: 'architect', text: 'Я — Марк Альбертович, в системе я Архитектор, который выстроил эту систему: баллы, кейсы, рейтинг, дневник — всё это не просто игра, а способ сделать поездку живой и честной' });
-    scenes.push({ who: 'architect', text: 'Заходи, открывай разделы, набирай очки, читай дневник. Контур запущен. Удачи, оператор' });
-  }
-  return scenes;
+  const finalStart = frozen ? 'fA1' : 'fB1';
+  return {
+    s1:  { who: 'system', text: 'Соединение установлено... Добро пожаловать в ZHIDAO Protocol', next: 's2' },
+    s2:  { who: 'system', text: 'Ты — новый оператор ZHIDAO Protocol', next: 's3' },
+    s3:  { who: 'system', text: 'До старта поездки осталось немного времени. Некоторые разделы уже активны. Некоторые ждут разрешения', next: 's4' },
+    s4:  { who: 'system', text: 'Можешь спросить: почему в этот раз должно быть иначе, чем раньше', choices: [
+            { label: 'Потому что теперь всё под контролем?', next: 's5' },
+            { label: 'Потому что это не просто поездка?', next: 's5' },
+            { label: 'Пока не понимаю', next: 's5' }
+          ] },
+    s5:  { who: 'system', text: 'Почти', next: 's6' },
+    s6:  { who: 'system', text: 'Раньше правила жили в чатах, таблицах, голосовых сообщениях и памяти взрослых', next: 's7' },
+    s7:  { who: 'system', text: 'Но в поездке всё меняется быстро: сборы, занятия, маршруты, отбой, вопросы, потерянные вещи, внезапные поручения', next: 's8' },
+    s8:  { who: 'system', text: 'Протокол создан, чтобы всё это не распалось на хаос', next: 's9' },
+    s9:  { who: 'system', text: 'Но Протокол не просто набор правил', next: 's10' },
+    s10: { who: 'system', text: 'За ним стоят живые люди. Сейчас они выйдут на связь', next: 's11' },
+
+    s11: { who: 'mju', text: 'Я Михаил Юрьевич, главный в нашей поездке', next: 's12' },
+    s12: { who: 'mju', text: 'Я слежу, чтобы Протокол не превратился в хаос: дисциплина, сборы, правила. Без этого ничего не работает', next: 's13' },
+    s13: { who: 'mju', text: 'Будь на связи, не теряйся, не подводи стаю, и всё будет в порядке', next: 's14' },
+    s14: { who: 'mju', text: 'Если система просит отметиться — отметься. Если сказали быть в точке сбора, будь там. Это не формальность', next: 's15' },
+    s15: { who: 'system', text: 'Узел дисциплины подключён', next: 's16' },
+
+    s16: { who: 'yulia', text: 'Привет! Я Юлия Витальевна, вожатая', next: 's17' },
+    s17: { who: 'yulia', text: 'Сейчас я на удалённой орбите, на связи дистанционно, но всё равно слежу за вами и помогаю издалека', next: 's18' },
+    s18: { who: 'yulia', text: 'Если что, пиши, не бойся', next: 's19' },
+    s19: { who: 'yulia', text: 'В поездке не бывает глупых вопросов. Бывает только момент, когда ты промолчал, а потом стало сложнее', next: 's20' },
+    s20: { who: 'system', text: 'Узел связи подключён', next: 's21' },
+
+    s21: { who: 'liza', text: 'А я, Елизавета Сергеевна', next: 's22' },
+    s22: { who: 'liza', text: 'Запутался в правилах, спрашивай у меня. Моя задача — твой комфорт и равновесие', next: 's23' },
+    s23: { who: 'liza', text: 'Протокол большой, но мы рядом', next: 's24' },
+    s24: { who: 'liza', text: 'Не надо пытаться разобраться во всём одному. В этой системе помощь — тоже часть прогресса', next: 's25' },
+    s25: { who: 'system', text: 'Узел равновесия подключён', next: 's26' },
+
+    s26: { who: 'system', text: 'Внешний контур отвечает...', next: 's27' },
+    s27: { who: 'system', text: 'BEIJING NODE // ожидание подтверждения', next: 's28' },
+    s28: { who: 'tianhao', text: '我叫孙天昊, я Сунь Тяньхао', next: 's29' },
+    s29: { who: 'tianhao', text: 'Когда вы окажетесь в Пекине и мы с вами увидимся, город перестанет быть картинкой на карте', next: 's30' },
+    s30: { who: 'tianhao', text: 'Там будут улицы, метро, столовые, магазины, фразы, которые нужно понять быстро, и ситуации, которых нет в учебнике', next: 's31' },
+    s31: { who: 'tianhao', text: 'Я буду помогать вам с языком и бытовыми фразами. Иногда одна правильная фраза экономит много сил', next: 's32' },
+    s32: { who: 'tianhao', text: 'Слушай подсказки. Повторяй. Используй. Китайский нужен не только на уроке', next: 's33' },
+    s33: { who: 'system', text: 'Внешний контур Пекина подключён', next: 's34' },
+
+    s34: { who: 'system', text: 'Остался последний узел', next: 's35' },
+    s35: { who: 'system', text: 'ARCHITECT ACCESS // подтверждение...', next: 's36' },
+    s36: { who: 'architect', text: 'Я Марк Альбертович', next: 's37' },
+    s37: { who: 'architect', text: 'В системе я Архитектор. Я выстроил этот протокол: профиль, рейтинг, дневник, задания, магазин, события и всё, что будет сопровождать поездку', next: 's38' },
+    s38: { who: 'architect', text: 'Но важно понять сразу: это не просто игра', next: 's39' },
+    s39: { who: 'architect', text: 'Баллы ничего не значат, если за ними нет действий. Рейтинг ничего не значит, если за ним нет вклада. Протокол видит не слова, а участие', choices: [
+            { label: 'Я готов подключиться', next: 's40a' },
+            { label: 'А если я ошибусь?', next: 's40b' },
+            { label: 'Что мне делать сейчас?', next: 's40c' }
+          ] },
+    s40a: { who: 'architect', text: 'Хорошо. Тогда просто начни с малого: будь на связи, следи за объявлениями, не пропускай отметки', next: finalStart },
+    s40b: { who: 'architect', text: 'Ошибки будут. Для этого рядом люди. Главное — не скрываться от системы и не пытаться ломать правила', next: finalStart },
+    s40c: { who: 'architect', text: 'Смотри доступные разделы. Читай объявления. Проверяй профиль. Остальное откроется, когда придёт время', next: finalStart },
+
+    fA1: { who: 'architect', text: 'Сейчас часть разделов ещё закрыта. Это не ошибка', next: 'fA2' },
+    fA2: { who: 'architect', text: 'Протокол не открывается сразу полностью. Он будет запускаться поэтапно — ближе к поездке и по мере готовности группы', next: 'fA3' },
+    fA3: { who: 'architect', text: 'Заходи, смотри, что уже доступно сейчас. Проверяй профиль, следи за объявлениями, привыкай к интерфейсу', next: 'fA4' },
+    fA4: { who: 'architect', text: 'Остальное появится само. Просто будь на связи', next: 'fA5' },
+    fA5: { who: 'system', text: 'PRE-LAUNCH MODE активен', next: 'fA6' },
+    fA6: { who: 'architect', text: 'Протокол запущен. Удачи, оператор', next: null },
+
+    fB1: { who: 'architect', text: 'Доступ открыт. Протокол перешёл в боевой режим', next: 'fB2' },
+    fB2: { who: 'architect', text: 'Баллы, рейтинг, дневник, задания, события — всё это теперь часть поездки', next: 'fB3' },
+    fB3: { who: 'architect', text: 'Помогай группе, отмечайся вовремя, участвуй в событиях, используй китайский и не забывай смотреть объявления', next: 'fB4' },
+    fB4: { who: 'architect', text: 'Протокол не требует идеальности. Он требует участия', next: 'fB5' },
+    fB5: { who: 'system', text: 'BEIJING MODE активен', next: 'fB6' },
+    fB6: { who: 'architect', text: 'Протокол запущен. Удачи, оператор', next: null }
+  };
 }
 
-let _introNovelScenes = [];
-let _introNovelIndex = 0;
+let _introNovelScenes = {};
+let _introNovelCurrentId = 's1';
 let _introNovelTypeInterval = null;
 
 function showIntroNovel(force) {
@@ -45,7 +99,7 @@ function showIntroNovel(force) {
     if (!force && localStorage.getItem(INTRO_NOVEL_SEEN_KEY) === '1') return;
   } catch (e) {}
   _introNovelScenes = _buildIntroNovelScenes();
-  _introNovelIndex = 0;
+  _introNovelCurrentId = 's1';
   const overlay = document.getElementById('introNovelOverlay');
   if (!overlay) return;
   overlay.style.display = 'flex';
@@ -54,15 +108,33 @@ function showIntroNovel(force) {
 window.showIntroNovel = showIntroNovel;
 
 function _renderIntroNovelScene() {
-  const scene = _introNovelScenes[_introNovelIndex];
+  const scene = _introNovelScenes[_introNovelCurrentId];
   if (!scene) { closeIntroNovel(); return; }
   const cast = INTRO_NOVEL_CAST[scene.who] || INTRO_NOVEL_CAST.system;
   const titleEl = document.getElementById('introNovelTitle');
   const closeEl = document.getElementById('introNovelClose');
   const nextBtn = document.getElementById('introNovelNextBtn');
+  const choicesEl = document.getElementById('introNovelChoices');
+  const imageEl = document.getElementById('introNovelImage');
   if (titleEl) { titleEl.textContent = cast.name; titleEl.style.color = cast.color; titleEl.style.borderColor = cast.color + '66'; titleEl.style.background = cast.color + '14'; }
   if (closeEl) { closeEl.style.color = cast.color; closeEl.style.borderColor = cast.color + '4d'; }
-  if (nextBtn) nextBtn.textContent = (_introNovelIndex === _introNovelScenes.length - 1) ? 'НАЧАТЬ ▸' : 'ДАЛЕЕ ▸';
+  if (imageEl) imageEl.style.backgroundImage = `url('${cast.image}')`;
+
+  if (scene.choices && scene.choices.length) {
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (choicesEl) {
+      choicesEl.style.display = 'flex';
+      choicesEl.innerHTML = scene.choices.map((c, i) =>
+        `<button class="intro-novel-btn" onclick="introNovelChoose(${i})">${escapeHtml(c.label)}</button>`
+      ).join('');
+    }
+  } else {
+    if (choicesEl) { choicesEl.style.display = 'none'; choicesEl.innerHTML = ''; }
+    if (nextBtn) {
+      nextBtn.style.display = '';
+      nextBtn.textContent = scene.next ? 'ПРОДОЛЖИТЬ ПОДКЛЮЧЕНИЕ ▸' : 'ЗАВЕРШИТЬ ▸';
+    }
+  }
   _typeIntroNovelText(scene.text);
 }
 
@@ -80,14 +152,20 @@ function _typeIntroNovelText(text) {
 }
 
 function introNovelNext() {
-  _introNovelIndex++;
-  if (_introNovelIndex >= _introNovelScenes.length) {
-    closeIntroNovel();
-    return;
-  }
+  const scene = _introNovelScenes[_introNovelCurrentId];
+  if (!scene || !scene.next) { closeIntroNovel(); return; }
+  _introNovelCurrentId = scene.next;
   _renderIntroNovelScene();
 }
 window.introNovelNext = introNovelNext;
+
+function introNovelChoose(choiceIndex) {
+  const scene = _introNovelScenes[_introNovelCurrentId];
+  if (!scene || !scene.choices || !scene.choices[choiceIndex]) return;
+  _introNovelCurrentId = scene.choices[choiceIndex].next;
+  _renderIntroNovelScene();
+}
+window.introNovelChoose = introNovelChoose;
 
 function introNovelSkip() {
   closeIntroNovel();
