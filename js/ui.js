@@ -238,6 +238,12 @@ function syncAdminUiVisibility() {
 
   const architectThemeBtn = document.getElementById('theme-btn-architect');
   if (architectThemeBtn) architectThemeBtn.style.display = isArchitect ? '' : 'none';
+
+  const isDevOwner = Number(currentUserId) === 389741116;
+  ['adminArchitectTriggerBtn','adminTestLogBtn','adminTestTianhaoBtn','adminTestFactBtn','adminTestMjuTopBtn','adminTestLizaBtn','adminTestNovelBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isDevOwner ? '' : 'none';
+  });
 }
 
 function openMore(section) {
@@ -1081,6 +1087,18 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   });
   zSafeUiCall('gift code poller', () => {
     if (typeof startGiftCodePoller === 'function') startGiftCodePoller();
+  });
+  zSafeUiCall('tianhao phrase poller', () => {
+    if (typeof startTianhaoPoller === 'function') startTianhaoPoller();
+  });
+  zSafeUiCall('tianhao fact poller', () => {
+    if (typeof startTianhaoFactPoller === 'function') startTianhaoFactPoller();
+  });
+  zSafeUiCall('liza curfew poller', () => {
+    if (typeof startLizaCurfewPoller === 'function') startLizaCurfewPoller();
+  });
+  zSafeUiCall('intro novel', () => {
+    if (typeof showIntroNovel === 'function') showIntroNovel(false);
   });
 
   if (!adminIntroPlaying && !_bootRunning) hideStartupCover();

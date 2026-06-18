@@ -145,6 +145,13 @@ const INSTRUCTION_TOUR_STEPS = [
 
 let instructionTourIndex = 0;
 let instructionTypeTimer = null;
+let instructionTourPrevPage = null;
+
+function instructionResetCasinoTabIfNeeded() {
+  if (instructionTourPrevPage === 'casino' && typeof switchCasinoTab === 'function') {
+    try { switchCasinoTab('play'); } catch (e) {}
+  }
+}
 
 function openInstructionModal() {
   const modal = document.getElementById('instructionModal');
@@ -194,6 +201,7 @@ function showInstructionTextGuide() {
 function startInstructionTour() {
   closeInstructionModal();
   instructionTourIndex = 0;
+  instructionTourPrevPage = null;
   const overlay = document.getElementById('instructionTourOverlay');
   if (!overlay) return;
   overlay.style.display = 'flex';
@@ -208,6 +216,8 @@ function closeInstructionTour() {
     instructionTypeTimer = null;
   }
   instructionSetHighlight(null);
+  instructionResetCasinoTabIfNeeded();
+  instructionTourPrevPage = null;
 }
 
 function instructionSetHighlight(selector) {
@@ -227,11 +237,15 @@ function renderInstructionTourStep() {
     return;
   }
 
+  if (step.page !== 'casino') instructionResetCasinoTabIfNeeded();
+
   const navBtn = document.querySelector(`.bottom-nav button[onclick*="showPage('${step.page}'"]`);
   try { showPage(step.page, navBtn || undefined); } catch (e) {}
   if (typeof step.action === 'function') {
     try { step.action(); } catch (e) {}
   }
+
+  instructionTourPrevPage = step.page;
 
   setTimeout(() => instructionSetHighlight(step.highlight), 80);
 

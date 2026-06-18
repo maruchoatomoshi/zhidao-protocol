@@ -1438,6 +1438,12 @@ def migrate_db():
                   redeemed_at TEXT NOT NULL,
                   UNIQUE(telegram_id, code))''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS tianhao_facts
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  text TEXT NOT NULL,
+                  show_at TEXT NOT NULL,
+                  created_at TEXT NOT NULL)''')
+
     c.execute("CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_economy_log_telegram_id ON economy_log(telegram_id, created_at)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_user_implants_tid ON user_implants(telegram_id, implant_id)")
@@ -4751,12 +4757,14 @@ async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(
 def get_active_gift_code():
     conn = get_conn()
     c = conn.cursor()
-    now = now_iso()
+    now_dt = datetime.now(BEIJING_TZ)
+    now = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+    window_end = (now_dt - timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
     c.execute(
         "SELECT code, reward_stars, max_uses, used_count FROM gift_codes "
-        "WHERE show_at IS NOT NULL AND show_at <= ? AND used_count < max_uses "
+        "WHERE show_at IS NOT NULL AND show_at <= ? AND show_at >= ? AND used_count < max_uses "
         "AND (expires_at IS NULL OR expires_at > ?) ORDER BY show_at DESC LIMIT 1",
-        (now, now)
+        (now, window_end, now)
     )
     row = c.fetchone()
     conn.close()
@@ -4777,6 +4785,66 @@ def admin_list_gift_codes(x_admin_id: Optional[int] = Header(None)):
 
     return {"codes": [
         {"code": r[0], "reward_stars": r[1], "max_uses": r[2], "used_count": r[3], "expires_at": r[4], "created_at": r[5], "note": r[6], "show_at": r[7]}
+        for r in rows
+    ]}
+
+
+@app.post("/api/admin/tianhao-fact")
+async def admin_create_tianhao_fact(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    text = str(data.get("text") or "").strip()
+    show_at = data.get("show_at") or None
+    if not text or not show_at:
+        raise HTTPException(status_code=400, detail="text and show_at required")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO tianhao_facts (text, show_at, created_at) VALUES (?, ?, ?)",
+                (text, show_at, now_iso()),
+            )
+            conn.commit()
+            return {"success": True}
+        finally:
+            conn.close()
+
+    return await db_write(_run)
+
+
+@app.get("/api/tianhao-fact/active")
+def get_active_tianhao_fact():
+    conn = get_conn()
+    c = conn.cursor()
+    now_dt = datetime.now(BEIJING_TZ)
+    now = now_dt.strftime('%Y-%m-%d %H:%M:%S')
+    window_end = (now_dt - timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute(
+        "SELECT id, text FROM tianhao_facts WHERE show_at <= ? AND show_at >= ? ORDER BY show_at DESC LIMIT 1",
+        (now, window_end)
+    )
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return {"active": False}
+    return {"active": True, "id": row[0], "text": row[1]}
+
+
+@app.get("/api/admin/tianhao-fact")
+def admin_list_tianhao_facts(x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT id, text, show_at, created_at FROM tianhao_facts ORDER BY show_at DESC LIMIT 50")
+    rows = c.fetchall()
+
+    return {"facts": [
+        {"id": r[0], "text": r[1], "show_at": r[2], "created_at": r[3]}
         for r in rows
     ]}
 
