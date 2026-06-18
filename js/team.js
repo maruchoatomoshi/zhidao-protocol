@@ -66,6 +66,30 @@ const TEAM_DATA = [
     // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_tianhao.png"
     avatar: "🏮",
     tgLink: "https://t.me/+8617614130674"
+  },
+  {
+    id: "wunan",
+    name: "Ву Нан",
+    codename: "Ву Нан",
+    role: "СОПРОВОЖДАЮЩИЙ",
+    short: "Новый оператор контура. Подробности скоро.",
+    status: "STANDBY_NODE",
+    statusText: "PENDING SYNC // ОЖИДАНИЕ",
+    color: "#888888",
+    avatar: "❔",
+    hidden: true
+  },
+  {
+    id: "olga",
+    name: "Ольга",
+    codename: "Ольга",
+    role: "СОПРОВОЖДАЮЩАЯ",
+    short: "Новый оператор контура. Подробности скоро.",
+    status: "STANDBY_NODE",
+    statusText: "PENDING SYNC // ОЖИДАНИЕ",
+    color: "#888888",
+    avatar: "❔",
+    hidden: true
   }
 ];
 
