@@ -42,6 +42,28 @@ function startLizaCurfewPoller() {
 }
 window.startLizaCurfewPoller = startLizaCurfewPoller;
 
+// ===== Пасхалка: 7 тапов по главному лого =====
+const LIZA_EASTER_PHRASES = [
+  'Так, кто это тут тыкает в логотип семь раз подряд? Нашёл тайник, нечего сказать.',
+  'Поздравляю, ты разблокировал секрет, нажав на картинку семь раз. Я одновременно горжусь и переживаю.',
+  'Нашёл пасхалку. Награды не будет, но я теперь знаю, что у тебя есть терпение на семь тапов.',
+];
+
+let _logoTapCount = 0;
+let _logoTapTimer = null;
+
+function handleLogoEasterTap() {
+  _logoTapCount++;
+  clearTimeout(_logoTapTimer);
+  _logoTapTimer = setTimeout(() => { _logoTapCount = 0; }, 1500);
+  if (_logoTapCount >= 7) {
+    _logoTapCount = 0;
+    clearTimeout(_logoTapTimer);
+    showLizaPopup(LIZA_EASTER_PHRASES[Math.floor(Math.random() * LIZA_EASTER_PHRASES.length)]);
+  }
+}
+window.handleLogoEasterTap = handleLogoEasterTap;
+
 function showLizaPopup(text) {
   const overlay = document.getElementById('lizaPopupOverlay');
   const imageEl = document.getElementById('lizaPopupImage');
