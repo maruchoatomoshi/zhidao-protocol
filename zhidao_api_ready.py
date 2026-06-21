@@ -3787,6 +3787,18 @@ REWIND_CASE_PRIZE_INFO = {
     "implant_red_dragon":  {"name": "Протокол Красный Дракон 红龙",   "rarity": "legendary"},
 }
 REWIND_RARITY_RANK = {"common": 0, "rare": 1, "epic": 2, "legendary": 3}
+# Must stay in sync with REWIND_CASE_PRIZE_INFO's "legendary" entries and
+# CARD_INFO's 5-star cards (genshin_<card_id>).
+REWIND_LEGENDARY_PRIZE_CODES = ["implant_red_dragon", "genshin_card_zhongli", "genshin_card_star"]
+
+
+def _rewind_admin_exclude_clause(column: str):
+    """SQL snippet + params to drop admin/test accounts from cross-user
+    Rewind comparisons, so 'best of the trip' titles reflect real students."""
+    if not ADMIN_IDS:
+        return "", []
+    placeholders = ','.join('?' * len(ADMIN_IDS))
+    return f" AND {column} NOT IN ({placeholders})", list(ADMIN_IDS)
 
 
 def _rewind_drop_info(prize_code: str):
@@ -3875,23 +3887,109 @@ def get_trip_rewind(telegram_id: int):
 
     c.execute("SELECT COUNT(*) FROM shop_purchases WHERE given_to=?", (telegram_id,))
     gifts_given = c.fetchone()[0] or 0
+
+    # Role: who's the most pronounced at each highlight-worthy stat across the
+    # whole trip (not just against their own numbers), so the closing slide
+    # can call out "единственный, кто..." when that's actually true. Admins/
+    # test accounts are excluded from the comparison pool so their seed data
+    # doesn't steal the spotlight from real students; an admin viewing their
+    # own Rewind just gets the generic fallback title.
+    role = None
+    if telegram_id not in ADMIN_IDS:
+        clause, params = _rewind_admin_exclude_clause('telegram_id')
+        code_ph = ','.join('?' * len(REWIND_LEGENDARY_PRIZE_CODES))
+        c.execute(
+            f'''SELECT telegram_id, COUNT(*) FROM casino_log
+                WHERE prize IN ({code_ph}){clause}
+                GROUP BY telegram_id''',
+            REWIND_LEGENDARY_PRIZE_CODES + params,
+        )
+        legendary_holders = [tid for tid, cnt in c.fetchall() if cnt > 0]
+        if telegram_id in legendary_holders:
+            if len(legendary_holders) == 1:
+                role = {"title": "ЛЮБИМЕЦ РАНДОМА", "subtitle": "единственный, кто выбил легендарный дроп за поездку"}
+            else:
+                role = {"title": "ЛЮБИМЕЦ РАНДОМА", "subtitle": f"один из {len(legendary_holders)} операторов с легендарным дропом"}
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('telegram_id')
+            c.execute(
+                f'''SELECT telegram_id,
+                           100.0 * COUNT(DISTINCT CASE WHEN status IN ('confirmed','free_time','admin_approved') THEN check_date END)
+                           / COUNT(DISTINCT check_date)
+                    FROM daily_checks
+                    WHERE 1=1{clause}
+                    GROUP BY telegram_id''',
+                params,
+            )
+            attendance_rows = [(tid, pct) for tid, pct in c.fetchall() if pct is not None]
+            if attendance_rows:
+                top_pct = max(pct for _, pct in attendance_rows)
+                leaders = [tid for tid, pct in attendance_rows if pct == top_pct]
+                if telegram_id in leaders and top_pct >= 95:
+                    role = {
+                        "title": "ОБРАЗЦОВЫЙ ОПЕРАТОР",
+                        "subtitle": "лучшая дисциплина отметок за поездку" if len(leaders) == 1 else "в числе лучших по дисциплине отметок",
+                    }
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('telegram_id')
+            c.execute(
+                f'''SELECT telegram_id, COUNT(*), SUM(is_correct) FROM event_actions
+                    WHERE 1=1{clause}
+                    GROUP BY telegram_id
+                    HAVING COUNT(*) >= 5''',
+                params,
+            )
+            accuracy_rows = [(tid, 100.0 * correct / total) for tid, total, correct in c.fetchall()]
+            if accuracy_rows:
+                top_acc = max(acc for _, acc in accuracy_rows)
+                leaders = [tid for tid, acc in accuracy_rows if acc == top_acc]
+                if telegram_id in leaders:
+                    role = {
+                        "title": "СТРАТЕГ ПРОТОКОЛА",
+                        "subtitle": "самая высокая точность ответов в ивентах" if len(leaders) == 1 else "в числе самых точных операторов в ивентах",
+                    }
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('given_to')
+            c.execute(
+                f'''SELECT given_to, COUNT(*) FROM shop_purchases
+                    WHERE given_to IS NOT NULL{clause}
+                    GROUP BY given_to''',
+                params,
+            )
+            gift_rows = c.fetchall()
+            if gift_rows:
+                top_gifts = max(cnt for _, cnt in gift_rows)
+                leaders = [tid for tid, cnt in gift_rows if cnt == top_gifts]
+                if telegram_id in leaders and top_gifts >= 1:
+                    role = {
+                        "title": "МЕЦЕНАТ ПРОТОКОЛА",
+                        "subtitle": "больше всех делился баллами с другими операторами" if len(leaders) == 1 else "в числе самых щедрых операторов",
+                    }
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('telegram_id')
+            c.execute(
+                f'''SELECT telegram_id, SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END) FROM economy_log
+                    WHERE 1=1{clause}
+                    GROUP BY telegram_id''',
+                params,
+            )
+            spend_rows = [(tid, v) for tid, v in c.fetchall() if v]
+            if spend_rows:
+                top_spend = max(v for _, v in spend_rows)
+                leaders = [tid for tid, v in spend_rows if v == top_spend]
+                if telegram_id in leaders and top_spend > 0:
+                    role = {
+                        "title": "ШОПОГОЛИК ПРОТОКОЛА",
+                        "subtitle": "потратил больше всех баллов за поездку" if len(leaders) == 1 else "в числе самых активных по тратам",
+                    }
+
     conn.close()
 
-    # Role v1: picks the single most pronounced stat for this user against
-    # their own numbers, not a cross-user ranking. Cheap and good enough for
-    # a first pass; a "best in the whole trip" version would need comparing
-    # against every other user and can be layered on later if it's worth it.
-    if best_drop and best_drop["rarity"] == "legendary":
-        role = {"title": "ЛЮБИМЕЦ РАНДОМА", "subtitle": "выбил легендарный дроп за поездку"}
-    elif attendance_pct >= 95:
-        role = {"title": "ОБРАЗЦОВЫЙ ОПЕРАТОР", "subtitle": "почти не пропускал отметки"}
-    elif total_actions >= 5 and event_accuracy >= 85:
-        role = {"title": "СТРАТЕГ ПРОТОКОЛА", "subtitle": "точные ответы в момент атак"}
-    elif gifts_given >= 3:
-        role = {"title": "МЕЦЕНАТ ПРОТОКОЛА", "subtitle": "делился баллами с другими операторами"}
-    elif points_spent > points_earned * 0.6 and points_spent > 0:
-        role = {"title": "ШОПОГОЛИК ПРОТОКОЛА", "subtitle": "не давал баллам застаиваться на счету"}
-    else:
+    if not role:
         role = {"title": "ОПЕРАТОР ПРОТОКОЛА", "subtitle": "стабильно выполнял свою часть работы"}
 
     return {
