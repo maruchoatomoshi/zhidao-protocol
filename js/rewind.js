@@ -6,7 +6,7 @@
  * `/api/rewind/{telegram_id}` (read-only aggregation over existing tables, see
  * CLAUDE.md) will later replace the demo object via loadRewindData().
  *
- * Trigger: window.showRewind()  (currently console / temporary launch only).
+ * Trigger: window.showRewind()  (admin-panel preview button / console).
  */
 
 const REWIND_RARITY_COLOR = {
@@ -67,7 +67,7 @@ function _rewindBuildSlides(d) {
       kicker: 'ты открыл', value: d.cases_opened, count: true,
       label: 'кейсов и молитв', sub: 'азарт — это тоже стратегия' },
 
-    { type: 'stat', accent: dropColor,
+    { type: 'stat', accent: dropColor, rays: true,
       kicker: 'твой лучший дроп', big: d.best_drop ? d.best_drop.name : '—', bigClass: 'text',
       label: dropLabel, sub: 'не каждому так везёт' },
 
@@ -100,48 +100,80 @@ function showRewind(data) {
   _rewindIndex = 0;
   const overlay = document.getElementById('rewindOverlay');
   if (!overlay) return;
+
+  // Persistent ambient shell — built once so background motion / particles
+  // keep running smoothly instead of restarting on every slide change.
+  overlay.innerHTML = `
+    <div class="rewind-bg"></div>
+    <div class="rewind-grid"></div>
+    <div class="rewind-particles" id="rewindParticles"></div>
+    <div class="rewind-scanlines"></div>
+    <div class="rewind-flash" id="rewindFlash"></div>
+    <div class="rewind-bars" id="rewindBars"></div>
+    <button class="rewind-close" onclick="closeRewind()">✕</button>
+    <div class="rewind-stage" id="rewindStage" onclick="_rewindTap(event)"></div>`;
+  _rewindSpawnParticles(document.getElementById('rewindParticles'), 16);
+
   overlay.style.display = 'block';
   document.body.classList.add('architect-popup-open');
   _rewindRender();
 }
 window.showRewind = showRewind;
 
+function _rewindSpawnParticles(host, n) {
+  if (!host) return;
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const left = Math.random() * 100;
+    const size = 2 + Math.random() * 3;
+    const dur = 6 + Math.random() * 7;
+    const delay = -Math.random() * 12;
+    html += `<div class="rewind-particle" style="left:${left}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s;"></div>`;
+  }
+  host.innerHTML = html;
+}
+
 function _rewindRender() {
   const overlay = document.getElementById('rewindOverlay');
-  if (!overlay) return;
+  const stage = document.getElementById('rewindStage');
+  const barsEl = document.getElementById('rewindBars');
+  if (!overlay || !stage) return;
   const slide = _rewindSlides[_rewindIndex];
   if (!slide) { closeRewind(); return; }
 
-  const bars = _rewindSlides.map((s, i) => {
-    const cls = i < _rewindIndex ? 'done' : (i === _rewindIndex ? 'active' : '');
-    return `<div class="rewind-bar ${cls}"><div class="rewind-bar-fill"></div></div>`;
-  }).join('');
+  // accent drives every ambient layer via CSS var on the root
+  overlay.style.setProperty('--accent', slide.accent);
+
+  if (barsEl) {
+    barsEl.innerHTML = _rewindSlides.map((s, i) => {
+      const cls = i < _rewindIndex ? 'done' : (i === _rewindIndex ? 'active' : '');
+      return `<div class="rewind-bar ${cls}"><div class="rewind-bar-fill"></div></div>`;
+    }).join('');
+  }
 
   const isLast = _rewindIndex === _rewindSlides.length - 1;
   const dur = slide.type === 'card' ? 0 : (slide.type === 'intro' ? 3200 : 4500);
 
-  overlay.innerHTML = `
-    <div class="rewind-bg" style="--accent:${slide.accent}"></div>
-    <div class="rewind-bars">${bars}</div>
-    <button class="rewind-close" onclick="closeRewind()">✕</button>
-    <div class="rewind-stage rewind-slide-enter" style="--accent:${slide.accent};--dur:${dur}ms"
-         onclick="_rewindTap(event)">
-      ${_rewindSlideHtml(slide)}
-    </div>`;
+  // re-trigger entrance animation
+  stage.classList.remove('rewind-slide-enter');
+  void stage.offsetWidth;
+  stage.innerHTML = _rewindSlideHtml(slide);
+  stage.classList.add('rewind-slide-enter');
 
-  // start count-up + bar timer
-  const bigEl = overlay.querySelector('.rewind-big.is-count');
-  if (bigEl && slide.count) {
-    _rewindCountUp(bigEl, slide.value, 1100, slide.suffix || '');
-  }
-  const activeFill = overlay.querySelector('.rewind-bar.active .rewind-bar-fill');
-  if (activeFill && dur > 0) {
-    activeFill.style.animation = `rewindBarFill ${dur}ms linear forwards`;
-  }
+  // transition flash
+  const flash = document.getElementById('rewindFlash');
+  if (flash) { flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); }
+
+  // count-up
+  const bigEl = stage.querySelector('.rewind-big.is-count');
+  if (bigEl && slide.count) _rewindCountUp(bigEl, slide.value, 1200, slide.suffix || '');
+
+  // progress bar fill timer
+  const activeFill = barsEl ? barsEl.querySelector('.rewind-bar.active .rewind-bar-fill') : null;
+  if (activeFill && dur > 0) activeFill.style.animation = `rewindBarFill ${dur}ms linear forwards`;
   if (_rewindTimer) clearTimeout(_rewindTimer);
-  if (dur > 0 && !isLast) {
-    _rewindTimer = setTimeout(() => _rewindNext(), dur);
-  }
+  if (dur > 0 && !isLast) _rewindTimer = setTimeout(() => _rewindNext(), dur);
+
   try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
 }
 
@@ -156,13 +188,14 @@ function _rewindSlideHtml(slide) {
       <div class="rewind-label">${escapeHtml(slide.subtitle)}</div>`;
   }
 
+  const rays = slide.rays ? '<div class="rewind-rays"></div>' : '';
   const big = slide.count
     ? `<div class="rewind-big is-count">0${slide.suffix || ''}</div>`
     : `<div class="rewind-big ${slide.bigClass === 'text' ? 'text' : ''}">${escapeHtml(String(slide.big))}</div>`;
 
   return `
     <div class="rewind-kicker">${escapeHtml(slide.kicker)}</div>
-    ${big}
+    <div class="rewind-big-wrap">${rays}${big}</div>
     ${slide.label ? `<div class="rewind-label">${escapeHtml(slide.label)}</div>` : ''}
     ${slide.sub ? `<div class="rewind-sub">${escapeHtml(slide.sub)}</div>` : ''}`;
 }
@@ -190,12 +223,10 @@ function _rewindCardHtml(d) {
 
 function _rewindCountUp(el, to, dur, suffix) {
   const start = performance.now();
-  const from = 0;
   function step(now) {
     const t = Math.min(1, (now - start) / dur);
     const eased = 1 - Math.pow(1 - t, 3);
-    const val = Math.round(from + (to - from) * eased);
-    el.textContent = val + (suffix || '');
+    el.textContent = Math.round(to * eased) + (suffix || '');
     if (t < 1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
