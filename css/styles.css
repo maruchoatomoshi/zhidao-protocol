@@ -17988,3 +17988,112 @@ body.wild-ai-breach .diary-section-title {
   0%, 100% { box-shadow: 0 0 0 4px rgba(0,229,255,0.18), 0 0 16px rgba(0,229,255,0.4); }
   50% { box-shadow: 0 0 0 9px rgba(0,229,255,0.05), 0 0 28px rgba(0,229,255,0.8); }
 }
+
+/* ===== Trip Rewind (Wrapped-style story slides) =====
+   Fixed brand palette, independent of the active theme. */
+.rewind-overlay {
+  position: fixed; inset: 0; z-index: 9600;
+  background: #05060a; overflow: hidden;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  color: #fff; user-select: none; -webkit-user-select: none;
+}
+.rewind-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(circle at 20% 12%, color-mix(in srgb, var(--accent,#00ff66) 26%, transparent), transparent 46%),
+    radial-gradient(circle at 85% 88%, color-mix(in srgb, var(--accent,#00ff66) 16%, transparent), transparent 52%),
+    #05060a;
+  transition: background 0.45s ease;
+}
+.rewind-bars {
+  position: relative; z-index: 3;
+  display: flex; gap: 4px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 6px;
+}
+.rewind-bar {
+  flex: 1; height: 3px; border-radius: 3px;
+  background: rgba(255,255,255,0.22); overflow: hidden;
+}
+.rewind-bar-fill { height: 100%; width: 0; background: #fff; }
+.rewind-bar.done .rewind-bar-fill { width: 100%; }
+@keyframes rewindBarFill { from { width: 0; } to { width: 100%; } }
+.rewind-close {
+  position: absolute; z-index: 5;
+  top: calc(8px + env(safe-area-inset-top, 0px)); right: 12px;
+  background: none; border: none; color: rgba(255,255,255,0.6);
+  font-size: 22px; line-height: 1; cursor: pointer; padding: 6px;
+}
+.rewind-stage {
+  position: relative; z-index: 2;
+  height: 100%; box-sizing: border-box;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  padding: 24px 28px calc(70px + env(safe-area-inset-bottom, 0px));
+}
+.rewind-kicker {
+  font-size: 14px; letter-spacing: 1px; line-height: 1.4;
+  text-transform: uppercase; color: rgba(255,255,255,0.78);
+  margin-bottom: 20px; max-width: 320px;
+}
+.rewind-big {
+  font-size: 92px; font-weight: 900; line-height: 0.92;
+  color: var(--accent, #00ff66);
+  text-shadow: 0 0 34px color-mix(in srgb, var(--accent,#00ff66) 60%, transparent);
+}
+.rewind-big.text { font-size: 46px; letter-spacing: 1px; }
+.rewind-label {
+  margin-top: 20px; font-size: 16px; line-height: 1.4;
+  color: rgba(255,255,255,0.9); max-width: 320px;
+}
+.rewind-sub {
+  margin-top: 10px; font-size: 12.5px; letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.5); max-width: 300px;
+}
+.rewind-role-badge {
+  width: 70px; height: 70px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; color: var(--accent, #00ff66);
+  border: 2px solid color-mix(in srgb, var(--accent,#00ff66) 55%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 30px color-mix(in srgb, var(--accent,#00ff66) 40%, transparent);
+}
+/* entrance animation */
+.rewind-slide-enter .rewind-kicker { animation: rewindUp 0.5s ease both; }
+.rewind-slide-enter .rewind-big,
+.rewind-slide-enter .rewind-role-badge { animation: rewindPop 0.6s cubic-bezier(.2,1.3,.4,1) both 0.1s; }
+.rewind-slide-enter .rewind-label { animation: rewindUp 0.5s ease both 0.25s; }
+.rewind-slide-enter .rewind-sub  { animation: rewindUp 0.5s ease both 0.35s; }
+.rewind-slide-enter .rewind-card { animation: rewindPop 0.55s cubic-bezier(.2,1.2,.4,1) both 0.05s; }
+@keyframes rewindUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rewindPop { from { opacity: 0; transform: scale(0.82); } to { opacity: 1; transform: scale(1); } }
+/* final shareable card */
+.rewind-card {
+  width: 100%; max-width: 340px; box-sizing: border-box;
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  border: 1px solid color-mix(in srgb, var(--accent,#00ff66) 42%, transparent);
+  border-radius: 20px; padding: 22px 22px 18px;
+  box-shadow: 0 0 36px color-mix(in srgb, var(--accent,#00ff66) 18%, transparent);
+}
+.rewind-card-head { text-align: center; margin-bottom: 16px; }
+.rewind-card-title {
+  font-size: 22px; font-weight: 900; letter-spacing: 2px;
+  color: var(--accent, #00ff66);
+}
+.rewind-card-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+.rewind-card-role {
+  text-align: center; font-size: 18px; font-weight: 800; letter-spacing: 1px;
+  color: #fff; margin-bottom: 18px;
+  padding: 8px; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent,#00ff66) 14%, transparent);
+}
+.rewind-card-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 14px;
+}
+.rewind-card-row span { color: rgba(255,255,255,0.7); }
+.rewind-card-row b { font-size: 18px; color: var(--accent, #00ff66); }
+.rewind-card-foot {
+  margin-top: 16px; text-align: center;
+  font-size: 11px; letter-spacing: 0.5px; color: rgba(255,255,255,0.45);
+}
