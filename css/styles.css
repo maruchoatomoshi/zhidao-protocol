@@ -828,6 +828,44 @@ body.theme-genshin-light .lb-path-badge {
   color: #5d4320;
   border-color: rgba(120, 90, 40, 0.28);
 }
+
+/* Genshin Dark — same warm gold-on-deep-purple treatment as the light
+   variant above, mirrored in dark tones (was previously unstyled and fell
+   back to the default NetWatch-dark look). */
+body.theme-genshin-dark .lb-item,
+body.theme-genshin-dark .diary-rank-card {
+  border-color: rgba(219,177,101,0.18);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(219,177,101,0.1), transparent 42%),
+    linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+}
+body.theme-genshin-dark .lb-item.top1,
+body.theme-genshin-dark .diary-rank-card.top1 {
+  border-color: rgba(219,177,101,0.4);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(219,177,101,0.2), transparent 46%),
+    linear-gradient(90deg, rgba(219,177,101,0.1), transparent);
+}
+body.theme-genshin-dark .lb-item.top2,
+body.theme-genshin-dark .diary-rank-card.top2 {
+  border-color: rgba(200,200,210,0.22);
+  background: linear-gradient(90deg, rgba(200,200,210,0.07), rgba(255,255,255,0.015));
+}
+body.theme-genshin-dark .lb-item.top3,
+body.theme-genshin-dark .diary-rank-card.top3 {
+  border-color: rgba(200,121,65,0.3);
+  background: linear-gradient(90deg, rgba(200,121,65,0.1), rgba(255,255,255,0.015));
+}
+body.theme-genshin-dark .lb-subline,
+body.theme-genshin-dark .diary-rank-sub {
+  color: #a09880;
+}
+body.theme-genshin-dark .lb-path-badge {
+  background: rgba(255,255,255,0.06);
+  color: #e8e0d0;
+  border-color: rgba(219,177,101,0.25);
+}
+
 .page { display: none; padding: 0 0 10px; position: relative; z-index: 1; }
 .page.active { display: block; }
 
@@ -9298,6 +9336,42 @@ body.theme-genshin-dark .home-event-card {
 
 body.theme-genshin-dark .home-event-card-kicker {
   color: rgba(219,177,101,0.68) !important;
+}
+
+/* Genshin Dark — gold-on-deep-purple casino/case cards, mirroring the
+   warm cream/gold light variant above (was previously unstyled, falling
+   back to the default NetWatch-dark look). */
+body.theme-genshin-dark .casino-balance,
+body.theme-genshin-dark .prize-result {
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-dark .case-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-dark .case-card.gold {
+  border-color: rgba(219,177,101,0.32);
+}
+
+body.theme-genshin-dark .case-card.purple {
+  border-color: rgba(155,89,182,0.3);
+}
+
+body.theme-genshin-dark .case-card.black {
+  border-color: rgba(200,121,65,0.28);
+}
+
+body.theme-genshin-dark .case-cn.g,
+body.theme-genshin-dark .case-pct.g {
+  color: #dbb165;
+}
+
+body.theme-genshin-dark .case-cn.p,
+body.theme-genshin-dark .case-pct.p {
+  color: #c98bff;
 }
 
 body.theme-genshin-dark .schedule-item,
