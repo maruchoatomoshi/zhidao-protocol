@@ -3756,6 +3756,155 @@ def get_user_profile_dossier(telegram_id: int):
     }
 
 
+# Trip window for Rewind's "duration" framing — there is no per-user
+# registration timestamp on `users`, so trip length must come from these
+# fixed dates rather than from the DB. Update before each trip.
+REWIND_TRIP_START = "2026-07-01"
+REWIND_TRIP_END = "2026-07-14"
+
+REWIND_CASE_PRIZE_INFO = {
+    "jackpot":             {"name": "ДЖЕКПОТ! +250★",              "rarity": "epic"},
+    "medium":              {"name": "+60 баллов",                    "rarity": "rare"},
+    "small":               {"name": "+30 баллов",                    "rarity": "common"},
+    "walk":                {"name": "+30 мин свободы",                "rarity": "common"},
+    "laundry":             {"name": "Вне очереди!",                  "rarity": "common"},
+    "skip":                {"name": "Иммунитет!",                    "rarity": "rare"},
+    "empty":               {"name": "Пустая миска риса",              "rarity": "common"},
+    "implant_guanxi":      {"name": "Имплант Гуаньси 关系",            "rarity": "epic"},
+    "implant_terracota":   {"name": "Имплант Терракота 兵马俑",        "rarity": "epic"},
+    "implant_panda":       {"name": "Имплант Панда 🐼",               "rarity": "epic"},
+    "implant_shaolin":     {"name": "Имплант Шаолинь 少林",            "rarity": "epic"},
+    "implant_linguasoft":  {"name": "Имплант Linguasoft 口才",        "rarity": "epic"},
+    "implant_caishen":     {"name": "Имплант Цайшэнь 财神",            "rarity": "epic"},
+    "implant_qilin":       {"name": "Имплант Цилинь 麒麟",             "rarity": "epic"},
+    "implant_red_dragon":  {"name": "Протокол Красный Дракон 红龙",   "rarity": "legendary"},
+}
+REWIND_RARITY_RANK = {"common": 0, "rare": 1, "epic": 2, "legendary": 3}
+
+
+def _rewind_drop_info(prize_code: str):
+    """Resolve a casino_log.prize code to a display name + rarity for Rewind's
+    'best drop' slide. Cases use REWIND_CASE_PRIZE_INFO; prayers (genshin_*)
+    fall back to CARD_INFO rarity (5★→legendary, 4★→epic) or are skipped if
+    the drop was just points/a buff with no collectible attached."""
+    if prize_code.startswith("genshin_"):
+        card_id = prize_code[len("genshin_"):]
+        if card_id.startswith("card_") and card_id in CARD_INFO:
+            info = CARD_INFO[card_id]
+            rarity = "legendary" if info.get("rarity", 4) >= 5 else "epic"
+            return {"name": info.get("name", card_id), "rarity": rarity}
+        return None
+    info = REWIND_CASE_PRIZE_INFO.get(prize_code)
+    if not info:
+        return None
+    return {"name": info["name"], "rarity": info["rarity"]}
+
+
+@app.get("/api/rewind/{telegram_id}")
+def get_trip_rewind(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT full_name, points FROM users WHERE telegram_id=?", (telegram_id,))
+    user_row = c.fetchone()
+    if not user_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    full_name, final_balance = user_row
+    final_balance = final_balance or 0
+
+    c.execute(
+        '''SELECT
+             COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0),
+             COALESCE(SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END), 0)
+           FROM economy_log WHERE telegram_id=?''',
+        (telegram_id,),
+    )
+    points_earned, points_spent = c.fetchone()
+
+    c.execute("SELECT prize FROM casino_log WHERE telegram_id=?", (telegram_id,))
+    drop_rows = c.fetchall()
+    cases_opened = sum(1 for (prize,) in drop_rows if not prize.startswith("genshin_"))
+    best_drop = None
+    best_rank = -1
+    for (prize,) in drop_rows:
+        drop = _rewind_drop_info(prize)
+        if not drop:
+            continue
+        rank = REWIND_RARITY_RANK.get(drop["rarity"], 0)
+        if rank > best_rank:
+            best_rank = rank
+            best_drop = drop
+
+    c.execute(
+        '''SELECT COUNT(DISTINCT check_date),
+                  COUNT(DISTINCT CASE WHEN status IN ('confirmed','free_time','admin_approved') THEN check_date END)
+           FROM daily_checks WHERE telegram_id=?''',
+        (telegram_id,),
+    )
+    total_check_dates, ok_check_dates = c.fetchone()
+    attendance_pct = round(100 * ok_check_dates / total_check_dates) if total_check_dates else 100
+
+    c.execute(
+        "SELECT COUNT(*) FROM diary_entries WHERE telegram_id=? AND status IN ('submitted','locked')",
+        (telegram_id,),
+    )
+    diary_entries = c.fetchone()[0] or 0
+    c.execute(
+        '''SELECT AVG(ds.stars) FROM diary_stars ds
+           JOIN diary_entries de ON de.telegram_id=ds.telegram_id AND de.entry_date=ds.entry_date
+           WHERE ds.telegram_id=? AND de.status IN ('submitted','locked')''',
+        (telegram_id,),
+    )
+    diary_avg_stars = c.fetchone()[0] or 0
+
+    c.execute("SELECT COUNT(DISTINCT event_id) FROM event_participants WHERE telegram_id=?", (telegram_id,))
+    events_repelled = c.fetchone()[0] or 0
+    c.execute(
+        "SELECT COUNT(*), COALESCE(SUM(is_correct),0) FROM event_actions WHERE telegram_id=?",
+        (telegram_id,),
+    )
+    total_actions, correct_actions = c.fetchone()
+    event_accuracy = round(100 * correct_actions / total_actions) if total_actions else 0
+
+    c.execute("SELECT COUNT(*) FROM shop_purchases WHERE given_to=?", (telegram_id,))
+    gifts_given = c.fetchone()[0] or 0
+    conn.close()
+
+    # Role v1: picks the single most pronounced stat for this user against
+    # their own numbers, not a cross-user ranking. Cheap and good enough for
+    # a first pass; a "best in the whole trip" version would need comparing
+    # against every other user and can be layered on later if it's worth it.
+    if best_drop and best_drop["rarity"] == "legendary":
+        role = {"title": "ЛЮБИМЕЦ РАНДОМА", "subtitle": "выбил легендарный дроп за поездку"}
+    elif attendance_pct >= 95:
+        role = {"title": "ОБРАЗЦОВЫЙ ОПЕРАТОР", "subtitle": "почти не пропускал отметки"}
+    elif total_actions >= 5 and event_accuracy >= 85:
+        role = {"title": "СТРАТЕГ ПРОТОКОЛА", "subtitle": "точные ответы в момент атак"}
+    elif gifts_given >= 3:
+        role = {"title": "МЕЦЕНАТ ПРОТОКОЛА", "subtitle": "делился баллами с другими операторами"}
+    elif points_spent > points_earned * 0.6 and points_spent > 0:
+        role = {"title": "ШОПОГОЛИК ПРОТОКОЛА", "subtitle": "не давал баллам застаиваться на счету"}
+    else:
+        role = {"title": "ОПЕРАТОР ПРОТОКОЛА", "subtitle": "стабильно выполнял свою часть работы"}
+
+    return {
+        "name": full_name,
+        "date_range": f"{REWIND_TRIP_START} — {REWIND_TRIP_END}",
+        "points_earned": points_earned,
+        "points_spent": points_spent,
+        "final_balance": final_balance,
+        "cases_opened": cases_opened,
+        "best_drop": best_drop,
+        "attendance_pct": attendance_pct,
+        "diary_entries": diary_entries,
+        "diary_avg_stars": round(diary_avg_stars, 1),
+        "events_repelled": events_repelled,
+        "event_accuracy": event_accuracy,
+        "gifts_given": gifts_given,
+        "role": role,
+    }
+
+
 @app.post("/api/profile/showcase")
 async def set_profile_showcase(data: dict):
     def _run():

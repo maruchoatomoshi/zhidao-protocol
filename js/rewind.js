@@ -1,10 +1,9 @@
 /**
  * ZHIDAO Protocol — Trip Rewind (Spotify-Wrapped-style end-of-trip summary)
  *
- * PROTOTYPE STATE (2026-06-21): runs on REWIND_DEMO_DATA so the visual can be
- * previewed before the backend exists. The backend endpoint
- * `/api/rewind/{telegram_id}` (read-only aggregation over existing tables, see
- * CLAUDE.md) will later replace the demo object via loadRewindData().
+ * Pulls real data from GET /api/rewind/{telegram_id} (read-only aggregation
+ * over existing tables, see CLAUDE.md). Falls back to REWIND_DEMO_DATA if
+ * the request fails (e.g. previewing before any real trip activity exists).
  *
  * Trigger: window.showRewind()  (admin-panel preview button / console).
  */
@@ -94,8 +93,16 @@ function _rewindBuildSlides(d) {
   ];
 }
 
-function showRewind(data) {
-  const d = data || REWIND_DEMO_DATA;
+async function loadRewindData() {
+  try {
+    const { response, data } = await apiGetJsonSafe(`/api/rewind/${currentUserId}`);
+    if (response.ok && data) return data;
+  } catch (e) {}
+  return REWIND_DEMO_DATA;
+}
+
+async function showRewind(data) {
+  const d = data || await loadRewindData();
   _rewindSlides = _rewindBuildSlides(d);
   _rewindIndex = 0;
   const overlay = document.getElementById('rewindOverlay');
