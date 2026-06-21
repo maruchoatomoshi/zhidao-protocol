@@ -2893,6 +2893,34 @@ body.theme-genshin-light .inv-btn-legendary {
   background: rgba(180,20,20,0.18);
   color: #f07a68;
 }
+/* In light themes, --bg2/--bg3 are mostly-transparent blacks/whites meant to
+   tint over a light page background. This modal instead sits on a dark
+   full-screen scrim, so a translucent sheet bg lets the dark scrim bleed
+   through and leaves dark theme text unreadable on a dark sheet. Use the
+   opaque --bg for the sheet itself, --bg3 (composited on that opaque sheet)
+   for fields inside it. */
+body.theme-nw-light .legendary-target-sheet,
+body.theme-admin-light .legendary-target-sheet,
+body.theme-genshin-light .legendary-target-sheet {
+  background:
+    radial-gradient(circle at 100% 0, var(--red-dim), transparent 44%),
+    var(--bg);
+  border-color: var(--red-border);
+}
+body.theme-nw-light .legendary-target-input,
+body.theme-admin-light .legendary-target-input,
+body.theme-genshin-light .legendary-target-input {
+  background: var(--bg3);
+  border-color: var(--red-border);
+  color: var(--text);
+}
+body.theme-nw-light .legendary-target-btn.cancel,
+body.theme-admin-light .legendary-target-btn.cancel,
+body.theme-genshin-light .legendary-target-btn.cancel {
+  background: var(--bg3);
+  border-color: var(--border);
+  color: var(--text2);
+}
 /* Generic in-app confirm dialog — used instead of tg.showPopup/window.confirm,
    both of which can be unsupported or hang on some Telegram clients. */
 .confirm-dialog-modal {
