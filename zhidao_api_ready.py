@@ -3759,8 +3759,15 @@ def get_user_profile_dossier(telegram_id: int):
 # Trip window for Rewind's "duration" framing — there is no per-user
 # registration timestamp on `users`, so trip length must come from these
 # fixed dates rather than from the DB. Update before each trip.
-REWIND_TRIP_START = "2026-07-01"
-REWIND_TRIP_END = "2026-07-14"
+REWIND_TRIP_START = "2026-07-04"
+REWIND_TRIP_END = "2026-07-27"
+
+
+def _rewind_format_date_range(start_iso: str, end_iso: str) -> str:
+    start = datetime.strptime(start_iso, "%Y-%m-%d")
+    end = datetime.strptime(end_iso, "%Y-%m-%d")
+    return f"{start.strftime('%d.%m')} — {end.strftime('%d.%m.%Y')}"
+
 
 REWIND_CASE_PRIZE_INFO = {
     "jackpot":             {"name": "ДЖЕКПОТ! +250★",              "rarity": "epic"},
@@ -3889,7 +3896,7 @@ def get_trip_rewind(telegram_id: int):
 
     return {
         "name": full_name,
-        "date_range": f"{REWIND_TRIP_START} — {REWIND_TRIP_END}",
+        "date_range": _rewind_format_date_range(REWIND_TRIP_START, REWIND_TRIP_END),
         "points_earned": points_earned,
         "points_spent": points_spent,
         "final_balance": final_balance,
