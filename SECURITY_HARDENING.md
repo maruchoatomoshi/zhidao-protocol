@@ -143,3 +143,92 @@ diff /root/zhidao_api.py <(curl -sL https://raw.githubusercontent.com/maruchoato
 | Айтишники (подмена запросов, replay) | Защищены при `TELEGRAM_AUTH_REQUIRED=1` + фикс replay |
 | DDoS / флуд | Закрывается in-app rate-limit (Дыра №2, исправлено) + желательно Cloudflare |
 | Профи-хакеры | Поверхность мала: нет инъекций/секретов, серверная экономика; главный вектор — отказ в обслуживании |
+
+---
+
+# Повторный аудит 2026-06-22
+
+Полный повторный аудит бэкенда (`zhidao_api_ready.py`) и фронтенда. Подтверждены
+выводы от 2026-06-10: SQL-инъекций нет, экономика серверо-авторитетна, секретов в
+коде нет, double-spend закрыт сериализацией через `DB_WRITE_EXECUTOR`/`DB_WRITE_LOCK`.
+Telegram HMAC + проверка свежести init-data и middleware привязки личности работают
+корректно. Ниже — что добавилось.
+
+## Главное действие (без изменений с прошлого раза)
+
+**Дыра №1 остаётся самой важной и закрывается только в проде, не в коде.**
+Подмена `telegram_id` в теле write-запросов возможна только при выключенной
+авторизации. В коде всё уже сделано правильно: при `TELEGRAM_AUTH_REQUIRED=1`
+любой `/api/*` write без валидного init-data получает 401 ещё до чтения тела.
+
+```bash
+systemctl show zhidao_api.service -p Environment | tr ' ' '\n' \
+  | grep -E "TELEGRAM_AUTH_REQUIRED|BOT_TOKEN|API_INTERNAL_TOKEN"
+```
+Должно быть `TELEGRAM_AUTH_REQUIRED=1` и непустой `BOT_TOKEN` (без `BOT_TOKEN`
+верификация всегда возвращает `None` — строка `verify_telegram_init_data`).
+Если нет:
+```bash
+systemctl edit zhidao_api.service
+# [Service]
+# Environment=TELEGRAM_AUTH_REQUIRED=1
+systemctl daemon-reload && systemctl restart zhidao_api.service
+```
+
+## Что исправлено в коде (commit `bb570e4`, задеплоить)
+
+1. **`X-Internal-Token` — constant-time сравнение.** Было `==`, стало
+   `hmac.compare_digest`. Токен — мастер-ключ (байпасит и auth-middleware, и
+   rate-limit), так что тайминг-утечка по нему критична.
+2. **CORS теперь настраивается через env `CORS_ALLOWED_ORIGINS`** (список через
+   запятую). **Дефолт — `*`, поведение прода НЕ меняется** до явной настройки.
+   Прошлый вывод (CORS `*` безопасен, т.к. auth по заголовку, а не cookie)
+   остаётся в силе — это defense-in-depth, чтобы можно было сузить origin без
+   правки кода. Если решишь закрыть:
+   ```bash
+   systemctl edit zhidao_api.service
+   # [Service]
+   # Environment=CORS_ALLOWED_ORIGINS=https://maruchoatomoshi.github.io
+   systemctl daemon-reload && systemctl restart zhidao_api.service
+   ```
+   ⚠ Сначала убедись, какой именно `Origin` шлёт Telegram WebView в проде —
+   неверное значение сломает приложение для всех. Пока не уверен — оставь дефолт `*`.
+3. **Гифт-коды: lockout от брутфорса.** После 5 неверных попыток гашения
+   `telegram_id` блокируется на 10 минут (`429`). Env не требует, значения
+   зашиты (`GIFT_CODE_MAX_FAILED_ATTEMPTS=5`, окно 600 с).
+
+Finding 4 (admin id из тела как fallback) и Finding 6 (аватар как `<img src>`)
+автоматически закрываются фиксом Дыры №1 / санитайзом во фронте — отдельных
+правок не требуют.
+
+### Деплой бэкенда
+
+ВНИМАНИЕ: сперва сверить с тем, что реально крутится (CLAUDE.md предупреждает о
+расхождении репо/сервера после отладки SQLite 2026-06-09):
+```bash
+diff /root/zhidao_api.py <(curl -sL https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/zhidao_api_ready.py)
+```
+Если расхождения — только ожидаемые (3 фикса выше), деплоить:
+```bash
+curl -sL https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/zhidao_api_ready.py -o /root/zhidao_api.py
+python3 -m py_compile /root/zhidao_api.py && systemctl restart zhidao_api.service
+```
+
+### Проверка после деплоя
+
+```bash
+# 1. Сервис поднялся
+systemctl status zhidao_api.service --no-pager
+
+# 2. Подмена личности закрыта (ожидаем 401, НЕ 200):
+curl -k -s -o /dev/null -w "%{http_code}\n" -X POST \
+  https://127.0.0.1:8443/api/casino/open -H "Content-Type: application/json" \
+  -d '{"telegram_id": 1}'
+
+# 3. Внутренний токен по-прежнему работает (ожидаем не 401):
+curl -k -s -o /dev/null -w "%{http_code}\n" \
+  https://127.0.0.1:8443/api/user/389741116 -H "X-Internal-Token: $API_INTERNAL_TOKEN"
+
+# 4. БД жива, WAL не раздут (см. CLAUDE.md):
+ls -lh /root/zhidao.db*
+```
