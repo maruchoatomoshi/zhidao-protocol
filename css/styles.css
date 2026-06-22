@@ -2,11 +2,14 @@
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
 :focus { outline: none; }
 
-/* Tactile press feedback to replace the removed default tap-highlight */
-button, .btn, a, [onclick] {
+/* Tactile press feedback to replace the removed default tap-highlight.
+   Scoped to real buttons only — a blanket [onclick] selector matched every
+   card/tile/row in the app (huge style-recalc cost on big re-renders like
+   the shop catalog) and made large elements feel heavy/slow when scaled. */
+button, .btn {
   transition: transform 0.08s ease;
 }
-button:active, .btn:active, a:active, [onclick]:active {
+button:active, .btn:active {
   transform: scale(0.96);
 }
 
