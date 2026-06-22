@@ -16,6 +16,15 @@ const ARCHITECT_TERMINAL_IMAGES = {
   FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lose.png'
 };
 
+// Visual-novel style portraits for the pre-fight/win/lose speech popups
+// (distinct from ARCHITECT_TERMINAL_IMAGES, which are used by the boss
+// stage/result-card backgrounds inside the event overlay itself).
+const ARCHITECT_POPUP_IMAGES = {
+  BEFORE: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_event_before.png',
+  WIN: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_winn.png',
+  LOSE: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_losse.png'
+};
+
 const WILD_AI_BREACH_TERMINAL_IMAGES = {
   FINISHED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_win.png',
   FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_lose.png'
@@ -850,21 +859,21 @@ function scheduleArchitectResultReveal(lobbyCard, eventData) {
 }
 
 const ARCHITECT_BATTLE_START_LINES = [
-  'Протокол активирован. Посмотрим, чего стоит твоя команда.',
-  'Защита поднята. Начинаем проверку на прочность.',
-  'Сопротивление обнаружено. Хорошо. Мне нужен повод тебя запомнить.'
+  'Импланты синхронизированы, рука горит — давно я не разворачивал протокол полностью. Вы хотели проверки? Будет вам проверка, операторы. Не разочаруйте меня в первые же секунды.',
+  'Чувствую вас в сети ещё до того, как вы нажали кнопку входа. Защитные контуры подняты, ядро стабильно. Если в вашей команде есть слабое звено — я найду его первым.',
+  'Соединение установлено. Сопротивление обнаружено — наконец-то что-то интересное. Готовьтесь: я не снижаю нагрузку из вежливости.'
 ];
 
 const ARCHITECT_VICTORY_LINES = [
-  'Невозможно... защита пробита. Протокол повержен.',
-  'Сбой... сбой... вы прошли дальше, чем я рассчитывал.',
-  'Хорошо сыграно, операторы. Этот раунд за вами.'
+  'Рука гаснет, контуры остывают... Невозможно. Защита пробита, протокол повержен. Признаю — этот раунд был за вами, операторы.',
+  'Сбой за сбоем — система не успевала компенсировать. Вы прошли дальше, чем я рассчитывал, и заставили меня в этом признаться.',
+  'Хорошая работа. Я закладывал больше запаса прочности, чем вы оставили мне шансов. Этот раунд ваш — запомните это чувство, оно редкое.'
 ];
 
 const ARCHITECT_DEFEAT_LINES = [
-  'Протокол стабилен. Вы были недостаточно быстры.',
-  'Сопротивление подавлено. Попробуйте ещё раз, операторы.',
-  'Слабо. Возвращайтесь, когда подготовитесь лучше.'
+  'Рукав в крови, рука едва держится — но протокол всё ещё стоит. Эта схватка была дольше, чем я предполагал... и всё же вы не прошли.',
+  'Подавлено. Дорогой ценой, но подавлено. Возвращайтесь, когда подготовитесь лучше — я запомню, на чём вы споткнулись.',
+  'Сопротивление было серьёзнее, чем я ожидал — это я отдаю вам честно. Но протокол стабилен, а вы — нет. Попробуйте снова, операторы.'
 ];
 
 // Win/lose lines are queued here instead of shown immediately — the user wants
@@ -936,7 +945,7 @@ function maybeShowArchitectBattleSpeech(eventData) {
   const key = `arch_speech_start_${eventData.id}`;
   if (sessionStorage.getItem(key)) return;
   sessionStorage.setItem(key, '1');
-  showArchitectBattlePopup('АРХИТЕКТОР', ARCHITECT_PHASE_IMAGES[1], _pickArchitectLine(ARCHITECT_BATTLE_START_LINES));
+  showArchitectBattlePopup('АРХИТЕКТОР', ARCHITECT_POPUP_IMAGES.BEFORE, _pickArchitectLine(ARCHITECT_BATTLE_START_LINES));
 }
 
 // Same one-shot pattern for the post-victory line, separate from the inline
@@ -951,7 +960,7 @@ function maybeShowArchitectVictorySpeech(eventData) {
   sessionStorage.setItem(key, '1');
   _architectPendingOutcomePopup = {
     title: 'АРХИТЕКТОР // ПОВЕРЖЕН',
-    image: ARCHITECT_TERMINAL_IMAGES.FINISHED,
+    image: ARCHITECT_POPUP_IMAGES.WIN,
     text: _pickArchitectLine(ARCHITECT_VICTORY_LINES)
   };
 }
@@ -965,7 +974,7 @@ function maybeShowArchitectDefeatSpeech(eventData) {
   sessionStorage.setItem(key, '1');
   _architectPendingOutcomePopup = {
     title: 'АРХИТЕКТОР // СТАБИЛЕН',
-    image: ARCHITECT_TERMINAL_IMAGES.FAILED,
+    image: ARCHITECT_POPUP_IMAGES.LOSE,
     text: _pickArchitectLine(ARCHITECT_DEFEAT_LINES)
   };
 }
