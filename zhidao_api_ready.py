@@ -160,7 +160,7 @@ FRAME_DEFINITIONS = [
      "category": "path", "check": lambda s: s["theme_path"] == "cyberpunk"},
     {"id": "path-genshin", "name": "Путь Genshin", "desc": "Выбери путь Genshin",
      "category": "path", "check": lambda s: s["theme_path"] == "genshin"},
-    {"id": "blackwall-defender", "name": "Хранитель Заслона", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
+    {"id": "blackwall-defender", "name": "Хранитель Файрвола", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
      "category": "legendary", "check": lambda s: s["wildai_defender"]},
 ]
 FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
@@ -702,7 +702,7 @@ WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2
 WILD_AI_BREACH_REWARD_REP = 30
 WILD_AI_BREACH_REWARD_FRAGMENTS = 2
 WILD_AI_BREACH_FRAME_ID = "blackwall-defender"
-WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Заслона"
+WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Файрвола"
 
 WILD_AI_BREACH_QUESTION_SEEDS = {
     "attack": [
@@ -3759,7 +3759,7 @@ def get_user_profile_dossier(telegram_id: int):
     elif any(row[0] == "implant_red_dragon" for row in implants):
         title = "红龙载体 / Носитель Красного Дракона"
     elif raid_wins > 0:
-        title = "黑墙幸存者 / Выживший у Заслона"
+        title = "红墙幸存者 / Выживший у Красного Файрвола"
     else:
         title = "协议执行者 / Исполнитель протокола"
 
@@ -7255,7 +7255,7 @@ async def netwatch_veil_breach(data: dict):
     target_id, target_name, locked_until = await db_write(_run)
     await send_telegram_message(
         target_id,
-        "🔴 NetWatch активировал «Взлом Заслона».\n"
+        "🔴 NetWatch активировал «Взлом Файрвола».\n"
         "Магазин и кейсы временно недоступны на 12 часов.",
     )
     return {"success": True, "target": target_name, "locked_until": locked_until}
@@ -8041,7 +8041,7 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
             '''INSERT INTO admin_action_logs
                (admin_id, target_id, action_type, points_delta, reason, created_at)
                VALUES (?, NULL, 'blackwall', 0, ?, ?)''',
-            (x_admin_id, 'BlackWall enabled' if enabled else 'BlackWall disabled', now_iso()),
+            (x_admin_id, 'Red Firewall enabled' if enabled else 'Red Firewall disabled', now_iso()),
         )
         conn.commit()
         conn.close()
@@ -9649,7 +9649,7 @@ def _check_blackwall(c, user_id):
     c.execute("SELECT value FROM settings WHERE key='blackwall'")
     bw = c.fetchone()
     if bw and bw[0] == '1' and (user_id is None or user_id not in ADMIN_IDS):
-        raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом BlackWall")
+        raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом Красного Файрвола")
 
 
 @app.get("/api/contracts")
