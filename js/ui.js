@@ -561,12 +561,12 @@ function startBlackwallBoot(cb) {
 
   const LINES = [
     { text: '> ZHIDAO PROTOCOL v3.0.0', delay: 0 },
-    { text: '> INITIALIZING BLACKWALL...', delay: 260 },
+    { text: '> INITIALIZING RED FIREWALL...', delay: 260 },
     { text: '> ARCHITECT ACCESS CONFIRMED', delay: 280 },
     { text: '> CLEARANCE LEVEL: OMEGA', delay: 240 },
     { text: '> LOADING NEURAL MESH... [████████] 100%', delay: 380 },
     { text: '> THREAT MATRIX: NOMINAL', delay: 220 },
-    { text: '> 智道黑壁 — ONLINE', delay: 300 },
+    { text: '> 智道红壁 — ONLINE', delay: 300 },
     { text: '欢迎回来, 架构师', delay: 420, gold: true },
   ];
 

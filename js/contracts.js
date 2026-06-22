@@ -358,7 +358,7 @@ async function loadOpenContracts(options = {}) {
     });
     if (r.status === 403) {
       const d = await r.json().catch(() => ({}));
-      showContractsBlackwall(d.detail || 'BlackWall активен');
+      showContractsBlackwall(d.detail || 'Красный Файрвол активен');
       return;
     }
     const data = await r.json();
@@ -399,7 +399,7 @@ async function loadMyContracts(options = {}) {
     });
     if (r.status === 403) {
       const d = await r.json().catch(() => ({}));
-      showContractsBlackwall(d.detail || 'BlackWall активен');
+      showContractsBlackwall(d.detail || 'Красный Файрвол активен');
       return;
     }
     const data = await r.json();

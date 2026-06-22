@@ -995,7 +995,7 @@ function renderArchitectLobby(eventData, errorText = '') {
       lobbyCard.innerHTML = `
         <div class="event-standby-screen">
           <div class="event-standby-kicker">⚠ WILD AI BREACH // STANDBY</div>
-          <div class="event-standby-title">${errorText || 'BLACKWALL ОНЛАЙН'}</div>
+          <div class="event-standby-title">${errorText || 'КРАСНЫЙ ФАЙРВОЛ ОНЛАЙН'}</div>
           <div class="event-standby-sub">Операция не активна. Вторжение Дикого ИИ пока не зафиксировано.</div>
           ${isAdmin ? `<button class="event-standby-create-btn" onclick="createWildAiEvent()">⚠ WILD AI BREACH // ОПЕРАЦИЯ ВЫТЕСНЕНИЯ</button>` : ''}
         </div>`;
@@ -1094,7 +1094,7 @@ function renderArchitectLobby(eventData, errorText = '') {
 
       if (subtextEl) {
         if (isWildAi && eventData.state === 'FAILED') {
-          subtextEl.textContent = 'Дикий ИИ прорвал BlackWall. Система перехвачена — приложение временно под контролем ИИ.';
+          subtextEl.textContent = 'Дикий ИИ прорвал Красный Файрвол. Система перехвачена — приложение временно под контролем ИИ.';
           subtextEl.style.display = 'block';
         } else {
           subtextEl.style.display = 'none';

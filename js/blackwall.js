@@ -8,7 +8,7 @@ function setCasinoBlackwallState(enabled) {
     }
     if (content.dataset.blackwallActive === '1') return;
     content.innerHTML =
-      '<div class="blackwall-screen"><div class="blackwall-title">BlackWall 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
+      '<div class="blackwall-screen"><div class="blackwall-title">Красный Файрвол 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
     content.dataset.blackwallActive = '1';
     return;
   }
@@ -29,7 +29,7 @@ function setShopBlackwallState(enabled) {
     }
     if (content.dataset.blackwallActive === '1') return;
     content.innerHTML =
-      '<div class="blackwall-screen"><div class="blackwall-title">BlackWall 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
+      '<div class="blackwall-screen"><div class="blackwall-title">Красный Файрвол 已激活</div><div style="font-size:11px;color:#555;font-family:monospace;line-height:1.8;">系统访问已受限<br>— NetWatch 网络保安 —</div></div>';
     content.dataset.blackwallActive = '1';
     return;
   }
