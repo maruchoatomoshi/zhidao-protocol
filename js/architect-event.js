@@ -936,12 +936,12 @@ function closeArchitectBattlePopup(e) {
 }
 window.closeArchitectBattlePopup = closeArchitectBattlePopup;
 
-// Architect taunts the team once when the fight first goes ACTIVE — sessionStorage
-// guard means it fires exactly once per event per browser session, regardless of
-// how many times the lobby re-polls and re-renders while the state stays ACTIVE.
+// Architect taunts the team once the event is created and opened to everyone
+// (REGISTRATION) — sessionStorage guard means it fires exactly once per event
+// per browser session, regardless of how many times the lobby re-polls.
 function maybeShowArchitectBattleSpeech(eventData) {
   if (!eventData || eventData.code === 'wildai_breach') return;
-  if (String(eventData.state || '').toUpperCase() !== 'ACTIVE') return;
+  if (String(eventData.state || '').toUpperCase() !== 'REGISTRATION') return;
   const key = `arch_speech_start_${eventData.id}`;
   if (sessionStorage.getItem(key)) return;
   sessionStorage.setItem(key, '1');
