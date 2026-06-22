@@ -25,9 +25,15 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+# Defaults to "*" (unchanged behavior) to avoid breaking the live Mini App.
+# Set CORS_ALLOWED_ORIGINS to a comma-separated list (e.g. "https://maruchoatomoshi.github.io")
+# once the real Telegram WebView Origin behavior has been confirmed in production.
+_cors_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] or ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -230,7 +236,9 @@ def verify_telegram_init_data(init_data: str) -> Optional[dict]:
 
 
 def request_has_internal_token(request: Request) -> bool:
-    return bool(API_INTERNAL_TOKEN and request.headers.get("x-internal-token") == API_INTERNAL_TOKEN)
+    if not API_INTERNAL_TOKEN:
+        return False
+    return hmac.compare_digest(request.headers.get("x-internal-token") or "", API_INTERNAL_TOKEN)
 
 
 def is_sensitive_api_request(request: Request) -> bool:
@@ -520,6 +528,35 @@ async def rate_limit_bucket_cleanup_loop():
             stale = [ip for ip, bucket in _rate_limit_buckets.items() if not bucket or now - bucket[-1] > 60]
             for ip in stale:
                 del _rate_limit_buckets[ip]
+
+
+#  Gift-code guessing throttle: locks out a telegram_id after repeated
+#  "code not found" guesses, independent of the generic per-second rate
+#  limiter above (which only caps request rate, not brute-force attempts
+#  against a low-entropy code over time).
+GIFT_CODE_MAX_FAILED_ATTEMPTS = 5
+GIFT_CODE_LOCKOUT_WINDOW_SECONDS = 600
+_gift_code_failed_attempts: dict[int, deque] = {}
+_gift_code_lock = threading.Lock()
+
+
+def _gift_code_attempt_locked_out(telegram_id: int) -> bool:
+    now = time.monotonic()
+    with _gift_code_lock:
+        bucket = _gift_code_failed_attempts.setdefault(telegram_id, deque())
+        while bucket and now - bucket[0] > GIFT_CODE_LOCKOUT_WINDOW_SECONDS:
+            bucket.popleft()
+        return len(bucket) >= GIFT_CODE_MAX_FAILED_ATTEMPTS
+
+
+def _gift_code_record_failed_attempt(telegram_id: int) -> None:
+    with _gift_code_lock:
+        _gift_code_failed_attempts.setdefault(telegram_id, deque()).append(time.monotonic())
+
+
+def _gift_code_clear_failed_attempts(telegram_id: int) -> None:
+    with _gift_code_lock:
+        _gift_code_failed_attempts.pop(telegram_id, None)
 
 
 PRESENCE_CHECK_TYPES = {"morning", "evening", "manual"}
@@ -4927,6 +4964,9 @@ async def redeem_gift_code(data: dict):
     if not code:
         raise HTTPException(status_code=400, detail="Code required")
 
+    if _gift_code_attempt_locked_out(telegram_id):
+        raise HTTPException(status_code=429, detail="Too many attempts, try again later")
+
     def _run():
         conn = get_conn()
         try:
@@ -4965,8 +5005,11 @@ async def redeem_gift_code(data: dict):
 
     result = await db_write(_run)
     if "error" in result:
+        if result["status"] == 404:
+            _gift_code_record_failed_attempt(telegram_id)
         raise HTTPException(status_code=result["status"], detail=result["error"])
 
+    _gift_code_clear_failed_attempts(telegram_id)
     return {"success": True, "reward_stars": result["reward_stars"], "new_points": result["new_points"]}
 
 
