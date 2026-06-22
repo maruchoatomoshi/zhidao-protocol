@@ -127,12 +127,14 @@ function openEventOverlay(tabHint) {
   setEventExplanation('');
   loadCurrentArchitectEvent();
   if (typeof loadEventActiveBonuses === 'function') loadEventActiveBonuses();
+  startArchitectLobbyPoll();
 }
 
 function closeEventOverlay() {
   const overlay = document.getElementById('eventOverlay');
   if (!overlay) return;
 
+  stopArchitectLobbyPoll();
   overlay.style.display = 'none';
 
   const nav = document.querySelector('.bottom-nav');
@@ -175,9 +177,32 @@ function closeEventOverlay() {
     architectResultRevealTimer = null;
     architectResultRevealEventKey = null;
   }
+
+  if (typeof flushPendingArchitectOutcomePopup === 'function') {
+    flushPendingArchitectOutcomePopup();
+  }
 }
 
 let architectEventEntryBannerTimer = null;
+let architectLobbyPollTimer = null;
+
+// Without this, state changes (lobby -> active fight -> finished) only ever
+// reach the client when the user opens the overlay or submits an action — if
+// they're just sitting in the lobby while the admin starts/finishes the
+// event, the client never finds out until they manually leave and come back.
+function startArchitectLobbyPoll() {
+  stopArchitectLobbyPoll();
+  architectLobbyPollTimer = setInterval(() => {
+    if (typeof loadCurrentArchitectEvent === 'function') loadCurrentArchitectEvent();
+  }, 6000);
+}
+
+function stopArchitectLobbyPoll() {
+  if (architectLobbyPollTimer) {
+    clearInterval(architectLobbyPollTimer);
+    architectLobbyPollTimer = null;
+  }
+}
 
 function openArchitectEventEntryBanner() {
   const overlay = document.getElementById('architectEventEntryBanner');

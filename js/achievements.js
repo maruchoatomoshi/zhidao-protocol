@@ -72,7 +72,9 @@ function ensureAchievementModal() {
   modal.innerHTML = `
     <div class="achievement-modal-sheet">
       <div class="achievement-modal-spin-zone">
-        <div class="achievement-modal-img-wrap achievement-icon-bg" id="achievementModalImgWrap" oncontextmenu="return false"></div>
+        <div class="achievement-modal-img-mask">
+          <div class="achievement-modal-img-wrap achievement-icon-bg" id="achievementModalImgWrap" oncontextmenu="return false"></div>
+        </div>
       </div>
       <div class="achievement-modal-spin-hint">⟲ потяни значок, чтобы покрутить</div>
       <div class="achievement-modal-status" id="achievementModalStatus"></div>
