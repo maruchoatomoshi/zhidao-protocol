@@ -2,6 +2,14 @@
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
 :focus { outline: none; }
 
+/* Tactile press feedback to replace the removed default tap-highlight */
+button, .btn, a, [onclick] {
+  transition: transform 0.08s ease;
+}
+button:active, .btn:active, a:active, [onclick]:active {
+  transform: scale(0.96);
+}
+
 :root {
   --red: #cc2200;
   --red-dim: rgba(180,20,20,0.15);
