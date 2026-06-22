@@ -861,6 +861,16 @@ const ARCHITECT_VICTORY_LINES = [
   'Хорошо сыграно, операторы. Этот раунд за вами.'
 ];
 
+const ARCHITECT_DEFEAT_LINES = [
+  'Протокол стабилен. Вы были недостаточно быстры.',
+  'Сопротивление подавлено. Попробуйте ещё раз, операторы.',
+  'Слабо. Возвращайтесь, когда подготовитесь лучше.'
+];
+
+// Win/lose lines are queued here instead of shown immediately — the user wants
+// them to appear after leaving the event, not while still staring at the lobby.
+let _architectPendingOutcomePopup = null;
+
 let _architectBattlePopupTypeTimer = null;
 
 function _pickArchitectLine(lines) {
@@ -931,14 +941,47 @@ function maybeShowArchitectBattleSpeech(eventData) {
 
 // Same one-shot pattern for the post-victory line, separate from the inline
 // win/lose result card which renders regardless of whether this popup was seen.
+// The popup itself is queued, not shown — it fires after the user exits the
+// event overlay (see flushPendingArchitectOutcomePopup in events.js).
 function maybeShowArchitectVictorySpeech(eventData) {
   if (!eventData || eventData.code === 'wildai_breach') return;
   if (String(eventData.state || '').toUpperCase() !== 'FINISHED') return;
   const key = `arch_speech_win_${eventData.id}`;
   if (sessionStorage.getItem(key)) return;
   sessionStorage.setItem(key, '1');
-  showArchitectBattlePopup('АРХИТЕКТОР // ПОВЕРЖЕН', ARCHITECT_TERMINAL_IMAGES.FINISHED, _pickArchitectLine(ARCHITECT_VICTORY_LINES));
+  _architectPendingOutcomePopup = {
+    title: 'АРХИТЕКТОР // ПОВЕРЖЕН',
+    image: ARCHITECT_TERMINAL_IMAGES.FINISHED,
+    text: _pickArchitectLine(ARCHITECT_VICTORY_LINES)
+  };
 }
+
+// Mirror of the victory speech for a failed run — also queued until exit.
+function maybeShowArchitectDefeatSpeech(eventData) {
+  if (!eventData || eventData.code === 'wildai_breach') return;
+  if (String(eventData.state || '').toUpperCase() !== 'FAILED') return;
+  const key = `arch_speech_lose_${eventData.id}`;
+  if (sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key, '1');
+  _architectPendingOutcomePopup = {
+    title: 'АРХИТЕКТОР // СТАБИЛЕН',
+    image: ARCHITECT_TERMINAL_IMAGES.FAILED,
+    text: _pickArchitectLine(ARCHITECT_DEFEAT_LINES)
+  };
+}
+
+// Called once the event overlay has actually closed, so the win/lose line
+// reads like a notification you get back to, not something buried under the
+// inline result card while you're still in the lobby.
+function flushPendingArchitectOutcomePopup() {
+  if (!_architectPendingOutcomePopup) return;
+  const popup = _architectPendingOutcomePopup;
+  _architectPendingOutcomePopup = null;
+  setTimeout(() => {
+    showArchitectBattlePopup(popup.title, popup.image, popup.text);
+  }, 350);
+}
+window.flushPendingArchitectOutcomePopup = flushPendingArchitectOutcomePopup;
 
 function renderArchitectLobby(eventData, errorText = '') {
   const lobbyCard = document.getElementById('eventLobbyCard');
@@ -985,6 +1028,7 @@ function renderArchitectLobby(eventData, errorText = '') {
 
   maybeShowArchitectBattleSpeech(eventData);
   maybeShowArchitectVictorySpeech(eventData);
+  maybeShowArchitectDefeatSpeech(eventData);
 
   // Standby screen wiped the lobby markup earlier — restore it before rendering
   if (!document.getElementById('eventStatusText') && window._eventLobbyMarkup) {
