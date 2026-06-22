@@ -71,7 +71,10 @@ function ensureAchievementModal() {
   modal.className = 'achievement-modal';
   modal.innerHTML = `
     <div class="achievement-modal-sheet">
-      <div class="achievement-modal-img-wrap achievement-icon-bg" id="achievementModalImgWrap" oncontextmenu="return false"></div>
+      <div class="achievement-modal-spin-zone">
+        <div class="achievement-modal-img-wrap achievement-icon-bg" id="achievementModalImgWrap" oncontextmenu="return false"></div>
+      </div>
+      <div class="achievement-modal-spin-hint">⟲ потяни значок, чтобы покрутить</div>
       <div class="achievement-modal-status" id="achievementModalStatus"></div>
       <div class="achievement-modal-title" id="achievementModalTitle"></div>
       <div class="achievement-modal-desc" id="achievementModalDesc"></div>
@@ -83,7 +86,61 @@ function ensureAchievementModal() {
       modal.style.display = 'none';
     }
   });
+  attachAchievementSpin(modal.querySelector('#achievementModalImgWrap'));
   return modal;
+}
+
+// Перетаскивание значка ачивки — крутится по Y с инерцией после отпускания, чисто косметика
+function attachAchievementSpin(el) {
+  let rotation = 0;
+  let dragging = false;
+  let startX = 0, startRotation = 0, lastX = 0, lastT = 0, velocity = 0;
+  let momentumFrame = null;
+
+  el.style.touchAction = 'none';
+  el.style.cursor = 'grab';
+
+  const apply = () => { el.style.transform = `rotateY(${rotation}deg)`; };
+  const stopMomentum = () => { if (momentumFrame) { cancelAnimationFrame(momentumFrame); momentumFrame = null; } };
+  const runMomentum = () => {
+    velocity *= 0.95;
+    rotation += velocity;
+    apply();
+    momentumFrame = Math.abs(velocity) > 0.05 ? requestAnimationFrame(runMomentum) : null;
+  };
+
+  el.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    stopMomentum();
+    startX = lastX = e.clientX;
+    startRotation = rotation;
+    lastT = performance.now();
+    velocity = 0;
+    el.style.cursor = 'grabbing';
+    try { el.setPointerCapture(e.pointerId); } catch(_) {}
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const now = performance.now();
+    const dt = Math.max(1, now - lastT);
+    velocity = ((e.clientX - lastX) / dt) * 16;
+    rotation = startRotation + (e.clientX - startX) * 0.6;
+    apply();
+    lastX = e.clientX;
+    lastT = now;
+  });
+  const endDrag = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    el.style.cursor = 'grab';
+    try { el.releasePointerCapture(e.pointerId); } catch(_) {}
+    if (Math.abs(velocity) > 0.5) momentumFrame = requestAnimationFrame(runMomentum);
+  };
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', endDrag);
+  el.addEventListener('pointerleave', (e) => { if (dragging) endDrag(e); });
+
+  el._resetSpin = () => { stopMomentum(); dragging = false; rotation = 0; apply(); };
 }
 
 function showAchievementInfo(code, name, description, earned) {
@@ -102,6 +159,7 @@ function showAchievementInfo(code, name, description, earned) {
     imgWrap.innerHTML = '<i class="ti ti-award" style="font-size:64px;color:#d4af37;"></i>';
   }
   imgWrap.classList.toggle('locked', !earned);
+  if (imgWrap._resetSpin) imgWrap._resetSpin();
   statusEl.textContent = earned ? '✓ ПОЛУЧЕНО' : '🔒 НЕДОСТУПНО';
   statusEl.className = 'achievement-modal-status ' + (earned ? 'earned' : 'locked');
   titleEl.textContent = name;
