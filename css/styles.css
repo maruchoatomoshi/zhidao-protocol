@@ -1967,6 +1967,30 @@ body.is-admin .profile-card-kicker {
 @keyframes lb-frame-spin {
   to { transform: rotate(360deg); }
 }
+
+/* "Титул дня" (title_player) — full-row leaderboard highlight, purely cosmetic */
+.lb-item.title-glow {
+  border-color: var(--title-glow-color, rgba(255,255,255,0.2));
+  box-shadow: 0 0 16px var(--title-glow-shadow, transparent), inset 0 0 24px var(--title-glow-shadow, transparent);
+  background:
+    linear-gradient(90deg, var(--title-glow-tint, transparent), transparent 60%),
+    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.055), transparent 38%),
+    linear-gradient(90deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+}
+.lb-item.title-cyan    { --title-glow-color: rgba(0,255,247,0.55); --title-glow-shadow: rgba(0,255,247,0.28); --title-glow-tint: rgba(0,255,247,0.12); }
+.lb-item.title-gold    { --title-glow-color: rgba(212,175,55,0.6);  --title-glow-shadow: rgba(212,175,55,0.3);  --title-glow-tint: rgba(212,175,55,0.14); }
+.lb-item.title-violet  { --title-glow-color: rgba(155,89,182,0.6); --title-glow-shadow: rgba(155,89,182,0.3); --title-glow-tint: rgba(155,89,182,0.14); }
+.lb-item.title-crimson { --title-glow-color: rgba(204,34,0,0.6);   --title-glow-shadow: rgba(204,34,0,0.3);   --title-glow-tint: rgba(204,34,0,0.14); }
+.lb-item.title-emerald { --title-glow-color: rgba(46,204,113,0.6); --title-glow-shadow: rgba(46,204,113,0.3); --title-glow-tint: rgba(46,204,113,0.14); }
+
+.title-style-swatch {
+  border-radius: 10px !important;
+}
+.title-style-swatch.title-cyan    { background: linear-gradient(135deg, #00fff7, #0a3d3d); box-shadow: 0 0 8px rgba(0,255,247,0.45); }
+.title-style-swatch.title-gold    { background: linear-gradient(135deg, #d4af37, #fff3b0); box-shadow: 0 0 8px rgba(212,175,55,0.45); }
+.title-style-swatch.title-violet  { background: linear-gradient(135deg, #9b59b6, #e91e8c); box-shadow: 0 0 8px rgba(155,89,182,0.45); }
+.title-style-swatch.title-crimson { background: linear-gradient(135deg, #cc2200, #ff6644); box-shadow: 0 0 8px rgba(204,34,0,0.45); }
+.title-style-swatch.title-emerald { background: linear-gradient(135deg, #2ecc71, #145a32); box-shadow: 0 0 8px rgba(46,204,113,0.45); }
 .lb-progress {
   height: 2px; border-radius: 1px;
   margin-top: 3px; opacity: 0.5;

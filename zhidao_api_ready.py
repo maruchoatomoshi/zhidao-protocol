@@ -165,6 +165,18 @@ FRAME_DEFINITIONS = [
 ]
 FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
 
+# Title Player ("Титул дня") highlight presets — purely cosmetic, full-row
+# glow on the leaderboard for the day. No mechanical effect, no economy impact.
+TITLE_STYLE_PRESETS = [
+    {"id": "cyan", "name": "Кибер-циан"},
+    {"id": "gold", "name": "Золото протокола"},
+    {"id": "violet", "name": "Фиолетовый сигнал"},
+    {"id": "crimson", "name": "Багровая тревога"},
+    {"id": "emerald", "name": "Изумрудный канал"},
+]
+TITLE_STYLE_IDS = {p["id"] for p in TITLE_STYLE_PRESETS}
+TITLE_STYLE_DEFAULT = "cyan"
+
 
 def compute_unlocked_frames(c, telegram_id: int) -> list:
     c.execute("SELECT rep_score, points FROM users WHERE telegram_id=?", (telegram_id,))
@@ -1313,6 +1325,8 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN protocol_fragments INTEGER DEFAULT 0")
     if 'equipped_frame' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN equipped_frame TEXT DEFAULT NULL")
+    if 'title_style' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN title_style TEXT DEFAULT NULL")
     if 'wildai_defender' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN wildai_defender INTEGER DEFAULT 0")
     if 'wildai_mvp' not in columns:
@@ -6538,6 +6552,7 @@ async def get_leaderboard():
         f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
                  us.equipped_frame,
+                 CASE WHEN us.title_date=? THEN us.title_style ELSE NULL END as title_style,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
                   AND durability > 0
@@ -6562,7 +6577,7 @@ async def get_leaderboard():
                  WHERE u.telegram_id IS NOT NULL
                  AND u.telegram_id NOT IN ({placeholders})
                  ORDER BY u.rep_score DESC LIMIT 10''',
-        [today] + ADMIN_IDS,
+        [today, today] + ADMIN_IDS,
     )
     result = c.fetchall()
 
@@ -6609,8 +6624,9 @@ async def get_leaderboard():
             "theme_path": r[4],
             "has_title": bool(r[5]),
             "equipped_frame": r[6] if r[6] in FRAME_IDS else None,
-            "implant": r[7],
-            "card": r[8],
+            "title_style": r[7] if r[7] in TITLE_STYLE_IDS else None,
+            "implant": r[8],
+            "card": r[9],
             "rank_delta": rank_delta,
         })
     return out
@@ -7531,6 +7547,7 @@ def get_shop(telegram_id: int = 0):
 async def buy_item(data: dict):
     telegram_id = data.get("telegram_id")
     item_code = data.get("item_code")
+    title_style = data.get("style") if data.get("style") in TITLE_STYLE_IDS else TITLE_STYLE_DEFAULT
     if not telegram_id or not item_code:
         raise HTTPException(status_code=400, detail="Missing data")
 
@@ -7579,8 +7596,9 @@ async def buy_item(data: dict):
                 c.execute("""INSERT INTO user_status (telegram_id, double_win) VALUES (?,1)
                              ON CONFLICT(telegram_id) DO UPDATE SET double_win=1""", (telegram_id,))
             elif item_code == 'title_player':
-                c.execute("""INSERT INTO user_status (telegram_id, title_date) VALUES (?,?)
-                             ON CONFLICT(telegram_id) DO UPDATE SET title_date=?""", (telegram_id, today, today))
+                c.execute("""INSERT INTO user_status (telegram_id, title_date, title_style) VALUES (?,?,?)
+                             ON CONFLICT(telegram_id) DO UPDATE SET title_date=?, title_style=?""",
+                          (telegram_id, today, title_style, today, title_style))
 
             expiry_days = SHOP_ITEM_EXPIRY_DAYS.get(item_code)
             if expiry_days is not None:

@@ -626,6 +626,9 @@ async function loadLeaderboard() {
       // Рамка аватара — за топ-3 фиксированная, для остальных по выбору пользователя
       const frameClass = (!topClass && item.equipped_frame) ? `has-frame frame-${item.equipped_frame}` : '';
 
+      // Титул дня с подсветкой — выделяет всю строку игрока целиком (рамка + ник + статус)
+      const titleGlowClass = item.title_style ? `title-glow title-${item.title_style}` : '';
+
       // Динамика места в рейтинге со вчера
       let rankChangeHtml = '';
       if (item.rank_delta > 0) {
@@ -634,7 +637,7 @@ async function loadLeaderboard() {
         rankChangeHtml = `<span class="lb-rank-change down">▼${Math.abs(item.rank_delta)}</span>`;
       }
 
-      html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''}" style="${animDelay}">
+      html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''} ${titleGlowClass}" style="${animDelay}">
         <div class="lb-rank">${medal}${rankChangeHtml}</div>
         <div class="lb-avatar ${frameClass}">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
