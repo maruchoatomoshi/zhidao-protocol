@@ -388,10 +388,10 @@
   </div>
 
   <div class="casino-subtabs">
-    <button class="subtab active" id="casinoPlayBtn" onclick="switchCasinoTab(currentThemePath==='genshin'?'genshin':'play',this)">🎰 ИГРАТЬ</button>
-    <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
-    <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
-    <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
+    <button class="subtab active" id="casinoPlayBtn" onclick="switchCasinoTab(currentThemePath==='genshin'?'genshin':'play',this)"><i class="ti ti-device-gamepad-2"></i> ИГРАТЬ</button>
+    <button class="subtab" onclick="switchCasinoTab('inventory',this)"><i class="ti ti-gift"></i> ПРИЗЫ</button>
+    <button class="subtab" onclick="switchCasinoTab('history',this)"><i class="ti ti-history"></i> ИСТОРИЯ</button>
+    <button class="subtab" onclick="switchCasinoTab('rules',this)"><i class="ti ti-clipboard-list"></i> ПРАВИЛА</button>
   </div>
 
   <div id="casinoPlayContent" style="display:flex;flex-direction:column;">
@@ -449,7 +449,7 @@
   <div id="casinoInventoryContent" style="display:none;flex-direction:column;">
     <div class="card" style="margin:8px 12px;">
       <div class="card-inner">
-        <div class="card-label">🎒 ПРИЗЫ ИЗ КЕЙСОВ</div>
+        <div class="card-label"><i class="ti ti-gift"></i> ПРИЗЫ ИЗ КЕЙСОВ</div>
         <div id="casinoInventoryList"><div class="empty-state">Загрузка...</div></div>
       </div>
     </div>
@@ -458,7 +458,7 @@
   <div id="casinoHistoryContent" style="display:none;flex-direction:column;">
     <div class="card" style="margin:8px 12px;">
       <div class="card-inner">
-        <div class="card-label">📊 ИСТОРИЯ ПРОКРУТОК</div>
+        <div class="card-label"><i class="ti ti-history"></i> ИСТОРИЯ ПРОКРУТОК</div>
         <div id="casinoHistoryList"><div class="empty-state">Загрузка...</div></div>
       </div>
     </div>
@@ -2555,7 +2555,7 @@
 <script src="./js/laundry.js?v=20260615a"></script>
 <script src="./js/achievements.js?v=20260622spinlock1"></script>
 <script src="./js/leaderboard.js?v=20260617a"></script>
-<script src="./js/shop.js?v=20260615a"></script>
+<script src="./js/shop.js?v=20260622iconfix1"></script>
 <script src="./js/casino.js?v=20260622firewall1"></script>
 <script src="./js/diary.js?v=20260613cleanup1"></script>
 <script src="./js/team.js?v=20260618b"></script>

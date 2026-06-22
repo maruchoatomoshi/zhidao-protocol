@@ -39,6 +39,7 @@ const SHOP_ICONS = {
   'raid_overclock': '<i class="ti ti-bolt" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
   'double_win':   '<i class="ti ti-arrows-double-sw-ne" style="color:var(--gold);font-size:22px;"></i>',
   'title_player': '<i class="ti ti-crown" style="color:var(--gold);font-size:22px;"></i>',
+  'path_switch':  '<i class="ti ti-arrows-right-left" style="color:rgba(230,160,60,0.9);font-size:22px;"></i>',
 };
 
 const GS_CARD_CONFIGS = {
