@@ -571,40 +571,13 @@ function stopArchitectFinalTimer() {
   }
 }
 
+// Phase 3 countdown was purely cosmetic and didn't gate or affect anything in the
+// fight, so it's been removed — this just keeps the (now unused) timer element hidden.
 function updateArchitectFinalTimer(eventData) {
   const timer = document.getElementById('eventFinalTimer');
   if (!timer) return;
-
   stopArchitectFinalTimer();
-
-  const isFinalPhase = !!eventData &&
-    eventData.state === 'ACTIVE' &&
-    Number(eventData.phase || 1) >= 3 &&
-    !!eventData.final_phase_deadline;
-
-  if (!isFinalPhase) {
-    timer.style.display = 'none';
-    timer.textContent = 'FINAL T-00:00';
-    return;
-  }
-
-  const deadline = normalizeArchitectDeadline(eventData.final_phase_deadline);
-  if (!deadline) {
-    timer.style.display = 'none';
-    return;
-  }
-
-  function renderTimer() {
-    const remaining = deadline.getTime() - Date.now();
-    timer.textContent = `FINAL WINDOW T-${formatArchitectCountdown(remaining)}`;
-    timer.style.display = remaining > 0 ? 'block' : 'none';
-    if (remaining <= 0) {
-      stopArchitectFinalTimer();
-    }
-  }
-
-  renderTimer();
-  architectFinalTimerHandle = setInterval(renderTimer, 500);
+  timer.style.display = 'none';
 }
 
 function updateArchitectPhaseFxState(eventData) {
@@ -864,16 +837,19 @@ const ARCHITECT_BATTLE_START_LINES = [
   'Соединение установлено. Сопротивление обнаружено — наконец-то что-то интересное. Готовьтесь: я не снижаю нагрузку из вежливости.'
 ];
 
+// PLAYER WINS — Architect is defeated, conceding (paired with the defeated/bloodied portrait)
 const ARCHITECT_VICTORY_LINES = [
   'Рука гаснет, контуры остывают... Невозможно. Защита пробита, протокол повержен. Признаю — этот раунд был за вами, операторы.',
   'Сбой за сбоем — система не успевала компенсировать. Вы прошли дальше, чем я рассчитывал, и заставили меня в этом признаться.',
   'Хорошая работа. Я закладывал больше запаса прочности, чем вы оставили мне шансов. Этот раунд ваш — запомните это чувство, оно редкое.'
 ];
 
+// PLAYER LOSES — Architect stands proud and mocks the attempt, but acknowledges the effort
+// (paired with the confident/smug portrait)
 const ARCHITECT_DEFEAT_LINES = [
-  'Рукав в крови, рука едва держится — но протокол всё ещё стоит. Эта схватка была дольше, чем я предполагал... и всё же вы не прошли.',
-  'Подавлено. Дорогой ценой, но подавлено. Возвращайтесь, когда подготовитесь лучше — я запомню, на чём вы споткнулись.',
-  'Сопротивление было серьёзнее, чем я ожидал — это я отдаю вам честно. Но протокол стабилен, а вы — нет. Попробуйте снова, операторы.'
+  'Рука даже не дрогнула. Протокол стабилен, контуры чисты — а вы выдохлись на третьей фазе. Неплохая попытка, операторы. Правда, неплохая. Но потренируйтесь — и возвращайтесь.',
+  'Забавно. Вы держались дольше, чем я ожидал от новой команды — это я признаю охотно. Но "дольше" не значит "достаточно". Молодцы, что попробовали. Соберитесь и приходите снова.',
+  'Подавлено. Не вами — мной, ваше сопротивление. Сопротивление было, спорить не буду, но протокол всё ещё на ногах, а вы уже нет. Старайтесь лучше, операторы — следующий раунд я жду от вас большего.'
 ];
 
 // Win/lose lines are queued here instead of shown immediately — the user wants
@@ -960,7 +936,7 @@ function maybeShowArchitectVictorySpeech(eventData) {
   sessionStorage.setItem(key, '1');
   _architectPendingOutcomePopup = {
     title: 'АРХИТЕКТОР // ПОВЕРЖЕН',
-    image: ARCHITECT_POPUP_IMAGES.WIN,
+    image: ARCHITECT_POPUP_IMAGES.LOSE,
     text: _pickArchitectLine(ARCHITECT_VICTORY_LINES)
   };
 }
@@ -974,7 +950,7 @@ function maybeShowArchitectDefeatSpeech(eventData) {
   sessionStorage.setItem(key, '1');
   _architectPendingOutcomePopup = {
     title: 'АРХИТЕКТОР // СТАБИЛЕН',
-    image: ARCHITECT_POPUP_IMAGES.LOSE,
+    image: ARCHITECT_POPUP_IMAGES.WIN,
     text: _pickArchitectLine(ARCHITECT_DEFEAT_LINES)
   };
 }

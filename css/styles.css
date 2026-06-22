@@ -12705,6 +12705,14 @@ body.is-architect .profile-card-spark.spark-bl {
   will-change: transform, filter;
 }
 
+/* Lobby boss art reads too small/cramped under the lobby card — give it a taller,
+   higher box so object-fit:contain renders it larger and shifted upward. */
+.event-overlay.event-state-lobby .event-hero img,
+.event-overlay.event-state-lobby .event-hero-video {
+  top: 60px;
+  height: calc(100vh + 30px - 60px);
+}
+
 /* Scan line flash on top of image during glitch — uses hero::after which already sweeps */
 .event-overlay.event-state-lobby .event-hero::after {
   animation: eventScanSweep 5.5s linear infinite, lobbyScanFlicker 14s linear infinite;
