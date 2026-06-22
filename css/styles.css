@@ -1663,6 +1663,7 @@ body.is-admin .profile-card-kicker {
 
 .profile-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
 }
@@ -16789,10 +16790,14 @@ body.theme-genshin-dark .campus-map-row {
   border-color: rgba(219,177,101,0.16);
 }
 
-body.theme-genshin-light .campus-map-popup-card,
+body.theme-genshin-light .campus-map-popup-card {
+  border-color: rgba(219,177,101,0.32);
+  background: rgba(252,247,236,0.98);
+  box-shadow: 0 20px 60px rgba(88, 56, 16, 0.22);
+}
 body.theme-genshin-dark .campus-map-popup-card {
   border-color: rgba(219,177,101,0.32);
-  background: var(--bg3);
+  background: rgba(26,22,40,0.98);
   box-shadow: 0 20px 60px rgba(88, 56, 16, 0.22);
 }
 
