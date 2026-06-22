@@ -604,8 +604,9 @@ async function loadLeaderboard() {
         signalLabel = CARD_GLYPHS[item.card][2];
       }
 
-      // Титул
-      const titleHtml = item.has_title ? '<span style="font-size:12px;margin-left:3px;">👑</span>' : '';
+      // Титул — раньше тут была корона рядом с ником, убрали: статус "титула дня"
+      // уже передаётся через title-glow подсветку всей строки (title_style выше).
+      const titleHtml = '';
 
       // Прогресс до следующего места
       let progressHtml = '';
