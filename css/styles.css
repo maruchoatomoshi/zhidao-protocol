@@ -11969,22 +11969,46 @@ body.theme-genshin-dark .raid-result-text {
     color: #e8e0d0;
 }
 
-/* ===== NETWATCH LIGHT: keep the raid overlay on its dark "night raid"
-   palette. The overlay background stays dark regardless of theme, but
-   --text/--gold/--red flip to light-theme (dark-on-light) values in
-   theme-nw-light, making boss name/labels nearly invisible on the dark
-   overlay. Re-pin those variables to their dark-theme values, scoped to
-   the overlay only. */
-body.theme-nw-light .raid-overlay {
-    --text: #ffffff;
-    --text2: #cccccc;
-    --text3: #888888;
-    --gold: #d4af37;
-    --gold-dim: rgba(212,175,55,0.1);
-    --gold-border: rgba(212,175,55,0.25);
-    --red: #cc2200;
-    --red-dim: rgba(180,20,20,0.15);
-    --red-border: rgba(180,20,20,0.35);
+/* ===== NETWATCH LIGHT: render the raid popup on the light "paper"
+   palette like the rest of the light theme, instead of forcing the dark
+   "night raid" look. */
+body.theme-nw-light .raid-content {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.5), transparent 35%),
+      linear-gradient(145deg, rgba(204,34,0,0.05), #f4f1ed 55%);
+    border-color: rgba(204,34,0,0.35);
+    box-shadow: 0 0 35px rgba(204,34,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.03);
+}
+
+body.theme-nw-light .boss-title { color: #993333; }
+
+body.theme-nw-light .raid-progress-container {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+}
+
+body.theme-nw-light .raid-kicker,
+body.theme-nw-light .raid-meter-state {
+    border-color: rgba(122,80,16,0.25);
+    background: rgba(122,80,16,0.08);
+}
+
+body.theme-nw-light .raid-brief-card,
+body.theme-nw-light .raid-roster-box,
+body.theme-nw-light .raid-result-panel {
+    border-color: rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.5);
+}
+
+body.theme-nw-light .raid-roster-chip {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.1);
+    color: #1a1a1a;
+}
+
+body.theme-nw-light .raid-chip {
+    border-color: rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.04);
 }
 
 /* ===== RAID VISUAL ENHANCEMENTS ===== */

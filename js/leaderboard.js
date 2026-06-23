@@ -593,7 +593,7 @@ async function loadDiaryStarsLeaderboardRating() {
         <div class="lb-avatar">${avatarMarkup(row.avatar_url, row.name, row.telegram_id, 'lb-avatar-img')}</div>
         <div class="diary-rank-main">
           <div class="diary-rank-name-row">
-            <span class="diary-rank-name">${escapeHtml(row.name)}${isMe?' 👈':''}</span>
+            <span class="diary-rank-name">${escapeHtml(row.name)}</span>
             <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
           </div>
           <div class="diary-rank-sub">
@@ -744,7 +744,7 @@ async function loadLeaderboard() {
         <div class="lb-avatar ${frameClass}">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
           <div class="lb-name-row">
-            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}${isMe?' 👈':''}</div>
+            <div class="lb-name" style="${nameStyle}">${escapeHtml(item.name)}${titleHtml}</div>
             <span class="lb-path-badge ${pathClass}">${pathLabel}</span>
           </div>
           <div class="lb-subline">
