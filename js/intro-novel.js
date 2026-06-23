@@ -2,7 +2,7 @@
  * ZHIDAO Protocol — Вводная визуальная новелла (онбординг при первом входе)
  */
 
-const INTRO_NOVEL_SEEN_KEY = 'introNovelSeen';
+const INTRO_NOVEL_SEEN_KEY = 'introNovelSeen_20260623a';
 const INTRO_NOVEL_GH = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/';
 
 const INTRO_NOVEL_CAST = {
@@ -15,8 +15,8 @@ const INTRO_NOVEL_CAST = {
 };
 
 function _buildIntroNovelScenes() {
-  const frozen = !!window.APP_FEATURE_FREEZE_ENABLED;
-  const finalStart = frozen ? 'fA1' : 'fB1';
+  const prelaunch = !!window.APP_FEATURE_FREEZE_ENABLED || !!window.APP_LAUNCH_LOCK_ENABLED;
+  const finalStart = prelaunch ? 'fA1' : 'fB1';
   return {
     s1:  { who: 'system', text: 'Соединение установлено... Добро пожаловать в ZHIDAO Protocol', next: 's2' },
     s2:  { who: 'system', text: 'Ты — новый оператор ZHIDAO Protocol', next: 's3' },
