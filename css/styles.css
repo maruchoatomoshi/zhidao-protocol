@@ -8625,9 +8625,7 @@ body.tg-ios #diaryStarsPopup {
 }
 
 .admin-presence-card.manual .admin-presence-icon {
-  color: #60b4d4;
-  border-color: rgba(96,180,212,0.28);
-  background: rgba(96,180,212,0.08);
+  color: color-mix(in srgb, #60b4d4 18%, transparent);
 }
 
 body.tg-ios .question-modal {
