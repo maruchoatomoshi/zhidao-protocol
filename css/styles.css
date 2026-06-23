@@ -1417,7 +1417,11 @@ body.is-admin .profile-card-kicker {
 .profile-avatar-fallback, .lb-avatar-fallback {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  color: var(--gold); font-family: monospace; font-weight: 900;
+  /* Fixed dark circle + white letter, independent of theme/frame color —
+     avatar frames (gold/silver/dragon/etc.) sit right behind this and a
+     gold letter on a gold frame was unreadable. */
+  background: rgba(10,10,20,0.82);
+  color: #fff; font-family: monospace; font-weight: 900;
 }
 .profile-avatar-fallback { font-size: 26px; }
 
