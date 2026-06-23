@@ -20,7 +20,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260622genshinfix1">
+<link rel="stylesheet" href="./css/styles.css?v=20260623rankshowcase1">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -121,7 +121,7 @@
           <div class="profile-card-name" id="profileDisplayName">Оператор ZHIDAO</div>
           <div class="profile-card-sub" id="profileAvatarStatus" style="display:none;"></div>
           <div class="profile-badge-row">
-            <span class="profile-badge profile-badge-rank" id="myRankSub">D-RANK</span>
+            <span class="profile-badge profile-badge-rank" id="myRankSub" onclick="openRankBreakdownModal()">D-RANK</span>
             <span class="profile-badge profile-badge-place" id="profileLeaderboardPlace">&mdash;</span>
             <span class="profile-badge profile-badge-path" id="profilePathBadge">SYNC</span>
             <span class="profile-badge profile-badge-mvp" id="profileMvpBadge" style="display:none;">⚡ MVP</span>
@@ -159,6 +159,21 @@
       </div>
       <div class="profile-showcase-options" id="profileShowcaseOptions">
         <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-showcase-modal" id="rankBreakdownModal" style="display:none;">
+    <div class="profile-showcase-panel">
+      <div class="profile-showcase-panel-head">
+        <div>
+          <div class="profile-card-kicker">RANK BREAKDOWN</div>
+          <div class="profile-showcase-panel-title">&#23426;&#33394; // Из чего собран ранг</div>
+        </div>
+        <button class="profile-showcase-close" onclick="closeRankBreakdownModal()">&#10005;</button>
+      </div>
+      <div class="profile-showcase-options" id="rankBreakdownContent">
+        <div class="empty-state">Загрузка...</div>
       </div>
     </div>
   </div>
@@ -2554,9 +2569,9 @@
 <script src="./js/announcements.js"></script>
 <script src="./js/laundry.js?v=20260615a"></script>
 <script src="./js/achievements.js?v=20260622spinlock1"></script>
-<script src="./js/leaderboard.js?v=20260617a"></script>
+<script src="./js/leaderboard.js?v=20260623rankshowcase1"></script>
 <script src="./js/shop.js?v=20260622iconfix1"></script>
-<script src="./js/casino.js?v=20260622iconfix2"></script>
+<script src="./js/casino.js?v=20260623rankshowcase1"></script>
 <script src="./js/diary.js?v=20260613cleanup1"></script>
 <script src="./js/team.js?v=20260618b"></script>
 <script src="./js/architect-diary.js?v=20260622imgfix1"></script>

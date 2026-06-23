@@ -1826,6 +1826,154 @@ body.is-admin .profile-card-kicker {
   font-size: 14px;
   color: var(--text3);
 }
+
+#profileShowcaseOptions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.profile-showcase-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px 12px;
+  border: 1px solid rgba(212,175,55,0.16);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+}
+.profile-showcase-card:hover {
+  background: rgba(212,175,55,0.08);
+}
+.profile-showcase-card-art {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.25);
+  font-size: 22px;
+  font-family: serif;
+  overflow: hidden;
+}
+.profile-showcase-card-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.profile-showcase-card-label {
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  color: var(--text3);
+}
+.profile-showcase-card-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+.profile-showcase-card-detail {
+  font-size: 8px;
+  color: var(--text3);
+  line-height: 1.3;
+}
+.profile-showcase-card-equipped {
+  margin-top: 2px;
+  font-size: 7px;
+  font-family: monospace;
+  color: var(--gold);
+}
+.profile-showcase-card.equipped {
+  border-color: rgba(212,175,55,0.55);
+  background: rgba(212,175,55,0.1);
+}
+.profile-showcase-card-gold .profile-showcase-card-art {
+  border: 1px solid rgba(192,160,64,0.5);
+  box-shadow: inset 0 0 16px rgba(255,200,0,0.08), 0 0 10px rgba(192,160,64,0.16);
+}
+.profile-showcase-card-purple .profile-showcase-card-art {
+  border: 1px solid rgba(155,89,182,0.5);
+  box-shadow: inset 0 0 16px rgba(155,89,182,0.08), 0 0 10px rgba(155,89,182,0.16);
+}
+.profile-showcase-card-blue .profile-showcase-card-art {
+  border: 1px solid rgba(74,122,204,0.46);
+  box-shadow: inset 0 0 16px rgba(74,122,204,0.07), 0 0 10px rgba(74,122,204,0.14);
+}
+.profile-showcase-card-red .profile-showcase-card-art {
+  border: 1px solid rgba(204,51,51,0.55);
+  box-shadow: inset 0 0 16px rgba(204,51,51,0.08), 0 0 10px rgba(204,51,51,0.16);
+}
+.profile-showcase-card-auto .profile-showcase-card-art {
+  border: 1px dashed rgba(255,255,255,0.18);
+}
+
+.profile-badge-rank {
+  cursor: pointer;
+}
+.rank-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 11px;
+}
+.rank-breakdown-label em {
+  font-size: 9px;
+  color: var(--text3);
+  font-style: normal;
+}
+.rank-breakdown-value {
+  color: var(--gold);
+  font-family: monospace;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.rank-breakdown-total {
+  padding: 4px 4px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: monospace;
+}
+.rank-breakdown-total strong {
+  color: var(--gold);
+}
+.rank-breakdown-progress {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.rank-breakdown-progress-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.rank-breakdown-progress-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.rank-breakdown-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), #f0d060);
+}
+.rank-breakdown-progress-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text3);
+}
 .lb-item {
   position: relative;
   display: flex;

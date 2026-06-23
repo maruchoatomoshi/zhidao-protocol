@@ -99,23 +99,24 @@ function renderImplantPassives(desc) {
     <div class="inventory-desc-secondary">+ ${parts.slice(1).join(' · ')}</div>`;
 }
 
+const IMPLANT_IMGS = {
+  'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
+  'implant_terracota':  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/armor.png',
+  'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
+  'implant_panda':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',
+  'implant_shaolin':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',
+  'implant_linguasoft': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true',
+  'implant_caishen':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',
+  'implant_qilin':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',
+  'implant_netwatch':   'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true',
+};
+
 async function loadImplants(telegramId) {
   const pageContainer = document.getElementById('myImplantsPage');
   if (pageContainer) {
     pageContainer.innerHTML = '<div class="empty-state" style="padding:12px;">Загрузка имплантов...</div>';
   }
   if (!telegramId) return;
-  const IMPLANT_IMGS = {
-    'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
-    'implant_terracota':  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/armor.png',
-    'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
-    'implant_panda':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',
-    'implant_shaolin':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',
-    'implant_linguasoft': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true',
-    'implant_caishen':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',
-    'implant_qilin':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',
-    'implant_netwatch':   'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true',
-  };
   try {
     const r = await fetch(`${API_URL}/api/casino/implants/${telegramId}`);
     if (!r.ok) return;

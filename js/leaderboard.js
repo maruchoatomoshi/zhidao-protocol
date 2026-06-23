@@ -110,7 +110,10 @@ function setProfileText(id, value) {
   if (el) el.textContent = value;
 }
 
+let lastProfileDossier = null;
+
 function renderProfileDossier(profile = {}) {
+  lastProfileDossier = profile;
   const stats = profile.stats || {};
   const showcase = profile.showcase || null;
   const place = profile.leaderboard_rank ? '#' + profile.leaderboard_rank : '—';
@@ -147,6 +150,88 @@ function renderProfileDossier(profile = {}) {
   if (typeof applyWildAiProfileOverride === 'function') applyWildAiProfileOverride();
 }
 
+const RANK_TIERS = [
+  { code: 'D',  min: 0 },
+  { code: 'C',  min: 180 },
+  { code: 'B',  min: 420 },
+  { code: 'A',  min: 760 },
+  { code: 'S',  min: 1150 },
+  { code: 'SS', min: 1650 },
+];
+
+function computeReputationBreakdown(profile) {
+  const stats = profile.stats || {};
+  const points = profile.points || 0;
+  const items = [
+    { label: 'Очки (потолок 1000)', value: Math.min(points, 1000) },
+    { label: 'Записи дневника', count: stats.diaries || 0, per: 35 },
+    { label: 'Импланты', count: stats.implants || 0, per: 45 },
+    { label: 'Карточки', count: stats.cards || 0, per: 35 },
+    { label: 'Рейды', count: stats.raids || 0, per: 25 },
+    { label: 'Победы в рейдах', count: stats.raid_wins || 0, per: 45 },
+    { label: 'Открытия кейсов', count: stats.case_opens || 0, per: 4 },
+    { label: 'Молитвы', count: stats.prayers || 0, per: 4 },
+  ].map(i => ({ ...i, value: i.value !== undefined ? i.value : i.count * i.per }));
+  const total = items.reduce((sum, i) => sum + i.value, 0);
+  return { items, total };
+}
+
+function renderRankBreakdown(profile) {
+  const box = document.getElementById('rankBreakdownContent');
+  if (!box) return;
+  const { items, total } = computeReputationBreakdown(profile);
+  let tierIdx = 0;
+  RANK_TIERS.forEach((t, i) => { if (total >= t.min) tierIdx = i; });
+  const current = RANK_TIERS[tierIdx];
+  const next = RANK_TIERS[tierIdx + 1];
+  const progressPct = next ? Math.min(100, Math.round(((total - current.min) / (next.min - current.min)) * 100)) : 100;
+
+  const rows = items.map(i => `
+    <div class="rank-breakdown-row">
+      <span class="rank-breakdown-label">${escapeHtml(i.label)}${i.count !== undefined ? ` <em>×${i.count}</em>` : ''}</span>
+      <span class="rank-breakdown-value">+${i.value}</span>
+    </div>
+  `).join('');
+
+  box.innerHTML = `
+    <div class="rank-breakdown-total">РЕПУТАЦИЯ: <strong>${total}</strong></div>
+    ${rows}
+    <div class="rank-breakdown-progress">
+      <div class="rank-breakdown-progress-head">
+        <span>${current.code}-RANK</span>
+        <span>${next ? next.code + '-RANK' : 'МАКСИМУМ'}</span>
+      </div>
+      <div class="rank-breakdown-progress-bar"><div class="rank-breakdown-progress-fill" style="width:${progressPct}%"></div></div>
+      <div class="rank-breakdown-progress-note">${next ? `Нужно ещё ${next.min - total} репутации до ${next.code}-RANK` : 'Максимальный ранг достигнут'}</div>
+    </div>
+  `;
+}
+
+async function openRankBreakdownModal() {
+  const modal = document.getElementById('rankBreakdownModal');
+  const box = document.getElementById('rankBreakdownContent');
+  if (!modal || !box) return;
+  modal.style.display = 'flex';
+  let profile = lastProfileDossier;
+  if (!profile && currentUserId) {
+    box.innerHTML = '<div class="empty-state">Загрузка...</div>';
+    try {
+      const r = await fetch(`${API_URL}/api/profile/${currentUserId}`);
+      profile = r.ok ? await r.json() : null;
+    } catch (e) {}
+  }
+  if (!profile) {
+    box.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+    return;
+  }
+  renderRankBreakdown(profile);
+}
+
+function closeRankBreakdownModal() {
+  const modal = document.getElementById('rankBreakdownModal');
+  if (modal) modal.style.display = 'none';
+}
+
 async function loadProfileDossier() {
   if (!currentUserId) return;
   try {
@@ -181,16 +266,19 @@ function renderProfileShowcaseOptions(options) {
     box.innerHTML = '<div class="empty-state">No active cards or implants</div>';
     return;
   }
-  box.innerHTML = options.map(item => `
-    <button class="profile-showcase-option" onclick="selectProfileShowcase('${item.kind}', '${escapeHtml(item.code)}')">
-      <span class="profile-showcase-option-icon">${escapeHtml(item.glyph)}</span>
-      <span class="profile-showcase-option-copy">
-        <span>${escapeHtml(item.label)}</span>
-        <strong>${escapeHtml(item.name)}</strong>
-        <em>${escapeHtml(item.detail)}</em>
-      </span>
-    </button>
-  `).join('');
+  box.innerHTML = options.map(item => {
+    const art = item.img
+      ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.name)}">`
+      : `<span>${escapeHtml(item.glyph)}</span>`;
+    return `
+    <button class="profile-showcase-card profile-showcase-card-${item.rarityClass} ${item.equipped ? 'equipped' : ''}" onclick="selectProfileShowcase('${item.kind}', '${escapeHtml(item.code)}')">
+      <span class="profile-showcase-card-art">${art}</span>
+      <span class="profile-showcase-card-label">${escapeHtml(item.label)}</span>
+      <span class="profile-showcase-card-name">${escapeHtml(item.name)}</span>
+      <span class="profile-showcase-card-detail">${escapeHtml(item.detail)}</span>
+      ${item.equipped ? '<span class="profile-showcase-card-equipped">★ АКТИВНО</span>' : ''}
+    </button>`;
+  }).join('');
 }
 
 async function openProfileShowcaseModal() {
@@ -199,6 +287,9 @@ async function openProfileShowcaseModal() {
   if (!modal || !box || !currentUserId) return;
   modal.style.display = 'flex';
   box.innerHTML = '<div class="empty-state">Loading...</div>';
+  const equippedKind = lastProfileDossier?.showcase?.kind || null;
+  const equippedCode = lastProfileDossier?.showcase?.code || null;
+  const isManual = lastProfileDossier?.showcase?.source === 'manual';
   try {
     const [implantsRes, cardsRes] = await Promise.all([
       fetch(`${API_URL}/api/casino/implants/${currentUserId}`),
@@ -213,25 +304,35 @@ async function openProfileShowcaseModal() {
       label: 'АВТО',
       name: 'Автоматическая витрина',
       detail: 'Система сама выбирает самый сильный активный предмет',
+      rarityClass: 'auto',
+      equipped: !isManual,
     }];
     (Array.isArray(implants) ? implants : []).forEach(item => {
+      const isLegendary = Boolean(LEGENDARY_IMPLANT_INFO && LEGENDARY_IMPLANT_INFO[item.implant_id]);
       options.push({
         kind: 'implant',
         code: item.implant_id,
         glyph: getProfileShowcaseGlyph('implant', item.implant_id, item.icon),
-        label: 'ИМПЛАНТ',
+        img: typeof IMPLANT_IMGS !== 'undefined' ? IMPLANT_IMGS[item.implant_id] : null,
+        label: isLegendary ? 'LEGENDARY ИМПЛАНТ' : 'ИМПЛАНТ',
         name: item.name || item.implant_id,
         detail: item.desc || `прочность ${item.durability || 0}`,
+        rarityClass: isLegendary ? 'red' : 'gold',
+        equipped: isManual && equippedKind === 'implant' && equippedCode === item.implant_id,
       });
     });
     (Array.isArray(cards) ? cards : []).forEach(item => {
+      const rarity = item.rarity || 4;
       options.push({
         kind: 'card',
         code: item.card_id,
         glyph: getProfileShowcaseGlyph('card', item.card_id),
-        label: `${item.rarity || 4}★ КАРТА`,
+        img: typeof GENSHIN_IMGS !== 'undefined' ? GENSHIN_IMGS[item.card_id] : null,
+        label: `${rarity}★ КАРТА`,
         name: item.name || item.card_id,
         detail: item.passive || `прочность ${item.durability || 0}`,
+        rarityClass: rarity === 5 ? 'gold' : rarity === 4 ? 'purple' : 'blue',
+        equipped: isManual && equippedKind === 'card' && equippedCode === item.card_id,
       });
     });
     renderProfileShowcaseOptions(options);
