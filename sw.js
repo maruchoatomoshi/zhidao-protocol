@@ -7,7 +7,7 @@
 // can serve stale content forever. If you replace a media file's *content*
 // while keeping its filename, bump CACHE_VERSION below to invalidate the
 // old cache.
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `zhidao-media-${CACHE_VERSION}`;
 const MEDIA_RE = /\.(png|jpe?g|gif|webp|svg|mp4|mp3|ogg|wav)(\?.*)?$/i;
 
