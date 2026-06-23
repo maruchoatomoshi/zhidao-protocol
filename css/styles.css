@@ -6303,6 +6303,20 @@ body.theme-genshin-light #raid-action-btn {
     color: #3d4555;
 }
 
+body.theme-genshin-light #gsPraySubtitle {
+    color: rgba(75,83,102,0.6);
+}
+
+body.theme-genshin-light #gsPrayScreen {
+    background: radial-gradient(ellipse at 50% 40%, #f0ebe1 0%, #e6dcc8 60%, #d8c8a0 100%);
+}
+
+body.theme-genshin-light #genshinOpenBtn {
+    background: #dbb165;
+    border-color: #c9a455;
+    color: #3d4555;
+}
+
 /* GENSHIN DARK (theme-genshin-dark) */
 body.theme-genshin-dark .raid-content {
     border-color: rgba(219,177,101,0.35);
