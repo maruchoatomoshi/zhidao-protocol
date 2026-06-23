@@ -1297,9 +1297,9 @@ function updateCasinoButtonState(data) {
   btn.disabled = false;
   btn.classList.remove('case-btn-disabled');
   if (isAdmin) {
-    btn.textContent = '🏮 [ 开箱 // КЕЙС ] 🏮';
+    btn.innerHTML = '<i class="ti ti-box"></i> [ 开箱 // КЕЙС ] <i class="ti ti-box"></i>';
   } else {
-    btn.textContent = `🏮 [ 开箱 // СКАН · ${scans}/7 ] 🏮`;
+    btn.innerHTML = `<i class="ti ti-box"></i> [ 开箱 // СКАН · ${scans}/7 ] <i class="ti ti-box"></i>`;
   }
 }
 
