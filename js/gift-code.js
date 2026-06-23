@@ -34,7 +34,7 @@ async function checkActiveGiftCode() {
     if (_mjuActiveCode === data.code) return;
     _mjuActiveCode = data.code;
     showMjuPopup(
-      `Стоп. Код активен — первые ${data.max_uses} оператора берут награду. Быстро.`,
+      `Стоп. Код активен — первые ${data.max_uses} оператора берут награду. Быстро`,
       data.code,
       data.reward_stars
     );
