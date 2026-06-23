@@ -18,8 +18,13 @@ async function loadPoints(telegramId) {
         }
       }
 
-      // Применяем путь (Киберпанк / Геншин)
-      if (!isAdmin) applyThemePath(data.theme_path || null);
+      // Применяем путь (Киберпанк / Геншин).
+      // loadPoints() is polled after almost every action (raids, casino, admin
+      // adjustments). Only re-trigger the path-choice screen from a *missing*
+      // theme_path when we genuinely don't have one yet this session — otherwise
+      // a single transient/empty response would re-show the "first open" chooser
+      // on top of an already-confirmed path.
+      if (!isAdmin && (data.theme_path || !currentThemePath)) applyThemePath(data.theme_path || null);
       loadProfileDossier();
     }
   } catch(e) {}

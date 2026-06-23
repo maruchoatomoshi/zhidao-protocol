@@ -3644,7 +3644,11 @@ body.is-admin .more-item.admin-only-item::before {
   margin-top: 8px; font-size: 11px; color: #bbb; line-height: 1.5;
 }
 .architect-popup-overlay {
-  position: fixed; inset: 0; z-index: 9500;
+  /* Must beat the raid overlay (z-index 9999) — Architect diary/battle
+     speech popups can fire while a raid is open (loadUserData refreshes
+     mid-raid), and used to render invisibly behind it while still
+     marking themselves as "seen". */
+  position: fixed; inset: 0; z-index: 10000;
   background: rgba(0,0,0,0.55);
   display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end;
   padding: 0 0 calc(78px + env(safe-area-inset-bottom, 0px));

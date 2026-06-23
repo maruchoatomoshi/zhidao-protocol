@@ -3657,6 +3657,19 @@ def get_user_profile_dossier(telegram_id: int):
         (telegram_id,),
     )
     cards = c.fetchall()
+    # Manual showcase picks must keep showing even if that specific item's
+    # durability later drops to 0 — otherwise the user's choice silently
+    # falls back to "auto" with no way to tell why.
+    c.execute(
+        "SELECT implant_id, durability FROM user_implants WHERE telegram_id=?",
+        (telegram_id,),
+    )
+    all_implants = c.fetchall()
+    c.execute(
+        "SELECT card_id, durability FROM user_cards WHERE telegram_id=?",
+        (telegram_id,),
+    )
+    all_cards = c.fetchall()
 
     def card_showcase(card_id: str, durability: int, source: str = "auto"):
         info = CARD_INFO.get(card_id, {"name": card_id, "rarity": 4})
@@ -3683,11 +3696,11 @@ def get_user_profile_dossier(telegram_id: int):
     manual_kind = (manual_showcase_kind or "").strip()
     manual_code = (manual_showcase_code or "").strip()
     if manual_kind == "implant" and manual_code:
-        manual_implant = next((row for row in implants if row[0] == manual_code), None)
+        manual_implant = next((row for row in all_implants if row[0] == manual_code), None)
         if manual_implant:
             showcase = implant_showcase(manual_implant[0], manual_implant[1], "manual")
     elif manual_kind == "card" and manual_code:
-        manual_card = next((row for row in cards if row[0] == manual_code), None)
+        manual_card = next((row for row in all_cards if row[0] == manual_code), None)
         if manual_card:
             showcase = card_showcase(manual_card[0], manual_card[1], "manual")
 
