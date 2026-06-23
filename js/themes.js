@@ -70,6 +70,7 @@ async function chooseThemePath(path) {
       const overlay = document.getElementById('overlay-path-choice');
       if (overlay) overlay.style.display = 'none';
       try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      try { localStorage.setItem('zhidao_theme_path', path); } catch(e) {}
       applyThemePath(path);
     } else if (r.status === 401) {
       showToast('Открой приложение заново через Telegram.');

@@ -442,6 +442,7 @@ function useItem(id, name) {
         const data = await r.json();
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
         if (data.new_path) {
+          try { localStorage.setItem('zhidao_theme_path', data.new_path); } catch(e) {}
           if (typeof applyThemePath === 'function') applyThemePath(data.new_path);
           const pathLabel = data.new_path === 'genshin' ? 'Геншин ✦' : 'Киберпанк 🏮';
           showToast(`✅ Путь сменён → ${pathLabel}`);

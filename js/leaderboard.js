@@ -20,11 +20,23 @@ async function loadPoints(telegramId) {
 
       // Применяем путь (Киберпанк / Геншин).
       // loadPoints() is polled after almost every action (raids, casino, admin
-      // adjustments). Only re-trigger the path-choice screen from a *missing*
-      // theme_path when we genuinely don't have one yet this session — otherwise
-      // a single transient/empty response would re-show the "first open" chooser
-      // on top of an already-confirmed path.
-      if (!isAdmin && (data.theme_path || !currentThemePath)) applyThemePath(data.theme_path || null);
+      // adjustments) and also runs once on every fresh app open, when
+      // currentThemePath always starts out null. A single transient/empty
+      // theme_path response (e.g. a DB read racing a just-committed write right
+      // after cold start) must not show the "first open" path-choice screen to
+      // someone who already picked a path in a previous session — so we keep a
+      // last-known-good copy in localStorage and only treat the path as truly
+      // unset if both the server response AND that cache are empty.
+      if (!isAdmin) {
+        if (data.theme_path) {
+          try { localStorage.setItem('zhidao_theme_path', data.theme_path); } catch(e) {}
+          applyThemePath(data.theme_path);
+        } else if (!currentThemePath) {
+          let cachedPath = null;
+          try { cachedPath = localStorage.getItem('zhidao_theme_path') || null; } catch(e) {}
+          applyThemePath(cachedPath);
+        }
+      }
       loadProfileDossier();
     }
   } catch(e) {}
