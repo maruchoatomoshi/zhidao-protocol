@@ -561,7 +561,7 @@ function adminDossierActionLabel(action) {
     presence_penalty: 'Штраф отметки',
     presence_cancel: 'Отметка отменена',
     reset_shop: 'Сброс магазина',
-    blackwall: 'BlackWall',
+    blackwall: 'Красный Файрвол',
     architect_event: 'Architect Event',
     wildai_event: 'Wild AI Event',
     wildai_breach: 'Wild AI Breach',
@@ -1132,7 +1132,7 @@ async function adminLoadActionLog() {
 async function setBlackwall(enabled) {
   try {
     const r = await fetch(`${API_URL}/api/admin/blackwall`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-id':currentUserId},body:JSON.stringify({enabled})});
-    if (r.ok) showToast(enabled ? '⛔ BlackWall включён!' : '✅ BlackWall выключен!');
+    if (r.ok) showToast(enabled ? '⛔ Красный Файрвол включён!' : '✅ Красный Файрвол выключен!');
   } catch(e) { showToast('Ошибка'); }
 }
 

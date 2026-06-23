@@ -112,6 +112,7 @@ function attachAchievementSpin(el) {
   };
 
   el.addEventListener('pointerdown', (e) => {
+    if (el.dataset.locked === '1') return;
     dragging = true;
     stopMomentum();
     startX = lastX = e.clientX;
@@ -161,11 +162,16 @@ function showAchievementInfo(code, name, description, earned) {
     imgWrap.innerHTML = '<i class="ti ti-award" style="font-size:64px;color:#d4af37;"></i>';
   }
   imgWrap.classList.toggle('locked', !earned);
+  imgWrap.dataset.locked = earned ? '0' : '1';
+  imgWrap.style.cursor = earned ? 'grab' : 'default';
   if (imgWrap._resetSpin) imgWrap._resetSpin();
   statusEl.textContent = earned ? '✓ ПОЛУЧЕНО' : '🔒 НЕДОСТУПНО';
   statusEl.className = 'achievement-modal-status ' + (earned ? 'earned' : 'locked');
   titleEl.textContent = name;
   descEl.textContent = earned ? description : 'Эта ачивка ещё не открыта. Условие получения скрыто, пока ты её не заработаешь.';
+
+  const hintEl = modal.querySelector('.achievement-modal-spin-hint');
+  if (hintEl) hintEl.style.display = earned ? '' : 'none';
 
   modal.style.display = 'flex';
 }

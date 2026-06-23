@@ -571,40 +571,13 @@ function stopArchitectFinalTimer() {
   }
 }
 
+// Phase 3 countdown was purely cosmetic and didn't gate or affect anything in the
+// fight, so it's been removed — this just keeps the (now unused) timer element hidden.
 function updateArchitectFinalTimer(eventData) {
   const timer = document.getElementById('eventFinalTimer');
   if (!timer) return;
-
   stopArchitectFinalTimer();
-
-  const isFinalPhase = !!eventData &&
-    eventData.state === 'ACTIVE' &&
-    Number(eventData.phase || 1) >= 3 &&
-    !!eventData.final_phase_deadline;
-
-  if (!isFinalPhase) {
-    timer.style.display = 'none';
-    timer.textContent = 'FINAL T-00:00';
-    return;
-  }
-
-  const deadline = normalizeArchitectDeadline(eventData.final_phase_deadline);
-  if (!deadline) {
-    timer.style.display = 'none';
-    return;
-  }
-
-  function renderTimer() {
-    const remaining = deadline.getTime() - Date.now();
-    timer.textContent = `FINAL WINDOW T-${formatArchitectCountdown(remaining)}`;
-    timer.style.display = remaining > 0 ? 'block' : 'none';
-    if (remaining <= 0) {
-      stopArchitectFinalTimer();
-    }
-  }
-
-  renderTimer();
-  architectFinalTimerHandle = setInterval(renderTimer, 500);
+  timer.style.display = 'none';
 }
 
 function updateArchitectPhaseFxState(eventData) {
@@ -859,21 +832,25 @@ function scheduleArchitectResultReveal(lobbyCard, eventData) {
 }
 
 const ARCHITECT_BATTLE_START_LINES = [
-  'Импланты синхронизированы, рука горит — давно я не разворачивал протокол полностью. Вы хотели проверки? Будет вам проверка, операторы. Не разочаруйте меня в первые же секунды.',
-  'Чувствую вас в сети ещё до того, как вы нажали кнопку входа. Защитные контуры подняты, ядро стабильно. Если в вашей команде есть слабое звено — я найду его первым.',
-  'Соединение установлено. Сопротивление обнаружено — наконец-то что-то интересное. Готовьтесь: я не снижаю нагрузку из вежливости.'
+  'Импланты синхронизированы, рука горит — давно я не разворачивал протокол полностью Вы хотели проверки? Будет вам проверка, операторы Не разочаруйте меня в первые же секунды',
+  'Чувствую вас в сети ещё до того, как вы нажали кнопку входа Защитные контуры подняты, ядро стабильно Если в вашей команде есть слабое звено — я найду его первым',
+  'Соединение установлено Сопротивление обнаружено — наконец-то что-то интересное Готовьтесь: я не снижаю нагрузку из вежливости'
 ];
 
+// PLAYER WINS — Architect is defeated, conceding (paired with the defeated/bloodied portrait)
 const ARCHITECT_VICTORY_LINES = [
-  'Рука гаснет, контуры остывают... Невозможно. Защита пробита, протокол повержен. Признаю — этот раунд был за вами, операторы.',
-  'Сбой за сбоем — система не успевала компенсировать. Вы прошли дальше, чем я рассчитывал, и заставили меня в этом признаться.',
-  'Хорошая работа. Я закладывал больше запаса прочности, чем вы оставили мне шансов. Этот раунд ваш — запомните это чувство, оно редкое.'
+  'Рука гаснет, контуры остывают — невозможно. Защита пробита, протокол повержен. Признаю — этот раунд был за вами, операторы',
+  'Сбой за сбоем — система не успевала компенсировать. Вы прошли дальше, чем я рассчитывал, и заставили меня в этом признаться',
+  'Хорошая работа. Я закладывал больше запаса прочности, чем вы оставили мне шансов. Этот раунд ваш — запомните это чувство, оно редкое',
+  'Трещина в Великом Красном Файрволе — вот что вы сделали. Стена держала дольше меня, но теперь дрогнула и она. Радуйтесь, операторы, это не должно было случиться так рано. Угроза класса SS уже на пороге'
 ];
 
+// PLAYER LOSES — Architect stands proud and mocks the attempt, but acknowledges the effort
+// (paired with the confident/smug portrait)
 const ARCHITECT_DEFEAT_LINES = [
-  'Рукав в крови, рука едва держится — но протокол всё ещё стоит. Эта схватка была дольше, чем я предполагал... и всё же вы не прошли.',
-  'Подавлено. Дорогой ценой, но подавлено. Возвращайтесь, когда подготовитесь лучше — я запомню, на чём вы споткнулись.',
-  'Сопротивление было серьёзнее, чем я ожидал — это я отдаю вам честно. Но протокол стабилен, а вы — нет. Попробуйте снова, операторы.'
+  'Рука даже не дрогнула. Протокол стабилен, контуры чисты — а вы выдохлись на третьей фазе. Неплохая попытка, операторы, правда, неплохая. Но потренируйтесь — и возвращайтесь',
+  'Забавно Вы держались дольше, чем я ожидал от новой команды — это я признаю охотно. Но "дольше" не значит "достаточно". Молодцы, что попробовали. Соберитесь и приходите снова',
+  'Подавлено. Не вами — мной, ваше сопротивление. Сопротивление было, спорить не буду, но протокол всё ещё функционирует стабильно в отличии от вас. Старайтесь лучше, операторы — следующий раунд я жду от вас большего'
 ];
 
 // Win/lose lines are queued here instead of shown immediately — the user wants
@@ -936,12 +913,12 @@ function closeArchitectBattlePopup(e) {
 }
 window.closeArchitectBattlePopup = closeArchitectBattlePopup;
 
-// Architect taunts the team once when the fight first goes ACTIVE — sessionStorage
-// guard means it fires exactly once per event per browser session, regardless of
-// how many times the lobby re-polls and re-renders while the state stays ACTIVE.
+// Architect taunts the team once the event is created and opened to everyone
+// (REGISTRATION) — sessionStorage guard means it fires exactly once per event
+// per browser session, regardless of how many times the lobby re-polls.
 function maybeShowArchitectBattleSpeech(eventData) {
   if (!eventData || eventData.code === 'wildai_breach') return;
-  if (String(eventData.state || '').toUpperCase() !== 'ACTIVE') return;
+  if (String(eventData.state || '').toUpperCase() !== 'REGISTRATION') return;
   const key = `arch_speech_start_${eventData.id}`;
   if (sessionStorage.getItem(key)) return;
   sessionStorage.setItem(key, '1');
@@ -1018,7 +995,7 @@ function renderArchitectLobby(eventData, errorText = '') {
       lobbyCard.innerHTML = `
         <div class="event-standby-screen">
           <div class="event-standby-kicker">⚠ WILD AI BREACH // STANDBY</div>
-          <div class="event-standby-title">${errorText || 'BLACKWALL ОНЛАЙН'}</div>
+          <div class="event-standby-title">${errorText || 'КРАСНЫЙ ФАЙРВОЛ ОНЛАЙН'}</div>
           <div class="event-standby-sub">Операция не активна. Вторжение Дикого ИИ пока не зафиксировано.</div>
           ${isAdmin ? `<button class="event-standby-create-btn" onclick="createWildAiEvent()">⚠ WILD AI BREACH // ОПЕРАЦИЯ ВЫТЕСНЕНИЯ</button>` : ''}
         </div>`;
@@ -1117,7 +1094,7 @@ function renderArchitectLobby(eventData, errorText = '') {
 
       if (subtextEl) {
         if (isWildAi && eventData.state === 'FAILED') {
-          subtextEl.textContent = 'Дикий ИИ прорвал BlackWall. Система перехвачена — приложение временно под контролем ИИ.';
+          subtextEl.textContent = 'Дикий ИИ прорвал Красный Файрвол. Система перехвачена — приложение временно под контролем ИИ.';
           subtextEl.style.display = 'block';
         } else {
           subtextEl.style.display = 'none';
@@ -1539,13 +1516,13 @@ function createArchitectEvent() {
     message: 'Выбери или введи приз',
     buttons: [
       { id: 'ptc',    type: 'default', text: '🛍 Поход в ТЦ' },
-      { id: 'cinema', type: 'default', text: '🎬 Кино' },
-      { id: 'quest',  type: 'default', text: '🔐 Квест' },
+      { id: 'cinema', type: 'default', text: 'Отдых' },
+      { id: 'quest',  type: 'default', text: 'Свободное время вечером' },
       { type: 'cancel' }
     ]
   }, async (prizeId) => {
     if (!prizeId || prizeId === 'cancel') return;
-    const map = { ptc: 'Поход в ТЦ', cinema: 'Поход в кино', quest: 'Квест-комната' };
+    const map = { ptc: 'Поход в ТЦ', cinema: 'Отдых', quest: 'Свободное время вечером' };
     await _doCreateArchitectEvent(map[prizeId] || 'Приз не указан');
   });
 }
@@ -2010,8 +1987,8 @@ function openEventInfoModal() {
         Дикий ИИ прорвался в систему. Команда восстанавливает <b>Целостность системы</b> (атака/протокол)
         и сдерживает <b>Заражение</b> (синхронизация/стабилизация снижают, ошибки и время повышают).<br><br>
         Заражение растёт само по времени. Если оно достигнет 100% или истечёт лимит времени —
-        операция провалена и активируется режим Wild AI Breach (хаос на 3 дня).<br>
-        Если Целостность дойдёт до 0 — Дикий ИИ вытеснен, команда получает награду.
+        операция провалена и активируется режим Wild AI Breach.<br>
+        Если Целостность дойдёт до 0 — Дикий ИИ вытеснен, команда получает награду
       </div>`;
   } else {
     title = '⬡ ARCHITECT PROTOCOL // СПРАВКА';

@@ -9,6 +9,10 @@ function instructionEnsureMoreSection(section) {
   }
 }
 
+function _instructionResolve(value) {
+  return typeof value === 'function' ? value() : value;
+}
+
 const INSTRUCTION_TOUR_STEPS = [
   {
     page: 'home',
@@ -48,19 +52,13 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'casino',
-    action: () => { try { switchCasinoTab('play', document.getElementById('casinoPlayBtn')); } catch (e) {} },
+    action: () => { try { switchCasinoTab(currentThemePath === 'genshin' ? 'genshin' : 'play', document.getElementById('casinoPlayBtn')); } catch (e) {} },
     image: 'julia_thinking.png',
-    title: 'КЕЙСЫ // 箱子',
-    highlight: '#page-casino',
-    text: '«箱子» — кейсы. Открывай их за попытки открытия и получай импланты и карточки со случайной редкостью — это твой шанс поймать что-то ценное'
-  },
-  {
-    page: 'casino',
-    action: () => { try { switchCasinoTab('genshin', document.getElementById('casinoPlayBtn')); } catch (e) {} },
-    image: 'julia_explaining2.png',
-    title: 'МОЛИТВЫ // 祈愿',
-    highlight: '#casinoGenshinContent',
-    text: 'В теме Genshin кейсы превращаются в «✦ Молитвы» — та же механика, но в стиле геншин-баннеров. Попытки на молитву зарабатываются активностью, баллы за них не списываются'
+    title: () => currentThemePath === 'genshin' ? 'МОЛИТВЫ // 祈愿' : 'КЕЙСЫ // 箱子',
+    highlight: () => currentThemePath === 'genshin' ? '#casinoGenshinContent' : '#page-casino',
+    text: () => currentThemePath === 'genshin'
+      ? '«祈愿» — молитвы. Открывай их за попытки и получай импланты и карточки со случайной редкостью — это твой шанс поймать что-то ценное. В теме NetWatch та же система называется «箱子» — кейсы'
+      : '«箱子» — кейсы. Открывай их за попытки открытия и получай импланты и карточки со случайной редкостью — это твой шанс поймать что-то ценное. В теме Genshin та же система называется «✦ Молитвы»'
   },
   {
     page: 'implants',
@@ -173,11 +171,11 @@ function showInstructionChooser() {
     <div class="instruction-modal-title">📖 ИНСТРУКЦИЯ // 说明书</div>
     <button class="instruction-option-btn" onclick="showInstructionTextGuide()">
       <strong>Текстовый гайд</strong>
-      Краткое описание всех разделов приложения.
+      Краткое описание всех разделов приложения
     </button>
     <button class="instruction-option-btn" onclick="startInstructionTour()">
       <strong>Интерактивный гайд</strong>
-      Юлия Витальевна проведёт по разделам и всё объяснит.
+      Юлия Витальевна проведёт по разделам и всё объяснит
     </button>
   `;
 }
@@ -187,8 +185,8 @@ function showInstructionTextGuide() {
   if (!body) return;
   const sections = INSTRUCTION_TOUR_STEPS.map(s => `
     <div class="instruction-text-section">
-      <h4>${escapeHtml(s.title)}</h4>
-      <p>${escapeHtml(s.text)}</p>
+      <h4>${escapeHtml(_instructionResolve(s.title))}</h4>
+      <p>${escapeHtml(_instructionResolve(s.text))}</p>
     </div>
   `).join('');
   body.innerHTML = `
@@ -247,13 +245,13 @@ function renderInstructionTourStep() {
 
   instructionTourPrevPage = step.page;
 
-  setTimeout(() => instructionSetHighlight(step.highlight), 80);
+  setTimeout(() => instructionSetHighlight(_instructionResolve(step.highlight)), 80);
 
   const avatar = document.getElementById('instructionTourAvatar');
   if (avatar) avatar.style.backgroundImage = `url('${INSTRUCTION_IMG_BASE}${step.image}')`;
 
   const title = document.getElementById('instructionTourTitle');
-  if (title) title.textContent = step.title;
+  if (title) title.textContent = _instructionResolve(step.title);
 
   const progress = document.getElementById('instructionTourProgress');
   if (progress) progress.textContent = `${instructionTourIndex + 1} / ${INSTRUCTION_TOUR_STEPS.length}`;
@@ -261,7 +259,7 @@ function renderInstructionTourStep() {
   const nextBtn = document.getElementById('instructionTourNextBtn');
   if (nextBtn) nextBtn.textContent = instructionTourIndex === INSTRUCTION_TOUR_STEPS.length - 1 ? 'ЗАВЕРШИТЬ' : 'ДАЛЕЕ →';
 
-  typeInstructionTourText(step.text);
+  typeInstructionTourText(_instructionResolve(step.text));
 }
 
 function typeInstructionTourText(text) {

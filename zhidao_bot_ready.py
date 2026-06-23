@@ -1257,8 +1257,8 @@ async def check_wildai_breach_broadcast():
     glitch = get_setting("breach_broadcast_phrase_glitch", "")
     translation = get_setting("breach_broadcast_phrase_translation", "")
     text = (
-        "⚠️ SYSTEM ERROR // BLACKWALL: ОФФЛАЙН\n\n"
-        "Операция по вытеснению Дикого ИИ провалена. Заслон пал — система захвачена на 3 дня.\n\n"
+        "⚠️ SYSTEM ERROR // RED FIREWALL: ОФФЛАЙН\n\n"
+        "Операция по вытеснению Дикого ИИ провалена. Файрвол пал — система захвачена на 3 дня.\n\n"
         f"{glitch}\n— \"{translation}\""
     )
     for tg_id in get_all_telegram_ids():
@@ -1592,7 +1592,7 @@ async def netwatch_blackwall_cmd(message: types.Message):
         ) as r:
             if r.status == 200:
                 data = await r.json()
-                await message.answer(f"🔴 Blackwall активирован!\nЦель: {data['target']}\nМагазин заблокирован на 24 часа")
+                await message.answer(f"🔴 Красный Файрвол активирован!\nЦель: {data['target']}\nМагазин заблокирован на 24 часа")
             elif r.status == 403:
                 await message.answer("❌ У тебя нет импланта Сетевой Дозор")
             elif r.status == 429:

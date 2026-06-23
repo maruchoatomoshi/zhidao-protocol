@@ -20,7 +20,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260622popupfix1">
+<link rel="stylesheet" href="./css/styles.css?v=20260623popupzindex1">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -83,7 +83,7 @@
 <!-- ===== ГЛАВНАЯ ===== -->
 <div class="page active" id="page-home">
   <div class="main-logo-wrap">
-    <div class="main-logo"><div class="no-leak-bg" style="width:140px;height:140px;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png');background-size:contain;background-position:center;background-repeat:no-repeat;" oncontextmenu="return false"></div></div>
+    <div class="main-logo" onclick="handleLogoEasterTap()"><div class="no-leak-bg" style="width:140px;height:140px;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png');background-size:contain;background-position:center;background-repeat:no-repeat;" oncontextmenu="return false"></div></div>
     <div class="main-pinyin">智能电子解决方案</div>
     <div class="proto-tag">🏮 PROTOCOL v3.0.0 // ACTIVE 🏮</div>
   </div>
@@ -121,7 +121,7 @@
           <div class="profile-card-name" id="profileDisplayName">Оператор ZHIDAO</div>
           <div class="profile-card-sub" id="profileAvatarStatus" style="display:none;"></div>
           <div class="profile-badge-row">
-            <span class="profile-badge profile-badge-rank" id="myRankSub">D-RANK</span>
+            <span class="profile-badge profile-badge-rank" id="myRankSub" onclick="openRankBreakdownModal()">D-RANK</span>
             <span class="profile-badge profile-badge-place" id="profileLeaderboardPlace">&mdash;</span>
             <span class="profile-badge profile-badge-path" id="profilePathBadge">SYNC</span>
             <span class="profile-badge profile-badge-mvp" id="profileMvpBadge" style="display:none;">⚡ MVP</span>
@@ -163,6 +163,21 @@
     </div>
   </div>
 
+  <div class="profile-showcase-modal" id="rankBreakdownModal" style="display:none;">
+    <div class="profile-showcase-panel">
+      <div class="profile-showcase-panel-head">
+        <div>
+          <div class="profile-card-kicker">RANK BREAKDOWN</div>
+          <div class="profile-showcase-panel-title">&#23426;&#33394; // Из чего собран ранг</div>
+        </div>
+        <button class="profile-showcase-close" onclick="closeRankBreakdownModal()">&#10005;</button>
+      </div>
+      <div class="profile-showcase-options" id="rankBreakdownContent">
+        <div class="empty-state">Загрузка...</div>
+      </div>
+    </div>
+  </div>
+
   <div class="profile-showcase-modal" id="profileFrameModal" style="display:none;">
     <div class="profile-showcase-panel">
       <div class="profile-showcase-panel-head">
@@ -185,7 +200,7 @@
       Система активирована, профиль зарегистрирован. Полный доступ откроется после начала поездки.
     </div>
     <div class="launch-gate-countdown" data-launch-countdown>--:--:--:--</div>
-    <div class="launch-gate-note">BLACKWALL HOLD // WAITING FOR SETTLEMENT</div>
+    <div class="launch-gate-note">RED FIREWALL HOLD // WAITING FOR SETTLEMENT</div>
   </div>
 
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
@@ -259,6 +274,21 @@
 <div class="card" id="tianhaoPhraseCard" style="display:none;margin:0 12px 12px;">
 </div>
 
+</div>
+
+<div class="profile-showcase-modal" id="titleStyleModal" style="display:none;">
+  <div class="profile-showcase-panel">
+    <div class="profile-showcase-panel-head">
+      <div>
+        <div class="profile-card-kicker">TITLE SELECT</div>
+        <div class="profile-showcase-panel-title">&#39064;&#27966; // Оформление Титула дня</div>
+      </div>
+      <button class="profile-showcase-close" onclick="closeTitleStyleModal()">&#10005;</button>
+    </div>
+    <div class="profile-showcase-options" id="titleStyleOptions">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== РАСПИСАНИЕ + НОВОСТИ ===== -->
@@ -351,8 +381,8 @@
   <div class="shop-subtabs">
     <button class="subtab active" onclick="switchShopTab('store',this)">商店 МАГАЗИН</button>
     <button class="subtab" onclick="switchShopTab('inventory',this)">背包 ИНВЕНТАРЬ</button>
-    <button class="subtab" onclick="switchShopTab('folk',this)">🏮 НАРОДНЫЙ</button>
-    <button class="subtab shop-contracts-tab" onclick="showPage('contracts', document.getElementById('nav-shop-btn'))">📋 ДОСКА</button>
+    <button class="subtab" onclick="switchShopTab('folk',this)"><i class="ti ti-users"></i> НАРОДНЫЙ</button>
+    <button class="subtab shop-contracts-tab" onclick="showPage('contracts', document.getElementById('nav-shop-btn'))"><i class="ti ti-clipboard-list"></i> ДОСКА</button>
   </div>
   <div id="shopStoreContent"></div>
   <div id="shopInventoryContent" style="display:none;"></div>
@@ -373,10 +403,10 @@
   </div>
 
   <div class="casino-subtabs">
-    <button class="subtab active" id="casinoPlayBtn" onclick="switchCasinoTab(currentThemePath==='genshin'?'genshin':'play',this)">🎰 ИГРАТЬ</button>
-    <button class="subtab" onclick="switchCasinoTab('inventory',this)">🎒 ПРИЗЫ</button>
-    <button class="subtab" onclick="switchCasinoTab('history',this)">📊 ИСТОРИЯ</button>
-    <button class="subtab" onclick="switchCasinoTab('rules',this)">📋 ПРАВИЛА</button>
+    <button class="subtab active" id="casinoPlayBtn" onclick="switchCasinoTab(currentThemePath==='genshin'?'genshin':'play',this)"><i class="ti ti-device-gamepad-2"></i> ИГРАТЬ</button>
+    <button class="subtab" onclick="switchCasinoTab('inventory',this)"><i class="ti ti-gift"></i> ПРИЗЫ</button>
+    <button class="subtab" onclick="switchCasinoTab('history',this)"><i class="ti ti-history"></i> ИСТОРИЯ</button>
+    <button class="subtab" onclick="switchCasinoTab('rules',this)"><i class="ti ti-clipboard-list"></i> ПРАВИЛА</button>
   </div>
 
   <div id="casinoPlayContent" style="display:flex;flex-direction:column;">
@@ -427,14 +457,14 @@
     </div>
 
     <div style="padding:0 12px 6px;display:flex;flex-direction:column;gap:6px;">
-      <button class="btn btn-primary" id="openCaseBtn" onclick="openCase()">🏮 [ 开箱 // ОТКРЫТЬ КЕЙС ] 🏮</button>
+      <button class="btn btn-primary" id="openCaseBtn" onclick="openCase()"><i class="ti ti-box"></i> [ 开箱 // ОТКРЫТЬ КЕЙС ] <i class="ti ti-box"></i></button>
     </div>
   </div>
 
   <div id="casinoInventoryContent" style="display:none;flex-direction:column;">
     <div class="card" style="margin:8px 12px;">
       <div class="card-inner">
-        <div class="card-label">🎒 ПРИЗЫ ИЗ КЕЙСОВ</div>
+        <div class="card-label"><i class="ti ti-gift"></i> ПРИЗЫ ИЗ КЕЙСОВ</div>
         <div id="casinoInventoryList"><div class="empty-state">Загрузка...</div></div>
       </div>
     </div>
@@ -443,7 +473,7 @@
   <div id="casinoHistoryContent" style="display:none;flex-direction:column;">
     <div class="card" style="margin:8px 12px;">
       <div class="card-inner">
-        <div class="card-label">📊 ИСТОРИЯ ПРОКРУТОК</div>
+        <div class="card-label"><i class="ti ti-history"></i> ИСТОРИЯ ПРОКРУТОК</div>
         <div id="casinoHistoryList"><div class="empty-state">Загрузка...</div></div>
       </div>
     </div>
@@ -455,38 +485,38 @@
         <div class="rules-icon"><div class="no-leak-bg" style="width:32px;height:32px;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png')" oncontextmenu="return false"></div></div>
         <div><div class="rules-title">金色 Золотой — 78.9%</div>
         <div class="rules-desc">
-          🍚 Пустая миска — не повезло (20%)<br>
-          ⭐ +30 баллов (35%)<br>
-          💫 +60 баллов (25%)<br>
-          🕐 +30 мин свободы (10%)<br>
-          🧺 Вне очереди на стирку (6%)<br>
-          🛡 Иммунитет от штрафа (3%)<br>
-          👑 ДЖЕКПОТ +250 баллов (1%)
+          <i class="ti ti-circle-x" style="color:var(--text3);"></i> Пустая миска — не повезло (20%)<br>
+          <i class="ti ti-star-filled" style="color:var(--gold);"></i> +30 баллов (35%)<br>
+          <i class="ti ti-sparkles" style="color:var(--gold);"></i> +60 баллов (25%)<br>
+          <i class="ti ti-clock" style="color:#60b4d4;"></i> +30 мин свободы (10%)<br>
+          <i class="ti ti-basket" style="color:#60b4d4;"></i> Вне очереди на стирку (6%)<br>
+          <i class="ti ti-shield-half" style="color:rgba(200,80,80,0.9);"></i> Иммунитет от штрафа (3%)<br>
+          <i class="ti ti-crown" style="color:var(--gold);"></i> ДЖЕКПОТ +250 баллов (1%)
         </div></div>
       </div>
       <div class="rules-row">
         <div class="rules-icon"><div class="no-leak-bg" style="width:32px;height:32px;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png')" oncontextmenu="return false"></div></div>
         <div><div class="rules-title">紫色 Фиолетовый — 21%</div>
         <div class="rules-desc">
-          🤝 Гуаньси 关系 — -10% в магазине<br>
-          🗿 Терракота 兵马俑 — блок штрафа, затем -5★ к следующей потере<br>
-          🐼 Панда — кэшбек +10★, продажа за 60%<br>
-          🥋 Шаолинь 少林 — +20★ за отметку, +10★ за идеальный день<br>
-          🎙 Linguasoft 口才 — +30★ за 3★, серия 3 дней +20★<br>
-          💰 Цайшэнь 财神 — +15★ каждые 24 часа<br>
-          🐉 Цилинь 麒麟 — +10★ за каждого владельца Цилиня
+          <i class="ti ti-handshake" style="color:#60b4d4;"></i> Гуаньси 关系 — -10% в магазине<br>
+          <i class="ti ti-shield-check" style="color:rgba(155,89,182,0.9);"></i> Терракота 兵马俑 — блок штрафа, затем -5★ к следующей потере<br>
+          <i class="ti ti-paw" style="color:rgba(155,89,182,0.9);"></i> Панда — кэшбек +10★, продажа за 60%<br>
+          <i class="ti ti-yin-yang" style="color:rgba(155,89,182,0.9);"></i> Шаолинь 少林 — +20★ за отметку, +10★ за идеальный день<br>
+          <i class="ti ti-microphone" style="color:rgba(155,89,182,0.9);"></i> Linguasoft 口才 — +30★ за 3★, серия 3 дней +20★<br>
+          <i class="ti ti-coin" style="color:var(--gold);"></i> Цайшэнь 财神 — +15★ каждые 24 часа<br>
+          <i class="ti ti-paw" style="color:rgba(155,89,182,0.9);"></i> Цилинь 麒麟 — +10★ за каждого владельца Цилиня
         </div></div>
       </div>
       <div class="rules-row">
         <div class="rules-icon"><div class="no-leak-bg" style="width:32px;height:32px;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/legendary_case.png')" oncontextmenu="return false"></div></div>
         <div><div class="rules-title">传奇 Легендарный — 0.1%</div>
         <div class="rules-desc">
-          🐉 Красный Дракон 红龙 — +20% баллов, перехват, сбросить импульс<br>
-          🔴 Сетевой Дозор 网络守卫 — Форматирование, Взлом Заслона и контроль сети
+          <i class="ti ti-flame" style="color:rgba(200,50,50,0.9);"></i> Красный Дракон 红龙 — +20% баллов, перехват, сбросить импульс<br>
+          <i class="ti ti-shield-lock" style="color:rgba(200,50,50,0.9);"></i> Сетевой Дозор 网络守卫 — Форматирование, Взлом Заслона и контроль сети
         </div></div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon">💰</div>
+        <div class="rules-icon"><i class="ti ti-scan" style="font-size:22px;color:var(--gold);"></i></div>
         <div><div class="rules-title">Попытки сканирования</div>
         <div class="rules-desc">
           Попытки бесплатны — зарабатываются активностью<br>
@@ -495,8 +525,8 @@
         </div></div>
       </div>
       <div style="margin:10px 12px;padding:12px;background:rgba(180,20,20,0.06);border:1px solid rgba(180,20,20,0.2);border-radius:8px;">
-        <div style="font-size:9px;color:rgba(200,50,50,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">ℹ️ КАК ЭТО РАБОТАЕТ</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.7;">Кейсы — игровая механика, основанная на активности, а не на трате баллов. Каждое сканирование гарантирует 1 фрагмент протокола. Призы случайны, но участие бесплатное 🎲</div>
+        <div style="font-size:9px;color:rgba(200,50,50,0.6);font-family:monospace;letter-spacing:1px;margin-bottom:6px;"><i class="ti ti-info-circle"></i> КАК ЭТО РАБОТАЕТ</div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.7;">Кейсы — игровая механика, основанная на активности, а не на трате баллов. Каждое сканирование гарантирует 1 фрагмент протокола. Призы случайны, но участие бесплатное <i class="ti ti-dice"></i></div>
       </div>
     </div>
   </div>  <!-- /casinoRulesContent -->
@@ -504,20 +534,20 @@
   <div id="genshinRulesContent" style="display:none;flex-direction:column;">
     <div style="padding:8px 0;">
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🔵</div>
+        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;"><i class="ti ti-circle-filled" style="color:#4a9af5;font-size:16px;"></i></div>
         <div>
           <div class="rules-title" style="font-size:13px;">синий свиток <span style="color:var(--text2);">— 79%</span></div>
           <div class="rules-desc">
-            ⭐ +30 звёзд (35%)<br>
-            💫 +60 звёзд (20%)<br>
-            🛡 Иммунитет от штрафа (10%)<br>
-            🕐 +30 мин свободы (7%)<br>
-            🌸 Карточка 4★ (28%)
+            <i class="ti ti-star-filled" style="color:var(--gold);"></i> +30 звёзд (35%)<br>
+            <i class="ti ti-sparkles" style="color:var(--gold);"></i> +60 звёзд (20%)<br>
+            <i class="ti ti-shield-half" style="color:rgba(200,80,80,0.9);"></i> Иммунитет от штрафа (10%)<br>
+            <i class="ti ti-clock" style="color:#4a9af5;"></i> +30 мин свободы (7%)<br>
+            <i class="ti ti-cards" style="color:#4a9af5;"></i> Карточка 4★ (28%)
           </div>
         </div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟣</div>
+        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;"><i class="ti ti-circle-filled" style="color:rgba(155,89,182,0.9);font-size:16px;"></i></div>
         <div>
           <div class="rules-title" style="font-size:13px;">фиолетовый свиток <span style="color:var(--text2);">— 20%</span></div>
           <div class="rules-desc">
@@ -532,7 +562,7 @@
         </div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:26px;min-width:36px;text-align:center;">🟡</div>
+        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;"><i class="ti ti-circle-filled" style="color:var(--gold);font-size:16px;"></i></div>
         <div>
           <div class="rules-title" style="font-size:13px;">золотой свиток <span style="color:var(--text2);">— 1%</span></div>
           <div class="rules-desc">
@@ -542,7 +572,7 @@
         </div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;">🔄</div>
+        <div class="rules-icon" style="font-size:22px;min-width:36px;text-align:center;"><i class="ti ti-repeat"></i></div>
         <div>
           <div class="rules-title">Дубликаты</div>
           <div class="rules-desc">
@@ -553,7 +583,7 @@
         </div>
       </div>
       <div class="rules-row">
-        <div class="rules-icon">💰</div>
+        <div class="rules-icon"><i class="ti ti-scan" style="font-size:22px;color:var(--gold);"></i></div>
         <div>
           <div class="rules-title">Попытки сканирования</div>
           <div class="rules-desc">
@@ -579,7 +609,7 @@
     <div style="padding:10px 12px 0;">
       <div style="text-align:center;margin-bottom:10px;">
         <div style="font-size:18px;font-weight:900;color:var(--gold);font-family:serif;letter-spacing:2px;">祈愿 МОЛИТВЫ</div>
-        <div style="font-size:9px;color:rgba(219,177,101,0.5);font-family:serif;margin-top:2px;">qí yuàn · испытай судьбу</div>
+        <div id="gsPraySubtitle" style="font-size:9px;color:rgba(219,177,101,0.5);font-family:serif;margin-top:2px;">qí yuàn · испытай судьбу</div>
       </div>
       <!-- Экран молитвы -->
       <div id="gsPrayScreen" style="width:100%;height:320px;border-radius:16px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:8px;background:radial-gradient(ellipse at 50% 40%,#e0d0f0 0%,#d8c8e8 60%,#c8b8d8 100%);">
@@ -898,7 +928,7 @@
       <button class="admin-sec-btn" onclick="showAdminSection('users',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="3.5"/><path d="M21.5 21v-2a4 4 0 0 0-3-3.87"/><path d="M15.5 3.13a3.5 3.5 0 0 1 0 6.74"/></svg></span><span class="admin-nav-label">Игроки</span></button>
       <button class="admin-sec-btn" onclick="showAdminSection('presence',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M8.5 15.5a5 5 0 0 1 0-7"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M5.5 18.5a9 9 0 0 1 0-13"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></span><span class="admin-nav-label">Перекличка</span></button>
       <button class="admin-sec-btn" onclick="showAdminSection('laundry',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.5"/><circle cx="12" cy="13" r="1.6"/><line x1="8" y1="6" x2="8" y2="6"/><line x1="11" y1="6" x2="11" y2="6"/></svg></span><span class="admin-nav-label">Стирка</span></button>
-      <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg></span><span class="admin-nav-label">BlackWall</span></button>
+      <button class="admin-sec-btn" onclick="showAdminSection('blackwall',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg></span><span class="admin-nav-label">Файрвол</span></button>
       <button class="admin-sec-btn" onclick="showAdminSection('contracts',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="3.5" width="13" height="17" rx="2"/><path d="M9 3.5h6v3H9z"/><line x1="8.5" y1="11" x2="15.5" y2="11"/><line x1="8.5" y1="14.5" x2="15.5" y2="14.5"/><line x1="8.5" y1="18" x2="12.5" y2="18"/></svg></span><span class="admin-nav-label">Контракты</span></button>
       <button class="admin-sec-btn" onclick="showAdminSection('report',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg></span><span class="admin-nav-label">Отчёт</span></button>
       <button class="admin-sec-btn" onclick="showAdminSection('giftcode',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5V7a2 2 0 0 1 2-2h3.5"/><path d="M22 9.5V7a2 2 0 0 0-2-2h-3.5"/><path d="M2 14.5V17a2 2 0 0 0 2 2h3.5"/><path d="M22 14.5V17a2 2 0 0 1-2 2h-3.5"/><line x1="12" y1="5" x2="12" y2="19"/><circle cx="12" cy="12" r="1.5"/></svg></span><span class="admin-nav-label">Коды</span></button>
@@ -1100,9 +1130,9 @@
     </div>
     <div id="admin-blackwall" class="admin-section" style="padding:0 12px;">
       <div class="admin-blackwall-card">
-        <div class="admin-blackwall-glyph">黑</div>
+        <div class="admin-blackwall-glyph">红</div>
         <div class="admin-blackwall-info">
-          <div class="admin-console-kicker">BLACKWALL PROTOCOL // 黑墙</div>
+          <div class="admin-console-kicker">RED FIREWALL PROTOCOL // 红墙</div>
           <div class="admin-blackwall-title">Глобальный контроль</div>
           <div class="admin-blackwall-desc">Блокировка магазина и кейсов для всех участников сети</div>
         </div>
@@ -1143,7 +1173,7 @@
         <div class="admin-blackwall-info">
           <div class="admin-console-kicker">WILD AI BREACH // 野生AI入侵</div>
           <div class="admin-blackwall-title">Прорыв диких ИИ</div>
-          <div class="admin-blackwall-desc">Глобальный режим хаоса на 3 дня: баннер, глитчи, перемешанный интерфейс. Включает BlackWall lockdown.</div>
+          <div class="admin-blackwall-desc">Глобальный режим хаоса на 3 дня: баннер, глитчи, перемешанный интерфейс. Включает блокировку Красным Файрволом.</div>
           <div class="admin-architect-event-status" id="adminWildAiBreachStatus">STATUS // CHECKING</div>
         </div>
       </div>
@@ -1245,14 +1275,14 @@
 
   <!-- Переключатель табов -->
   <div style="display:flex;gap:6px;margin:0 12px 10px;">
-    <button id="tab-implants-btn" onclick="switchImplantsTab('implants')" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⚡ ИМПЛАНТЫ</button>
+    <button id="tab-implants-btn" onclick="switchImplantsTab('implants')" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;"><i class="ti ti-bolt"></i> ИМПЛАНТЫ</button>
     <button id="tab-cards-btn" onclick="switchImplantsTab('cards')" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">✦ КАРТОЧКИ</button>
   </div>
 
   <!-- ТАБ ИМПЛАНТЫ -->
   <div id="implants-tab">
   <!-- Мои импланты -->
-  <div class="cn-divider">⚡ 我的植入物 МОИ ИМПЛАНТЫ</div>
+  <div class="cn-divider"><i class="ti ti-bolt"></i> 我的植入物 МОИ ИМПЛАНТЫ</div>
   <div class="card" style="margin:4px 12px;">
     <div class="card-inner" id="myImplantsPage">
       <div class="empty-state" style="padding:12px;">Импланты не установлены<br><span style="font-size:10px;font-family:monospace;color:var(--text3);">Открывай фиолетовые и чёрные кейсы!</span></div>
@@ -1282,7 +1312,7 @@
 
   <!-- Каталог всех имплантов -->
   <div id="implants-catalog">
-  <div class="cn-divider">📖 植入物目录 КАТАЛОГ</div>
+  <div class="cn-divider"><i class="ti ti-book"></i> 植入物目录 КАТАЛОГ</div>
 
   <!-- ГУАНЬСИ -->
   <div class="card" style="margin:6px 12px;">
@@ -1516,7 +1546,7 @@
       <div style="text-align:center;margin-bottom:14px;position:relative;">
         <div class="no-leak-bg" style="width:180px;height:180px;border-radius:16px;border:1px solid rgba(180,20,20,0.6);box-shadow:0 0 32px rgba(180,0,0,0.3),0 0 60px rgba(180,0,0,0.1);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/honglong_implant.png')" oncontextmenu="return false"></div>
         <div style="position:absolute;top:8px;left:8px;background:rgba(180,20,20,0.25);border:1px solid #cc3333;color:#cc3333;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</div>
-        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">黑色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
         <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">红龙 КРАСНЫЙ ДРАКОН</div>
@@ -1524,7 +1554,7 @@
       </div>
       <div style="padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:6px;">// ЛОР</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Чёрный Заслон. Носители получают статус <span style="color:rgba(212,175,55,0.8);font-weight:600;">红龙节点</span> — «Узел Красного Дракона». Использовать с осторожностью. Один из ста тысяч</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Прототип военного импланта, разработанный для агентов NetWatch высшего допуска. Говорят, что Красный Дракон был создан на основе кода самого первого ИИ, который смог обойти Великий Красный Файрвол. Носители получают статус <span style="color:rgba(212,175,55,0.8);font-weight:600;">红龙节点</span> — «Узел Красного Дракона». Использовать с осторожностью. Один из ста тысяч</div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(180,20,20,0.2);">
         <div style="font-size:9px;color:rgba(200,80,80,0.7);font-family:monospace;letter-spacing:1px;margin-bottom:8px;">// ПАССИВНЫЕ НАВЫКИ</div>
@@ -1551,7 +1581,7 @@
         </div>
       </div>
       <div style="margin-top:12px;padding:10px;background:rgba(180,20,20,0.1);border:1px solid rgba(180,20,20,0.3);border-radius:8px;font-size:10px;color:rgba(200,60,60,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
-        ⚠️ ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
+        <i class="ti ti-alert-triangle"></i> ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
       </div>
     </div>
   </div>
@@ -1562,7 +1592,7 @@
       <div style="text-align:center;margin-bottom:14px;position:relative;">
         <div class="no-leak-bg" style="width:180px;height:180px;border-radius:16px;border:1px solid rgba(180,20,20,0.6);box-shadow:0 0 32px rgba(180,0,0,0.3),0 0 60px rgba(180,0,0,0.1);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wangluoshouwei_implant.png')" oncontextmenu="return false"></div>
         <div style="position:absolute;top:8px;left:8px;background:rgba(180,20,20,0.25);border:1px solid #cc3333;color:#cc3333;font-size:8px;padding:2px 8px;border-radius:3px;font-family:monospace;">ЛЕГЕНДАРНЫЙ</div>
-        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">⬛ ЧЁРНЫЙ КЕЙС</div>
+        <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(212,175,55,0.6);font-family:monospace;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:3px;">黑色 КЕЙС</div>
       </div>
       <div style="text-align:center;margin-bottom:12px;">
         <div style="font-size:20px;font-weight:900;color:var(--text);" class="implant-catalog-title">网络守卫 СЕТЕВОЙ ДОЗОР</div>
@@ -1593,7 +1623,7 @@
         </div>
       </div>
       <div style="margin-top:12px;padding:10px;background:rgba(180,20,20,0.1);border:1px solid rgba(180,20,20,0.3);border-radius:8px;font-size:10px;color:rgba(200,60,60,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
-        ⚠️ ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
+        <i class="ti ti-alert-triangle"></i> ШАНС ВЫПАДЕНИЯ: 0.1% // ОДИН ИЗ ТЫСЯЧИ
       </div>
     </div>
   </div>
@@ -1630,7 +1660,7 @@
       </div>
     </div>
 
-    <div class="cn-divider">📖 КАТАЛОГ КАРТОЧЕК</div>
+    <div class="cn-divider"><i class="ti ti-book"></i> КАТАЛОГ КАРТОЧЕК</div>
 
     <!-- АРХОНТ ЗЕМЛИ -->
     <div class="card" style="margin:6px 12px;">
@@ -1638,7 +1668,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:2px solid rgba(192,160,64,0.6);box-shadow:0 0 28px rgba(192,160,64,0.25);background-color:rgba(192,160,64,0.05);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(192,160,64,0.85);border:1px solid rgba(192,160,64,0.9);color:#2a1800;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★★ ЛЕГЕНД.</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#c0a040;"></i> ЗОЛОТОЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">岩王帝君 АРХОНТ ЗЕМЛИ</div>
@@ -1664,7 +1694,7 @@
           </div>
         </div>
         <div style="margin-top:12px;padding:10px;background:rgba(192,160,64,0.08);border:1px solid rgba(192,160,64,0.25);border-radius:8px;font-size:10px;color:rgba(192,160,64,0.8);font-family:monospace;text-align:center;letter-spacing:1px;">
-          ⚠️ ШАНС ВЫПАДЕНИЯ: 1%
+          <i class="ti ti-alert-triangle"></i> ШАНС ВЫПАДЕНИЯ: 1%
         </div>
       </div>
     </div>
@@ -1675,7 +1705,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:2px solid rgba(155,89,182,0.5);box-shadow:0 0 28px rgba(155,89,182,0.2);background-color:rgba(155,89,182,0.05);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★★ ЛЕГЕНД.</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">✨ ЗОЛОТОЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(219,177,101,0.7);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#c0a040;"></i> ЗОЛОТОЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">紫微星君 ИМПЕРАТОРСКАЯ ЗВЕЗДА</div>
@@ -1701,7 +1731,7 @@
           </div>
         </div>
         <div style="margin-top:12px;padding:10px;background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.25);border-radius:8px;font-size:10px;color:rgba(155,89,182,0.8);font-family:monospace;text-align:center;">
-          ⚠️ ШАНС ВЫПАДЕНИЯ: 1%
+          <i class="ti ti-alert-triangle"></i> ШАНС ВЫПАДЕНИЯ: 1%
         </div>
       </div>
     </div>
@@ -1712,7 +1742,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(155,89,182,0.15);background-color:rgba(155,89,182,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#9b59b6;"></i> ФИОЛЕТОВЫЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">九尾狐灵 ЛИСА-ОБОРОТЕНЬ</div>
@@ -1746,7 +1776,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(155,89,182,0.4);box-shadow:0 0 20px rgba(200,80,40,0.2);background-color:rgba(155,89,182,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(155,89,182,0.85);border:1px solid rgba(155,89,182,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💜 ФИОЛЕТОВЫЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(155,89,182,0.7);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#9b59b6;"></i> ФИОЛЕТОВЫЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">焰莲使者 СТРАЖ ОГНЯ</div>
@@ -1780,7 +1810,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#4a9af5;"></i> СИНИЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">桃花仙子 НЕБЕСНАЯ ФЕЯ</div>
@@ -1814,7 +1844,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#4a9af5;"></i> СИНИЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">文曲星君 ЗВЕЗДА ЛИТЕРАТУРЫ</div>
@@ -1848,7 +1878,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,150,74,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#4a9af5;"></i> СИНИЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">木灵仙君 ДУХ ЛЕСА</div>
@@ -1882,7 +1912,7 @@
         <div style="text-align:center;margin-bottom:14px;position:relative;">
           <div class="no-leak-bg" style="width:160px;height:220px;border-radius:16px;border:1px solid rgba(74,122,204,0.4);box-shadow:0 0 20px rgba(74,122,204,0.15);background-color:rgba(74,122,204,0.04);background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png')" oncontextmenu="return false"></div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#4a9af5;"></i> СИНИЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">海灵仙后 ДУХ МОРЕЙ</div>
@@ -1918,7 +1948,7 @@
             <div class="no-leak-bg" style="width:100%;height:100%;display:block;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/moon_card.png')" oncontextmenu="return false"></div>
           </div>
           <div style="position:absolute;top:8px;left:8px;background:rgba(74,122,204,0.85);border:1px solid rgba(74,122,204,0.9);color:#fff;font-size:7px;padding:2px 6px;border-radius:3px;font-family:monospace;font-weight:700;">★★★★</div>
-          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:3px;">💙 СИНИЙ</div>
+          <div style="position:absolute;top:8px;right:8px;font-size:8px;color:rgba(74,122,204,0.8);font-family:monospace;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:3px;"><i class="ti ti-diamond" style="color:#4a9af5;"></i> СИНИЙ</div>
         </div>
         <div style="text-align:center;margin-bottom:12px;">
           <div style="font-size:20px;font-weight:900;color:var(--text);">嫦娥仙子 БОГИНЯ ЛУНЫ</div>
@@ -1983,7 +2013,7 @@
 
     <!-- Попап оценки (только для вожатых) -->
     <div id="diaryStarsPopup" style="display:none;position:fixed;inset:0;z-index:9000;
-      background:rgba(0,0,0,0.7);align-items:flex-end;justify-content:center;">
+      background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:flex-end;justify-content:center;">
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;
         padding:24px;width:100%;max-width:480px;box-sizing:border-box;position:relative;">
         <button onclick="closeDiaryStarsPopup()" style="position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text3);font-size:22px;cursor:pointer;line-height:1;">✕</button>
@@ -2059,7 +2089,7 @@
     <!-- Заблокировано BlackWall -->
     <div id="contractsBlackwallMsg" class="contracts-blackwall" style="display:none;">
       <div class="contracts-blackwall-icon">⛔</div>
-      <div class="contracts-blackwall-title">BlackWall 已激活</div>
+      <div class="contracts-blackwall-title">Красный Файрвол 已激活</div>
       <div class="contracts-blackwall-text">Доска поручений временно заблокирована.<br>Ожидайте снятия режима.</div>
     </div>
 
@@ -2502,7 +2532,7 @@
   <div class="launch-gate-panel" onclick="event.stopPropagation()">
     <div class="launch-gate-scan"></div>
     <button class="launch-gate-close" onclick="closeLaunchGateOverlay()">×</button>
-    <div class="launch-gate-kicker">BLACKWALL ACCESS CONTROL</div>
+    <div class="launch-gate-kicker">RED FIREWALL ACCESS CONTROL</div>
     <div class="launch-gate-big">禁止入口</div>
     <div class="launch-gate-panel-title">Доступ пока закрыт</div>
     <div class="launch-gate-panel-copy">
@@ -2531,17 +2561,17 @@
 <script src="./js/config.js?v=20260614freeze1"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260617a"></script>
+<script src="./js/ui.js?v=20260622firewall1"></script>
 <script src="./js/telegram-compat.js"></script>
-<script src="./js/themes.js?v=20260614themeintro1"></script>
-<script src="./js/blackwall.js"></script>
+<script src="./js/themes.js?v=20260623casinotabfix1"></script>
+<script src="./js/blackwall.js?v=20260622firewall1"></script>
 <script src="./js/schedule.js"></script>
 <script src="./js/announcements.js"></script>
 <script src="./js/laundry.js?v=20260615a"></script>
-<script src="./js/achievements.js?v=20260607e"></script>
-<script src="./js/leaderboard.js?v=20260617a"></script>
-<script src="./js/shop.js?v=20260615a"></script>
-<script src="./js/casino.js?v=20260619lighttheme1"></script>
+<script src="./js/achievements.js?v=20260622spinlock1"></script>
+<script src="./js/leaderboard.js?v=20260623pathloop1"></script>
+<script src="./js/shop.js?v=20260622iconfix1"></script>
+<script src="./js/casino.js?v=20260623casinotabfix1"></script>
 <script src="./js/diary.js?v=20260613cleanup1"></script>
 <script src="./js/team.js?v=20260618b"></script>
 <script src="./js/architect-diary.js?v=20260622imgfix1"></script>
@@ -2554,11 +2584,12 @@
 <script src="./js/admin.js?v=20260622firewall1"></script>
 <script src="./js/campus-map.js?v=20260622a"></script>
 <script src="./js/raid.js?v=20260615a"></script>
-<script src="./js/wild-ai-breach.js?v=20260614fix1"></script>
+<script src="./js/wild-ai-breach.js?v=20260622firewall1"></script>
 <script src="./js/events.js?v=20260622popupfix1"></script>
-<script src="./js/architect-event.js?v=20260622popupfix2"></script>
+<script src="./js/architect-event.js?v=20260623popupzindex1"></script>
 <script src="./js/demo.js?v=20260614themeintro1"></script>
 <script src="./js/instruction.js?v=20260623a"></script>
+<script src="./js/rewind.js?v=20260621rewindapi2"></script>
 <script src="./js/main.js?v=20260515a"></script>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
@@ -2620,7 +2651,7 @@
     </div>
 
     <div class="event-hero" id="eventHero">
-      <div class="event-wildai-lobby-warning">SYSTEM ERROR // BLACKWALL INTEGRITY: CRITICAL</div>
+      <div class="event-wildai-lobby-warning">SYSTEM ERROR // RED FIREWALL INTEGRITY: CRITICAL</div>
       <video
         id="eventBossVideo"
         class="event-hero-video"
@@ -2792,7 +2823,7 @@
   <div class="architect-event-entry-card" onclick="event.stopPropagation()">
     <div class="architect-event-entry-scan"></div>
     <button class="architect-event-entry-close" onclick="closeArchitectEventEntryBanner()">×</button>
-    <div class="architect-event-entry-kicker">BLACKWALL SECURITY // INTRUSION ALERT</div>
+    <div class="architect-event-entry-kicker">RED FIREWALL SECURITY // INTRUSION ALERT</div>
     <div class="architect-event-entry-title">ВНИМАНИЕ!</div>
     <div class="architect-event-entry-copy">
       Несанкционированный вход в сеть.<br>
@@ -2818,7 +2849,7 @@
       <div class="architect-banner-eye-scan"></div>
     </div>
     <div class="architect-banner-title" data-text="АРХИТЕКТОР В СЕТИ">АРХИТЕКТОР В СЕТИ</div>
-    <div class="architect-banner-subtitle">BLACKWALL // КАНАЛ ОТКРЫТ</div>
+    <div class="architect-banner-subtitle">КРАСНЫЙ ФАЙРВОЛ // КАНАЛ ОТКРЫТ</div>
     <div class="architect-banner-actions">
       <button class="architect-banner-dismiss" onclick="closeArchitectArrivalBanner()">[ ПРИНЯТО ]</button>
     </div>
@@ -2955,6 +2986,8 @@
   </div>
 </div>
 
+
+<div class="rewind-overlay" id="rewindOverlay" style="display:none;"></div>
 
 <div id="toastContainer"></div>
 

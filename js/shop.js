@@ -39,6 +39,7 @@ const SHOP_ICONS = {
   'raid_overclock': '<i class="ti ti-bolt" style="color:rgba(155,89,182,0.9);font-size:22px;"></i>',
   'double_win':   '<i class="ti ti-arrows-double-sw-ne" style="color:var(--gold);font-size:22px;"></i>',
   'title_player': '<i class="ti ti-crown" style="color:var(--gold);font-size:22px;"></i>',
+  'path_switch':  '<i class="ti ti-arrows-right-left" style="color:rgba(230,160,60,0.9);font-size:22px;"></i>',
 };
 
 const GS_CARD_CONFIGS = {
@@ -272,38 +273,92 @@ async function loadShop() {
 
 async function buyItem(code, name, price) {
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  if (code === 'title_player') {
+    openTitleStyleModal(name, price);
+    return;
+  }
   safeShowPopup({
     title: `Купить ${name}?`,
     message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
     buttons: [{id:'confirm',type:'default',text:'✅ Купить'},{type:'cancel'}]
   }, async (btnId) => {
     if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/shop/buy`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({telegram_id:currentUserId, item_code:code})
-      });
-      if (r.ok) {
-        const data = await r.json();
-        currentPoints = data.new_points;
-        updatePoints();
-        if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
-        try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        const itemEl = document.querySelector(`.shop-item[data-item-code="${code}"]`);
-        if (itemEl) {
-          itemEl.classList.add('shop-item-bought');
-          spawnShopSparkles(itemEl);
-        }
-        showToast(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`, 'success');
-        setTimeout(() => loadShop(), 650);
-      } else {
-        const err = await r.json();
-        if (err.detail === 'Daily limit reached') showToast('Этот товар уже разобрали!');
-        else if (err.detail === 'Not enough points') showToast('Недостаточно баллов!');
-        else if (err.detail === 'Account frozen') showToast('⛔ Аккаунт под надзором NetWatch');
-        else showToast('Ошибка покупки');
+    await submitShopPurchase(code, name);
+  });
+}
+
+async function submitShopPurchase(code, name, style) {
+  try {
+    const body = {telegram_id:currentUserId, item_code:code};
+    if (style) body.style = style;
+    const r = await fetch(`${API_URL}/api/shop/buy`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (r.ok) {
+      const data = await r.json();
+      currentPoints = data.new_points;
+      updatePoints();
+      if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
+      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+      const itemEl = document.querySelector(`.shop-item[data-item-code="${code}"]`);
+      if (itemEl) {
+        itemEl.classList.add('shop-item-bought');
+        spawnShopSparkles(itemEl);
       }
-    } catch(e) { showToast('Ошибка соединения'); }
+      showToast(`✅ Куплено: ${data.item}!\nОстаток: ${data.new_points} ★`, 'success');
+      setTimeout(() => loadShop(), 650);
+    } else {
+      const err = await r.json();
+      if (err.detail === 'Daily limit reached') showToast('Этот товар уже разобрали!');
+      else if (err.detail === 'Not enough points') showToast('Недостаточно баллов!');
+      else if (err.detail === 'Account frozen') showToast('⛔ Аккаунт под надзором NetWatch');
+      else showToast('Ошибка покупки');
+    }
+  } catch(e) { showToast('Ошибка соединения'); }
+}
+
+// Title Player ("Титул дня") highlight presets — must match TITLE_STYLE_PRESETS
+// on the backend. Purely cosmetic full-row glow on the leaderboard for the day.
+const TITLE_STYLE_PRESETS = [
+  {id:'cyan',    name:'Кибер-циан'},
+  {id:'gold',    name:'Золото протокола'},
+  {id:'violet',  name:'Фиолетовый сигнал'},
+  {id:'crimson', name:'Багровая тревога'},
+  {id:'emerald', name:'Изумрудный канал'},
+];
+
+function openTitleStyleModal(name, price) {
+  const box = document.getElementById('titleStyleOptions');
+  if (box) {
+    box.innerHTML = TITLE_STYLE_PRESETS.map(p => `
+      <button class="profile-showcase-option" onclick="confirmTitlePlayerPurchase('${p.id}',${price})">
+        <span class="profile-frame-swatch title-style-swatch title-${p.id}"></span>
+        <span class="profile-showcase-option-copy">
+          <span>ПОДСВЕТКА СТРОКИ</span>
+          <strong>${p.name}</strong>
+          <em>Выделит всю твою строку в рейтинге на сегодня</em>
+        </span>
+      </button>`).join('');
+  }
+  const modal = document.getElementById('titleStyleModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeTitleStyleModal() {
+  const modal = document.getElementById('titleStyleModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function confirmTitlePlayerPurchase(styleId, price) {
+  closeTitleStyleModal();
+  safeShowPopup({
+    title: 'Купить Титул дня?',
+    message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
+    buttons: [{id:'confirm',type:'default',text:'✅ Купить'},{type:'cancel'}]
+  }, async (btnId) => {
+    if (btnId !== 'confirm') return;
+    await submitShopPurchase('title_player', 'Титул дня', styleId);
   });
 }
 

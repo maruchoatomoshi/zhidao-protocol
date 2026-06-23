@@ -358,7 +358,7 @@ async function loadOpenContracts(options = {}) {
     });
     if (r.status === 403) {
       const d = await r.json().catch(() => ({}));
-      showContractsBlackwall(d.detail || 'BlackWall активен');
+      showContractsBlackwall(d.detail || 'Красный Файрвол активен');
       return;
     }
     const data = await r.json();
@@ -399,7 +399,7 @@ async function loadMyContracts(options = {}) {
     });
     if (r.status === 403) {
       const d = await r.json().catch(() => ({}));
-      showContractsBlackwall(d.detail || 'BlackWall активен');
+      showContractsBlackwall(d.detail || 'Красный Файрвол активен');
       return;
     }
     const data = await r.json();
@@ -464,9 +464,6 @@ function renderContractCard(c, showActions) {
   const statusColor = CONTRACT_STATUS_COLORS[c.status] || 'var(--text3)';
   const catLabel = CONTRACT_CATEGORY_LABELS[c.category] || c.category;
   const isAdminContract = isAdminContractCreator(c);
-  const suspHtml = c.is_suspicious
-    ? `<div class="contract-warning">⚠ Подозрительный: ${escapeHtml(c.suspicious_reason || '')}</div>`
-    : '';
 
   let actionsHtml = '';
   if (c.status === 'open' && !isMe && currentUserId) {
@@ -560,7 +557,6 @@ function renderContractCard(c, showActions) {
       ${getContractCountdownHtml(c)}
     </div>
     ${flowHtml}
-    ${suspHtml}
     ${actionsHtml}
   </div>`;
 }

@@ -450,6 +450,13 @@ const CAMPUS_MAP_DISPLAY_FIXES = {
     category: 'important',
     description: 'Важная точка для медицинских вопросов.',
   },
+  'парковка': {
+    label: '停车场',
+    cn: '停车场',
+    en: 'Parking',
+    category: 'important',
+    description: 'Парковка.',
+  },
 };
 
 const CAMPUS_MAP_FAVORITES_STORAGE_KEY = 'zhidao_campus_map_favorites_v1';
@@ -737,6 +744,8 @@ function campusMapEditorPanel() {
   const cursor = campusMapEditorCursor || point || { x: 50, y: 50 };
   const title = point && point.title || '';
   const label = point && point.label || '';
+  const cn = point && point.cn || '';
+  const en = point && point.en || '';
   const category = point && point.category || 'important';
   const labelPos = point && point.labelPos || 'right';
   const labelDx = Number(point && point.labelDx || 0);
@@ -759,6 +768,8 @@ function campusMapEditorPanel() {
         <div class="campus-map-editor-grid">
           <label>Название<input id="campusEditTitle" value="${campusMapEscape(title)}" placeholder="Название в карточке"></label>
           <label>Подпись<input id="campusEditLabel" value="${campusMapEscape(label)}" placeholder="Короткая подпись"></label>
+          <label>中文<input id="campusEditCn" value="${campusMapEscape(cn)}" placeholder="Китайское название"></label>
+          <label>EN<input id="campusEditEn" value="${campusMapEscape(en)}" placeholder="Английское название"></label>
           <label>X<input id="campusEditX" type="number" step="0.1" value="${Number(cursor.x || 0).toFixed(1)}"></label>
           <label>Y<input id="campusEditY" type="number" step="0.1" value="${Number(cursor.y || 0).toFixed(1)}"></label>
           <label>Тип
@@ -957,8 +968,8 @@ function campusMapEditorPayload(existing) {
     id: existing && existing.id || `custom-${Date.now()}`,
     title,
     label,
-    cn: existing && existing.cn || '',
-    en: existing && existing.en || '',
+    cn: campusMapEditorValue('campusEditCn').trim() || existing && existing.cn || '',
+    en: campusMapEditorValue('campusEditEn').trim() || existing && existing.en || '',
     category: campusMapEditorValue('campusEditCategory') || existing && existing.category || 'important',
     x,
     y,
@@ -981,6 +992,8 @@ function bindCampusMapEditorAutosave() {
   const fields = [
     'campusEditTitle',
     'campusEditLabel',
+    'campusEditCn',
+    'campusEditEn',
     'campusEditX',
     'campusEditY',
     'campusEditCategory',

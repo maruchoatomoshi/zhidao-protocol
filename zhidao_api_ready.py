@@ -25,9 +25,15 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+# Defaults to "*" (unchanged behavior) to avoid breaking the live Mini App.
+# Set CORS_ALLOWED_ORIGINS to a comma-separated list (e.g. "https://maruchoatomoshi.github.io")
+# once the real Telegram WebView Origin behavior has been confirmed in production.
+_cors_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] or ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -154,10 +160,22 @@ FRAME_DEFINITIONS = [
      "category": "path", "check": lambda s: s["theme_path"] == "cyberpunk"},
     {"id": "path-genshin", "name": "Путь Genshin", "desc": "Выбери путь Genshin",
      "category": "path", "check": lambda s: s["theme_path"] == "genshin"},
-    {"id": "blackwall-defender", "name": "Хранитель Заслона", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
+    {"id": "blackwall-defender", "name": "Хранитель Файрвола", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
      "category": "legendary", "check": lambda s: s["wildai_defender"]},
 ]
 FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
+
+# Title Player ("Титул дня") highlight presets — purely cosmetic, full-row
+# glow on the leaderboard for the day. No mechanical effect, no economy impact.
+TITLE_STYLE_PRESETS = [
+    {"id": "cyan", "name": "Кибер-циан"},
+    {"id": "gold", "name": "Золото протокола"},
+    {"id": "violet", "name": "Фиолетовый сигнал"},
+    {"id": "crimson", "name": "Багровая тревога"},
+    {"id": "emerald", "name": "Изумрудный канал"},
+]
+TITLE_STYLE_IDS = {p["id"] for p in TITLE_STYLE_PRESETS}
+TITLE_STYLE_DEFAULT = "cyan"
 
 
 def compute_unlocked_frames(c, telegram_id: int) -> list:
@@ -230,7 +248,9 @@ def verify_telegram_init_data(init_data: str) -> Optional[dict]:
 
 
 def request_has_internal_token(request: Request) -> bool:
-    return bool(API_INTERNAL_TOKEN and request.headers.get("x-internal-token") == API_INTERNAL_TOKEN)
+    if not API_INTERNAL_TOKEN:
+        return False
+    return hmac.compare_digest(request.headers.get("x-internal-token") or "", API_INTERNAL_TOKEN)
 
 
 def is_sensitive_api_request(request: Request) -> bool:
@@ -522,6 +542,35 @@ async def rate_limit_bucket_cleanup_loop():
                 del _rate_limit_buckets[ip]
 
 
+#  Gift-code guessing throttle: locks out a telegram_id after repeated
+#  "code not found" guesses, independent of the generic per-second rate
+#  limiter above (which only caps request rate, not brute-force attempts
+#  against a low-entropy code over time).
+GIFT_CODE_MAX_FAILED_ATTEMPTS = 5
+GIFT_CODE_LOCKOUT_WINDOW_SECONDS = 600
+_gift_code_failed_attempts: dict[int, deque] = {}
+_gift_code_lock = threading.Lock()
+
+
+def _gift_code_attempt_locked_out(telegram_id: int) -> bool:
+    now = time.monotonic()
+    with _gift_code_lock:
+        bucket = _gift_code_failed_attempts.setdefault(telegram_id, deque())
+        while bucket and now - bucket[0] > GIFT_CODE_LOCKOUT_WINDOW_SECONDS:
+            bucket.popleft()
+        return len(bucket) >= GIFT_CODE_MAX_FAILED_ATTEMPTS
+
+
+def _gift_code_record_failed_attempt(telegram_id: int) -> None:
+    with _gift_code_lock:
+        _gift_code_failed_attempts.setdefault(telegram_id, deque()).append(time.monotonic())
+
+
+def _gift_code_clear_failed_attempts(telegram_id: int) -> None:
+    with _gift_code_lock:
+        _gift_code_failed_attempts.pop(telegram_id, None)
+
+
 PRESENCE_CHECK_TYPES = {"morning", "evening", "manual"}
 PRESENCE_STATUSES = {
     "pending",
@@ -653,7 +702,7 @@ WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2
 WILD_AI_BREACH_REWARD_REP = 30
 WILD_AI_BREACH_REWARD_FRAGMENTS = 2
 WILD_AI_BREACH_FRAME_ID = "blackwall-defender"
-WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Заслона"
+WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Файрвола"
 
 WILD_AI_BREACH_QUESTION_SEEDS = {
     "attack": [
@@ -1276,6 +1325,8 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN protocol_fragments INTEGER DEFAULT 0")
     if 'equipped_frame' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN equipped_frame TEXT DEFAULT NULL")
+    if 'title_style' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN title_style TEXT DEFAULT NULL")
     if 'wildai_defender' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN wildai_defender INTEGER DEFAULT 0")
     if 'wildai_mvp' not in columns:
@@ -3708,7 +3759,7 @@ def get_user_profile_dossier(telegram_id: int):
     elif any(row[0] == "implant_red_dragon" for row in implants):
         title = "红龙载体 / Носитель Красного Дракона"
     elif raid_wins > 0:
-        title = "黑墙幸存者 / Выживший у Заслона"
+        title = "红墙幸存者 / Выживший у Красного Файрвола"
     else:
         title = "协议执行者 / Исполнитель протокола"
 
@@ -3753,6 +3804,260 @@ def get_user_profile_dossier(telegram_id: int):
             "raid_wins": raid_wins,
         },
         "status_line": f"状态：在线 // 权限：{permission_label} // 同步率：{sync_rate}%",
+    }
+
+
+# Trip window for Rewind's "duration" framing — there is no per-user
+# registration timestamp on `users`, so trip length must come from these
+# fixed dates rather than from the DB. Update before each trip.
+REWIND_TRIP_START = "2026-07-04"
+REWIND_TRIP_END = "2026-07-27"
+
+
+def _rewind_format_date_range(start_iso: str, end_iso: str) -> str:
+    start = datetime.strptime(start_iso, "%Y-%m-%d")
+    end = datetime.strptime(end_iso, "%Y-%m-%d")
+    return f"{start.strftime('%d.%m')} — {end.strftime('%d.%m.%Y')}"
+
+
+REWIND_CASE_PRIZE_INFO = {
+    "jackpot":             {"name": "ДЖЕКПОТ! +250★",              "rarity": "epic"},
+    "medium":              {"name": "+60 баллов",                    "rarity": "rare"},
+    "small":               {"name": "+30 баллов",                    "rarity": "common"},
+    "walk":                {"name": "+30 мин свободы",                "rarity": "common"},
+    "laundry":             {"name": "Вне очереди!",                  "rarity": "common"},
+    "skip":                {"name": "Иммунитет!",                    "rarity": "rare"},
+    "empty":               {"name": "Пустая миска риса",              "rarity": "common"},
+    "implant_guanxi":      {"name": "Имплант Гуаньси 关系",            "rarity": "epic"},
+    "implant_terracota":   {"name": "Имплант Терракота 兵马俑",        "rarity": "epic"},
+    "implant_panda":       {"name": "Имплант Панда 🐼",               "rarity": "epic"},
+    "implant_shaolin":     {"name": "Имплант Шаолинь 少林",            "rarity": "epic"},
+    "implant_linguasoft":  {"name": "Имплант Linguasoft 口才",        "rarity": "epic"},
+    "implant_caishen":     {"name": "Имплант Цайшэнь 财神",            "rarity": "epic"},
+    "implant_qilin":       {"name": "Имплант Цилинь 麒麟",             "rarity": "epic"},
+    "implant_red_dragon":  {"name": "Протокол Красный Дракон 红龙",   "rarity": "legendary"},
+}
+REWIND_RARITY_RANK = {"common": 0, "rare": 1, "epic": 2, "legendary": 3}
+# Must stay in sync with REWIND_CASE_PRIZE_INFO's "legendary" entries and
+# CARD_INFO's 5-star cards (genshin_<card_id>).
+REWIND_LEGENDARY_PRIZE_CODES = ["implant_red_dragon", "genshin_card_zhongli", "genshin_card_star"]
+
+
+def _rewind_admin_exclude_clause(column: str):
+    """SQL snippet + params to drop admin/test accounts from cross-user
+    Rewind comparisons, so 'best of the trip' titles reflect real students."""
+    if not ADMIN_IDS:
+        return "", []
+    placeholders = ','.join('?' * len(ADMIN_IDS))
+    return f" AND {column} NOT IN ({placeholders})", list(ADMIN_IDS)
+
+
+def _rewind_drop_info(prize_code: str):
+    """Resolve a casino_log.prize code to a display name + rarity for Rewind's
+    'best drop' slide. Cases use REWIND_CASE_PRIZE_INFO; prayers (genshin_*)
+    fall back to CARD_INFO rarity (5★→legendary, 4★→epic) or are skipped if
+    the drop was just points/a buff with no collectible attached."""
+    if prize_code.startswith("genshin_"):
+        card_id = prize_code[len("genshin_"):]
+        if card_id.startswith("card_") and card_id in CARD_INFO:
+            info = CARD_INFO[card_id]
+            rarity = "legendary" if info.get("rarity", 4) >= 5 else "epic"
+            return {"name": info.get("name", card_id), "rarity": rarity}
+        return None
+    info = REWIND_CASE_PRIZE_INFO.get(prize_code)
+    if not info:
+        return None
+    return {"name": info["name"], "rarity": info["rarity"]}
+
+
+@app.get("/api/rewind/{telegram_id}")
+def get_trip_rewind(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT full_name, points FROM users WHERE telegram_id=?", (telegram_id,))
+    user_row = c.fetchone()
+    if not user_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found")
+    full_name, final_balance = user_row
+    final_balance = final_balance or 0
+
+    c.execute(
+        '''SELECT
+             COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0),
+             COALESCE(SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END), 0)
+           FROM economy_log WHERE telegram_id=?''',
+        (telegram_id,),
+    )
+    points_earned, points_spent = c.fetchone()
+
+    c.execute("SELECT prize FROM casino_log WHERE telegram_id=?", (telegram_id,))
+    drop_rows = c.fetchall()
+    cases_opened = sum(1 for (prize,) in drop_rows if not prize.startswith("genshin_"))
+    best_drop = None
+    best_rank = -1
+    for (prize,) in drop_rows:
+        drop = _rewind_drop_info(prize)
+        if not drop:
+            continue
+        rank = REWIND_RARITY_RANK.get(drop["rarity"], 0)
+        if rank > best_rank:
+            best_rank = rank
+            best_drop = drop
+
+    c.execute(
+        '''SELECT COUNT(DISTINCT check_date),
+                  COUNT(DISTINCT CASE WHEN status IN ('confirmed','free_time','admin_approved') THEN check_date END)
+           FROM daily_checks WHERE telegram_id=?''',
+        (telegram_id,),
+    )
+    total_check_dates, ok_check_dates = c.fetchone()
+    attendance_pct = round(100 * ok_check_dates / total_check_dates) if total_check_dates else 100
+
+    c.execute(
+        "SELECT COUNT(*) FROM diary_entries WHERE telegram_id=? AND status IN ('submitted','locked')",
+        (telegram_id,),
+    )
+    diary_entries = c.fetchone()[0] or 0
+    c.execute(
+        '''SELECT AVG(ds.stars) FROM diary_stars ds
+           JOIN diary_entries de ON de.telegram_id=ds.telegram_id AND de.entry_date=ds.entry_date
+           WHERE ds.telegram_id=? AND de.status IN ('submitted','locked')''',
+        (telegram_id,),
+    )
+    diary_avg_stars = c.fetchone()[0] or 0
+
+    c.execute("SELECT COUNT(DISTINCT event_id) FROM event_participants WHERE telegram_id=?", (telegram_id,))
+    events_repelled = c.fetchone()[0] or 0
+    c.execute(
+        "SELECT COUNT(*), COALESCE(SUM(is_correct),0) FROM event_actions WHERE telegram_id=?",
+        (telegram_id,),
+    )
+    total_actions, correct_actions = c.fetchone()
+    event_accuracy = round(100 * correct_actions / total_actions) if total_actions else 0
+
+    c.execute("SELECT COUNT(*) FROM shop_purchases WHERE given_to=?", (telegram_id,))
+    gifts_given = c.fetchone()[0] or 0
+
+    # Role: who's the most pronounced at each highlight-worthy stat across the
+    # whole trip (not just against their own numbers), so the closing slide
+    # can call out "единственный, кто..." when that's actually true. Admins/
+    # test accounts are excluded from the comparison pool so their seed data
+    # doesn't steal the spotlight from real students; an admin viewing their
+    # own Rewind just gets the generic fallback title.
+    role = None
+    if telegram_id not in ADMIN_IDS:
+        clause, params = _rewind_admin_exclude_clause('telegram_id')
+        code_ph = ','.join('?' * len(REWIND_LEGENDARY_PRIZE_CODES))
+        c.execute(
+            f'''SELECT telegram_id, COUNT(*) FROM casino_log
+                WHERE prize IN ({code_ph}){clause}
+                GROUP BY telegram_id''',
+            REWIND_LEGENDARY_PRIZE_CODES + params,
+        )
+        legendary_holders = [tid for tid, cnt in c.fetchall() if cnt > 0]
+        if telegram_id in legendary_holders:
+            if len(legendary_holders) == 1:
+                role = {"title": "ЛЮБИМЕЦ РАНДОМА", "subtitle": "единственный, кто выбил легендарный дроп за поездку"}
+            else:
+                role = {"title": "ЛЮБИМЕЦ РАНДОМА", "subtitle": f"один из {len(legendary_holders)} операторов с легендарным дропом"}
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('telegram_id')
+            c.execute(
+                f'''SELECT telegram_id,
+                           100.0 * COUNT(DISTINCT CASE WHEN status IN ('confirmed','free_time','admin_approved') THEN check_date END)
+                           / COUNT(DISTINCT check_date)
+                    FROM daily_checks
+                    WHERE 1=1{clause}
+                    GROUP BY telegram_id''',
+                params,
+            )
+            attendance_rows = [(tid, pct) for tid, pct in c.fetchall() if pct is not None]
+            if attendance_rows:
+                top_pct = max(pct for _, pct in attendance_rows)
+                leaders = [tid for tid, pct in attendance_rows if pct == top_pct]
+                if telegram_id in leaders and top_pct >= 95:
+                    role = {
+                        "title": "ОБРАЗЦОВЫЙ ОПЕРАТОР",
+                        "subtitle": "лучшая дисциплина отметок за поездку" if len(leaders) == 1 else "в числе лучших по дисциплине отметок",
+                    }
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('telegram_id')
+            c.execute(
+                f'''SELECT telegram_id, COUNT(*), SUM(is_correct) FROM event_actions
+                    WHERE 1=1{clause}
+                    GROUP BY telegram_id
+                    HAVING COUNT(*) >= 5''',
+                params,
+            )
+            accuracy_rows = [(tid, 100.0 * correct / total) for tid, total, correct in c.fetchall()]
+            if accuracy_rows:
+                top_acc = max(acc for _, acc in accuracy_rows)
+                leaders = [tid for tid, acc in accuracy_rows if acc == top_acc]
+                if telegram_id in leaders:
+                    role = {
+                        "title": "СТРАТЕГ ПРОТОКОЛА",
+                        "subtitle": "самая высокая точность ответов в ивентах" if len(leaders) == 1 else "в числе самых точных операторов в ивентах",
+                    }
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('given_to')
+            c.execute(
+                f'''SELECT given_to, COUNT(*) FROM shop_purchases
+                    WHERE given_to IS NOT NULL{clause}
+                    GROUP BY given_to''',
+                params,
+            )
+            gift_rows = c.fetchall()
+            if gift_rows:
+                top_gifts = max(cnt for _, cnt in gift_rows)
+                leaders = [tid for tid, cnt in gift_rows if cnt == top_gifts]
+                if telegram_id in leaders and top_gifts >= 1:
+                    role = {
+                        "title": "МЕЦЕНАТ ПРОТОКОЛА",
+                        "subtitle": "больше всех делился баллами с другими операторами" if len(leaders) == 1 else "в числе самых щедрых операторов",
+                    }
+
+        if not role:
+            clause, params = _rewind_admin_exclude_clause('telegram_id')
+            c.execute(
+                f'''SELECT telegram_id, SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END) FROM economy_log
+                    WHERE 1=1{clause}
+                    GROUP BY telegram_id''',
+                params,
+            )
+            spend_rows = [(tid, v) for tid, v in c.fetchall() if v]
+            if spend_rows:
+                top_spend = max(v for _, v in spend_rows)
+                leaders = [tid for tid, v in spend_rows if v == top_spend]
+                if telegram_id in leaders and top_spend > 0:
+                    role = {
+                        "title": "ШОПОГОЛИК ПРОТОКОЛА",
+                        "subtitle": "потратил больше всех баллов за поездку" if len(leaders) == 1 else "в числе самых активных по тратам",
+                    }
+
+    conn.close()
+
+    if not role:
+        role = {"title": "ОПЕРАТОР ПРОТОКОЛА", "subtitle": "стабильно выполнял свою часть работы"}
+
+    return {
+        "name": full_name,
+        "date_range": _rewind_format_date_range(REWIND_TRIP_START, REWIND_TRIP_END),
+        "points_earned": points_earned,
+        "points_spent": points_spent,
+        "final_balance": final_balance,
+        "cases_opened": cases_opened,
+        "best_drop": best_drop,
+        "attendance_pct": attendance_pct,
+        "diary_entries": diary_entries,
+        "diary_avg_stars": round(diary_avg_stars, 1),
+        "events_repelled": events_repelled,
+        "event_accuracy": event_accuracy,
+        "gifts_given": gifts_given,
+        "role": role,
     }
 
 
@@ -4673,6 +4978,9 @@ async def redeem_gift_code(data: dict):
     if not code:
         raise HTTPException(status_code=400, detail="Code required")
 
+    if _gift_code_attempt_locked_out(telegram_id):
+        raise HTTPException(status_code=429, detail="Too many attempts, try again later")
+
     def _run():
         conn = get_conn()
         try:
@@ -4711,8 +5019,11 @@ async def redeem_gift_code(data: dict):
 
     result = await db_write(_run)
     if "error" in result:
+        if result["status"] == 404:
+            _gift_code_record_failed_attempt(telegram_id)
         raise HTTPException(status_code=result["status"], detail=result["error"])
 
+    _gift_code_clear_failed_attempts(telegram_id)
     return {"success": True, "reward_stars": result["reward_stars"], "new_points": result["new_points"]}
 
 
@@ -6241,6 +6552,7 @@ async def get_leaderboard():
         f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
                  CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
                  us.equipped_frame,
+                 CASE WHEN us.title_date=? THEN us.title_style ELSE NULL END as title_style,
                  (SELECT implant_id FROM user_implants
                   WHERE telegram_id=u.telegram_id
                   AND durability > 0
@@ -6265,7 +6577,7 @@ async def get_leaderboard():
                  WHERE u.telegram_id IS NOT NULL
                  AND u.telegram_id NOT IN ({placeholders})
                  ORDER BY u.rep_score DESC LIMIT 10''',
-        [today] + ADMIN_IDS,
+        [today, today] + ADMIN_IDS,
     )
     result = c.fetchall()
 
@@ -6312,8 +6624,9 @@ async def get_leaderboard():
             "theme_path": r[4],
             "has_title": bool(r[5]),
             "equipped_frame": r[6] if r[6] in FRAME_IDS else None,
-            "implant": r[7],
-            "card": r[8],
+            "title_style": r[7] if r[7] in TITLE_STYLE_IDS else None,
+            "implant": r[8],
+            "card": r[9],
             "rank_delta": rank_delta,
         })
     return out
@@ -6942,7 +7255,7 @@ async def netwatch_veil_breach(data: dict):
     target_id, target_name, locked_until = await db_write(_run)
     await send_telegram_message(
         target_id,
-        "🔴 NetWatch активировал «Взлом Заслона».\n"
+        "🔴 NetWatch активировал «Взлом Файрвола».\n"
         "Магазин и кейсы временно недоступны на 12 часов.",
     )
     return {"success": True, "target": target_name, "locked_until": locked_until}
@@ -7234,6 +7547,7 @@ def get_shop(telegram_id: int = 0):
 async def buy_item(data: dict):
     telegram_id = data.get("telegram_id")
     item_code = data.get("item_code")
+    title_style = data.get("style") if data.get("style") in TITLE_STYLE_IDS else TITLE_STYLE_DEFAULT
     if not telegram_id or not item_code:
         raise HTTPException(status_code=400, detail="Missing data")
 
@@ -7282,8 +7596,9 @@ async def buy_item(data: dict):
                 c.execute("""INSERT INTO user_status (telegram_id, double_win) VALUES (?,1)
                              ON CONFLICT(telegram_id) DO UPDATE SET double_win=1""", (telegram_id,))
             elif item_code == 'title_player':
-                c.execute("""INSERT INTO user_status (telegram_id, title_date) VALUES (?,?)
-                             ON CONFLICT(telegram_id) DO UPDATE SET title_date=?""", (telegram_id, today, today))
+                c.execute("""INSERT INTO user_status (telegram_id, title_date, title_style) VALUES (?,?,?)
+                             ON CONFLICT(telegram_id) DO UPDATE SET title_date=?, title_style=?""",
+                          (telegram_id, today, title_style, today, title_style))
 
             expiry_days = SHOP_ITEM_EXPIRY_DAYS.get(item_code)
             if expiry_days is not None:
@@ -7726,7 +8041,7 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
             '''INSERT INTO admin_action_logs
                (admin_id, target_id, action_type, points_delta, reason, created_at)
                VALUES (?, NULL, 'blackwall', 0, ?, ?)''',
-            (x_admin_id, 'BlackWall enabled' if enabled else 'BlackWall disabled', now_iso()),
+            (x_admin_id, 'Red Firewall enabled' if enabled else 'Red Firewall disabled', now_iso()),
         )
         conn.commit()
         conn.close()
@@ -9334,7 +9649,7 @@ def _check_blackwall(c, user_id):
     c.execute("SELECT value FROM settings WHERE key='blackwall'")
     bw = c.fetchone()
     if bw and bw[0] == '1' and (user_id is None or user_id not in ADMIN_IDS):
-        raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом BlackWall")
+        raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом Красного Файрвола")
 
 
 @app.get("/api/contracts")

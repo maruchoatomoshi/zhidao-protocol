@@ -31,7 +31,7 @@ const IMPLANT_DISPLAY_INFO = {
   implant_caishen: { name: '\u0426\u0430\u0439\u0448\u044d\u043d\u044c \u8d22\u795e', desc: '+15\u2605 \u043a\u0430\u0436\u0434\u044b\u0435 24 \u0447\u0430\u0441\u0430', icon: '\ud83d\udcb0' },
   implant_qilin: { name: '\u0426\u0438\u043b\u0438\u043d\u044c \u9e92\u9e9f', desc: '+10\u2605 \u0437\u0430 \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430 \u0426\u0438\u043b\u0438\u043d\u044f', icon: '\ud83d\udc09' },
   implant_red_dragon: { name: '\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0414\u0440\u0430\u043a\u043e\u043d \u7ea2\u9f99', desc: '+20% \u043d\u0430\u0433\u0440\u0430\u0434\u043d\u044b\u0445 \u00b7 \u0432\u0434\u0432\u043e\u0435 \u0432 \u0432\u043e\u0441\u043a\u0440\u0435\u0441\u0435\u043d\u044c\u0435 \u00b7 \u043f\u0435\u0440\u0435\u0445\u0432\u0430\u0442 \u00b7 \u0441\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0438\u043c\u043f\u0443\u043b\u044c\u0441', icon: '\ud83d\udc09' },
-  implant_netwatch: { name: '\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0414\u043e\u0437\u043e\u0440 \u7f51\u7edc\u5b88\u536b', desc: 'NetWatch: \u0443\u0434\u0430\u0440, Blackwall \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0441\u0435\u0442\u0438', icon: '\ud83d\udd34' },
+  implant_netwatch: { name: '\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0414\u043e\u0437\u043e\u0440 \u7f51\u7edc\u5b88\u536b', desc: 'NetWatch: \u0443\u0434\u0430\u0440, \u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0444\u0430\u0439\u0440\u0432\u043e\u043b \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0441\u0435\u0442\u0438', icon: '\ud83d\udd34' },
 };
 const LEGENDARY_IMPLANT_INFO = {
   implant_red_dragon: {
@@ -78,6 +78,7 @@ let legendaryImplantStatus = {};
 let hasPandaImplant = false;
 let scanAttempts = 0;
 let protocolFragments = 0;
+let activeCasinoSubtab = 'play';
 const CASE_IMAGES = {
   gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
   purple: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png',
@@ -99,23 +100,24 @@ function renderImplantPassives(desc) {
     <div class="inventory-desc-secondary">+ ${parts.slice(1).join(' · ')}</div>`;
 }
 
+const IMPLANT_IMGS = {
+  'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
+  'implant_terracota':  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/armor.png',
+  'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
+  'implant_panda':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',
+  'implant_shaolin':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',
+  'implant_linguasoft': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true',
+  'implant_caishen':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',
+  'implant_qilin':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',
+  'implant_netwatch':   'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true',
+};
+
 async function loadImplants(telegramId) {
   const pageContainer = document.getElementById('myImplantsPage');
   if (pageContainer) {
     pageContainer.innerHTML = '<div class="empty-state" style="padding:12px;">Загрузка имплантов...</div>';
   }
   if (!telegramId) return;
-  const IMPLANT_IMGS = {
-    'implant_guanxi':     'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',
-    'implant_terracota':  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/armor.png',
-    'implant_red_dragon': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',
-    'implant_panda':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true',
-    'implant_shaolin':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true',
-    'implant_linguasoft': 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true',
-    'implant_caishen':    'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true',
-    'implant_qilin':      'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',
-    'implant_netwatch':   'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true',
-  };
   try {
     const r = await fetch(`${API_URL}/api/casino/implants/${telegramId}`);
     if (!r.ok) return;
@@ -780,6 +782,7 @@ async function disassembleCard(id) {
 }
 
 function switchCasinoTab(mode, btn) {
+  activeCasinoSubtab = (mode === 'genshin') ? 'play' : mode;
   loadPoints(currentUserId);
   document.querySelectorAll('#page-casino .subtab').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -1297,9 +1300,9 @@ function updateCasinoButtonState(data) {
   btn.disabled = false;
   btn.classList.remove('case-btn-disabled');
   if (isAdmin) {
-    btn.textContent = '🏮 [ 开箱 // КЕЙС ] 🏮';
+    btn.innerHTML = '<i class="ti ti-box"></i> [ 开箱 // КЕЙС ] <i class="ti ti-box"></i>';
   } else {
-    btn.textContent = `🏮 [ 开箱 // СКАН · ${scans}/7 ] 🏮`;
+    btn.innerHTML = `<i class="ti ti-box"></i> [ 开箱 // СКАН · ${scans}/7 ] <i class="ti ti-box"></i>`;
   }
 }
 

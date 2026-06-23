@@ -1,5 +1,17 @@
 
-* { margin:0; padding:0; box-sizing:border-box; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+:focus { outline: none; }
+
+/* Tactile press feedback to replace the removed default tap-highlight.
+   Scoped to real buttons only — a blanket [onclick] selector matched every
+   card/tile/row in the app (huge style-recalc cost on big re-renders like
+   the shop catalog) and made large elements feel heavy/slow when scaled. */
+button, .btn {
+  transition: transform 0.08s ease;
+}
+button:active, .btn:active {
+  transform: scale(0.96);
+}
 
 :root {
   --red: #cc2200;
@@ -828,6 +840,44 @@ body.theme-genshin-light .lb-path-badge {
   color: #5d4320;
   border-color: rgba(120, 90, 40, 0.28);
 }
+
+/* Genshin Dark — same warm gold-on-deep-purple treatment as the light
+   variant above, mirrored in dark tones (was previously unstyled and fell
+   back to the default NetWatch-dark look). */
+body.theme-genshin-dark .lb-item,
+body.theme-genshin-dark .diary-rank-card {
+  border-color: rgba(219,177,101,0.18);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(219,177,101,0.1), transparent 42%),
+    linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+}
+body.theme-genshin-dark .lb-item.top1,
+body.theme-genshin-dark .diary-rank-card.top1 {
+  border-color: rgba(219,177,101,0.4);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(219,177,101,0.2), transparent 46%),
+    linear-gradient(90deg, rgba(219,177,101,0.1), transparent);
+}
+body.theme-genshin-dark .lb-item.top2,
+body.theme-genshin-dark .diary-rank-card.top2 {
+  border-color: rgba(200,200,210,0.22);
+  background: linear-gradient(90deg, rgba(200,200,210,0.07), rgba(255,255,255,0.015));
+}
+body.theme-genshin-dark .lb-item.top3,
+body.theme-genshin-dark .diary-rank-card.top3 {
+  border-color: rgba(200,121,65,0.3);
+  background: linear-gradient(90deg, rgba(200,121,65,0.1), rgba(255,255,255,0.015));
+}
+body.theme-genshin-dark .lb-subline,
+body.theme-genshin-dark .diary-rank-sub {
+  color: #a09880;
+}
+body.theme-genshin-dark .lb-path-badge {
+  background: rgba(255,255,255,0.06);
+  color: #e8e0d0;
+  border-color: rgba(219,177,101,0.25);
+}
+
 .page { display: none; padding: 0 0 10px; position: relative; z-index: 1; }
 .page.active { display: block; }
 
@@ -1613,6 +1663,7 @@ body.is-admin .profile-card-kicker {
 
 .profile-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 8px;
 }
@@ -1775,6 +1826,154 @@ body.is-admin .profile-card-kicker {
   font-size: 14px;
   color: var(--text3);
 }
+
+#profileShowcaseOptions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.profile-showcase-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px 12px;
+  border: 1px solid rgba(212,175,55,0.16);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+}
+.profile-showcase-card:hover {
+  background: rgba(212,175,55,0.08);
+}
+.profile-showcase-card-art {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.25);
+  font-size: 22px;
+  font-family: serif;
+  overflow: hidden;
+}
+.profile-showcase-card-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.profile-showcase-card-label {
+  font-size: 7px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  color: var(--text3);
+}
+.profile-showcase-card-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+.profile-showcase-card-detail {
+  font-size: 8px;
+  color: var(--text3);
+  line-height: 1.3;
+}
+.profile-showcase-card-equipped {
+  margin-top: 2px;
+  font-size: 7px;
+  font-family: monospace;
+  color: var(--gold);
+}
+.profile-showcase-card.equipped {
+  border-color: rgba(212,175,55,0.55);
+  background: rgba(212,175,55,0.1);
+}
+.profile-showcase-card-gold .profile-showcase-card-art {
+  border: 1px solid rgba(192,160,64,0.5);
+  box-shadow: inset 0 0 16px rgba(255,200,0,0.08), 0 0 10px rgba(192,160,64,0.16);
+}
+.profile-showcase-card-purple .profile-showcase-card-art {
+  border: 1px solid rgba(155,89,182,0.5);
+  box-shadow: inset 0 0 16px rgba(155,89,182,0.08), 0 0 10px rgba(155,89,182,0.16);
+}
+.profile-showcase-card-blue .profile-showcase-card-art {
+  border: 1px solid rgba(74,122,204,0.46);
+  box-shadow: inset 0 0 16px rgba(74,122,204,0.07), 0 0 10px rgba(74,122,204,0.14);
+}
+.profile-showcase-card-red .profile-showcase-card-art {
+  border: 1px solid rgba(204,51,51,0.55);
+  box-shadow: inset 0 0 16px rgba(204,51,51,0.08), 0 0 10px rgba(204,51,51,0.16);
+}
+.profile-showcase-card-auto .profile-showcase-card-art {
+  border: 1px dashed rgba(255,255,255,0.18);
+}
+
+.profile-badge-rank {
+  cursor: pointer;
+}
+.rank-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 11px;
+}
+.rank-breakdown-label em {
+  font-size: 9px;
+  color: var(--text3);
+  font-style: normal;
+}
+.rank-breakdown-value {
+  color: var(--gold);
+  font-family: monospace;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.rank-breakdown-total {
+  padding: 4px 4px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: monospace;
+}
+.rank-breakdown-total strong {
+  color: var(--gold);
+}
+.rank-breakdown-progress {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.rank-breakdown-progress-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.rank-breakdown-progress-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.rank-breakdown-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), #f0d060);
+}
+.rank-breakdown-progress-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text3);
+}
 .lb-item {
   position: relative;
   display: flex;
@@ -1851,9 +2050,12 @@ body.is-admin .profile-card-kicker {
   font-size: 13px;
   color: var(--text);
   flex: 1;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 .lb-points {
   position: relative;
@@ -1929,6 +2131,30 @@ body.is-admin .profile-card-kicker {
 @keyframes lb-frame-spin {
   to { transform: rotate(360deg); }
 }
+
+/* "Титул дня" (title_player) — full-row leaderboard highlight, purely cosmetic */
+.lb-item.title-glow {
+  border-color: var(--title-glow-color, rgba(255,255,255,0.2));
+  box-shadow: 0 0 16px var(--title-glow-shadow, transparent), inset 0 0 24px var(--title-glow-shadow, transparent);
+  background:
+    linear-gradient(90deg, var(--title-glow-tint, transparent), transparent 60%),
+    radial-gradient(circle at 0% 50%, rgba(212,175,55,0.055), transparent 38%),
+    linear-gradient(90deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+}
+.lb-item.title-cyan    { --title-glow-color: rgba(0,255,247,0.55); --title-glow-shadow: rgba(0,255,247,0.28); --title-glow-tint: rgba(0,255,247,0.12); }
+.lb-item.title-gold    { --title-glow-color: rgba(212,175,55,0.6);  --title-glow-shadow: rgba(212,175,55,0.3);  --title-glow-tint: rgba(212,175,55,0.14); }
+.lb-item.title-violet  { --title-glow-color: rgba(155,89,182,0.6); --title-glow-shadow: rgba(155,89,182,0.3); --title-glow-tint: rgba(155,89,182,0.14); }
+.lb-item.title-crimson { --title-glow-color: rgba(204,34,0,0.6);   --title-glow-shadow: rgba(204,34,0,0.3);   --title-glow-tint: rgba(204,34,0,0.14); }
+.lb-item.title-emerald { --title-glow-color: rgba(46,204,113,0.6); --title-glow-shadow: rgba(46,204,113,0.3); --title-glow-tint: rgba(46,204,113,0.14); }
+
+.title-style-swatch {
+  border-radius: 10px !important;
+}
+.title-style-swatch.title-cyan    { background: linear-gradient(135deg, #00fff7, #0a3d3d); box-shadow: 0 0 8px rgba(0,255,247,0.45); }
+.title-style-swatch.title-gold    { background: linear-gradient(135deg, #d4af37, #fff3b0); box-shadow: 0 0 8px rgba(212,175,55,0.45); }
+.title-style-swatch.title-violet  { background: linear-gradient(135deg, #9b59b6, #e91e8c); box-shadow: 0 0 8px rgba(155,89,182,0.45); }
+.title-style-swatch.title-crimson { background: linear-gradient(135deg, #cc2200, #ff6644); box-shadow: 0 0 8px rgba(204,34,0,0.45); }
+.title-style-swatch.title-emerald { background: linear-gradient(135deg, #2ecc71, #145a32); box-shadow: 0 0 8px rgba(46,204,113,0.45); }
 .lb-progress {
   height: 2px; border-radius: 1px;
   margin-top: 3px; opacity: 0.5;
@@ -2892,6 +3118,34 @@ body.theme-genshin-light .inv-btn-legendary {
   border-color: rgba(180,20,20,0.32);
   background: rgba(180,20,20,0.18);
   color: #f07a68;
+}
+/* In light themes, --bg2/--bg3 are mostly-transparent blacks/whites meant to
+   tint over a light page background. This modal instead sits on a dark
+   full-screen scrim, so a translucent sheet bg lets the dark scrim bleed
+   through and leaves dark theme text unreadable on a dark sheet. Use the
+   opaque --bg for the sheet itself, --bg3 (composited on that opaque sheet)
+   for fields inside it. */
+body.theme-nw-light .legendary-target-sheet,
+body.theme-admin-light .legendary-target-sheet,
+body.theme-genshin-light .legendary-target-sheet {
+  background:
+    radial-gradient(circle at 100% 0, var(--red-dim), transparent 44%),
+    var(--bg);
+  border-color: var(--red-border);
+}
+body.theme-nw-light .legendary-target-input,
+body.theme-admin-light .legendary-target-input,
+body.theme-genshin-light .legendary-target-input {
+  background: var(--bg3);
+  border-color: var(--red-border);
+  color: var(--text);
+}
+body.theme-nw-light .legendary-target-btn.cancel,
+body.theme-admin-light .legendary-target-btn.cancel,
+body.theme-genshin-light .legendary-target-btn.cancel {
+  background: var(--bg3);
+  border-color: var(--border);
+  color: var(--text2);
 }
 /* Generic in-app confirm dialog — used instead of tg.showPopup/window.confirm,
    both of which can be unsupported or hang on some Telegram clients. */
@@ -6046,6 +6300,20 @@ body.theme-genshin-light .raid-roster-chip {
 
 body.theme-genshin-light #raid-action-btn {
     background: #dbb165;
+    color: #3d4555;
+}
+
+body.theme-genshin-light #gsPraySubtitle {
+    color: rgba(75,83,102,0.6);
+}
+
+body.theme-genshin-light #gsPrayScreen {
+    background: radial-gradient(ellipse at 50% 40%, #f0ebe1 0%, #e6dcc8 60%, #d8c8a0 100%);
+}
+
+body.theme-genshin-light #genshinOpenBtn {
+    background: #dbb165;
+    border-color: #c9a455;
     color: #3d4555;
 }
 
@@ -9285,6 +9553,42 @@ body.theme-genshin-dark .home-event-card-kicker {
   color: rgba(219,177,101,0.68) !important;
 }
 
+/* Genshin Dark — gold-on-deep-purple casino/case cards, mirroring the
+   warm cream/gold light variant above (was previously unstyled, falling
+   back to the default NetWatch-dark look). */
+body.theme-genshin-dark .casino-balance,
+body.theme-genshin-dark .prize-result {
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-dark .case-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border-color: rgba(219,177,101,0.16);
+}
+
+body.theme-genshin-dark .case-card.gold {
+  border-color: rgba(219,177,101,0.32);
+}
+
+body.theme-genshin-dark .case-card.purple {
+  border-color: rgba(155,89,182,0.3);
+}
+
+body.theme-genshin-dark .case-card.black {
+  border-color: rgba(200,121,65,0.28);
+}
+
+body.theme-genshin-dark .case-cn.g,
+body.theme-genshin-dark .case-pct.g {
+  color: #dbb165;
+}
+
+body.theme-genshin-dark .case-cn.p,
+body.theme-genshin-dark .case-pct.p {
+  color: #c98bff;
+}
+
 body.theme-genshin-dark .schedule-item,
 body.theme-genshin-dark .shop-item,
 body.theme-genshin-dark .inventory-item,
@@ -11665,22 +11969,46 @@ body.theme-genshin-dark .raid-result-text {
     color: #e8e0d0;
 }
 
-/* ===== NETWATCH LIGHT: keep the raid overlay on its dark "night raid"
-   palette. The overlay background stays dark regardless of theme, but
-   --text/--gold/--red flip to light-theme (dark-on-light) values in
-   theme-nw-light, making boss name/labels nearly invisible on the dark
-   overlay. Re-pin those variables to their dark-theme values, scoped to
-   the overlay only. */
-body.theme-nw-light .raid-overlay {
-    --text: #ffffff;
-    --text2: #cccccc;
-    --text3: #888888;
-    --gold: #d4af37;
-    --gold-dim: rgba(212,175,55,0.1);
-    --gold-border: rgba(212,175,55,0.25);
-    --red: #cc2200;
-    --red-dim: rgba(180,20,20,0.15);
-    --red-border: rgba(180,20,20,0.35);
+/* ===== NETWATCH LIGHT: render the raid popup on the light "paper"
+   palette like the rest of the light theme, instead of forcing the dark
+   "night raid" look. */
+body.theme-nw-light .raid-content {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.5), transparent 35%),
+      linear-gradient(145deg, rgba(204,34,0,0.05), #f4f1ed 55%);
+    border-color: rgba(204,34,0,0.35);
+    box-shadow: 0 0 35px rgba(204,34,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.03);
+}
+
+body.theme-nw-light .boss-title { color: #993333; }
+
+body.theme-nw-light .raid-progress-container {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+}
+
+body.theme-nw-light .raid-kicker,
+body.theme-nw-light .raid-meter-state {
+    border-color: rgba(122,80,16,0.25);
+    background: rgba(122,80,16,0.08);
+}
+
+body.theme-nw-light .raid-brief-card,
+body.theme-nw-light .raid-roster-box,
+body.theme-nw-light .raid-result-panel {
+    border-color: rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.5);
+}
+
+body.theme-nw-light .raid-roster-chip {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.1);
+    color: #1a1a1a;
+}
+
+body.theme-nw-light .raid-chip {
+    border-color: rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.04);
 }
 
 /* ===== RAID VISUAL ENHANCEMENTS ===== */
@@ -12562,6 +12890,14 @@ body.is-architect .profile-card-spark.spark-bl {
     lobbyBossFloat  9s ease-in-out infinite,
     lobbyBossGlitch 14s linear infinite;
   will-change: transform, filter;
+}
+
+/* Lobby boss art reads too small/cramped under the lobby card — give it a taller,
+   higher box so object-fit:contain renders it larger and shifted upward. */
+.event-overlay.event-state-lobby .event-hero img,
+.event-overlay.event-state-lobby .event-hero-video {
+  top: 60px;
+  height: calc(100vh + 30px - 60px);
 }
 
 /* Scan line flash on top of image during glitch — uses hero::after which already sweeps */
@@ -15295,6 +15631,7 @@ body.lite-mode .leaderboard-modal { backdrop-filter: none !important; -webkit-ba
 body.lite-mode .admin-panel { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.lite-mode .event-dialog { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.lite-mode .popup-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.lite-mode #diaryStarsPopup { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.lite-mode .contract-card { animation: none !important; }
 body.lite-mode .lb-item { animation: none !important; }
 body.lite-mode .inventory-item { box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; }
@@ -16639,10 +16976,14 @@ body.theme-genshin-dark .campus-map-row {
   border-color: rgba(219,177,101,0.16);
 }
 
-body.theme-genshin-light .campus-map-popup-card,
+body.theme-genshin-light .campus-map-popup-card {
+  border-color: rgba(219,177,101,0.32);
+  background: rgba(252,247,236,0.98);
+  box-shadow: 0 20px 60px rgba(88, 56, 16, 0.22);
+}
 body.theme-genshin-dark .campus-map-popup-card {
   border-color: rgba(219,177,101,0.32);
-  background: var(--bg3);
+  background: rgba(26,22,40,0.98);
   box-shadow: 0 20px 60px rgba(88, 56, 16, 0.22);
 }
 
@@ -18001,3 +18342,218 @@ body.wild-ai-breach .diary-section-title {
   0%, 100% { box-shadow: 0 0 0 4px rgba(0,229,255,0.18), 0 0 16px rgba(0,229,255,0.4); }
   50% { box-shadow: 0 0 0 9px rgba(0,229,255,0.05), 0 0 28px rgba(0,229,255,0.8); }
 }
+
+/* ===== Trip Rewind (Wrapped-style story slides) =====
+   Fixed brand palette, independent of the active theme. */
+.rewind-overlay {
+  position: fixed; inset: 0; z-index: 9600;
+  background: #05060a; overflow: hidden;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  color: #fff; user-select: none; -webkit-user-select: none;
+}
+.rewind-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(circle at 20% 12%, color-mix(in srgb, var(--accent,#00ff66) 26%, transparent), transparent 46%),
+    radial-gradient(circle at 85% 88%, color-mix(in srgb, var(--accent,#00ff66) 16%, transparent), transparent 52%),
+    #05060a;
+  transition: background 0.45s ease;
+}
+.rewind-bars {
+  position: relative; z-index: 3;
+  display: flex; gap: 4px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 6px;
+}
+.rewind-bar {
+  flex: 1; height: 3px; border-radius: 3px;
+  background: rgba(255,255,255,0.22); overflow: hidden;
+}
+.rewind-bar-fill { height: 100%; width: 0; background: #fff; }
+.rewind-bar.done .rewind-bar-fill { width: 100%; }
+@keyframes rewindBarFill { from { width: 0; } to { width: 100%; } }
+.rewind-close {
+  position: absolute; z-index: 5;
+  top: calc(8px + env(safe-area-inset-top, 0px)); right: 12px;
+  background: none; border: none; color: rgba(255,255,255,0.6);
+  font-size: 22px; line-height: 1; cursor: pointer; padding: 6px;
+}
+.rewind-stage {
+  position: relative; z-index: 2;
+  height: 100%; box-sizing: border-box;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  padding: 24px 28px calc(70px + env(safe-area-inset-bottom, 0px));
+}
+.rewind-kicker {
+  font-size: 14px; letter-spacing: 1px; line-height: 1.4;
+  text-transform: uppercase; color: rgba(255,255,255,0.78);
+  margin-bottom: 20px; max-width: 320px;
+}
+.rewind-big {
+  font-size: 92px; font-weight: 900; line-height: 0.92;
+  color: var(--accent, #00ff66);
+  text-shadow: 0 0 34px color-mix(in srgb, var(--accent,#00ff66) 60%, transparent);
+}
+.rewind-big.text { font-size: 46px; letter-spacing: 1px; }
+.rewind-label {
+  margin-top: 20px; font-size: 16px; line-height: 1.4;
+  color: rgba(255,255,255,0.9); max-width: 320px;
+}
+.rewind-sub {
+  margin-top: 10px; font-size: 12.5px; letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.5); max-width: 300px;
+}
+.rewind-role-badge {
+  width: 70px; height: 70px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; color: var(--accent, #00ff66);
+  border: 2px solid color-mix(in srgb, var(--accent,#00ff66) 55%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 30px color-mix(in srgb, var(--accent,#00ff66) 40%, transparent);
+}
+/* entrance animation */
+.rewind-slide-enter .rewind-kicker { animation: rewindUp 0.5s ease both; }
+.rewind-slide-enter .rewind-big,
+.rewind-slide-enter .rewind-role-badge { animation: rewindPop 0.6s cubic-bezier(.2,1.3,.4,1) both 0.1s; }
+.rewind-slide-enter .rewind-label { animation: rewindUp 0.5s ease both 0.25s; }
+.rewind-slide-enter .rewind-sub  { animation: rewindUp 0.5s ease both 0.35s; }
+.rewind-slide-enter .rewind-card { animation: rewindPop 0.55s cubic-bezier(.2,1.2,.4,1) both 0.05s; }
+@keyframes rewindUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rewindPop { from { opacity: 0; transform: scale(0.82); } to { opacity: 1; transform: scale(1); } }
+/* final shareable card */
+.rewind-card {
+  width: 100%; max-width: 340px; box-sizing: border-box;
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+  border: 1px solid color-mix(in srgb, var(--accent,#00ff66) 42%, transparent);
+  border-radius: 20px; padding: 22px 22px 18px;
+  box-shadow: 0 0 36px color-mix(in srgb, var(--accent,#00ff66) 18%, transparent);
+}
+.rewind-card-head { text-align: center; margin-bottom: 16px; }
+.rewind-card-title {
+  font-size: 22px; font-weight: 900; letter-spacing: 2px;
+  color: var(--accent, #00ff66);
+}
+.rewind-card-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+.rewind-card-role {
+  text-align: center; font-size: 18px; font-weight: 800; letter-spacing: 1px;
+  color: #fff; margin-bottom: 18px;
+  padding: 8px; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent,#00ff66) 14%, transparent);
+}
+.rewind-card-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 14px;
+}
+.rewind-card-row span { color: rgba(255,255,255,0.7); }
+.rewind-card-row b { font-size: 18px; color: var(--accent, #00ff66); }
+.rewind-card-foot {
+  margin-top: 16px; text-align: center;
+  font-size: 11px; letter-spacing: 0.5px; color: rgba(255,255,255,0.45);
+}
+
+/* ===== Trip Rewind — ambient effects layer ===== */
+/* drifting glow on the base background */
+.rewind-bg::before {
+  content: ''; position: absolute; inset: -30%;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent,#00ff66) 18%, transparent), transparent 40%),
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent,#00ff66) 12%, transparent), transparent 45%);
+  animation: rewindDrift 14s ease-in-out infinite alternate;
+}
+@keyframes rewindDrift {
+  from { transform: translate(-4%, -3%) scale(1); }
+  to   { transform: translate(5%, 4%) scale(1.12); }
+}
+/* synthwave perspective grid at the bottom */
+.rewind-grid {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 44%; z-index: 0;
+  overflow: hidden; opacity: 0.45; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 92%);
+  mask-image: linear-gradient(to top, #000 0%, transparent 92%);
+}
+.rewind-grid::before {
+  content: ''; position: absolute; left: -50%; right: -50%; top: 0; bottom: -40%;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent,#00ff66) 50%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent,#00ff66) 50%, transparent) 1px, transparent 1px);
+  background-size: 42px 42px;
+  transform: rotateX(72deg); transform-origin: top center;
+  animation: rewindGridScroll 1.6s linear infinite;
+}
+@keyframes rewindGridScroll { from { background-position: 0 0; } to { background-position: 0 42px; } }
+/* floating particles */
+.rewind-particles { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.rewind-particle {
+  position: absolute; bottom: -12px; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent,#00ff66) 75%, #fff);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent,#00ff66) 80%, transparent);
+  opacity: 0; animation-name: rewindFloat; animation-timing-function: linear; animation-iteration-count: infinite;
+}
+@keyframes rewindFloat {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  12%  { opacity: 0.9; }
+  88%  { opacity: 0.5; }
+  100% { transform: translateY(-108vh) scale(0.4); opacity: 0; }
+}
+/* subtle scanlines */
+.rewind-scanlines {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.5;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 3px);
+  animation: rewindScan 9s linear infinite;
+}
+@keyframes rewindScan { from { background-position: 0 0; } to { background-position: 0 140px; } }
+/* slide-change flash */
+.rewind-flash {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--accent,#00ff66) 38%, transparent), transparent 60%);
+}
+.rewind-flash.go { animation: rewindFlash 0.6s ease-out; }
+@keyframes rewindFlash {
+  0%   { opacity: 0.7; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+/* keep stage above ambient layers */
+.rewind-stage { z-index: 4; }
+.rewind-bars, .rewind-close { z-index: 5; }
+/* big-number wrapper hosts the rotating rays */
+.rewind-big-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+.rewind-rays {
+  position: absolute; inset: 0; margin: auto; width: 360px; height: 360px; z-index: 0;
+  pointer-events: none; opacity: 0.6;
+  background: repeating-conic-gradient(from 0deg,
+    color-mix(in srgb, var(--accent,#00ff66) 24%, transparent) 0deg 6deg,
+    transparent 6deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 6%, transparent 66%);
+  mask-image: radial-gradient(circle, #000 6%, transparent 66%);
+  animation: rewindSpin 16s linear infinite;
+}
+.rewind-big { position: relative; z-index: 1; }
+@keyframes rewindSpin { to { transform: rotate(360deg); } }
+/* breathing glow on the big number (entrance pop + looping glow) */
+.rewind-slide-enter .rewind-big,
+.rewind-slide-enter .rewind-role-badge {
+  animation: rewindPop 0.6s cubic-bezier(.2,1.3,.4,1) both 0.1s,
+             rewindGlow 2.6s ease-in-out infinite 0.7s;
+}
+@keyframes rewindGlow {
+  0%, 100% { text-shadow: 0 0 24px color-mix(in srgb, var(--accent,#00ff66) 45%, transparent); }
+  50%      { text-shadow: 0 0 46px color-mix(in srgb, var(--accent,#00ff66) 90%, transparent); }
+}
+/* rotating ring behind the role badge */
+.rewind-role-badge { position: relative; }
+.rewind-role-badge::before {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%; z-index: -1;
+  background: conic-gradient(from 0deg, transparent,
+    color-mix(in srgb, var(--accent,#00ff66) 85%, transparent), transparent 62%);
+  animation: rewindSpin 3s linear infinite;
+}
+/* shine sweep across the final card */
+.rewind-card { position: relative; overflow: hidden; }
+.rewind-card::after {
+  content: ''; position: absolute; top: 0; left: -60%; width: 42%; height: 100%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,0.18), transparent);
+  transform: skewX(-18deg); pointer-events: none;
+  animation: rewindShine 2.8s ease-in-out infinite 0.9s;
+}
+@keyframes rewindShine { 0% { left: -60%; } 60%, 100% { left: 135%; } }

@@ -67,7 +67,7 @@ function applyWildAiBreachState(settings) {
   const wildAiCardCopy = document.querySelector('#homeWildAiEventCard .home-event-card-copy');
   if (wildAiCardCopy) {
     wildAiCardCopy.textContent = active
-      ? 'BLACKWALL ПРОБИТ — система захвачена. Жмите для деталей операции'
+      ? 'КРАСНЫЙ ФАЙРВОЛ ПРОБИТ — система захвачена. Жмите для деталей операции'
       : 'Операция вытеснения дикого ИИ из системы';
   }
 }
@@ -90,7 +90,7 @@ function renderWildAiBreachBanner(settings) {
   }
   const phrase = settings.breach_phrase || { glitch: '', translation: '' };
   banner.innerHTML = `
-    <div class="wab-line1">SYSTEM ERROR // BLACKWALL: ОФФЛАЙН</div>
+    <div class="wab-line1">SYSTEM ERROR // RED FIREWALL: ОФФЛАЙН</div>
     <div class="wab-line2">${phrase.glitch}<span class="wab-translation"> — "${phrase.translation}"</span></div>
     <div class="wab-timer" id="wildAiBreachTimer"></div>
   `;
