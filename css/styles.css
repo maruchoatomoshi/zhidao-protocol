@@ -5908,7 +5908,7 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 252px;
+    height: 320px;
 }
 
 .boss-frame::before,
@@ -5919,24 +5919,24 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 }
 
 .boss-frame::before {
-    width: 246px;
-    height: 270px;
+    width: 312px;
+    height: 344px;
     border-radius: 30px;
     border: 1px solid rgba(204,34,0,0.22);
     box-shadow: 0 0 28px rgba(204,34,0,0.08);
 }
 
 .boss-frame::after {
-    width: 170px;
-    height: 170px;
+    width: 215px;
+    height: 215px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(212,175,55,0.14), transparent 70%);
     filter: blur(6px);
 }
 
 .boss-img {
-    width: 228px;
-    height: 252px;
+    width: 290px;
+    height: 320px;
     object-fit: contain;
     object-position: center center;
     border-radius: 28px;
