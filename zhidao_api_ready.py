@@ -3975,6 +3975,62 @@ def get_trip_rewind(telegram_id: int):
     c.execute("SELECT COUNT(*) FROM shop_purchases WHERE given_to=?", (telegram_id,))
     gifts_given = c.fetchone()[0] or 0
 
+    # Weekly activity timeline: bucket points earned into 7-day windows from
+    # the trip start so the "когда ты фармил больше всего" slide has data
+    # without needing a new table — reuses economy_log timestamps.
+    trip_start_dt = datetime.strptime(REWIND_TRIP_START, "%Y-%m-%d")
+    c.execute(
+        "SELECT created_at, amount FROM economy_log WHERE telegram_id=? AND amount>0",
+        (telegram_id,),
+    )
+    week_totals = {}
+    for created_at, amount in c.fetchall():
+        entry_dt = parse_iso(created_at) or trip_start_dt
+        week_idx = max(0, (entry_dt - trip_start_dt).days // 7)
+        week_totals[week_idx] = week_totals.get(week_idx, 0) + amount
+    timeline = [
+        {"label": f"Нед. {i + 1}", "value": week_totals[i]}
+        for i in sorted(week_totals.keys())
+    ]
+
+    # Cross-user comparison ("top X% by points earned"), same admin-exclusion
+    # rule as the role highlights below — admins viewing their own Rewind
+    # don't get a percentile since they're not part of the comparison pool.
+    percentile = None
+    beaten_count = None
+    if telegram_id not in ADMIN_IDS:
+        clause, params = _rewind_admin_exclude_clause('telegram_id')
+        c.execute(
+            f'''SELECT telegram_id, SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END)
+                FROM economy_log
+                WHERE 1=1{clause}
+                GROUP BY telegram_id''',
+            params,
+        )
+        earn_rows = [(tid, v or 0) for tid, v in c.fetchall()]
+        total_n = len(earn_rows)
+        if total_n > 0:
+            ahead = sum(1 for _, v in earn_rows if v > points_earned)
+            beaten_count = max(0, total_n - ahead - 1)
+            percentile = max(1, round(100 * (ahead + 1) / total_n))
+
+    # Anti-record: a self-deprecating stat for balance against the otherwise
+    # all-praise slides. Prefers a string of empty case draws (funnier/more
+    # relatable than a raw points number) and falls back to the single
+    # biggest one-shot spend.
+    empty_draws = sum(1 for (prize,) in drop_rows if prize == "empty")
+    c.execute(
+        "SELECT amount FROM economy_log WHERE telegram_id=? AND amount<0 ORDER BY amount ASC LIMIT 1",
+        (telegram_id,),
+    )
+    biggest_spend_row = c.fetchone()
+    if empty_draws >= 3:
+        antirecord = {"label": "невезение протокола", "value": f"{empty_draws}x", "sub": "пустая миска риса в кейсах"}
+    elif biggest_spend_row and biggest_spend_row[0] <= -50:
+        antirecord = {"label": "самый дорогой порыв", "value": f"-{abs(biggest_spend_row[0])}", "sub": "потрачено за один раз"}
+    else:
+        antirecord = {"label": "без явных проколов", "value": "0", "sub": "ни одного заметного прокола за поездку"}
+
     # Role: who's the most pronounced at each highlight-worthy stat across the
     # whole trip (not just against their own numbers), so the closing slide
     # can call out "единственный, кто..." when that's actually true. Admins/
@@ -4094,6 +4150,10 @@ def get_trip_rewind(telegram_id: int):
         "event_accuracy": event_accuracy,
         "gifts_given": gifts_given,
         "role": role,
+        "timeline": timeline,
+        "percentile": percentile,
+        "beaten_count": beaten_count,
+        "antirecord": antirecord,
     }
 
 

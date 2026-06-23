@@ -35,7 +35,10 @@ const REWIND_SLIDE_META = {
   diary:      { icon: 'ti-book',         hanzi: '记' },
   events:     { icon: 'ti-bolt',         hanzi: '盾' },
   role:       { icon: 'ti-crown',        hanzi: '命' },
-  card:       { icon: 'ti-share',        hanzi: '协议' }
+  card:       { icon: 'ti-share',        hanzi: '协议' },
+  timeline:   { icon: 'ti-chart-bar',    hanzi: '迹' },
+  compare:    { icon: 'ti-trophy',       hanzi: '比' },
+  antirecord: { icon: 'ti-mood-confuzed',hanzi: '囧' }
 };
 
 // --- DEMO DATA (placeholder until /api/rewind/{telegram_id}) ---
@@ -56,7 +59,16 @@ const REWIND_DEMO_DATA = {
   role: {
     title: 'ЛЮБИМЕЦ РАНДОМА',
     subtitle: 'единственный, кто выбил легендарный имплант за поездку'
-  }
+  },
+  timeline: [
+    { label: 'Нед. 1', value: 420 },
+    { label: 'Нед. 2', value: 610 },
+    { label: 'Нед. 3', value: 540 },
+    { label: 'Нед. 4', value: 270 }
+  ],
+  percentile: 12,
+  beaten_count: 58,
+  antirecord: { label: 'самый дорогой порыв', value: '-180', sub: 'потрачено за один раз' }
 };
 
 let _rewindSlides = [];
@@ -66,7 +78,7 @@ let _rewindTimer = null;
 function _rewindBuildSlides(d) {
   const dropColor = REWIND_RARITY_COLOR[d.best_drop && d.best_drop.rarity] || '#00ff66';
   const dropLabel = REWIND_RARITY_LABEL[d.best_drop && d.best_drop.rarity] || '';
-  return [
+  const slides = [
     { type: 'intro', key: 'intro', accent: '#00ff66',
       kicker: 'ZHIDAO PROTOCOL', big: 'REWIND', bigClass: 'text',
       label: d.date_range, sub: 'твоя поездка в цифрах' },
@@ -81,13 +93,29 @@ function _rewindBuildSlides(d) {
 
     { type: 'stat', key: 'cases', accent: '#6aa0d4',
       kicker: 'ты открыл', value: d.cases_opened, count: true,
-      label: 'кейсов и молитв', sub: 'азарт — это тоже стратегия' },
+      label: 'кейсов и молитв', sub: 'азарт — это тоже стратегия' }
+  ];
 
-    { type: 'stat', key: 'drop', accent: dropColor, rays: true,
+  if (d.timeline && d.timeline.length) {
+    slides.push({ type: 'timeline', key: 'timeline', accent: '#6aa0d4',
+      kicker: 'твоя активность по неделям', timeline: d.timeline,
+      sub: 'баллы, заработанные за каждую неделю' });
+  }
+
+  slides.push(
+    { type: 'stat', key: 'drop', accent: dropColor, rays: true, dropRarity: d.best_drop ? d.best_drop.rarity : null,
       kicker: 'твой лучший дроп', big: d.best_drop ? d.best_drop.name : '—', bigClass: 'text',
       dropImage: d.best_drop ? d.best_drop.image_url : null,
-      label: dropLabel, sub: 'не каждому так везёт' },
+      label: dropLabel, sub: 'не каждому так везёт' }
+  );
 
+  if (d.percentile) {
+    slides.push({ type: 'stat', key: 'compare', accent: '#ffd24a',
+      kicker: 'по баллам за поездку ты вошёл', big: 'ТОП-' + d.percentile + '%', bigClass: 'text',
+      label: d.beaten_count ? 'обогнал ' + d.beaten_count + ' операторов' : 'среди всех операторов поездки' });
+  }
+
+  slides.push(
     { type: 'stat', key: 'attendance', accent: '#00ff66',
       kicker: 'дисциплина отметок', value: d.attendance_pct, suffix: '%', count: true,
       label: 'ты почти не пропускал сбор', sub: 'Михаил Юрьевич это заметил' },
@@ -95,8 +123,16 @@ function _rewindBuildSlides(d) {
     { type: 'stat', key: 'diary', accent: '#ffd24a',
       kicker: 'дневник оператора', value: d.diary_entries, count: true,
       label: 'записей сдано',
-      sub: 'средняя оценка ' + (d.diary_avg_stars || 0).toFixed(1) + ' ★' },
+      sub: 'средняя оценка ' + (d.diary_avg_stars || 0).toFixed(1) + ' ★' }
+  );
 
+  if (d.antirecord) {
+    slides.push({ type: 'stat', key: 'antirecord', accent: '#ff7a45',
+      kicker: 'и для баланса — антирекорд', big: d.antirecord.value, bigClass: 'text',
+      label: d.antirecord.label, sub: d.antirecord.sub });
+  }
+
+  slides.push(
     { type: 'stat', key: 'events', accent: '#00ff66',
       kicker: 'ты отражал атаки Архитектора и WildAI', value: d.events_repelled, count: true,
       label: 'раз спасал протокол',
@@ -108,7 +144,9 @@ function _rewindBuildSlides(d) {
       subtitle: d.role ? d.role.subtitle : '' },
 
     { type: 'card', key: 'card', accent: '#00ff66', data: d }
-  ];
+  );
+
+  return slides;
 }
 
 async function loadRewindData() {
@@ -199,7 +237,23 @@ function _rewindRender() {
   if (_rewindTimer) clearTimeout(_rewindTimer);
   if (dur > 0 && !isLast) _rewindTimer = setTimeout(() => _rewindNext(), dur);
 
+  // stinger on the two "wow" moments: a legendary best-drop and the final card
+  if (slide.key === 'card' || (slide.key === 'drop' && slide.dropRarity === 'legendary')) {
+    _rewindPlayStinger();
+  }
+
   try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
+}
+
+function _rewindPlayStinger() {
+  const audio = document.getElementById('rewindStingerAudio');
+  if (!audio) return;
+  try {
+    audio.currentTime = 0;
+    audio.volume = 0.55;
+    const stopAt = setTimeout(() => { try { audio.pause(); } catch (e) {} }, 2500);
+    audio.play().catch(() => clearTimeout(stopAt));
+  } catch (e) {}
 }
 
 function _rewindHanziBg(key) {
@@ -222,6 +276,25 @@ function _rewindSlideHtml(slide) {
       <div class="rewind-role-badge"><i class="ti ${REWIND_SLIDE_META.role.icon}"></i></div>
       <div class="rewind-big text">${escapeHtml(slide.title)}</div>
       <div class="rewind-label">${escapeHtml(slide.subtitle)}</div>`;
+  }
+
+  if (slide.type === 'timeline') {
+    const maxVal = Math.max(1, ...slide.timeline.map(t => t.value));
+    const bars = slide.timeline.map(t => {
+      const pct = Math.max(4, Math.round(100 * t.value / maxVal));
+      return `
+        <div class="rewind-tl-col">
+          <div class="rewind-tl-val">${escapeHtml(String(t.value))}</div>
+          <div class="rewind-tl-bar-wrap"><div class="rewind-tl-bar" style="height:${pct}%;"></div></div>
+          <div class="rewind-tl-label">${escapeHtml(t.label)}</div>
+        </div>`;
+    }).join('');
+    return `
+      ${_rewindHanziBg(slide.key)}
+      ${_rewindIconHtml(slide.key)}
+      <div class="rewind-kicker">${escapeHtml(slide.kicker)}</div>
+      <div class="rewind-timeline">${bars}</div>
+      ${slide.sub ? `<div class="rewind-sub">${escapeHtml(slide.sub)}</div>` : ''}`;
   }
 
   const rays = slide.rays ? '<div class="rewind-rays"></div>' : '';
@@ -255,10 +328,81 @@ function _rewindCardHtml(d) {
         ${row('Дисциплина', d.attendance_pct + '%')}
         ${row('Спасений протокола', d.events_repelled)}
       </div>
-      <div class="rewind-card-foot">智能电子解决方案 · сделай скриншот ↗</div>
+      <div class="rewind-card-foot">智能电子解决方案</div>
     </div>
-    <div class="rewind-sub" style="margin-top:18px;">нажми, чтобы закрыть</div>`;
+    <button class="rewind-share-btn" onclick="event.stopPropagation(); _rewindShareCard();"><i class="ti ti-download"></i> сохранить картинку</button>
+    <div class="rewind-sub" style="margin-top:10px;">нажми мимо кнопки, чтобы закрыть</div>`;
 }
+
+function _rewindShareCard() {
+  const cardSlide = _rewindSlides[_rewindSlides.length - 1];
+  const d = cardSlide ? cardSlide.data : null;
+  if (!d) return;
+  const accent = '#00ff66';
+  const w = 720, h = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, '#0a0f0a');
+  bg.addColorStop(1, '#040604');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 5;
+  ctx.strokeRect(18, 18, w - 36, h - 36);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = accent;
+  ctx.font = '900 46px sans-serif';
+  ctx.fillText('ZHIDAO REWIND', w / 2, 130);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '24px sans-serif';
+  ctx.fillText(d.date_range || '', w / 2, 170);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 34px sans-serif';
+  ctx.fillText(d.role ? d.role.title : '—', w / 2, 260);
+
+  const rows = [
+    ['Заработано', d.points_earned],
+    ['Кейсов открыто', d.cases_opened],
+    ['Дисциплина', (d.attendance_pct || 0) + '%'],
+    ['Спасений протокола', d.events_repelled]
+  ];
+  let y = 380;
+  rows.forEach(([label, val]) => {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '26px sans-serif';
+    ctx.fillText(label, 70, y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = accent;
+    ctx.font = '900 30px sans-serif';
+    ctx.fillText(String(val), w - 70, y);
+    y += 90;
+  });
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '18px sans-serif';
+  ctx.fillText('智能电子解决方案', w / 2, h - 60);
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'zhidao_rewind.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  });
+}
+window._rewindShareCard = _rewindShareCard;
 
 function _rewindCountUp(el, to, dur, suffix) {
   const start = performance.now();
