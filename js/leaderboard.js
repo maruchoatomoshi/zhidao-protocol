@@ -194,7 +194,7 @@ function renderRankBreakdown(profile) {
   `).join('');
 
   box.innerHTML = `
-    <div class="rank-breakdown-total">РЕПУТАЦИЯ: <strong>${total}</strong></div>
+    <div class="rank-breakdown-total">ИНДЕКС РАНГА: <strong>${total}</strong></div>
     ${rows}
     <div class="rank-breakdown-progress">
       <div class="rank-breakdown-progress-head">
@@ -202,7 +202,7 @@ function renderRankBreakdown(profile) {
         <span>${next ? next.code + '-RANK' : 'МАКСИМУМ'}</span>
       </div>
       <div class="rank-breakdown-progress-bar"><div class="rank-breakdown-progress-fill" style="width:${progressPct}%"></div></div>
-      <div class="rank-breakdown-progress-note">${next ? `Нужно ещё ${next.min - total} репутации до ${next.code}-RANK` : 'Максимальный ранг достигнут'}</div>
+      <div class="rank-breakdown-progress-note">${next ? `Нужно ещё ${next.min - total} к индексу ранга до ${next.code}-RANK` : 'Максимальный ранг достигнут'}</div>
     </div>
   `;
 }

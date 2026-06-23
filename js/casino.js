@@ -78,6 +78,7 @@ let legendaryImplantStatus = {};
 let hasPandaImplant = false;
 let scanAttempts = 0;
 let protocolFragments = 0;
+let activeCasinoSubtab = 'play';
 const CASE_IMAGES = {
   gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
   purple: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/purple_case.png',
@@ -781,6 +782,7 @@ async function disassembleCard(id) {
 }
 
 function switchCasinoTab(mode, btn) {
+  activeCasinoSubtab = (mode === 'genshin') ? 'play' : mode;
   loadPoints(currentUserId);
   document.querySelectorAll('#page-casino .subtab').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');

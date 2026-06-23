@@ -22,9 +22,11 @@ function applyThemePath(path) {
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'none';
     const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'block';
-    // Кейсы — показываем рулетку
-    const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'flex';
-    const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'none';
+    // Кейсы — показываем рулетку, но только если казино сейчас открыто на вкладке ИГРАТЬ
+    if (typeof activeCasinoSubtab === 'undefined' || activeCasinoSubtab === 'play') {
+      const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'flex';
+      const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'none';
+    }
     const genshinTabBtn = document.getElementById('genshinTabBtn'); if (genshinTabBtn) genshinTabBtn.style.display = 'none';
     const playBtn = document.getElementById('casinoPlayBtn'); if (playBtn) playBtn.textContent = '🎰 ИГРАТЬ';
   } else if (path === 'genshin') {
@@ -39,9 +41,11 @@ function applyThemePath(path) {
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'block';
     const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'none';
-    // Молитвы — показываем Геншин
-    const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'none';
-    const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'flex';
+    // Молитвы — показываем Геншин, но только если казино сейчас открыто на вкладке ИГРАТЬ
+    if (typeof activeCasinoSubtab === 'undefined' || activeCasinoSubtab === 'play') {
+      const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'none';
+      const gc = document.getElementById('casinoGenshinContent'); if (gc) gc.style.display = 'flex';
+    }
     const playBtn = document.getElementById('casinoPlayBtn'); if (playBtn) playBtn.textContent = '✦ МОЛИТВЫ';
   } else {
     // path = null — первый вход, показываем экран выбора
@@ -88,8 +92,10 @@ function syncAdminThemeMode(theme) {
   const casinoPrayers = document.getElementById('casinoGenshinContent');
   const playBtn = document.getElementById('casinoPlayBtn');
 
-  if (casinoCases) casinoCases.style.display = isGenshinTheme ? 'none' : 'flex';
-  if (casinoPrayers) casinoPrayers.style.display = isGenshinTheme ? 'flex' : 'none';
+  if (typeof activeCasinoSubtab === 'undefined' || activeCasinoSubtab === 'play') {
+    if (casinoCases) casinoCases.style.display = isGenshinTheme ? 'none' : 'flex';
+    if (casinoPrayers) casinoPrayers.style.display = isGenshinTheme ? 'flex' : 'none';
+  }
   if (playBtn) playBtn.textContent = isGenshinTheme ? '✦ МОЛИТВЫ' : '🎰 ИГРАТЬ';
 
   const implTab = document.getElementById('implants-tab');
