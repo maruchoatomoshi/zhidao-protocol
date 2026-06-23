@@ -173,11 +173,11 @@ function showInstructionChooser() {
     <div class="instruction-modal-title">📖 ИНСТРУКЦИЯ // 说明书</div>
     <button class="instruction-option-btn" onclick="showInstructionTextGuide()">
       <strong>Текстовый гайд</strong>
-      Краткое описание всех разделов приложения.
+      Краткое описание всех разделов приложения
     </button>
     <button class="instruction-option-btn" onclick="startInstructionTour()">
       <strong>Интерактивный гайд</strong>
-      Юлия Витальевна проведёт по разделам и всё объяснит.
+      Юлия Витальевна проведёт по разделам и всё объяснит
     </button>
   `;
 }
