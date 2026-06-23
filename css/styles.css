@@ -7265,6 +7265,16 @@ body.theme-nw-light .toast.toast-success { background: rgba(240,252,245,0.97); }
 body.theme-nw-light .toast.toast-error   { background: rgba(252,240,240,0.97); }
 body.theme-nw-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
 
+body.theme-genshin-light #toastContainer .toast {
+  background: rgba(252,250,246,0.97);
+  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.12);
+  color: var(--text);
+}
+body.theme-genshin-light .toast.toast-success { background: rgba(240,252,245,0.97); }
+body.theme-genshin-light .toast.toast-error   { background: rgba(252,240,240,0.97); }
+body.theme-genshin-light .toast.toast-warn    { background: rgba(252,248,235,0.97); }
+
 /* --- nw-light: admin dossier modal --- */
 body.theme-nw-light .admin-dossier-sheet {
   background:
