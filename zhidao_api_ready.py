@@ -3850,6 +3850,29 @@ REWIND_CASE_PRIZE_INFO = {
     "implant_qilin":       {"name": "Имплант Цилинь 麒麟",             "rarity": "epic"},
     "implant_red_dragon":  {"name": "Протокол Красный Дракон 红龙",   "rarity": "legendary"},
 }
+# Mirrors IMPLANT_IMGS / GENSHIN_IMGS in js/casino.js so the Rewind "best
+# drop" slide can show the actual item art instead of just its name.
+REWIND_IMPLANT_IMAGES = {
+    "implant_guanxi":     "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true",
+    "implant_terracota":  "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/armor.png",
+    "implant_red_dragon": "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true",
+    "implant_panda":      "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/panda_implant.png?raw=true",
+    "implant_shaolin":    "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/shaolin_implant.png?raw=true",
+    "implant_linguasoft": "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/linguasoft_implant.png?raw=true",
+    "implant_caishen":    "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/caishen.png?raw=true",
+    "implant_qilin":      "https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true",
+}
+REWIND_CARD_IMAGES = {
+    "card_zhongli":    "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_zhongli.png",
+    "card_pyro":       "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_pyro.png",
+    "card_fox":        "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fox.png",
+    "card_fairy":      "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_fairy.png",
+    "card_literature": "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_literature.png",
+    "card_forest":     "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_forest.png",
+    "card_sea":        "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_sea.png",
+    "card_moon":       "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/moon_card.png",
+    "card_star":       "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/card_star.png",
+}
 REWIND_RARITY_RANK = {"common": 0, "rare": 1, "epic": 2, "legendary": 3}
 # Must stay in sync with REWIND_CASE_PRIZE_INFO's "legendary" entries and
 # CARD_INFO's 5-star cards (genshin_<card_id>).
@@ -3875,12 +3898,12 @@ def _rewind_drop_info(prize_code: str):
         if card_id.startswith("card_") and card_id in CARD_INFO:
             info = CARD_INFO[card_id]
             rarity = "legendary" if info.get("rarity", 4) >= 5 else "epic"
-            return {"name": info.get("name", card_id), "rarity": rarity}
+            return {"name": info.get("name", card_id), "rarity": rarity, "image_url": REWIND_CARD_IMAGES.get(card_id)}
         return None
     info = REWIND_CASE_PRIZE_INFO.get(prize_code)
     if not info:
         return None
-    return {"name": info["name"], "rarity": info["rarity"]}
+    return {"name": info["name"], "rarity": info["rarity"], "image_url": REWIND_IMPLANT_IMAGES.get(prize_code)}
 
 
 @app.get("/api/rewind/{telegram_id}")

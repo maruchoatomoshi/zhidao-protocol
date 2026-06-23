@@ -21,6 +21,23 @@ const REWIND_RARITY_LABEL = {
   common:    'ОБЫЧНЫЙ'
 };
 
+// Per-slide flair: a Tabler icon (consistent with the rest of the app — no
+// emoji) plus a single oversized hanzi character drifting in the background,
+// each picked to echo that slide's theme (信 for credit/points, 勤 for
+// attendance discipline, etc.) rather than being purely decorative.
+const REWIND_SLIDE_META = {
+  intro:      { icon: 'ti-sparkles',     hanzi: '智道' },
+  earned:     { icon: 'ti-coin',         hanzi: '信' },
+  spent:      { icon: 'ti-shopping-cart',hanzi: '耗' },
+  cases:      { icon: 'ti-box',          hanzi: '箱' },
+  drop:       { icon: 'ti-diamond',      hanzi: '运' },
+  attendance: { icon: 'ti-shield-check', hanzi: '勤' },
+  diary:      { icon: 'ti-book',         hanzi: '记' },
+  events:     { icon: 'ti-bolt',         hanzi: '盾' },
+  role:       { icon: 'ti-crown',        hanzi: '命' },
+  card:       { icon: 'ti-share',        hanzi: '协议' }
+};
+
 // --- DEMO DATA (placeholder until /api/rewind/{telegram_id}) ---
 const REWIND_DEMO_DATA = {
   name: 'ОПЕРАТОР',
@@ -29,7 +46,7 @@ const REWIND_DEMO_DATA = {
   points_spent: 1230,
   final_balance: 610,
   cases_opened: 27,
-  best_drop: { name: 'КРАСНЫЙ ДРАКОН', rarity: 'legendary' },
+  best_drop: { name: 'КРАСНЫЙ ДРАКОН', rarity: 'legendary', image_url: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true' },
   attendance_pct: 96,
   diary_entries: 11,
   diary_avg_stars: 4.3,
@@ -50,46 +67,47 @@ function _rewindBuildSlides(d) {
   const dropColor = REWIND_RARITY_COLOR[d.best_drop && d.best_drop.rarity] || '#00ff66';
   const dropLabel = REWIND_RARITY_LABEL[d.best_drop && d.best_drop.rarity] || '';
   return [
-    { type: 'intro', accent: '#00ff66',
+    { type: 'intro', key: 'intro', accent: '#00ff66',
       kicker: 'ZHIDAO PROTOCOL', big: 'REWIND', bigClass: 'text',
       label: d.date_range, sub: 'твоя поездка в цифрах' },
 
-    { type: 'stat', accent: '#00ff66',
+    { type: 'stat', key: 'earned', accent: '#00ff66',
       kicker: 'за эту поездку ты заработал', value: d.points_earned, count: true,
       label: '信用 баллов', sub: 'каждый — за реальное действие' },
 
-    { type: 'stat', accent: '#ff4d6d',
+    { type: 'stat', key: 'spent', accent: '#ff4d6d',
       kicker: '…и не побоялся потратить', value: d.points_spent, count: true,
       label: 'баллов на кейсы, магазин и события' },
 
-    { type: 'stat', accent: '#6aa0d4',
+    { type: 'stat', key: 'cases', accent: '#6aa0d4',
       kicker: 'ты открыл', value: d.cases_opened, count: true,
       label: 'кейсов и молитв', sub: 'азарт — это тоже стратегия' },
 
-    { type: 'stat', accent: dropColor, rays: true,
+    { type: 'stat', key: 'drop', accent: dropColor, rays: true,
       kicker: 'твой лучший дроп', big: d.best_drop ? d.best_drop.name : '—', bigClass: 'text',
+      dropImage: d.best_drop ? d.best_drop.image_url : null,
       label: dropLabel, sub: 'не каждому так везёт' },
 
-    { type: 'stat', accent: '#00ff66',
+    { type: 'stat', key: 'attendance', accent: '#00ff66',
       kicker: 'дисциплина отметок', value: d.attendance_pct, suffix: '%', count: true,
       label: 'ты почти не пропускал сбор', sub: 'Михаил Юрьевич это заметил' },
 
-    { type: 'stat', accent: '#ffd24a',
+    { type: 'stat', key: 'diary', accent: '#ffd24a',
       kicker: 'дневник оператора', value: d.diary_entries, count: true,
       label: 'записей сдано',
       sub: 'средняя оценка ' + (d.diary_avg_stars || 0).toFixed(1) + ' ★' },
 
-    { type: 'stat', accent: '#00ff66',
+    { type: 'stat', key: 'events', accent: '#00ff66',
       kicker: 'ты отражал атаки Архитектора и WildAI', value: d.events_repelled, count: true,
       label: 'раз спасал протокол',
       sub: 'точность ответов ' + (d.event_accuracy || 0) + '%' },
 
-    { type: 'role', accent: '#00ff66',
+    { type: 'role', key: 'role', accent: '#00ff66',
       kicker: 'твоя роль в протоколе',
       title: d.role ? d.role.title : '—',
       subtitle: d.role ? d.role.subtitle : '' },
 
-    { type: 'card', accent: '#00ff66', data: d }
+    { type: 'card', key: 'card', accent: '#00ff66', data: d }
   ];
 }
 
@@ -184,25 +202,39 @@ function _rewindRender() {
   try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
 }
 
+function _rewindHanziBg(key) {
+  const meta = REWIND_SLIDE_META[key];
+  return meta ? `<div class="rewind-hanzi-bg">${meta.hanzi}</div>` : '';
+}
+
+function _rewindIconHtml(key) {
+  const meta = REWIND_SLIDE_META[key];
+  return meta ? `<div class="rewind-icon"><i class="ti ${meta.icon}"></i></div>` : '';
+}
+
 function _rewindSlideHtml(slide) {
-  if (slide.type === 'card') return _rewindCardHtml(slide.data);
+  if (slide.type === 'card') return _rewindHanziBg(slide.key) + _rewindCardHtml(slide.data);
 
   if (slide.type === 'role') {
     return `
+      ${_rewindHanziBg(slide.key)}
       <div class="rewind-kicker">${escapeHtml(slide.kicker)}</div>
-      <div class="rewind-role-badge">★</div>
+      <div class="rewind-role-badge"><i class="ti ${REWIND_SLIDE_META.role.icon}"></i></div>
       <div class="rewind-big text">${escapeHtml(slide.title)}</div>
       <div class="rewind-label">${escapeHtml(slide.subtitle)}</div>`;
   }
 
   const rays = slide.rays ? '<div class="rewind-rays"></div>' : '';
+  const dropImg = slide.dropImage ? `<img class="rewind-drop-img" src="${escapeHtml(slide.dropImage)}" alt="">` : '';
   const big = slide.count
     ? `<div class="rewind-big is-count">0${slide.suffix || ''}</div>`
-    : `<div class="rewind-big ${slide.bigClass === 'text' ? 'text' : ''}">${escapeHtml(String(slide.big))}</div>`;
+    : `<div class="rewind-big ${slide.bigClass === 'text' ? 'text' : ''} ${dropImg ? 'with-img' : ''}">${escapeHtml(String(slide.big))}</div>`;
 
   return `
+    ${_rewindHanziBg(slide.key)}
+    ${_rewindIconHtml(slide.key)}
     <div class="rewind-kicker">${escapeHtml(slide.kicker)}</div>
-    <div class="rewind-big-wrap">${rays}${big}</div>
+    <div class="rewind-big-wrap">${rays}${dropImg}${big}</div>
     ${slide.label ? `<div class="rewind-label">${escapeHtml(slide.label)}</div>` : ''}
     ${slide.sub ? `<div class="rewind-sub">${escapeHtml(slide.sub)}</div>` : ''}`;
 }
