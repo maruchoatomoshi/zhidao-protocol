@@ -814,6 +814,7 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
         <button onclick="adminPrepareRepAction(10, 'вклад в группу')">+10 REP</button>
         <button onclick="adminPrepareRepAction(-5, 'нарушение')">-5 REP</button>
         <button onclick="adminPrepareRepAction(-20, 'серьёзное нарушение')">-20 REP</button>
+        <button onclick="adminResetSelectedAvatar()">🗑 Сбросить аватар</button>
       </div>
       <div class="admin-dossier-room">
         <div class="admin-room-row">
@@ -844,6 +845,31 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
     modal.classList.add('show');
   }
   if (!options.skipSearch) adminSearchUsers();
+}
+
+async function adminResetSelectedAvatar() {
+  if (!adminSelectedUser || !currentUserId) {
+    showToast('Сначала выбери игрока');
+    return;
+  }
+  if (!confirm('Сбросить аватар этого игрока?')) return;
+  try {
+    const r = await fetch(`${API_URL}/api/admin/user/reset_avatar`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: adminSelectedUser.telegram_id}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось сбросить аватар');
+      return;
+    }
+    adminSelectedUser.avatar_url = null;
+    showToast('Аватар сброшен');
+    adminLoadUserDossier(adminSelectedUser.telegram_id);
+  } catch (e) {
+    showToast('Ошибка сброса аватара');
+  }
 }
 
 async function adminSaveSelectedRoom() {

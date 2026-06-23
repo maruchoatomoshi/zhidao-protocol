@@ -4592,6 +4592,42 @@ async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(
     return await db_write(_run)
 
 
+@app.post("/api/admin/user/reset_avatar")
+async def admin_reset_user_avatar(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        try:
+            telegram_id = int(data.get("telegram_id"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
+        target = c.fetchone()
+        if not target:
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+
+        c.execute("UPDATE users SET avatar_url=NULL WHERE telegram_id=?", (telegram_id,))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, ?, 'avatar_reset', 0, ?, ?)''',
+            (x_admin_id, telegram_id, "avatar reset by admin", now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {
+            "success": True,
+            "telegram_id": telegram_id,
+            "full_name": target[0] or str(telegram_id),
+        }
+    return await db_write(_run)
+
+
 @app.get("/api/admin/user/{telegram_id}/dossier")
 def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None)):
     if x_admin_id not in ADMIN_IDS:
