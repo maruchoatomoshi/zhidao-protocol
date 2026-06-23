@@ -31,7 +31,7 @@ async function checkActiveGiftCode() {
     if (!data || !data.active) return;
     const seen = _getMjuSeen();
     if (seen.has(data.code)) return;
-    _markMjuSeen(data.code);
+    if (_mjuActiveCode === data.code) return;
     _mjuActiveCode = data.code;
     showMjuPopup(
       `Стоп. Код активен — первые ${data.max_uses} оператора берут награду. Быстро.`,
@@ -53,6 +53,7 @@ async function claimMjuCode() {
     });
 
     if (data.success) {
+      _markMjuSeen(_mjuActiveCode);
       currentPoints = data.new_points;
       updatePoints();
       if (btn) {
@@ -139,4 +140,5 @@ function closeMjuPopup(e) {
   if (overlay) overlay.style.display = 'none';
   if (mjuPopupTypeTimer) { clearInterval(mjuPopupTypeTimer); mjuPopupTypeTimer = null; }
   document.body.classList.remove('architect-popup-open');
+  _mjuActiveCode = null;
 }
