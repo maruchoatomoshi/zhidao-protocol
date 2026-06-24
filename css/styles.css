@@ -4982,6 +4982,31 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   color: var(--red);
 }
 
+/* Admin slot day-picker buttons (Сегодня/Завтра/Послезавтра) */
+.admin-day-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.admin-day-btn {
+  padding: 8px 4px;
+  background: rgba(0,0,0,0.28);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text3);
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.admin-day-btn.active {
+  background: var(--red-dim);
+  border-color: var(--red-border);
+  color: var(--red);
+}
+
 /* Admin slot list */
 .admin-slot-list-label {
   font-family: monospace;

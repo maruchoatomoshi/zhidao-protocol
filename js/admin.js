@@ -276,6 +276,27 @@ function switchAdminLaundryTab(tab) {
   else adminLoadWaterSlots();
 }
 
+const ADMIN_SLOT_DAY_LABELS = {
+  today: 'Сегодня',
+  tomorrow: 'Завтра',
+  after: 'Послезавтра',
+};
+
+function setAdminSlotDay(prefix, key, btn) {
+  const dateStr = formatAdminSlotDate(key);
+  const hidden = document.getElementById(prefix + 'Day');
+  if (hidden) hidden.value = `${ADMIN_SLOT_DAY_LABELS[key]} (${dateStr})`;
+  const group = btn ? btn.parentElement : null;
+  if (group) group.querySelectorAll('.admin-day-btn').forEach(b => b.classList.toggle('active', b === btn));
+}
+
+function formatAdminSlotDate(key) {
+  const offsets = { today: 0, tomorrow: 1, after: 2 };
+  const d = new Date();
+  d.setDate(d.getDate() + (offsets[key] || 0));
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+}
+
 async function adminLoadLaundrySlots() {
   const container = document.getElementById('adminLaundryList');
   try {
@@ -293,7 +314,7 @@ async function adminLoadLaundrySlots() {
     <div class="admin-slot-icon">${taken ? '✓' : '○'}</div>
     <div class="admin-slot-info">
       <div class="admin-slot-time">${slot.day} · ${slot.time}</div>
-      ${slot.note ? `<div class="admin-slot-note">${slot.note}</div>` : ''}
+      ${slot.assignee ? `<div class="admin-slot-note">К кому подходить: ${slot.assignee}</div>` : ''}
       <div class="admin-slot-note">${bookings.length}/${capacity} мест</div>
       ${bookingList}
     </div>
@@ -306,17 +327,18 @@ async function adminLoadLaundrySlots() {
 async function adminAddLaundrySlot() {
   const day = document.getElementById('lDay').value.trim();
   const time = document.getElementById('lTime').value.trim();
-  const note = document.getElementById('lNote').value.trim();
-  if (!day || !time) { showToast('Заполни день и время'); return; }
+  const assignee = document.getElementById('lAssignee').value;
+  if (!day || !time) { showToast('Выбери день и время'); return; }
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({day, time, note, capacity: parseInt(document.getElementById('lCapacity').value)||1})
+      body: JSON.stringify({day, time, assignee, capacity: parseInt(document.getElementById('lCapacity').value)||1})
     });
     if (r.ok) {
       document.getElementById('lDay').value='';
       document.getElementById('lTime').value='';
-      document.getElementById('lNote').value='';
+      document.getElementById('lAssignee').value='';
+      document.querySelectorAll('#lDayBtns .admin-day-btn').forEach(b => b.classList.remove('active'));
       try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
       adminLoadLaundrySlots();
     } else showToast('Ошибка!');
@@ -352,8 +374,7 @@ async function adminLoadWaterSlots() {
     if (!data.length) { container.innerHTML = '<div class="empty-state">Слотов нет</div>'; return; }
     container.innerHTML = data.map(slot => {
       const bookings = slot.bookings || [];
-      const capacity = slot.capacity || 1;
-      const full = bookings.length >= capacity;
+      const full = false;
       const scheduleText = [slot.day, slot.time].filter(Boolean).join(' · ');
       const bookingList = bookings.length
         ? bookings.map(b => `<div class="admin-slot-status">${b.name} · TG ${b.telegram_id} <button class="admin-slot-del" style="padding:2px 6px;margin-left:6px;" onclick="adminCancelWaterBooking(${slot.id},${b.telegram_id})">×</button></div>`).join('')
@@ -363,8 +384,8 @@ async function adminLoadWaterSlots() {
     <div class="admin-slot-icon">💧</div>
     <div class="admin-slot-info">
       <div class="admin-slot-time">${slot.floor ? `Этаж ${slot.floor}` : 'Вода'}${scheduleText ? ` · ${scheduleText}` : ''}</div>
-      ${slot.note ? `<div class="admin-slot-note">${slot.note}</div>` : ''}
-      <div class="admin-slot-note">${bookings.length}/${capacity} мест</div>
+      ${slot.assignee ? `<div class="admin-slot-note">К кому подходить: ${slot.assignee}</div>` : ''}
+      <div class="admin-slot-note">${bookings.length} записано</div>
       ${bookingList}
     </div>
     <button class="admin-slot-del" onclick="adminDeleteWaterSlot(${slot.id})"><i class="ti ti-trash"></i></button>
@@ -377,18 +398,20 @@ async function adminAddWaterSlot() {
   const day = document.getElementById('wDay').value.trim();
   const time = document.getElementById('wTime').value.trim();
   const floor = document.getElementById('wFloor') ? document.getElementById('wFloor').value.trim() : '';
-  const note = document.getElementById('wNote').value.trim();
+  const assignee = document.getElementById('wAssignee').value;
   if (!floor) { showToast('Укажи этаж'); return; }
+  if (!day || !time) { showToast('Выбери день и время'); return; }
   try {
     const r = await fetch(`${API_URL}/api/water/schedule`, {
       method:'POST', headers:{'Content-Type':'application/json','x-admin-id':currentUserId},
-      body: JSON.stringify({day, time, floor, note, capacity: parseInt(document.getElementById('wCapacity').value)||1})
+      body: JSON.stringify({day, time, floor, assignee})
     });
     if (r.ok) {
       document.getElementById('wDay').value='';
       document.getElementById('wTime').value='';
       if (document.getElementById('wFloor')) document.getElementById('wFloor').value='';
-      document.getElementById('wNote').value='';
+      document.getElementById('wAssignee').value='';
+      document.querySelectorAll('#wDayBtns .admin-day-btn').forEach(b => b.classList.remove('active'));
       try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
       adminLoadWaterSlots();
     } else showToast('Ошибка!');

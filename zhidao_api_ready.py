@@ -1351,6 +1351,8 @@ def migrate_db():
     laundry_schedule_columns = {row[1] for row in c.fetchall()}
     if 'capacity' not in laundry_schedule_columns:
         c.execute("ALTER TABLE laundry_schedule ADD COLUMN capacity INTEGER DEFAULT 1")
+    if 'assignee' not in laundry_schedule_columns:
+        c.execute("ALTER TABLE laundry_schedule ADD COLUMN assignee TEXT DEFAULT ''")
     c.execute('''INSERT OR IGNORE INTO laundry_bookings (slot_id, telegram_id)
                  SELECT id, taken_by FROM laundry_schedule
                  WHERE taken_by IS NOT NULL''')
@@ -1366,6 +1368,8 @@ def migrate_db():
         c.execute("ALTER TABLE water_schedule ADD COLUMN floor TEXT DEFAULT ''")
     if 'capacity' not in water_schedule_columns:
         c.execute("ALTER TABLE water_schedule ADD COLUMN capacity INTEGER DEFAULT 1")
+    if 'assignee' not in water_schedule_columns:
+        c.execute("ALTER TABLE water_schedule ADD COLUMN assignee TEXT DEFAULT ''")
     c.execute("PRAGMA table_info(events)")
     event_columns = {row[1] for row in c.fetchall()}
     if event_columns:
@@ -8836,7 +8840,7 @@ async def disassemble_card(card_id: int, data: dict):
 def get_laundry_schedule():
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, day, time, note, COALESCE(capacity, 1) FROM laundry_schedule ORDER BY id")
+    c.execute("SELECT id, day, time, note, COALESCE(capacity, 1), COALESCE(assignee, '') FROM laundry_schedule ORDER BY id")
     rows = c.fetchall()
     result = []
     for row in rows:
@@ -8858,6 +8862,7 @@ def get_laundry_schedule():
             "time": row[2],
             "note": row[3],
             "capacity": max(int(row[4] or 1), 1),
+            "assignee": row[5],
             "booked": len(bookings),
             "bookings": bookings,
             "taken_by": bookings[0] if bookings else None,
@@ -8875,8 +8880,8 @@ async def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
         c = conn.cursor()
         capacity = max(int(data.get("capacity") or 1), 1)
         c.execute(
-            "INSERT INTO laundry_schedule (day, time, note, capacity) VALUES (?,?,?,?)",
-            (data.get("day"), data.get("time"), data.get("note", ""), capacity),
+            "INSERT INTO laundry_schedule (day, time, note, capacity, assignee) VALUES (?,?,?,?,?)",
+            (data.get("day"), data.get("time"), data.get("note", ""), capacity, data.get("assignee", "")),
         )
         conn.commit()
         conn.close()
@@ -8970,7 +8975,7 @@ async def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int
 def get_water_schedule():
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, day, time, COALESCE(floor, ''), note, COALESCE(capacity, 1) FROM water_schedule ORDER BY id")
+    c.execute("SELECT id, day, time, COALESCE(floor, ''), note, COALESCE(capacity, 1), COALESCE(assignee, '') FROM water_schedule ORDER BY id")
     rows = c.fetchall()
     result = []
     for row in rows:
@@ -8993,6 +8998,7 @@ def get_water_schedule():
             "floor": row[3],
             "note": row[4],
             "capacity": max(int(row[5] or 1), 1),
+            "assignee": row[6],
             "booked": len(bookings),
             "bookings": bookings,
         })
@@ -9009,13 +9015,14 @@ async def add_water_slot(data: dict, x_admin_id: int = Header(None)):
         c = conn.cursor()
         capacity = max(int(data.get("capacity") or 1), 1)
         c.execute(
-            "INSERT INTO water_schedule (day, time, floor, note, capacity) VALUES (?,?,?,?,?)",
+            "INSERT INTO water_schedule (day, time, floor, note, capacity, assignee) VALUES (?,?,?,?,?,?)",
             (
                 data.get("day"),
                 data.get("time"),
                 data.get("floor", ""),
                 data.get("note", ""),
                 capacity,
+                data.get("assignee", ""),
             ),
         )
         conn.commit()
@@ -9047,16 +9054,12 @@ async def book_water_slot(slot_id: int, data: dict):
             raise HTTPException(status_code=400, detail="Missing telegram_id")
         conn = get_conn()
         c = conn.cursor()
-        c.execute("SELECT COALESCE(capacity, 1) FROM water_schedule WHERE id=?", (slot_id,))
+        c.execute("SELECT id FROM water_schedule WHERE id=?", (slot_id,))
         slot = c.fetchone()
         if not slot:
             conn.close()
             raise HTTPException(status_code=404, detail="Not found")
-        capacity = max(int(slot[0] or 1), 1)
-        c.execute("SELECT COUNT(*) FROM water_bookings WHERE slot_id=?", (slot_id,))
-        if c.fetchone()[0] >= capacity:
-            conn.close()
-            raise HTTPException(status_code=400, detail="Slot full")
+        # Вода — без лимита мест (наработка от МЮ, 2026-06-24): не проверяем capacity.
         c.execute("DELETE FROM water_bookings WHERE telegram_id=?", (telegram_id,))
         c.execute(
             "INSERT OR IGNORE INTO water_bookings (slot_id, telegram_id) VALUES (?,?)",
