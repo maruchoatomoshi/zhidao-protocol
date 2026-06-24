@@ -105,9 +105,27 @@ let _introNovelCurrentId = 's1';
 let _introNovelTypeInterval = null;
 
 function showIntroNovel(force) {
+  if (force) { _showIntroNovelNow(); return; }
+  // "seen" flag is account-synced via Telegram CloudStorage (falls back to
+  // localStorage on old clients) so the novel doesn't replay on every new
+  // device/Telegram client the same account opens the app from.
   try {
-    if (!force && localStorage.getItem(INTRO_NOVEL_SEEN_KEY) === '1') return;
+    if (window.Telegram?.WebApp?.CloudStorage) {
+      tg.CloudStorage.getItem(INTRO_NOVEL_SEEN_KEY, (err, val) => {
+        const seen = (!err && val === '1') || localStorage.getItem(INTRO_NOVEL_SEEN_KEY) === '1';
+        if (!seen) _showIntroNovelNow();
+      });
+      return;
+    }
   } catch (e) {}
+  try {
+    if (localStorage.getItem(INTRO_NOVEL_SEEN_KEY) === '1') return;
+  } catch (e) {}
+  _showIntroNovelNow();
+}
+window.showIntroNovel = showIntroNovel;
+
+function _showIntroNovelNow() {
   _introNovelScenes = _buildIntroNovelScenes();
   _introNovelCurrentId = 's1';
   const overlay = document.getElementById('introNovelOverlay');
@@ -115,7 +133,6 @@ function showIntroNovel(force) {
   overlay.style.display = 'flex';
   _renderIntroNovelScene();
 }
-window.showIntroNovel = showIntroNovel;
 
 function _renderIntroNovelScene() {
   const scene = _introNovelScenes[_introNovelCurrentId];
@@ -188,6 +205,7 @@ window.introNovelSkip = introNovelSkip;
 function closeIntroNovel() {
   if (_introNovelTypeInterval) clearInterval(_introNovelTypeInterval);
   try { localStorage.setItem(INTRO_NOVEL_SEEN_KEY, '1'); } catch (e) {}
+  try { if (window.Telegram?.WebApp?.CloudStorage) tg.CloudStorage.setItem(INTRO_NOVEL_SEEN_KEY, '1', () => {}); } catch (e) {}
   const overlay = document.getElementById('introNovelOverlay');
   if (overlay) overlay.style.display = 'none';
 }
