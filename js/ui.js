@@ -162,7 +162,7 @@ function toggleProfileFab() {
 }
 
 function showPage(name, btn) {
-  if (isLaunchGateActive() && name !== 'schedule') {
+  if (isLaunchGateActive() && name !== 'schedule' && name !== 'home') {
     showLaunchGateOverlay();
     return;
   }

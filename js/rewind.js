@@ -298,7 +298,7 @@ function _rewindSlideHtml(slide) {
   }
 
   const rays = slide.rays ? '<div class="rewind-rays"></div>' : '';
-  const dropImg = slide.dropImage ? `<img class="rewind-drop-img" src="${escapeHtml(slide.dropImage)}" alt="">` : '';
+  const dropImg = slide.dropImage ? `<img class="rewind-drop-img" src="${escapeHtml(slide.dropImage)}" alt="" oncontextmenu="return false">` : '';
   const big = slide.count
     ? `<div class="rewind-big is-count">0${slide.suffix || ''}</div>`
     : `<div class="rewind-big ${slide.bigClass === 'text' ? 'text' : ''} ${dropImg ? 'with-img' : ''}">${escapeHtml(String(slide.big))}</div>`;

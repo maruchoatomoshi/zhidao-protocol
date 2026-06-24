@@ -164,7 +164,7 @@ async function loadImplants(telegramId) {
       }).join('');
       return `<div class="implant-row">
         <div class="implant-icon ${isLeg?'legendary':''}">
-          ${img ? `<img src="${escapeHtml(img)}" style="width:24px;height:24px;object-fit:contain;border-radius:4px;">` : displayIcon}
+          ${img ? `<img src="${escapeHtml(img)}" style="width:24px;height:24px;object-fit:contain;border-radius:4px;" oncontextmenu="return false">` : displayIcon}
         </div>
         <div>
           <div class="implant-cn">${displayName}</div>
@@ -219,7 +219,7 @@ async function loadImplants(telegramId) {
       return `<div class="inventory-item inventory-item-asset ${isLeg ? 'inventory-item-legendary' : ''}">
         <div class="inventory-header">
           <div class="inventory-icon ${isLeg ? 'legendary' : ''}">
-            ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(displayName)}">` : displayIcon}
+            ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(displayName)}" oncontextmenu="return false">` : displayIcon}
           </div>
           <div class="inventory-info">
             <div class="inventory-kicker">${isLeg ? 'LEGENDARY IMPLANT' : 'RARE IMPLANT'} ${duplicateBadge}</div>
@@ -505,7 +505,7 @@ function gsBuildCard(cardId, cardInfo) {
   front.innerHTML = `
     <div style="flex:1;width:100%;display:flex;align-items:center;justify-content:center;position:relative;">
       <div style="position:absolute;inset:4px;border-radius:10px;background:${c.frontBg||'rgba(74,122,204,0.08)'};border:1px solid ${(c.frontBorder||'rgba(74,122,204,0.7)').replace(/[\d.]+\)$/,'0.2)')}"></div>
-      ${(c.img) ? `<img src="${escapeHtml(c.img)}" style="width:110px;height:130px;object-fit:contain;position:relative;z-index:2;border-radius:8px;">` : `<div style="font-size:58px;position:relative;z-index:2;filter:drop-shadow(0 4px 10px ${c.petalColor||'rgba(74,122,204,0.5)'})">${c.emoji||'✦'}</div>`}
+      ${(c.img) ? `<img src="${escapeHtml(c.img)}" style="width:110px;height:130px;object-fit:contain;position:relative;z-index:2;border-radius:8px;" oncontextmenu="return false">` : `<div style="font-size:58px;position:relative;z-index:2;filter:drop-shadow(0 4px 10px ${c.petalColor||'rgba(74,122,204,0.5)'})">${c.emoji||'✦'}</div>`}
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:3px;padding-bottom:2px;">
       <div style="font-size:10px;font-weight:700;color:#2a2040;font-family:serif;letter-spacing:1px;text-align:center;">${cardInfo?cardInfo.name:''}</div>
@@ -717,7 +717,7 @@ async function loadCards(telegramId) {
       const imgSrc = GENSHIN_IMGS[card.card_id];
       const cardPassive = card.passive || '';
       const cardVisual = imgSrc
-        ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(card.name)}">`
+        ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(card.name)}" oncontextmenu="return false">`
         : emoji;
       const dots = Array(3).fill(0).map((_,i) =>
         `<div class="inventory-dur-dot ${i < card.durability ? 'on' : 'off'}" style="${i < card.durability ? `background:${rarityColor};box-shadow:0 0 8px ${rarityColor}88;` : ''}"></div>`
@@ -816,7 +816,7 @@ function buildRouletteItem(caseType, index, isTarget = false) {
   el.dataset.index = String(index);
   if (isTarget) el.dataset.target = '1';
   el.innerHTML = `
-    <img src="${escapeHtml(imgUrl)}" class="roulette-case-img" alt="${escapeHtml(CASE_ROULETTE_LABELS[caseType] || caseType)}">
+    <img src="${escapeHtml(imgUrl)}" class="roulette-case-img" alt="${escapeHtml(CASE_ROULETTE_LABELS[caseType] || caseType)}" oncontextmenu="return false">
     <div class="roulette-case-label">${CASE_ROULETTE_LABELS[caseType] || caseType}</div>
   `;
   return el;
@@ -962,7 +962,7 @@ async function spinRoulette(targetPrize, caseType = 'gold', targetIdx = null) {
           winner.classList.remove('opening');
           winner.classList.add('opened', `opened-${caseType}`);
           const prizeContent = targetPrize.img
-            ? `<img src="${escapeHtml(targetPrize.img)}" class="roulette-prize-reveal" style="width:80px;height:80px;object-fit:contain;border-radius:10px;"><div class="roulette-item-name">${escapeHtml(targetPrize.name)}</div>`
+            ? `<img src="${escapeHtml(targetPrize.img)}" class="roulette-prize-reveal" style="width:80px;height:80px;object-fit:contain;border-radius:10px;" oncontextmenu="return false"><div class="roulette-item-name">${escapeHtml(targetPrize.name)}</div>`
             : `<div class="roulette-item-icon roulette-prize-reveal">${targetPrize.icon}</div><div class="roulette-item-name">${escapeHtml(targetPrize.name)}</div>`;
           winner.innerHTML = prizeContent;
           if (targetPrize.code==='jackpot' || caseType === 'black') winner.style.animation='shimmer 0.5s infinite';
@@ -1019,7 +1019,7 @@ function showPrizeResult(prize, caseType = 'gold', doubledWin = false) {
 
   const legendaryClass = isLegendary ? ' cyber-result-legendary' : '';
   let imgHtml = prize.img
-    ? `<img src="${escapeHtml(prize.img)}" class="${legendaryClass.trim()}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;">`
+    ? `<img src="${escapeHtml(prize.img)}" class="${legendaryClass.trim()}" style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px ${glowColor});animation:cyberPulse 2s ease-in-out infinite;" oncontextmenu="return false">`
     : `<div class="${legendaryClass.trim()}" style="font-size:72px;filter:drop-shadow(0 0 16px ${glowColor});">${prize.icon}</div>`;
 
   // Анимация появления приза (зависит от типа кейса)

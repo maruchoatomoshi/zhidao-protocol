@@ -285,7 +285,7 @@ function renderProfileShowcaseOptions(options) {
   }
   box.innerHTML = options.map(item => {
     const art = item.img
-      ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.name)}">`
+      ? `<img src="${escapeHtml(item.img)}" alt="${escapeHtml(item.name)}" oncontextmenu="return false">`
       : `<span>${escapeHtml(item.glyph)}</span>`;
     return `
     <button class="profile-showcase-card profile-showcase-card-${item.rarityClass} ${item.equipped ? 'equipped' : ''}" onclick="selectProfileShowcase('${item.kind}', '${escapeHtml(item.code)}')">
