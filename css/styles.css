@@ -1417,11 +1417,9 @@ body.is-admin .profile-card-kicker {
 .profile-avatar-fallback, .lb-avatar-fallback {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  /* Fixed dark circle + white letter, independent of theme/frame color —
-     avatar frames (gold/silver/dragon/etc.) sit right behind this and a
-     gold letter on a gold frame was unreadable. */
-  background: rgba(10,10,20,0.82);
-  color: #fff; font-family: monospace; font-weight: 900;
+  background: transparent;
+  color: var(--gold);
+  font-family: monospace; font-weight: 900;
 }
 .profile-avatar-fallback { font-size: 26px; }
 
@@ -2099,6 +2097,9 @@ body.is-admin .profile-card-kicker {
 .lb-item.top3 .lb-avatar-fallback {
   border-radius: 50%;
 }
+.lb-item.top1 .lb-avatar-fallback { color: #d4af37; }
+.lb-item.top2 .lb-avatar-fallback { color: #d8d8d8; }
+.lb-item.top3 .lb-avatar-fallback { color: #e8a050; }
 
 /* Equipped avatar frames — unlockable cosmetic "mini-achievements" */
 .has-frame {
@@ -2132,6 +2133,17 @@ body.is-admin .profile-card-kicker {
 .frame-scholar   { --frame-gradient: conic-gradient(from 0deg, #3498db, #ffffff, #3498db, #ffffff, #3498db); --frame-glow: rgba(52,152,219,0.45); }
 .frame-path-netwatch { --frame-gradient: conic-gradient(from 0deg, #cc2200, #330000, #cc2200, #330000, #cc2200); --frame-glow: rgba(204,34,0,0.35); }
 .frame-path-genshin  { --frame-gradient: conic-gradient(from 0deg, #9b59b6, #e91e8c, #9b59b6, #e91e8c, #9b59b6); --frame-glow: rgba(155,89,182,0.4); }
+.frame-bronze .lb-avatar-fallback, .frame-bronze .profile-avatar-fallback { color: #e8a050; }
+.frame-silver .lb-avatar-fallback, .frame-silver .profile-avatar-fallback { color: #d8d8d8; }
+.frame-gold .lb-avatar-fallback, .frame-gold .profile-avatar-fallback { color: #fff3b0; }
+.frame-diamond .lb-avatar-fallback, .frame-diamond .profile-avatar-fallback { color: #7fdbff; }
+.frame-dragon .lb-avatar-fallback, .frame-dragon .profile-avatar-fallback { color: #ff6644; }
+.frame-netwatch-legend .lb-avatar-fallback, .frame-netwatch-legend .profile-avatar-fallback { color: #00fff7; }
+.frame-zhongli .lb-avatar-fallback, .frame-zhongli .profile-avatar-fallback { color: #d4af37; }
+.frame-raider .lb-avatar-fallback, .frame-raider .profile-avatar-fallback { color: #ff8800; }
+.frame-scholar .lb-avatar-fallback, .frame-scholar .profile-avatar-fallback { color: #3498db; }
+.frame-path-netwatch .lb-avatar-fallback, .frame-path-netwatch .profile-avatar-fallback { color: #ff6644; }
+.frame-path-genshin .lb-avatar-fallback, .frame-path-genshin .profile-avatar-fallback { color: #e91e8c; }
 @keyframes lb-frame-spin {
   to { transform: rotate(360deg); }
 }
@@ -2284,11 +2296,6 @@ body.is-admin .profile-card-kicker {
   border-color: rgba(212,175,55,0.45);
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 10px rgba(212,175,55,0.12);
 }
-.diary-rank-card .lb-avatar-fallback {
-  background:
-    radial-gradient(circle at 50% 30%, rgba(212,175,55,0.28), transparent 60%),
-    rgba(10,10,20,0.85);
-}
 .diary-rank-card.top1 .lb-avatar {
   border-color: #d4af37;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(212,175,55,0.5);
@@ -2301,6 +2308,9 @@ body.is-admin .profile-card-kicker {
   border-color: #b87333;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(184,115,51,0.4);
 }
+.diary-rank-card.top1 .lb-avatar-fallback { color: #d4af37; }
+.diary-rank-card.top2 .lb-avatar-fallback { color: #d8d8d8; }
+.diary-rank-card.top3 .lb-avatar-fallback { color: #e8a050; }
 .diary-rank-place {
   position: relative;
   z-index: 1;
