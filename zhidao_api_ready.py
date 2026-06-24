@@ -3842,7 +3842,7 @@ REWIND_CASE_PRIZE_INFO = {
     "skip":                {"name": "Иммунитет!",                    "rarity": "rare"},
     "empty":               {"name": "Пустая миска риса",              "rarity": "common"},
     "implant_guanxi":      {"name": "Имплант Гуаньси 关系",            "rarity": "epic"},
-    "implant_terracota":   {"name": "Имплант Терракота 兵马俑",        "rarity": "epic"},
+    "implant_terracota":   {"name": "Имплант Терракота 兵马俑",        "rarity": "legendary"},
     "implant_panda":       {"name": "Имплант Панда 🐼",               "rarity": "epic"},
     "implant_shaolin":     {"name": "Имплант Шаолинь 少林",            "rarity": "epic"},
     "implant_linguasoft":  {"name": "Имплант Linguasoft 口才",        "rarity": "epic"},
@@ -3876,7 +3876,7 @@ REWIND_CARD_IMAGES = {
 REWIND_RARITY_RANK = {"common": 0, "rare": 1, "epic": 2, "legendary": 3}
 # Must stay in sync with REWIND_CASE_PRIZE_INFO's "legendary" entries and
 # CARD_INFO's 5-star cards (genshin_<card_id>).
-REWIND_LEGENDARY_PRIZE_CODES = ["implant_red_dragon", "genshin_card_zhongli", "genshin_card_star"]
+REWIND_LEGENDARY_PRIZE_CODES = ["implant_red_dragon", "implant_terracota", "genshin_card_zhongli", "genshin_card_star"]
 
 
 def _rewind_admin_exclude_clause(column: str):
@@ -6928,7 +6928,6 @@ async def open_case(data: dict):
     elif case_type == 'purple':
         prizes = [
             {"code": "implant_guanxi",     "name": "Имплант Гуаньси 关系",      "points": 0, "weight": 68, "icon": "🤝", "case_type": "purple"},
-            {"code": "implant_terracota",  "name": "Имплант Терракота 兵马俑",  "points": 0, "weight": 70, "icon": "🗿", "case_type": "purple"},
             {"code": "implant_panda",      "name": "Имплант Панда 🐼",          "points": 0, "weight": 64, "icon": "🐼", "case_type": "purple"},
             {"code": "implant_shaolin",    "name": "Имплант Шаолинь 少林",      "points": 0, "weight": 62, "icon": "🥋", "case_type": "purple"},
             {"code": "implant_linguasoft", "name": "Имплант Linguasoft 口才",   "points": 0, "weight": 60, "icon": "🎙", "case_type": "purple"},
@@ -6938,6 +6937,7 @@ async def open_case(data: dict):
     else:
         prizes = [
             {"code": "implant_red_dragon", "name": "Протокол Красный Дракон 红龙", "points": 0, "weight": 1, "icon": "🐉", "case_type": "black"},
+            {"code": "implant_terracota",  "name": "Имплант Терракота 兵马俑",     "points": 0, "weight": 1, "icon": "🗿", "case_type": "black"},
         ]
     prize = dict(random.choices(prizes, weights=[p["weight"] for p in prizes], k=1)[0])
 
