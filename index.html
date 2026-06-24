@@ -1353,27 +1353,6 @@
     </div>
   </div>
 
-  <!-- Обмен фрагментов протокола -->
-  <div class="cn-divider"><i class="ti ti-recycle"></i> 协议碎片 ОБМЕН ФРАГМЕНТОВ</div>
-  <div class="card" style="margin:4px 12px;" id="fragment-exchange-implant-block">
-    <div class="card-inner">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <i class="ti ti-recycle" style="font-size:28px;color:var(--red);"></i>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);">Обмен фрагментов</div>
-          <div style="font-size:11px;color:var(--text3);font-family:monospace;">10 фрагментов → случайный имплант</div>
-        </div>
-        <div style="margin-left:auto;text-align:right;">
-          <div style="font-size:11px;color:var(--text3);font-family:monospace;">Твои фрагменты</div>
-          <div style="font-size:18px;font-weight:700;color:var(--gold);" id="implant-frag-count">—</div>
-        </div>
-      </div>
-      <button class="btn btn-primary" id="fragment-exchange-implant-btn" onclick="exchangeFragments('implant')" style="width:100%;font-family:monospace;font-size:11px;letter-spacing:1px;">
-        <i class="ti ti-recycle"></i> ОБМЕНЯТЬ 10 ФРАГМЕНТОВ
-      </button>
-    </div>
-  </div>
-
   <!-- Каталог всех имплантов -->
   <div id="implants-catalog">
   <div class="cn-divider"><i class="ti ti-book"></i> 植入物目录 КАТАЛОГ</div>
@@ -1703,28 +1682,7 @@
       <div class="empty-state">Загрузка...</div>
     </div>
 
-    <!-- Обмен фрагментов протокола -->
-    <div class="cn-divider"><i class="ti ti-recycle"></i> 协议碎片 ОБМЕН ФРАГМЕНТОВ</div>
-    <div class="card" style="margin:4px 12px;" id="fragment-exchange-card-block">
-      <div class="card-inner">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <i class="ti ti-recycle" style="font-size:28px;color:var(--red);"></i>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text);">Обмен фрагментов</div>
-            <div style="font-size:11px;color:var(--text3);font-family:monospace;">10 фрагментов → случайная карточка</div>
-          </div>
-          <div style="margin-left:auto;text-align:right;">
-            <div style="font-size:11px;color:var(--text3);font-family:monospace;">Твои фрагменты</div>
-            <div style="font-size:18px;font-weight:700;color:var(--gold);" id="card-frag-count">—</div>
-          </div>
-        </div>
-        <button class="btn btn-primary" id="fragment-exchange-card-btn" onclick="exchangeFragments('card')" style="width:100%;font-family:monospace;font-size:11px;letter-spacing:1px;">
-          <i class="ti ti-recycle"></i> ОБМЕНЯТЬ 10 ФРАГМЕНТОВ
-        </button>
-      </div>
-    </div>
-
-    <div class="cn-divider"><i class="ti ti-book"></i> КАТАЛОГ КАРТОЧЕК</div>
+    <div class="cn-divider" id="cards-catalog-divider"><i class="ti ti-book"></i> КАТАЛОГ КАРТОЧЕК</div>
 
     <!-- АРХОНТ ЗЕМЛИ -->
     <div class="card" style="margin:6px 12px;">
@@ -2630,7 +2588,7 @@
 <script src="./js/achievements.js?v=20260622spinlock1"></script>
 <script src="./js/leaderboard.js?v=20260623pathcache1"></script>
 <script src="./js/shop.js?v=20260623pathcache1"></script>
-<script src="./js/casino.js?v=20260624terracotalegendary1"></script>
+<script src="./js/casino.js?v=20260624nofragexchange1"></script>
 <script src="./js/diary.js?v=20260613cleanup1"></script>
 <script src="./js/team.js?v=20260618b"></script>
 <script src="./js/architect-diary.js?v=20260622imgfix1"></script>
@@ -2646,7 +2604,7 @@
 <script src="./js/wild-ai-breach.js?v=20260622firewall1"></script>
 <script src="./js/events.js?v=20260622popupfix1"></script>
 <script src="./js/architect-event.js?v=20260623popupzindex1"></script>
-<script src="./js/demo.js?v=20260614themeintro1"></script>
+<script src="./js/demo.js?v=20260624nofragexchange1"></script>
 <script src="./js/instruction.js?v=20260624boardnav1"></script>
 <script src="./js/rewind.js?v=20260623rewindpolish2"></script>
 <script src="./js/main.js?v=20260624newsdeeplink1"></script>

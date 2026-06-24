@@ -1243,7 +1243,6 @@ async function loadCasinoStatus() {
     }
     renderCasinoAttempts(data);
     updateCasinoButtonState(data);
-    updateFragmentCounters(protocolFragments);
   } catch(e) {}
 }
 
@@ -1306,48 +1305,8 @@ function updateCasinoButtonState(data) {
   }
 }
 
-// ===== FRAGMENT EXCHANGE =====
-
-function updateFragmentCounters(frags) {
-  const n = frags != null ? frags : protocolFragments;
-  const a = document.getElementById('implant-frag-count');
-  const b = document.getElementById('card-frag-count');
-  if (a) a.textContent = n;
-  if (b) b.textContent = n;
-  const ib = document.getElementById('fragment-exchange-implant-btn');
-  const cb = document.getElementById('fragment-exchange-card-btn');
-  if (ib) ib.disabled = n < 10;
-  if (cb) cb.disabled = n < 10;
-}
-
-async function exchangeFragments(type) {
-  if (!currentUserId) return;
-  const label = type === 'implant' ? 'случайный имплант' : 'случайную карточку';
-  safeShowPopup({
-    title: 'Обмен фрагментов',
-    message: `Потратить 10 фрагментов протокола и получить ${label}?`,
-    buttons: [{id:'confirm', type:'default', text:'🔬 Обменять'}, {type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/fragments/exchange`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({telegram_id: currentUserId, type})
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        if (data.detail && data.detail.includes('Not enough fragments')) showToast('Недостаточно фрагментов (нужно 10)');
-        else showToast('Ошибка: ' + (data.detail || ''));
-        return;
-      }
-      protocolFragments = data.protocol_fragments;
-      updateFragmentCounters(protocolFragments);
-      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-      showToast(`✅ Получен: ${data.name}\nОсталось фрагментов: ${data.protocol_fragments}`);
-      if (type === 'implant') loadImplants(currentUserId);
-      else loadCards(currentUserId);
-    } catch(e) { showToast('Ошибка соединения'); }
-  });
-}
+// Обмен фрагментов на импланты/карточки убран (2026-06-24, по решению МЮ —
+// слишком лёгкий способ получить импланты/карточки). Сами фрагменты
+// продолжают накапливаться (касино/WildAI), но больше нигде не тратятся.
 
 // ===== ПОГОДА =====

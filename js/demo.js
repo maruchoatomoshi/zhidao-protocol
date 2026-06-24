@@ -204,10 +204,10 @@
     }
 
     const cardsTab = document.getElementById('cards-tab');
-    const exchange = document.getElementById('fragment-exchange-card-block');
-    if (exchange) exchange.style.display = 'none';
-    if (cardsTab && exchange && !document.getElementById('demoCardCatalogLock')) {
-      let node = exchange.nextElementSibling;
+    const cardsAnchor = document.getElementById('cards-catalog-divider');
+    if (cardsAnchor) cardsAnchor.style.display = 'none';
+    if (cardsTab && cardsAnchor && !document.getElementById('demoCardCatalogLock')) {
+      let node = cardsAnchor.nextElementSibling;
       while (node) {
         node.style.display = 'none';
         node = node.nextElementSibling;
@@ -218,7 +218,7 @@
       lock.innerHTML = `<div class="demo-lock-kicker">CARD ARCHIVE LOCKED</div>
         <div class="demo-lock-title">Карточки откроются в Пекине</div>
         <div class="demo-lock-copy">Архив карточек, редкости и пассивки скрыты до официального запуска.</div>`;
-      exchange.insertAdjacentElement('afterend', lock);
+      cardsAnchor.insertAdjacentElement('afterend', lock);
     }
   }
 
@@ -486,7 +486,6 @@
   window.loadDiaryStarsLeaderboardRating = async function loadDemoDiaryStarsLeaderboardRating() {
     installDemoRatingLock();
   };
-  window.exchangeFragments = async function demoExchangeFragments() { demoBlockedAction('Обмен фрагментов'); };
   window.loadCasinoStatus = async function loadDemoCasinoStatus() {
     installDemoSpoilerLocks();
   };
