@@ -13,6 +13,7 @@ function switchShopTab(mode, btn) {
     loadInventory();
   } else if (mode === 'folk') {
     document.getElementById('shopFolkContent').style.display = 'block';
+    if (typeof loadFolkShop === 'function') loadFolkShop();
   }
 }
 

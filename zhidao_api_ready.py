@@ -977,6 +977,22 @@ def init_db():
                   telegram_id INTEGER,
                   emoji TEXT,
                   UNIQUE(announcement_id, telegram_id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS community_shop_proposals
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  title TEXT NOT NULL,
+                  description TEXT NOT NULL,
+                  status TEXT NOT NULL DEFAULT 'pending',
+                  created_at TEXT NOT NULL,
+                  moderated_by INTEGER DEFAULT NULL,
+                  moderated_at TEXT DEFAULT NULL,
+                  moderation_note TEXT DEFAULT NULL)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS community_shop_reactions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  proposal_id INTEGER NOT NULL,
+                  telegram_id INTEGER NOT NULL,
+                  emoji TEXT NOT NULL,
+                  UNIQUE(proposal_id, telegram_id))''')
     c.execute('''CREATE TABLE IF NOT EXISTS admin_action_logs
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   admin_id INTEGER NOT NULL,
@@ -3057,6 +3073,11 @@ DIARY_STAR_BONUS_POINTS = 20
 TRIP_QUIZ_REWARD_POINTS = 50
 TRIP_QUIZ_PASS_RATIO = 0.7
 
+COMMUNITY_SHOP_REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑']
+COMMUNITY_SHOP_VOTE_EMOJI = '👑'
+COMMUNITY_SHOP_DEMAND_LIKES = 70
+COMMUNITY_SHOP_DEMAND_RATIO = 0.7
+
 
 def award_achievement(c, telegram_id: int, code: str) -> bool:
     """Awards an achievement if not already earned. Returns True if newly granted."""
@@ -4475,6 +4496,187 @@ async def react_to_announcement(item_id: int, data: dict):
         conn.commit()
         conn.close()
         return {"success": True}
+    return await db_write(_run)
+
+
+def _community_shop_demand(c, proposal_id: int):
+    c.execute("SELECT emoji, COUNT(*) FROM community_shop_reactions WHERE proposal_id=? GROUP BY emoji", (proposal_id,))
+    reaction_counts = {row[0]: row[1] for row in c.fetchall()}
+    crown_count = reaction_counts.get(COMMUNITY_SHOP_VOTE_EMOJI, 0)
+    total_voters = sum(reaction_counts.values())
+    ratio = (crown_count / total_voters) if total_voters else 0
+    demand_confirmed = crown_count >= COMMUNITY_SHOP_DEMAND_LIKES or ratio >= COMMUNITY_SHOP_DEMAND_RATIO
+    return reaction_counts, crown_count, demand_confirmed
+
+
+@app.post("/api/community-shop/propose")
+async def community_shop_propose(data: dict):
+    telegram_id = int(data.get("telegram_id") or 0)
+    title = str(data.get("title") or "").strip()
+    description = str(data.get("description") or "").strip()
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    if not title or not description:
+        raise HTTPException(status_code=400, detail="title and description required")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO community_shop_proposals (telegram_id, title, description, created_at) VALUES (?,?,?,?)",
+                (telegram_id, title, description, now_iso()),
+            )
+            conn.commit()
+            return {"success": True, "id": c.lastrowid}
+        finally:
+            conn.close()
+
+    return await db_write(_run)
+
+
+@app.get("/api/community-shop/proposals")
+def community_shop_proposals():
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT p.id, p.title, p.description, p.status, p.created_at, p.telegram_id, COALESCE(u.full_name, p.telegram_id)
+           FROM community_shop_proposals p LEFT JOIN users u ON u.telegram_id = p.telegram_id
+           WHERE p.status != 'rejected' ORDER BY p.created_at DESC'''
+    )
+    rows = c.fetchall()
+    result = []
+    for r in rows:
+        _, crown_count, demand_confirmed = _community_shop_demand(c, r[0])
+        result.append({
+            "id": r[0], "title": r[1], "description": r[2], "status": r[3], "created_at": r[4],
+            "telegram_id": r[5], "author_name": str(r[6]),
+            "crown_count": crown_count, "demand_confirmed": demand_confirmed,
+        })
+    conn.close()
+    return result
+
+
+@app.get("/api/community-shop/proposals/{proposal_id}/reactions")
+def community_shop_reactions(proposal_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT emoji, COUNT(*) as cnt FROM community_shop_reactions WHERE proposal_id=? GROUP BY emoji", (proposal_id,))
+    rows = c.fetchall()
+    conn.close()
+    return [{"emoji": r[0], "count": r[1]} for r in rows]
+
+
+@app.post("/api/community-shop/proposals/{proposal_id}/react")
+async def community_shop_react(proposal_id: int, data: dict):
+    def _run():
+        telegram_id = data.get("telegram_id")
+        emoji = data.get("emoji")
+        if not telegram_id or not emoji:
+            raise HTTPException(status_code=400, detail="Missing data")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT emoji FROM community_shop_reactions WHERE proposal_id=? AND telegram_id=?", (proposal_id, telegram_id))
+        existing = c.fetchone()
+        if existing and existing[0] == emoji:
+            c.execute("DELETE FROM community_shop_reactions WHERE proposal_id=? AND telegram_id=?", (proposal_id, telegram_id))
+        else:
+            c.execute("INSERT OR REPLACE INTO community_shop_reactions (proposal_id, telegram_id, emoji) VALUES (?,?,?)", (proposal_id, telegram_id, emoji))
+        conn.commit()
+        conn.close()
+        return {"success": True}
+    return await db_write(_run)
+
+
+@app.get("/api/admin/community-shop/proposals")
+def admin_community_shop_proposals(x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT p.id, p.title, p.description, p.status, p.created_at, p.telegram_id,
+                  COALESCE(u.full_name, p.telegram_id), p.moderation_note
+           FROM community_shop_proposals p LEFT JOIN users u ON u.telegram_id = p.telegram_id
+           ORDER BY p.created_at DESC'''
+    )
+    rows = c.fetchall()
+    result = []
+    for r in rows:
+        _, crown_count, demand_confirmed = _community_shop_demand(c, r[0])
+        result.append({
+            "id": r[0], "title": r[1], "description": r[2], "status": r[3], "created_at": r[4],
+            "telegram_id": r[5], "author_name": str(r[6]), "moderation_note": r[7],
+            "crown_count": crown_count, "demand_confirmed": demand_confirmed,
+        })
+    conn.close()
+    result.sort(key=lambda p: p["crown_count"], reverse=True)
+    return result
+
+
+@app.post("/api/admin/community-shop/proposals/{proposal_id}/promote")
+async def admin_promote_community_shop_proposal(proposal_id: int, data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    price = data.get("price")
+    if not isinstance(price, int) or price <= 0:
+        raise HTTPException(status_code=400, detail="Valid price required")
+    icon = str(data.get("icon") or "🏮").strip()
+    category = str(data.get("category") or "folk").strip()
+    daily_limit = data.get("daily_limit")
+    daily_limit = int(daily_limit) if isinstance(daily_limit, int) else -1
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT title, description, status FROM community_shop_proposals WHERE id=?", (proposal_id,))
+            row = c.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Proposal not found")
+            title, description, status = row
+            if status == 'promoted':
+                raise HTTPException(status_code=409, detail="Already promoted")
+            code = f"community_{proposal_id}"
+            c.execute(
+                '''INSERT INTO shop_items (code, name, description, icon, price, daily_limit, category, active)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+                   ON CONFLICT(code) DO UPDATE SET name=excluded.name, description=excluded.description,
+                     icon=excluded.icon, price=excluded.price, daily_limit=excluded.daily_limit,
+                     category=excluded.category, active=1''',
+                (code, title, description, icon, price, daily_limit, category),
+            )
+            c.execute(
+                "UPDATE community_shop_proposals SET status='promoted', moderated_by=?, moderated_at=? WHERE id=?",
+                (x_admin_id, now_iso(), proposal_id),
+            )
+            conn.commit()
+            return {"success": True, "item_code": code}
+        finally:
+            conn.close()
+
+    return await db_write(_run)
+
+
+@app.post("/api/admin/community-shop/proposals/{proposal_id}/reject")
+async def admin_reject_community_shop_proposal(proposal_id: int, data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    note = str(data.get("note") or "").strip() or None
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute(
+                "UPDATE community_shop_proposals SET status='rejected', moderated_by=?, moderated_at=?, moderation_note=? WHERE id=?",
+                (x_admin_id, now_iso(), note, proposal_id),
+            )
+            conn.commit()
+            return {"success": True}
+        finally:
+            conn.close()
+
     return await db_write(_run)
 
 

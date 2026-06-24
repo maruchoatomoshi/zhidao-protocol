@@ -200,7 +200,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode','tianhao-fact','trip-quiz'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode','tianhao-fact','trip-quiz','community-shop'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -226,6 +226,7 @@ function showAdminSection(name, btn) {
   if (name==='giftcode') adminLoadGiftCodes();
   if (name==='tianhao-fact') adminLoadTianhaoFacts();
   if (name==='trip-quiz') adminLoadTripQuizQuestions();
+  if (name==='community-shop') adminLoadCommunityShopProposals();
 }
 
 async function loadAdminLaundry() {
@@ -1982,6 +1983,89 @@ async function adminDeleteTripQuizQuestion(questionId) {
       adminLoadTripQuizQuestions();
     } else {
       showToast('Ошибка удаления');
+    }
+  } catch (e) { showToast('Ошибка соединения'); }
+}
+
+async function adminLoadCommunityShopProposals() {
+  const el = document.getElementById('adminCommunityShopList');
+  if (!el) return;
+  el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/community-shop/proposals`, {headers: {'x-admin-id': currentUserId}});
+    const proposals = await r.json();
+    if (!proposals.length) {
+      el.innerHTML = '<div class="empty-state">Предложений пока нет</div>';
+      return;
+    }
+    const statusLabels = {pending: 'на рассмотрении', promoted: 'в магазине', rejected: 'отклонено'};
+    el.innerHTML = proposals.map(p => `
+      <div class="card" style="margin-bottom:10px;">
+        <div class="card-inner" style="padding:12px 14px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;color:var(--text);">${escapeHtml(p.title)}</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:4px;">${escapeHtml(p.description)}</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px;">Автор: ${escapeHtml(p.author_name)} · ${statusLabels[p.status] || p.status}</div>
+            </div>
+            <div style="text-align:center;flex-shrink:0;">
+              <div style="font-size:18px;">👑</div>
+              <div style="font-size:13px;font-weight:700;color:${p.demand_confirmed ? '#cc8800' : 'var(--text)'};">${p.crown_count}</div>
+              ${p.demand_confirmed ? '<div style="font-size:8px;color:#cc8800;">СПРОС</div>' : ''}
+            </div>
+          </div>
+          ${p.status === 'pending' ? `
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+              <input class="admin-input" id="folkPrice-${p.id}" type="number" placeholder="Цена ★" style="flex:1;min-width:80px;">
+              <button class="btn btn-primary" style="padding:8px 12px;font-size:11px;" onclick="adminPromoteCommunityShopProposal(${p.id})">✅ В магазин</button>
+              <button class="btn" style="padding:8px 12px;font-size:11px;" onclick="adminRejectCommunityShopProposal(${p.id})">✖ Отклонить</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
+}
+
+async function adminPromoteCommunityShopProposal(proposalId) {
+  const priceInput = document.getElementById(`folkPrice-${proposalId}`);
+  const price = parseInt(priceInput?.value, 10);
+  if (!price || price <= 0) { showToast('Укажи цену в ★'); return; }
+
+  const ok = await showConfirmDialog({title:'Добавить в магазин?',message:`Товар появится в основном магазине за ${price}★.`,confirmText:'Добавить'});
+  if (!ok) return;
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/community-shop/proposals/${proposalId}/promote`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({price})
+    });
+    if (r.ok) {
+      showToast('✅ Товар добавлен в магазин');
+      adminLoadCommunityShopProposals();
+    } else {
+      showToast('Ошибка добавления');
+    }
+  } catch (e) { showToast('Ошибка соединения'); }
+}
+
+async function adminRejectCommunityShopProposal(proposalId) {
+  const ok = await showConfirmDialog({title:'Отклонить предложение?',message:'Предложение будет скрыто из народного магазина.',confirmText:'Отклонить',danger:true});
+  if (!ok) return;
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/community-shop/proposals/${proposalId}/reject`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({})
+    });
+    if (r.ok) {
+      showToast('Предложение отклонено');
+      adminLoadCommunityShopProposals();
+    } else {
+      showToast('Ошибка отклонения');
     }
   } catch (e) { showToast('Ошибка соединения'); }
 }
