@@ -200,7 +200,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
-  ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode','tianhao-fact'].forEach(s => {
+  ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode','tianhao-fact','trip-quiz'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
   document.querySelectorAll('.admin-sec-btn').forEach(b => b.classList.remove('active'));
@@ -225,6 +225,7 @@ function showAdminSection(name, btn) {
   if (name==='report') adminLoadEconomyReport(7);
   if (name==='giftcode') adminLoadGiftCodes();
   if (name==='tianhao-fact') adminLoadTianhaoFacts();
+  if (name==='trip-quiz') adminLoadTripQuizQuestions();
 }
 
 async function loadAdminLaundry() {
@@ -1905,6 +1906,84 @@ async function adminLoadTianhaoFacts() {
   } catch (e) {
     el.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
   }
+}
+
+async function adminCreateTripQuizQuestion() {
+  const prompt = (document.getElementById('adminTripQuizPrompt').value || '').trim();
+  const optionA = (document.getElementById('adminTripQuizOptionA').value || '').trim();
+  const optionB = (document.getElementById('adminTripQuizOptionB').value || '').trim();
+  const optionC = (document.getElementById('adminTripQuizOptionC').value || '').trim();
+  const correctOption = document.getElementById('adminTripQuizCorrect').value;
+  const explanation = (document.getElementById('adminTripQuizExplanation').value || '').trim();
+
+  if (!prompt || !optionA || !optionB || !optionC) { showToast('Заполни вопрос и все варианты'); return; }
+
+  try {
+    const r = await fetch(`${API_URL}/api/admin/trip-quiz/questions`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({
+        prompt, option_a: optionA, option_b: optionB, option_c: optionC,
+        correct_option: correctOption, explanation,
+      })
+    });
+    if (r.ok) {
+      showToast('✅ Вопрос добавлен');
+      document.getElementById('adminTripQuizPrompt').value = '';
+      document.getElementById('adminTripQuizOptionA').value = '';
+      document.getElementById('adminTripQuizOptionB').value = '';
+      document.getElementById('adminTripQuizOptionC').value = '';
+      document.getElementById('adminTripQuizExplanation').value = '';
+      adminLoadTripQuizQuestions();
+    } else {
+      showToast('Ошибка добавления вопроса');
+    }
+  } catch (e) { showToast('Ошибка соединения'); }
+}
+
+async function adminLoadTripQuizQuestions() {
+  const el = document.getElementById('adminTripQuizList');
+  if (!el) return;
+  el.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/trip-quiz/questions`, {headers: {'x-admin-id': currentUserId}});
+    const data = await r.json();
+    const questions = data.questions || [];
+    if (!questions.length) {
+      el.innerHTML = '<div class="empty-state">Вопросов пока нет</div>';
+      return;
+    }
+    el.innerHTML = questions.map(q => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-size:12px;color:var(--text);">${escapeHtml(q.prompt)}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px;">
+            A: ${escapeHtml(q.option_a)} · B: ${escapeHtml(q.option_b)} · C: ${escapeHtml(q.option_c)}
+          </div>
+          <div style="font-size:10px;color:var(--accent);margin-top:2px;">Правильный: ${q.correct_option.toUpperCase()}</div>
+        </div>
+        <button class="btn" style="padding:6px 10px;font-size:10px;" onclick="adminDeleteTripQuizQuestion(${q.id})">🗑</button>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
+}
+
+async function adminDeleteTripQuizQuestion(questionId) {
+  const ok = await showConfirmDialog({title:'Удалить вопрос?',message:'Вопрос будет удалён из квиза.',confirmText:'Удалить',danger:true});
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/admin/trip-quiz/questions/${questionId}`, {
+      method: 'DELETE',
+      headers: {'x-admin-id': currentUserId}
+    });
+    if (r.ok) {
+      showToast('Вопрос удалён');
+      adminLoadTripQuizQuestions();
+    } else {
+      showToast('Ошибка удаления');
+    }
+  } catch (e) { showToast('Ошибка соединения'); }
 }
 
 function adminTestArchitectDiaryPopup() {

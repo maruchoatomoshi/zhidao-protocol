@@ -1273,6 +1273,22 @@ def init_db():
                   correct_option TEXT NOT NULL,
                   explanation TEXT DEFAULT NULL,
                   created_at TEXT NOT NULL)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS trip_quiz_questions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  prompt TEXT NOT NULL,
+                  option_a TEXT NOT NULL,
+                  option_b TEXT NOT NULL,
+                  option_c TEXT NOT NULL,
+                  correct_option TEXT NOT NULL,
+                  explanation TEXT DEFAULT NULL,
+                  created_by INTEGER DEFAULT NULL,
+                  created_at TEXT NOT NULL)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS trip_quiz_attempts
+                 (telegram_id INTEGER PRIMARY KEY,
+                  score INTEGER NOT NULL,
+                  total INTEGER NOT NULL,
+                  passed INTEGER NOT NULL,
+                  completed_at TEXT NOT NULL)''')
     conn.commit()
     conn.close()
 
@@ -3037,6 +3053,9 @@ def apply_diary_points_delta(c, telegram_id: int, previous_points: int, next_poi
 
 DIARY_STAR_POINTS = {1: 15, 2: 30, 3: 50}
 DIARY_STAR_BONUS_POINTS = 20
+
+TRIP_QUIZ_REWARD_POINTS = 50
+TRIP_QUIZ_PASS_RATIO = 0.7
 
 
 def award_achievement(c, telegram_id: int, code: str) -> bool:
@@ -5293,6 +5312,194 @@ def admin_list_tianhao_facts(x_admin_id: Optional[int] = Header(None)):
         {"id": r[0], "text": r[1], "show_at": r[2], "created_at": r[3]}
         for r in rows
     ]}
+
+
+@app.post("/api/admin/trip-quiz/questions")
+async def admin_create_trip_quiz_question(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    prompt = str(data.get("prompt") or "").strip()
+    option_a = str(data.get("option_a") or "").strip()
+    option_b = str(data.get("option_b") or "").strip()
+    option_c = str(data.get("option_c") or "").strip()
+    correct_option = str(data.get("correct_option") or "").strip().lower()
+    explanation = str(data.get("explanation") or "").strip() or None
+    if not prompt or not option_a or not option_b or not option_c:
+        raise HTTPException(status_code=400, detail="prompt and all options required")
+    if correct_option not in ("a", "b", "c"):
+        raise HTTPException(status_code=400, detail="correct_option must be a, b or c")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute(
+                '''INSERT INTO trip_quiz_questions
+                   (prompt, option_a, option_b, option_c, correct_option, explanation, created_by, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                (prompt, option_a, option_b, option_c, correct_option, explanation, x_admin_id, now_iso()),
+            )
+            conn.commit()
+            return {"success": True}
+        finally:
+            conn.close()
+
+    return await db_write(_run)
+
+
+@app.get("/api/admin/trip-quiz/questions")
+def admin_list_trip_quiz_questions(x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        '''SELECT id, prompt, option_a, option_b, option_c, correct_option, explanation, created_at
+           FROM trip_quiz_questions ORDER BY created_at DESC'''
+    )
+    rows = c.fetchall()
+    conn.close()
+    return {"questions": [
+        {
+            "id": r[0], "prompt": r[1], "option_a": r[2], "option_b": r[3], "option_c": r[4],
+            "correct_option": r[5], "explanation": r[6], "created_at": r[7],
+        }
+        for r in rows
+    ]}
+
+
+@app.delete("/api/admin/trip-quiz/questions/{question_id}")
+async def admin_delete_trip_quiz_question(question_id: int, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("DELETE FROM trip_quiz_questions WHERE id=?", (question_id,))
+            conn.commit()
+            return {"success": True}
+        finally:
+            conn.close()
+
+    return await db_write(_run)
+
+
+@app.get("/api/trip-quiz/status/{telegram_id}")
+def trip_quiz_status(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM trip_quiz_questions")
+    question_count = c.fetchone()[0] or 0
+    c.execute(
+        "SELECT score, total, passed, completed_at FROM trip_quiz_attempts WHERE telegram_id=?",
+        (telegram_id,),
+    )
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return {"available": question_count > 0, "attempted": False}
+    return {
+        "available": question_count > 0,
+        "attempted": True,
+        "score": row[0],
+        "total": row[1],
+        "passed": bool(row[2]),
+        "completed_at": row[3],
+    }
+
+
+@app.get("/api/trip-quiz/questions/{telegram_id}")
+def trip_quiz_questions(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM trip_quiz_attempts WHERE telegram_id=?", (telegram_id,))
+    if c.fetchone():
+        conn.close()
+        raise HTTPException(status_code=409, detail="Quiz already completed")
+    c.execute(
+        "SELECT id, prompt, option_a, option_b, option_c FROM trip_quiz_questions ORDER BY id"
+    )
+    rows = c.fetchall()
+    conn.close()
+    if not rows:
+        raise HTTPException(status_code=404, detail="No quiz questions configured")
+    return {
+        "reward": TRIP_QUIZ_REWARD_POINTS,
+        "pass_ratio": TRIP_QUIZ_PASS_RATIO,
+        "questions": [
+            {"id": r[0], "prompt": r[1], "option_a": r[2], "option_b": r[3], "option_c": r[4]}
+            for r in rows
+        ],
+    }
+
+
+@app.post("/api/trip-quiz/submit")
+async def trip_quiz_submit(data: dict):
+    telegram_id = int(data.get("telegram_id") or 0)
+    answers = data.get("answers") or []
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id required")
+    if not isinstance(answers, list) or not answers:
+        raise HTTPException(status_code=400, detail="answers required")
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT 1 FROM trip_quiz_attempts WHERE telegram_id=?", (telegram_id,))
+            if c.fetchone():
+                raise HTTPException(status_code=409, detail="Quiz already completed")
+            c.execute("SELECT id, correct_option FROM trip_quiz_questions")
+            correct_map = {row[0]: row[1] for row in c.fetchall()}
+            if not correct_map:
+                raise HTTPException(status_code=400, detail="No quiz questions configured")
+
+            total = len(correct_map)
+            score = 0
+            answered_ids = set()
+            for a in answers:
+                qid = a.get("question_id")
+                if qid in answered_ids:
+                    continue
+                answered_ids.add(qid)
+                selected = str(a.get("selected_option") or "").strip().lower()
+                if qid in correct_map and selected == correct_map[qid]:
+                    score += 1
+
+            passed = 1 if (score / total) >= TRIP_QUIZ_PASS_RATIO else 0
+            completed_at = now_iso()
+            c.execute(
+                "INSERT INTO trip_quiz_attempts (telegram_id, score, total, passed, completed_at) VALUES (?,?,?,?,?)",
+                (telegram_id, score, total, passed, completed_at),
+            )
+
+            reward = 0
+            new_points = None
+            if passed:
+                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (TRIP_QUIZ_REWARD_POINTS, telegram_id))
+                c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                row = c.fetchone()
+                new_points = row[0] if row else None
+                log_economy(c, telegram_id, "trip_quiz_reward", TRIP_QUIZ_REWARD_POINTS, new_points, None, "trip_quiz", "Факты о поездке")
+                reward = TRIP_QUIZ_REWARD_POINTS
+
+            conn.commit()
+            return {
+                "success": True,
+                "score": score,
+                "total": total,
+                "passed": bool(passed),
+                "reward": reward,
+                "new_points": new_points,
+            }
+        finally:
+            conn.close()
+
+    return await db_write(_run)
 
 
 

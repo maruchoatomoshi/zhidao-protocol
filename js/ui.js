@@ -201,6 +201,7 @@ function showPage(name, btn) {
   if (name === 'rating') { loadLeaderboard(); updateRatingPoints(); }
   if (name === 'diary') loadDiaryPage();
   if (name === 'diary-stars') initDiaryStarsPage();
+  if (name === 'trip-quiz') { if (typeof openTripQuizPage === 'function') openTripQuizPage(); }
   if (name === 'contracts') { if (typeof openContractsPage === 'function') openContractsPage(); }
   if (name === 'casino') {
     fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
@@ -1082,6 +1083,9 @@ function zApplyUserProfile(telegramId, data, options = {}) {
   });
   zSafeUiCall('diary access', () => {
     if (typeof syncDiaryAccessVisibility === 'function') syncDiaryAccessVisibility();
+  });
+  zSafeUiCall('trip quiz banner', () => {
+    if (typeof syncTripQuizBannerVisibility === 'function') syncTripQuizBannerVisibility();
   });
   zSafeUiCall('feature freeze', () => {
     if (typeof syncFeatureFreezeBadges === 'function') syncFeatureFreezeBadges();
