@@ -13662,6 +13662,12 @@ body.is-architect .profile-card-spark.spark-bl {
   animation: hpCriticalPulse 0.9s ease-in-out infinite;
 }
 
+/* Wild AI Breach battle clips letterbox down to a small strip with object-fit:contain
+   (their source aspect ratio differs from Architect's clips) — fill the hero box instead. */
+.event-overlay.event-wildai #eventBossVideo {
+  object-fit: cover;
+}
+
 /* — Question modal premium cyber — */
 .event-question-modal {
   border-radius: 16px !important;

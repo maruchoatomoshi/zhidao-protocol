@@ -167,7 +167,7 @@ FRAME_DEFINITIONS = [
      "category": "path", "check": lambda s: s["theme_path"] == "cyberpunk"},
     {"id": "path-genshin", "name": "Путь Genshin", "desc": "Выбери путь Genshin",
      "category": "path", "check": lambda s: s["theme_path"] == "genshin"},
-    {"id": "blackwall-defender", "name": "Хранитель Файрвола", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
+    {"id": "redwall-defender", "name": "Хранитель Файрвола", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
      "category": "legendary", "check": lambda s: s["wildai_defender"]},
 ]
 FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
@@ -705,7 +705,7 @@ WILD_AI_BREACH_INFECTION_ON_ERROR = 3
 WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION = 5
 WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2
 WILD_AI_BREACH_REWARD_REP = 30
-WILD_AI_BREACH_FRAME_ID = "blackwall-defender"
+WILD_AI_BREACH_FRAME_ID = "redwall-defender"
 WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Файрвола"
 
 WILD_AI_BREACH_QUESTION_SEEDS = {
@@ -9528,7 +9528,7 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
         boss_image = data.get("boss_image")
         reward_text = data.get("reward_text") or f"+{WILD_AI_BREACH_REWARD_REP} REP, рамка «{WILD_AI_BREACH_FRAME_ID}»"
         min_players = int(data.get("min_players") or 3)
-        max_players = int(data.get("max_players") or 5)
+        max_players = int(data.get("max_players") or 15)
         max_hp = int(data.get("max_hp") or WILD_AI_BREACH_DEFAULT_HP)
         created_at = now_iso()
         if min_players < 1:

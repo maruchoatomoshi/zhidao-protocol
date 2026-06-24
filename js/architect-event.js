@@ -1977,7 +1977,8 @@ function openEventInfoModal() {
   const body = document.getElementById('eventInfoModalBody');
   if (!modal || !body) return;
 
-  const isWildAi = currentArchitectEvent && currentArchitectEvent.code === 'wildai_breach';
+  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+  const isWildAi = currentArchitectEvent ? currentArchitectEvent.code === 'wildai_breach' : hintIsWildAi;
 
   let title, intro;
   if (isWildAi) {
