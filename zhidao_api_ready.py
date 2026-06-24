@@ -610,7 +610,7 @@ SHOP_ITEM_SEEDS = [
     ("immunity",    "Иммунитет",         "Блокирует один штраф",                          "🛡", 150,  5, "privilege"),
     ("laundry_vip", "Стирка VIP",         "Приоритет на стирку",                           "🧺", 150,  5, "privilege"),
     ("dj",          "DJ-сет",             "Право выбрать музыку",                          "🎵", 100,  1, "social"),
-    ("amnesty",     "Амнистия",           "Снять один штраф по согласованию",              "🤝",  80,  5, "privilege"),
+    ("amnesty",     "Амнистия",           "Снять один штраф по согласованию · до 00:00 по Пекину",  "🤝",  80,  5, "privilege"),
     ("kfc",         "KFC",                "Награда из специального меню",                  "🍗", 300,  5, "food"),
     ("bubbletea",   "Bubble Tea",         "Награда из специального меню",                  "🧋", 250,  5, "food"),
     ("no_report",   "Без доклада",        "Пропуск одного доклада по согласованию",        "📄", 400,  5, "vip"),
@@ -630,7 +630,7 @@ SHOP_ITEM_EXPIRY_DAYS = {
     'kfc':         0,
     'bubbletea':   0,
     'immunity':    1,
-    'amnesty':     1,
+    'amnesty':     0,
     'dj':          1,
     'no_report':   1,
 }
@@ -8280,6 +8280,8 @@ async def gift_item(data: dict):
             purchase = c.fetchone()
             if not purchase:
                 raise HTTPException(status_code=404, detail="Purchase not found")
+            if purchase[0] == 'amnesty':
+                raise HTTPException(status_code=400, detail="Cannot gift amnesty")
             if from_id not in ADMIN_IDS:
                 c.execute(
                     """SELECT COUNT(*) FROM shop_purchases
@@ -8334,6 +8336,8 @@ async def sell_item(data: dict):
             purchase = c.fetchone()
             if not purchase:
                 raise HTTPException(status_code=404, detail="Not found")
+            if purchase[0] == 'amnesty':
+                raise HTTPException(status_code=400, detail="Cannot sell amnesty")
             sell_rate = 0.6 if has_active_implant(c, telegram_id, "implant_panda") else 0.5
             refund = int(purchase[1] * sell_rate)
             c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, telegram_id))

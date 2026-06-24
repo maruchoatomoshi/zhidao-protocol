@@ -419,8 +419,9 @@ async function loadInventory() {
         </div>
         <div class="inventory-actions">
           <button class="inv-btn inv-btn-use" onclick="useItem(${item.id},'${shopJsArg(item.name)}','${item.code}')">✅ Использовать</button>
+          ${item.code === 'amnesty' ? '' : `
           <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id},'${shopJsArg(item.name)}')">🎁 Подарить</button>
-          <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id},'${shopJsArg(item.name)}',${item.price})">💰 Продать</button>
+          <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id},'${shopJsArg(item.name)}',${item.price})">💰 Продать</button>`}
         </div>
       </div>`;
     }).join('');
