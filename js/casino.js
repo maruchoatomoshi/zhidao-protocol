@@ -5,7 +5,7 @@ const PRIZES = [
   { code:'walk',    icon:'🕐', name:'+30 мин свободы',   desc:'Покажи скрин вожатому', points:0, rarity:'uncommon' },
   { code:'laundry', icon:'🧺', name:'Вне очереди!',      desc:'Первым на стирку',    points:0,   rarity:'rare' },
   { code:'skip',    icon:'🛡', name:'Иммунитет!',        desc:'Один пропуск без штрафа', points:0, rarity:'rare' },
-  { code:'jackpot', icon:'👑', name:'ДЖЕКПОТ!',          desc:'+250 баллов! Невероятно!', points:250, rarity:'jackpot' },
+  { code:'jackpot', icon:'👑', name:'ДЖЕКПОТ!',          desc:'+100 баллов! Невероятно!', points:100, rarity:'jackpot' },
 ];
 const PURPLE_PRIZES = [
   { code:'implant_guanxi',    icon:'🤝', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',           name:'Гуаньси 关系',       desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
@@ -197,7 +197,7 @@ async function loadImplants(telegramId) {
         : '';
 
       const disassembleBtn = isSecond
-        ? `<button class="inv-btn inv-btn-gift" onclick="disassembleImplant(${imp.id})">⚙️ [ РАЗОБРАТЬ +100 ★ ]</button>`
+        ? `<button class="inv-btn inv-btn-gift" onclick="disassembleImplant(${imp.id})">⚙️ [ РАЗОБРАТЬ +50 ★ ]</button>`
         : '';
       const legendaryInfo = LEGENDARY_IMPLANT_INFO[imp.implant_id];
       const legendaryBtn = legendaryInfo && !isSecond
@@ -1140,8 +1140,8 @@ function launchConfetti(count) {
 async function disassembleImplant(id) {
   safeShowPopup({
     title: '⚙️ Разобрать имплант?',
-    message: 'Ты получишь +100 ★ за разборку дубля. Имплант будет уничтожен.',
-    buttons: [{id:'confirm', type:'default', text:'⚙️ Разобрать +100 ★'}, {type:'cancel'}]
+    message: 'Ты получишь +50 ★ за разборку дубля. Имплант будет уничтожен.',
+    buttons: [{id:'confirm', type:'default', text:'⚙️ Разобрать +50 ★'}, {type:'cancel'}]
   }, async (btnId) => {
     if (btnId !== 'confirm') return;
     try {
@@ -1155,7 +1155,7 @@ async function disassembleImplant(id) {
         currentPoints = data.new_points;
         updatePoints();
         try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        showToast(`✅ Разобрано! +100 ★\nБаланс: ${data.new_points} ★`);
+        showToast(`✅ Разобрано! +50 ★\nБаланс: ${data.new_points} ★`);
         loadImplants(currentUserId);
       } else {
         const err = await r.json();

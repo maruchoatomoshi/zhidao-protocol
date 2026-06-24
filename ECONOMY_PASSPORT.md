@@ -56,10 +56,10 @@ REP does not change from:
 | Bot `/award` | configurable | `0` | Direct DB write; should be moved to API/log. |
 | Sunday salary | default `+100★` | `0` | Bot-side; Red Dragon doubles it. |
 | Raid win | `+100★` | `0` | Entry is `-50★`, win chance `40%`. |
-| Case cash drop | `0/+30/+60/+250★` | `0` | Costs scan attempt, not direct ★. |
+| Case cash drop | `0/+30/+60/+100★` | `0` | Costs scan attempt, not direct ★. |
 | Genshin prayer cash drop | `+30/+60★` | `0` | Costs scan attempt, not direct ★. |
 | Card duplicate disassemble | `+50★` | `0` | Duplicate recovery. |
-| Implant duplicate disassemble | `+100★` | `0` | Duplicate recovery. |
+| Implant duplicate disassemble | `+50★` | `0` | Duplicate recovery. |
 | Shop resale | `50%` or `60%` with Panda | `0` | Recovery, not profit if bought normally. |
 | Contract payout | `reward - fee` | `0` | Transfer from creator's frozen reward. |
 
@@ -150,7 +150,7 @@ Scan attempt sources:
 Cases:
 
 - Gold/purple/black roll.
-- Possible cash prizes: `+30★`, `+60★`, `+250★`.
+- Possible cash prizes: `+30★`, `+60★`, `+100★`.
 - Possible utility/item/implant drops.
 
 Genshin prayers:

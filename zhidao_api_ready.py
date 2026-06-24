@@ -3882,7 +3882,7 @@ def _rewind_format_date_range(start_iso: str, end_iso: str) -> str:
 
 
 REWIND_CASE_PRIZE_INFO = {
-    "jackpot":             {"name": "ДЖЕКПОТ! +250★",              "rarity": "epic"},
+    "jackpot":             {"name": "ДЖЕКПОТ! +100★",              "rarity": "epic"},
     "medium":              {"name": "+60 баллов",                    "rarity": "rare"},
     "small":               {"name": "+30 баллов",                    "rarity": "common"},
     "walk":                {"name": "+30 мин свободы",                "rarity": "common"},
@@ -7344,7 +7344,7 @@ async def open_case(data: dict):
             {"code": "walk",    "name": "+30 мин свободы",    "points": 0,   "weight": 20, "icon": "🕐", "case_type": "gold"},
             {"code": "laundry", "name": "Вне очереди!",       "points": 0,   "weight": 12, "icon": "🧺", "case_type": "gold"},
             {"code": "skip",    "name": "Иммунитет!",         "points": 0,   "weight": 6,  "icon": "🛡", "case_type": "gold"},
-            {"code": "jackpot", "name": "ДЖЕКПОТ! +250★",     "points": 250, "weight": 1,  "icon": "👑", "case_type": "gold"},
+            {"code": "jackpot", "name": "ДЖЕКПОТ! +100★",     "points": 100, "weight": 1,  "icon": "👑", "case_type": "gold"},
         ]
     elif case_type == 'purple':
         prizes = [
@@ -7496,7 +7496,7 @@ def get_casino_history(telegram_id: int):
         "walk": {"name": "+30 мин свободы", "icon": "🕐"},
         "laundry": {"name": "Вне очереди!", "icon": "🧺"},
         "skip": {"name": "Иммунитет!", "icon": "🛡"},
-        "jackpot": {"name": "ДЖЕКПОТ! +250!", "icon": "👑"},
+        "jackpot": {"name": "ДЖЕКПОТ! +100!", "icon": "👑"},
         "implant_guanxi": {"name": "Имплант Гуаньси 关系", "icon": "🤝"},
         "implant_terracota": {"name": "Имплант Терракота 兵马俑", "icon": "🗿"},
         "implant_panda": {"name": "Имплант Панда 🐼", "icon": "🐼"},
@@ -8008,13 +8008,13 @@ async def disassemble_implant(implant_id: int, data: dict):
             conn.close()
             raise HTTPException(status_code=400, detail="Not a duplicate")
         c.execute("UPDATE user_implants SET durability=0 WHERE id=?", (implant_id,))
-        c.execute("UPDATE users SET points = points + 100 WHERE telegram_id=?", (telegram_id,))
+        c.execute("UPDATE users SET points = points + 50 WHERE telegram_id=?", (telegram_id,))
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
         new_points = c.fetchone()[0]
-        log_economy(c, telegram_id, 'implant_disassemble', 100, new_points, implant_id, 'implant', implant_type)
+        log_economy(c, telegram_id, 'implant_disassemble', 50, new_points, implant_id, 'implant', implant_type)
         conn.commit()
         conn.close()
-        return {"success": True, "refund": 100, "new_points": new_points}
+        return {"success": True, "refund": 50, "new_points": new_points}
     return await db_write(_run)
 
 
