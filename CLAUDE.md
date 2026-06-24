@@ -219,6 +219,21 @@ Known focus areas:
 - Keep inventory cards readable in light themes.
 - Keep case/prayer UI switching correctly for admins and normal users.
 
+### Aqua / Hainan theme — draft, paused (2026-06-24)
+
+A sixth theme (`theme-aqua`) was built as a CSS-only experiment after the user shared a reference screenshot of a glossy ocean/glass UI (dragon-in-glass-orb logo, bubbles, light rays, Frutiger-Aero-style glassmorphic cards) and asked for something close to it, framed for the upcoming Hainan trip and explicitly wanted visible only to himself for now.
+
+What exists:
+
+- `js/config.js`: `'aqua'` added to the `THEMES` array.
+- `index.html`: `theme-btn-aqua` picker card in `#more-themes` (hidden by default via inline `display:none`), plus an `.aqua-layer` ambient background block (rays/caustics/18 bubble `span`s) inserted after `#matrixRain`.
+- `js/ui.js`: `syncAdminUiVisibility()` shows the `theme-btn-aqua` card only when `isDevOwner` (`telegram_id === 389741116`) — same gating mechanism used for the existing dev-only test buttons. No other user can see or select this theme.
+- `css/styles.css`: a `body.theme-aqua` block at the end of the file — ocean gradient background, animated rays/caustics/rising bubbles, glassmorphic overrides for `.card`, `.btn-primary`, `.btn-gold`, `.bottom-nav`, `.nav-item`, `.page-title`, plus the usual dark-text-on-light-background override list (same pattern as `theme-nw-light`).
+
+What's missing to actually match the reference image: the dragon-in-glass-orb logo art and fish imagery are drawn assets that can't be produced with CSS alone — closing the gap needs real generated/commissioned art assets, not more CSS tuning.
+
+User feedback after seeing it live: "пока выглядит, конечно, голо, но прикольно всё равно" (looks bare for now, but still cool). Explicit instruction: save this as a draft and possibly come back to it later — **do not continue polishing this theme unless the user explicitly asks to resume it.**
+
 ### Inventory
 
 Inventory was improved toward a unified card standard:
