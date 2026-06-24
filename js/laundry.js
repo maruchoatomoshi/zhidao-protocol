@@ -2,6 +2,9 @@ function initLaundry() {
   // Загрузка происходит при открытии раздела, не при старте
 }
 
+const _laundrySlotCache = {};
+const _waterSlotCache = {};
+
 function switchLaundryTab(tab) {
   const lt = document.getElementById('laundry-tab');
   const wt = document.getElementById('water-tab');
@@ -17,6 +20,10 @@ function switchLaundryTab(tab) {
 
 async function bookWaterSlot(slotId) {
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  const slot = _waterSlotCache[slotId];
+  const when = slot ? [slot.day, slot.time].filter(Boolean).join(', ') : 'этот слот';
+  const ok = await showConfirmDialog({title:'Записываю на воду', message:`${when}. Подтверждаете?`, confirmText:'Подтвердить'});
+  if (!ok) return;
   try {
     const r = await fetch(`${API_URL}/api/water/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
     if (r.ok) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} showToast('✅ Записаны на набор воды!'); loadWaterSchedule(); }
@@ -44,6 +51,7 @@ async function loadLaundrySchedule() {
       return;
     }
     container.innerHTML = data.map(slot => {
+      _laundrySlotCache[slot.id] = slot;
       const capacity = slot.capacity || 1;
       const booked = slot.booked || 0;
       const bookings = slot.bookings || [];
@@ -88,6 +96,7 @@ async function loadWaterSchedule() {
       return;
     }
     container.innerHTML = data.map(slot => {
+      _waterSlotCache[slot.id] = slot;
       const booked = slot.booked || 0;
       const bookings = slot.bookings || [];
       const isMe = bookings.some(b => b.telegram_id === currentUserId);
@@ -119,6 +128,10 @@ async function loadWaterSchedule() {
 
 async function bookLaundrySlot(slotId) {
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
+  const slot = _laundrySlotCache[slotId];
+  const when = slot ? [slot.day, slot.time].filter(Boolean).join(', ') : 'этот слот';
+  const ok = await showConfirmDialog({title:'Записываю на стирку', message:`${when}. Подтверждаете?`, confirmText:'Подтвердить'});
+  if (!ok) return;
   try {
     const r = await fetch(`${API_URL}/api/laundry/schedule/${slotId}/book`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
     if (r.ok) {
