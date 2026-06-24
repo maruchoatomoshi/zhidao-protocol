@@ -147,10 +147,10 @@ function syncFeatureFreezeBadges() {
   });
 }
 
-let _currentPage = 'home';
+let _currentPage = 'schedule';
 
 function showPage(name, btn) {
-  if (isLaunchGateActive() && name !== 'home') {
+  if (isLaunchGateActive() && name !== 'schedule') {
     showLaunchGateOverlay();
     return;
   }

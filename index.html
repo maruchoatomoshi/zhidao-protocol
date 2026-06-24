@@ -20,7 +20,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260625avatar1">
+<link rel="stylesheet" href="./css/styles.css?v=20260625navfab1">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -79,6 +79,11 @@
 <!-- Конфетти -->
 <div id="confettiContainer" style="position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;"></div>
 
+<!-- Кнопка профиля/меню — фиксирована в правом верхнем углу, видна на всех разделах -->
+<button class="profile-fab" id="profileFabBtn" onclick="showPage('home')" aria-label="Профиль">
+  <i class="ti ti-user"></i>
+</button>
+
 <!-- Модалка вопроса -->
 <div class="question-modal" id="questionModal">
   <div class="question-box">
@@ -92,7 +97,7 @@
 </div>
 
 <!-- ===== ГЛАВНАЯ ===== -->
-<div class="page active" id="page-home">
+<div class="page" id="page-home">
   <div class="main-logo-wrap">
     <div class="main-logo" onclick="handleLogoEasterTap()"><div class="no-leak-bg" style="width:140px;height:140px;background-image:url('https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/logo.png');background-size:contain;background-position:center;background-repeat:no-repeat;" oncontextmenu="return false"></div></div>
     <div class="main-pinyin">智能电子解决方案</div>
@@ -314,7 +319,7 @@
 </div>
 
 <!-- ===== РАСПИСАНИЕ + НОВОСТИ ===== -->
-<div class="page" id="page-schedule">
+<div class="page active" id="page-schedule">
   <div class="page-header">
     <div class="page-title">НОВОСТИ <span class="page-title-cn">新闻</span></div>
     <div class="page-sub">> xīn wén // объявления от вожатых</div>
@@ -2517,11 +2522,7 @@
 </div>
 
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="showPage('home',this)">
-    <i class="ti ti-smart-home"></i>
-    <span class="nav-cn">主页</span>
-  </button>
-  <button class="nav-item" onclick="showPage('schedule',this)">
+  <button class="nav-item active" onclick="showPage('schedule',this)">
     <i class="ti ti-layout-list"></i>
     <span class="nav-cn">日程</span>
   </button>
@@ -2666,7 +2667,7 @@
 <script src="./js/config.js?v=20260624aquatheme1"></script>
 <script src="./js/state.js"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260625shopreset1"></script>
+<script src="./js/ui.js?v=20260625navfab1"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js?v=20260624boardnav1"></script>
 <script src="./js/blackwall.js?v=20260622firewall1"></script>

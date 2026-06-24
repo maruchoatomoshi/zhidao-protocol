@@ -697,6 +697,33 @@ body.theme-genshin-light .matrix-kanji {
 }
 .nav-cn { font-size: 8px; font-family: serif; color: inherit; line-height: 1; }
 
+.profile-fab {
+  position: fixed;
+  top: calc(10px + var(--tg-safe-top, 0px));
+  right: calc(10px + var(--tg-safe-right, 0px));
+  z-index: 500;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5,5,16,0.92);
+  border: 1px solid var(--red-border);
+  color: rgba(200,50,50,0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  cursor: pointer;
+  transition: all var(--transition-normal) var(--ease-standard);
+}
+.profile-fab .ti { font-size: 19px !important; line-height: 1; }
+.profile-fab:active { transform: scale(0.92); }
+body.theme-nw-light .profile-fab,
+body.theme-genshin-light .profile-fab,
+body.theme-admin-light .profile-fab {
+  background: rgba(255,255,255,0.92);
+  color: #a02020;
+}
+
 /* ===== СВЕТЛЫЕ ТЕМЫ — ТЁМНЫЙ ТЕКСТ ===== */
 body.theme-nw-light .page-title,
 body.theme-nw-light .page-sub,
