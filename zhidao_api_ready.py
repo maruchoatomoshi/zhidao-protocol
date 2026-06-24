@@ -76,6 +76,13 @@ try:
 except ValueError:
     RATE_LIMIT_MAX_REQUESTS_PER_IP = 300
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
+
+
+def shop_day_str() -> str:
+    """Shop daily limits/stock reset at 07:00 Beijing time, not midnight."""
+    return (datetime.now(BEIJING_TZ) - timedelta(hours=7)).strftime('%Y-%m-%d')
+
+
 REQUEST_LOG_SLOW_MS = int(os.getenv("REQUEST_LOG_SLOW_MS", "1500") or "1500")
 REQUEST_LOG_ALL = os.getenv("REQUEST_LOG_ALL", "0").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -606,7 +613,6 @@ SHOP_ITEM_SEEDS = [
     ("amnesty",     "Амнистия",           "Снять один штраф по согласованию",              "🤝",  80,  5, "privilege"),
     ("kfc",         "KFC",                "Награда из специального меню",                  "🍗", 300,  5, "food"),
     ("bubbletea",   "Bubble Tea",         "Награда из специального меню",                  "🧋", 250,  5, "food"),
-    ("snack",       "Снэк",               "Награда из специального меню",                  "🍦", 200,  5, "food"),
     ("no_report",   "Без доклада",        "Пропуск одного доклада по согласованию",        "📄", 400,  5, "vip"),
     ("poizon",      "Poizon",             "Премиальная награда",                           "👕", 600,  3, "vip"),
     ("double_win",  "Двойной сигнал",     "Удваивает очки первого открытия кейса или молитвы — после использования сгорает", "🎴", 130, 10, "privilege"),
@@ -615,7 +621,7 @@ SHOP_ITEM_SEEDS = [
     ("path_switch", "Смена пути 转换",    "Переключиться между NetWatch и Genshin",        "🔁", 500, -1, "vip"),
 ]
 # Items removed from active catalog (deactivated on every startup so seeds don't re-enable them)
-SHOP_ITEM_DEACTIVATE = {"extra_case", "solo_seat"}
+SHOP_ITEM_DEACTIVATE = {"extra_case", "solo_seat", "snack"}
 
 # Items that expire at midnight (Beijing) after purchase.
 # 0 = tonight 23:59 (same calendar day), 1 = tomorrow 23:59.
@@ -623,7 +629,6 @@ SHOP_ITEM_EXPIRY_DAYS = {
     'laundry_vip': 0,
     'kfc':         0,
     'bubbletea':   0,
-    'snack':       0,
     'immunity':    1,
     'amnesty':     1,
     'dj':          1,
@@ -8039,7 +8044,7 @@ async def use_casino_prize(purchase_id: int, data: dict):
 
 @app.get("/api/shop")
 def get_shop(telegram_id: int = 0):
-    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+    today = shop_day_str()
     conn = get_conn()
     c = conn.cursor()
     is_frozen = user_netwatch_locked(c, telegram_id)
@@ -8094,6 +8099,7 @@ async def buy_item(data: dict):
 
     def _run():
         today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+        shop_day = shop_day_str()
         conn = get_conn()
         try:
             c = conn.cursor()
@@ -8113,7 +8119,7 @@ async def buy_item(data: dict):
                 price = max(0, int(price * 0.93))
 
             if daily_limit != -1:
-                c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (item_code, today))
+                c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (item_code, shop_day))
                 row = c.fetchone()
                 if row and row[0] >= daily_limit:
                     return {"error": "Daily limit reached", "status": 409}
@@ -8153,7 +8159,7 @@ async def buy_item(data: dict):
             c.execute("INSERT INTO shop_purchases (telegram_id, item_code, expires_at) VALUES (?,?,?)",
                       (telegram_id, item_code, expires_at))
             c.execute("""INSERT INTO shop_daily_counts (item_code, date, count) VALUES (?,?,1)
-                         ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, today))
+                         ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, shop_day))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
@@ -8428,7 +8434,7 @@ async def reset_shop(x_admin_id: Optional[int] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
-        today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+        today = shop_day_str()
         conn = get_conn()
         c = conn.cursor()
         c.execute("DELETE FROM shop_daily_counts WHERE date=?", (today,))

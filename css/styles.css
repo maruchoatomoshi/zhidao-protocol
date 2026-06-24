@@ -2072,6 +2072,8 @@ body.is-admin .profile-card-kicker {
 .lb-item.top1 .lb-avatar,
 .lb-item.top2 .lb-avatar,
 .lb-item.top3 .lb-avatar {
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
 }
 .lb-item.top1 .lb-avatar::before,
@@ -2079,11 +2081,11 @@ body.is-admin .profile-card-kicker {
 .lb-item.top3 .lb-avatar::before {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: -3px;
   z-index: -1;
   border-radius: 50%;
   background: var(--lb-frame-gradient);
-  box-shadow: 0 0 10px var(--lb-frame-glow);
+  box-shadow: 0 0 12px var(--lb-frame-glow);
   animation: lb-frame-spin 4s linear infinite;
 }
 .lb-item.top1 .lb-avatar { --lb-frame-gradient: conic-gradient(from 0deg, #d4af37, #fff3b0, #d4af37, #fff3b0, #d4af37); --lb-frame-glow: rgba(212,175,55,0.55); }
@@ -2096,6 +2098,11 @@ body.is-admin .profile-card-kicker {
 .lb-item.top3 .lb-avatar-img,
 .lb-item.top3 .lb-avatar-fallback {
   border-radius: 50%;
+}
+.lb-item.top1 .lb-avatar-fallback,
+.lb-item.top2 .lb-avatar-fallback,
+.lb-item.top3 .lb-avatar-fallback {
+  font-size: 18px;
 }
 .lb-item.top1 .lb-avatar-fallback { color: #d4af37; }
 .lb-item.top2 .lb-avatar-fallback { color: #d8d8d8; }
@@ -2290,11 +2297,14 @@ body.is-admin .profile-card-kicker {
   border-color: rgba(184,115,51,0.20);
 }
 .diary-rank-card .lb-avatar {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border-width: 1.5px;
   border-color: rgba(212,175,55,0.45);
   box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 10px rgba(212,175,55,0.12);
+}
+.diary-rank-card .lb-avatar-fallback {
+  font-size: 17px;
 }
 .diary-rank-card.top1 .lb-avatar {
   border-color: #d4af37;

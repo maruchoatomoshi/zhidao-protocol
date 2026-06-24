@@ -48,7 +48,7 @@ function updateLaunchGateCountdowns() {
   });
 }
 
-// Дневные лимиты магазина сбрасываются в полночь по Пекину (UTC+8).
+// Дневные лимиты магазина сбрасываются в 7:00 по Пекину (UTC+8), не в полночь.
 function formatShopResetCountdown() {
   const now = new Date();
   const beijingMs = now.getTime() + 8 * 3600 * 1000;
@@ -57,7 +57,8 @@ function formatShopResetCountdown() {
     + beijingDate.getUTCMinutes() * 60000
     + beijingDate.getUTCSeconds() * 1000
     + beijingDate.getUTCMilliseconds();
-  const msLeft = 24 * 3600000 - msIntoDay;
+  const resetMs = 7 * 3600000;
+  const msLeft = msIntoDay < resetMs ? (resetMs - msIntoDay) : (24 * 3600000 - msIntoDay + resetMs);
   const totalSeconds = Math.floor(msLeft / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
