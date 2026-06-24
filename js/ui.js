@@ -244,6 +244,10 @@ function syncAdminUiVisibility() {
     const el = document.getElementById(id);
     if (el) el.style.display = isDevOwner ? '' : 'none';
   });
+
+  // Aqua / Hainan test theme — visible only to the dev owner while in testing.
+  const aquaThemeBtn = document.getElementById('theme-btn-aqua');
+  if (aquaThemeBtn) aquaThemeBtn.style.display = isDevOwner ? '' : 'none';
 }
 
 function openMore(section) {
