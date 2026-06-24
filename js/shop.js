@@ -418,7 +418,7 @@ async function loadInventory() {
           </div>
         </div>
         <div class="inventory-actions">
-          <button class="inv-btn inv-btn-use" onclick="useItem(${item.id},'${shopJsArg(item.name)}')">✅ Использовать</button>
+          <button class="inv-btn inv-btn-use" onclick="useItem(${item.id},'${shopJsArg(item.name)}','${item.code}')">✅ Использовать</button>
           <button class="inv-btn inv-btn-gift" onclick="giftItem(${item.id},'${shopJsArg(item.name)}')">🎁 Подарить</button>
           <button class="inv-btn inv-btn-sell" onclick="sellItem(${item.id},'${shopJsArg(item.name)}',${item.price})">💰 Продать</button>
         </div>
@@ -427,7 +427,8 @@ async function loadInventory() {
   } catch(e) { document.getElementById('shopInventoryContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
-function useItem(id, name) {
+function useItem(id, name, code) {
+  if (code === 'amnesty') { openAmnestyModal(id, name); return; }
   safeShowPopup({
     title: `Использовать ${name}?`,
     message: 'Покажи этот экран вожатому. После подтверждения товар спишется.',
@@ -615,6 +616,169 @@ async function confirmGift() {
     btn.textContent = '🎁 Подарить';
     showToast('Ошибка соединения');
   }
+}
+
+let _amnestyItemId = null, _amnestyItemName = null, _amnestySelectedUser = null;
+let _amnestySearchTimer = null, _amnestySearchSeq = 0;
+
+function openAmnestyModal(id, name) {
+  _amnestyItemId = id;
+  _amnestyItemName = name;
+  _amnestySelectedUser = null;
+
+  let modal = document.getElementById('amnestyUserModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'amnestyUserModal';
+    modal.className = 'gift-modal';
+    modal.innerHTML = `
+      <div class="gift-modal-card">
+        <div class="gift-modal-head">
+          <div>
+            <div class="gift-modal-kicker">AMNESTY // 特赦</div>
+            <div class="gift-modal-title">🤝 Амнистия</div>
+          </div>
+          <button class="gift-modal-close" onclick="closeAmnestyModal()">✕</button>
+        </div>
+        <div class="gift-modal-item" id="amnestyModalItemLabel"></div>
+        <div class="gift-modal-tax">Найди человека, у которого хочешь снять штраф. Последний подходящий штраф будет полностью возвращён.</div>
+        <input class="gift-modal-search" id="amnestyUserSearchInput" placeholder="Поиск по имени..." oninput="amnestySearchDebounced()" autocomplete="off" spellcheck="false">
+        <div class="gift-modal-results" id="amnestyUserResults"></div>
+        <div class="gift-modal-selected" id="amnestySelectedDisplay" style="display:none"></div>
+        <div class="gift-modal-actions">
+          <button class="inv-btn" style="flex:0 0 auto;padding:9px 18px;" onclick="closeAmnestyModal()">Отмена</button>
+          <button class="inv-btn inv-btn-use gift-modal-confirm" id="amnestyConfirmBtn" onclick="confirmAmnesty()" disabled>🤝 Снять штраф</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  document.getElementById('amnestyModalItemLabel').textContent = name;
+  const input = document.getElementById('amnestyUserSearchInput');
+  input.value = '';
+  document.getElementById('amnestyUserResults').innerHTML = '';
+  document.getElementById('amnestySelectedDisplay').style.display = 'none';
+  document.getElementById('amnestyConfirmBtn').disabled = true;
+  _amnestySelectedUser = null;
+  modal.classList.add('show');
+  _amnestySearchUsers('');
+  setTimeout(() => input.focus(), 120);
+}
+
+function closeAmnestyModal() {
+  const m = document.getElementById('amnestyUserModal');
+  if (m) m.classList.remove('show');
+}
+
+function amnestySearchDebounced() {
+  clearTimeout(_amnestySearchTimer);
+  _amnestySearchTimer = setTimeout(() => {
+    _amnestySearchUsers(document.getElementById('amnestyUserSearchInput')?.value || '');
+  }, 280);
+}
+
+async function _amnestySearchUsers(q) {
+  const container = document.getElementById('amnestyUserResults');
+  if (!container || !currentUserId) return;
+  const seq = ++_amnestySearchSeq;
+  container.innerHTML = '<div class="gift-modal-hint">Поиск...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/users/search?q=${encodeURIComponent(q)}&caller_id=${currentUserId}`);
+    if (seq !== _amnestySearchSeq) return;
+    const data = await r.json();
+    const users = Array.isArray(data.users) ? data.users : [];
+    if (!users.length) {
+      container.innerHTML = '<div class="gift-modal-hint">Никого не найдено</div>';
+      return;
+    }
+    container.innerHTML = users.map(u => {
+      const initials = (u.full_name || '?')[0].toUpperCase();
+      const avatarHtml = u.avatar_url
+        ? `<img src="${escapeHtml(u.avatar_url)}" class="gift-user-img" onerror="this.style.display='none'">`
+        : `<span class="gift-user-initials">${initials}</span>`;
+      const _gn = JSON.stringify(u.full_name).replace(/"/g, '&quot;');
+      const _ga = JSON.stringify(u.avatar_url || '').replace(/"/g, '&quot;');
+      return `<div class="gift-user-row" onclick="amnestySelectUser(${u.telegram_id},${_gn},${_ga})">
+        <div class="gift-user-ava">${avatarHtml}</div>
+        <div class="gift-user-info">
+          <div class="gift-user-name">${u.full_name}</div>
+        </div>
+        <div class="gift-user-pts">${u.points||0}★</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    if (seq !== _amnestySearchSeq) return;
+    container.innerHTML = '<div class="gift-modal-hint">Ошибка соединения</div>';
+  }
+}
+
+function amnestySelectUser(id, name, avatar) {
+  _amnestySelectedUser = {id, name, avatar};
+  document.getElementById('amnestyUserResults').innerHTML = '';
+  document.getElementById('amnestyUserSearchInput').value = name;
+  const display = document.getElementById('amnestySelectedDisplay');
+  display.style.display = 'flex';
+  const initials = (name || '?')[0].toUpperCase();
+  const avatarHtml = avatar
+    ? `<img src="${escapeHtml(avatar)}" class="gift-user-img" onerror="this.style.display='none'">`
+    : `<span class="gift-user-initials">${initials}</span>`;
+  display.innerHTML = `
+    <div class="gift-user-ava">${avatarHtml}</div>
+    <div class="gift-user-info" style="flex:1">
+      <div class="gift-user-name">${name}</div>
+      <div class="gift-modal-hint" style="margin:0">Выбран кандидат на амнистию</div>
+    </div>
+    <button class="gift-clear-btn" onclick="amnestyClearUser()" title="Изменить">✕</button>
+  `;
+  document.getElementById('amnestyConfirmBtn').disabled = false;
+}
+
+function amnestyClearUser() {
+  _amnestySelectedUser = null;
+  document.getElementById('amnestySelectedDisplay').style.display = 'none';
+  document.getElementById('amnestyUserSearchInput').value = '';
+  document.getElementById('amnestyConfirmBtn').disabled = true;
+  _amnestySearchUsers('');
+}
+
+function confirmAmnesty() {
+  if (!_amnestySelectedUser || !_amnestyItemId || !currentUserId) return;
+  safeShowPopup({
+    title: `Снять штраф у ${_amnestySelectedUser.name}?`,
+    message: 'После подтверждения товар спишется и последний штраф будет возвращён.',
+    buttons: [{id:'confirm', type:'default', text:'✅ Подтвердить'}, {type:'cancel'}]
+  }, async (btnId) => {
+    if (btnId !== 'confirm') return;
+    const btn = document.getElementById('amnestyConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const r = await fetch(`${API_URL}/api/shop/use/${_amnestyItemId}`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({telegram_id: currentUserId, target_id: _amnestySelectedUser.id})
+      });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        closeAmnestyModal();
+        try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+        showToast(`🤝 Штраф снят: ${data.target_name} +${data.refunded}★`);
+        loadInventory();
+      } else {
+        btn.disabled = false;
+        btn.textContent = '🤝 Снять штраф';
+        const msg = data.detail || '';
+        showToast(
+          msg === 'No eligible penalty found' ? 'У этого человека нет штрафа, который можно снять' :
+          msg === 'Cannot target yourself' ? 'Нельзя выбрать себя' :
+          msg || 'Ошибка использования'
+        );
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '🤝 Снять штраф';
+      showToast('Ошибка соединения');
+    }
+  });
 }
 
 async function sellItem(id, name, price) {

@@ -8363,9 +8363,49 @@ async def use_shop_item(purchase_id: int, data: dict):
             conn.close()
             raise HTTPException(status_code=404, detail="Not found")
         item_code = row[1]
-        c.execute("UPDATE shop_purchases SET status='used' WHERE id=?", (purchase_id,))
 
         extra = {}
+        if item_code == 'amnesty':
+            target_id = data.get("target_id")
+            if not target_id:
+                conn.close()
+                raise HTTPException(status_code=400, detail="target_id required")
+            target_id = int(target_id)
+            if target_id == telegram_id:
+                conn.close()
+                raise HTTPException(status_code=400, detail="Cannot target yourself")
+            c.execute("SELECT full_name FROM users WHERE telegram_id=?", (target_id,))
+            target_row = c.fetchone()
+            if not target_row:
+                conn.close()
+                raise HTTPException(status_code=404, detail="Target not found")
+            c.execute(
+                '''SELECT id, operation, amount, note
+                   FROM economy_log
+                   WHERE telegram_id=? AND amount < 0
+                     AND operation IN ('presence_penalty', 'admin_points', 'bot_penalize')
+                     AND NOT EXISTS (
+                       SELECT 1 FROM economy_log resets
+                       WHERE resets.operation='amnesty_reset'
+                         AND resets.reference_id=economy_log.id
+                     )
+                   ORDER BY created_at DESC LIMIT 1''',
+                (target_id,),
+            )
+            penalty_row = c.fetchone()
+            if not penalty_row:
+                conn.close()
+                raise HTTPException(status_code=404, detail="No eligible penalty found")
+            penalty_id, operation, amount, note = penalty_row
+            refund = abs(amount)
+            c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, target_id))
+            c.execute("SELECT points FROM users WHERE telegram_id=?", (target_id,))
+            target_balance = c.fetchone()[0] or 0
+            log_economy(c, target_id, "amnesty_reset", refund, target_balance, penalty_id, "shop_item", note or operation)
+            extra = {"target_name": target_row[0], "refunded": refund, "target_id": target_id}
+
+        c.execute("UPDATE shop_purchases SET status='used' WHERE id=?", (purchase_id,))
+
         if item_code == 'path_switch':
             c.execute("SELECT theme_path FROM user_status WHERE telegram_id=?", (telegram_id,))
             path_row = c.fetchone()
@@ -8379,7 +8419,13 @@ async def use_shop_item(purchase_id: int, data: dict):
         conn.commit()
         conn.close()
         return {"success": True, **extra}
-    return await db_write(_run)
+    result = await db_write(_run)
+    if result.get("target_id"):
+        await send_telegram_message(
+            int(result["target_id"]),
+            f"🤝 АМНИСТИЯ\n\nС тебя сняли штраф на {result['refunded']}★ по согласованию.",
+        )
+    return result
 
 @app.post("/api/admin/freeze")
 async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
