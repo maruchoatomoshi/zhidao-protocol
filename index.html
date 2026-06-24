@@ -661,6 +661,11 @@
       <div class="more-item-name">ДНЕВНИК ★</div>
       <div class="more-item-cn">日记评分 rì jì píng fēn</div>
     </div>
+    <div class="more-item" data-feature="implants" onclick="showPage('implants', document.getElementById('nav-more-btn'))">
+      <i class="ti ti-cpu more-item-icon" id="moreCatalogIcon" style="color:rgba(120,180,255,0.9);"></i>
+      <div class="more-item-name" id="moreCatalogLabel">ИМПЛАНТЫ</div>
+      <div class="more-item-cn" id="moreCatalogCn">植入物</div>
+    </div>
     <div class="more-item" id="diaryArchiveItem" onclick="openDiaryPage()" style="opacity:0.45;display:none;">
       <i class="ti ti-book-2 more-item-icon" style="color:var(--text3);"></i>
       <div class="more-item-name">АРХИВ</div>
@@ -2115,13 +2120,8 @@
 <!-- ===== ДОСКА ПОРУЧЕНИЙ ===== -->
 <div class="page" id="page-contracts">
   <div class="page-header">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <div>
-        <div class="page-title">ДОСКА ПОРУЧЕНИЙ <span class="page-title-cn">契约板</span></div>
-        <div class="page-sub">> qì yuē bǎn // помогай и зарабатывай ★</div>
-      </div>
-      <button class="diary-back-btn" onclick="showPage('shop', document.getElementById('nav-shop-btn'))">[ НАЗАД ]</button>
-    </div>
+    <div class="page-title">ДОСКА ПОРУЧЕНИЙ <span class="page-title-cn">契约板</span></div>
+    <div class="page-sub">> qì yuē bǎn // помогай и зарабатывай ★</div>
   </div>
 
   <div class="contracts-shell">
@@ -2472,9 +2472,9 @@
     <i class="ti ti-package" id="nav-casino-icon"></i>
     <span class="nav-cn" id="nav-casino-label">箱子</span>
   </button>
-  <button class="nav-item" data-feature="implants" onclick="showPage('implants',this)">
-    <i class="ti ti-cpu" id="nav-implants-icon"></i>
-    <span class="nav-cn" id="nav-implants-label">植入物</span>
+  <button class="nav-item" onclick="showPage('contracts',this)">
+    <i class="ti ti-clipboard-list"></i>
+    <span class="nav-cn">任务板</span>
   </button>
   <button class="nav-item" id="nav-more-btn" onclick="showPage('more',this)">
     <i class="ti ti-menu-2"></i>
@@ -2603,7 +2603,7 @@
 <script src="./js/api.js?v=20260528a"></script>
 <script src="./js/ui.js?v=20260624aquatheme1"></script>
 <script src="./js/telegram-compat.js"></script>
-<script src="./js/themes.js?v=20260623pathcache1"></script>
+<script src="./js/themes.js?v=20260624boardnav1"></script>
 <script src="./js/blackwall.js?v=20260622firewall1"></script>
 <script src="./js/schedule.js"></script>
 <script src="./js/announcements.js"></script>
@@ -2628,7 +2628,7 @@
 <script src="./js/events.js?v=20260622popupfix1"></script>
 <script src="./js/architect-event.js?v=20260623popupzindex1"></script>
 <script src="./js/demo.js?v=20260614themeintro1"></script>
-<script src="./js/instruction.js?v=20260623a"></script>
+<script src="./js/instruction.js?v=20260624boardnav1"></script>
 <script src="./js/rewind.js?v=20260623rewindpolish2"></script>
 <script src="./js/main.js?v=20260624newsdeeplink1"></script>
 

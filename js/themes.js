@@ -149,8 +149,9 @@ function setTheme(theme, isUserAction = true) {
   const el = (id) => document.getElementById(id);
   if (el('nav-casino-label'))    el('nav-casino-label').textContent = isG ? '祈愿' : '箱子';
   if (el('nav-casino-icon'))     el('nav-casino-icon').className    = isG ? 'ti ti-sparkles' : 'ti ti-package';
-  if (el('nav-implants-label'))  el('nav-implants-label').textContent = isG ? '卡片' : '植入物';
-  if (el('nav-implants-icon'))   el('nav-implants-icon').className  = isG ? 'ti ti-cards' : 'ti ti-cpu';
+  if (el('moreCatalogLabel'))   el('moreCatalogLabel').textContent = isG ? 'КАРТОЧКИ' : 'ИМПЛАНТЫ';
+  if (el('moreCatalogCn'))      el('moreCatalogCn').textContent    = isG ? '卡片' : '植入物';
+  if (el('moreCatalogIcon'))    el('moreCatalogIcon').className    = isG ? 'ti ti-cards more-item-icon' : 'ti ti-cpu more-item-icon';
   if (el('casino-page-cn'))      el('casino-page-cn').textContent   = isG ? '祈愿' : '箱子';
   if (el('casino-page-title') && el('casino-page-title').firstChild)   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
   if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';

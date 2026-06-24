@@ -61,16 +61,16 @@ const INSTRUCTION_TOUR_STEPS = [
       : '«箱子» — кейсы. Открывай их за попытки открытия и получай импланты и карточки со случайной редкостью — это твой шанс поймать что-то ценное. В теме Genshin та же система называется «✦ Молитвы»'
   },
   {
-    page: 'implants',
-    action: () => { try { switchImplantsTab('implants'); } catch (e) {} },
+    page: 'more',
+    action: () => { try { showPage('implants', document.getElementById('nav-more-btn')); switchImplantsTab('implants'); } catch (e) {} },
     image: 'julia_explaining.png',
     title: 'ИМПЛАНТЫ // 植入物',
     highlight: '#implants-tab',
-    text: '«植入物» — твои импланты с пассивными бонусами. Ниже — каталог всех имплантов, чтобы заранее знать, что можно получить и для чего оно нужно'
+    text: '«植入物» — твои импланты с пассивными бонусами. Ниже — каталог всех имплантов, чтобы заранее знать, что можно получить и для чего оно нужно. Открыть их можно через раздел «ЕЩЁ»'
   },
   {
-    page: 'implants',
-    action: () => { try { switchImplantsTab('cards'); } catch (e) {} },
+    page: 'more',
+    action: () => { try { showPage('implants', document.getElementById('nav-more-btn')); switchImplantsTab('cards'); } catch (e) {} },
     image: 'julia_based2.png',
     title: 'КАРТОЧКИ // 卡片',
     highlight: '#cards-tab',
