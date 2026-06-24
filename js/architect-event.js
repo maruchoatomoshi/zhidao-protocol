@@ -21,8 +21,8 @@ const ARCHITECT_TERMINAL_IMAGES = {
 // stage/result-card backgrounds inside the event overlay itself).
 const ARCHITECT_POPUP_IMAGES = {
   BEFORE: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_event_before.png',
-  WIN: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_winn.png',
-  LOSE: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_losse.png'
+  WIN: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_losse.png',
+  LOSE: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_winn.png'
 };
 
 const WILD_AI_BREACH_TERMINAL_IMAGES = {
