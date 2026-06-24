@@ -1263,16 +1263,33 @@
 
     <div id="admin-report" class="admin-section" style="display:none;padding:0 12px;">
       <div class="admin-console-card">
-        <div class="admin-console-kicker">ЭКОНОМИЧЕСКИЙ ЖУРНАЛ</div>
-        <div class="admin-console-title">Отчёт по игрокам</div>
-        <div class="admin-filter-wrap">
-          <button class="admin-filter-btn active" onclick="adminLoadEconomyReport(7, this)">7 дней</button>
-          <button class="admin-filter-btn" onclick="adminLoadEconomyReport(30, this)">30 дней</button>
-          <button class="admin-filter-btn" onclick="adminLoadEconomyReport(0, this)">Всё время</button>
+        <div class="admin-filter-wrap" style="margin-bottom:10px;">
+          <button class="admin-filter-btn active" id="adminReportModeEconomy" onclick="adminSetReportMode('economy')">💰 Экономика</button>
+          <button class="admin-filter-btn" id="adminReportModeActivity" onclick="adminSetReportMode('activity')">📊 Активность</button>
         </div>
-        <input class="admin-input" id="adminReportSearch" placeholder="Поиск по имени или ID" oninput="adminFilterEconomyReport()" style="margin-bottom:8px;">
-        <div id="adminReportContent">
-          <div class="empty-state">Загрузка...</div>
+
+        <div id="adminReportEconomyPane">
+          <div class="admin-console-kicker">ЭКОНОМИЧЕСКИЙ ЖУРНАЛ</div>
+          <div class="admin-console-title">Отчёт по игрокам</div>
+          <div class="admin-filter-wrap">
+            <button class="admin-filter-btn active" onclick="adminLoadEconomyReport(7, this)">7 дней</button>
+            <button class="admin-filter-btn" onclick="adminLoadEconomyReport(30, this)">30 дней</button>
+            <button class="admin-filter-btn" onclick="adminLoadEconomyReport(0, this)">Всё время</button>
+          </div>
+          <input class="admin-input" id="adminReportSearch" placeholder="Поиск по имени или ID" oninput="adminFilterEconomyReport()" style="margin-bottom:8px;">
+          <div id="adminReportContent">
+            <div class="empty-state">Загрузка...</div>
+          </div>
+        </div>
+
+        <div id="adminReportActivityPane" style="display:none;">
+          <div class="admin-console-kicker">ЖУРНАЛ ДЕЙСТВИЙ</div>
+          <div class="admin-console-title">Активность игроков</div>
+          <div class="admin-console-note" style="margin-bottom:8px;">Действия: магазин, кейсы, рейды, перекличка, дневник, ивенты. Не учитывает простое открытие приложения.</div>
+          <input class="admin-input" id="adminActivityReportSearch" placeholder="Поиск по имени или ID" oninput="adminFilterActivityReport()" style="margin-bottom:8px;">
+          <div id="adminActivityReportContent">
+            <div class="empty-state">Загрузка...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -2597,7 +2614,7 @@
 <script src="./js/liza-curfew.js?v=20260617a"></script>
 <script src="./js/intro-novel.js?v=20260624cloudsync1"></script>
 <script src="./js/contracts.js?v=20260623suspfix1"></script>
-<script src="./js/admin.js?v=20260624myu2"></script>
+<script src="./js/admin.js?v=20260624activity1"></script>
 <script src="./js/campus-map.js?v=20260622a"></script>
 <script src="./js/raid.js?v=20260615a"></script>
 <script src="./js/wild-ai-breach.js?v=20260622firewall1"></script>

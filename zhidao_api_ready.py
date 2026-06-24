@@ -10401,6 +10401,59 @@ def admin_economy_report(since: Optional[str] = None, until: Optional[str] = Non
     }
 
 
+@app.get("/api/admin/activity/report")
+def admin_activity_report(x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
+
+    conn = get_conn()
+    c = conn.cursor()
+
+    c.execute(
+        '''SELECT
+             a.telegram_id,
+             COALESCE(u.full_name, a.telegram_id) AS full_name,
+             COUNT(*) AS total_count,
+             COALESCE(SUM(CASE WHEN substr(a.ts, 1, 10) = ? THEN 1 ELSE 0 END), 0) AS today_count,
+             MAX(a.ts) AS last_active
+           FROM (
+             SELECT telegram_id, created_at AS ts FROM economy_log
+             UNION ALL
+             SELECT telegram_id, confirmed_at AS ts FROM daily_checks WHERE confirmed_at IS NOT NULL
+             UNION ALL
+             SELECT telegram_id, updated_at AS ts FROM diary_entries WHERE updated_at IS NOT NULL
+             UNION ALL
+             SELECT telegram_id, created_at AS ts FROM casino_log
+             UNION ALL
+             SELECT telegram_id, created_at AS ts FROM event_actions
+           ) a
+           LEFT JOIN users u ON u.telegram_id = a.telegram_id
+           GROUP BY a.telegram_id
+           ORDER BY today_count DESC, total_count DESC''',
+        (today,),
+    )
+    rows = c.fetchall()
+    conn.close()
+
+    players = [
+        {
+            "telegram_id": row[0],
+            "full_name": str(row[1]),
+            "total_count": row[2] or 0,
+            "today_count": row[3] or 0,
+            "last_active": row[4],
+        }
+        for row in rows
+    ]
+
+    return {
+        "today": today,
+        "players": players,
+    }
+
+
 @app.post("/api/admin/contracts/{contract_id}/resolve")
 async def admin_resolve_contract(contract_id: int, data: dict,
                                   x_admin_id: Optional[int] = Header(None)):

@@ -1715,6 +1715,92 @@ function adminRenderEconomyReport(data) {
   return `<div class="contract-monitor-stats">${cards}</div><div class="contract-monitor-grid">${rows}</div>`;
 }
 
+function adminSetReportMode(mode) {
+  const economyPane = document.getElementById('adminReportEconomyPane');
+  const activityPane = document.getElementById('adminReportActivityPane');
+  const economyBtn = document.getElementById('adminReportModeEconomy');
+  const activityBtn = document.getElementById('adminReportModeActivity');
+  if (!economyPane || !activityPane) return;
+  const isActivity = mode === 'activity';
+  economyPane.style.display = isActivity ? 'none' : 'block';
+  activityPane.style.display = isActivity ? 'block' : 'none';
+  if (economyBtn) economyBtn.classList.toggle('active', !isActivity);
+  if (activityBtn) activityBtn.classList.toggle('active', isActivity);
+  if (isActivity && !window._adminActivityReportData) adminLoadActivityReport();
+}
+
+async function adminLoadActivityReport() {
+  const el = document.getElementById('adminActivityReportContent');
+  if (!el || !currentUserId) return;
+  el.innerHTML = '<div class="empty-state">Собираю данные по игрокам...</div>';
+  try {
+    const r = await fetch(`${API_URL}/api/admin/activity/report`, {
+      headers: {'x-admin-id': String(currentUserId)},
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      el.innerHTML = `<div class="empty-state">${escapeHtml(data.detail || 'Ошибка отчёта')}</div>`;
+      return;
+    }
+    window._adminActivityReportData = data;
+    el.innerHTML = adminRenderActivityReport(data);
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state">Нет соединения</div>';
+  }
+}
+
+function adminFilterActivityReport() {
+  const data = window._adminActivityReportData;
+  if (!data) return;
+  const q = (document.getElementById('adminActivityReportSearch').value || '').trim().toLowerCase();
+  document.querySelectorAll('#adminActivityReportContent .activity-report-row').forEach(row => {
+    const match = !q || row.dataset.search.includes(q);
+    row.style.display = match ? '' : 'none';
+  });
+}
+
+function adminFormatLastActive(ts) {
+  if (!ts) return 'нет данных';
+  const d = new Date(ts.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return escapeHtml(ts);
+  return d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function adminRenderActivityReport(data) {
+  const players = Array.isArray(data.players) ? data.players : [];
+  if (!players.length) {
+    return '<div class="empty-state">Нет данных об активности</div>';
+  }
+
+  const rows = players.map((p, i) => {
+    const flags = [];
+    if (p.today_count === 0) flags.push('💤 неактивен сегодня');
+    const search = `${String(p.full_name).toLowerCase()} ${p.telegram_id}`;
+    const rank = i < 3 ? ['🥇','🥈','🥉'][i] : `#${i + 1}`;
+
+    return `
+    <div class="economy-report-row activity-report-row" data-search="${escapeHtml(search)}" onclick="adminToggleEconomyReportRow(this)">
+      <div class="economy-report-head">
+        <div>
+          <strong>${rank} ${escapeHtml(p.full_name)}</strong>
+          <span class="economy-report-id">ID ${p.telegram_id}</span>
+        </div>
+        <div class="economy-report-net pos">${p.today_count}</div>
+      </div>
+      ${flags.length ? `<div class="contract-monitor-flags">${flags.map(f => `<span>${escapeHtml(f)}</span>`).join('')}</div>` : ''}
+      <div class="economy-report-details">
+        <div class="economy-report-grid">
+          <div class="economy-report-stat"><span>Сегодня</span><b>${p.today_count}</b></div>
+          <div class="economy-report-stat"><span>Всего</span><b>${p.total_count}</b></div>
+          <div class="economy-report-stat"><span>Последняя активность</span><b>${adminFormatLastActive(p.last_active)}</b></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="contract-monitor-grid">${rows}</div>`;
+}
+
 async function adminCreateGiftCode() {
   const code = (document.getElementById('adminGiftCode').value || '').trim().toUpperCase();
   const rewardStars = parseInt(document.getElementById('adminGiftCodeStars').value);
