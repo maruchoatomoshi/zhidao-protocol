@@ -601,7 +601,7 @@ SHOP_ITEM_SEEDS = [
     # (code, name, desc, icon, price, daily_limit, category)
     # daily_limit=-1 → unlimited; >0 → global units sold per day cap
     ("immunity",    "Иммунитет",         "Блокирует один штраф",                          "🛡", 150,  5, "privilege"),
-    ("laundry_vip", "Стирка VIP",         "Приоритет на стирку",                           "🧺",  80,  5, "privilege"),
+    ("laundry_vip", "Стирка VIP",         "Приоритет на стирку",                           "🧺", 150,  5, "privilege"),
     ("dj",          "DJ-сет",             "Право выбрать музыку",                          "🎵", 100,  1, "social"),
     ("amnesty",     "Амнистия",           "Снять один штраф по согласованию",              "🤝",  80,  5, "privilege"),
     ("kfc",         "KFC",                "Награда из специального меню",                  "🍗", 300,  5, "food"),
