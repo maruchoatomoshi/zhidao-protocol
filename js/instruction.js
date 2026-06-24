@@ -19,7 +19,7 @@ const INSTRUCTION_TOUR_STEPS = [
     image: 'julia_based.png',
     title: 'ГЛАВНЫЙ ЭКРАН // 主页',
     highlight: '#profileCard',
-    text: 'Привет! Я Юлия Витальевна — на связи как ассистент протокола ZHIDAO. Это главный экран: твои баллы ★ и профиль оператора — аватар, ранг, путь развития, рамки и витрина. Жми «Далее», и я покажу всё остальное'
+    text: 'Привет! Я Юлия Витальевна — на связи как ассистент протокола ZHIDAO. Это карточка оператора: твои баллы ★, аватар, ранг, путь развития, рамки и витрина. Открыть её можно в любой момент кнопкой в правом верхнем углу — нажми её ещё раз, чтобы вернуться назад. Жми «Далее», и я покажу всё остальное'
   },
   {
     page: 'schedule',
@@ -30,6 +30,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'rating',
+    feature: 'rating',
     image: 'julia_explaining2.png',
     title: 'РЕЙТИНГ // 排名',
     highlight: '#page-rating',
@@ -37,6 +38,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'shop',
+    feature: 'shop',
     image: 'julia_based2.png',
     title: 'МАГАЗИН // 商店',
     highlight: '#shopStoreContent',
@@ -52,6 +54,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'casino',
+    feature: 'casino',
     action: () => { try { switchCasinoTab(currentThemePath === 'genshin' ? 'genshin' : 'play', document.getElementById('casinoPlayBtn')); } catch (e) {} },
     image: 'julia_thinking.png',
     title: () => currentThemePath === 'genshin' ? 'МОЛИТВЫ // 祈愿' : 'КЕЙСЫ // 箱子',
@@ -62,6 +65,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'more',
+    feature: 'implants',
     action: () => { try { showPage('implants', document.getElementById('nav-more-btn')); switchImplantsTab('implants'); } catch (e) {} },
     image: 'julia_explaining.png',
     title: 'ИМПЛАНТЫ // 植入物',
@@ -70,6 +74,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'more',
+    feature: 'implants',
     action: () => { try { showPage('implants', document.getElementById('nav-more-btn')); switchImplantsTab('cards'); } catch (e) {} },
     image: 'julia_based2.png',
     title: 'КАРТОЧКИ // 卡片',
@@ -78,6 +83,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'diary-stars',
+    feature: 'diary-stars',
     action: () => { try { showPage('diary-stars', document.getElementById('nav-more-btn')); } catch (e) {} },
     image: 'julia_explaining2.png',
     title: 'ДНЕВНИК 💎 // 日记评分',
@@ -118,6 +124,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'more',
+    feature: 'achievements',
     action: () => instructionEnsureMoreSection('achievements'),
     image: 'julia_based2.png',
     title: 'АЧИВКИ // 成就',
@@ -141,6 +148,19 @@ const INSTRUCTION_TOUR_STEPS = [
   },
 ];
 
+// Часть разделов закрыта до старта поездки (см. APP_FROZEN_FEATURES в js/config.js).
+// Инструкция сама подстраивается: пока заморозка активна, шаги по замороженным
+// разделам пропускаются — это и есть «урезанная» версия. Полная версия появится
+// сама собой, когда заморозка снимется, без отдельного второго списка.
+function getActiveInstructionSteps() {
+  return INSTRUCTION_TOUR_STEPS.filter(s => !s.feature || !isFeatureFrozen(s.feature));
+}
+
+function isInstructionTourCut() {
+  return getActiveInstructionSteps().length < INSTRUCTION_TOUR_STEPS.length;
+}
+
+let instructionTourSteps = INSTRUCTION_TOUR_STEPS;
 let instructionTourIndex = 0;
 let instructionTypeTimer = null;
 let instructionTourPrevPage = null;
@@ -167,8 +187,12 @@ function closeInstructionModal(e) {
 function showInstructionChooser() {
   const body = document.getElementById('instructionModalBody');
   if (!body) return;
+  const cutNotice = isInstructionTourCut()
+    ? `<div class="instruction-cut-notice">⚠ Сокращённая версия — часть разделов пока заморожена до старта поездки</div>`
+    : '';
   body.innerHTML = `
     <div class="instruction-modal-title">📖 ИНСТРУКЦИЯ // 说明书</div>
+    ${cutNotice}
     <button class="instruction-option-btn" onclick="showInstructionTextGuide()">
       <strong>Текстовый гайд</strong>
       Краткое описание всех разделов приложения
@@ -183,7 +207,11 @@ function showInstructionChooser() {
 function showInstructionTextGuide() {
   const body = document.getElementById('instructionModalBody');
   if (!body) return;
-  const sections = INSTRUCTION_TOUR_STEPS.map(s => `
+  const steps = getActiveInstructionSteps();
+  const cutNotice = steps.length < INSTRUCTION_TOUR_STEPS.length
+    ? `<div class="instruction-cut-notice">⚠ Сейчас доступна сокращённая версия — часть разделов пока заморожена до старта поездки. Полная инструкция откроется автоматически вместе с остальными разделами</div>`
+    : '';
+  const sections = steps.map(s => `
     <div class="instruction-text-section">
       <h4>${escapeHtml(_instructionResolve(s.title))}</h4>
       <p>${escapeHtml(_instructionResolve(s.text))}</p>
@@ -191,6 +219,7 @@ function showInstructionTextGuide() {
   `).join('');
   body.innerHTML = `
     <div class="instruction-modal-title">📖 ИНСТРУКЦИЯ // 说明书</div>
+    ${cutNotice}
     ${sections}
     <button class="instruction-option-btn instruction-back-btn" onclick="showInstructionChooser()">← Назад</button>
   `;
@@ -198,6 +227,7 @@ function showInstructionTextGuide() {
 
 function startInstructionTour() {
   closeInstructionModal();
+  instructionTourSteps = getActiveInstructionSteps();
   instructionTourIndex = 0;
   instructionTourPrevPage = null;
   const overlay = document.getElementById('instructionTourOverlay');
@@ -229,7 +259,7 @@ function instructionSetHighlight(selector) {
 }
 
 function renderInstructionTourStep() {
-  const step = INSTRUCTION_TOUR_STEPS[instructionTourIndex];
+  const step = instructionTourSteps[instructionTourIndex];
   if (!step) {
     closeInstructionTour();
     return;
@@ -254,10 +284,10 @@ function renderInstructionTourStep() {
   if (title) title.textContent = _instructionResolve(step.title);
 
   const progress = document.getElementById('instructionTourProgress');
-  if (progress) progress.textContent = `${instructionTourIndex + 1} / ${INSTRUCTION_TOUR_STEPS.length}`;
+  if (progress) progress.textContent = `${instructionTourIndex + 1} / ${instructionTourSteps.length}`;
 
   const nextBtn = document.getElementById('instructionTourNextBtn');
-  if (nextBtn) nextBtn.textContent = instructionTourIndex === INSTRUCTION_TOUR_STEPS.length - 1 ? 'ЗАВЕРШИТЬ' : 'ДАЛЕЕ →';
+  if (nextBtn) nextBtn.textContent = instructionTourIndex === instructionTourSteps.length - 1 ? 'ЗАВЕРШИТЬ' : 'ДАЛЕЕ →';
 
   typeInstructionTourText(_instructionResolve(step.text));
 }
@@ -286,7 +316,7 @@ function typeInstructionTourText(text) {
 }
 
 function instructionTourNext() {
-  if (instructionTourIndex >= INSTRUCTION_TOUR_STEPS.length - 1) {
+  if (instructionTourIndex >= instructionTourSteps.length - 1) {
     closeInstructionTour();
     return;
   }

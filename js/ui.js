@@ -148,6 +148,18 @@ function syncFeatureFreezeBadges() {
 }
 
 let _currentPage = 'schedule';
+let _profileFabReturnPage = 'schedule';
+
+// Кнопка профиля в правом верхнем углу: первое нажатие открывает карточку
+// игрока, второе — закрывает её и возвращает в раздел, откуда её открыли.
+function toggleProfileFab() {
+  if (_currentPage === 'home') {
+    showPage(_profileFabReturnPage);
+  } else {
+    _profileFabReturnPage = _currentPage;
+    showPage('home');
+  }
+}
 
 function showPage(name, btn) {
   if (isLaunchGateActive() && name !== 'schedule') {
@@ -189,6 +201,9 @@ function showPage(name, btn) {
 
   document.getElementById('page-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
+
+  const profileFabIcon = document.querySelector('#profileFabBtn .ti');
+  if (profileFabIcon) profileFabIcon.className = name === 'home' ? 'ti ti-x' : 'ti ti-user';
 
   // Pages that always refresh (live data)
   if (name === 'schedule') { loadAnnouncements(); loadSchedule(); }
