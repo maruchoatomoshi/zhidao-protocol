@@ -77,7 +77,6 @@ let legendaryCardStatus = {};
 let legendaryImplantStatus = {};
 let hasPandaImplant = false;
 let scanAttempts = 0;
-let protocolFragments = 0;
 let activeCasinoSubtab = 'play';
 const CASE_IMAGES = {
   gold:   'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/1774509730760.png',
@@ -550,7 +549,7 @@ async function openGenshinCase() {
     }
 
     currentPoints = data.new_points; updatePoints();
-    if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; protocolFragments = data.protocol_fragments || protocolFragments; }
+    if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; }
     loadCasinoStatus();
     if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
     curGsCardId = data.card_id || null;
@@ -883,7 +882,7 @@ async function openCase() {
       return;
     }
     const data = await r.json();
-    if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; protocolFragments = data.protocol_fragments || protocolFragments; }
+    if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; }
     const caseType = data.prize.case_type || 'gold';
     const targetIdx = 38 + Math.floor(Math.random() * 4);
     initRoulette(caseType, targetIdx);
@@ -1237,9 +1236,7 @@ async function loadCasinoStatus() {
     if (scansRes.ok) {
       const sc = await scansRes.json();
       scanAttempts = sc.scan_attempts || 0;
-      protocolFragments = sc.protocol_fragments || 0;
       data.scan_attempts = scanAttempts;
-      data.protocol_fragments = protocolFragments;
     }
     renderCasinoAttempts(data);
     updateCasinoButtonState(data);

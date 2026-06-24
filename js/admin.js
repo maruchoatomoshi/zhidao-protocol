@@ -1599,36 +1599,6 @@ async function adminGrantScanAttempt() {
   });
 }
 
-async function adminGrantFragments() {
-  if (!isArchitect) return;
-  const rawId = String(document.getElementById('fragmentTargetId')?.value || '').trim();
-  const amount = parseInt(document.getElementById('fragmentAmount')?.value, 10);
-  const targetId = parseInt(rawId, 10) || adminResolveTargetId();
-  if (!targetId || !amount || amount < 1) {
-    showToast('Укажи Telegram ID и количество');
-    return;
-  }
-  return adminRunEconomyMutation(async () => {
-  try {
-    showToast('Выдаю фрагменты...');
-    const r = await adminFetch(`${API_URL}/api/admin/fragments`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
-      body: JSON.stringify({telegram_id: targetId, amount}),
-    });
-    const data = await adminReadJsonSafe(r);
-    if (!r.ok) { showToast(data.detail || 'Ошибка'); return; }
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
-    showToast(`Выдано ${amount} фрагментов\nИтого у игрока: ${data.protocol_fragments}`);
-    const amountInput = document.getElementById('fragmentAmount');
-    if (amountInput) amountInput.value = '';
-    adminRefreshSelectedDossierLater(targetId);
-  } catch(e) {
-    await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверяю фрагменты игрока...');
-  }
-  });
-}
-
 async function adminLoadEconomyReport(days, btn) {
   const el = document.getElementById('adminReportContent');
   if (!el || !currentUserId) return;

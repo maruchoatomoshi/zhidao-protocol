@@ -700,7 +700,6 @@ WILD_AI_BREACH_INFECTION_ON_ERROR = 3
 WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION = 5
 WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2
 WILD_AI_BREACH_REWARD_REP = 30
-WILD_AI_BREACH_REWARD_FRAGMENTS = 2
 WILD_AI_BREACH_FRAME_ID = "blackwall-defender"
 WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Файрвола"
 
@@ -2223,8 +2222,8 @@ def distribute_wildai_victory_rewards(c, event_id: int, mvp_id: Optional[int]):
     for telegram_id in participant_ids:
         c.execute("UPDATE users SET rep_score = COALESCE(rep_score, 0) + ? WHERE telegram_id=?", (WILD_AI_BREACH_REWARD_REP, telegram_id))
         c.execute(
-            "UPDATE user_status SET protocol_fragments = COALESCE(protocol_fragments, 0) + ?, wildai_defender=1 WHERE telegram_id=?",
-            (WILD_AI_BREACH_REWARD_FRAGMENTS, telegram_id),
+            "UPDATE user_status SET wildai_defender=1 WHERE telegram_id=?",
+            (telegram_id,),
         )
         c.execute("UPDATE user_status SET wildai_mvp = ? WHERE telegram_id=?", (1 if telegram_id == mvp_id else 0, telegram_id))
 
@@ -6904,12 +6903,11 @@ async def grant_achievement(data: dict, x_admin_id: Optional[int] = Header(None)
 def get_user_scans(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
     row = c.fetchone()
     conn.close()
     return {
         "scan_attempts": row[0] if row else 0,
-        "protocol_fragments": row[1] if row else 0,
     }
 
 @app.post("/api/casino/open")
@@ -6966,14 +6964,9 @@ async def open_case(data: dict):
             now_str = now_beijing.strftime('%Y-%m-%d %H:%M:%S')
 
             if telegram_id not in ADMIN_IDS:
-                c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
+                c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,0)
                              ON CONFLICT(telegram_id) DO UPDATE SET
-                               scan_attempts = MAX(0, scan_attempts - 1),
-                               protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
-            else:
-                c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,1)
-                             ON CONFLICT(telegram_id) DO UPDATE SET
-                               protocol_fragments = COALESCE(protocol_fragments, 0) + 1""", (telegram_id,))
+                               scan_attempts = MAX(0, scan_attempts - 1)""", (telegram_id,))
 
             if prize["code"] == "skip":
                 c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
@@ -7000,7 +6993,7 @@ async def open_case(data: dict):
             c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
-            c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+            c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
             scan_row = c.fetchone()
             log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
 
@@ -7022,7 +7015,6 @@ async def open_case(data: dict):
             return {
                 "new_points": new_points,
                 "scan_attempts": scan_row[0] if scan_row else 0,
-                "protocol_fragments": scan_row[1] if scan_row else 0,
                 "doubled_win": doubled_win,
                 "diary_unlocked": diary_unlocked,
             }
@@ -7037,7 +7029,6 @@ async def open_case(data: dict):
         "prize": prize,
         "new_points": result["new_points"],
         "scan_attempts": result["scan_attempts"],
-        "protocol_fragments": result["protocol_fragments"],
         "doubled_win": result["doubled_win"],
         "diary_unlocked": result["diary_unlocked"],
     }
@@ -8559,12 +8550,11 @@ async def open_genshin_case(data: dict):
             if scan_attempts <= 0:
                 conn.close()
                 raise HTTPException(status_code=400, detail="No scan attempts")
-            c.execute("""INSERT INTO user_status (telegram_id, scan_attempts, protocol_fragments) VALUES (?,0,1)
+            c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,0)
                          ON CONFLICT(telegram_id) DO UPDATE SET
-                           scan_attempts=MAX(0, scan_attempts-1),
-                           protocol_fragments=protocol_fragments+1""", (telegram_id,))
+                           scan_attempts=MAX(0, scan_attempts-1)""", (telegram_id,))
         else:
-            c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+            c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
             status_row = c.fetchone()
 
         pool_name = random.choices(['blue', 'purple', 'gold'], weights=[790, 200, 10])[0]
@@ -8650,7 +8640,7 @@ async def open_genshin_case(data: dict):
                 log_economy(c, telegram_id, "card_sea_tide", sea_bonus, balance_after, None, "card", f"prayer #{prayers_today}")
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
         new_points = c.fetchone()[0]
-        c.execute("SELECT scan_attempts, protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
+        c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
         sc_row = c.fetchone()
         log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
 
@@ -8673,42 +8663,9 @@ async def open_genshin_case(data: dict):
         if sea_bonus:
             result["sea_bonus"] = sea_bonus
         result["scan_attempts"] = sc_row[0] if sc_row else 0
-        result["protocol_fragments"] = sc_row[1] if sc_row else 0
         result["diary_unlocked"] = diary_unlocked
         return result
     return await db_write(_run)
-
-
-@app.post("/api/admin/fragments")
-async def admin_grant_fragments(data: dict, x_admin_id: Optional[int] = Header(None)):
-    if x_admin_id not in ARCHITECT_IDS:
-        raise HTTPException(status_code=403, detail="Forbidden: Architect only")
-    telegram_id = data.get("telegram_id")
-    amount = int(data.get("amount") or 0)
-    if not telegram_id or amount < 1:
-        raise HTTPException(status_code=400, detail="Missing data")
-
-    def _run():
-        conn = get_conn()
-        try:
-            c = conn.cursor()
-            c.execute("SELECT 1 FROM users WHERE telegram_id=?", (telegram_id,))
-            if not c.fetchone():
-                return None
-            c.execute("""INSERT INTO user_status (telegram_id, protocol_fragments) VALUES (?,?)
-                         ON CONFLICT(telegram_id) DO UPDATE SET protocol_fragments=COALESCE(protocol_fragments,0)+?""",
-                      (telegram_id, amount, amount))
-            c.execute("SELECT protocol_fragments FROM user_status WHERE telegram_id=?", (telegram_id,))
-            new_val = c.fetchone()[0]
-            conn.commit()
-            return new_val
-        finally:
-            conn.close()
-
-    new_val = await db_write(_run)
-    if new_val is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"success": True, "telegram_id": telegram_id, "amount": amount, "protocol_fragments": new_val}
 
 
 @app.post("/api/admin/scan-attempt")
@@ -9099,7 +9056,7 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
         title = data.get("title") or "WILD AI BREACH"
         boss_name = data.get("boss_name") or "Дикий ИИ"
         boss_image = data.get("boss_image")
-        reward_text = data.get("reward_text") or f"+{WILD_AI_BREACH_REWARD_REP} REP, +{WILD_AI_BREACH_REWARD_FRAGMENTS} фрагмента протокола, рамка «{WILD_AI_BREACH_FRAME_ID}»"
+        reward_text = data.get("reward_text") or f"+{WILD_AI_BREACH_REWARD_REP} REP, рамка «{WILD_AI_BREACH_FRAME_ID}»"
         min_players = int(data.get("min_players") or 3)
         max_players = int(data.get("max_players") or 5)
         max_hp = int(data.get("max_hp") or WILD_AI_BREACH_DEFAULT_HP)
