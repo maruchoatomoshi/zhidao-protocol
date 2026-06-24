@@ -29,6 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof syncLaunchGateVisibility === 'function') syncLaunchGateVisibility();
   if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
 
+  // Deep-link: ссылка вида t.me/<bot>/<app>?startapp=news открывает раздел НОВОСТИ сразу при старте.
+  try {
+    const startParam = tg.initDataUnsafe?.start_param;
+    if (startParam === 'news') {
+      const newsBtn = document.querySelector('.nav-item[onclick*="showPage(\'schedule\'"]');
+      showPage('schedule', newsBtn);
+    }
+  } catch (e) {}
+
   const screen = document.getElementById('gsPrayScreen');
   if (screen) screen.addEventListener('click', () => {
     if (gsAnimating || gsCardFlipped) return;
