@@ -2277,6 +2277,30 @@ body.is-admin .profile-card-kicker {
 .diary-rank-card.top3 {
   border-color: rgba(184,115,51,0.20);
 }
+.diary-rank-card .lb-avatar {
+  width: 38px;
+  height: 38px;
+  border-width: 1.5px;
+  border-color: rgba(212,175,55,0.45);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 10px rgba(212,175,55,0.12);
+}
+.diary-rank-card .lb-avatar-fallback {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(212,175,55,0.28), transparent 60%),
+    rgba(10,10,20,0.85);
+}
+.diary-rank-card.top1 .lb-avatar {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(212,175,55,0.5);
+}
+.diary-rank-card.top2 .lb-avatar {
+  border-color: #c8c8c8;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(200,200,200,0.4);
+}
+.diary-rank-card.top3 .lb-avatar {
+  border-color: #b87333;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 0 12px rgba(184,115,51,0.4);
+}
 .diary-rank-place {
   position: relative;
   z-index: 1;
@@ -18867,3 +18891,165 @@ body.theme-aqua .card-label { color: rgba(15,124,192,0.85) !important; }
 body.theme-aqua .card-label::after { background: linear-gradient(90deg, rgba(15,124,192,0.25), transparent); }
 body.theme-aqua .cn-divider::before,
 body.theme-aqua .cn-divider::after { background: linear-gradient(90deg, transparent, rgba(15,124,192,0.3)); }
+
+/* ===== Народный магазин (community shop) ===== */
+.folk-shop-banner {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+  padding: 18px 14px 16px;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid var(--gold-border);
+  background:
+    radial-gradient(circle at 50% 0%, var(--gold-dim), transparent 70%),
+    var(--card-bg, rgba(255,255,255,0.03));
+}
+.folk-shop-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--gold-border), transparent);
+  opacity: 0.5;
+  height: 1px;
+  top: auto;
+}
+.folk-shop-icon {
+  font-size: 30px;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 10px var(--gold-dim));
+}
+.folk-shop-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.folk-shop-title .folk-shop-title-cn { color: var(--gold); font-weight: 700; }
+.folk-shop-sub {
+  font-size: 10.5px;
+  color: var(--text2);
+  line-height: 1.65;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.folk-shop-sub b { color: var(--gold); }
+
+.folk-shop-propose-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+}
+.folk-shop-propose-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--gold), transparent);
+  opacity: 0.85;
+}
+.folk-shop-propose-card .card-inner { padding: 13px 14px; }
+.folk-shop-propose-kicker {
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.folk-item-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.025);
+  transition: border-color 0.2s;
+}
+.folk-item-card.is-hot { border-color: var(--gold-border); }
+.folk-item-card .card-inner { padding: 13px 14px; }
+.folk-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.folk-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+}
+.folk-item-desc {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 4px;
+  line-height: 1.55;
+}
+.folk-item-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 9.5px;
+  font-family: monospace;
+  letter-spacing: 0.3px;
+  color: var(--text3);
+}
+.folk-item-status.status-promoted { color: #4caf7d; }
+.folk-item-status.status-rejected { color: var(--red, #c0504d); }
+.folk-item-status.status-hot { color: var(--gold); font-weight: 700; }
+
+.folk-crown-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 50px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-dim);
+  cursor: pointer;
+  font-family: monospace;
+  transition: all 0.2s;
+}
+.folk-crown-btn.is-voted {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+.folk-crown-btn .folk-crown-emoji { font-size: 17px; line-height: 1; }
+.folk-crown-btn .folk-crown-count {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold);
+}
+.folk-crown-btn.is-voted .folk-crown-count { color: var(--bg, #0a0e12); }
+
+.folk-item-progress-track {
+  margin-top: 10px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.folk-item-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), #f0d060);
+  transition: width 0.4s ease;
+}
+.folk-item-progress-label {
+  margin-top: 4px;
+  font-size: 9px;
+  font-family: monospace;
+  color: var(--text3);
+  display: flex;
+  justify-content: space-between;
+}

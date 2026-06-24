@@ -4558,13 +4558,18 @@ def community_shop_proposals():
 
 
 @app.get("/api/community-shop/proposals/{proposal_id}/reactions")
-def community_shop_reactions(proposal_id: int):
+def community_shop_reactions(proposal_id: int, telegram_id: int = None):
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT emoji, COUNT(*) as cnt FROM community_shop_reactions WHERE proposal_id=? GROUP BY emoji", (proposal_id,))
     rows = c.fetchall()
+    my_emoji = None
+    if telegram_id is not None:
+        c.execute("SELECT emoji FROM community_shop_reactions WHERE proposal_id=? AND telegram_id=?", (proposal_id, telegram_id))
+        my_row = c.fetchone()
+        my_emoji = my_row[0] if my_row else None
     conn.close()
-    return [{"emoji": r[0], "count": r[1]} for r in rows]
+    return [{"emoji": r[0], "count": r[1], "you": r[0] == my_emoji} for r in rows]
 
 
 @app.post("/api/community-shop/proposals/{proposal_id}/react")

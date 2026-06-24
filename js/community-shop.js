@@ -1,7 +1,8 @@
-// Народный магазин: игроки предлагают товары, голосуют реакциями (👑 = голос «за»).
-// При 70 голосах 👑 или 70% реакций от проголосовавших — админы видят пометку «СПРОС» и могут добавить товар в основной магазин.
+// Народный магазин: игроки предлагают товары, голосуют 👑.
+// При 70 голосах 👑 — админы видят пометку «СПРОС» и могут добавить товар в основной магазин.
 
-const FOLK_REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑'];
+const FOLK_VOTE_EMOJI = '👑';
+const FOLK_DEMAND_THRESHOLD = 70;
 
 async function loadFolkShop() {
   const el = document.getElementById('folkShopFeed');
@@ -17,7 +18,8 @@ async function loadFolkShop() {
 
     const withReactions = await Promise.all(proposals.map(async p => {
       try {
-        const rr = await fetch(`${API_URL}/api/community-shop/proposals/${p.id}/reactions`);
+        const qs = currentUserId ? `?telegram_id=${currentUserId}` : '';
+        const rr = await fetch(`${API_URL}/api/community-shop/proposals/${p.id}/reactions${qs}`);
         const reactions = rr.ok ? await rr.json() : [];
         return { ...p, reactions };
       } catch { return { ...p, reactions: [] }; }
@@ -26,27 +28,35 @@ async function loadFolkShop() {
     const statusLabels = {pending: '⏳ на рассмотрении', promoted: '✅ уже в магазине', rejected: '✖ отклонено'};
 
     el.innerHTML = withReactions.map(item => {
-      const reactionMap = {};
-      item.reactions.forEach(r => { reactionMap[r.emoji] = r.count; });
+      const crown = item.reactions.find(r => r.emoji === FOLK_VOTE_EMOJI);
+      const count = crown ? crown.count : 0;
+      const voted = !!(crown && crown.you);
+      const pct = Math.min(100, Math.round((count / FOLK_DEMAND_THRESHOLD) * 100));
+      const isHot = item.demand_confirmed || count >= FOLK_DEMAND_THRESHOLD;
 
-      const reactionBtns = FOLK_REACTIONS.map(emoji => {
-        const count = reactionMap[emoji] || 0;
-        const active = count > 0 ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.4);' : '';
-        return `<button onclick="reactToFolkProposal(${item.id}, '${emoji}', this)"
-          style="display:inline-flex;align-items:center;gap:3px;padding:4px 8px;
-          background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-          border-radius:20px;cursor:pointer;font-size:13px;color:var(--text2);
-          font-family:monospace;${active}transition:all 0.2s;">
-          ${emoji}${count > 0 ? `<span style="font-size:10px;color:var(--gold);">${count}</span>` : ''}
-        </button>`;
-      }).join('');
+      let statusClass = '';
+      let statusText = statusLabels[item.status] || item.status;
+      if (item.status === 'promoted') statusClass = 'status-promoted';
+      else if (item.status === 'rejected') statusClass = 'status-rejected';
+      else if (item.demand_confirmed) { statusClass = 'status-hot'; statusText += ' · 👑 СПРОС ПОДТВЕРЖДЁН'; }
 
-      return `<div class="card" style="margin-bottom:10px;">
-        <div class="card-inner" style="padding:12px 14px;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${escapeHtml(item.title)}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5;">${escapeHtml(item.description)}</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:6px;">${statusLabels[item.status] || item.status}${item.demand_confirmed ? ' · 👑 СПРОС ПОДТВЕРЖДЁН' : ''}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${reactionBtns}</div>
+      return `<div class="folk-item-card${isHot ? ' is-hot' : ''}">
+        <div class="card-inner">
+          <div class="folk-item-head">
+            <div>
+              <div class="folk-item-title">${escapeHtml(item.title)}</div>
+              <div class="folk-item-desc">${escapeHtml(item.description)}</div>
+            </div>
+            <button class="folk-crown-btn${voted ? ' is-voted' : ''}" onclick="reactToFolkProposal(${item.id}, this)">
+              <span class="folk-crown-emoji">👑</span>
+              <span class="folk-crown-count">${count}</span>
+            </button>
+          </div>
+          <div class="folk-item-status ${statusClass}">${statusText}</div>
+          ${item.status === 'pending' ? `
+            <div class="folk-item-progress-track"><div class="folk-item-progress-fill" style="width:${pct}%;"></div></div>
+            <div class="folk-item-progress-label"><span>${count} / ${FOLK_DEMAND_THRESHOLD} 👑</span><span>${pct}%</span></div>
+          ` : ''}
         </div>
       </div>`;
     }).join('');
@@ -55,13 +65,13 @@ async function loadFolkShop() {
   }
 }
 
-async function reactToFolkProposal(id, emoji, btn) {
+async function reactToFolkProposal(id, btn) {
   if (!currentUserId) { showToast('Откройте через Telegram бота'); return; }
   try {
     const r = await fetch(`${API_URL}/api/community-shop/proposals/${id}/react`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({telegram_id: currentUserId, emoji})
+      body: JSON.stringify({telegram_id: currentUserId, emoji: FOLK_VOTE_EMOJI})
     });
     if (r.ok) {
       try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}

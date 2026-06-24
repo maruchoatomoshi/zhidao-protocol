@@ -415,18 +415,18 @@
     <button class="subtab active" onclick="switchShopTab('store',this)">商店 МАГАЗИН</button>
     <button class="subtab" onclick="switchShopTab('inventory',this)">背包 ИНВЕНТАРЬ</button>
     <button class="subtab" onclick="switchShopTab('folk',this)"><i class="ti ti-users"></i> НАРОДНЫЙ</button>
-    <button class="subtab shop-contracts-tab" onclick="showPage('contracts', document.getElementById('nav-shop-btn'))"><i class="ti ti-clipboard-list"></i> ДОСКА</button>
   </div>
   <div id="shopStoreContent"></div>
   <div id="shopInventoryContent" style="display:none;"></div>
   <div id="shopFolkContent" style="display:none;padding:0 12px;">
-    <div style="text-align:center;padding:10px 6px 14px;">
-      <div style="font-size:28px;margin-bottom:6px;">🏮</div>
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">民间商店 Народный магазин</div>
-      <div style="font-size:10px;color:var(--text2);line-height:1.6;">Предложи свой товар. Если предложение набирает 👑 70 голосов (или 70% реакций) — админы рассмотрят его для основного магазина.</div>
+    <div class="folk-shop-banner">
+      <div class="folk-shop-icon">🏮</div>
+      <div class="folk-shop-title">Народный магазин <span class="folk-shop-title-cn">民间商店</span></div>
+      <div class="folk-shop-sub">Предложи свой товар. Если предложение набирает <b>👑 70 голосов</b> — админы рассмотрят его для основного магазина.</div>
     </div>
-    <div class="card" style="margin-bottom:10px;">
-      <div class="card-inner" style="padding:12px 14px;">
+    <div class="folk-shop-propose-card">
+      <div class="card-inner">
+        <div class="folk-shop-propose-kicker">НОВОЕ ПРЕДЛОЖЕНИЕ</div>
         <input class="admin-input" id="folkProposalTitle" placeholder="Название товара" style="margin-bottom:8px;">
         <textarea class="admin-input" id="folkProposalDescription" placeholder="Описание: что это и почему нужно" rows="3" style="resize:vertical;margin-bottom:8px;"></textarea>
         <button class="btn btn-primary" style="width:100%;padding:9px;" onclick="submitFolkProposal()">📨 ПРЕДЛОЖИТЬ ТОВАР</button>
@@ -2688,7 +2688,7 @@
 <script src="./js/contracts.js?v=20260623suspfix1"></script>
 <script src="./js/admin.js?v=20260624folkshop1"></script>
 <script src="./js/trip-quiz.js?v=20260624tripquiz1"></script>
-<script src="./js/community-shop.js?v=20260624folkshop1"></script>
+<script src="./js/community-shop.js?v=20260624folkshop2"></script>
 <script src="./js/campus-map.js?v=20260622a"></script>
 <script src="./js/raid.js?v=20260615a"></script>
 <script src="./js/wild-ai-breach.js?v=20260622firewall1"></script>
