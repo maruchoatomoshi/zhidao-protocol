@@ -16,9 +16,9 @@ const PURPLE_PRIZES = [
   { code:'implant_qilin',     icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/qilin_implant.png?raw=true',      name:'Цилинь 麒麟',        desc:'+10★ за каждого владельца Цилиня', points:0, rarity:'rare' },
 ];
 const BLACK_PRIZES = [
+  { code:'implant_terracota',  icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',                    name:'Терракота 兵马俑',       desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
   { code:'implant_red_dragon', icon:'🐉', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/honglong_implant.png?raw=true',           name:'Красный Дракон 红龙',    desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
   { code:'implant_netwatch',   icon:'🔴', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/wangluoshouwei_implant.png?raw=true', name:'Сетевой Дозор 网络守卫', desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
-  { code:'implant_terracota',  icon:'🗿', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/armor.png?raw=true',                    name:'Терракота 兵马俑',       desc:'⚡ ЛЕГЕНДАРНЫЙ ПРОТОКОЛ!', points:0, rarity:'jackpot' },
 ];
 const PRIZE_MAP = {};
 [...PRIZES, ...PURPLE_PRIZES, ...BLACK_PRIZES].forEach(p => PRIZE_MAP[p.code] = p);
@@ -34,6 +34,12 @@ const IMPLANT_DISPLAY_INFO = {
   implant_netwatch: { name: '\u0421\u0435\u0442\u0435\u0432\u043e\u0439 \u0414\u043e\u0437\u043e\u0440 \u7f51\u7edc\u5b88\u536b', desc: 'NetWatch: \u0443\u0434\u0430\u0440, \u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u0444\u0430\u0439\u0440\u0432\u043e\u043b \u0438 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0441\u0435\u0442\u0438', icon: '\ud83d\udd34' },
 };
 const LEGENDARY_IMPLANT_INFO = {
+  implant_terracota: {
+    title: 'ПРОТОКОЛ ТЕРРАКОТА',
+    glyph: '兵',
+    passive: 'Нейроблок: перехватывает 1 штрафной импульс в день. Глиняный панцирь: после блока следующий денежный штраф в тот же день уменьшается на 5★.',
+    actions: [],
+  },
   implant_red_dragon: {
     title: 'ПРОТОКОЛ КРАСНЫЙ ДРАКОН',
     glyph: '龍',
@@ -151,12 +157,13 @@ async function loadImplants(telegramId) {
       const displayDesc = display.desc || imp.desc || '';
       const displayIcon = display.icon || imp.icon || '';
       const img = IMPLANT_IMGS[imp.implant_id];
+      const isLeg = Boolean(LEGENDARY_IMPLANT_INFO[imp.implant_id]);
       const dots = Array(3).fill(0).map((_,i) => {
-        const cls = i < imp.durability ? (imp.implant_id==='implant_red_dragon'?'dur-dot on-r':'dur-dot on') : 'dur-dot off';
+        const cls = i < imp.durability ? (isLeg?'dur-dot on-r':'dur-dot on') : 'dur-dot off';
         return `<div class="${cls}"></div>`;
       }).join('');
       return `<div class="implant-row">
-        <div class="implant-icon ${imp.implant_id==='implant_red_dragon'?'legendary':''}">
+        <div class="implant-icon ${isLeg?'legendary':''}">
           ${img ? `<img src="${escapeHtml(img)}" style="width:24px;height:24px;object-fit:contain;border-radius:4px;">` : displayIcon}
         </div>
         <div>
@@ -896,7 +903,7 @@ async function openCase() {
     updatePoints();
     // Обновляем HUD попыток и текст кнопки
     loadCasinoStatus();
-    if (prize.code==='jackpot'||prize.code==='implant_red_dragon') { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(100); }
+    if (prize.code==='jackpot'||LEGENDARY_IMPLANT_INFO[prize.code]) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(100); }
     else if (prize.code.startsWith('implant_')) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(50); }
     else if (prize.points > 50) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(30); }
     else if (prize.code==='empty') try{tg.HapticFeedback.notificationOccurred('error');}catch(e){}

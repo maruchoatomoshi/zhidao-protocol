@@ -632,8 +632,8 @@ async function loadLeaderboard() {
   const IMPLANT_GLYPHS = {
     'implant_red_dragon':   ['龍', '#cc2200', 'RED DRAGON'],
     'implant_netwatch':     ['衛', '#cc2200', 'NETWATCH'],
+    'implant_terracota':    ['兵', '#cc2200', 'TERRACOTA'],
     'implant_guanxi':       ['義', '#9b59b6', 'GUANXI'],
-    'implant_terracota':    ['兵', '#9b59b6', 'TERRACOTA'],
     'implant_panda':        ['熊', '#9b59b6', 'PANDA'],
     'implant_shaolin':      ['武', '#9b59b6', 'SHAOLIN'],
     'implant_linguasoft':   ['言', '#9b59b6', 'LINGUASOFT'],
@@ -705,7 +705,7 @@ async function loadLeaderboard() {
       else if (i === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
 
       // Легендарные импланты — красный ник поверх всего
-      const isLegendary = item.implant === 'implant_red_dragon' || item.implant === 'implant_netwatch';
+      const isLegendary = item.implant === 'implant_red_dragon' || item.implant === 'implant_netwatch' || item.implant === 'implant_terracota';
       if (isLegendary) {
         nameStyle = 'color:#cc2200;text-shadow:0 0 10px rgba(200,0,0,0.5);font-weight:700;';
       }
