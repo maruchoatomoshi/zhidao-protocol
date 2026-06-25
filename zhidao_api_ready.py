@@ -8655,7 +8655,10 @@ async def toggle_wildai_breach(data: dict, x_admin_id: Optional[int] = Header(No
         conn = get_conn()
         c = conn.cursor()
         if enabled:
-            activate_wildai_breach(c, admin_id=x_admin_id, reason='Wild AI Breach enabled (manual)')
+            # TEMPORARY (2026-06-25): broadcast disabled during testing so manual
+            # toggles don't spam every user. Set back to default (omit the
+            # argument, or pass True) once testing is done.
+            activate_wildai_breach(c, admin_id=x_admin_id, reason='Wild AI Breach enabled (manual)', send_broadcast=False)
         else:
             c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
             c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
@@ -10147,7 +10150,7 @@ def _check_blackwall(c, user_id):
     c.execute("SELECT value FROM settings WHERE key='blackwall'")
     bw = c.fetchone()
     if bw and bw[0] == '1' and (user_id is None or user_id not in ADMIN_IDS):
-        raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом Красного Файрвола")
+        raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом Великого Красного Файрвола")
 
 
 @app.get("/api/contracts")

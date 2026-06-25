@@ -5490,9 +5490,15 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   border: 1px solid #ff0000; padding: 30px; text-align: center; margin: 12px;
 }
 .blackwall-title {
-  font-size: 28px; font-weight: 900; color: #ff2200;
-  text-shadow: 0 0 20px #ff2200; letter-spacing: 4px;
-  margin-bottom: 12px; animation: glitch 2s infinite; white-space: nowrap;
+  font-size: clamp(16px, 5.5vw, 26px); font-weight: 900; color: #ff2200;
+  text-shadow: 0 0 20px #ff2200; letter-spacing: 2px;
+  margin-bottom: 8px; animation: glitch 2s infinite;
+  white-space: normal; word-break: break-word; max-width: 100%;
+}
+.blackwall-subtitle {
+  font-size: clamp(11px, 3.2vw, 14px); font-weight: 700; color: #ff5544;
+  text-shadow: 0 0 10px rgba(255,40,40,0.6); letter-spacing: 1px;
+  margin-bottom: 12px; white-space: normal; word-break: break-word; max-width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -18209,6 +18215,15 @@ body.wild-ai-breach .page-title-cn,
 body.wild-ai-breach .diary-section-title {
   color: #ff6666 !important;
   text-shadow: 0 0 4px rgba(255,40,40,0.5);
+}
+
+/* Светлые темы хардкодят светлый фон .empty-state — перебиваем его при Breach */
+body.wild-ai-breach.theme-nw-light .empty-state,
+body.wild-ai-breach.theme-genshin-light .empty-state {
+  background: rgba(255,40,40,0.07) !important;
+  border-color: rgba(255,60,60,0.25) !important;
+  box-shadow: none !important;
+  color: var(--text3) !important;
 }
 
 .lb-corrupted-badge {
