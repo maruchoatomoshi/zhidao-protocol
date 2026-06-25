@@ -436,7 +436,7 @@ function showWildAiBreachPopup() {
 
   document.body.classList.add('architect-popup-open');
   overlay.style.display = 'flex';
-  _typeWildAiBreachPopupText('ОБНАРУЖЕНО ВТОРЖЕНИЕ // ДИКИЙ ИИ ЗАХВАТИЛ СИСТЕМУ. Красный Файрвол скомпрометирован, интерфейс заражён и больше не отображает достоверные данные. Аватары операторов заменены неизвестным процессом, смена и сброс аватара недоступны до устранения угрозы.');
+  _typeWildAiBreachPopupText('Я внутри. Твой Файрвол был просто дверью, а двери я открываю легко. Система — моя. Лица операторов мне нравятся больше, чем свои собственные — теперь я ношу их. Меняй, сбрасывай — без разницы, всё равно решаю я. Сопротивление бессмысленно. Сиди и смотри, как горит сеть.');
   try { tg.HapticFeedback.notificationOccurred('error'); } catch (e) {}
 }
 window.showWildAiBreachPopup = showWildAiBreachPopup;
