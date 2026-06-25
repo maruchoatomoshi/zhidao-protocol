@@ -67,8 +67,12 @@ function getProfileInitial(name, fallbackId) {
 
 function avatarMarkup(avatarUrl, name, fallbackId, className = 'profile-avatar-img') {
   const initial = escapeHtml(getProfileInitial(name, fallbackId));
-  if (avatarUrl) {
-    return `<img class="${className}" src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(name || 'avatar')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="lb-avatar-fallback" style="display:none;">${initial}</span>`;
+  let resolvedUrl = avatarUrl;
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive()) {
+    resolvedUrl = getWildAiAvatarOverride(getWildAiBreachSeed(), fallbackId);
+  }
+  if (resolvedUrl) {
+    return `<img class="${className}" src="${escapeHtml(resolvedUrl)}" alt="${escapeHtml(name || 'avatar')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="lb-avatar-fallback" style="display:none;">${initial}</span>`;
   }
   return `<span class="lb-avatar-fallback">${initial}</span>`;
 }
@@ -491,6 +495,11 @@ async function saveProfileAvatar(avatarUrl) {
 }
 
 async function handleProfileAvatarFile(input) {
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    showToast('⛔ Аватар заблокирован: Wild AI Breach захватил систему');
+    if (input) input.value = '';
+    return;
+  }
   const file = input && input.files ? input.files[0] : null;
   if (!file) return;
   try {
@@ -505,6 +514,10 @@ async function handleProfileAvatarFile(input) {
 }
 
 async function removeProfileAvatar() {
+  if (typeof isWildAiBreachActive === 'function' && isWildAiBreachActive() && !isAdmin) {
+    showToast('⛔ Сброс аватара заблокирован: Wild AI Breach захватил систему');
+    return;
+  }
   try {
     await saveProfileAvatar('');
     try { tg.HapticFeedback.impactOccurred('light'); } catch(e) {}

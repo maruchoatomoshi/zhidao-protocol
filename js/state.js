@@ -15,4 +15,5 @@ let currentArchitectEvent = null;
 let currentArchitectEventId = null;
 let globalAlertPollingHandle = null;
 let casinoPlayOriginalMarkup = '';
+let casinoGenshinOriginalMarkup = '';
 let shopStoreOriginalMarkup = '';

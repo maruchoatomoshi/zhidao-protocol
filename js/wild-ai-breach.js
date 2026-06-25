@@ -7,6 +7,17 @@ let _wildAiBreachNavOriginal = null;
 let _wildAiBreachTimerInterval = null;
 let _wildAiBreachSeed = 0;
 
+const WILD_AI_AVATAR_POOL = [
+  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/ai_avatar.png',
+  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/ai_avatar2.png',
+  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/ai_avatar3.png',
+  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/ai_avatar4.png',
+  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/ai_avatar5.png',
+  'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/ai_avatar_6.png',
+];
+const WILD_AI_BREACH_POPUP_IMG = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_photo.png';
+const WILD_AI_BREACH_POPUP_SEEN_KEY = 'wildAiBreachPopupSeenUntil';
+
 function seededShuffle(array, seed) {
   const arr = array.slice();
   let s = (seed || 0) + 1;
@@ -32,6 +43,7 @@ function applyWildAiBreachState(settings) {
     scrambleImplantCatalog(settings.breach_seed || 0);
     applyWildAiShopDisguise();
     startWildAiChaosLoop();
+    if (!isAdmin) maybeShowWildAiBreachPopup(settings);
   } else {
     removeWildAiBreachBanner();
     restoreNavLabels();
@@ -40,6 +52,8 @@ function applyWildAiBreachState(settings) {
     restoreImplantCatalog();
     stopWildAiChaosLoop();
   }
+
+  syncWildAiAvatarLockUi();
 
   if (typeof applyWildAiProfileOverride === 'function') applyWildAiProfileOverride();
 
@@ -78,6 +92,13 @@ function isWildAiBreachActive() {
 
 function getWildAiBreachSeed() {
   return _wildAiBreachSeed;
+}
+
+function getWildAiAvatarOverride(seed, telegramId) {
+  let s = (Number(seed) || 0) + (Number(telegramId) || 0);
+  s = (s * 9301 + 49297) % 233280;
+  const idx = s % WILD_AI_AVATAR_POOL.length;
+  return WILD_AI_AVATAR_POOL[idx];
 }
 
 function renderWildAiBreachBanner(settings) {
@@ -228,9 +249,11 @@ function startWildAiChaosLoop() {
     scrambleImplantCatalog(_wildAiBreachSeed + tick);
     applyWildAiShopDisguise(_wildAiBreachSeed + tick);
   }, 7000);
+  scheduleWildAiChaosToast();
 }
 
 function stopWildAiChaosLoop() {
+  stopWildAiChaosToast();
   if (_wildAiChaosInterval) {
     clearInterval(_wildAiChaosInterval);
     _wildAiChaosInterval = null;
@@ -252,6 +275,9 @@ function applyWildAiProfileOverride() {
   const card = document.getElementById('profileCard');
   if (!card) return;
 
+  const preview = document.getElementById('profileAvatarPreview');
+  const fallback = document.getElementById('profileAvatarFallback');
+
   if (!isWildAiBreachActive()) {
     if (_wildAiProfileOriginal) {
       card.classList.remove('wild-ai-profile');
@@ -260,6 +286,18 @@ function applyWildAiProfileOverride() {
       setProfileText('profileStatusLine', _wildAiProfileOriginal.statusLine);
       ['profileStatCases','profileStatPrayers','profileStatCards','profileStatImplants','profileStatDiaries','profileStatRaids']
         .forEach(id => setProfileText(id, _wildAiProfileOriginal.stats[id]));
+      if (preview && fallback && _wildAiProfileOriginal.avatarOverridden) {
+        if (_wildAiProfileOriginal.avatarUrl) {
+          preview.src = _wildAiProfileOriginal.avatarUrl;
+          preview.style.display = 'block';
+          fallback.style.display = 'none';
+        } else {
+          preview.removeAttribute('src');
+          preview.style.display = 'none';
+          fallback.style.display = 'flex';
+        }
+      }
+      _wildAiProfileOriginal = null;
     }
     return;
   }
@@ -270,6 +308,8 @@ function applyWildAiProfileOverride() {
       name: document.getElementById('profileDisplayName')?.textContent || '',
       statusLine: document.getElementById('profileStatusLine')?.textContent || '',
       stats: {},
+      avatarUrl: currentAvatarUrl || '',
+      avatarOverridden: false,
     };
     ['profileStatCases','profileStatPrayers','profileStatCards','profileStatImplants','profileStatDiaries','profileStatRaids']
       .forEach(id => { _wildAiProfileOriginal.stats[id] = document.getElementById(id)?.textContent || '0'; });
@@ -281,6 +321,26 @@ function applyWildAiProfileOverride() {
   setProfileText('profileStatusLine', '状态：失控 // 权限：未知 // 同步率：???%');
   ['profileStatCases','profileStatPrayers','profileStatCards','profileStatImplants','profileStatDiaries','profileStatRaids']
     .forEach(id => setProfileText(id, '???'));
+
+  if (preview && fallback && !isAdmin) {
+    _wildAiProfileOriginal.avatarOverridden = true;
+    preview.src = getWildAiAvatarOverride(getWildAiBreachSeed(), currentUserId);
+    preview.style.display = 'block';
+    fallback.style.display = 'none';
+  }
+}
+
+function syncWildAiAvatarLockUi() {
+  const uploadBtn = document.getElementById('profileAvatarUploadBtn');
+  const resetBtn = document.getElementById('profileAvatarResetBtn');
+  const input = document.getElementById('profileAvatarInput');
+  const locked = isWildAiBreachActive() && !isAdmin;
+  [uploadBtn, resetBtn].forEach(btn => {
+    if (!btn) return;
+    btn.disabled = locked;
+    btn.classList.toggle('wild-ai-locked', locked);
+  });
+  if (input) input.disabled = locked;
 }
 
 // ===== Каталог имплантов — перетасовка названий между карточками =====
@@ -339,4 +399,104 @@ function applyWildAiShopDisguise(seed) {
       btnEl.setAttribute('onclick', newOnclick);
     }
   });
+}
+
+// ===== Попап вторжения (показывается один раз за активацию) =====
+
+let _wildAiBreachPopupTypeTimer = null;
+
+function maybeShowWildAiBreachPopup(settings) {
+  try {
+    const until = settings && settings.breach_until ? String(settings.breach_until) : '';
+    if (!until) return;
+    if (localStorage.getItem(WILD_AI_BREACH_POPUP_SEEN_KEY) === until) return;
+    localStorage.setItem(WILD_AI_BREACH_POPUP_SEEN_KEY, until);
+    showWildAiBreachPopup();
+  } catch (e) {}
+}
+
+function showWildAiBreachPopup() {
+  const overlay = document.getElementById('wildAiBreachPopupOverlay');
+  const imageEl = document.getElementById('wildAiBreachPopupImage');
+  const box = overlay ? overlay.querySelector('.architect-popup-box') : null;
+  const textEl = document.getElementById('wildAiBreachPopupText');
+  if (!overlay || !textEl) return;
+
+  if (imageEl) {
+    imageEl.style.backgroundImage = `url('${WILD_AI_BREACH_POPUP_IMG}')`;
+    imageEl.style.animation = 'none';
+    void imageEl.offsetWidth;
+    imageEl.style.animation = '';
+  }
+  if (box) {
+    box.style.animation = 'none';
+    void box.offsetWidth;
+    box.style.animation = '';
+  }
+
+  document.body.classList.add('architect-popup-open');
+  overlay.style.display = 'flex';
+  _typeWildAiBreachPopupText('ОБНАРУЖЕНО ВТОРЖЕНИЕ // ДИКИЙ ИИ ЗАХВАТИЛ СИСТЕМУ. Красный Файрвол скомпрометирован, интерфейс заражён и больше не отображает достоверные данные. Аватары операторов заменены неизвестным процессом, смена и сброс аватара недоступны до устранения угрозы.');
+  try { tg.HapticFeedback.notificationOccurred('error'); } catch (e) {}
+}
+window.showWildAiBreachPopup = showWildAiBreachPopup;
+
+function _typeWildAiBreachPopupText(text) {
+  const textEl = document.getElementById('wildAiBreachPopupText');
+  if (!textEl) return;
+  if (_wildAiBreachPopupTypeTimer) { clearInterval(_wildAiBreachPopupTypeTimer); _wildAiBreachPopupTypeTimer = null; }
+  textEl.innerHTML = '<span class="wildai-popup-typed"></span><span class="architect-popup-cursor">▌</span>';
+  const typedEl = textEl.querySelector('.wildai-popup-typed');
+  let i = 0;
+  _wildAiBreachPopupTypeTimer = setInterval(() => {
+    i++;
+    typedEl.textContent = text.slice(0, i);
+    if (i >= text.length) {
+      clearInterval(_wildAiBreachPopupTypeTimer);
+      _wildAiBreachPopupTypeTimer = null;
+      const cursor = textEl.querySelector('.architect-popup-cursor');
+      if (cursor) cursor.remove();
+    }
+  }, 22);
+}
+
+function closeWildAiBreachPopup(e) {
+  if (e && e.target !== e.currentTarget && !e.target.closest('.architect-popup-close')) return;
+  const overlay = document.getElementById('wildAiBreachPopupOverlay');
+  if (overlay) overlay.style.display = 'none';
+  if (_wildAiBreachPopupTypeTimer) { clearInterval(_wildAiBreachPopupTypeTimer); _wildAiBreachPopupTypeTimer = null; }
+  document.body.classList.remove('architect-popup-open');
+}
+window.closeWildAiBreachPopup = closeWildAiBreachPopup;
+
+// ===== Доп. хаос — поддельные системные ошибки в тостах =====
+
+const WILD_AI_FAKE_ERRORS = [
+  'ОШИBКA: ЦЕЛОСТНОСТЬ ДAHHЫХ НЕ ПОДТВЕРЖДЕНА',
+  'ПРЕДУПРЕЖДЕНИЕ: НЕИЗВЕСТНЫЙ ПРОЦЕСС ЧИТАЕТ ВАШ ПРОФИЛЬ',
+  'СБОЙ СИНХРОНИЗАЦИИ // ПОВТОРНАЯ ПОПЫТКА...',
+  'ДОСTУП К МОДУЛЮ ЗAПРОШЕН ИЗВНЕ',
+  'NetWatch: ОБНАРУЖЕНА АНОМАЛИЯ В ТРАФИКЕ',
+  'ВНИМАНИЕ: ИДЕНТИФИКАЦИЯ ОПЕРАТОРА НЕСТАБИЛЬНА',
+];
+
+let _wildAiChaosToastTimeout = null;
+
+function scheduleWildAiChaosToast() {
+  if (_wildAiChaosToastTimeout) return;
+  const fire = () => {
+    if (!isWildAiBreachActive()) { _wildAiChaosToastTimeout = null; return; }
+    if (typeof showToast === 'function') {
+      showToast(WILD_AI_FAKE_ERRORS[Math.floor(Math.random() * WILD_AI_FAKE_ERRORS.length)], 'error');
+    }
+    _wildAiChaosToastTimeout = setTimeout(fire, 15000 + Math.random() * 20000);
+  };
+  _wildAiChaosToastTimeout = setTimeout(fire, 15000 + Math.random() * 20000);
+}
+
+function stopWildAiChaosToast() {
+  if (_wildAiChaosToastTimeout) {
+    clearTimeout(_wildAiChaosToastTimeout);
+    _wildAiChaosToastTimeout = null;
+  }
 }

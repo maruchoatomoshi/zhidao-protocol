@@ -223,6 +223,13 @@ function showPage(name, btn) {
     fetch(`${API_URL}/api/settings`).then(r => r.json()).then(settings => {
       if (settings.blackwall && !isAdmin) {
         setCasinoBlackwallState(true);
+        if (currentThemePath === 'genshin') {
+          document.getElementById('casinoPlayContent').style.display = 'none';
+          const gcEl = document.getElementById('casinoGenshinContent');
+          if (gcEl) gcEl.style.display = 'flex';
+        } else {
+          document.getElementById('casinoPlayContent').style.display = 'flex';
+        }
       } else {
         setCasinoBlackwallState(false);
         if (currentThemePath === 'genshin') {
