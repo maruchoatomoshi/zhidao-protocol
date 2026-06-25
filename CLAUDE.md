@@ -410,3 +410,50 @@ journalctl -u zhidao_api.service -n 20 --no-pager | grep -E "WRITE|SLOW|WAL|lock
    - **Status update (2026-06-24, later same day)**: items 1-2 (laundry/water UI redesign: date buttons, native time picker, "к кому подходить" dropdown, no person-limit for water) and item 3 (Стирка VIP shop price raised to 150★ to match Иммунитет, per explicit user instruction) are **implemented, committed, deployed to the live server, and verified working**. Additionally, per a follow-up МЮ note ("Надо подтверждение спрашивать, а то можно мискликнуть"), booking now requires a confirm dialog ("Записываю: <день>, <время>. Подтверждаете?") before the request is sent — implemented in `js/laundry.js` via the existing `showConfirmDialog` helper, no backend change needed. Item 4 (admin point-granting reason field) was investigated and found **already implemented** in the current codebase — `js/admin.js` (`adminAdjustPointsFromForm`/`adminAdjustRepFromForm`) already requires both an amount and a non-empty reason before submitting; quick-preset buttons for common amounts/reasons already exist too (`adminPreparePointAction`/`adminPrepareRepAction`, wired to ±10★/±50★/±5 REP/etc. buttons). Worth revisiting with the user whether anything beyond this is wanted (e.g. a dropdown of preset reasons instead of free text) before considering item 4 closed.
    - **New item 12 (2026-06-24) — navigation redesign, recorded only, not yet implemented ("Пока фиксируй, сделаем потом")**: turn the main/home screen (currently the leftmost bottom-nav tab, `主页`/`showPage('home')`) into something reached via a button rather than a permanent bottom-nav tab. Put the news/schedule tab (`日程`/`showPage('schedule')`, already exists and already loads `loadAnnouncements()`+`loadSchedule()`) in its place as the new default/leading tab. Add a new button fixed at the **top-right corner, visible across all sections/pages**, that opens the player menu (i.e. what is currently the home screen/profile) — clicking it should behave like the current home tab does today. Implementation will need: removing the `主页` `<button class="nav-item" onclick="showPage('home',this)">` entry from `<nav class="bottom-nav">` in `index.html` (~line 2474), adding a persistent top-right button (likely fixed-position, present on every `.page`, not just one) that calls `showPage('home')`, and changing whatever currently defaults to the `home` page on first load/launch-gate logic to default to `schedule` instead (check `index.html` `class="page active" id="page-home"` at ~line 95 and any launch-gate/`isLaunchGateActive` logic in `js/ui.js` that already special-cases `name !== 'home'`, since `showPage` exempts `home` from the launch gate — that exemption may need to move to `schedule` instead).
 
+## Hainan Trip Sequel Lore — "Blue Horizon" Corporate Buyout Concept (recorded 2026-06-25, draft only, not implemented)
+
+User explicitly asked to record this as a lore document only — no code written. Possible future migration to React was mentioned as a reason to defer implementation, so do not start building this against the current vanilla-JS/classic-script architecture without re-confirming.
+
+### Core idea
+
+The Hainan ("season 2") app is not a new skin bolted onto the Beijing ("season 1") ZHIDAO lore — it's framed as a **corporate rebrand/buyout** so new students get a zero-friction onboarding while Beijing veterans get a hidden continuity layer.
+
+- **BlueJoy Corporation / 蓝悦集团** did not buy ZHIDAO outright — it obtained a **license/access/corporate integration to the ZHIDAO Core**, and shipped its own glossy shell as **Blue Horizon OS v4.0.0** (the Frutiger-Aero ocean/glass aesthetic from the reference screenshot, reusing/extending the paused `theme-aqua` draft from 2026-06-24). Avoid the literal phrasing "BlueJoy bought ZHIDAO" even in-lore — keep it deliberately ambiguous: BlueJoy *believes* it owns the system; the Architect knows the core can't be fully bought.
+- **ZHIDAO Core / Legacy PEK Engine** — the old hacker backend, still alive underneath the corporate shell.
+- **Coral Firewall / 珊瑚防火墙** — the Hainan-season equivalent of the Великий Красный Файрвол / BlackWall, themed as the corporate-resort protective layer that ends up triggering the season's central malfunction.
+- **Season title**: ZHIDAO Protocol: Blue Horizon / 海岛蓝图.
+
+### Onboarding split by veteran status
+
+A single `VETERAN_IDS` array on the backend would gate which intro branch a user sees in `intro-novel.js`:
+
+- **New students** (no Beijing history): see a clean, friction-free corporate welcome — "Blue Horizon OS v4.0.0 / Добро пожаловать на остров. BlueJoy создаёт для вас идеальный день." No mention of BlackWall, NetWatch, or the Architect as a dark/threatening entity. They are full "factory" users of a resort CRM-style app (quests, points, laundry, cards, dolphins).
+- **Veterans** (Beijing history): see a glitch on first launch — a fake "system error" revealing a fragment of the old red/black Beijing UI or the Architect's pixel silhouette over the ocean background, e.g. a fake log block:
+  ```
+  [ERROR] Legacy Core detected. Sector: PEK-2026
+  BlackWall residue: archived. Architect signature: active.
+  Corporate shell restored. Do not mention this incident.
+  ```
+  followed by an Architect message: "Ты это видел. Значит, они не всё стёрли." Veterans may also get a subtle non-power-affecting badge like `Legacy Operator: Sector PEK` on their profile (explicitly NOT meant to grant economy/rank advantages — narrative-only, so new students don't feel second-class).
+
+### Mid-trip climax — "the shell cracks"
+
+The planned story beat for the middle of the trip: the perfect BlueJoy/Coral Firewall system throws an error and locks the group, and the glossy Blue Horizon interface visibly degrades back toward the old red/black ZHIDAO look (panels glitching, corporate copy like "Пожалуйста, сохраняйте позитивный настрой" overlaid on a hard system-recovery log, e.g.):
+```
+ZHIDAO CORE RECOVERY MODE
+PEK LEGACY ENGINE: ONLINE
+BLACKWALL ARCHIVE: PARTIAL
+ARCHITECT MANUAL OVERRIDE: REQUESTED
+```
+New students panic/are confused by the sudden tone shift; veterans become mentors/elite who already know how this engine behaves ("мы так две недели в Пекине жили") and walk the group through manual recovery via the existing contracts mechanic. The intended payoff is narrative status for veterans (not mechanical power), and a thematic point that BlueJoy can optimize/route/suggest but can't take responsibility or make a real decision under failure — that has to come from the people who lived through Beijing.
+
+### Key phrases / canon lines
+
+- BlueJoy's stance: "BlueJoy знает, где вам будет лучше." / corporate framing of old modules as "Mood Index, Harmony Tasks, Resort Rewards" replacing the deprecated "BlackWall, NetWatch, Architect Event" naming.
+- Architect's stance: "Они поняли механику. Но не поняли, зачем она была создана." — proposed as the season's defining line.
+- Season moral: an idealized convenience system can route, suggest, and optimize, but cannot take responsibility or act under real failure — that requires the people who already have lived experience with the unfiltered system.
+
+### Status
+
+Recorded as a narrative/lore draft only, per explicit user instruction ("пока можешь зафиксировать в документе"). Not scheduled, not estimated, no backend/frontend work started. User is also weighing an eventual migration to React, which would affect how/whether this gets built against the current architecture — re-confirm scope and stack before any implementation work begins.
+
