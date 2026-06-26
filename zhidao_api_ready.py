@@ -3081,7 +3081,6 @@ TRIP_QUIZ_PASS_RATIO = 0.7
 COMMUNITY_SHOP_REACTIONS = ['👍', '❤️', '🔥', '😂', '😮', '👑']
 COMMUNITY_SHOP_VOTE_EMOJI = '👑'
 COMMUNITY_SHOP_DEMAND_LIKES = 70
-COMMUNITY_SHOP_DEMAND_RATIO = 0.7
 
 
 def award_achievement(c, telegram_id: int, code: str) -> bool:
@@ -4508,9 +4507,7 @@ def _community_shop_demand(c, proposal_id: int):
     c.execute("SELECT emoji, COUNT(*) FROM community_shop_reactions WHERE proposal_id=? GROUP BY emoji", (proposal_id,))
     reaction_counts = {row[0]: row[1] for row in c.fetchall()}
     crown_count = reaction_counts.get(COMMUNITY_SHOP_VOTE_EMOJI, 0)
-    total_voters = sum(reaction_counts.values())
-    ratio = (crown_count / total_voters) if total_voters else 0
-    demand_confirmed = crown_count >= COMMUNITY_SHOP_DEMAND_LIKES or ratio >= COMMUNITY_SHOP_DEMAND_RATIO
+    demand_confirmed = crown_count >= COMMUNITY_SHOP_DEMAND_LIKES
     return reaction_counts, crown_count, demand_confirmed
 
 
@@ -8383,23 +8380,25 @@ async def use_shop_item(purchase_id: int, data: dict):
             if not target_row:
                 conn.close()
                 raise HTTPException(status_code=404, detail="Target not found")
+            today_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
             c.execute(
                 '''SELECT id, operation, amount, note
                    FROM economy_log
                    WHERE telegram_id=? AND amount < 0
                      AND operation IN ('presence_penalty', 'admin_points', 'bot_penalize')
+                     AND created_at >= ?
                      AND NOT EXISTS (
                        SELECT 1 FROM economy_log resets
                        WHERE resets.operation='amnesty_reset'
                          AND resets.reference_id=economy_log.id
                      )
                    ORDER BY created_at DESC LIMIT 1''',
-                (target_id,),
+                (target_id, today_str),
             )
             penalty_row = c.fetchone()
             if not penalty_row:
                 conn.close()
-                raise HTTPException(status_code=404, detail="No eligible penalty found")
+                raise HTTPException(status_code=404, detail="No eligible penalty for today found")
             penalty_id, operation, amount, note = penalty_row
             refund = abs(amount)
             c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (refund, target_id))

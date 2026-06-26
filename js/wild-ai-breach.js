@@ -379,7 +379,7 @@ function applyWildAiShopDisguise(seed) {
     name: el.querySelector('.shop-item-name')?.innerHTML || '',
     desc: el.querySelector('.shop-item-cn')?.innerHTML || '',
     icon: el.querySelector('.shop-item-icon')?.innerHTML || '',
-    onclick: el.querySelector('.shop-item-buy')?.getAttribute('onclick') || null,
+    footer: el.querySelector('.shop-item-footer')?.innerHTML || '',
   }));
   const shuffled = seededShuffle(originals, useSeed);
 
@@ -388,16 +388,14 @@ function applyWildAiShopDisguise(seed) {
     const nameEl = el.querySelector('.shop-item-name');
     const descEl = el.querySelector('.shop-item-cn');
     const iconEl = el.querySelector('.shop-item-icon');
-    const btnEl = el.querySelector('.shop-item-buy');
+    const footerEl = el.querySelector('.shop-item-footer');
     if (nameEl) nameEl.innerHTML = src.name;
     if (descEl) descEl.innerHTML = src.desc;
     if (iconEl) iconEl.innerHTML = src.icon;
-    if (btnEl && src.onclick) {
-      const disguisedName = (nameEl ? nameEl.textContent : '').trim();
-      const escaped = disguisedName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      const newOnclick = src.onclick.replace(/buyItem\('([^']*)','[^']*',/, (m, code) => `buyItem('${code}','${escaped}',`);
-      btnEl.setAttribute('onclick', newOnclick);
-    }
+    // Swapping the whole footer (price + buy button + onclick) together keeps
+    // the displayed price and the actual charged price in sync with whichever
+    // item is now shown in this slot.
+    if (footerEl) footerEl.innerHTML = src.footer;
   });
 }
 
