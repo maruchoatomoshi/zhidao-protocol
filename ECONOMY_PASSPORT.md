@@ -52,6 +52,7 @@ REP does not change from:
 | --- | ---: | ---: | --- |
 | Diary rating | `+15/+30/+50★`, optional `+20★` | same delta | API-side, logged. |
 | Presence scan reward | `+1 scan_attempt` | `0` | New morning/evening confirmation, cap `7`. |
+| Presence base reward | `+5★` | `0` | New morning/evening confirmation, guaranteed, no item required. Kept below the weakest card bonus (Forest `+8★`) so card/implant ownership stays a real upgrade. |
 | Admin wallet action | configurable | `0` | `/api/admin/points`. |
 | Bot `/award` | configurable | `0` | Direct DB write; should be moved to API/log. |
 | Sunday salary | default `+100★` | `0` | Bot-side; Red Dragon doubles it. |

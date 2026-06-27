@@ -6135,6 +6135,16 @@ async def confirm_presence(data: dict):
                     c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
                                  ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""",
                               (telegram_id,))
+                    # Base guaranteed reward for an ordinary confirmation, independent of
+                    # any card/implant bonus — kept below the weakest card bonus (Forest +8)
+                    # so owning a card still feels like an upgrade over the base reward.
+                    c.execute("UPDATE users SET points = points + 5 WHERE telegram_id=?", (telegram_id,))
+                    c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
+                    balance_after = c.fetchone()[0] or 0
+                    log_economy(
+                        c, telegram_id, "presence_base_reward", 5, balance_after,
+                        None, "presence", f"{check_type} {check_date}",
+                    )
             elif action == "request_leave":
                 row = apply_presence_status(c, check_type, check_date, telegram_id, "leave_requested", note)
             elif action == "free_time":
