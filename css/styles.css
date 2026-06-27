@@ -2157,6 +2157,11 @@ body.is-admin .profile-card-kicker {
 .has-frame .profile-avatar-fallback {
   border-radius: 50%;
 }
+/* Profile card avatar is bigger than leaderboard rows — thicken the frame ring so it reads clearly */
+.profile-avatar-wrap.has-frame::before {
+  inset: -6px;
+  box-shadow: 0 0 16px var(--frame-glow);
+}
 .frame-bronze    { --frame-gradient: conic-gradient(from 0deg, #b87333, #e8a050, #b87333, #e8a050, #b87333); --frame-glow: rgba(184,115,51,0.4); }
 .frame-silver    { --frame-gradient: conic-gradient(from 0deg, #b0b0b0, #f0f0f0, #b0b0b0, #f0f0f0, #b0b0b0); --frame-glow: rgba(200,200,200,0.4); }
 .frame-gold      { --frame-gradient: conic-gradient(from 0deg, #d4af37, #fff3b0, #d4af37, #fff3b0, #d4af37); --frame-glow: rgba(212,175,55,0.55); }
