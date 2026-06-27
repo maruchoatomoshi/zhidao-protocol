@@ -1242,13 +1242,24 @@ async def list_users(message: types.Message):
     if not users:
         await message.answer("Список пользователей пуст.")
         return
-    text = "👥 Пользователи:\n\n"
+    lines = []
     for code, username, tg_id, full_name, points in users:
         tg = str(tg_id) if tg_id else "не активирован"
         name = full_name if full_name else "имя не указано"
         pts = points if points else 0
-        text += f"• {name} | {pts}⭐ | TG: {tg}\n"
-    await message.answer(text)
+        lines.append(f"• {name} | {pts}⭐ | TG: {tg}")
+
+    # Telegram caps messages at 4096 chars — with 100+ users a single message
+    # would silently fail to send, so chunk into multiple messages instead.
+    header = f"👥 Пользователи ({len(users)}):\n\n"
+    chunk = header
+    for line in lines:
+        if len(chunk) + len(line) + 1 > 3500:
+            await message.answer(chunk)
+            chunk = ""
+        chunk += line + "\n"
+    if chunk.strip():
+        await message.answer(chunk)
 
 
 async def check_wildai_breach_broadcast():
