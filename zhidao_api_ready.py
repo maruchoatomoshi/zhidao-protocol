@@ -171,8 +171,8 @@ FRAME_DEFINITIONS = [
      "category": "legendary", "check": lambda s: s["wildai_defender"]},
     {"id": "architect-victor", "name": "Покоритель Архитектора", "desc": "Победи Архитектора в Architect Protocol",
      "category": "legendary", "check": lambda s: s["architect_winner"]},
-    {"id": "collector", "name": "Полный комплект протокола", "desc": "Собери имплант 红龙, имплант 衛 и карту 岩 Чжун Ли одновременно",
-     "category": "legendary", "check": lambda s: "implant_red_dragon" in s["implants"] and "implant_netwatch" in s["implants"] and "card_zhongli" in s["cards"]},
+    {"id": "collector", "name": "Коллекционер протокола", "desc": "Имей 5+ разных имплантов/карточек одновременно",
+     "category": "activity", "check": lambda s: len(s["implants"]) + len(s["cards"]) >= 5},
     {"id": "discipline", "name": "Дисциплинированный оператор", "desc": "Подтверди 15+ перекличек/отбоев",
      "category": "activity", "check": lambda s: s["confirmed_checks"] >= 15},
 ]
