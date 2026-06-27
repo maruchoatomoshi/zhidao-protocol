@@ -787,7 +787,8 @@ body.theme-genshin-light .launch-gate-kicker,
 body.theme-genshin-light .demo-lock-kicker,
 body.theme-genshin-light .event-lobby-card .event-lobby-reward::before,
 body.theme-genshin-light .event-result-card .event-lobby-reward::before,
-body.theme-genshin-light .diary-star
+body.theme-genshin-light .diary-star,
+body.theme-genshin-light #gsPraySubtitle
 { color: #a07028 !important; }
 
 body.theme-genshin-light .page-title,
@@ -6438,10 +6439,6 @@ body.theme-genshin-light .raid-roster-chip {
 body.theme-genshin-light #raid-action-btn {
     background: #dbb165;
     color: #3d4555;
-}
-
-body.theme-genshin-light #gsPraySubtitle {
-    color: rgba(61,69,85,0.85);
 }
 
 body.theme-genshin-light #gsPrayScreen {
