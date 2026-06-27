@@ -7310,9 +7310,14 @@ async def get_user_achievements(telegram_id: int):
         if legend_earned_at:
             earned["legend"] = legend_earned_at
 
+    # Admins see every achievement as earned — purely cosmetic display
+    # override, same as the frame unlock; doesn't write to user_achievements
+    # or affect real progress/economy.
+    is_admin_view = telegram_id in ADMIN_IDS
+
     result = []
     for code, name, description, icon, secret in all_achievements:
-        is_earned = code in earned
+        is_earned = code in earned or is_admin_view
         if secret and not is_earned:
             continue
         result.append({
