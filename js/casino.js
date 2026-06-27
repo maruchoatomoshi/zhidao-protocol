@@ -1257,10 +1257,16 @@ async function loadCasinoStatus() {
 }
 
 function renderCasinoAttempts(data) {
-  const pips = document.getElementById('casinoAttemptsPips');
-  if (!pips) return;
   const scans = data.scan_attempts != null ? data.scan_attempts : scanAttempts;
   const limit = 7;
+
+  const gsCount = document.getElementById('gsPrayAttemptsCount');
+  if (gsCount) {
+    gsCount.textContent = (data.frozen && !isAdmin) ? '⛔' : isAdmin ? '∞' : `${scans}/${limit}`;
+  }
+
+  const pips = document.getElementById('casinoAttemptsPips');
+  if (!pips) return;
 
   if (data.frozen && !isAdmin) {
     pips.innerHTML = `<span class="cas-attempt-pip spent" style="opacity:0.4;">⛔</span>`;
