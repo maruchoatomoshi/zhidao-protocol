@@ -457,6 +457,57 @@ async function adminPenalizeRep() {
   await adminAdjustRepFromForm(-1);
 }
 
+const MANUAL_ACHIEVEMENT_NAMES = {
+  early_bird: '🌅 Ранний подъём',
+  iron_mode: '🎯 Железный режим',
+  curious: '🔎 Исследователь',
+  polyglot: '你好 Полиглот',
+  explorer: '🧭 Проводник',
+  brave: '🛡 Смелый ход',
+  exemplary: '✅ Образцовый участник',
+  night_watch: '🦉 Ночной дозор',
+  master: '⚙ Мастер системы',
+};
+
+async function adminGrantAchievementFromForm() {
+  const targetId = adminResolveTargetId();
+  const code = document.getElementById('grantAchievementSelect')?.value;
+  if (!targetId || !code) {
+    showToast('Выбери игрока и ачивку');
+    return;
+  }
+  const targetName = adminSelectedUser?.telegram_id === targetId ? adminSelectedUser.full_name : String(targetId);
+  const ok = await showConfirmDialog({
+    title: 'Выдать ачивку?',
+    message: `${targetName}\n${MANUAL_ACHIEVEMENT_NAMES[code] || code}`,
+    confirmText: 'Выдать',
+  });
+  if (!ok) return;
+  await adminSubmitAchievementGrant(targetId, code);
+}
+
+async function adminSubmitAchievementGrant(targetId, code) {
+  return adminRunEconomyMutation(async () => {
+    try {
+      showToast('Выдаю ачивку...');
+      const r = await adminFetch(`${API_URL}/api/achievements/grant`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'x-admin-id': String(currentUserId)},
+        body: JSON.stringify({telegram_id: targetId, code}),
+      });
+      const data = await adminReadJsonSafe(r);
+      if (!r.ok || data.success === false) {
+        showToast(data.detail || 'Ошибка выдачи ачивки');
+        return;
+      }
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      showToast('Ачивка выдана ✅');
+    } catch (e) {
+      await adminRecoverAfterUncertainMutation(targetId, 'Запрос мог выполниться. Проверь ачивки игрока...');
+    }
+  });
+}
+
 function adminSearchUsersDebounced() {
   clearTimeout(adminSearchTimer);
   adminSearchTimer = setTimeout(adminSearchUsers, 280);

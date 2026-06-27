@@ -1122,6 +1122,23 @@
         <div class="admin-console-note">★ — кошелёк. REP — публичная репутация. Все действия пишутся в журнал.</div>
       </div>
 
+      <div class="admin-console-card">
+        <div class="cn-divider">🏆 АЧИВКИ</div>
+        <select class="admin-input" id="grantAchievementSelect">
+          <option value="early_bird">🌅 Ранний подъём</option>
+          <option value="iron_mode">🎯 Железный режим</option>
+          <option value="curious">🔎 Исследователь</option>
+          <option value="polyglot">你好 Полиглот</option>
+          <option value="explorer">🧭 Проводник</option>
+          <option value="brave">🛡 Смелый ход</option>
+          <option value="exemplary">✅ Образцовый участник</option>
+          <option value="night_watch">🦉 Ночной дозор</option>
+          <option value="master">⚙ Мастер системы</option>
+        </select>
+        <button class="btn btn-gold" style="width:100%;padding:8px;" onclick="adminGrantAchievementFromForm()">ВЫДАТЬ АЧИВКУ</button>
+        <div class="admin-console-note">Цель берётся из поля выше (Telegram ID или выбранный из поиска игрок). Остальные ачивки система выдаёт сама.</div>
+      </div>
+
       <div class="admin-console-card architect-only-block" style="display:none;">
         <div class="cn-divider">📡 ПОПЫТКИ СКАНИРОВАНИЯ</div>
         <input class="admin-input" id="fragmentTargetId" placeholder="Telegram ID игрока">
