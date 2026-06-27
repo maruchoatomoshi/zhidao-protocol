@@ -192,6 +192,11 @@ TITLE_STYLE_DEFAULT = "cyan"
 
 
 def compute_unlocked_frames(c, telegram_id: int) -> list:
+    # Admins get every cosmetic frame unlocked by default — purely a display
+    # perk, doesn't touch points/REP/leaderboard or any underlying stat.
+    if telegram_id in ADMIN_IDS:
+        return [f["id"] for f in FRAME_DEFINITIONS]
+
     c.execute("SELECT rep_score, points FROM users WHERE telegram_id=?", (telegram_id,))
     row = c.fetchone()
     rep = (row[0] or 0) if row else 0
@@ -3828,6 +3833,13 @@ def get_user_profile_dossier(telegram_id: int):
     else:
         rank = "D"
     sync_rate = min(99, max(1, round((reputation_score / 1650) * 100)))
+
+    # Admins always display as SS-rank / fully synced — cosmetic display
+    # override only, the underlying reputation_score (and the breakdown a
+    # student would see for themselves) stays based on real stats.
+    if telegram_id in ADMIN_IDS:
+        rank = "SS"
+        sync_rate = 99
 
     if wildai_mvp:
         title = WILD_AI_BREACH_MVP_TITLE

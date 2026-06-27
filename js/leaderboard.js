@@ -200,7 +200,10 @@ function computeReputationBreakdown(profile) {
 function renderRankBreakdown(profile) {
   const box = document.getElementById('rankBreakdownContent');
   if (!box) return;
-  const { items, total } = computeReputationBreakdown(profile);
+  const { items, total: realTotal } = computeReputationBreakdown(profile);
+  // Admins always show as maxed-out SS-RANK, matching the badge override
+  // the backend already applies — cosmetic only, doesn't touch real stats.
+  const total = profile.is_admin ? Math.max(realTotal, RANK_TIERS[RANK_TIERS.length - 1].min) : realTotal;
   let tierIdx = 0;
   RANK_TIERS.forEach((t, i) => { if (total >= t.min) tierIdx = i; });
   const current = RANK_TIERS[tierIdx];
