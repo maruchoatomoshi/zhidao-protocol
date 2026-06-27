@@ -589,6 +589,8 @@ function openCreateContractModal() {
   const errEl = document.getElementById('contractCreateError');
   if (errEl) errEl.style.display = 'none';
   updateContractFeePreview();
+  const fabBtn = document.getElementById('profileFabBtn');
+  if (fabBtn) fabBtn.style.display = 'none';
 }
 
 function closeCreateContractModal() {
@@ -610,6 +612,8 @@ function closeCreateContractModal() {
   if (expEl)   expEl.value   = '24';
   if (errEl)   errEl.style.display = 'none';
   updateContractFeePreview();
+  const fabBtn = document.getElementById('profileFabBtn');
+  if (fabBtn) fabBtn.style.display = '';
 }
 
 function updateContractFeePreview() {

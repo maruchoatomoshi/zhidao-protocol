@@ -1303,7 +1303,7 @@ function updateCasinoButtonState(data) {
   if (!isAdmin && scans <= 0) {
     btn.disabled = true;
     btn.classList.add('case-btn-disabled');
-    btn.textContent = '[ Сканирований нет // Зарабатывай на перекличках ]';
+    btn.textContent = '[ Сканирований нет // Зарабатывай на перекличках ]';
     return;
   }
   btn.disabled = false;
