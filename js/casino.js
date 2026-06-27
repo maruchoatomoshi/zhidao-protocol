@@ -899,6 +899,12 @@ async function openCase() {
     const prize = { ...basePrize, points: data.prize.points ?? basePrize.points, name: data.prize.name || basePrize.name };
     await spinRoulette(prize, caseType, targetIdx);
     showPrizeResult(prize, caseType, data.doubled_win);
+    // Снимаем блокировку сразу после показа приза — раньше она держалась
+    // до клика по оверлею результата, и если клик не происходил (свайп
+    // со страницы, потеря фокуса), кнопка крутки оставалась заблокированной
+    // до полной перезагрузки приложения.
+    isSpinning = false;
+    document.getElementById('openCaseBtn').disabled = false;
     currentPoints = data.new_points;
     updatePoints();
     // Обновляем HUD попыток и текст кнопки

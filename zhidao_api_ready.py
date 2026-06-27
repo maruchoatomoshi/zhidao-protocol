@@ -7357,11 +7357,11 @@ async def open_case(data: dict):
     if case_type == 'gold':
         prizes = [
             {"code": "empty",   "name": "Пустая миска риса", "points": 0,   "weight": 40, "icon": "🍚", "case_type": "gold"},
-            {"code": "small",   "name": "+30 баллов",         "points": 30,  "weight": 30, "icon": "⭐", "case_type": "gold"},
-            {"code": "medium",  "name": "+60 баллов",         "points": 60,  "weight": 15, "icon": "💫", "case_type": "gold"},
-            {"code": "walk",    "name": "+30 мин свободы",    "points": 0,   "weight": 20, "icon": "🕐", "case_type": "gold"},
-            {"code": "laundry", "name": "Вне очереди!",       "points": 0,   "weight": 12, "icon": "🧺", "case_type": "gold"},
-            {"code": "skip",    "name": "Иммунитет!",         "points": 0,   "weight": 6,  "icon": "🛡", "case_type": "gold"},
+            {"code": "small",   "name": "+30 баллов",         "points": 30,  "weight": 24, "icon": "⭐", "case_type": "gold"},
+            {"code": "medium",  "name": "+60 баллов",         "points": 60,  "weight": 12, "icon": "💫", "case_type": "gold"},
+            {"code": "walk",    "name": "+30 мин свободы",    "points": 0,   "weight": 8,  "icon": "🕐", "case_type": "gold"},
+            {"code": "laundry", "name": "Вне очереди!",       "points": 0,   "weight": 10, "icon": "🧺", "case_type": "gold"},
+            {"code": "skip",    "name": "Иммунитет!",         "points": 0,   "weight": 5,  "icon": "🛡", "case_type": "gold"},
             {"code": "jackpot", "name": "ДЖЕКПОТ! +100★",     "points": 100, "weight": 1,  "icon": "👑", "case_type": "gold"},
         ]
     elif case_type == 'purple':
@@ -8965,21 +8965,16 @@ CARD_INFO = {
 
 GENSHIN_POOL = {
     'blue': {
-        'weight': 790,
+        'weight': 789,
         'items': [
-            {'type': 'points', 'amount': 30, 'weight': 300},
-            {'type': 'points', 'amount': 60, 'weight': 150},
-            {'type': 'immunity', 'weight': 80},
-            {'type': 'walk', 'weight': 50},
-            {'type': 'card', 'id': 'card_fairy', 'weight': 40},
-            {'type': 'card', 'id': 'card_literature', 'weight': 40},
-            {'type': 'card', 'id': 'card_forest', 'weight': 40},
-            {'type': 'card', 'id': 'card_sea', 'weight': 40},
-            {'type': 'card', 'id': 'card_moon', 'weight': 40},
+            {'type': 'points', 'amount': 30, 'weight': 54},
+            {'type': 'points', 'amount': 60, 'weight': 26},
+            {'type': 'immunity', 'weight': 14},
+            {'type': 'walk', 'weight': 6},
         ],
     },
     'purple': {
-        'weight': 200,
+        'weight': 210,
         'items': [
             {'type': 'card', 'id': 'card_pyro', 'weight': 1},
             {'type': 'card', 'id': 'card_fox', 'weight': 1},
@@ -8991,7 +8986,7 @@ GENSHIN_POOL = {
         ],
     },
     'gold': {
-        'weight': 10,
+        'weight': 1,
         'items': [
             {'type': 'card', 'id': 'card_zhongli', 'weight': 1},
             {'type': 'card', 'id': 'card_star', 'weight': 1},
@@ -9050,7 +9045,7 @@ async def open_genshin_case(data: dict):
             c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
             status_row = c.fetchone()
 
-        pool_name = random.choices(['blue', 'purple', 'gold'], weights=[790, 200, 10])[0]
+        pool_name = random.choices(['blue', 'purple', 'gold'], weights=[789, 210, 1])[0]
         pool = GENSHIN_POOL[pool_name]
         item = random.choices(pool['items'], weights=[it['weight'] for it in pool['items']])[0]
         today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
