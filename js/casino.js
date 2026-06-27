@@ -682,7 +682,7 @@ function formatCasinoHistoryItem(item) {
 async function loadCards(telegramId) {
   if (!telegramId) {
     const container = document.getElementById('myCardsContent');
-    if (container) container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Кейсы!</span></div>';
+    if (container) container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Молитвы!</span></div>';
     return;
   }
   const container = document.getElementById('myCardsContent');
@@ -698,7 +698,7 @@ async function loadCards(telegramId) {
       legendaryCardStatus = {};
     }
     if (!data.length) {
-      container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Кейсы!</span></div>';
+      container.innerHTML = '<div class="empty-state">Карточек пока нет<br><span style="font-size:10px;font-family:serif;color:var(--text3);">Соверши молитву во вкладке Молитвы!</span></div>';
       return;
     }
     const cardCounts = {};
