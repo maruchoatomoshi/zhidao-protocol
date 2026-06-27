@@ -3258,6 +3258,29 @@ body.theme-genshin-light .legendary-target-btn.cancel {
 .confirm-dialog-btn.confirm { border-color: color-mix(in srgb, var(--gold) 38%, transparent); background: color-mix(in srgb, var(--gold-dim) 70%, transparent); color: var(--gold); }
 .confirm-dialog-btn.confirm.danger { border-color: rgba(180,20,20,0.34); background: rgba(180,20,20,0.16); color: #f07a68; }
 
+.avatar-crop-modal {
+  position: fixed; inset: 0; z-index: 9400;
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px; background: rgba(3,2,7,0.72); backdrop-filter: blur(12px);
+}
+.avatar-crop-sheet {
+  position: relative; width: min(340px, 100%); padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--gold) 32%, var(--border));
+  border-radius: 20px;
+  background: radial-gradient(circle at 100% 0, color-mix(in srgb, var(--gold) 16%, transparent), transparent 44%), color-mix(in srgb, var(--bg2) 94%, #120c04);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.42);
+}
+.avatar-crop-viewport {
+  position: relative; width: 280px; height: 280px; margin: 14px auto 0;
+  overflow: hidden; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--gold) 50%, transparent);
+  touch-action: none; cursor: grab; background: #000;
+}
+.avatar-crop-viewport img {
+  position: absolute; max-width: none; max-height: none; pointer-events: none; user-select: none;
+}
+.avatar-crop-zoom { width: 100%; margin-top: 14px; accent-color: var(--gold); }
+
 .inventory-dur { display: flex; gap: 3px; justify-content: flex-end; }
 .inventory-dur .dur-dot,
 .inventory-dur-dot {

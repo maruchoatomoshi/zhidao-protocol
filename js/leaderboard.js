@@ -455,28 +455,134 @@ async function selectProfileFrame(frameId) {
   }
 }
 
-function compressProfileAvatar(file) {
+const AVATAR_CROP_VIEWPORT = 280;
+const AVATAR_CROP_OUTPUT = 320;
+
+function ensureAvatarCropModal() {
+  let modal = document.getElementById('avatarCropModal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'avatarCropModal';
+  modal.className = 'avatar-crop-modal';
+  modal.style.display = 'none';
+  modal.innerHTML = `
+    <div class="avatar-crop-sheet">
+      <div class="confirm-dialog-title">Обрезка фото</div>
+      <div class="confirm-dialog-msg">Двигай фото и тяни ползунок, чтобы выбрать, что попадёт в кадр</div>
+      <div class="avatar-crop-viewport" id="avatarCropViewport">
+        <img id="avatarCropImg" draggable="false" alt="">
+      </div>
+      <input type="range" id="avatarCropZoom" min="1" max="3" step="0.01" value="1" class="avatar-crop-zoom">
+      <div class="confirm-dialog-actions">
+        <button class="confirm-dialog-btn cancel" type="button" data-role="cancel">Отмена</button>
+        <button class="confirm-dialog-btn confirm" type="button" data-role="save">Сохранить</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openAvatarCropModal(file) {
   return new Promise((resolve, reject) => {
-    if (!file || !file.type || !file.type.startsWith('image/')) {
-      reject(new Error('Invalid image'));
-      return;
-    }
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Read failed'));
     reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Image failed'));
-      img.onload = () => {
-        const maxSize = 320;
-        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.76));
+      const modal = ensureAvatarCropModal();
+      const viewport = modal.querySelector('#avatarCropViewport');
+      const imgEl = modal.querySelector('#avatarCropImg');
+      const zoomSlider = modal.querySelector('#avatarCropZoom');
+      const cancelBtn = modal.querySelector('[data-role="cancel"]');
+      const saveBtn = modal.querySelector('[data-role="save"]');
+
+      let baseScale = 1, zoom = 1, offsetX = 0, offsetY = 0;
+      let imgW = 0, imgH = 0;
+      let dragging = false, dragStartX = 0, dragStartY = 0, startOffsetX = 0, startOffsetY = 0;
+
+      const applyTransform = () => {
+        const scale = baseScale * zoom;
+        imgEl.style.width = `${imgW * scale}px`;
+        imgEl.style.height = `${imgH * scale}px`;
+        imgEl.style.left = `${offsetX}px`;
+        imgEl.style.top = `${offsetY}px`;
       };
-      img.src = reader.result;
+
+      const clampOffsets = () => {
+        const scale = baseScale * zoom;
+        const w = imgW * scale, h = imgH * scale;
+        const minX = Math.min(0, AVATAR_CROP_VIEWPORT - w);
+        const minY = Math.min(0, AVATAR_CROP_VIEWPORT - h);
+        offsetX = Math.max(minX, Math.min(0, offsetX));
+        offsetY = Math.max(minY, Math.min(0, offsetY));
+      };
+
+      const onPointerDown = (e) => {
+        dragging = true;
+        dragStartX = e.clientX; dragStartY = e.clientY;
+        startOffsetX = offsetX; startOffsetY = offsetY;
+        if (viewport.setPointerCapture) viewport.setPointerCapture(e.pointerId);
+      };
+      const onPointerMove = (e) => {
+        if (!dragging) return;
+        offsetX = startOffsetX + (e.clientX - dragStartX);
+        offsetY = startOffsetY + (e.clientY - dragStartY);
+        clampOffsets();
+        applyTransform();
+      };
+      const onPointerUp = () => { dragging = false; };
+
+      const onZoom = () => {
+        zoom = Number(zoomSlider.value) || 1;
+        clampOffsets();
+        applyTransform();
+      };
+
+      const cleanup = () => {
+        modal.style.display = 'none';
+        viewport.removeEventListener('pointerdown', onPointerDown);
+        viewport.removeEventListener('pointermove', onPointerMove);
+        viewport.removeEventListener('pointerup', onPointerUp);
+        viewport.removeEventListener('pointercancel', onPointerUp);
+        zoomSlider.removeEventListener('input', onZoom);
+        cancelBtn.removeEventListener('click', onCancel);
+        saveBtn.removeEventListener('click', onSave);
+        modal.removeEventListener('click', onBackdrop);
+      };
+      const onCancel = () => { cleanup(); resolve(null); };
+      const onBackdrop = (event) => { if (event.target === modal) onCancel(); };
+      const onSave = () => {
+        const scale = baseScale * zoom;
+        const canvas = document.createElement('canvas');
+        canvas.width = AVATAR_CROP_OUTPUT;
+        canvas.height = AVATAR_CROP_OUTPUT;
+        const ctx = canvas.getContext('2d');
+        const sSize = AVATAR_CROP_VIEWPORT / scale;
+        ctx.drawImage(imgEl, -offsetX / scale, -offsetY / scale, sSize, sSize, 0, 0, AVATAR_CROP_OUTPUT, AVATAR_CROP_OUTPUT);
+        cleanup();
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+
+      imgEl.onerror = () => { cleanup(); reject(new Error('Image failed')); };
+      imgEl.onload = () => {
+        imgW = imgEl.naturalWidth;
+        imgH = imgEl.naturalHeight;
+        baseScale = Math.max(AVATAR_CROP_VIEWPORT / imgW, AVATAR_CROP_VIEWPORT / imgH);
+        zoom = 1;
+        zoomSlider.value = '1';
+        offsetX = (AVATAR_CROP_VIEWPORT - imgW * baseScale) / 2;
+        offsetY = (AVATAR_CROP_VIEWPORT - imgH * baseScale) / 2;
+        applyTransform();
+        modal.style.display = 'flex';
+      };
+      imgEl.src = reader.result;
+
+      viewport.addEventListener('pointerdown', onPointerDown);
+      viewport.addEventListener('pointermove', onPointerMove);
+      viewport.addEventListener('pointerup', onPointerUp);
+      viewport.addEventListener('pointercancel', onPointerUp);
+      zoomSlider.addEventListener('input', onZoom);
+      cancelBtn.addEventListener('click', onCancel);
+      saveBtn.addEventListener('click', onSave);
+      modal.addEventListener('click', onBackdrop);
     };
     reader.readAsDataURL(file);
   });
@@ -505,10 +611,17 @@ async function handleProfileAvatarFile(input) {
   }
   const file = input && input.files ? input.files[0] : null;
   if (!file) return;
+  if (!file.type || !file.type.startsWith('image/')) {
+    showToast('Нужен файл изображения');
+    if (input) input.value = '';
+    return;
+  }
   try {
-    const avatarUrl = await compressProfileAvatar(file);
-    await saveProfileAvatar(avatarUrl);
-    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    const avatarUrl = await openAvatarCropModal(file);
+    if (avatarUrl) {
+      await saveProfileAvatar(avatarUrl);
+      try { tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+    }
   } catch (e) {
     showToast('Не удалось сохранить аватар');
   } finally {
