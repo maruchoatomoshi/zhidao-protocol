@@ -71,13 +71,12 @@ const TEAM_DATA = [
     id: "wunan",
     name: "Ву Нан",
     codename: "Ву Нан",
-    role: "СОПРОВОЖДАЮЩИЙ",
-    short: "Новый оператор контура. Подробности скоро.",
-    status: "STANDBY_NODE",
-    statusText: "PENDING SYNC // ОЖИДАНИЕ",
-    color: "#888888",
-    avatar: "❔",
-    hidden: true
+    role: "АДМИН // СОПРОВОЖДАЮЩИЙ",
+    short: "Новый администратор контура. Помогает с сопровождением и дисциплиной группы.",
+    status: "ACTIVE_NODE",
+    statusText: "SUPPORT NODE // СОПРОВОЖДЕНИЕ",
+    color: "#00aaff",
+    avatar: "🧭"
   },
   {
     id: "olga",
