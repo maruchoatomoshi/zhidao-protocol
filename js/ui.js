@@ -264,10 +264,8 @@ function syncAdminUiVisibility() {
   if (architectThemeBtn) architectThemeBtn.style.display = isArchitect ? '' : 'none';
 
   const isDevOwner = Number(currentUserId) === 389741116;
-  ['adminArchitectTriggerBtn','adminTestLogBtn','adminTestTianhaoBtn','adminTestFactBtn','adminTestMjuTopBtn','adminTestLizaBtn','adminTestNovelBtn'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = isDevOwner ? '' : 'none';
-  });
+  const adminArchitectTriggerBtn = document.getElementById('adminArchitectTriggerBtn');
+  if (adminArchitectTriggerBtn) adminArchitectTriggerBtn.style.display = isDevOwner ? '' : 'none';
 
   // Aqua / Hainan test theme — visible only to the dev owner while in testing.
   const aquaThemeBtn = document.getElementById('theme-btn-aqua');
