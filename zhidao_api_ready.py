@@ -169,6 +169,12 @@ FRAME_DEFINITIONS = [
      "category": "path", "check": lambda s: s["theme_path"] == "genshin"},
     {"id": "redwall-defender", "name": "Хранитель Файрвола", "desc": "Отрази вторжение диких ИИ в Wild AI Breach",
      "category": "legendary", "check": lambda s: s["wildai_defender"]},
+    {"id": "architect-victor", "name": "Покоритель Архитектора", "desc": "Победи Архитектора в Architect Protocol",
+     "category": "legendary", "check": lambda s: s["architect_winner"]},
+    {"id": "collector", "name": "Полный комплект протокола", "desc": "Собери имплант 红龙, имплант 衛 и карту 岩 Чжун Ли одновременно",
+     "category": "legendary", "check": lambda s: "implant_red_dragon" in s["implants"] and "implant_netwatch" in s["implants"] and "card_zhongli" in s["cards"]},
+    {"id": "discipline", "name": "Дисциплинированный оператор", "desc": "Подтверди 15+ перекличек/отбоев",
+     "category": "activity", "check": lambda s: s["confirmed_checks"] >= 15},
 ]
 FRAME_IDS = {f["id"] for f in FRAME_DEFINITIONS}
 
@@ -206,14 +212,19 @@ def compute_unlocked_frames(c, telegram_id: int) -> list:
     c.execute("SELECT COALESCE(SUM(stars),0) FROM diary_stars WHERE telegram_id=?", (telegram_id,))
     diary_stars = c.fetchone()[0] or 0
 
-    c.execute("SELECT wildai_defender FROM user_status WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT wildai_defender, architect_winner FROM user_status WHERE telegram_id=?", (telegram_id,))
     row = c.fetchone()
     wildai_defender = bool(row[0]) if row else False
+    architect_winner = bool(row[1]) if row else False
+
+    c.execute("SELECT COUNT(*) FROM daily_checks WHERE telegram_id=? AND status='confirmed'", (telegram_id,))
+    confirmed_checks = c.fetchone()[0] or 0
 
     stats = {
         "rep": rep, "theme_path": theme_path, "implants": implants,
         "cards": cards, "raids": raids, "diary_stars": diary_stars,
-        "wildai_defender": wildai_defender,
+        "wildai_defender": wildai_defender, "architect_winner": architect_winner,
+        "confirmed_checks": confirmed_checks,
     }
     return [f["id"] for f in FRAME_DEFINITIONS if f["check"](stats)]
 
@@ -1367,6 +1378,8 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN wildai_defender INTEGER DEFAULT 0")
     if 'wildai_mvp' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN wildai_mvp INTEGER DEFAULT 0")
+    if 'architect_winner' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN architect_winner INTEGER DEFAULT 0")
     c.execute("PRAGMA table_info(diary_scores)")
     diary_score_columns = {row[1] for row in c.fetchall()}
     if 'auto_diary_points' not in diary_score_columns:
@@ -2253,6 +2266,13 @@ def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wil
     )
 
 
+def distribute_architect_victory_rewards(c, event_id: int):
+    c.execute("SELECT telegram_id FROM event_participants WHERE event_id=?", (event_id,))
+    participant_ids = [row[0] for row in c.fetchall()]
+    for telegram_id in participant_ids:
+        c.execute("UPDATE user_status SET architect_winner=1 WHERE telegram_id=?", (telegram_id,))
+
+
 def distribute_wildai_victory_rewards(c, event_id: int, mvp_id: Optional[int]):
     c.execute("SELECT telegram_id FROM event_participants WHERE event_id=?", (event_id,))
     participant_ids = [row[0] for row in c.fetchall()]
@@ -2366,6 +2386,7 @@ def refresh_event_state(c, event_row: dict):
             (event_row["ended_at"], mvp_id, event_row["id"]),
         )
         event_row["mvp_user_id"] = mvp_id
+        distribute_architect_victory_rewards(c, event_row["id"])
         add_event_log(c, event_row["id"], "system", "Architect event completed.")
 
     apply_architect_phase_transitions(c, event_row)

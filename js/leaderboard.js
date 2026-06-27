@@ -104,7 +104,7 @@ function renderProfileAvatarCard(profile = {}) {
   }
 }
 
-const FRAME_IDS = ['bronze','silver','gold','diamond','dragon','netwatch-legend','zhongli','raider','scholar','path-netwatch','path-genshin'];
+const FRAME_IDS = ['bronze','silver','gold','diamond','dragon','netwatch-legend','zhongli','raider','scholar','path-netwatch','path-genshin','redwall-defender','architect-victor','collector','discipline'];
 
 function applyAvatarFrame(el, frameId) {
   if (!el) return;

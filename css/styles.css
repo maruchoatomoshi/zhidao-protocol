@@ -2167,6 +2167,10 @@ body.is-admin .profile-card-kicker {
 .frame-scholar   { --frame-gradient: conic-gradient(from 0deg, #3498db, #ffffff, #3498db, #ffffff, #3498db); --frame-glow: rgba(52,152,219,0.45); }
 .frame-path-netwatch { --frame-gradient: conic-gradient(from 0deg, #cc2200, #330000, #cc2200, #330000, #cc2200); --frame-glow: rgba(204,34,0,0.35); }
 .frame-path-genshin  { --frame-gradient: conic-gradient(from 0deg, #9b59b6, #e91e8c, #9b59b6, #e91e8c, #9b59b6); --frame-glow: rgba(155,89,182,0.4); }
+.frame-redwall-defender { --frame-gradient: conic-gradient(from 0deg, #ff2244, #220008, #ff2244, #220008, #ff2244); --frame-glow: rgba(255,34,68,0.5); }
+.frame-architect-victor { --frame-gradient: conic-gradient(from 0deg, #ffffff, #2a2a2a, #ffffff, #2a2a2a, #ffffff); --frame-glow: rgba(255,255,255,0.5); }
+.frame-collector { --frame-gradient: conic-gradient(from 0deg, #d4af37, #cc2200, #00fff7, #d4af37, #cc2200, #00fff7, #d4af37); --frame-glow: rgba(212,175,55,0.45); }
+.frame-discipline { --frame-gradient: conic-gradient(from 0deg, #2ecc71, #145a32, #2ecc71, #145a32, #2ecc71); --frame-glow: rgba(46,204,113,0.45); }
 .frame-bronze .lb-avatar-fallback, .frame-bronze .profile-avatar-fallback { color: #e8a050; }
 .frame-silver .lb-avatar-fallback, .frame-silver .profile-avatar-fallback { color: #d8d8d8; }
 .frame-gold .lb-avatar-fallback, .frame-gold .profile-avatar-fallback { color: #fff3b0; }
@@ -2178,6 +2182,10 @@ body.is-admin .profile-card-kicker {
 .frame-scholar .lb-avatar-fallback, .frame-scholar .profile-avatar-fallback { color: #3498db; }
 .frame-path-netwatch .lb-avatar-fallback, .frame-path-netwatch .profile-avatar-fallback { color: #ff6644; }
 .frame-path-genshin .lb-avatar-fallback, .frame-path-genshin .profile-avatar-fallback { color: #e91e8c; }
+.frame-redwall-defender .lb-avatar-fallback, .frame-redwall-defender .profile-avatar-fallback { color: #ff2244; }
+.frame-architect-victor .lb-avatar-fallback, .frame-architect-victor .profile-avatar-fallback { color: #ffffff; }
+.frame-collector .lb-avatar-fallback, .frame-collector .profile-avatar-fallback { color: #d4af37; }
+.frame-discipline .lb-avatar-fallback, .frame-discipline .profile-avatar-fallback { color: #2ecc71; }
 @keyframes lb-frame-spin {
   to { transform: rotate(360deg); }
 }
