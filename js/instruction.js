@@ -108,6 +108,14 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'more',
+    action: () => instructionEnsureMoreSection('presence'),
+    image: 'julia_explaining2.png',
+    title: 'ПЕРЕКЛИЧКА // 点名',
+    highlight: '#more-presence',
+    text: '«ПЕРЕКЛИЧКА» — здесь видно твой статус подъёма и отбоя за сегодня. Если вечером нужно задержаться (погулять, в гостях, спорт) — оставь причину и запроси отгул, админы увидят заявку и одобрят или отклонят её. Этот раздел работает даже в режиме заморозки других функций'
+  },
+  {
+    page: 'more',
     action: () => instructionEnsureMoreSection('weather'),
     image: 'julia_thinking.png',
     title: 'ПОГОДА И КУРС // 天气 / 汇率',

@@ -35,6 +35,7 @@ window.APP_FROZEN_FEATURES = {
   'diary-stars': true,
   rating:        true,
   contracts:     true,
+  presence:      false,
 };
 // Таймер обратного отсчёта в окне заморозки: открытие утром 5 июля (по Пекину).
 window.APP_FREEZE_TARGET_AT = '2026-07-05T00:00:00+08:00';
