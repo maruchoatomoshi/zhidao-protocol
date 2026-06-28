@@ -42,19 +42,6 @@ const TEAM_DATA = [
     tgLink: "https://t.me/naoayako"
   },
   {
-    id: "yulia",
-    name: "Юлия Витальевна",
-    codename: "Мудрец Шести Путей Китая",
-    role: "АЛЬФА ВОЖАТАЯ",
-    short: "В нашем сердечке. Поправляйтесь скорее!",
-    status: "DEEP_WEB",
-    statusText: "REMOTE ORBIT // НЕВИДИМЫЙ ОПЕРАТОР",
-    color: "#fa00ff",
-    // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_yulia.png"
-    avatar: "🛡️",
-    tgLink: "https://t.me/Trufanova_Yulia"
-  },
-  {
     id: "tianhao",
     name: "Сунь Тяньхао",
     codename: "孙舒珩",
@@ -89,7 +76,20 @@ const TEAM_DATA = [
     color: "#00aaff",
     avatar: "🔑",
     tgLink: "https://t.me/helga_kul"
-  }
+  },
+  {
+    id: "yulia",
+    name: "Юлия Витальевна",
+    codename: "Мудрец Шести Путей Китая",
+    role: "АЛЬФА ВОЖАТАЯ",
+    short: "В нашем сердечке. Поправляйтесь скорее!",
+    status: "DEEP_WEB",
+    statusText: "REMOTE ORBIT // НЕВИДИМЫЙ ОПЕРАТОР",
+    color: "#fa00ff",
+    // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_yulia.png"
+    avatar: "🛡️",
+    tgLink: "https://t.me/Trufanova_Yulia"
+  },
 ];
 
 function _buildTeamCard(member) {
