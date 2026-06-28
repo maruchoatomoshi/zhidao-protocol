@@ -11,7 +11,10 @@ const INTRO_NOVEL_CAST = {
   yulia:     { name: 'ЮЛИЯ ВИТАЛЬЕВНА',          color: '#fa00ff', image: INTRO_NOVEL_GH + 'julia_based.png' },
   liza:      { name: 'ЕЛИЗАВЕТА СЕРГЕЕВНА',      color: '#00f0ff', image: INTRO_NOVEL_GH + 'liza_neutral-Photoroom.png' },
   tianhao:   { name: '孙天昊 СУНЬ ТЯНЬХАО',       color: '#ffaa00', image: INTRO_NOVEL_GH + 'tianhao_explaining.png' },
-  architect: { name: 'АРХИТЕКТОР',               color: '#00ff66', image: INTRO_NOVEL_GH + 'architect_happy.png' }
+  architect: { name: 'АРХИТЕКТОР',               color: '#00ff66', image: INTRO_NOVEL_GH + 'architect_happy.png' },
+  // Картинок для Ву Нан и Ольги пока нет — используем logo.png как заглушку, цвет уже фирменный (совпадает с карточкой в "Команде")
+  wunan:     { name: 'ВУ НАН',                   color: '#3d6cff', image: INTRO_NOVEL_GH + 'logo.png' },
+  olga:      { name: 'ОЛЬГА',                    color: '#14c9a6', image: INTRO_NOVEL_GH + 'logo.png' }
 };
 
 function _buildIntroNovelScenes() {
