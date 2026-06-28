@@ -7170,8 +7170,7 @@ async def get_leaderboard():
                  LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
                  WHERE u.telegram_id IS NOT NULL
                  AND u.telegram_id NOT IN ({placeholders})
-                 AND u.rep_score > 0
-                 ORDER BY u.rep_score DESC, u.rowid ASC LIMIT 20''',
+                 ORDER BY u.rep_score DESC, u.rowid ASC''',
         [today, today] + ADMIN_IDS,
     )
     result = c.fetchall()

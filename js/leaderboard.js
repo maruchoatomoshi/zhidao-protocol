@@ -814,24 +814,28 @@ async function loadLeaderboard() {
       html += '<div class="lb-corrupted-badge">⚠ ДАННЫЕ ПОВРЕЖДЕНЫ // ОТОБРАЖЕНИЕ НЕДОСТОВЕРНО</div>';
     }
 
+    let firstUnrankedSeen = false;
     data.forEach((item, i) => {
-      const medal = medals[i] || (i+1)+'.';
+      // Место в рейтинге показываем только после первых очков репутации —
+      // до этого игрок виден в списке, но без места/подсветки (см. дискуссию 2026-06-28).
+      const hasRank = item.rep > 0;
+      const medal = !hasRank ? '—' : (medals[i] || (i+1)+'.');
       const isMe = currentUserId && item.telegram_id === currentUserId;
-      if (isMe) myRank = i+1;
-      const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      if (isMe) myRank = hasRank ? i+1 : '—';
+      const topClass = !hasRank ? '' : (i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '');
       const animDelay = `animation-delay:${i*0.06}s`;
 
-      // Цвет ника — топ-10 градиент
-      const nameColor = i < 10 ? TOP_COLORS[i] : '';
+      // Цвет ника — топ-10 градиент (только для тех, у кого уже есть место)
+      const nameColor = hasRank && i < 10 ? TOP_COLORS[i] : '';
       const isGradient = nameColor && nameColor.startsWith('linear');
       let nameStyle = isGradient
         ? `background:${nameColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;`
         : nameColor ? `color:${nameColor};font-weight:700;` : '';
 
       // Свечение топ-3
-      if (i === 0) nameStyle += 'filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));';
-      else if (i === 1) nameStyle += 'filter:drop-shadow(0 0 6px rgba(200,200,200,0.4));';
-      else if (i === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
+      if (hasRank && i === 0) nameStyle += 'filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));';
+      else if (hasRank && i === 1) nameStyle += 'filter:drop-shadow(0 0 6px rgba(200,200,200,0.4));';
+      else if (hasRank && i === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
 
       // Легендарные импланты — красный ник поверх всего
       const isLegendary = item.implant === 'implant_red_dragon' || item.implant === 'implant_netwatch' || item.implant === 'implant_terracota';
@@ -841,7 +845,7 @@ async function loadLeaderboard() {
 
       const pathLabel = item.theme_path === 'genshin' ? 'GENSHIN' : item.theme_path === 'cyberpunk' ? 'NETWATCH' : 'SYNC';
       const pathClass = item.theme_path === 'genshin' ? 'genshin' : item.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
-      const rankSignal = i === 0 ? 'ALPHA' : i < 3 ? 'ELITE' : i < 10 ? 'TOP-10' : 'OPERATOR';
+      const rankSignal = !hasRank ? 'NO RATING' : (i === 0 ? 'ALPHA' : i < 3 ? 'ELITE' : i < 10 ? 'TOP-10' : 'OPERATOR');
 
       // Сигнал импланта/карты для подстроки
       let signalLabel = 'NO IMPLANT';
@@ -855,10 +859,10 @@ async function loadLeaderboard() {
       // уже передаётся через title-glow подсветку всей строки (title_style выше).
       const titleHtml = '';
 
-      // Прогресс до следующего места
+      // Прогресс до следующего места (только среди тех, у кого уже есть место)
       let progressHtml = '';
-      let deltaHtml = i === 0 ? '<span>LEADER NODE</span>' : '';
-      if (i > 0 && data[i-1]) {
+      let deltaHtml = hasRank && i === 0 ? '<span>LEADER NODE</span>' : '';
+      if (hasRank && i > 0 && data[i-1]) {
         const prev = data[i-1].rep;
         const curr = item.rep;
         const delta = Math.max(0, prev - curr);
@@ -868,8 +872,12 @@ async function loadLeaderboard() {
         deltaHtml = `<span>${delta} REP TO NEXT</span>`;
       }
 
-      // Разделитель после топ-3
-      const divider = i === 3 ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
+      // Разделитель после топ-3, и ещё один — на стыке "есть место" / "репутации пока нет"
+      let divider = i === 3 && hasRank ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
+      if (!hasRank && !firstUnrankedSeen) {
+        firstUnrankedSeen = true;
+        divider += '<div class="lb-divider">— — — РЕПУТАЦИЯ ПОКА НЕ НАЧИСЛЕНА — — —</div>';
+      }
 
       // Рамка аватара всегда отражает то, что игрок экипировал в профиле —
       // топ-3 статус показывается подсветкой всей строки (topClass), не отдельной рамкой.
@@ -878,14 +886,15 @@ async function loadLeaderboard() {
       // Титул дня с подсветкой — выделяет всю строку игрока целиком (рамка + ник + статус)
       const titleGlowClass = item.title_style ? `title-glow title-${item.title_style}` : '';
 
-      // Подсветка по диапазону места: 4-10 циан, 11-20 фиолет (топ-3 уже подсвечен через topClass)
-      const tierClass = !topClass && i >= 3 && i < 10 ? 'tier-cyan' : (!topClass && i >= 10 && i < 20 ? 'tier-violet' : '');
+      // Подсветка по диапазону места: 4-10 циан, 11-20 фиолет (топ-3 уже подсвечен через topClass).
+      // До первых очков репутации подсветки нет вообще.
+      const tierClass = !hasRank ? '' : (!topClass && i >= 3 && i < 10 ? 'tier-cyan' : (!topClass && i >= 10 && i < 20 ? 'tier-violet' : ''));
 
       // Динамика места в рейтинге со вчера
       let rankChangeHtml = '';
-      if (item.rank_delta > 0) {
+      if (hasRank && item.rank_delta > 0) {
         rankChangeHtml = `<span class="lb-rank-change up">▲${item.rank_delta}</span>`;
-      } else if (item.rank_delta < 0) {
+      } else if (hasRank && item.rank_delta < 0) {
         rankChangeHtml = `<span class="lb-rank-change down">▼${Math.abs(item.rank_delta)}</span>`;
       }
 
