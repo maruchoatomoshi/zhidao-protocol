@@ -764,27 +764,26 @@ async function loadCards(telegramId) {
 }
 
 async function disassembleCard(id) {
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: '✦ Разобрать карточку?',
     message: 'Ты получишь +50 ✦ за дубль. Карточка будет уничтожена.',
-    buttons: [{id:'confirm', type:'default', text:'✦ Разобрать +50 ✦'}, {type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/cards/disassemble/${id}`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({telegram_id: currentUserId})
-      });
-      if (r.ok) {
-        const data = await r.json();
-        currentPoints = data.new_points;
-        updatePoints();
-        try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        showToast(`✦ Разобрано! +50 ✦\nБаланс: ${data.new_points} ✦`);
-        loadCards(currentUserId);
-      } else showToast('Ошибка разборки');
-    } catch(e) { showToast('Ошибка соединения'); }
+    confirmText: '✦ Разобрать +50 ✦',
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/cards/disassemble/${id}`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId})
+    });
+    if (r.ok) {
+      const data = await r.json();
+      currentPoints = data.new_points;
+      updatePoints();
+      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+      showToast(`✦ Разобрано! +50 ✦\nБаланс: ${data.new_points} ✦`);
+      loadCards(currentUserId);
+    } else showToast('Ошибка разборки');
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 function switchCasinoTab(mode, btn) {
@@ -1144,32 +1143,31 @@ function launchConfetti(count) {
 }
 
 async function disassembleImplant(id) {
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: '⚙️ Разобрать имплант?',
     message: 'Ты получишь +50 ★ за разборку дубля. Имплант будет уничтожен.',
-    buttons: [{id:'confirm', type:'default', text:'⚙️ Разобрать +50 ★'}, {type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/casino/implants/disassemble/${id}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({telegram_id: currentUserId})
-      });
-      if (r.ok) {
-        const data = await r.json();
-        currentPoints = data.new_points;
-        updatePoints();
-        try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        showToast(`✅ Разобрано! +50 ★\nБаланс: ${data.new_points} ★`);
-        loadImplants(currentUserId);
-      } else {
-        const err = await r.json();
-        if (err.detail === 'Not a duplicate') showToast('Это не дубль — нельзя разобрать!');
-        else showToast('Ошибка разборки');
-      }
-    } catch(e) { showToast('Ошибка соединения'); }
+    confirmText: '⚙️ Разобрать +50 ★',
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/casino/implants/disassemble/${id}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId})
+    });
+    if (r.ok) {
+      const data = await r.json();
+      currentPoints = data.new_points;
+      updatePoints();
+      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+      showToast(`✅ Разобрано! +50 ★\nБаланс: ${data.new_points} ★`);
+      loadImplants(currentUserId);
+    } else {
+      const err = await r.json();
+      if (err.detail === 'Not a duplicate') showToast('Это не дубль — нельзя разобрать!');
+      else showToast('Ошибка разборки');
+    }
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 async function loadCasinoInventory() {
@@ -1204,17 +1202,17 @@ async function loadCasinoInventory() {
 }
 
 async function useCasinoPrize(id, name) {
-  safeShowPopup({
-    title:`Использовать ${name}?`, message:'Покажи этот экран вожатому для подтверждения.',
-    buttons:[{id:'confirm',type:'default',text:'✅ Показать вожатому'},{type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/casino/use/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
-      if (r.ok) { showToast('✅ Приз использован!'); loadCasinoInventory(); }
-      else { const err=await r.json(); showToast(err.detail==='Prize expired'?'⏰ Приз истёк!':'Ошибка'); }
-    } catch(e) { showToast('Ошибка соединения'); }
+  const ok = await showConfirmDialog({
+    title: `Использовать ${name}?`,
+    message: 'Покажи этот экран вожатому для подтверждения.',
+    confirmText: '✅ Показать вожатому',
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/casino/use/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram_id:currentUserId})});
+    if (r.ok) { showToast('✅ Приз использован!'); loadCasinoInventory(); }
+    else { const err=await r.json(); showToast(err.detail==='Prize expired'?'⏰ Приз истёк!':'Ошибка'); }
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 
 async function loadCasinoHistory() {

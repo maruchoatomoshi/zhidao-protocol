@@ -278,14 +278,13 @@ async function buyItem(code, name, price) {
     openTitleStyleModal(name, price);
     return;
   }
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: `Купить ${name}?`,
     message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
-    buttons: [{id:'confirm',type:'default',text:'✅ Купить'},{type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    await submitShopPurchase(code, name);
+    confirmText: '✅ Купить',
   });
+  if (!ok) return;
+  await submitShopPurchase(code, name);
 }
 
 async function submitShopPurchase(code, name, style) {
@@ -353,14 +352,13 @@ function closeTitleStyleModal() {
 
 async function confirmTitlePlayerPurchase(styleId, price) {
   closeTitleStyleModal();
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: 'Купить Титул дня?',
     message: `Стоимость: ${price} ★\nТвой баланс: ${currentPoints} ★`,
-    buttons: [{id:'confirm',type:'default',text:'✅ Купить'},{type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    await submitShopPurchase('title_player', 'Титул дня', styleId);
+    confirmText: '✅ Купить',
   });
+  if (!ok) return;
+  await submitShopPurchase('title_player', 'Титул дня', styleId);
 }
 
 const SHOP_CATEGORY_LABEL = {
@@ -428,36 +426,35 @@ async function loadInventory() {
   } catch(e) { document.getElementById('shopInventoryContent').innerHTML = '<div class="empty-state">Ошибка загрузки</div>'; }
 }
 
-function useItem(id, name, code) {
+async function useItem(id, name, code) {
   if (code === 'amnesty') { openAmnestyModal(id, name); return; }
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: `Использовать ${name}?`,
     message: 'Покажи этот экран вожатому. После подтверждения товар спишется.',
-    buttons: [{id:'confirm', type:'default', text:'✅ Использовать'}, {type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/shop/use/${id}`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({telegram_id: currentUserId})
-      });
-      if (r.ok) {
-        const data = await r.json();
-        try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        if (data.new_path) {
-          try { localStorage.setItem('zhidao_theme_path', data.new_path); } catch(e) {}
-          if (typeof applyThemePath === 'function') applyThemePath(data.new_path);
-          const pathLabel = data.new_path === 'genshin' ? 'Геншин ✦' : 'Киберпанк 🏮';
-          showToast(`✅ Путь сменён → ${pathLabel}`);
-        } else {
-          showToast(`✅ ${name} использован!\nПокажи это сообщение вожатому.`);
-        }
-        loadInventory();
-      } else {
-        showToast('Ошибка использования');
-      }
-    } catch(e) { showToast('Ошибка соединения'); }
+    confirmText: '✅ Использовать',
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/shop/use/${id}`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId})
+    });
+    if (r.ok) {
+      const data = await r.json();
+      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+      if (data.new_path) {
+        try { localStorage.setItem('zhidao_theme_path', data.new_path); } catch(e) {}
+        if (typeof applyThemePath === 'function') applyThemePath(data.new_path);
+        const pathLabel = data.new_path === 'genshin' ? 'Геншин ✦' : 'Киберпанк 🏮';
+        showToast(`✅ Путь сменён → ${pathLabel}`);
+      } else {
+        showToast(`✅ ${name} использован!\nПокажи это сообщение вожатому.`);
+      }
+      loadInventory();
+    } else {
+      showToast('Ошибка использования');
+    }
+  } catch(e) { showToast('Ошибка соединения'); }
 }
 let _giftItemId = null, _giftItemName = null, _giftSelectedUser = null;
 let _giftSearchTimer = null, _giftSearchSeq = 0;
@@ -742,44 +739,43 @@ function amnestyClearUser() {
   _amnestySearchUsers('');
 }
 
-function confirmAmnesty() {
+async function confirmAmnesty() {
   if (!_amnestySelectedUser || !_amnestyItemId || !currentUserId) return;
-  safeShowPopup({
+  const ok = await showConfirmDialog({
     title: `Снять штраф у ${_amnestySelectedUser.name}?`,
     message: 'После подтверждения товар спишется и последний штраф будет возвращён.',
-    buttons: [{id:'confirm', type:'default', text:'✅ Подтвердить'}, {type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    const btn = document.getElementById('amnestyConfirmBtn');
-    btn.disabled = true;
-    btn.textContent = '...';
-    try {
-      const r = await fetch(`${API_URL}/api/shop/use/${_amnestyItemId}`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({telegram_id: currentUserId, target_id: _amnestySelectedUser.id})
-      });
-      const data = await r.json();
-      if (r.ok && data.success) {
-        closeAmnestyModal();
-        try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
-        showToast(`🤝 Штраф снят: ${data.target_name} +${data.refunded}★`);
-        loadInventory();
-      } else {
-        btn.disabled = false;
-        btn.textContent = '🤝 Снять штраф';
-        const msg = data.detail || '';
-        showToast(
-          msg === 'No eligible penalty found' ? 'У этого человека нет штрафа, который можно снять' :
-          msg === 'Cannot target yourself' ? 'Нельзя выбрать себя' :
-          msg || 'Ошибка использования'
-        );
-      }
-    } catch(e) {
+    confirmText: '✅ Подтвердить',
+  });
+  if (!ok) return;
+  const btn = document.getElementById('amnestyConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const r = await fetch(`${API_URL}/api/shop/use/${_amnestyItemId}`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({telegram_id: currentUserId, target_id: _amnestySelectedUser.id})
+    });
+    const data = await r.json();
+    if (r.ok && data.success) {
+      closeAmnestyModal();
+      try{tg.HapticFeedback.notificationOccurred('success');}catch(e){}
+      showToast(`🤝 Штраф снят: ${data.target_name} +${data.refunded}★`);
+      loadInventory();
+    } else {
       btn.disabled = false;
       btn.textContent = '🤝 Снять штраф';
-      showToast('Ошибка соединения');
+      const msg = data.detail || '';
+      showToast(
+        msg === 'No eligible penalty found' ? 'У этого человека нет штрафа, который можно снять' :
+        msg === 'Cannot target yourself' ? 'Нельзя выбрать себя' :
+        msg || 'Ошибка использования'
+      );
     }
-  });
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🤝 Снять штраф';
+    showToast('Ошибка соединения');
+  }
 }
 
 async function sellItem(id, name, price) {
@@ -787,25 +783,25 @@ async function sellItem(id, name, price) {
   const rate = pandaActive ? 0.6 : 0.5;
   const refund = Math.floor(price * rate);
   const rateLabel = pandaActive ? '60% · Панда 🐼' : '50%';
-  safeShowPopup({
-    title:`Продать ${name}?`,
-    message:`Ты получишь ${refund} ★ (${rateLabel} от стоимости ${price} ★)`,
-    buttons:[{id:'confirm',type:'destructive',text:`💰 Продать за ${refund} ★`},{type:'cancel'}]
-  }, async (btnId) => {
-    if (btnId !== 'confirm') return;
-    try {
-      const r = await fetch(`${API_URL}/api/shop/sell`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({purchase_id:id,telegram_id:currentUserId})});
-      if (r.ok) {
-        const data = await r.json();
-        currentPoints = data.new_points;
-        updatePoints();
-        const pandaNote = data.sell_rate === 0.6 ? ' · Панда 🐼' : '';
-        if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
-        showToast(`✅ Продано! +${data.refund} ★${pandaNote}`);
-        loadInventory();
-      }
-    } catch(e) { showToast('Ошибка'); }
+  const ok = await showConfirmDialog({
+    title: `Продать ${name}?`,
+    message: `Ты получишь ${refund} ★ (${rateLabel} от стоимости ${price} ★)`,
+    confirmText: `💰 Продать за ${refund} ★`,
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/shop/sell`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({purchase_id:id,telegram_id:currentUserId})});
+    if (r.ok) {
+      const data = await r.json();
+      currentPoints = data.new_points;
+      updatePoints();
+      const pandaNote = data.sell_rate === 0.6 ? ' · Панда 🐼' : '';
+      if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
+      showToast(`✅ Продано! +${data.refund} ★${pandaNote}`);
+      loadInventory();
+    }
+  } catch(e) { showToast('Ошибка'); }
 }
 
 function spawnShopSparkles(itemEl) {
