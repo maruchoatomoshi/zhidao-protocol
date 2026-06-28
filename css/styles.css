@@ -4371,7 +4371,19 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   font-weight: 900;
   cursor: pointer;
 }
-.admin-dossier-quick button:nth-child(n + 3) {
+.admin-dossier-quick button.admin-quick-points-neg {
+  border-color: color-mix(in srgb, var(--red-border) 68%, var(--border));
+  color: #ff6666;
+}
+.admin-dossier-quick button.admin-quick-rep-pos {
+  border-color: color-mix(in srgb, #4ad4c8 55%, var(--border));
+  color: #4ad4c8;
+}
+.admin-dossier-quick button.admin-quick-rep-neg {
+  border-color: color-mix(in srgb, #e8a23c 60%, var(--border));
+  color: #e8a23c;
+}
+.admin-dossier-quick button.admin-quick-danger {
   border-color: color-mix(in srgb, var(--red-border) 68%, var(--border));
   color: #ff6666;
 }

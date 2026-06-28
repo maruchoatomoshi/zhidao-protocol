@@ -5320,6 +5320,79 @@ async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(Non
     }
 
 
+@app.post("/api/admin/rep")
+async def admin_adjust_rep(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    target_id = data.get("telegram_id")
+    reason = str(data.get("reason") or "").strip()
+    try:
+        target_id = int(target_id)
+        delta = int(data.get("delta"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    if delta == 0:
+        raise HTTPException(status_code=400, detail="Delta must not be zero")
+    if abs(delta) > 1000:
+        raise HTTPException(status_code=400, detail="Delta too large")
+    if len(reason) < 3:
+        raise HTTPException(status_code=400, detail="Reason required")
+    requested_delta = delta
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT full_name, rep_score, points FROM users WHERE telegram_id=?", (target_id,))
+            row = c.fetchone()
+            if not row:
+                return None
+
+            previous_rep = row[1] or 0
+            c.execute(
+                "UPDATE users SET rep_score = MAX(0, COALESCE(rep_score, 0) + ?) WHERE telegram_id=?",
+                (delta, target_id),
+            )
+            c.execute("SELECT rep_score, points FROM users WHERE telegram_id=?", (target_id,))
+            new_rep, points = c.fetchone()
+            new_rep = new_rep or 0
+            actual_delta = new_rep - previous_rep
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, ?, 'rep_adjust', ?, ?, ?)''',
+                (x_admin_id, target_id, actual_delta, reason, now_iso()),
+            )
+            log_economy(c, target_id, 'admin_rep', actual_delta, points or 0, x_admin_id, 'admin', reason)
+            conn.commit()
+            return {
+                "full_name": row[0] or str(target_id),
+                "previous_rep": previous_rep,
+                "new_rep": new_rep,
+                "points": points or 0,
+                "actual_delta": actual_delta,
+            }
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if result is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "success": True,
+        "telegram_id": target_id,
+        "full_name": result["full_name"],
+        "previous_rep_score": result["previous_rep"],
+        "new_rep_score": result["new_rep"],
+        "points": result["points"],
+        "delta": result["actual_delta"],
+        "requested_delta": requested_delta,
+    }
+
+
 @app.post("/api/internal/points/add")
 async def internal_add_points(data: dict, request: Request):
     if not request_has_internal_token(request):

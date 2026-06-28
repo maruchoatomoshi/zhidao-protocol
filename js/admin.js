@@ -882,15 +882,15 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
         ${adminRenderDossierStat('Контракты', `${stats.contracts_created || 0} / ${stats.contracts_done || 0}`, `создал / выполнил · споры: ${stats.contracts_disputed || 0}`)}
       </div>
       <div class="admin-dossier-quick">
-        <button onclick="adminPreparePointAction(10, 'быстрый бонус')">+10★</button>
-        <button onclick="adminPreparePointAction(50, 'особый бонус')">+50★</button>
-        <button onclick="adminPreparePointAction(-10, 'небольшой штраф')">-10★</button>
-        <button onclick="adminPreparePointAction(-20, 'нарушение режима')">-20★</button>
-        <button onclick="adminPrepareRepAction(5, 'полезная помощь')">+5 REP</button>
-        <button onclick="adminPrepareRepAction(10, 'вклад в группу')">+10 REP</button>
-        <button onclick="adminPrepareRepAction(-5, 'нарушение')">-5 REP</button>
-        <button onclick="adminPrepareRepAction(-20, 'серьёзное нарушение')">-20 REP</button>
-        <button onclick="adminResetSelectedAvatar()">🗑 Сбросить аватар</button>
+        <button class="admin-quick-points-pos" onclick="adminPreparePointAction(10, 'быстрый бонус')">+10★</button>
+        <button class="admin-quick-points-pos" onclick="adminPreparePointAction(50, 'особый бонус')">+50★</button>
+        <button class="admin-quick-points-neg" onclick="adminPreparePointAction(-10, 'небольшой штраф')">-10★</button>
+        <button class="admin-quick-points-neg" onclick="adminPreparePointAction(-20, 'нарушение режима')">-20★</button>
+        <button class="admin-quick-rep-pos" onclick="adminPrepareRepAction(5, 'полезная помощь')">+5 REP</button>
+        <button class="admin-quick-rep-pos" onclick="adminPrepareRepAction(10, 'вклад в группу')">+10 REP</button>
+        <button class="admin-quick-rep-neg" onclick="adminPrepareRepAction(-5, 'нарушение')">-5 REP</button>
+        <button class="admin-quick-rep-neg" onclick="adminPrepareRepAction(-20, 'серьёзное нарушение')">-20 REP</button>
+        <button class="admin-quick-danger" onclick="adminResetSelectedAvatar()">🗑 Сбросить аватар</button>
       </div>
       <div class="admin-dossier-room">
         <div class="admin-room-row">
