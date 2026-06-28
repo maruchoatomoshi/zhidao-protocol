@@ -689,6 +689,11 @@
     <div class="page-sub">> gèng duō // все функции</div>
   </div>
   <div class="more-grid">
+    <div class="more-item" data-feature="presence" onclick="openMore('presence')">
+      <i class="ti ti-broadcast more-item-icon" style="color:#32d872;"></i>
+      <div class="more-item-name">ПЕРЕКЛИЧКА</div>
+      <div class="more-item-cn">点名 diǎn míng</div>
+    </div>
     <div class="more-item" data-feature="diary-stars" onclick="showPage('diary-stars', document.getElementById('nav-more-btn'))">
       <i class="ti ti-star more-item-icon" style="color:var(--gold);"></i>
       <div class="more-item-name">ДНЕВНИК ★</div>
@@ -742,6 +747,11 @@
   </div>
 
   <!-- Субстраницы More -->
+  <div id="more-presence" style="display:none;">
+    <div class="cn-divider">📡 点名 ПЕРЕКЛИЧКА</div>
+    <div id="userPresenceRoot" style="padding:0 12px 10px;"></div>
+  </div>
+
   <div id="more-map" style="display:none;">
     <div class="cn-divider">🗺 校园地图 КАРТА КАМПУСА</div>
     <div id="campusMapRoot" class="campus-map-root"></div>
@@ -1170,6 +1180,21 @@
       </div>
 
       <div class="admin-presence-grid">
+        <div class="admin-presence-card manual">
+          <div class="admin-presence-icon">请</div>
+          <div class="admin-presence-main">
+            <div class="admin-presence-kicker">ОТГУЛ // 请假申请</div>
+            <div class="admin-presence-title">Заявки на отгул</div>
+            <div class="admin-presence-desc">Запросы с вечерней и внеплановой переклички в одном месте.</div>
+          </div>
+          <div class="admin-presence-actions" style="grid-template-columns:1fr;">
+            <button class="admin-presence-btn" onclick="adminLoadLeaveRequests()">Обновить</button>
+          </div>
+          <div id="adminPresenceLeaveRequests" class="admin-presence-status">
+            <div class="empty-state">Статус ещё не загружен</div>
+          </div>
+        </div>
+
         <div class="admin-presence-card manual">
           <div class="admin-presence-icon">点</div>
           <div class="admin-presence-main">
@@ -2664,7 +2689,7 @@
 <script src="./js/config.js?v=20260628contractsfreeze"></script>
 <script src="./js/state.js?v=20260625wildaibreach1"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260628contractsfreeze"></script>
+<script src="./js/ui.js?v=20260628presenceopenmore"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js?v=20260624boardnav1"></script>
 <script src="./js/blackwall.js?v=20260625wildaibreach2"></script>
@@ -2684,9 +2709,10 @@
 <script src="./js/liza-curfew.js?v=20260617a"></script>
 <script src="./js/intro-novel.js?v=20260624cloudsync1"></script>
 <script src="./js/contracts.js?v=20260625wildaibreach2"></script>
-<script src="./js/admin.js?v=20260628presenceui"></script>
+<script src="./js/admin.js?v=20260628leaverequests"></script>
 <script src="./js/trip-quiz.js?v=20260624tripquiz1"></script>
 <script src="./js/community-shop.js?v=20260628pct"></script>
+<script src="./js/presence.js?v=20260628leave1"></script>
 <script src="./js/campus-map.js?v=20260625imgctxfix1"></script>
 <script src="./js/raid.js?v=20260615a"></script>
 <script src="./js/wild-ai-breach.js?v=20260625wildaibreach1"></script>

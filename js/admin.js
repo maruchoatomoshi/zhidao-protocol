@@ -1053,7 +1053,7 @@ function adminRenderPresenceOverview(checkType, data) {
 
   const counts = data.counts || {};
   const checks = Array.isArray(data.checks) ? data.checks : [];
-  const activeRows = checks.filter(row => ['pending', 'leave_requested', 'leave_rejected', 'needs_attention'].includes(row.status));
+  const activeRows = checks.filter(row => ['pending', 'leave_rejected', 'needs_attention'].includes(row.status));
   const chipKeys = ['pending', 'confirmed', 'penalized'];
   const statusGrid = chipKeys.map(key => `
     <div class="admin-presence-chip ${key}">
@@ -1122,6 +1122,50 @@ function adminLoadPresenceAll() {
   adminLoadPresence('morning');
   adminLoadPresence('evening');
   adminLoadPresence('manual');
+  adminLoadLeaveRequests();
+}
+
+async function adminLoadLeaveRequests() {
+  if (!isAdmin || !currentUserId) return;
+  const container = document.getElementById('adminPresenceLeaveRequests');
+  if (container) container.innerHTML = '<div class="empty-state">Загрузка...</div>';
+  try {
+    const [evening, manual] = await Promise.all(['evening', 'manual'].map(checkType =>
+      fetch(`${API_URL}/api/presence/admin/overview?check_type=${checkType}`, {headers: {'x-admin-id': currentUserId}})
+        .then(r => r.ok ? r.json() : null)
+        .then(data => ({checkType, data}))
+        .catch(() => null)
+    ));
+
+    const rows = [evening, manual].filter(Boolean).flatMap(({checkType, data}) =>
+      (data && Array.isArray(data.checks) ? data.checks : [])
+        .filter(row => row.status === 'leave_requested')
+        .map(row => ({...row, checkType, checkDate: data.check_date}))
+    );
+
+    if (!container) return;
+    if (!rows.length) { container.innerHTML = '<div class="empty-state">Нет заявок на отгул</div>'; return; }
+
+    container.innerHTML = `<div class="admin-presence-list">
+      ${rows.map(row => {
+        const room = row.room_number ? `<span class="admin-presence-room"> · #${escapeHtml(row.room_number)}</span>` : '';
+        const checkDate = escapeHtml(String(row.checkDate || ''));
+        return `
+        <div class="admin-presence-row leave_requested">
+          <div>
+            <div class="admin-presence-name">${escapeHtml(row.full_name || row.telegram_id || 'Без имени')}${room} <span class="inventory-pill" style="font-size:7px;">${row.checkType === 'manual' ? 'внеплановая' : 'отбой'}</span></div>
+            <div class="admin-presence-meta">ID ${escapeHtml(row.telegram_id)}${row.note ? ` · «${escapeHtml(row.note)}»` : ''}</div>
+          </div>
+          <div class="admin-presence-row-actions">
+            <button class="admin-presence-row-btn approve" onclick="adminApprovePresenceLeave('${row.telegram_id}', '${row.checkType}', '${checkDate}')">✅ Разрешить</button>
+            <button class="admin-presence-row-btn reject" onclick="adminRejectPresenceLeave('${row.telegram_id}', '${row.checkType}', '${checkDate}')">❌ Отклонить</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } catch (e) {
+    if (container) container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+  }
 }
 
 async function adminDispatchPresence(checkType) {
@@ -1200,6 +1244,7 @@ async function adminMarkPresenceManually(telegramId, checkType, checkDate) {
     }
     showToast('Отмечено');
     adminLoadPresence(checkType);
+    adminLoadLeaveRequests();
   } catch (e) {
     showToast('Ошибка соединения');
   }
@@ -1226,6 +1271,7 @@ async function adminApprovePresenceLeave(telegramId, checkType, checkDate) {
     }
     showToast('Отгул разрешён');
     adminLoadPresence(checkType);
+    adminLoadLeaveRequests();
   } catch (e) {
     showToast('Ошибка соединения');
   }
@@ -1253,6 +1299,7 @@ async function adminRejectPresenceLeave(telegramId, checkType, checkDate) {
     }
     showToast('Отгул отклонён');
     adminLoadPresence(checkType);
+    adminLoadLeaveRequests();
   } catch (e) {
     showToast('Ошибка соединения');
   }

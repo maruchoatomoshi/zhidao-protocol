@@ -563,7 +563,6 @@ def get_presence_keyboard(check_type, check_date=None):
             inline_keyboard=[
                 [
                     InlineKeyboardButton(text="✅ Я проснулся", callback_data="presence:morning:confirm"),
-                    InlineKeyboardButton(text="🙋 Нужна помощь", callback_data="presence:morning:request_leave"),
                 ]
             ]
         )
