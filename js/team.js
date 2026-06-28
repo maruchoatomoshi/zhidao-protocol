@@ -21,7 +21,7 @@ const TEAM_DATA = [
     name: "Марк Альбертович",
     codename: "Архитектор",
     role: "СИГМА ВОЖАТЫЙ",
-    short: "Архитектор системы, как тот чел из фильма Matrix",
+    short: "Сисадмин, как тот чел из фильма Matrix. Что-то не работает? Пишите",
     status: "HOST",
     statusText: "ERROR // ERROR",
     color: "#00ff66",
@@ -44,7 +44,7 @@ const TEAM_DATA = [
   {
     id: "yulia",
     name: "Юлия Витальевна",
-    codename: "Юля",
+    codename: "Мудрец Шести Путей Китая",
     role: "АЛЬФА ВОЖАТАЯ",
     short: "В нашем сердечке. Поправляйтесь скорее!",
     status: "DEEP_WEB",
