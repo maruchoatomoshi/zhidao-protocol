@@ -1432,7 +1432,7 @@ body.is-admin .profile-card-kicker {
   background:
     radial-gradient(circle at 50% 30%, rgba(212,175,55,0.14), transparent 58%),
     rgba(255,255,255,0.04);
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
