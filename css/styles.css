@@ -2192,87 +2192,21 @@ body.is-admin .profile-card-kicker {
 .frame-architect-victor .lb-avatar-fallback, .frame-architect-victor .profile-avatar-fallback { color: #ffffff; }
 .frame-collector .lb-avatar-fallback, .frame-collector .profile-avatar-fallback { color: #d4af37; }
 .frame-discipline .lb-avatar-fallback, .frame-discipline .profile-avatar-fallback { color: #2ecc71; }
-/* Frame shapes — geometry escalates with how hard the frame is to earn.
-   Applies to the equipped frame everywhere it renders: leaderboard rows, the profile card,
-   and the frame picker swatches in the showcase panel.
-   Tier 0 (path — just a choice): circle, unchanged.
-   Tier 1 (early REP ladder — bronze/silver): rounded square.
-   Tier 2 (gold/diamond REP + grind achievements): hexagon.
-   Tier 3 (legendary — rare implant/card or boss-fight win): one unique shape each. */
-
-/* Tier 1 — rounded square */
-.frame-bronze.has-frame,
-.frame-silver.has-frame {
-  border-radius: 22% !important;
-}
-.frame-bronze.has-frame::before,
-.frame-silver.has-frame::before,
-.frame-bronze .lb-avatar-img, .frame-bronze .lb-avatar-fallback, .frame-bronze .profile-avatar-img, .frame-bronze .profile-avatar-fallback, .profile-frame-swatch.frame-bronze,
-.frame-silver .lb-avatar-img, .frame-silver .lb-avatar-fallback, .frame-silver .profile-avatar-img, .frame-silver .profile-avatar-fallback, .profile-frame-swatch.frame-silver {
-  border-radius: 22%;
-}
-
-/* Tier 2 — hexagon */
-.frame-gold.has-frame,
-.frame-diamond.has-frame,
-.frame-raider.has-frame,
-.frame-scholar.has-frame,
-.frame-discipline.has-frame,
-.frame-collector.has-frame {
-  border-radius: 0 !important;
-}
-.frame-gold.has-frame::before,
-.frame-diamond.has-frame::before,
-.frame-raider.has-frame::before,
-.frame-scholar.has-frame::before,
-.frame-discipline.has-frame::before,
-.frame-collector.has-frame::before,
-.frame-gold .lb-avatar-img, .frame-gold .lb-avatar-fallback, .frame-gold .profile-avatar-img, .frame-gold .profile-avatar-fallback, .profile-frame-swatch.frame-gold,
-.frame-diamond .lb-avatar-img, .frame-diamond .lb-avatar-fallback, .frame-diamond .profile-avatar-img, .frame-diamond .profile-avatar-fallback, .profile-frame-swatch.frame-diamond,
-.frame-raider .lb-avatar-img, .frame-raider .lb-avatar-fallback, .frame-raider .profile-avatar-img, .frame-raider .profile-avatar-fallback, .profile-frame-swatch.frame-raider,
-.frame-scholar .lb-avatar-img, .frame-scholar .lb-avatar-fallback, .frame-scholar .profile-avatar-img, .frame-scholar .profile-avatar-fallback, .profile-frame-swatch.frame-scholar,
-.frame-discipline .lb-avatar-img, .frame-discipline .lb-avatar-fallback, .frame-discipline .profile-avatar-img, .frame-discipline .profile-avatar-fallback, .profile-frame-swatch.frame-discipline,
-.frame-collector .lb-avatar-img, .frame-collector .lb-avatar-fallback, .frame-collector .profile-avatar-img, .frame-collector .profile-avatar-fallback, .profile-frame-swatch.frame-collector {
-  border-radius: 0;
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-}
-
-/* Tier 3 — legendary, one unique shape per frame */
-.frame-dragon.has-frame,
-.frame-netwatch-legend.has-frame,
-.frame-zhongli.has-frame,
-.frame-redwall-defender.has-frame,
-.frame-architect-victor.has-frame {
-  border-radius: 0 !important;
-}
+/* Legendary frames pulse instead of spin — everything else keeps the original rotation. */
 .frame-dragon.has-frame::before,
-.frame-dragon .lb-avatar-img, .frame-dragon .lb-avatar-fallback, .frame-dragon .profile-avatar-img, .frame-dragon .profile-avatar-fallback, .profile-frame-swatch.frame-dragon {
-  border-radius: 0;
-  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-}
 .frame-netwatch-legend.has-frame::before,
-.frame-netwatch-legend .lb-avatar-img, .frame-netwatch-legend .lb-avatar-fallback, .frame-netwatch-legend .profile-avatar-img, .frame-netwatch-legend .profile-avatar-fallback, .profile-frame-swatch.frame-netwatch-legend {
-  border-radius: 0;
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-}
 .frame-zhongli.has-frame::before,
-.frame-zhongli .lb-avatar-img, .frame-zhongli .lb-avatar-fallback, .frame-zhongli .profile-avatar-img, .frame-zhongli .profile-avatar-fallback, .profile-frame-swatch.frame-zhongli {
-  border-radius: 0;
-  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
-}
 .frame-redwall-defender.has-frame::before,
-.frame-redwall-defender .lb-avatar-img, .frame-redwall-defender .lb-avatar-fallback, .frame-redwall-defender .profile-avatar-img, .frame-redwall-defender .profile-avatar-fallback, .profile-frame-swatch.frame-redwall-defender {
-  border-radius: 0;
-  clip-path: polygon(50% 0%, 100% 15%, 100% 55%, 50% 100%, 0% 55%, 0% 15%);
-}
-.frame-architect-victor.has-frame::before,
-.frame-architect-victor .lb-avatar-img, .frame-architect-victor .lb-avatar-fallback, .frame-architect-victor .profile-avatar-img, .frame-architect-victor .profile-avatar-fallback, .profile-frame-swatch.frame-architect-victor {
-  border-radius: 0;
-  clip-path: polygon(50% 0%, 75% 50%, 50% 100%, 25% 50%);
+.frame-architect-victor.has-frame::before {
+  animation: lb-frame-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes lb-frame-spin {
   to { transform: rotate(360deg); }
+}
+@keyframes lb-frame-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.78; }
 }
 
 /* "Титул дня" (title_player) — full-row leaderboard highlight, purely cosmetic */
