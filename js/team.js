@@ -62,7 +62,7 @@ const TEAM_DATA = [
     short: "Помогает с сопровождением и дисциплиной группы",
     status: "ACTIVE_NODE",
     statusText: "SUPPORT NODE // СОПРОВОЖДЕНИЕ",
-    color: "#3d6cff",
+    color: "#9b6bff",
     avatar: "🧭"
   },
   {
