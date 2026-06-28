@@ -871,8 +871,9 @@ async function loadLeaderboard() {
       // Разделитель после топ-3
       const divider = i === 3 ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
 
-      // Рамка аватара — за топ-3 фиксированная, для остальных по выбору пользователя
-      const frameClass = (!topClass && item.equipped_frame) ? `has-frame frame-${item.equipped_frame}` : '';
+      // Рамка аватара всегда отражает то, что игрок экипировал в профиле —
+      // топ-3 статус показывается подсветкой всей строки (topClass), не отдельной рамкой.
+      const frameClass = item.equipped_frame ? `has-frame frame-${item.equipped_frame}` : '';
 
       // Титул дня с подсветкой — выделяет всю строку игрока целиком (рамка + ник + статус)
       const titleGlowClass = item.title_style ? `title-glow title-${item.title_style}` : '';

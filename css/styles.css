@@ -2036,17 +2036,20 @@ body.is-admin .profile-card-kicker {
   border-left: 2px solid rgba(212,175,55,0.4);
 }
 .lb-item.top1 {
-  border-color: rgba(212,175,55,0.26);
+  border-color: rgba(212,175,55,0.45);
+  box-shadow: 0 0 16px rgba(212,175,55,0.22), inset 0 0 24px rgba(212,175,55,0.08);
   background:
     radial-gradient(circle at 0% 50%, rgba(212,175,55,0.13), transparent 42%),
     linear-gradient(90deg, rgba(212,175,55,0.08), transparent);
 }
 .lb-item.top2 {
-  border-color: rgba(210,210,210,0.18);
+  border-color: rgba(210,210,210,0.35);
+  box-shadow: 0 0 14px rgba(200,200,200,0.16), inset 0 0 20px rgba(200,200,200,0.06);
   background: linear-gradient(90deg, rgba(180,180,180,0.06), rgba(255,255,255,0.012));
 }
 .lb-item.top3 {
-  border-color: rgba(184,115,51,0.18);
+  border-color: rgba(184,115,51,0.32);
+  box-shadow: 0 0 14px rgba(184,115,51,0.16), inset 0 0 20px rgba(184,115,51,0.06);
   background: linear-gradient(90deg, rgba(184,115,51,0.06), rgba(255,255,255,0.012));
 }
 .lb-rank {
@@ -2096,42 +2099,8 @@ body.is-admin .profile-card-kicker {
   font-family: monospace;
   white-space: nowrap;
 }
-/* Top-3 avatar frames — CSS-only "mini achievement" cosmetics */
-.lb-item.top1 .lb-avatar,
-.lb-item.top2 .lb-avatar,
-.lb-item.top3 .lb-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-}
-.lb-item.top1 .lb-avatar::before,
-.lb-item.top2 .lb-avatar::before,
-.lb-item.top3 .lb-avatar::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  z-index: -1;
-  border-radius: 50%;
-  background: var(--lb-frame-gradient);
-  box-shadow: 0 0 12px var(--lb-frame-glow);
-  animation: lb-frame-spin 4s linear infinite;
-}
-.lb-item.top1 .lb-avatar { --lb-frame-gradient: conic-gradient(from 0deg, #d4af37, #fff3b0, #d4af37, #fff3b0, #d4af37); --lb-frame-glow: rgba(212,175,55,0.55); }
-.lb-item.top2 .lb-avatar { --lb-frame-gradient: conic-gradient(from 0deg, #b0b0b0, #f0f0f0, #b0b0b0, #f0f0f0, #b0b0b0); --lb-frame-glow: rgba(200,200,200,0.4); }
-.lb-item.top3 .lb-avatar { --lb-frame-gradient: conic-gradient(from 0deg, #b87333, #e8a050, #b87333, #e8a050, #b87333); --lb-frame-glow: rgba(184,115,51,0.4); }
-.lb-item.top1 .lb-avatar-img,
-.lb-item.top1 .lb-avatar-fallback,
-.lb-item.top2 .lb-avatar-img,
-.lb-item.top2 .lb-avatar-fallback,
-.lb-item.top3 .lb-avatar-img,
-.lb-item.top3 .lb-avatar-fallback {
-  border-radius: 50%;
-}
-.lb-item.top1 .lb-avatar-fallback,
-.lb-item.top2 .lb-avatar-fallback,
-.lb-item.top3 .lb-avatar-fallback {
-  font-size: 18px;
-}
+/* Top-3 status is shown via the row glow above (.lb-item.top1/.top2/.top3);
+   the avatar itself always shows the player's own equipped frame, if any. */
 .lb-item.top1 .lb-avatar-fallback { color: #d4af37; }
 .lb-item.top2 .lb-avatar-fallback { color: #d8d8d8; }
 .lb-item.top3 .lb-avatar-fallback { color: #e8a050; }
