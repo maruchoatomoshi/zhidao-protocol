@@ -2192,6 +2192,44 @@ body.is-admin .profile-card-kicker {
 .frame-architect-victor .lb-avatar-fallback, .frame-architect-victor .profile-avatar-fallback { color: #ffffff; }
 .frame-collector .lb-avatar-fallback, .frame-collector .profile-avatar-fallback { color: #d4af37; }
 .frame-discipline .lb-avatar-fallback, .frame-discipline .profile-avatar-fallback { color: #2ecc71; }
+/* Frame shapes — give frame tiers distinct geometry instead of one circle for every frame.
+   Applies to the equipped frame everywhere it renders: leaderboard rows, the profile card,
+   and the frame picker swatches in the showcase panel. */
+.frame-diamond.has-frame,
+.frame-dragon.has-frame,
+.frame-netwatch-legend.has-frame,
+.frame-redwall-defender.has-frame,
+.frame-raider.has-frame {
+  border-radius: 0 !important;
+}
+.frame-diamond.has-frame::before,
+.frame-dragon.has-frame::before,
+.frame-netwatch-legend.has-frame::before,
+.frame-redwall-defender.has-frame::before,
+.frame-raider.has-frame::before,
+.frame-diamond .lb-avatar-img, .frame-diamond .lb-avatar-fallback, .frame-diamond .profile-avatar-img, .frame-diamond .profile-avatar-fallback, .profile-frame-swatch.frame-diamond,
+.frame-dragon .lb-avatar-img, .frame-dragon .lb-avatar-fallback, .frame-dragon .profile-avatar-img, .frame-dragon .profile-avatar-fallback, .profile-frame-swatch.frame-dragon,
+.frame-netwatch-legend .lb-avatar-img, .frame-netwatch-legend .lb-avatar-fallback, .frame-netwatch-legend .profile-avatar-img, .frame-netwatch-legend .profile-avatar-fallback, .profile-frame-swatch.frame-netwatch-legend,
+.frame-redwall-defender .lb-avatar-img, .frame-redwall-defender .lb-avatar-fallback, .frame-redwall-defender .profile-avatar-img, .frame-redwall-defender .profile-avatar-fallback, .profile-frame-swatch.frame-redwall-defender,
+.frame-raider .lb-avatar-img, .frame-raider .lb-avatar-fallback, .frame-raider .profile-avatar-img, .frame-raider .profile-avatar-fallback, .profile-frame-swatch.frame-raider {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.frame-zhongli.has-frame,
+.frame-architect-victor.has-frame,
+.frame-collector.has-frame {
+  border-radius: 0 !important;
+}
+.frame-zhongli.has-frame::before,
+.frame-architect-victor.has-frame::before,
+.frame-collector.has-frame::before,
+.frame-zhongli .lb-avatar-img, .frame-zhongli .lb-avatar-fallback, .frame-zhongli .profile-avatar-img, .frame-zhongli .profile-avatar-fallback, .profile-frame-swatch.frame-zhongli,
+.frame-architect-victor .lb-avatar-img, .frame-architect-victor .lb-avatar-fallback, .frame-architect-victor .profile-avatar-img, .frame-architect-victor .profile-avatar-fallback, .profile-frame-swatch.frame-architect-victor,
+.frame-collector .lb-avatar-img, .frame-collector .lb-avatar-fallback, .frame-collector .profile-avatar-img, .frame-collector .profile-avatar-fallback, .profile-frame-swatch.frame-collector {
+  border-radius: 0;
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+}
+
 @keyframes lb-frame-spin {
   to { transform: rotate(360deg); }
 }
