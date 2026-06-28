@@ -73,7 +73,7 @@ const TEAM_DATA = [
     short: "Помогает с сопровождением и дисциплиной группы",
     status: "ACTIVE_NODE",
     statusText: "SUPPORT NODE // СОПРОВОЖДЕНИЕ",
-    color: "#14c9a6",
+    color: "#ffd23f",
     avatar: "🔑",
     tgLink: "https://t.me/helga_kul"
   },

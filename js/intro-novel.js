@@ -14,7 +14,7 @@ const INTRO_NOVEL_CAST = {
   architect: { name: 'АРХИТЕКТОР',               color: '#00ff66', image: INTRO_NOVEL_GH + 'architect_happy.png' },
   // Картинок для Ву Нан и Ольги пока нет — используем logo.png как заглушку, цвет уже фирменный (совпадает с карточкой в "Команде")
   wunan:     { name: 'ВУ НАН',                   color: '#9b6bff', image: INTRO_NOVEL_GH + 'logo.png' },
-  olga:      { name: 'ОЛЬГА',                    color: '#14c9a6', image: INTRO_NOVEL_GH + 'logo.png' }
+  olga:      { name: 'ОЛЬГА',                    color: '#ffd23f', image: INTRO_NOVEL_GH + 'logo.png' }
 };
 
 function _buildIntroNovelScenes() {
