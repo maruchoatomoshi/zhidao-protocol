@@ -4535,12 +4535,18 @@ async def react_to_announcement(item_id: int, data: dict):
     return await db_write(_run)
 
 
+COMMUNITY_SHOP_DEMAND_PCT = 0.70
+
+
 def _community_shop_demand(c, proposal_id: int):
     c.execute("SELECT emoji, COUNT(*) FROM community_shop_reactions WHERE proposal_id=? GROUP BY emoji", (proposal_id,))
     reaction_counts = {row[0]: row[1] for row in c.fetchall()}
     crown_count = reaction_counts.get(COMMUNITY_SHOP_VOTE_EMOJI, 0)
-    demand_confirmed = crown_count >= COMMUNITY_SHOP_DEMAND_LIKES
-    return reaction_counts, crown_count, demand_confirmed
+    c.execute("SELECT COUNT(*) FROM users")
+    total_users = c.fetchone()[0] or 0
+    participation_pct = (crown_count / total_users) if total_users else 0.0
+    demand_confirmed = crown_count >= COMMUNITY_SHOP_DEMAND_LIKES or participation_pct >= COMMUNITY_SHOP_DEMAND_PCT
+    return reaction_counts, crown_count, demand_confirmed, participation_pct
 
 
 @app.post("/api/community-shop/propose")
@@ -4581,11 +4587,12 @@ def community_shop_proposals():
     rows = c.fetchall()
     result = []
     for r in rows:
-        _, crown_count, demand_confirmed = _community_shop_demand(c, r[0])
+        _, crown_count, demand_confirmed, participation_pct = _community_shop_demand(c, r[0])
         result.append({
             "id": r[0], "title": r[1], "description": r[2], "status": r[3], "created_at": r[4],
             "telegram_id": r[5], "author_name": str(r[6]),
             "crown_count": crown_count, "demand_confirmed": demand_confirmed,
+            "participation_pct": round(participation_pct * 100, 1),
         })
     conn.close()
     return result
@@ -4642,11 +4649,12 @@ def admin_community_shop_proposals(x_admin_id: Optional[int] = Header(None)):
     rows = c.fetchall()
     result = []
     for r in rows:
-        _, crown_count, demand_confirmed = _community_shop_demand(c, r[0])
+        _, crown_count, demand_confirmed, participation_pct = _community_shop_demand(c, r[0])
         result.append({
             "id": r[0], "title": r[1], "description": r[2], "status": r[3], "created_at": r[4],
             "telegram_id": r[5], "author_name": str(r[6]), "moderation_note": r[7],
             "crown_count": crown_count, "demand_confirmed": demand_confirmed,
+            "participation_pct": round(participation_pct * 100, 1),
         })
     conn.close()
     result.sort(key=lambda p: p["crown_count"], reverse=True)

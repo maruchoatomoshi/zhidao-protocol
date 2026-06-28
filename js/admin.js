@@ -2154,6 +2154,7 @@ async function adminLoadCommunityShopProposals() {
             <div style="text-align:center;flex-shrink:0;">
               <div style="font-size:18px;">👑</div>
               <div style="font-size:13px;font-weight:700;color:${p.demand_confirmed ? '#cc8800' : 'var(--text)'};">${p.crown_count}</div>
+              <div style="font-size:8px;color:var(--text3);">${p.participation_pct || 0}% игроков</div>
               ${p.demand_confirmed ? '<div style="font-size:8px;color:#cc8800;">СПРОС</div>' : ''}
             </div>
           </div>

@@ -1,5 +1,5 @@
 // Народный магазин: игроки предлагают товары, голосуют 👑.
-// При 70 голосах 👑 — админы видят пометку «СПРОС» и могут добавить товар в основной магазин.
+// При 70 голосах 👑 ИЛИ когда проголосовало 70% игроков — админы видят пометку «СПРОС» и могут добавить товар в основной магазин.
 
 const FOLK_VOTE_EMOJI = '👑';
 const FOLK_DEMAND_THRESHOLD = 70;
@@ -31,8 +31,9 @@ async function loadFolkShop() {
       const crown = item.reactions.find(r => r.emoji === FOLK_VOTE_EMOJI);
       const count = crown ? crown.count : 0;
       const voted = !!(crown && crown.you);
-      const pct = Math.min(100, Math.round((count / FOLK_DEMAND_THRESHOLD) * 100));
-      const isHot = item.demand_confirmed || count >= FOLK_DEMAND_THRESHOLD;
+      const participationPct = Number(item.participation_pct || 0);
+      const pct = Math.min(100, Math.max(Math.round((count / FOLK_DEMAND_THRESHOLD) * 100), Math.round(participationPct)));
+      const isHot = item.demand_confirmed || count >= FOLK_DEMAND_THRESHOLD || participationPct >= 70;
 
       let statusClass = '';
       let statusText = statusLabels[item.status] || item.status;
@@ -55,7 +56,7 @@ async function loadFolkShop() {
           <div class="folk-item-status ${statusClass}">${statusText}</div>
           ${item.status === 'pending' ? `
             <div class="folk-item-progress-track"><div class="folk-item-progress-fill" style="width:${pct}%;"></div></div>
-            <div class="folk-item-progress-label"><span>${count} / ${FOLK_DEMAND_THRESHOLD} 👑</span><span>${pct}%</span></div>
+            <div class="folk-item-progress-label"><span>${count} / ${FOLK_DEMAND_THRESHOLD} 👑 · ${participationPct}% участников</span><span>${pct}%</span></div>
           ` : ''}
         </div>
       </div>`;
