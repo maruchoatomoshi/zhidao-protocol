@@ -22,18 +22,18 @@ window.APP_LAUNCH_LOCK_ENABLED = false;
 window.APP_LAUNCH_TARGET_AT = '2026-07-04T09:00:00+08:00';
 window.ARCHITECT_EVENT_ENABLED = false;
 
-// === ЗАМОРОЗКА ФИЧ (до официального старта) ===
-// Разделы ниже закрыты для обычных игроков. Админы и архитекторы видят всё.
-// Чтобы разморозить раздел — поставь false. Чтобы выключить всю систему — APP_FEATURE_FREEZE_ENABLED = false.
+// 
+// 
+// 
 window.APP_FEATURE_FREEZE_ENABLED = false;
 window.APP_FROZEN_FEATURES = {
-  casino:        true,  // кейсы / молитвы
-  shop:          true,  // магазин
-  implants:      true,  // импланты / карточки
-  laundry:       false, // стирка / вода
-  achievements:  true,  // ачивки
-  'diary-stars': true,  // дневник ★
-  rating:        true,  // рейтинг
+  casino:        true,  
+  shop:          true, 
+  implants:      true,  
+  laundry:       false, 
+  achievements:  true,  
+  'diary-stars': true,  
+  rating:        true,  
 };
 // Таймер обратного отсчёта в окне заморозки: открытие утром 5 июля (по Пекину).
 window.APP_FREEZE_TARGET_AT = '2026-07-05T00:00:00+08:00';
