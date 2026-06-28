@@ -7443,15 +7443,17 @@ async def open_case(data: dict):
                 c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_laundry', now_str, 'active'))
             elif prize["code"].startswith("implant_"):
                 c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
+            c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
+            dw_row = c.fetchone()
+            dw_active = bool(dw_row and dw_row[0])
+            if dw_active:
+                c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
             doubled_win = False
             if prize.get("points", 0) > 0:
-                c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
-                dw_row = c.fetchone()
-                if dw_row and dw_row[0]:
+                if dw_active:
                     prize["points"] *= 2
                     prize["name"] = f'{prize["name"]} ×2'
                     doubled_win = True
-                    c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
                 c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (prize["points"], telegram_id))
 
             c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
@@ -9079,6 +9081,12 @@ async def open_genshin_case(data: dict):
         now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
         result = {}
 
+        c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
+        dw_row = c.fetchone()
+        dw_active = bool(dw_row and dw_row[0])
+        if dw_active:
+            c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
+
         if item['type'] == 'card':
             card_id = item['id']
             info = CARD_INFO[card_id]
@@ -9110,12 +9118,9 @@ async def open_genshin_case(data: dict):
                 fox_bonus = 30
                 amount += fox_bonus
             doubled_win = False
-            c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
-            dw_row = c.fetchone()
-            if dw_row and dw_row[0]:
+            if dw_active:
                 amount *= 2
                 doubled_win = True
-                c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
             c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
             prize_code = f"genshin_points_{amount}"
             if fox_bonus:

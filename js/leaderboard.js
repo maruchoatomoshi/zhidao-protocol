@@ -11,7 +11,7 @@ async function loadPoints(telegramId) {
       if (b) {
         if (data.double_win) {
           b.style.display = 'block';
-          b.textContent = '🃏 УДВОЕНИЕ АКТИВНО!';
+          b.textContent = '✦ УДВОЕНИЕ АКТИВНО!';
         } else {
           b.style.display = 'none';
           b.textContent = '';
