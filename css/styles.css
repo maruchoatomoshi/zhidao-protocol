@@ -2105,6 +2105,19 @@ body.is-admin .profile-card-kicker {
 .lb-item.top2 .lb-avatar-fallback { color: #d8d8d8; }
 .lb-item.top3 .lb-avatar-fallback { color: #e8a050; }
 
+/* Rank-tier row glow for places 4-10 (cyan) and 11-20 (violet) — weaker than top-3 glow.
+   Overridden by .title-glow (purchased "Титул дня") since that rule is defined later in the cascade. */
+.lb-item.tier-cyan {
+  border-color: rgba(0,255,247,0.22);
+  box-shadow: 0 0 10px rgba(0,255,247,0.10), inset 0 0 14px rgba(0,255,247,0.04);
+  background: linear-gradient(90deg, rgba(0,255,247,0.05), transparent);
+}
+.lb-item.tier-violet {
+  border-color: rgba(155,89,182,0.22);
+  box-shadow: 0 0 10px rgba(155,89,182,0.10), inset 0 0 14px rgba(155,89,182,0.04);
+  background: linear-gradient(90deg, rgba(155,89,182,0.05), transparent);
+}
+
 /* Equipped avatar frames — unlockable cosmetic "mini-achievements" */
 .has-frame {
   border-radius: 50% !important;

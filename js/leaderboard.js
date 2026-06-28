@@ -878,6 +878,9 @@ async function loadLeaderboard() {
       // Титул дня с подсветкой — выделяет всю строку игрока целиком (рамка + ник + статус)
       const titleGlowClass = item.title_style ? `title-glow title-${item.title_style}` : '';
 
+      // Подсветка по диапазону места: 4-10 циан, 11-20 фиолет (топ-3 уже подсвечен через topClass)
+      const tierClass = !topClass && i >= 3 && i < 10 ? 'tier-cyan' : (!topClass && i >= 10 && i < 20 ? 'tier-violet' : '');
+
       // Динамика места в рейтинге со вчера
       let rankChangeHtml = '';
       if (item.rank_delta > 0) {
@@ -886,7 +889,7 @@ async function loadLeaderboard() {
         rankChangeHtml = `<span class="lb-rank-change down">▼${Math.abs(item.rank_delta)}</span>`;
       }
 
-      html += `${divider}<div class="lb-item ${topClass} ${isMe?'me':''} ${titleGlowClass}" style="${animDelay}">
+      html += `${divider}<div class="lb-item ${topClass} ${tierClass} ${isMe?'me':''} ${titleGlowClass}" style="${animDelay}">
         <div class="lb-rank">${medal}${rankChangeHtml}</div>
         <div class="lb-avatar ${frameClass}">${avatarMarkup(item.avatar_url, item.name, item.telegram_id, 'lb-avatar-img')}</div>
         <div class="lb-name-wrap">
