@@ -726,15 +726,33 @@ async function loadDiaryStarsLeaderboardRating() {
     );
 
     const medals = ['🥇','🥈','🥉'];
+    let firstUnratedSeen = false;
+    // Игроки с одинаковыми очками/звёздами/днями делят одно место, как в основном рейтинге.
+    let lastDiaryKey = null, lastDiaryRankIdx = -1;
     const cards = data.map((row, i) => {
-      const medal = medals[i] || `${i+1}.`;
+      // Место/подсветка — только после первой реальной оценки дневника, по тому же
+      // принципу, что и в основном рейтинге (см. обсуждение 2026-06-28).
+      const hasScore = (row.days_rated || 0) > 0;
+      let rankIdx = null;
+      if (hasScore) {
+        const key = `${row.total_points || 0}|${row.total_stars || 0}|${row.days_rated || 0}`;
+        rankIdx = (key === lastDiaryKey) ? lastDiaryRankIdx : i;
+        lastDiaryKey = key;
+        lastDiaryRankIdx = rankIdx;
+      }
+      const medal = !hasScore ? '—' : (medals[rankIdx] || `${rankIdx+1}.`);
       const isMe = row.telegram_id === currentUserId;
-      const topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const topClass = !hasScore ? '' : (rankIdx === 0 ? 'top1' : rankIdx === 1 ? 'top2' : rankIdx === 2 ? 'top3' : '');
       const pathLabel = row.theme_path === 'genshin' ? 'GENSHIN' : row.theme_path === 'cyberpunk' ? 'NETWATCH' : 'SYNC';
       const pathClass = row.theme_path === 'genshin' ? 'genshin' : row.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
-      const status = row.days_rated > 0 ? `${row.days_rated} DAYS // +${row.total_points || 0}★` : 'ОЖИДАЕТ ОЦЕНКИ';
+      const status = hasScore ? `${row.days_rated} DAYS // +${row.total_points || 0}★` : 'ОЖИДАЕТ ОЦЕНКИ';
       const stars = row.total_stars || 0;
-      return `<div class="diary-rank-card ${topClass} ${isMe ? 'me' : ''}" style="animation-delay:${i*0.05}s">
+      let divider = '';
+      if (!hasScore && !firstUnratedSeen) {
+        firstUnratedSeen = true;
+        divider = '<div class="lb-divider">— — — ОЦЕНКИ ПОКА НЕТ — — —</div>';
+      }
+      return `${divider}<div class="diary-rank-card ${topClass} ${isMe ? 'me' : ''}" style="animation-delay:${i*0.05}s">
         <div class="diary-rank-place">${medal}</div>
         <div class="lb-avatar">${avatarMarkup(row.avatar_url, row.name, row.telegram_id, 'lb-avatar-img')}</div>
         <div class="diary-rank-main">
@@ -815,27 +833,37 @@ async function loadLeaderboard() {
     }
 
     let firstUnrankedSeen = false;
+    let thirdDividerShown = false;
+    // Игроки с одинаковым REP делят одно и то же место (1,1,3 — "спортивная" нумерация),
+    // а не получают разные места только из-за порядка строк.
+    let lastRepValue = null, lastRankIdx = -1;
     data.forEach((item, i) => {
       // Место в рейтинге показываем только после первых очков репутации —
       // до этого игрок виден в списке, но без места/подсветки (см. дискуссию 2026-06-28).
       const hasRank = item.rep > 0;
-      const medal = !hasRank ? '—' : (medals[i] || (i+1)+'.');
+      let rankIdx = null;
+      if (hasRank) {
+        rankIdx = (item.rep === lastRepValue) ? lastRankIdx : i;
+        lastRepValue = item.rep;
+        lastRankIdx = rankIdx;
+      }
+      const medal = !hasRank ? '—' : (medals[rankIdx] || (rankIdx+1)+'.');
       const isMe = currentUserId && item.telegram_id === currentUserId;
-      if (isMe) myRank = hasRank ? i+1 : '—';
-      const topClass = !hasRank ? '' : (i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '');
+      if (isMe) myRank = hasRank ? rankIdx+1 : '—';
+      const topClass = !hasRank ? '' : (rankIdx === 0 ? 'top1' : rankIdx === 1 ? 'top2' : rankIdx === 2 ? 'top3' : '');
       const animDelay = `animation-delay:${i*0.06}s`;
 
       // Цвет ника — топ-10 градиент (только для тех, у кого уже есть место)
-      const nameColor = hasRank && i < 10 ? TOP_COLORS[i] : '';
+      const nameColor = hasRank && rankIdx < 10 ? TOP_COLORS[rankIdx] : '';
       const isGradient = nameColor && nameColor.startsWith('linear');
       let nameStyle = isGradient
         ? `background:${nameColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;`
         : nameColor ? `color:${nameColor};font-weight:700;` : '';
 
       // Свечение топ-3
-      if (hasRank && i === 0) nameStyle += 'filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));';
-      else if (hasRank && i === 1) nameStyle += 'filter:drop-shadow(0 0 6px rgba(200,200,200,0.4));';
-      else if (hasRank && i === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
+      if (hasRank && rankIdx === 0) nameStyle += 'filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));';
+      else if (hasRank && rankIdx === 1) nameStyle += 'filter:drop-shadow(0 0 6px rgba(200,200,200,0.4));';
+      else if (hasRank && rankIdx === 2) nameStyle += 'filter:drop-shadow(0 0 6px rgba(184,115,51,0.4));';
 
       // Легендарные импланты — красный ник поверх всего
       const isLegendary = item.implant === 'implant_red_dragon' || item.implant === 'implant_netwatch' || item.implant === 'implant_terracota';
@@ -845,7 +873,7 @@ async function loadLeaderboard() {
 
       const pathLabel = item.theme_path === 'genshin' ? 'GENSHIN' : item.theme_path === 'cyberpunk' ? 'NETWATCH' : 'SYNC';
       const pathClass = item.theme_path === 'genshin' ? 'genshin' : item.theme_path === 'cyberpunk' ? 'netwatch' : 'sync';
-      const rankSignal = !hasRank ? 'NO RATING' : (i === 0 ? 'ALPHA' : i < 3 ? 'ELITE' : i < 10 ? 'TOP-10' : 'OPERATOR');
+      const rankSignal = !hasRank ? 'NO RATING' : (rankIdx === 0 ? 'ALPHA' : rankIdx < 3 ? 'ELITE' : rankIdx < 10 ? 'TOP-10' : 'OPERATOR');
 
       // Сигнал импланта/карты для подстроки
       let signalLabel = 'NO IMPLANT';
@@ -861,19 +889,21 @@ async function loadLeaderboard() {
 
       // Прогресс до следующего места (только среди тех, у кого уже есть место)
       let progressHtml = '';
-      let deltaHtml = hasRank && i === 0 ? '<span>LEADER NODE</span>' : '';
+      let deltaHtml = hasRank && rankIdx === 0 ? '<span>LEADER NODE</span>' : '';
       if (hasRank && i > 0 && data[i-1]) {
         const prev = data[i-1].rep;
         const curr = item.rep;
         const delta = Math.max(0, prev - curr);
         const pct = prev > 0 ? Math.round((curr / prev) * 100) : 100;
-        const barColor = isLegendary ? 'rgba(200,34,0,0.5)' : i < 3 ? 'rgba(212,175,55,0.4)' : 'rgba(150,150,150,0.2)';
+        const barColor = isLegendary ? 'rgba(200,34,0,0.5)' : rankIdx < 3 ? 'rgba(212,175,55,0.4)' : 'rgba(150,150,150,0.2)';
         progressHtml = `<div class="lb-progress" style="width:${pct}%;background:${barColor};max-width:100%;"></div>`;
         deltaHtml = `<span>${delta} REP TO NEXT</span>`;
       }
 
-      // Разделитель после топ-3, и ещё один — на стыке "есть место" / "репутации пока нет"
-      let divider = i === 3 && hasRank ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
+      // Разделитель после топ-3 (по месту, не по строке — при равенстве REP не разрывает группу),
+      // и ещё один — на стыке "есть место" / "репутации пока нет"
+      let divider = hasRank && rankIdx >= 3 && !thirdDividerShown ? '<div class="lb-divider">— — — ТОП 3 — — —</div>' : '';
+      if (divider) thirdDividerShown = true;
       if (!hasRank && !firstUnrankedSeen) {
         firstUnrankedSeen = true;
         divider += '<div class="lb-divider">— — — РЕПУТАЦИЯ ПОКА НЕ НАЧИСЛЕНА — — —</div>';
@@ -888,7 +918,7 @@ async function loadLeaderboard() {
 
       // Подсветка по диапазону места: 4-10 циан, 11-20 фиолет (топ-3 уже подсвечен через topClass).
       // До первых очков репутации подсветки нет вообще.
-      const tierClass = !hasRank ? '' : (!topClass && i >= 3 && i < 10 ? 'tier-cyan' : (!topClass && i >= 10 && i < 20 ? 'tier-violet' : ''));
+      const tierClass = !hasRank ? '' : (!topClass && rankIdx >= 3 && rankIdx < 10 ? 'tier-cyan' : (!topClass && rankIdx >= 10 && rankIdx < 20 ? 'tier-violet' : ''));
 
       // Динамика места в рейтинге со вчера
       let rankChangeHtml = '';
