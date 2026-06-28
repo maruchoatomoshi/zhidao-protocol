@@ -8996,10 +8996,11 @@ GENSHIN_POOL = {
     'blue': {
         'weight': 789,
         'items': [
-            {'type': 'points', 'amount': 30, 'weight': 54},
-            {'type': 'points', 'amount': 60, 'weight': 26},
-            {'type': 'immunity', 'weight': 14},
-            {'type': 'walk', 'weight': 6},
+            {'type': 'empty', 'weight': 40},
+            {'type': 'points', 'amount': 30, 'weight': 24},
+            {'type': 'points', 'amount': 60, 'weight': 12},
+            {'type': 'walk', 'weight': 8},
+            {'type': 'immunity', 'weight': 5},
         ],
     },
     'purple': {
@@ -9136,6 +9137,9 @@ async def open_genshin_case(data: dict):
             c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
             prize_code = "genshin_immunity"
             result = {"type": "immunity", "pool": pool_name, "name": "Иммунитет", "rarity": 0}
+        elif item['type'] == 'empty':
+            prize_code = "genshin_empty"
+            result = {"type": "empty", "pool": pool_name, "name": "Пустая миска риса", "rarity": 0}
         else:
             expires = today + ' 22:00:00'
             c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
