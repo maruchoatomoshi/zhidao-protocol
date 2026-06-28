@@ -101,6 +101,7 @@ const FEATURE_FREEZE_LABELS = {
   achievements:  'АЧИВКИ',
   'diary-stars': 'ДНЕВНИК ★',
   rating:        'РЕЙТИНГ',
+  contracts:     'ДОСКА ПОРУЧЕНИЙ',
 };
 
 function isFeatureFrozen(name) {

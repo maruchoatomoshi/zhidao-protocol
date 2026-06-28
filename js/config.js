@@ -27,13 +27,14 @@ window.ARCHITECT_EVENT_ENABLED = false;
 // 
 window.APP_FEATURE_FREEZE_ENABLED = true;
 window.APP_FROZEN_FEATURES = {
-  casino:        true,  
-  shop:          true, 
-  implants:      true,  
-  laundry:       false, 
-  achievements:  true,  
-  'diary-stars': true,  
-  rating:        true,  
+  casino:        true,
+  shop:          true,
+  implants:      true,
+  laundry:       false,
+  achievements:  true,
+  'diary-stars': true,
+  rating:        true,
+  contracts:     true,
 };
 // Таймер обратного отсчёта в окне заморозки: открытие утром 5 июля (по Пекину).
 window.APP_FREEZE_TARGET_AT = '2026-07-05T00:00:00+08:00';
