@@ -1066,24 +1066,37 @@ function adminRenderPresenceOverview(checkType, data) {
   const counts = data.counts || {};
   const checks = Array.isArray(data.checks) ? data.checks : [];
   const activeRows = checks.filter(row => ['pending', 'leave_requested', 'leave_rejected', 'needs_attention'].includes(row.status));
-  const statusGrid = ADMIN_PRESENCE_ORDER.map(key => `
+  const chipKeys = checkType === 'manual' ? ['pending', 'confirmed', 'penalized'] : ADMIN_PRESENCE_ORDER;
+  const statusGrid = chipKeys.map(key => `
     <div class="admin-presence-chip ${key}">
       <span>${ADMIN_PRESENCE_LABELS[key] || key}</span>
       <strong>${counts[key] || 0}</strong>
     </div>
   `).join('');
 
+  const checkDate = escapeHtml(String(data.check_date || ''));
   const attentionList = activeRows.length
     ? `<div class="admin-presence-list">
-        ${activeRows.slice(0, 8).map(row => `
+        ${activeRows.slice(0, 8).map(row => {
+          const room = row.room_number ? `<span class="admin-presence-room"> · #${escapeHtml(row.room_number)}</span>` : '';
+          const actions = row.status === 'leave_requested'
+            ? `<div class="admin-presence-row-actions">
+                <button class="admin-presence-row-btn approve" onclick="adminApprovePresenceLeave('${row.telegram_id}', '${checkType}', '${checkDate}')">✅ Разрешить</button>
+                <button class="admin-presence-row-btn reject" onclick="adminRejectPresenceLeave('${row.telegram_id}', '${checkType}', '${checkDate}')">❌ Отклонить</button>
+              </div>`
+            : `<div class="admin-presence-row-actions">
+                <button class="admin-presence-row-btn" onclick="adminMarkPresenceManually('${row.telegram_id}', '${checkType}', '${checkDate}')">✓ Отметить</button>
+              </div>`;
+          return `
           <div class="admin-presence-row ${row.status}">
             <div>
-              <div class="admin-presence-name">${escapeHtml(row.full_name || row.telegram_id || 'Без имени')}</div>
+              <div class="admin-presence-name">${escapeHtml(row.full_name || row.telegram_id || 'Без имени')}${room}</div>
               <div class="admin-presence-meta">ID ${escapeHtml(row.telegram_id)} · ${ADMIN_PRESENCE_LABELS[row.status] || row.status} · попыток ${row.attempts_sent || 0}</div>
             </div>
-            <div class="admin-presence-row-badge">${row.status === 'needs_attention' ? 'ALERT' : 'WAIT'}</div>
+            ${actions}
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>`
     : '<div class="empty-state">Нет активных тревог или ожиданий</div>';
 
@@ -1172,6 +1185,85 @@ async function adminCancelPresence(checkType) {
       return;
     }
     showToast(`Отменено статусов: ${data.cancelled || 0}`);
+    adminLoadPresence(checkType);
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function adminMarkPresenceManually(telegramId, checkType, checkDate) {
+  if (!isAdmin || !currentUserId) return;
+  const ok = await showConfirmDialog({
+    title: 'Отметить присутствие?',
+    message: `Игрок ID ${telegramId} будет отмечен как подтвердивший присутствие.`,
+    confirmText: 'Отметить',
+  });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/presence/admin/mark`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: telegramId, check_type: checkType, check_date: checkDate, note: 'Отмечено администратором'}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось отметить');
+      return;
+    }
+    showToast('Отмечено');
+    adminLoadPresence(checkType);
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function adminApprovePresenceLeave(telegramId, checkType, checkDate) {
+  if (!isAdmin || !currentUserId) return;
+  const ok = await showConfirmDialog({
+    title: 'Разрешить отгул?',
+    message: `Запрос игрока ID ${telegramId} будет одобрен.`,
+    confirmText: 'Разрешить',
+  });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/presence/admin/approve`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: telegramId, check_type: checkType, check_date: checkDate, reason: 'Одобрено администратором'}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось одобрить');
+      return;
+    }
+    showToast('Отгул разрешён');
+    adminLoadPresence(checkType);
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function adminRejectPresenceLeave(telegramId, checkType, checkDate) {
+  if (!isAdmin || !currentUserId) return;
+  const ok = await showConfirmDialog({
+    title: 'Отклонить отгул?',
+    message: `Запрос игрока ID ${telegramId} будет отклонён.`,
+    confirmText: 'Отклонить',
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    const r = await fetch(`${API_URL}/api/presence/admin/reject`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: telegramId, check_type: checkType, check_date: checkDate, reason: 'Отклонено администратором'}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось отклонить');
+      return;
+    }
+    showToast('Отгул отклонён');
     adminLoadPresence(checkType);
   } catch (e) {
     showToast('Ошибка соединения');

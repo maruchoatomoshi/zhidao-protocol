@@ -715,7 +715,7 @@ def get_presence_message(check_type, attempt_no=1):
 
     return (
         "🌙 Вечерняя отметка\n\n"
-        f"Попытка {attempt_no}/3. 22:00 — нужно быть в комнате.\n"
+        f"Попытка {attempt_no}/3. 20:00 — нужно быть в комнате.\n"
         "Если у тебя разрешение от админа или активное «Свободное время», выбери нужную кнопку."
     )
 
@@ -1174,8 +1174,8 @@ async def toggle_reminders(message: types.Message):
         await message.answer(
             "✅ Напоминания включены!\n\n"
             "• 07:00/07:10/07:30 — подъём\n"
-            "• 21:00/21:15/22:00 — вечерняя отметка\n"
-            "• 22:30 — отбой"
+            "• 20:00/20:15/20:50 — вечерняя отметка\n"
+            "• 21:20 — отбой"
         )
     else:
         await message.answer("❌ Напоминания выключены.")
@@ -1713,12 +1713,12 @@ async def qilin_morning():
 
 async def main():
     init_db()
-    scheduler.add_job(send_checkin, CronTrigger(hour=21, minute=0, timezone=BEIJING_TZ))
-    scheduler.add_job(retry_evening_presence, CronTrigger(hour=21, minute=15, timezone=BEIJING_TZ), args=[2])
-    scheduler.add_job(retry_evening_presence, CronTrigger(hour=22, minute=0, timezone=BEIJING_TZ), args=[3])
-    scheduler.add_job(check_missing, CronTrigger(hour=22, minute=15, timezone=BEIJING_TZ))
-    scheduler.add_job(send_goodnight, CronTrigger(hour=22, minute=30, timezone=BEIJING_TZ))
-    scheduler.add_job(penalize_presence, CronTrigger(hour=22, minute=45, timezone=BEIJING_TZ), args=["evening"])
+    scheduler.add_job(send_checkin, CronTrigger(hour=20, minute=0, timezone=BEIJING_TZ))
+    scheduler.add_job(retry_evening_presence, CronTrigger(hour=20, minute=15, timezone=BEIJING_TZ), args=[2])
+    scheduler.add_job(retry_evening_presence, CronTrigger(hour=20, minute=50, timezone=BEIJING_TZ), args=[3])
+    scheduler.add_job(check_missing, CronTrigger(hour=21, minute=5, timezone=BEIJING_TZ))
+    scheduler.add_job(send_goodnight, CronTrigger(hour=21, minute=20, timezone=BEIJING_TZ))
+    scheduler.add_job(penalize_presence, CronTrigger(hour=21, minute=35, timezone=BEIJING_TZ), args=["evening"])
 
     scheduler.add_job(send_morning_presence, CronTrigger(hour=7, minute=0, timezone=BEIJING_TZ))
     scheduler.add_job(retry_morning_presence, CronTrigger(hour=7, minute=10, timezone=BEIJING_TZ), args=[2])

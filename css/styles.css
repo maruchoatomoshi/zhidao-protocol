@@ -5014,6 +5014,7 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  flex-wrap: wrap;
   padding: 9px 10px;
   border-radius: 11px;
   border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
@@ -5023,6 +5024,10 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   color: var(--text);
   font-size: 11px;
   font-weight: 800;
+}
+.admin-presence-room {
+  color: var(--gold);
+  font-weight: 900;
 }
 .admin-presence-meta {
   color: var(--text3);
@@ -5040,6 +5045,32 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   font-family: monospace;
   font-size: 7px;
   font-weight: 900;
+}
+.admin-presence-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.admin-presence-row-btn {
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg3) 70%, transparent);
+  color: var(--text2);
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.admin-presence-row-btn.approve {
+  border-color: color-mix(in srgb, #32d872 55%, transparent);
+  background: rgba(50, 216, 114, 0.12);
+  color: #32d872;
+}
+.admin-presence-row-btn.reject {
+  border-color: var(--red-border);
+  background: var(--red-dim);
+  color: var(--red);
 }
 
 /* Admin panel header */

@@ -1956,7 +1956,6 @@ def get_presence_keyboard_markup(check_type: str, check_date: Optional[str] = No
         return {
             "inline_keyboard": [[
                 {"text": "✅ Я проснулся", "callback_data": "presence:morning:confirm"},
-                {"text": "🙋 Нужна помощь", "callback_data": "presence:morning:request_leave"},
             ]]
         }
     if check_type == "manual":
@@ -1994,7 +1993,7 @@ def get_presence_message_text(check_type: str, attempt_no: int = 1):
 
     return (
         "🌙 Вечерняя отметка\n\n"
-        f"Попытка {attempt_no}/3. 21:00 — нужно быть в комнате.\n"
+        f"Попытка {attempt_no}/3. 20:00 — нужно быть в комнате.\n"
         "Если у тебя разрешение от админа или активное «Свободное время», выбери нужную кнопку."
     )
 
@@ -6028,22 +6027,7 @@ def get_presence_status(check_type: str, telegram_id: int, check_date: Optional[
     }
 
 
-@app.post("/api/presence/confirm")
-async def confirm_presence(data: dict):
-    try:
-        telegram_id = int(data.get("telegram_id"))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid telegram_id")
-
-    check_type = normalize_presence_check_type(data.get("check_type"))
-    check_date = normalize_presence_date(data.get("check_date"))
-    action = str(data.get("action") or "confirm").strip().lower()
-    note = str(data.get("note") or "").strip()
-
-    def _run():
-        conn = get_conn()
-        try:
-            c = conn.cursor()
+def _presence_confirm_logic(c, telegram_id, check_type, check_date, action, note):
             c.execute("SELECT telegram_id FROM users WHERE telegram_id=?", (telegram_id,))
             if not c.fetchone():
                 return {"error": "User not found", "status": 404}
@@ -6163,8 +6147,68 @@ async def confirm_presence(data: dict):
             else:
                 return {"error": "Invalid action", "status": 400}
 
-            conn.commit()
             return {"check": row}
+
+
+@app.post("/api/presence/confirm")
+async def confirm_presence(data: dict):
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    action = str(data.get("action") or "confirm").strip().lower()
+    note = str(data.get("note") or "").strip()
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            result = _presence_confirm_logic(c, telegram_id, check_type, check_date, action, note)
+            if "error" not in result:
+                conn.commit()
+            return result
+        finally:
+            conn.close()
+
+    result = await db_write(_run)
+    if "error" in result:
+        raise HTTPException(status_code=result["status"], detail=result["error"])
+
+    return {"success": True, "check": result["check"]}
+
+
+@app.post("/api/presence/admin/mark")
+async def admin_mark_presence(data: dict, x_admin_id: Optional[int] = Header(None)):
+    if x_admin_id not in ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        telegram_id = int(data.get("telegram_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    check_type = normalize_presence_check_type(data.get("check_type"))
+    check_date = normalize_presence_date(data.get("check_date"))
+    note = str(data.get("note") or "отметка администратором").strip()
+
+    def _run():
+        conn = get_conn()
+        try:
+            c = conn.cursor()
+            result = _presence_confirm_logic(c, telegram_id, check_type, check_date, "confirm", note)
+            if "error" in result:
+                return result
+            c.execute(
+                '''INSERT INTO admin_action_logs
+                   (admin_id, target_id, action_type, points_delta, reason, created_at)
+                   VALUES (?, ?, 'presence_admin_mark', 0, ?, ?)''',
+                (x_admin_id, telegram_id, f"{check_type} {check_date}: {note}", now_iso()),
+            )
+            conn.commit()
+            return result
         finally:
             conn.close()
 
@@ -6511,7 +6555,7 @@ def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x
         '''SELECT dc.id, dc.check_type, dc.check_date, dc.telegram_id, u.full_name,
                   dc.status, dc.attempts_sent, dc.first_sent_at, dc.last_attempt_at,
                   dc.confirmed_at, dc.escalated_at, dc.penalized_at,
-                  dc.penalty_points, dc.note, u.points
+                  dc.penalty_points, dc.note, u.points, u.room_number
            FROM daily_checks dc
            LEFT JOIN users u ON u.telegram_id = dc.telegram_id
            WHERE dc.check_type=? AND dc.check_date=?
@@ -6527,7 +6571,11 @@ def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x
              u.full_name COLLATE NOCASE''',
         (check_type, check_date),
     )
-    checks = [serialize_presence_row(row) for row in c.fetchall()]
+    checks = []
+    for row in c.fetchall():
+        item = serialize_presence_row(row)
+        item["room_number"] = row[15] or ""
+        checks.append(item)
     counts = {status: 0 for status in PRESENCE_STATUSES}
     for item in checks:
         counts[item["status"]] = counts.get(item["status"], 0) + 1
