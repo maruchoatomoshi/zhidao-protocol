@@ -1035,18 +1035,6 @@ const ADMIN_PRESENCE_LABELS = {
   skipped: 'Отменены',
 };
 
-const ADMIN_PRESENCE_ORDER = [
-  'pending',
-  'confirmed',
-  'free_time',
-  'leave_requested',
-  'admin_approved',
-  'leave_rejected',
-  'needs_attention',
-  'penalized',
-  'skipped',
-];
-
 function adminPresenceTarget(checkType) {
   if (checkType === 'morning') return document.getElementById('adminPresenceMorning');
   if (checkType === 'manual') return document.getElementById('adminPresenceManual');
@@ -1066,7 +1054,7 @@ function adminRenderPresenceOverview(checkType, data) {
   const counts = data.counts || {};
   const checks = Array.isArray(data.checks) ? data.checks : [];
   const activeRows = checks.filter(row => ['pending', 'leave_requested', 'leave_rejected', 'needs_attention'].includes(row.status));
-  const chipKeys = checkType === 'manual' ? ['pending', 'confirmed', 'penalized'] : ADMIN_PRESENCE_ORDER;
+  const chipKeys = ['pending', 'confirmed', 'penalized'];
   const statusGrid = chipKeys.map(key => `
     <div class="admin-presence-chip ${key}">
       <span>${ADMIN_PRESENCE_LABELS[key] || key}</span>
