@@ -7170,7 +7170,8 @@ async def get_leaderboard():
                  LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
                  WHERE u.telegram_id IS NOT NULL
                  AND u.telegram_id NOT IN ({placeholders})
-                 ORDER BY u.rep_score DESC LIMIT 20''',
+                 AND u.rep_score > 0
+                 ORDER BY u.rep_score DESC, u.rowid ASC LIMIT 20''',
         [today, today] + ADMIN_IDS,
     )
     result = c.fetchall()
@@ -7195,9 +7196,9 @@ async def get_leaderboard():
                 c2 = conn2.cursor()
                 c2.execute(
                     f'''INSERT OR IGNORE INTO leaderboard_snapshots (telegram_id, rank, rep, snapshot_date)
-                        SELECT telegram_id, ROW_NUMBER() OVER (ORDER BY rep_score DESC), rep_score, ?
+                        SELECT telegram_id, ROW_NUMBER() OVER (ORDER BY rep_score DESC, rowid ASC), rep_score, ?
                         FROM users
-                        WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders})''',
+                        WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders}) AND rep_score > 0''',
                     [today] + ADMIN_IDS,
                 )
                 conn2.commit()
