@@ -847,6 +847,24 @@ ARCHITECT_QUESTION_SEEDS = {
     ],
 }
 
+# Chinese-language learning pool — educational, not lore. action_type='duel'.
+DUEL_QUESTION_SEEDS = [
+    {"prompt": "Как по-китайски «спасибо»?", "option_a": "谢谢 xièxie", "option_b": "对不起 duìbuqǐ", "option_c": "再见 zàijiàn", "correct_option": "a", "explanation": "谢谢 (xièxie) — спасибо."},
+    {"prompt": "Что означает 你好?", "option_a": "Пока", "option_b": "Привет", "option_c": "Извините", "correct_option": "b", "explanation": "你好 (nǐ hǎo) — привет/здравствуй."},
+    {"prompt": "Как сказать «до свидания»?", "option_a": "再见 zàijiàn", "option_b": "谢谢 xièxie", "option_c": "请 qǐng", "correct_option": "a", "explanation": "再见 (zàijiàn) — до свидания."},
+    {"prompt": "Что значит 老师?", "option_a": "Студент", "option_b": "Учитель", "option_c": "Друг", "correct_option": "b", "explanation": "老师 (lǎoshī) — учитель."},
+    {"prompt": "Как по-китайски «вода»?", "option_a": "火 huǒ", "option_b": "水 shuǐ", "option_c": "茶 chá", "correct_option": "b", "explanation": "水 (shuǐ) — вода."},
+    {"prompt": "Числительное 三 означает:", "option_a": "Два", "option_b": "Три", "option_c": "Пять", "correct_option": "b", "explanation": "三 (sān) — три."},
+    {"prompt": "Что значит 中国?", "option_a": "Япония", "option_b": "Китай", "option_c": "Корея", "correct_option": "b", "explanation": "中国 (Zhōngguó) — Китай."},
+    {"prompt": "Как сказать «я»?", "option_a": "我 wǒ", "option_b": "你 nǐ", "option_c": "他 tā", "correct_option": "a", "explanation": "我 (wǒ) — я."},
+    {"prompt": "Иероглиф 大 означает:", "option_a": "Маленький", "option_b": "Большой", "option_c": "Средний", "correct_option": "b", "explanation": "大 (dà) — большой."},
+    {"prompt": "Что значит 朋友?", "option_a": "Семья", "option_b": "Друг", "option_c": "Сосед", "correct_option": "b", "explanation": "朋友 (péngyou) — друг."},
+    {"prompt": "Как по-китайски «есть/кушать»?", "option_a": "喝 hē", "option_b": "吃 chī", "option_c": "看 kàn", "correct_option": "b", "explanation": "吃 (chī) — есть; 喝 (hē) — пить."},
+    {"prompt": "Что означает 学生?", "option_a": "Учитель", "option_b": "Студент", "option_c": "Директор", "correct_option": "b", "explanation": "学生 (xuésheng) — студент/ученик."},
+    {"prompt": "Цвет 红 — это:", "option_a": "Красный", "option_b": "Синий", "option_c": "Зелёный", "correct_option": "a", "explanation": "红 (hóng) — красный."},
+    {"prompt": "Как сказать «хорошо / ок»?", "option_a": "不 bù", "option_b": "好 hǎo", "option_c": "没 méi", "correct_option": "b", "explanation": "好 (hǎo) — хорошо."},
+]
+
 
 _THREAD_LOCAL = threading.local()
 
@@ -11208,25 +11226,6 @@ DUEL_COLUMNS = [
     "challenger_answer", "opponent_answer", "challenger_answer_at", "opponent_answer_at",
     "winner_id", "created_at", "updated_at", "accepted_at", "finished_at",
 ]
-
-# Chinese-language learning pool — educational, not lore. action_type='duel'.
-DUEL_QUESTION_SEEDS = [
-    {"prompt": "Как по-китайски «спасибо»?", "option_a": "谢谢 xièxie", "option_b": "对不起 duìbuqǐ", "option_c": "再见 zàijiàn", "correct_option": "a", "explanation": "谢谢 (xièxie) — спасибо."},
-    {"prompt": "Что означает 你好?", "option_a": "Пока", "option_b": "Привет", "option_c": "Извините", "correct_option": "b", "explanation": "你好 (nǐ hǎo) — привет/здравствуй."},
-    {"prompt": "Как сказать «до свидания»?", "option_a": "再见 zàijiàn", "option_b": "谢谢 xièxie", "option_c": "请 qǐng", "correct_option": "a", "explanation": "再见 (zàijiàn) — до свидания."},
-    {"prompt": "Что значит 老师?", "option_a": "Студент", "option_b": "Учитель", "option_c": "Друг", "correct_option": "b", "explanation": "老师 (lǎoshī) — учитель."},
-    {"prompt": "Как по-китайски «вода»?", "option_a": "火 huǒ", "option_b": "水 shuǐ", "option_c": "茶 chá", "correct_option": "b", "explanation": "水 (shuǐ) — вода."},
-    {"prompt": "Числительное 三 означает:", "option_a": "Два", "option_b": "Три", "option_c": "Пять", "correct_option": "b", "explanation": "三 (sān) — три."},
-    {"prompt": "Что значит 中国?", "option_a": "Япония", "option_b": "Китай", "option_c": "Корея", "correct_option": "b", "explanation": "中国 (Zhōngguó) — Китай."},
-    {"prompt": "Как сказать «я»?", "option_a": "我 wǒ", "option_b": "你 nǐ", "option_c": "他 tā", "correct_option": "a", "explanation": "我 (wǒ) — я."},
-    {"prompt": "Иероглиф 大 означает:", "option_a": "Маленький", "option_b": "Большой", "option_c": "Средний", "correct_option": "b", "explanation": "大 (dà) — большой."},
-    {"prompt": "Что значит 朋友?", "option_a": "Семья", "option_b": "Друг", "option_c": "Сосед", "correct_option": "b", "explanation": "朋友 (péngyou) — друг."},
-    {"prompt": "Как по-китайски «есть/кушать»?", "option_a": "喝 hē", "option_b": "吃 chī", "option_c": "看 kàn", "correct_option": "b", "explanation": "吃 (chī) — есть; 喝 (hē) — пить."},
-    {"prompt": "Что означает 学生?", "option_a": "Учитель", "option_b": "Студент", "option_c": "Директор", "correct_option": "b", "explanation": "学生 (xuésheng) — студент/ученик."},
-    {"prompt": "Цвет 红 — это:", "option_a": "Красный", "option_b": "Синий", "option_c": "Зелёный", "correct_option": "a", "explanation": "红 (hóng) — красный."},
-    {"prompt": "Как сказать «хорошо / ок»?", "option_a": "不 bù", "option_b": "好 hǎo", "option_c": "没 méi", "correct_option": "b", "explanation": "好 (hǎo) — хорошо."},
-]
-
 
 def _duel_allowed(telegram_id) -> bool:
     return DUELS_PUBLIC or telegram_id in ADMIN_IDS
