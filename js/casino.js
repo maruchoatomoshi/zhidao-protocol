@@ -5,7 +5,7 @@ const PRIZES = [
   { code:'walk',    icon:'🕐', name:'+30 мин свободы',   desc:'Покажи скрин вожатому', points:0, rarity:'uncommon' },
   { code:'laundry', icon:'🧺', name:'Вне очереди!',      desc:'Первым на стирку',    points:0,   rarity:'rare' },
   { code:'skip',    icon:'🛡', name:'Иммунитет!',        desc:'Один пропуск без штрафа', points:0, rarity:'rare' },
-  { code:'jackpot', icon:'👑', name:'ДЖЕКПОТ!',          desc:'+100 баллов! Невероятно!', points:100, rarity:'jackpot' },
+  { code:'jackpot', icon:'👑', name:'НАГРАДА ОТ СИСТЕМЫ',          desc:'+100 баллов! Невероятно!', points:100, rarity:'jackpot' },
 ];
 const PURPLE_PRIZES = [
   { code:'implant_guanxi',    icon:'🤝', img:'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/guanxi_implant.png?raw=true',           name:'Гуаньси 关系',       desc:'Имплант: -10% к ценам в магазине', points:0, rarity:'rare' },
@@ -1208,7 +1208,7 @@ async function loadCasinoInventory() {
 async function useCasinoPrize(id, name) {
   const ok = await showConfirmDialog({
     title: `Использовать ${name}?`,
-    message: 'Покажи этот экран вожатому для подтверждения.',
+    message: 'Покажи этот экран вожатому для подтверждения',
     confirmText: '✅ Показать вожатому',
   });
   if (!ok) return;
