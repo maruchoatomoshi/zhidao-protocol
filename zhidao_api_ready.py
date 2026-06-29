@@ -8615,17 +8615,39 @@ async def send_question(data: dict):
     telegram_id = data.get("telegram_id")
     if not question:
         raise HTTPException(status_code=400, detail="No question")
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
-    result = c.fetchone()
-    conn.close()
-    name = result[0] if result else str(telegram_id)
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
+        result = c.fetchone()
+        name = result[0] if result else str(telegram_id)
+        now_str = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute(
+            '''INSERT INTO anon_questions (telegram_id, full_name, username, text, created_at)
+               VALUES (?, ?, ?, ?, ?)''',
+            (telegram_id, name, '', question, now_str),
+        )
+        question_id = c.lastrowid
+        conn.commit()
+        conn.close()
+        return question_id, name
+
+    question_id, name = await db_write(_run)
+    reply_markup = {
+        "inline_keyboard": [[
+            {"text": "✉️ Ответить", "callback_data": f"anon_reply:{question_id}"}
+        ]]
+    }
     for admin_id in ADMIN_IDS:
         if admin_id <= 0:
             continue
-        await send_telegram_message(admin_id, f"🤫 Анонимный вопрос\n👤 От: {name}\n\n{question}")
-    return {"success": True}
+        await send_telegram_message(
+            admin_id,
+            f"🤫 Вопрос #{question_id}\n👤 От: {name}\n\n{question}",
+            reply_markup=reply_markup,
+        )
+    return {"success": True, "question_id": question_id}
 
 
 def get_wild_ai_breach_state(c) -> dict:
