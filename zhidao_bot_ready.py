@@ -572,7 +572,6 @@ def get_presence_keyboard(check_type, check_date=None):
         return InlineKeyboardMarkup(
             inline_keyboard=[[
                 InlineKeyboardButton(text="✅ Я на месте", callback_data=f"presence:manual{suffix}:confirm"),
-                InlineKeyboardButton(text="🙋 Нужен отгул", callback_data=f"presence:manual{suffix}:request_leave"),
             ]]
         )
 
@@ -581,7 +580,6 @@ def get_presence_keyboard(check_type, check_date=None):
             [InlineKeyboardButton(text="✅ Я в комнате", callback_data="presence:evening:confirm")],
             [
                 InlineKeyboardButton(text="🕐 Свободное время", callback_data="presence:evening:free_time"),
-                InlineKeyboardButton(text="🙋 Нужен отгул", callback_data="presence:evening:request_leave"),
             ],
         ]
     )

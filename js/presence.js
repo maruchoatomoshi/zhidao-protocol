@@ -55,7 +55,9 @@ async function loadUserPresence() {
     fetchUserPresenceStatus('evening'),
   ]);
 
-  const canRequestLeave = evening && ['confirmed', 'free_time', 'leave_rejected'].includes(evening.status);
+  // Кнопка отгула доступна, пока идёт вечерняя перекличка: можно запросить сразу
+  // (pending), после подтверждения, или повторно после отказа.
+  const canRequestLeave = evening && ['pending', 'confirmed', 'free_time', 'leave_rejected'].includes(evening.status);
   const leaveForm = canRequestLeave ? `
     <div style="margin-top:4px;">
       <textarea id="presenceLeaveReason" placeholder="Куда и почему: погулять, сижу у друзей, спорт..." style="width:100%;min-height:54px;background:color-mix(in srgb, var(--bg3) 70%, transparent);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:11px;padding:8px;resize:vertical;"></textarea>

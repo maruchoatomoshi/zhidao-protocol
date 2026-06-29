@@ -1963,7 +1963,6 @@ def get_presence_keyboard_markup(check_type: str, check_date: Optional[str] = No
         return {
             "inline_keyboard": [[
                 {"text": "✅ Я на месте", "callback_data": f"presence:manual:{session}:confirm"},
-                {"text": "🙋 Нужен отгул", "callback_data": f"presence:manual:{session}:request_leave"},
             ]]
         }
 
@@ -1972,7 +1971,6 @@ def get_presence_keyboard_markup(check_type: str, check_date: Optional[str] = No
             [{"text": "✅ Я в комнате", "callback_data": "presence:evening:confirm"}],
             [
                 {"text": "🕐 Свободное время", "callback_data": "presence:evening:free_time"},
-                {"text": "🙋 Нужен отгул", "callback_data": "presence:evening:request_leave"},
             ],
         ]
     }
