@@ -369,6 +369,7 @@
   <div style="display:flex;gap:6px;margin:0 12px 8px;">
     <button id="tab-rating-main-btn" onclick="switchRatingTab('main',this)" class="subtab active" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">🏆 РЕЙТИНГ</button>
     <button id="tab-rating-diary-btn" onclick="switchRatingTab('diary',this)" class="subtab" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">💎 ДНЕВНИК</button>
+    <button id="tab-rating-duels-btn" onclick="switchRatingTab('duels',this)" class="subtab duel-tab-btn" style="flex:1;padding:8px;font-size:9px;font-family:monospace;letter-spacing:1px;">⚔ ДУЭЛИ</button>
   </div>
 
   <div id="rating-main-tab">
@@ -400,6 +401,20 @@
     <div class="card" style="margin:4px 12px;">
       <div class="card-inner" id="diaryStarsLeaderboardRating">
         <div class="empty-state">Загрузка...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rating-duels-tab" style="display:none;">
+    <div class="duel-hub">
+      <button class="btn btn-primary duel-challenge-btn" onclick="openDuelChallenge()">⚡ ВЫЗВАТЬ НА ДУЭЛЬ</button>
+      <div id="duelStatusWrap"></div>
+      <div id="duelIncomingWrap"></div>
+      <div class="cn-divider">🏆 对决榜 // ПОБЕДЫ И ПОРАЖЕНИЯ</div>
+      <div class="card" style="margin:4px 12px;">
+        <div class="card-inner" id="duelLeaderboard">
+          <div class="empty-state">Загрузка...</div>
+        </div>
       </div>
     </div>
   </div>
@@ -2721,7 +2736,54 @@
 <script src="./js/demo.js?v=20260624nofragexchange1"></script>
 <script src="./js/instruction.js?v=20260628presencestep"></script>
 <script src="./js/rewind.js?v=20260625imgctxfix1"></script>
+<script src="./js/duel.js?v=20260629pvp1"></script>
 <script src="./js/main.js?v=20260624newsdeeplink1"></script>
+
+<!-- ── ДУЭЛЬ: экран вызова соперника ── -->
+<div id="duelChallengeModal" class="duel-modal">
+  <div class="duel-modal-box">
+    <div class="duel-modal-head">
+      <span>⚔ ВЫЗОВ НА ДУЭЛЬ</span>
+      <button class="duel-modal-close" onclick="closeDuelChallenge()">×</button>
+    </div>
+    <div style="padding:10px 4px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">СТАВКА</div>
+      <div id="duelStakeRow" class="duel-stake-row"></div>
+      <div style="font-size:11px;color:var(--text3);margin:12px 0 6px;">СОПЕРНИК</div>
+      <input id="duelOpponentSearch" class="duel-search" placeholder="поиск по имени..." oninput="renderDuelOpponentList()">
+      <div id="duelOpponentList" class="duel-opp-list"><div class="empty-state">Загрузка...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ДУЭЛЬ: полноэкранный VS-бой ── -->
+<div id="duel-overlay" class="duel-overlay">
+  <div class="duel-vs-screen">
+    <button class="duel-close" onclick="closeDuelOverlay()">×</button>
+    <div class="duel-stage">
+      <div class="duel-fighter">
+        <div class="duel-avatar" id="duelYouAvatar">Я</div>
+        <div class="duel-name" id="duelYouName">ТЫ</div>
+        <div class="duel-hpbar"><div class="duel-hpfill duel-hpfill-you" id="duelYouHp"></div></div>
+        <div class="duel-hptext" id="duelYouHpText">100</div>
+      </div>
+      <div class="duel-vs-badge">VS</div>
+      <div class="duel-fighter">
+        <div class="duel-avatar" id="duelOppAvatar">?</div>
+        <div class="duel-name" id="duelOppName">СОПЕРНИК</div>
+        <div class="duel-hpbar"><div class="duel-hpfill duel-hpfill-opp" id="duelOppHp"></div></div>
+        <div class="duel-hptext" id="duelOppHpText">100</div>
+      </div>
+    </div>
+    <div class="duel-roundbar">
+      <span id="duelRoundLabel">—</span>
+      <span id="duelTimer" class="duel-timer"></span>
+    </div>
+    <div class="duel-question" id="duelQuestion"></div>
+    <div class="duel-answers" id="duelAnswers"></div>
+    <div class="duel-status-line" id="duelStatusLine"></div>
+  </div>
+</div>
 
 <!-- ── Экран выбора пути (показывается при первом входе) ── -->
 <div id="overlay-path-choice" style="

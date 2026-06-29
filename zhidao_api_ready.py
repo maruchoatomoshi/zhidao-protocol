@@ -11768,3 +11768,25 @@ def duel_leaderboard():
         board.append({"telegram_id": tid, "name": nm[0], "avatar_url": nm[1], "wins": w, "losses": l, "total": w + l})
     board.sort(key=lambda x: (-x["wins"], x["losses"], -x["total"]))
     return {"leaderboard": board}
+
+
+@app.get("/api/duel/opponents/{telegram_id}")
+def duel_opponents(telegram_id: int):
+    """Pickable opponents. While DUELS_PUBLIC is False, only other admins are
+    returned (the main /api/leaderboard excludes admins, so it can't be reused
+    for admin-vs-admin testing)."""
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT telegram_id, full_name, avatar_url, COALESCE(rep_score,0) FROM users "
+        "WHERE telegram_id IS NOT NULL AND telegram_id!=? ORDER BY full_name COLLATE NOCASE",
+        (telegram_id,),
+    )
+    rows = c.fetchall()
+    conn.close()
+    out = []
+    for r in rows:
+        if not DUELS_PUBLIC and r[0] not in ADMIN_IDS:
+            continue
+        out.append({"telegram_id": r[0], "name": r[1] or str(r[0]), "avatar_url": r[2], "rep": r[3]})
+    return {"opponents": out, "enabled": _duel_allowed(telegram_id)}

@@ -651,7 +651,10 @@ function switchRatingTab(tab, btn) {
   if (btn) btn.classList.add('active');
   document.getElementById('rating-main-tab').style.display = tab === 'main' ? 'block' : 'none';
   document.getElementById('rating-diary-tab').style.display = tab === 'diary' ? 'block' : 'none';
+  const duelsTab = document.getElementById('rating-duels-tab');
+  if (duelsTab) duelsTab.style.display = tab === 'duels' ? 'block' : 'none';
   if (tab === 'diary') loadDiaryStarsLeaderboardRating();
+  if (tab === 'duels' && typeof loadDuelHub === 'function') loadDuelHub();
 }
 
 async function loadDiaryStarsLeaderboardRating() {

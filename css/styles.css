@@ -19246,3 +19246,224 @@ body.theme-aqua .cn-divider::after { background: linear-gradient(90deg, transpar
   display: flex;
   justify-content: space-between;
 }
+
+/* =========================================================================
+   PvP ДУЭЛИ — хаб (следует теме) + полноэкранный VS-бой (фикс. неон-киберпанк)
+   ========================================================================= */
+
+/* Вкладка «Дуэли» в рейтинге — только для админов */
+.duel-tab-btn { display: none; }
+body.is-admin .duel-tab-btn { display: block; }
+
+/* ---- Хаб ---- */
+.duel-hub { padding: 4px 0 12px; }
+.duel-challenge-btn {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 4px 12px 10px;
+  padding: 12px;
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+.duel-card {
+  margin: 6px 12px;
+  padding: 12px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.duel-card-live { border-color: var(--red-border); }
+.duel-card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.duel-card-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.duel-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.duel-card-actions .btn { flex: 1; }
+.duel-btn-secondary {
+  margin-top: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: monospace;
+  font-size: 11px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ---- Лидерборд дуэлей ---- */
+.duel-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.duel-lb-row:last-child { border-bottom: none; }
+.duel-lb-rank { width: 22px; text-align: center; font-weight: 700; color: var(--gold); font-family: monospace; }
+.duel-lb-name { flex: 1; font-size: 13px; color: var(--text); }
+.duel-lb-record { font-family: monospace; font-size: 13px; font-weight: 700; }
+.duel-w { color: #32d872; }
+.duel-l { color: #ff6b6b; }
+
+/* ---- Модалка вызова ---- */
+.duel-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.78);
+  align-items: center; justify-content: center;
+  padding: 18px; box-sizing: border-box;
+}
+.duel-modal.show { display: flex; }
+.duel-modal-box {
+  width: 100%; max-width: 420px;
+  max-height: 84vh; overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.duel-modal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: monospace; letter-spacing: 1px; font-size: 13px; color: var(--text);
+  margin-bottom: 8px;
+}
+.duel-modal-close {
+  background: none; border: none; color: var(--text2);
+  font-size: 22px; line-height: 1; cursor: pointer;
+}
+.duel-stake-row { display: flex; gap: 8px; }
+.duel-stake-btn {
+  flex: 1; padding: 10px 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text2);
+  font-family: monospace; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+}
+.duel-stake-btn.active {
+  background: var(--red-dim);
+  border-color: var(--red-border);
+  color: var(--red);
+}
+.duel-search {
+  width: 100%; box-sizing: border-box;
+  padding: 9px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.duel-opp-list { max-height: 40vh; overflow-y: auto; }
+.duel-opp-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.duel-opp-row:active { background: var(--bg2); }
+.duel-opp-name { font-size: 13px; color: var(--text); }
+.duel-opp-rep { font-family: monospace; font-size: 12px; color: var(--gold); }
+
+/* =========================================================================
+   VS-бой — полноэкранный, фиксированная неон-киберпанк палитра (вне темы)
+   ========================================================================= */
+.duel-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 10001;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,40,60,0.10), transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(0,255,136,0.10), transparent 55%),
+    #05060a;
+  color: #e8fff3;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  box-sizing: border-box;
+  flex-direction: column;
+}
+.duel-overlay.show { display: flex; }
+.duel-vs-screen { display: flex; flex-direction: column; height: 100%; gap: 14px; }
+.duel-close {
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); right: 14px;
+  background: none; border: none; color: rgba(232,255,243,0.6);
+  font-size: 26px; line-height: 1; cursor: pointer; z-index: 2;
+}
+
+.duel-stage {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; margin-top: 18px;
+}
+.duel-fighter { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.duel-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 800; font-family: monospace;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.18);
+}
+.duel-fighter:first-child .duel-avatar { border-color: rgba(0,255,136,0.7); box-shadow: 0 0 18px rgba(0,255,136,0.3); }
+.duel-fighter:last-child .duel-avatar { border-color: rgba(255,60,80,0.7); box-shadow: 0 0 18px rgba(255,60,80,0.3); }
+.duel-name {
+  font-size: 12px; font-family: monospace; letter-spacing: 1px;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.duel-hpbar {
+  width: 100%; height: 12px; border-radius: 6px; overflow: hidden;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.duel-hpfill { height: 100%; width: 100%; transition: width 0.4s ease; }
+.duel-hpfill-you { background: linear-gradient(90deg, #00ff88, #39ff14); }
+.duel-hpfill-opp { background: linear-gradient(90deg, #ff3c50, #ff6b6b); }
+.duel-hpfill.duel-hp-low { background: linear-gradient(90deg, #ff2a2a, #ff8800); }
+.duel-hptext { font-family: monospace; font-size: 12px; color: rgba(232,255,243,0.8); }
+.duel-vs-badge {
+  align-self: center; margin-top: 18px;
+  font-family: monospace; font-weight: 800; font-size: 20px;
+  color: #ff3c50; text-shadow: 0 0 12px rgba(255,60,80,0.6);
+}
+
+.duel-roundbar {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: monospace; font-size: 12px; letter-spacing: 1px;
+  color: rgba(232,255,243,0.7);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 8px 2px;
+}
+.duel-timer { font-size: 18px; font-weight: 800; color: #00e5ff; }
+.duel-timer-urgent { color: #ff3c50; animation: duelPulse 0.6s infinite; }
+@keyframes duelPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.duel-question {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 19px; font-weight: 700; line-height: 1.5;
+  padding: 8px;
+}
+.duel-answers { display: flex; flex-direction: column; gap: 10px; }
+.duel-answer-btn {
+  width: 100%; padding: 15px 14px;
+  background: rgba(0,255,136,0.08);
+  border: 1px solid rgba(0,255,136,0.3);
+  border-radius: 10px;
+  color: #e8fff3;
+  font-size: 16px; font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.duel-answer-btn:active { transform: scale(0.98); background: rgba(0,255,136,0.18); }
+.duel-answer-btn:disabled { opacity: 0.45; cursor: default; }
+.duel-ready-btn { width: 100%; padding: 16px; font-family: monospace; letter-spacing: 1px; }
+.duel-ready-wait { text-align: center; color: rgba(232,255,243,0.7); font-family: monospace; padding: 16px; }
+.duel-status-line {
+  text-align: center; min-height: 18px;
+  font-size: 12px; font-family: monospace; color: rgba(232,255,243,0.65);
+}
+.duel-result { text-align: center; font-family: monospace; font-weight: 800; font-size: 30px; letter-spacing: 2px; }
+.duel-result-win { color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.6); }
+.duel-result-lose { color: #ff3c50; text-shadow: 0 0 20px rgba(255,60,80,0.5); }
+.duel-result-draw { color: #00e5ff; }
