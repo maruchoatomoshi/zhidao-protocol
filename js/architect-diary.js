@@ -3,76 +3,94 @@
  * Лог-записи, открывающиеся по мере прогресса оператора.
  */
 
+const ARCHITECT_DIARY_AUTHORS = {
+  architect: { name: 'АРХИТЕКТОР',       image: 'architect_happy.png', color: '#00ff66' },
+  olga:      { name: 'ОЛЬГА МИХАЙЛОВНА', image: 'olga.png',            color: '#ffd23f' },
+  wunan:     { name: 'ВУ НАН',           image: 'wungan.png',          color: '#9b6bff' }
+};
+
 const ARCHITECT_DIARY_ENTRIES = [
   {
     code: "intro",
     title: "ЗАПИСЬ #000 // ИНИЦИАЛИЗАЦИЯ",
-    text: "Системный журнал активирован Я — Архитектор, наблюдаю за протоколом. Формально я слежу за стабильностью протокола, неформально — за тем, как вы тратите баллы на кейсы вместо сна. Продолжайте в том же духе, мне любопытно, к чему это приведёт",
-    image: "architect_explaining.png"
+    who: "olga",
+    text: "Привет! Это дневник вожатых — мы будем иногда оставлять здесь заметки о том, что происходит. Сегодня заметила, что вы быстро втянулись в баллы и кейсы. Это хорошо, только не забывайте и про сон — я буду напоминать",
+    image: "olga.png"
   },
   {
     code: "first_spin",
     title: "ЗАПИСЬ #001 // ПЕРВАЯ КРУТКА",
-    text: "Зафиксирован первый запрос на открытие кейса. Вероятностный генератор сработал штатно. Напоминаю: «штатно» не означает «в вашу пользу». Удачи в следующий раз, она вам пригодится",
-    image: "atchitect_thinking.png"
+    who: "wunan",
+    text: "Слышала, что кто-то уже открыл свой первый кейс! Повезло не так, как хотелось — бывает. Следующий раз обязательно будет удачнее, 加油 (надо стараться)!",
+    image: "wungan.png"
   },
   {
     code: "first_item",
     title: "ЗАПИСЬ #002 // ПЕРВЫЙ ТРОФЕЙ",
-    text: "В вашем инвентаре зафиксирован первый предмет. Поздравляю! Теперь у вас есть что терять. Рекомендую не продавать его в первые пять минут радости, обычно об этом потом жалеют",
-    image: "architect_surprising.png"
+    who: "olga",
+    text: "О, у тебя появился первый предмет в инвентаре! Поздравляю. Совет от меня: не продавай его сразу на эмоциях — потом обычно жалеют",
+    image: "olga.png"
   },
   {
     code: "first_raid",
     title: "ЗАПИСЬ #003 // ПЕРВЫЙ РЕЙД",
-    text: "Зафиксировано присоединение к рейду! Командная активность временно повысила общий уровень шума в системе на 14%. Шум — это хорошо, а тишина в этом контуре обычно означает, что кто-то сломал расписание",
-    image: "architect_surprising.png"
+    who: "wunan",
+    text: "Вы присоединились к рейду — отлично, вместе веселее и быстрее! Шум и движение — это нормально, тишина у нас обычно значит, что кто-то проспал расписание",
+    image: "wungan.png"
   },
   {
     code: "first_economy",
     title: "ЗАПИСЬ #004 // ПЕРВАЯ КОРРЕКЦИЯ БАЛАНСА",
-    text: "Баланс оператора был изменён вручную. Я не комментирую, заслуженно это было или нет, у меня нет доступа к видеозаписям с прошлой ночи. Но баллы — это баллы, записал в журнал, точка",
-    image: "atchitect_thinking.png"
+    who: "wunan",
+    text: "Твой баланс баллов поправили вручную. Заслуженно или нет — решали без меня, но в журнал я это всё равно записываю",
+    image: "wungan.png"
   },
   {
     code: "first_achievement",
     title: "ЗАПИСЬ #005 // ПЕРВОЕ ДОСТИЖЕНИЕ",
+    who: "architect",
     text: "Получено первое достижение! Система поздравляет вас сухим текстом, потому что других эмоций у системы пока нет. Но если бы были, то это были бы гордость и легкое недоверие, что вы справились сами",
     image: "architect_happy.png"
   },
   {
     code: "first_laundry",
     title: "ЗАПИСЬ #006 // ПЕРВАЯ ЗАПИСЬ НА СТИРКУ",
-    text: "Оператор записался на стирку... Незначительное на первый взгляд действие, но именно из таких решений строится цивилизация. Прогресс человечества начинался с того, что кто-то перестал носить грязные носки",
-    image: "architect_explaining.png"
+    who: "olga",
+    text: "Видела, что ты записался на стирку. Мелочь на первый взгляд, а на деле именно из таких привычек складывается порядок в комнате и в голове",
+    image: "olga.png"
   },
   {
     code: "first_shop_tx",
     title: "ЗАПИСЬ #007 // ПЕРВАЯ ТРАНЗАКЦИЯ",
-    text: "Зафиксирована первая операция в магазине: покупка, продажа или передача предмета. Экономика пришла в движение. Помните: всё, что вы отдаёте, кто-то получает, а то, что получаете — кто-то, скорее всего, пытался продать подороже",
-    image: "architect_explaining.png"
+    who: "olga",
+    text: "У тебя прошла первая операция в магазине — покупка, продажа или подарок. Экономика заработала! Только не забывай: то, что отдаёшь — кому-то достаётся, и наоборот",
+    image: "olga.png"
   },
   {
     code: "first_contract",
     title: "ЗАПИСЬ #008 // ПЕРВОЕ ПОРУЧЕНИЕ",
+    who: "architect",
     text: "Оператор оформил первое поручение на доске контрактов! Бюрократия — древнейшая технология контроля, и она прекрасно работает даже в киберпанке. Спасибо, что заполнили форму. Действительно, это редкость",
     image: "architect_happy.png"
   },
   {
     code: "architect_intro",
     title: "ЗАПИСЬ #009 // ПЕРЕД АКТИВАЦИЕЙ ПРОТОКОЛА АРХИТЕКТОРА",
+    who: "architect",
     text: "Решили бросить вызов системе? Ну что ж, посмотрим, сколько вы сможете продержаться. Здесь нет места ошибкам, останутся сильнейшие",
     image: "architect_event_before.png"
   },
   {
     code: "architect_victory",
     title: "ЗАПИСЬ #010 // ПОСЛЕ ПОБЕДЫ",
+    who: "architect",
     text: "Не может быть, цифры не могут обманывать... Можете наслаждаться вашей победой, но впереди вас ждёт более серьёзная угроза, чем вы могли себе представить",
     image: "architect_ivent_losse.png"
   },
   {
     code: "architect_defeat",
     title: "ЗАПИСЬ #011 // ПОСЛЕ ПОРАЖЕНИЯ",
+    who: "architect",
     text: "Протокол подавления завершён не в вашу пользу. Не страшно — система предусматривает повторные попытки, в отличие от некоторых людей. Перегруппируйтесь, отдохните и в следующий раз действуйте слаженнее. Я подожду, я всегда жду",
     image: "architect_ivent_winn.png"
   }
@@ -88,11 +106,19 @@ function _buildArchitectDiaryCard(entry, unlocked, unlockedAt) {
   const image = (unlocked && entry.image)
     ? `<div class="architect-diary-card-img"><img src="${ARCHITECT_DIARY_IMG_BASE}${escapeHtml(entry.image)}" alt="" loading="lazy" oncontextmenu="return false"></div>`
     : '';
+  const author = unlocked ? (ARCHITECT_DIARY_AUTHORS[entry.who] || ARCHITECT_DIARY_AUTHORS.architect) : null;
+  const authorBadge = author
+    ? `<div class="architect-diary-card-author" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+         <img src="${ARCHITECT_DIARY_IMG_BASE}${escapeHtml(author.image)}" alt="" loading="lazy" oncontextmenu="return false" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid ${author.color}66;">
+         <span style="font-size:11px;color:${author.color};letter-spacing:0.5px;">${escapeHtml(author.name)}</span>
+       </div>`
+    : '';
 
   return `
     <div class="card architect-diary-card${lockedClass}" style="margin-bottom:10px;">
       <div class="card-inner" style="padding:12px 14px;">
         <div class="architect-diary-card-title">${title}</div>
+        ${authorBadge}
         ${image}
         <div class="architect-diary-card-text">${text}</div>
         ${meta}
@@ -194,7 +220,11 @@ function showArchitectPopup(entry) {
   const imageEl = document.getElementById('architectPopupImage');
   const box = overlay ? overlay.querySelector('.architect-popup-box') : null;
   const textEl = document.getElementById('architectPopupText');
+  const titleEl = document.getElementById('architectPopupTitle');
   if (!overlay || !textEl) return;
+
+  const author = ARCHITECT_DIARY_AUTHORS[entry.who] || ARCHITECT_DIARY_AUTHORS.architect;
+  if (titleEl) { titleEl.textContent = author.name; titleEl.style.color = author.color; }
 
   if (imageEl) {
     imageEl.style.backgroundImage = entry.image ? `url('${ARCHITECT_DIARY_IMG_BASE}${entry.image}')` : '';
