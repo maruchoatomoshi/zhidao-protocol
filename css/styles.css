@@ -5011,6 +5011,21 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   flex-direction: column;
   gap: 6px;
 }
+.admin-presence-confirmed {
+  margin-top: 10px;
+}
+.admin-presence-confirmed summary {
+  cursor: pointer;
+  color: #32d872;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 6px 2px;
+}
+.admin-presence-confirmed .admin-presence-list {
+  margin-top: 6px;
+}
 .admin-presence-row {
   display: flex;
   align-items: center;

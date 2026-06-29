@@ -1054,6 +1054,7 @@ function adminRenderPresenceOverview(checkType, data) {
   const counts = data.counts || {};
   const checks = Array.isArray(data.checks) ? data.checks : [];
   const activeRows = checks.filter(row => ['pending', 'leave_rejected', 'needs_attention'].includes(row.status));
+  const confirmedRows = checks.filter(row => ['confirmed', 'free_time', 'admin_approved'].includes(row.status));
   const chipKeys = ['pending', 'confirmed', 'penalized'];
   const statusGrid = chipKeys.map(key => `
     <div class="admin-presence-chip ${key}">
@@ -1088,6 +1089,24 @@ function adminRenderPresenceOverview(checkType, data) {
       </div>`
     : '<div class="empty-state">Нет активных тревог или ожиданий</div>';
 
+  const confirmedList = confirmedRows.length
+    ? `<details class="admin-presence-confirmed">
+        <summary>✅ Подтвердили (${confirmedRows.length})</summary>
+        <div class="admin-presence-list">
+          ${confirmedRows.map(row => {
+            const room = row.room_number ? `<span class="admin-presence-room"> · #${escapeHtml(row.room_number)}</span>` : '';
+            return `
+            <div class="admin-presence-row ${row.status}">
+              <div>
+                <div class="admin-presence-name">${escapeHtml(row.full_name || row.telegram_id || 'Без имени')}${room}</div>
+                <div class="admin-presence-meta">ID ${escapeHtml(row.telegram_id)} · ${ADMIN_PRESENCE_LABELS[row.status] || row.status}${row.confirmed_at ? ' · ' + escapeHtml(String(row.confirmed_at).slice(11, 16)) : ''}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </details>`
+    : '';
+
   const rawDate = String(data.check_date || 'сегодня');
   const displayDate = checkType === 'manual' && rawDate.includes('__')
     ? rawDate.replace('__', ' · ').replace(/(\d{2})(\d{2})(\d{2})\d*$/, '$1:$2:$3')
@@ -1096,6 +1115,7 @@ function adminRenderPresenceOverview(checkType, data) {
     <div class="admin-presence-date">${checkType === 'manual' ? 'Сессия' : 'Дата'}: ${escapeHtml(displayDate)}</div>
     <div class="admin-presence-chips">${statusGrid}</div>
     ${attentionList}
+    ${confirmedList}
   `;
 }
 
