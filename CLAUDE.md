@@ -36,6 +36,20 @@ Resolution: persistent thread-local connections (`_PersistentConn`), PASSIVE-onl
 sha256: d842860f72718193c24151f60e6ece7f0041a7dc6c201e770e50c2b840b2c07a
 ```
 
+### 2026-06-29 — Первый боевой запуск (First Live Launch) — 59 пользователей
+
+59 real students launched the Mini App simultaneously. No lag, everyone could open it, no `database is locked` errors. `journalctl -u zhidao_api.service -u zhidao_bot.service --since "2 hours ago"` over the launch window showed only:
+
+- `lock_wait=0ms` on every DB write (the write queue never backed up)
+- `open_case` ~508–579ms, `save_campus_map` ~147–154ms — normal
+- one `admin_resolve_contract` at 1690ms — a single admin action, not a systemic issue
+- `WAL_CHECKPOINT` up to 4302ms but always `busy=0` with frames fully checkpointed — not blocking
+- two `ZHIDAO_DB_WRITE_ERROR ... HTTPException: 409: Path already chosen` at 21:14:08 — expected/handled 409 from a user double-submitting their theme path choice, not a crash
+
+Conclusion: the current SQLite write-lock + persistent-connection architecture (`DB_WRITE_LOCK`, single-worker `DB_WRITE_EXECUTOR`, thread-local `_PersistentConn`) holds up under real concurrent load. **Do not change SQLite/WAL handling based on this result** — it just passed its first real test, leave it alone until there's an actual problem.
+
+Follow-up backup taken right after this launch — see `/root/zhidao_launch_backups/` on the server for the `launch_ok_59_users_<timestamp>.tar.gz` snapshot (API + bot + systemd units + DB), taken via the launch-backup command in the Deployment Notes section below.
+
 ## Current Priority
 
 **Backend is stable on the server.** The server runs a known-good version of `/root/zhidao_api.py` that was backed up on 2026-06-09:
@@ -286,6 +300,24 @@ The bot is a separate service:
 
 ```bash
 systemctl status zhidao_bot.service --no-pager
+```
+
+Post-launch backup (run after any successful real-world launch window, e.g. the 2026-06-29 59-user launch):
+
+```bash
+TS=$(date +%Y%m%d_%H%M%S)
+mkdir -p /root/zhidao_launch_backups/$TS
+
+cp -a /root/zhidao_api.py /root/zhidao_launch_backups/$TS/
+cp -a /root/zhidao_bot.py /root/zhidao_launch_backups/$TS/
+cp -a /root/zhidao.db* /root/zhidao_launch_backups/$TS/ 2>/dev/null || true
+cp -a /etc/systemd/system/zhidao_api.service /root/zhidao_launch_backups/$TS/
+cp -a /etc/systemd/system/zhidao_bot.service /root/zhidao_launch_backups/$TS/
+cp -a /etc/systemd/system/zhidao_api.service.d /root/zhidao_launch_backups/$TS/ 2>/dev/null || true
+cp -a /etc/systemd/system/zhidao_bot.service.d /root/zhidao_launch_backups/$TS/ 2>/dev/null || true
+
+tar -czf /root/zhidao_launch_backups/launch_ok_$TS.tar.gz -C /root/zhidao_launch_backups/$TS .
+sha256sum /root/zhidao_launch_backups/launch_ok_$TS.tar.gz
 ```
 
 Some admin IDs must be added both in backend and bot code if bot/admin behavior differs.
