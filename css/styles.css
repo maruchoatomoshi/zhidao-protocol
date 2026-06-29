@@ -707,7 +707,7 @@ body.theme-genshin-light .matrix-kanji {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(5,5,16,0.92);
+  background-color: rgba(5,5,16,0.92);
   border: 1px solid var(--red-border);
   color: rgba(200,50,50,0.95);
   backdrop-filter: blur(10px);
@@ -726,7 +726,7 @@ body.theme-genshin-light .matrix-kanji {
 body.theme-nw-light .profile-fab,
 body.theme-genshin-light .profile-fab,
 body.theme-admin-light .profile-fab {
-  background: rgba(255,255,255,0.92);
+  background-color: rgba(255,255,255,0.92);
   color: #a02020;
 }
 
