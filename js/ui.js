@@ -1190,7 +1190,7 @@ async function loadUserData(telegramId) {
   const cached = zReadCachedUserProfile(telegramId);
   if (cached) {
     zApplyUserProfile(telegramId, cached, { fromCache: true });
-    showToast('Профиль временно показан из кеша. Проверю соединение позже.');
+    showToast('Профиль временно показан из кеша. Проверю соединение позже');
     return;
   }
 
