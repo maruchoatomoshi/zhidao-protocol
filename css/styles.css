@@ -717,6 +717,12 @@ body.theme-genshin-light .matrix-kanji {
 }
 .profile-fab .ti { font-size: 19px !important; line-height: 1; }
 .profile-fab:active { transform: scale(0.92); }
+.profile-fab.profile-fab-has-avatar {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.profile-fab.profile-fab-has-avatar .ti { display: none; }
 body.theme-nw-light .profile-fab,
 body.theme-genshin-light .profile-fab,
 body.theme-admin-light .profile-fab {

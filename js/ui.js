@@ -165,6 +165,21 @@ function toggleProfileFab() {
   }
 }
 
+// Кнопка профиля показывает аватар игрока, если он есть, и иконку-человечка,
+// если аватара нет. На самом экране профиля аватар прячется — там нужна
+// иконка-крестик, чтобы было понятно, что кнопка закрывает экран.
+function _updateProfileFabAvatar() {
+  const btn = document.getElementById('profileFabBtn');
+  if (!btn) return;
+  if (currentAvatarUrl && _currentPage !== 'home') {
+    btn.style.backgroundImage = `url('${currentAvatarUrl}')`;
+    btn.classList.add('profile-fab-has-avatar');
+  } else {
+    btn.style.backgroundImage = '';
+    btn.classList.remove('profile-fab-has-avatar');
+  }
+}
+
 function showPage(name, btn) {
   if (isLaunchGateActive() && name !== 'schedule' && name !== 'home') {
     showLaunchGateOverlay();
@@ -208,6 +223,7 @@ function showPage(name, btn) {
 
   const profileFabIcon = document.querySelector('#profileFabBtn .ti');
   if (profileFabIcon) profileFabIcon.className = name === 'home' ? 'ti ti-x' : 'ti ti-user';
+  _updateProfileFabAvatar();
 
   // Pages that always refresh (live data)
   if (name === 'schedule') { loadAnnouncements(); loadSchedule(); }
@@ -1030,6 +1046,7 @@ function zApplyUserProfile(telegramId, data, options = {}) {
 
   userConfig = data.link;
   currentAvatarUrl = data.avatar_url || null;
+  _updateProfileFabAvatar();
 
   const displayName = data.full_name || data.username || `ID ${telegramId}`;
   zSetText('status', options.fromCache ? '● КЕШ' : '● АКТИВЕН');

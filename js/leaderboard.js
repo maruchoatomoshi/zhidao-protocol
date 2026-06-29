@@ -88,6 +88,7 @@ function renderProfileAvatarCard(profile = {}) {
   const displayName = profile.full_name || tgUser?.first_name || profile.username || currentUserId || 'ZHIDAO';
   const avatarUrl = profile.avatar_url || currentAvatarUrl || tgUser?.photo_url || '';
   currentAvatarUrl = avatarUrl || null;
+  if (typeof _updateProfileFabAvatar === 'function') _updateProfileFabAvatar();
 
   nameEl.textContent = displayName;
   fallback.textContent = getProfileInitial(displayName, currentUserId);

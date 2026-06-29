@@ -46,6 +46,7 @@ const INSTRUCTION_TOUR_STEPS = [
   },
   {
     page: 'shop',
+    feature: 'contracts',
     action: () => { try { showPage('contracts', document.getElementById('nav-shop-btn')); } catch (e) {} },
     image: 'julia_thinking.png',
     title: 'ДОСКА ПОРУЧЕНИЙ // 任务板',
