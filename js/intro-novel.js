@@ -11,7 +11,7 @@ const INTRO_NOVEL_CAST = {
   yulia:     { name: 'ЮЛИЯ ВИТАЛЬЕВНА',          color: '#fa00ff', image: INTRO_NOVEL_GH + 'julia_based.png' },
   liza:      { name: 'ЕЛИЗАВЕТА СЕРГЕЕВНА',      color: '#00f0ff', image: INTRO_NOVEL_GH + 'liza_neutral-Photoroom.png' },
   tianhao:   { name: '孙天昊 СУНЬ ТЯНЬХАО',       color: '#ffaa00', image: INTRO_NOVEL_GH + 'tianhao_explaining.png' },
-  architect: { name: 'АРХИТЕКТОР',               color: '#00ff66', image: INTRO_NOVEL_GH + 'architect_happy.png' },
+  architect: { name: 'МАРК АЛЬБЕРТОВИЧ',               color: '#00ff66', image: INTRO_NOVEL_GH + 'architect_happy.png' },
   wunan:     { name: 'ВУ НАН',                   color: '#9b6bff', image: INTRO_NOVEL_GH + 'wungan.png' },
   olga:      { name: 'ОЛЬГА МИХАЙЛОВНА',         color: '#ffd23f', image: INTRO_NOVEL_GH + 'olga.png' }
 };
