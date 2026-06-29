@@ -4040,6 +4040,8 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
   cursor: pointer;
   transition: all var(--transition-fast) var(--ease-standard);
 }
+/* Beats the `display:flex !important` above so dev-owner-only buttons can hide. */
+.admin-sec-btn.dev-owner-hidden { display: none !important; }
 .admin-nav-icon { font-size: 18px; line-height: 1; display: block; }
 .admin-nav-icon svg { width: 19px; height: 19px; display: block; stroke: currentColor; color: var(--gold); }
 .admin-sec-btn.active .admin-nav-icon svg { color: var(--gold); }

@@ -269,7 +269,9 @@ function syncAdminUiVisibility() {
 
   const isDevOwner = Number(currentUserId) === 389741116;
   const adminArchitectTriggerBtn = document.getElementById('adminArchitectTriggerBtn');
-  if (adminArchitectTriggerBtn) adminArchitectTriggerBtn.style.display = isDevOwner ? '' : 'none';
+  // .admin-sec-btn has `display:flex !important`, so an inline display:none is ignored —
+  // gate visibility via a class that carries its own !important instead.
+  if (adminArchitectTriggerBtn) adminArchitectTriggerBtn.classList.toggle('dev-owner-hidden', !isDevOwner);
 
   // Aqua / Hainan test theme — visible only to the dev owner while in testing.
   const aquaThemeBtn = document.getElementById('theme-btn-aqua');
