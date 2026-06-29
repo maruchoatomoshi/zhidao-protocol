@@ -102,6 +102,9 @@ const FEATURE_FREEZE_LABELS = {
   'diary-stars': 'ДНЕВНИК ★',
   rating:        'РЕЙТИНГ',
   contracts:     'ДОСКА ПОРУЧЕНИЙ',
+  'profile-frame':    'РАМКИ АВАТАРА',
+  'profile-rank':     'РАНГ',
+  'profile-showcase': 'ВИТРИНА / ВЫБОР ИМПЛАНТА',
 };
 
 function isFeatureFrozen(name) {

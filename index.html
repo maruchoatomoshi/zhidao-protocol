@@ -148,7 +148,7 @@
           <div class="profile-card-name" id="profileDisplayName">Оператор ZHIDAO</div>
           <div class="profile-card-sub" id="profileAvatarStatus" style="display:none;"></div>
           <div class="profile-badge-row">
-            <span class="profile-badge profile-badge-rank" id="myRankSub" onclick="openRankBreakdownModal()">D-RANK</span>
+            <span class="profile-badge profile-badge-rank" id="myRankSub" data-feature="profile-rank" onclick="openRankBreakdownModal()">D-RANK</span>
             <span class="profile-badge profile-badge-place" id="profileLeaderboardPlace">&mdash;</span>
             <span class="profile-badge profile-badge-path" id="profilePathBadge">SYNC</span>
             <span class="profile-badge profile-badge-mvp" id="profileMvpBadge" style="display:none;">⚡ MVP</span>
@@ -167,8 +167,8 @@
       <div class="profile-card-actions">
         <input id="profileAvatarInput" type="file" accept="image/*" style="display:none;" onchange="handleProfileAvatarFile(this)">
         <button class="profile-mini-btn" id="profileAvatarUploadBtn" onclick="document.getElementById('profileAvatarInput').click()">АВАТАР</button>
-        <button class="profile-mini-btn" onclick="openProfileShowcaseModal()">ВИТРИНА</button>
-        <button class="profile-mini-btn" onclick="openProfileFrameModal()">РАМКИ</button>
+        <button class="profile-mini-btn" data-feature="profile-showcase" onclick="openProfileShowcaseModal()">ВИТРИНА</button>
+        <button class="profile-mini-btn" data-feature="profile-frame" onclick="openProfileFrameModal()">РАМКИ</button>
         <button class="profile-mini-btn ghost" id="profileAvatarResetBtn" onclick="removeProfileAvatar()">СБРОС</button>
         <button class="profile-mini-btn" onclick="openInstructionModal()">📖 ИНСТРУКЦИЯ</button>
       </div>
@@ -2686,10 +2686,10 @@
   </div>
 </div>
 
-<script src="./js/config.js?v=20260628presenceflag"></script>
+<script src="./js/config.js?v=20260629freezeprofile"></script>
 <script src="./js/state.js?v=20260625wildaibreach1"></script>
 <script src="./js/api.js?v=20260528a"></script>
-<script src="./js/ui.js?v=20260628presenceopenmore"></script>
+<script src="./js/ui.js?v=20260629freezeprofile"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js?v=20260624boardnav1"></script>
 <script src="./js/blackwall.js?v=20260625wildaibreach2"></script>
@@ -2697,7 +2697,7 @@
 <script src="./js/announcements.js"></script>
 <script src="./js/laundry.js?v=20260624myu2"></script>
 <script src="./js/achievements.js?v=20260622spinlock1"></script>
-<script src="./js/leaderboard.js?v=20260628dwfix"></script>
+<script src="./js/leaderboard.js?v=20260629freezeprofile"></script>
 <script src="./js/shop.js?v=20260628gsempty"></script>
 <script src="./js/casino.js?v=20260628confirmdialog"></script>
 <script src="./js/diary.js?v=20260613cleanup1"></script>

@@ -232,6 +232,7 @@ function renderRankBreakdown(profile) {
 }
 
 async function openRankBreakdownModal() {
+  if (typeof isFeatureFrozen === 'function' && isFeatureFrozen('profile-rank')) { showFeatureFreezeOverlay('profile-rank'); return; }
   const modal = document.getElementById('rankBreakdownModal');
   const box = document.getElementById('rankBreakdownContent');
   if (!modal || !box) return;
@@ -306,6 +307,7 @@ function renderProfileShowcaseOptions(options) {
 }
 
 async function openProfileShowcaseModal() {
+  if (typeof isFeatureFrozen === 'function' && isFeatureFrozen('profile-showcase')) { showFeatureFreezeOverlay('profile-showcase'); return; }
   const modal = document.getElementById('profileShowcaseModal');
   const box = document.getElementById('profileShowcaseOptions');
   if (!modal || !box || !currentUserId) return;
@@ -416,6 +418,7 @@ function renderProfileFrameOptions(data) {
 }
 
 async function openProfileFrameModal() {
+  if (typeof isFeatureFrozen === 'function' && isFeatureFrozen('profile-frame')) { showFeatureFreezeOverlay('profile-frame'); return; }
   const modal = document.getElementById('profileFrameModal');
   const box = document.getElementById('profileFrameOptions');
   if (!modal || !box || !currentUserId) return;

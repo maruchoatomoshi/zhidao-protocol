@@ -36,6 +36,10 @@ window.APP_FROZEN_FEATURES = {
   rating:        true,
   contracts:     true,
   presence:      false,
+  // Элементы карточки игрока: рамки, ранг и выбор импланта (витрина).
+  'profile-frame':    true,
+  'profile-rank':     true,
+  'profile-showcase': true,
 };
-// Таймер обратного отсчёта в окне заморозки: открытие утром 5 июля (по Пекину).
-window.APP_FREEZE_TARGET_AT = '2026-07-05T00:00:00+08:00';
+// Таймер обратного отсчёта в окне заморозки: открытие утром 6 июля 7:00 (по Пекину).
+window.APP_FREEZE_TARGET_AT = '2026-07-06T07:00:00+08:00';
