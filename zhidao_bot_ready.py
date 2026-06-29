@@ -453,8 +453,13 @@ def has_dragon(telegram_id):
     conn = db_connect()
     c = conn.cursor()
     c.execute(
-        "SELECT id FROM user_implants WHERE telegram_id=? AND implant_id='implant_red_dragon' AND durability > 0",
-        (telegram_id,),
+        '''SELECT ui.id FROM user_implants ui
+           LEFT JOIN user_status us ON us.telegram_id = ui.telegram_id
+           WHERE ui.telegram_id=? AND ui.implant_id='implant_red_dragon' AND ui.durability > 0
+             AND (COALESCE(us.theme_path, 'cyberpunk') != 'genshin' OR ui.telegram_id IN ({placeholders}))'''.format(
+            placeholders=",".join("?" for _ in ADMIN_IDS) or "NULL"
+        ),
+        [telegram_id] + list(ADMIN_IDS),
     )
     result = c.fetchone()
     conn.close()
