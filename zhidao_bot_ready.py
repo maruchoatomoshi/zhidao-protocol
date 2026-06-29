@@ -110,6 +110,7 @@ def db_connect():
 class Form(StatesGroup):
     waiting_name = State()
     waiting_bug_report = State()
+    waiting_anon_reply = State()
 
 
 def init_db():
@@ -150,6 +151,15 @@ def init_db():
                   username TEXT DEFAULT '',
                   text TEXT NOT NULL,
                   status TEXT DEFAULT 'open',
+                  created_at TEXT NOT NULL)"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS anon_questions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  telegram_id INTEGER NOT NULL,
+                  full_name TEXT DEFAULT '',
+                  username TEXT DEFAULT '',
+                  text TEXT NOT NULL,
                   created_at TEXT NOT NULL)"""
     )
     conn.commit()
@@ -649,6 +659,36 @@ def save_bug_report(message: types.Message, text: str) -> int:
     conn.commit()
     conn.close()
     return int(report_id)
+
+
+def save_anon_question(message: types.Message, text: str) -> int:
+    full_name = message.from_user.full_name or str(message.from_user.id)
+    username = message.from_user.username or ""
+    now_str = datetime.now(BEIJING_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute(
+        """INSERT INTO anon_questions
+           (telegram_id, full_name, username, text, created_at)
+           VALUES (?, ?, ?, ?, ?)""",
+        (message.from_user.id, full_name, username, text.strip(), now_str),
+    )
+    question_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return int(question_id)
+
+
+def get_anon_question(question_id: int):
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute(
+        "SELECT telegram_id, full_name FROM anon_questions WHERE id=?",
+        (question_id,),
+    )
+    row = c.fetchone()
+    conn.close()
+    return row
 
 
 def get_recent_bug_reports(limit: int = 10):
@@ -1547,12 +1587,57 @@ async def anonymous_question(message: types.Message):
     if len(args) < 2:
         await message.answer("Использование: /вопрос ТЕКСТ")
         return
-    await message.answer("✅ Вопрос отправлен анонимно!")
-    for admin_id in ADMIN_IDS:
-        try:
-            await bot.send_message(admin_id, f"🤫 Анонимный вопрос:\n\n{args[1]}")
-        except Exception:
-            pass
+    question_id = save_anon_question(message, args[1])
+    await message.answer("✅ Вопрос отправлен куратору!")
+    username = f"@{message.from_user.username}" if message.from_user.username else "без username"
+    reply_kb = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(text="✉️ Ответить", callback_data=f"anon_reply:{question_id}"),
+        ]]
+    )
+    await notify_admins(
+        f"🤫 Вопрос #{question_id}\n"
+        f"От: {message.from_user.full_name} ({username})\n"
+        f"TG: {message.from_user.id}\n\n"
+        f"{args[1]}",
+        reply_markup=reply_kb,
+    )
+
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("anon_reply:"))
+async def anon_reply_start(callback: types.CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Нет прав администратора", show_alert=True)
+        return
+    question_id = int(callback.data.split(":", 1)[1])
+    row = get_anon_question(question_id)
+    if not row:
+        await callback.answer("Вопрос не найден", show_alert=True)
+        return
+    await state.set_state(Form.waiting_anon_reply)
+    await state.update_data(anon_question_id=question_id)
+    await callback.message.answer(f"Напиши ответ на вопрос #{question_id} одним сообщением:")
+    await callback.answer()
+
+
+@dp.message(Form.waiting_anon_reply)
+async def anon_reply_send(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    question_id = data.get("anon_question_id")
+    await state.clear()
+    row = get_anon_question(question_id) if question_id else None
+    if not row:
+        await message.answer("❌ Не удалось найти вопрос для ответа.")
+        return
+    target_telegram_id, _full_name = row
+    try:
+        await bot.send_message(
+            target_telegram_id,
+            f"💬 Ответ куратора на твой вопрос:\n\n{message.text or ''}",
+        )
+        await message.answer(f"✅ Ответ на вопрос #{question_id} отправлен.")
+    except Exception:
+        await message.answer("❌ Не получилось отправить ответ. Возможно, пользователь заблокировал бота.")
 
 
 @dp.message(Command("netwatch_strike"))
