@@ -22,6 +22,9 @@ function applyThemePath(path) {
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'block';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'none';
     const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'block';
+    // Скрываем переключатель на КАРТОЧКИ для обычных пользователей пути NetWatch
+    const implantsBtn = document.getElementById('tab-implants-btn'); if (implantsBtn) implantsBtn.style.display = '';
+    const cardsBtn = document.getElementById('tab-cards-btn'); if (cardsBtn) cardsBtn.style.display = isAdmin ? '' : 'none';
     // Кейсы — показываем рулетку, но только если казино сейчас открыто на вкладке ИГРАТЬ
     if (typeof activeCasinoSubtab === 'undefined' || activeCasinoSubtab === 'play') {
       const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'flex';
@@ -41,6 +44,9 @@ function applyThemePath(path) {
     const implTab = document.getElementById('implants-tab'); if (implTab) implTab.style.display = 'none';
     const cardTab = document.getElementById('cards-tab'); if (cardTab) cardTab.style.display = 'block';
     const implCat = document.getElementById('implants-catalog'); if (implCat) implCat.style.display = 'none';
+    // Скрываем переключатель на ИМПЛАНТЫ для обычных пользователей пути Genshin
+    const implantsBtn2 = document.getElementById('tab-implants-btn'); if (implantsBtn2) implantsBtn2.style.display = isAdmin ? '' : 'none';
+    const cardsBtn2 = document.getElementById('tab-cards-btn'); if (cardsBtn2) cardsBtn2.style.display = '';
     // Молитвы — показываем Геншин, но только если казино сейчас открыто на вкладке ИГРАТЬ
     if (typeof activeCasinoSubtab === 'undefined' || activeCasinoSubtab === 'play') {
       const cp = document.getElementById('casinoPlayContent'); if (cp) cp.style.display = 'none';

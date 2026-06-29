@@ -162,6 +162,14 @@ def init_db():
                   text TEXT NOT NULL,
                   created_at TEXT NOT NULL)"""
     )
+    c.execute("PRAGMA table_info(anon_questions)")
+    anon_q_columns = {row[1] for row in c.fetchall()}
+    if 'status' not in anon_q_columns:
+        c.execute("ALTER TABLE anon_questions ADD COLUMN status TEXT DEFAULT 'open'")
+    if 'answered_by_name' not in anon_q_columns:
+        c.execute("ALTER TABLE anon_questions ADD COLUMN answered_by_name TEXT DEFAULT NULL")
+    if 'answered_at' not in anon_q_columns:
+        c.execute("ALTER TABLE anon_questions ADD COLUMN answered_at TEXT DEFAULT NULL")
     conn.commit()
     conn.close()
 
@@ -683,12 +691,24 @@ def get_anon_question(question_id: int):
     conn = db_connect()
     c = conn.cursor()
     c.execute(
-        "SELECT telegram_id, full_name FROM anon_questions WHERE id=?",
+        "SELECT telegram_id, full_name, status, answered_by_name FROM anon_questions WHERE id=?",
         (question_id,),
     )
     row = c.fetchone()
     conn.close()
     return row
+
+
+def mark_anon_question_answered(question_id: int, admin_name: str):
+    now_str = datetime.now(BEIJING_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute(
+        "UPDATE anon_questions SET status='answered', answered_by_name=?, answered_at=? WHERE id=?",
+        (admin_name, now_str, question_id),
+    )
+    conn.commit()
+    conn.close()
 
 
 def get_recent_bug_reports(limit: int = 10):
@@ -1614,9 +1634,36 @@ async def anon_reply_start(callback: types.CallbackQuery, state: FSMContext):
     if not row:
         await callback.answer("Вопрос не найден", show_alert=True)
         return
+    _target_id, _full_name, status, answered_by_name = row
     await state.set_state(Form.waiting_anon_reply)
     await state.update_data(anon_question_id=question_id)
-    await callback.message.answer(f"Напиши ответ на вопрос #{question_id} одним сообщением:")
+    cancel_kb = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(text="❌ Отмена", callback_data=f"anon_cancel:{question_id}"),
+        ]]
+    )
+    prefix = ""
+    if status == "answered":
+        prefix = f"⚠️ Этот вопрос уже отвечен ({answered_by_name or 'другой админ'}). Можешь отправить ещё один ответ или отменить.\n\n"
+    await callback.message.answer(
+        f"{prefix}Напиши ответ на вопрос #{question_id} одним сообщением:",
+        reply_markup=cancel_kb,
+    )
+    await callback.answer()
+
+
+@dp.callback_query(lambda c: c.data and c.data.startswith("anon_cancel:"))
+async def anon_reply_cancel(callback: types.CallbackQuery, state: FSMContext):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Нет прав администратора", show_alert=True)
+        return
+    current_state = await state.get_state()
+    if current_state == Form.waiting_anon_reply.state:
+        await state.clear()
+    question_id = callback.data.split(":", 1)[1]
+    await callback.message.answer(
+        f"Отменено. Вопрос #{question_id} остался без ответа — можешь нажать «✉️ Ответить» позже."
+    )
     await callback.answer()
 
 
@@ -1629,13 +1676,18 @@ async def anon_reply_send(message: types.Message, state: FSMContext):
     if not row:
         await message.answer("❌ Не удалось найти вопрос для ответа.")
         return
-    target_telegram_id, _full_name = row
+    target_telegram_id, _full_name, _status, _answered_by_name = row
+    admin_name = message.from_user.full_name or str(message.from_user.id)
     try:
         await bot.send_message(
             target_telegram_id,
             f"💬 Ответ куратора на твой вопрос:\n\n{message.text or ''}",
         )
         await message.answer(f"✅ Ответ на вопрос #{question_id} отправлен.")
+        mark_anon_question_answered(question_id, admin_name)
+        await notify_admins(
+            f"ℹ️ Вопрос #{question_id} получил ответ от {admin_name}. Отвечать ещё раз не нужно."
+        )
     except Exception:
         await message.answer("❌ Не получилось отправить ответ. Возможно, пользователь заблокировал бота.")
 

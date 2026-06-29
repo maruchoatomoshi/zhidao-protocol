@@ -623,6 +623,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Переключатель табов импланты/карточки
 function switchImplantsTab(tab) {
+  if (!isAdmin && typeof currentThemePath !== 'undefined') {
+    if (currentThemePath === 'cyberpunk' && tab === 'cards') return;
+    if (currentThemePath === 'genshin' && tab === 'implants') return;
+  }
   document.getElementById('implants-tab').style.display = tab === 'implants' ? 'block' : 'none';
   document.getElementById('cards-tab').style.display = tab === 'cards' ? 'block' : 'none';
   document.getElementById('tab-implants-btn').classList.toggle('active', tab === 'implants');
