@@ -23,7 +23,7 @@ button:active, .btn:active {
   --bg: #050510;
   --bg2: rgba(255,255,255,0.03);
   --bg3: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.12);
   --text: #ffffff;
   --text2: #cccccc;
   --text3: #888888;
@@ -124,7 +124,7 @@ body.theme-genshin-dark {
   --bg: #1a1628;
   --bg2: rgba(255,255,255,0.04);
   --bg3: rgba(255,255,255,0.07);
-  --border: rgba(219,177,101,0.1);
+  --border: rgba(219,177,101,0.18);
   --text: #e8e0d0;
   --text2: #a09880;
   --text3: #5a5248;
