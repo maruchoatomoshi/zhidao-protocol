@@ -4810,28 +4810,33 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
     query = str(q or "").strip()
     conn = get_conn()
     c = conn.cursor()
-    if query:
+    if query and query.isdigit():
         like = f"%{query}%"
-        if query.isdigit():
-            c.execute(
-                '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
-                   FROM users
-                   WHERE telegram_id IS NOT NULL
-                     AND (CAST(telegram_id AS TEXT) LIKE ? OR full_name LIKE ? OR marzban_username LIKE ?)
-                   ORDER BY points DESC
-                   LIMIT 20''',
-                (like, like, like),
-            )
-        else:
-            c.execute(
-                '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
-                   FROM users
-                   WHERE telegram_id IS NOT NULL
-                     AND (full_name LIKE ? OR marzban_username LIKE ?)
-                   ORDER BY points DESC
-                   LIMIT 20''',
-                (like, like),
-            )
+        c.execute(
+            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
+               FROM users
+               WHERE telegram_id IS NOT NULL
+                 AND (CAST(telegram_id AS TEXT) LIKE ? OR full_name LIKE ? OR marzban_username LIKE ?)
+               ORDER BY points DESC
+               LIMIT 20''',
+            (like, like, like),
+        )
+        rows = c.fetchall()
+    elif query:
+        # SQLite's LIKE only case-folds ASCII letters, so Cyrillic names with a
+        # different case (e.g. "марк" vs "Марк") never matched — filter in
+        # Python with a Unicode-aware lower() instead.
+        c.execute(
+            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
+               FROM users
+               WHERE telegram_id IS NOT NULL
+               ORDER BY points DESC''',
+        )
+        needle = query.lower()
+        rows = [
+            row for row in c.fetchall()
+            if needle in str(row[1] or "").lower() or needle in str(row[2] or "").lower()
+        ][:20]
     else:
         c.execute(
             '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
@@ -4840,7 +4845,7 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
                ORDER BY points DESC
                LIMIT 20''',
         )
-    rows = c.fetchall()
+        rows = c.fetchall()
     roommate_map = {}
     room_numbers = sorted({row[5] for row in rows if row[5]})
     for room_number in room_numbers:
