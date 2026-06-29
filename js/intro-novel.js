@@ -7,7 +7,7 @@ const INTRO_NOVEL_GH = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao
 
 const INTRO_NOVEL_CAST = {
   system:    { name: 'СИСТЕМА',                 color: '#7d8a99', image: INTRO_NOVEL_GH + 'logo.png' },
-  mju:       { name: 'МИХАИЛ ЮРЬЕВИЧ // МЮ',    color: '#ff003c', image: INTRO_NOVEL_GH + 'mu_happy.png' },
+  mju:       { name: 'МИХАИЛ ЮРЬЕВИЧ',    color: '#ff003c', image: INTRO_NOVEL_GH + 'mu_happy.png' },
   yulia:     { name: 'ЮЛИЯ ВИТАЛЬЕВНА',          color: '#fa00ff', image: INTRO_NOVEL_GH + 'julia_based.png' },
   liza:      { name: 'ЕЛИЗАВЕТА СЕРГЕЕВНА',      color: '#00f0ff', image: INTRO_NOVEL_GH + 'liza_neutral-Photoroom.png' },
   tianhao:   { name: '孙天昊 СУНЬ ТЯНЬХАО',       color: '#ffaa00', image: INTRO_NOVEL_GH + 'tianhao_explaining.png' },
