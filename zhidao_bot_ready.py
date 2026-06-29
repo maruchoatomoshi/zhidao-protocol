@@ -1650,10 +1650,6 @@ async def moon_morning():
             await change_points(tg_id, 12, operation='card_moon_passive', note='утренний пассив Богини Луны')
         except Exception:
             continue
-        try:
-            await bot.send_message(tg_id, "🌙 +12★ // лунный свет Чанъэ 嫦娥")
-        except Exception:
-            pass
 
 
 async def netwatch_morning():
@@ -1666,10 +1662,6 @@ async def netwatch_morning():
             await change_points(tg_id, 25, operation='netwatch_passive', note='утренний пассив NetWatch')
         except Exception:
             continue
-        try:
-            await bot.send_message(tg_id, "🔴 +25★ // восполнение памяти NetWatch")
-        except Exception:
-            pass
 
 
 async def caishen_morning():
@@ -1682,10 +1674,6 @@ async def caishen_morning():
             await change_points(tg_id, 15, operation='caishen_passive', note='утренний пассив Цайшэнь')
         except Exception:
             continue
-        try:
-            await bot.send_message(tg_id, "💰 +15★ // пассивный доход Цайшэня 财神")
-        except Exception:
-            pass
 
 
 async def qilin_morning():
@@ -1704,10 +1692,6 @@ async def qilin_morning():
                                 note=f'Цилинь: {total_owners} владельцев → {bonus}★')
         except Exception:
             continue
-        try:
-            await bot.send_message(tg_id, f"🦄 +{bonus}★ // Цилинь麒麟 ({total_owners} вл. → {bonus}★/чел.)")
-        except Exception:
-            pass
 
 
 async def main():
