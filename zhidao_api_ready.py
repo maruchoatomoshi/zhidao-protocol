@@ -1326,6 +1326,32 @@ def init_db():
                   total INTEGER NOT NULL,
                   passed INTEGER NOT NULL,
                   completed_at TEXT NOT NULL)''')
+    # PvP duels (Tekken-style live quiz battle). Async challenge -> accept ->
+    # ready-check -> live rounds. Zero-sum stake. See CLAUDE.md PvP spec.
+    c.execute('''CREATE TABLE IF NOT EXISTS duels
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  challenger_id INTEGER NOT NULL,
+                  opponent_id INTEGER NOT NULL,
+                  stake INTEGER NOT NULL,
+                  status TEXT NOT NULL DEFAULT 'pending',
+                  challenger_hp INTEGER NOT NULL DEFAULT 100,
+                  opponent_hp INTEGER NOT NULL DEFAULT 100,
+                  challenger_ready INTEGER NOT NULL DEFAULT 0,
+                  opponent_ready INTEGER NOT NULL DEFAULT 0,
+                  round_no INTEGER NOT NULL DEFAULT 0,
+                  current_question_id INTEGER DEFAULT NULL,
+                  round_started_at TEXT DEFAULT NULL,
+                  challenger_answer TEXT DEFAULT NULL,
+                  opponent_answer TEXT DEFAULT NULL,
+                  challenger_answer_at TEXT DEFAULT NULL,
+                  opponent_answer_at TEXT DEFAULT NULL,
+                  winner_id INTEGER DEFAULT NULL,
+                  created_at TEXT NOT NULL,
+                  updated_at TEXT DEFAULT NULL,
+                  accepted_at TEXT DEFAULT NULL,
+                  finished_at TEXT DEFAULT NULL)''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_duels_opponent ON duels(opponent_id, status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_duels_challenger ON duels(challenger_id, status)")
     conn.commit()
     conn.close()
 
@@ -1690,6 +1716,28 @@ def ensure_seed_data():
                         created_at,
                     ),
                 )
+
+    # Duel question pool (Chinese-language, action_type='duel'). Educational,
+    # not lore — keeps PvP duels about language learning, not random chance.
+    c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='duel'")
+    duel_count = c.fetchone()[0]
+    if duel_count == 0:
+        created_at = datetime.utcnow().isoformat()
+        for question in DUEL_QUESTION_SEEDS:
+            c.execute(
+                '''INSERT INTO event_questions
+                   (event_code, action_type, difficulty, prompt, option_a, option_b, option_c, correct_option, explanation, created_at)
+                   VALUES ('duel', 'duel', 1, ?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    question["prompt"],
+                    question["option_a"],
+                    question["option_b"],
+                    question["option_c"],
+                    question["correct_option"],
+                    question.get("explanation"),
+                    created_at,
+                ),
+            )
     conn.commit()
     conn.close()
 
@@ -11136,3 +11184,587 @@ async def admin_resolve_contract(contract_id: int, data: dict,
         conn.close()
         return {"success": True, "action": action}
     return await db_write(_run)
+
+
+# ======================================================================
+# PvP DUELS (Tekken-style live quiz battle)
+# Async challenge -> accept -> ready-check -> live polled rounds.
+# Zero-sum fixed stake tiers. Admin/flag-gated until DUELS_PUBLIC=True.
+# See CLAUDE.md PvP spec.
+# ======================================================================
+
+DUELS_PUBLIC = False          # while False, duels are admins-only (rollout flag)
+DUEL_STAKE_TIERS = [10, 25, 50, 100]
+DUEL_MAX_HP = 100
+DUEL_HIT_DAMAGE = 20
+DUEL_MAX_ROUNDS = 7
+DUEL_ROUND_SECONDS = 20       # answer window per round
+DUEL_CHALLENGE_EXPIRY_SECONDS = 86400  # 24h to accept a challenge
+
+DUEL_COLUMNS = [
+    "id", "challenger_id", "opponent_id", "stake", "status",
+    "challenger_hp", "opponent_hp", "challenger_ready", "opponent_ready",
+    "round_no", "current_question_id", "round_started_at",
+    "challenger_answer", "opponent_answer", "challenger_answer_at", "opponent_answer_at",
+    "winner_id", "created_at", "updated_at", "accepted_at", "finished_at",
+]
+
+# Chinese-language learning pool — educational, not lore. action_type='duel'.
+DUEL_QUESTION_SEEDS = [
+    {"prompt": "Как по-китайски «спасибо»?", "option_a": "谢谢 xièxie", "option_b": "对不起 duìbuqǐ", "option_c": "再见 zàijiàn", "correct_option": "a", "explanation": "谢谢 (xièxie) — спасибо."},
+    {"prompt": "Что означает 你好?", "option_a": "Пока", "option_b": "Привет", "option_c": "Извините", "correct_option": "b", "explanation": "你好 (nǐ hǎo) — привет/здравствуй."},
+    {"prompt": "Как сказать «до свидания»?", "option_a": "再见 zàijiàn", "option_b": "谢谢 xièxie", "option_c": "请 qǐng", "correct_option": "a", "explanation": "再见 (zàijiàn) — до свидания."},
+    {"prompt": "Что значит 老师?", "option_a": "Студент", "option_b": "Учитель", "option_c": "Друг", "correct_option": "b", "explanation": "老师 (lǎoshī) — учитель."},
+    {"prompt": "Как по-китайски «вода»?", "option_a": "火 huǒ", "option_b": "水 shuǐ", "option_c": "茶 chá", "correct_option": "b", "explanation": "水 (shuǐ) — вода."},
+    {"prompt": "Числительное 三 означает:", "option_a": "Два", "option_b": "Три", "option_c": "Пять", "correct_option": "b", "explanation": "三 (sān) — три."},
+    {"prompt": "Что значит 中国?", "option_a": "Япония", "option_b": "Китай", "option_c": "Корея", "correct_option": "b", "explanation": "中国 (Zhōngguó) — Китай."},
+    {"prompt": "Как сказать «я»?", "option_a": "我 wǒ", "option_b": "你 nǐ", "option_c": "他 tā", "correct_option": "a", "explanation": "我 (wǒ) — я."},
+    {"prompt": "Иероглиф 大 означает:", "option_a": "Маленький", "option_b": "Большой", "option_c": "Средний", "correct_option": "b", "explanation": "大 (dà) — большой."},
+    {"prompt": "Что значит 朋友?", "option_a": "Семья", "option_b": "Друг", "option_c": "Сосед", "correct_option": "b", "explanation": "朋友 (péngyou) — друг."},
+    {"prompt": "Как по-китайски «есть/кушать»?", "option_a": "喝 hē", "option_b": "吃 chī", "option_c": "看 kàn", "correct_option": "b", "explanation": "吃 (chī) — есть; 喝 (hē) — пить."},
+    {"prompt": "Что означает 学生?", "option_a": "Учитель", "option_b": "Студент", "option_c": "Директор", "correct_option": "b", "explanation": "学生 (xuésheng) — студент/ученик."},
+    {"prompt": "Цвет 红 — это:", "option_a": "Красный", "option_b": "Синий", "option_c": "Зелёный", "correct_option": "a", "explanation": "红 (hóng) — красный."},
+    {"prompt": "Как сказать «хорошо / ок»?", "option_a": "不 bù", "option_b": "好 hǎo", "option_c": "没 méi", "correct_option": "b", "explanation": "好 (hǎo) — хорошо."},
+]
+
+
+def _duel_allowed(telegram_id) -> bool:
+    return DUELS_PUBLIC or telegram_id in ADMIN_IDS
+
+
+def _duel_role(duel: dict, telegram_id):
+    if telegram_id == duel["challenger_id"]:
+        return "challenger"
+    if telegram_id == duel["opponent_id"]:
+        return "opponent"
+    return None
+
+
+def _fetch_duel(c, duel_id):
+    c.execute(f"SELECT {','.join(DUEL_COLUMNS)} FROM duels WHERE id=?", (duel_id,))
+    row = c.fetchone()
+    if not row:
+        return None
+    return dict(zip(DUEL_COLUMNS, row))
+
+
+def choose_duel_question(c, exclude_id=None):
+    if exclude_id:
+        c.execute(
+            "SELECT id, prompt, option_a, option_b, option_c FROM event_questions "
+            "WHERE event_code='duel' AND id!=? ORDER BY RANDOM() LIMIT 1",
+            (exclude_id,),
+        )
+        row = c.fetchone()
+        if row:
+            return {"id": row[0], "prompt": row[1], "option_a": row[2], "option_b": row[3], "option_c": row[4]}
+    c.execute(
+        "SELECT id, prompt, option_a, option_b, option_c FROM event_questions "
+        "WHERE event_code='duel' ORDER BY RANDOM() LIMIT 1"
+    )
+    row = c.fetchone()
+    if not row:
+        return None
+    return {"id": row[0], "prompt": row[1], "option_a": row[2], "option_b": row[3], "option_c": row[4]}
+
+
+def _round_due(duel: dict) -> bool:
+    """A round is ready to resolve when both answered, or the timer expired."""
+    if duel["status"] != "active":
+        return False
+    if duel["challenger_answer"] is not None and duel["opponent_answer"] is not None:
+        return True
+    started = parse_iso(duel["round_started_at"])
+    if started and (datetime.utcnow() - started).total_seconds() >= DUEL_ROUND_SECONDS:
+        return True
+    return False
+
+
+def _settle_duel(c, duel: dict, winner_id):
+    """Zero-sum stake transfer. transfer = min(stake, loser balance) keeps it
+    exactly zero-sum even if the loser spent points after accepting."""
+    if not winner_id:
+        return  # draw — no transfer
+    stake = duel["stake"]
+    loser_id = duel["opponent_id"] if winner_id == duel["challenger_id"] else duel["challenger_id"]
+    c.execute("SELECT COALESCE(points, 0) FROM users WHERE telegram_id=?", (loser_id,))
+    row = c.fetchone()
+    bal = row[0] if row else 0
+    transfer = min(stake, max(0, bal))
+    if transfer <= 0:
+        return
+    c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (transfer, winner_id))
+    c.execute("UPDATE users SET points = MAX(0, COALESCE(points, 0) - ?) WHERE telegram_id=?", (transfer, loser_id))
+    log_economy(c, winner_id, 'duel_win', transfer, None, duel["id"], 'duel', f"Победа в дуэли #{duel['id']}")
+    log_economy(c, loser_id, 'duel_loss', -transfer, None, duel["id"], 'duel', f"Поражение в дуэли #{duel['id']}")
+
+
+def _resolve_round(c, duel: dict):
+    """Resolve the current round (called when both answered or timer expired),
+    then either finish the match or advance to the next round. Idempotent guard
+    is the caller's responsibility (status=='active' and _round_due)."""
+    c.execute("SELECT correct_option FROM event_questions WHERE id=?", (duel["current_question_id"],))
+    row = c.fetchone()
+    correct = row[0] if row else None
+
+    ch_ok = correct is not None and duel["challenger_answer"] == correct
+    op_ok = correct is not None and duel["opponent_answer"] == correct
+    ch_hp = duel["challenger_hp"]
+    op_hp = duel["opponent_hp"]
+
+    hit_role = None
+    if ch_ok and op_ok:
+        ch_t = parse_iso(duel["challenger_answer_at"])
+        op_t = parse_iso(duel["opponent_answer_at"])
+        if ch_t and op_t and ch_t < op_t:
+            hit_role = "challenger"
+        elif ch_t and op_t and op_t < ch_t:
+            hit_role = "opponent"
+    elif ch_ok:
+        hit_role = "challenger"
+    elif op_ok:
+        hit_role = "opponent"
+
+    if hit_role == "challenger":
+        op_hp = max(0, op_hp - DUEL_HIT_DAMAGE)
+    elif hit_role == "opponent":
+        ch_hp = max(0, ch_hp - DUEL_HIT_DAMAGE)
+
+    now = now_iso()
+    finished = False
+    winner_id = None
+    if ch_hp <= 0 or op_hp <= 0:
+        finished = True
+        if op_hp <= 0 and ch_hp > 0:
+            winner_id = duel["challenger_id"]
+        elif ch_hp <= 0 and op_hp > 0:
+            winner_id = duel["opponent_id"]
+        else:
+            winner_id = None
+    elif duel["round_no"] >= DUEL_MAX_ROUNDS:
+        finished = True
+        if ch_hp > op_hp:
+            winner_id = duel["challenger_id"]
+        elif op_hp > ch_hp:
+            winner_id = duel["opponent_id"]
+        else:
+            winner_id = None
+
+    if finished:
+        c.execute(
+            "UPDATE duels SET challenger_hp=?, opponent_hp=?, status='finished', winner_id=?, "
+            "finished_at=?, updated_at=?, current_question_id=NULL WHERE id=?",
+            (ch_hp, op_hp, winner_id, now, now, duel["id"]),
+        )
+        settled = _fetch_duel(c, duel["id"])
+        _settle_duel(c, settled, winner_id)
+    else:
+        nextq = choose_duel_question(c, exclude_id=duel["current_question_id"])
+        c.execute(
+            "UPDATE duels SET challenger_hp=?, opponent_hp=?, round_no=round_no+1, current_question_id=?, "
+            "round_started_at=?, challenger_answer=NULL, opponent_answer=NULL, "
+            "challenger_answer_at=NULL, opponent_answer_at=NULL, updated_at=? WHERE id=?",
+            (ch_hp, op_hp, nextq["id"] if nextq else None, now, now, duel["id"]),
+        )
+    return _fetch_duel(c, duel["id"])
+
+
+def _resolve_round_locked(duel_id):
+    """Re-fetch under the write lock, re-check, resolve. Used for timer-expiry
+    resolution triggered from the (read) state endpoint."""
+    conn = get_conn()
+    c = conn.cursor()
+    duel = _fetch_duel(c, duel_id)
+    if duel and duel["status"] == "active" and _round_due(duel):
+        duel = _resolve_round(c, duel)
+        conn.commit()
+    conn.close()
+    return duel
+
+
+def _public_duel_state(duel: dict, viewer_id):
+    """Build the viewer-facing duel state. Never leaks correct_option."""
+    if not duel:
+        return {"exists": False}
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT telegram_id, full_name FROM users WHERE telegram_id IN (?,?)",
+        (duel["challenger_id"], duel["opponent_id"]),
+    )
+    names = {r[0]: r[1] for r in c.fetchall()}
+    question = None
+    if duel["status"] == "active" and duel["current_question_id"]:
+        c.execute(
+            "SELECT id, prompt, option_a, option_b, option_c FROM event_questions WHERE id=?",
+            (duel["current_question_id"],),
+        )
+        r = c.fetchone()
+        if r:
+            question = {"id": r[0], "prompt": r[1], "options": {"a": r[2], "b": r[3], "c": r[4]}}
+    conn.close()
+
+    role = _duel_role(duel, viewer_id)
+    you_ch = role == "challenger"
+    opp_id = duel["opponent_id"] if you_ch else duel["challenger_id"]
+    your_hp = duel["challenger_hp"] if you_ch else duel["opponent_hp"]
+    opp_hp = duel["opponent_hp"] if you_ch else duel["challenger_hp"]
+    your_ready = duel["challenger_ready"] if you_ch else duel["opponent_ready"]
+    opp_ready = duel["opponent_ready"] if you_ch else duel["challenger_ready"]
+    your_ans = duel["challenger_answer"] if you_ch else duel["opponent_answer"]
+    opp_ans = duel["opponent_answer"] if you_ch else duel["challenger_answer"]
+
+    out = {
+        "exists": True,
+        "id": duel["id"],
+        "status": duel["status"],
+        "stake": duel["stake"],
+        "role": role,
+        "round_no": duel["round_no"],
+        "max_hp": DUEL_MAX_HP,
+        "max_rounds": DUEL_MAX_ROUNDS,
+        "round_seconds": DUEL_ROUND_SECONDS,
+        "you": {"hp": your_hp, "ready": bool(your_ready), "answered": your_ans is not None},
+        "opponent": {
+            "telegram_id": opp_id,
+            "name": names.get(opp_id, str(opp_id)),
+            "hp": opp_hp,
+            "ready": bool(opp_ready),
+            "answered": opp_ans is not None,
+        },
+    }
+    if duel["status"] == "active":
+        started = parse_iso(duel["round_started_at"])
+        out["seconds_left"] = (
+            max(0, int(DUEL_ROUND_SECONDS - (datetime.utcnow() - started).total_seconds()))
+            if started else DUEL_ROUND_SECONDS
+        )
+        out["question"] = question
+    if duel["status"] == "finished":
+        out["winner_id"] = duel["winner_id"]
+        out["you_won"] = duel["winner_id"] == viewer_id
+        out["draw"] = duel["winner_id"] is None
+    return out
+
+
+@app.post("/api/duel/challenge")
+async def duel_challenge(data: dict):
+    challenger_id = data.get("challenger_id")
+    opponent_id = data.get("opponent_id")
+    stake = data.get("stake")
+
+    def _run():
+        if not challenger_id or not opponent_id:
+            raise HTTPException(status_code=400, detail="Не указаны игроки")
+        if challenger_id == opponent_id:
+            raise HTTPException(status_code=400, detail="Нельзя вызвать самого себя")
+        if stake not in DUEL_STAKE_TIERS:
+            raise HTTPException(status_code=400, detail="Недопустимая ставка")
+        if not _duel_allowed(challenger_id) or not _duel_allowed(opponent_id):
+            raise HTTPException(status_code=403, detail="Дуэли пока доступны только админам")
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute(
+            "SELECT telegram_id, full_name, COALESCE(points,0) FROM users WHERE telegram_id IN (?,?)",
+            (challenger_id, opponent_id),
+        )
+        rows = {r[0]: (r[1], r[2]) for r in c.fetchall()}
+        if challenger_id not in rows or opponent_id not in rows:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Игрок не найден")
+        if rows[challenger_id][1] < stake:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Недостаточно баллов для ставки")
+        c.execute(
+            "SELECT id FROM duels WHERE status IN ('pending','accepted','ready','active') "
+            "AND (challenger_id=? OR opponent_id=?) LIMIT 1",
+            (challenger_id, challenger_id),
+        )
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=409, detail="У тебя уже есть активная дуэль")
+        c.execute(
+            "SELECT id FROM duels WHERE status IN ('ready','active') AND (challenger_id=? OR opponent_id=?) LIMIT 1",
+            (opponent_id, opponent_id),
+        )
+        if c.fetchone():
+            conn.close()
+            raise HTTPException(status_code=409, detail="Соперник сейчас в бою")
+        now = now_iso()
+        c.execute(
+            "INSERT INTO duels (challenger_id, opponent_id, stake, status, created_at, updated_at) "
+            "VALUES (?,?,?, 'pending', ?, ?)",
+            (challenger_id, opponent_id, stake, now, now),
+        )
+        duel_id = c.lastrowid
+        conn.commit()
+        ch_name = rows[challenger_id][0]
+        conn.close()
+        return {"duel_id": duel_id, "challenger_name": ch_name}
+
+    result = await db_write(_run)
+    await send_telegram_message(
+        opponent_id,
+        f"⚔️ {result['challenger_name']} вызывает тебя на дуэль!\nСтавка: {stake}★\n\n"
+        f"Открой приложение → Рейтинг → ⚔ ДУЭЛИ, чтобы принять или отклонить.",
+    )
+    return {"success": True, "duel_id": result["duel_id"]}
+
+
+@app.get("/api/duel/incoming/{telegram_id}")
+def duel_incoming(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    cutoff = (datetime.utcnow() - timedelta(seconds=DUEL_CHALLENGE_EXPIRY_SECONDS)).isoformat()
+    c.execute(
+        "SELECT d.id, d.challenger_id, u.full_name, d.stake, d.created_at FROM duels d "
+        "JOIN users u ON u.telegram_id = d.challenger_id "
+        "WHERE d.opponent_id=? AND d.status='pending' AND d.created_at>=? ORDER BY d.id DESC",
+        (telegram_id, cutoff),
+    )
+    items = [
+        {"duel_id": r[0], "challenger_id": r[1], "challenger_name": r[2], "stake": r[3], "created_at": r[4]}
+        for r in c.fetchall()
+    ]
+    conn.close()
+    return {"challenges": items}
+
+
+@app.get("/api/duel/current/{telegram_id}")
+def duel_current(telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT id FROM duels WHERE status IN ('accepted','ready','active') "
+        "AND (challenger_id=? OR opponent_id=?) ORDER BY id DESC LIMIT 1",
+        (telegram_id, telegram_id),
+    )
+    row = c.fetchone()
+    active_id = row[0] if row else None
+    c.execute(
+        "SELECT id, opponent_id, stake FROM duels WHERE status='pending' AND challenger_id=? ORDER BY id DESC LIMIT 1",
+        (telegram_id,),
+    )
+    sent = c.fetchone()
+    conn.close()
+    return {
+        "enabled": _duel_allowed(telegram_id),
+        "active_duel_id": active_id,
+        "pending_sent": ({"duel_id": sent[0], "opponent_id": sent[1], "stake": sent[2]} if sent else None),
+    }
+
+
+@app.post("/api/duel/{duel_id}/accept")
+async def duel_accept(duel_id: int, data: dict):
+    telegram_id = data.get("telegram_id")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        duel = _fetch_duel(c, duel_id)
+        if not duel:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Дуэль не найдена")
+        if duel["opponent_id"] != telegram_id:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Это не твой вызов")
+        if duel["status"] != "pending":
+            conn.close()
+            raise HTTPException(status_code=409, detail="Вызов уже не активен")
+        created = parse_iso(duel["created_at"])
+        if created and (datetime.utcnow() - created).total_seconds() > DUEL_CHALLENGE_EXPIRY_SECONDS:
+            c.execute("UPDATE duels SET status='expired', updated_at=? WHERE id=?", (now_iso(), duel_id))
+            conn.commit()
+            conn.close()
+            raise HTTPException(status_code=409, detail="Вызов истёк")
+        c.execute("SELECT COALESCE(points,0) FROM users WHERE telegram_id=?", (telegram_id,))
+        bal = (c.fetchone() or [0])[0]
+        if bal < duel["stake"]:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Недостаточно баллов для ставки")
+        now = now_iso()
+        c.execute("UPDATE duels SET status='accepted', accepted_at=?, updated_at=? WHERE id=?", (now, now, duel_id))
+        conn.commit()
+        conn.close()
+        return {"challenger_id": duel["challenger_id"], "stake": duel["stake"]}
+
+    res = await db_write(_run)
+    await send_telegram_message(
+        res["challenger_id"],
+        f"⚔️ Твой вызов принят! Ставка {res['stake']}★.\n"
+        f"Открой приложение → Рейтинг → ⚔ ДУЭЛИ и нажми «Готов», когда будешь у телефона.",
+    )
+    return {"success": True}
+
+
+@app.post("/api/duel/{duel_id}/decline")
+async def duel_decline(duel_id: int, data: dict):
+    telegram_id = data.get("telegram_id")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        duel = _fetch_duel(c, duel_id)
+        if not duel:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Дуэль не найдена")
+        if duel["opponent_id"] != telegram_id:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Это не твой вызов")
+        if duel["status"] != "pending":
+            conn.close()
+            raise HTTPException(status_code=409, detail="Вызов уже не активен")
+        c.execute("UPDATE duels SET status='declined', updated_at=? WHERE id=?", (now_iso(), duel_id))
+        conn.commit()
+        conn.close()
+        return {"challenger_id": duel["challenger_id"]}
+
+    res = await db_write(_run)
+    await send_telegram_message(res["challenger_id"], "⚔️ Твой вызов на дуэль отклонён.")
+    return {"success": True}
+
+
+@app.post("/api/duel/{duel_id}/cancel")
+async def duel_cancel(duel_id: int, data: dict):
+    telegram_id = data.get("telegram_id")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        duel = _fetch_duel(c, duel_id)
+        if not duel:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Дуэль не найдена")
+        if duel["challenger_id"] != telegram_id:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Это не твой вызов")
+        if duel["status"] not in ("pending", "accepted", "ready"):
+            conn.close()
+            raise HTTPException(status_code=409, detail="Дуэль уже нельзя отменить")
+        c.execute("UPDATE duels SET status='cancelled', updated_at=? WHERE id=?", (now_iso(), duel_id))
+        conn.commit()
+        conn.close()
+        return True
+
+    await db_write(_run)
+    return {"success": True}
+
+
+@app.post("/api/duel/{duel_id}/ready")
+async def duel_ready(duel_id: int, data: dict):
+    telegram_id = data.get("telegram_id")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        duel = _fetch_duel(c, duel_id)
+        if not duel:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Дуэль не найдена")
+        role = _duel_role(duel, telegram_id)
+        if not role:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Ты не участник дуэли")
+        if duel["status"] not in ("accepted", "ready"):
+            conn.close()
+            raise HTTPException(status_code=409, detail="Сейчас нельзя готовиться")
+        now = now_iso()
+        col = "challenger_ready" if role == "challenger" else "opponent_ready"
+        c.execute(f"UPDATE duels SET {col}=1, status='ready', updated_at=? WHERE id=?", (now, duel_id))
+        duel = _fetch_duel(c, duel_id)
+        if duel["challenger_ready"] and duel["opponent_ready"]:
+            q = choose_duel_question(c)
+            c.execute(
+                "UPDATE duels SET status='active', round_no=1, current_question_id=?, round_started_at=?, "
+                "challenger_hp=?, opponent_hp=?, updated_at=? WHERE id=?",
+                (q["id"] if q else None, now, DUEL_MAX_HP, DUEL_MAX_HP, now, duel_id),
+            )
+        conn.commit()
+        conn.close()
+        return True
+
+    await db_write(_run)
+    return {"success": True}
+
+
+@app.post("/api/duel/{duel_id}/answer")
+async def duel_answer(duel_id: int, data: dict):
+    telegram_id = data.get("telegram_id")
+    option = data.get("option")
+    question_id = data.get("question_id")
+
+    def _run():
+        conn = get_conn()
+        c = conn.cursor()
+        duel = _fetch_duel(c, duel_id)
+        if not duel:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Дуэль не найдена")
+        role = _duel_role(duel, telegram_id)
+        if not role:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Ты не участник дуэли")
+        if duel["status"] != "active":
+            conn.close()
+            raise HTTPException(status_code=409, detail="Бой не идёт")
+        if option not in ("a", "b", "c"):
+            conn.close()
+            raise HTTPException(status_code=400, detail="Неверный вариант")
+        if question_id and int(question_id) != duel["current_question_id"]:
+            conn.close()
+            raise HTTPException(status_code=409, detail="Раунд уже сменился")
+        ans_col = "challenger_answer" if role == "challenger" else "opponent_answer"
+        at_col = "challenger_answer_at" if role == "challenger" else "opponent_answer_at"
+        if duel[ans_col] is None:
+            now = now_iso()
+            c.execute(f"UPDATE duels SET {ans_col}=?, {at_col}=?, updated_at=? WHERE id=?", (option, now, now, duel_id))
+            duel = _fetch_duel(c, duel_id)
+            if _round_due(duel):
+                duel = _resolve_round(c, duel)
+            conn.commit()
+        conn.close()
+        return duel
+
+    duel = await db_write(_run)
+    return _public_duel_state(duel, telegram_id)
+
+
+@app.get("/api/duel/{duel_id}/state")
+async def duel_state(duel_id: int, telegram_id: int):
+    conn = get_conn()
+    c = conn.cursor()
+    duel = _fetch_duel(c, duel_id)
+    conn.close()
+    if duel and duel["status"] == "active" and _round_due(duel):
+        duel = await db_write(lambda: _resolve_round_locked(duel_id))
+    return _public_duel_state(duel, telegram_id)
+
+
+@app.get("/api/duel/leaderboard")
+def duel_leaderboard():
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute(
+        "SELECT winner_id, COUNT(*) FROM duels WHERE status='finished' AND winner_id IS NOT NULL GROUP BY winner_id"
+    )
+    wins = {r[0]: r[1] for r in c.fetchall()}
+    c.execute(
+        "SELECT CASE WHEN winner_id=challenger_id THEN opponent_id ELSE challenger_id END AS loser, COUNT(*) "
+        "FROM duels WHERE status='finished' AND winner_id IS NOT NULL GROUP BY loser"
+    )
+    losses = {r[0]: r[1] for r in c.fetchall()}
+    ids = set(wins) | set(losses)
+    names = {}
+    if ids:
+        qmarks = ",".join("?" * len(ids))
+        c.execute(f"SELECT telegram_id, full_name, avatar_url FROM users WHERE telegram_id IN ({qmarks})", tuple(ids))
+        names = {r[0]: (r[1], r[2]) for r in c.fetchall()}
+    conn.close()
+    board = []
+    for tid in ids:
+        w = wins.get(tid, 0)
+        l = losses.get(tid, 0)
+        nm = names.get(tid, (str(tid), None))
+        board.append({"telegram_id": tid, "name": nm[0], "avatar_url": nm[1], "wins": w, "losses": l, "total": w + l})
+    board.sort(key=lambda x: (-x["wins"], x["losses"], -x["total"]))
+    return {"leaderboard": board}
