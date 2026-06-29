@@ -125,7 +125,7 @@ async function triggerGlobalArchitectAlert() {
   }
 }
 
-async function checkGlobalAlert() {
+async function checkGlobalAlert(baselineOnly) {
   if (!currentUserId) return;
   if (document.hidden) return;
 
@@ -146,6 +146,13 @@ async function checkGlobalAlert() {
 
     setLastSeenGlobalAlertId(alertId);
 
+    // baselineOnly: первый вызов при открытии приложения просто запоминает
+    // уже существующий алерт как "виденный", не показывая баннер — иначе
+    // те, кто открыл приложение позже срабатывания кнопки, тоже видели бы
+    // его. Баннер должен ловить только тех, у кого приложение уже было
+    // открыто в момент срабатывания (следующий тик поллинга/возврат из фона).
+    if (baselineOnly) return;
+
     if (String(alert.alert_type || '').toLowerCase() === 'architect') {
       openArchitectArrivalBanner();
     }
@@ -154,7 +161,7 @@ async function checkGlobalAlert() {
 
 function startGlobalAlertPolling() {
   if (globalAlertPollingHandle) return;
-  checkGlobalAlert();
+  checkGlobalAlert(true);
   // 10s + skip when hidden: ~85 одновременных клиентов не должны давать лавину GET'ов.
   globalAlertPollingHandle = setInterval(checkGlobalAlert, 10000);
   document.addEventListener('visibilitychange', () => {
