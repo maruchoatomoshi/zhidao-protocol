@@ -12,9 +12,8 @@ const INTRO_NOVEL_CAST = {
   liza:      { name: 'ЕЛИЗАВЕТА СЕРГЕЕВНА',      color: '#00f0ff', image: INTRO_NOVEL_GH + 'liza_neutral-Photoroom.png' },
   tianhao:   { name: '孙天昊 СУНЬ ТЯНЬХАО',       color: '#ffaa00', image: INTRO_NOVEL_GH + 'tianhao_explaining.png' },
   architect: { name: 'АРХИТЕКТОР',               color: '#00ff66', image: INTRO_NOVEL_GH + 'architect_happy.png' },
-  // Картинок для Ву Нан и Ольги пока нет — используем logo.png как заглушку, цвет уже фирменный (совпадает с карточкой в "Команде")
-  wunan:     { name: 'ВУ НАН',                   color: '#9b6bff', image: INTRO_NOVEL_GH + 'logo.png' },
-  olga:      { name: 'ОЛЬГА',                    color: '#ffd23f', image: INTRO_NOVEL_GH + 'logo.png' }
+  wunan:     { name: 'ВУ НАН',                   color: '#9b6bff', image: INTRO_NOVEL_GH + 'wungan.png' },
+  olga:      { name: 'ОЛЬГА МИХАЙЛОВНА',         color: '#ffd23f', image: INTRO_NOVEL_GH + 'olga.png' }
 };
 
 function _buildIntroNovelScenes() {
@@ -59,7 +58,15 @@ function _buildIntroNovelScenes() {
     s23: { who: 'liza', text: 'Протокол большой, но мы рядом', next: 's24' },
     s24: { who: 'liza', text: 'Не надо пытаться разобраться во всём одному В этой системе помощь — тоже часть прогресса', next: 's24h' },
     s24h: { who: 'liza', text: 'Скоро на связь выйдет тот, кого вы ещё не знаете. Он — про Пекин, а я — про то, что происходит у вас внутри', next: 's25' },
-    s25: { who: 'system', text: 'Узел равновесия подключён', next: 's26' },
+    s25: { who: 'system', text: 'Узел равновесия подключён', next: 's25o' },
+
+    s25o: { who: 'system', text: 'Подключается ещё один контур — те, кто рядом с вами каждый день', next: 'sO1r' },
+    sO1r: { who: 'olga', text: 'Привет! Лиза уже всё объяснила про самочувствие, мы — про дела', next: 'sO1' },
+    sO1:  { who: 'olga', text: 'Я Ольга Михайловна, вожатая. Стирка, вода, бытовые вопросы — обычно это ко мне или к Нан', next: 'sO2' },
+    sO2:  { who: 'wunan', text: '大家好, я Ву Нан', next: 'sO3' },
+    sO3:  { who: 'wunan', text: 'Если что-то по расписанию дня, по комнатам или мелким делам — спрашивайте, не стесняйтесь', next: 'sO4' },
+    sO4:  { who: 'olga', text: 'Это не самая заметная часть Протокола, но именно на ней держится комфорт каждого дня', next: 'sO5' },
+    sO5:  { who: 'system', text: 'Узел быта подключён', next: 's26' },
 
     s26: { who: 'system', text: 'Внешний контур отвечает...', next: 's27' },
     s27: { who: 'system', text: 'BEIJING NODE // ожидание подтверждения', next: 's28r' },
