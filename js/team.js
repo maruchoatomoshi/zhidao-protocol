@@ -67,8 +67,8 @@ const TEAM_DATA = [
   },
   {
     id: "olga",
-    name: "Ольга",
-    codename: "Ольга",
+    name: "Ольга Михайловна",
+    codename: "SUPPORT",
     role: "СИГМА ВОЖАТАЯ",
     short: "Помогает с сопровождением и дисциплиной группы",
     status: "ACTIVE_NODE",
