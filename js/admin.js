@@ -1860,7 +1860,7 @@ function adminRenderEconomyReport(data) {
   const periodLabel = `${escapeHtml(String(data.since || '').slice(0, 10))} — ${escapeHtml(String(data.until || '').slice(0, 10))}`;
 
   const cards = [
-    ['Заработано', `${Number(summary.total_earned || 0)}★`, `${players.length} активных игроков`],
+    ['Заработано', `${Number(summary.total_earned || 0)}★`, `${Number(summary.active_players || 0)} активных / ${players.length} всего`],
     ['Потрачено', `${Number(summary.total_spent || 0)}★`, periodLabel],
     ['Кейсы/молитвы', `${Number(summary.total_cases_opened || 0)}`, 'открыто за период'],
     ['Рейды', `${Number(summary.total_raids_entered || 0)}`, 'попыток за период'],

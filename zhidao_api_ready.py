@@ -11128,32 +11128,54 @@ def admin_economy_report(since: Optional[str] = None, until: Optional[str] = Non
     conn = get_conn()
     c = conn.cursor()
 
+    admin_placeholders = ','.join('?' * len(ADMIN_IDS))
     c.execute(
         '''SELECT
-             el.telegram_id,
-             COALESCE(u.full_name, el.telegram_id) AS full_name,
+             u.telegram_id,
+             COALESCE(u.full_name, u.telegram_id) AS full_name,
              u.points,
-             COUNT(*) AS tx_count,
-             COALESCE(SUM(CASE WHEN el.amount>0 THEN el.amount ELSE 0 END),0) AS earned,
-             COALESCE(SUM(CASE WHEN el.amount<0 THEN -el.amount ELSE 0 END),0) AS spent,
-             COALESCE(SUM(CASE WHEN el.operation='shop_purchase' THEN -el.amount ELSE 0 END),0) AS shop_spent,
-             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') THEN 1 ELSE 0 END),0) AS cases_opened,
-             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') THEN -el.amount ELSE 0 END),0) AS cases_spent,
-             COALESCE(SUM(CASE WHEN el.operation IN ('case_open','prayer_open') AND el.amount>0 THEN el.amount ELSE 0 END),0) AS cases_won,
-             COALESCE(SUM(CASE WHEN el.operation='raid_entry' THEN 1 ELSE 0 END),0) AS raids_entered,
-             COALESCE(SUM(CASE WHEN el.operation='raid_reward' THEN 1 ELSE 0 END),0) AS raids_won,
-             COALESCE(SUM(CASE WHEN el.operation='gift_tax' THEN 1 ELSE 0 END),0) AS gifts_sent,
-             COALESCE(SUM(CASE WHEN el.operation='gift_receive' THEN 1 ELSE 0 END),0) AS gifts_received,
-             COALESCE(SUM(CASE WHEN el.operation IN ('presence_penalty','presence_rep_penalty','admin_points','bot_penalize') AND el.amount<0 THEN 1 ELSE 0 END),0) AS penalties,
-             COALESCE(SUM(CASE WHEN el.operation IN ('bot_salary','bot_award') THEN el.amount ELSE 0 END),0) AS salary_award_total,
-             COALESCE(SUM(CASE WHEN el.operation='contract_payout' THEN el.amount ELSE 0 END),0) AS contract_earnings,
-             COALESCE(SUM(CASE WHEN el.operation='contract_freeze' THEN -el.amount ELSE 0 END),0) AS contract_spent
-           FROM economy_log el
-           LEFT JOIN users u ON u.telegram_id=el.telegram_id
-           WHERE el.created_at BETWEEN ? AND ?
-           GROUP BY el.telegram_id
-           ORDER BY tx_count DESC''',
-        (since, until),
+             COALESCE(e.tx_count, 0) AS tx_count,
+             COALESCE(e.earned, 0) AS earned,
+             COALESCE(e.spent, 0) AS spent,
+             COALESCE(e.shop_spent, 0) AS shop_spent,
+             COALESCE(e.cases_opened, 0) AS cases_opened,
+             COALESCE(e.cases_spent, 0) AS cases_spent,
+             COALESCE(e.cases_won, 0) AS cases_won,
+             COALESCE(e.raids_entered, 0) AS raids_entered,
+             COALESCE(e.raids_won, 0) AS raids_won,
+             COALESCE(e.gifts_sent, 0) AS gifts_sent,
+             COALESCE(e.gifts_received, 0) AS gifts_received,
+             COALESCE(e.penalties, 0) AS penalties,
+             COALESCE(e.salary_award_total, 0) AS salary_award_total,
+             COALESCE(e.contract_earnings, 0) AS contract_earnings,
+             COALESCE(e.contract_spent, 0) AS contract_spent
+           FROM users u
+           LEFT JOIN (
+             SELECT
+               telegram_id,
+               COUNT(*) AS tx_count,
+               COALESCE(SUM(CASE WHEN amount>0 THEN amount ELSE 0 END),0) AS earned,
+               COALESCE(SUM(CASE WHEN amount<0 THEN -amount ELSE 0 END),0) AS spent,
+               COALESCE(SUM(CASE WHEN operation='shop_purchase' THEN -amount ELSE 0 END),0) AS shop_spent,
+               COALESCE(SUM(CASE WHEN operation IN ('case_open','prayer_open') THEN 1 ELSE 0 END),0) AS cases_opened,
+               COALESCE(SUM(CASE WHEN operation IN ('case_open','prayer_open') THEN -amount ELSE 0 END),0) AS cases_spent,
+               COALESCE(SUM(CASE WHEN operation IN ('case_open','prayer_open') AND amount>0 THEN amount ELSE 0 END),0) AS cases_won,
+               COALESCE(SUM(CASE WHEN operation='raid_entry' THEN 1 ELSE 0 END),0) AS raids_entered,
+               COALESCE(SUM(CASE WHEN operation='raid_reward' THEN 1 ELSE 0 END),0) AS raids_won,
+               COALESCE(SUM(CASE WHEN operation='gift_tax' THEN 1 ELSE 0 END),0) AS gifts_sent,
+               COALESCE(SUM(CASE WHEN operation='gift_receive' THEN 1 ELSE 0 END),0) AS gifts_received,
+               COALESCE(SUM(CASE WHEN operation IN ('presence_penalty','presence_rep_penalty','admin_points','bot_penalize') AND amount<0 THEN 1 ELSE 0 END),0) AS penalties,
+               COALESCE(SUM(CASE WHEN operation IN ('bot_salary','bot_award') THEN amount ELSE 0 END),0) AS salary_award_total,
+               COALESCE(SUM(CASE WHEN operation='contract_payout' THEN amount ELSE 0 END),0) AS contract_earnings,
+               COALESCE(SUM(CASE WHEN operation='contract_freeze' THEN -amount ELSE 0 END),0) AS contract_spent
+             FROM economy_log
+             WHERE created_at BETWEEN ? AND ?
+             GROUP BY telegram_id
+           ) e ON e.telegram_id = u.telegram_id
+           WHERE u.telegram_id IS NOT NULL
+             AND u.telegram_id NOT IN ({})
+           ORDER BY tx_count DESC, u.full_name COLLATE NOCASE'''.format(admin_placeholders),
+        [since, until] + ADMIN_IDS,
     )
     rows = c.fetchall()
     conn.close()
@@ -11188,6 +11210,7 @@ def admin_economy_report(since: Optional[str] = None, until: Optional[str] = Non
         "until": until,
         "summary": {
             "players": len(players),
+            "active_players": sum(1 for p in players if p["tx_count"] > 0),
             "total_earned": sum(p["earned"] for p in players),
             "total_spent": sum(p["spent"] for p in players),
             "total_cases_opened": sum(p["cases_opened"] for p in players),
@@ -11209,28 +11232,38 @@ def admin_activity_report(x_admin_id: Optional[int] = Header(None)):
     conn = get_conn()
     c = conn.cursor()
 
+    admin_placeholders = ','.join('?' * len(ADMIN_IDS))
     c.execute(
         '''SELECT
-             a.telegram_id,
-             COALESCE(u.full_name, a.telegram_id) AS full_name,
-             COUNT(*) AS total_count,
-             COALESCE(SUM(CASE WHEN substr(a.ts, 1, 10) = ? THEN 1 ELSE 0 END), 0) AS today_count,
-             MAX(a.ts) AS last_active
-           FROM (
-             SELECT telegram_id, created_at AS ts FROM economy_log
-             UNION ALL
-             SELECT telegram_id, confirmed_at AS ts FROM daily_checks WHERE confirmed_at IS NOT NULL
-             UNION ALL
-             SELECT telegram_id, updated_at AS ts FROM diary_entries WHERE updated_at IS NOT NULL
-             UNION ALL
-             SELECT telegram_id, created_at AS ts FROM casino_log
-             UNION ALL
-             SELECT telegram_id, created_at AS ts FROM event_actions
-           ) a
-           LEFT JOIN users u ON u.telegram_id = a.telegram_id
-           GROUP BY a.telegram_id
-           ORDER BY today_count DESC, total_count DESC''',
-        (today,),
+             u.telegram_id,
+             COALESCE(u.full_name, u.telegram_id) AS full_name,
+             COALESCE(a.total_count, 0) AS total_count,
+             COALESCE(a.today_count, 0) AS today_count,
+             a.last_active
+           FROM users u
+           LEFT JOIN (
+             SELECT
+               telegram_id,
+               COUNT(*) AS total_count,
+               COALESCE(SUM(CASE WHEN substr(ts, 1, 10) = ? THEN 1 ELSE 0 END), 0) AS today_count,
+               MAX(ts) AS last_active
+             FROM (
+               SELECT telegram_id, created_at AS ts FROM economy_log
+               UNION ALL
+               SELECT telegram_id, confirmed_at AS ts FROM daily_checks WHERE confirmed_at IS NOT NULL
+               UNION ALL
+               SELECT telegram_id, updated_at AS ts FROM diary_entries WHERE updated_at IS NOT NULL
+               UNION ALL
+               SELECT telegram_id, created_at AS ts FROM casino_log
+               UNION ALL
+               SELECT telegram_id, created_at AS ts FROM event_actions
+             )
+             GROUP BY telegram_id
+           ) a ON a.telegram_id = u.telegram_id
+           WHERE u.telegram_id IS NOT NULL
+             AND u.telegram_id NOT IN ({})
+           ORDER BY today_count DESC, total_count DESC, u.full_name COLLATE NOCASE'''.format(admin_placeholders),
+        [today] + ADMIN_IDS,
     )
     rows = c.fetchall()
     conn.close()
