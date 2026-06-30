@@ -5628,7 +5628,11 @@ body.theme-nw-light .team-card-btn   { background: rgba(0,0,0,0.03); }
 .architect-event-entry-card {
   position: relative;
   width: min(100%, 420px);
-  overflow: hidden;
+  max-height: calc(var(--app-height, 100dvh) - 36px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid rgba(255, 42, 42, 0.60);
   border-radius: 18px;
   padding: 22px 18px 20px;
@@ -14459,6 +14463,78 @@ body.is-architect .profile-card-spark.spark-bl {
   box-shadow: 0 -6px 22px rgba(0,0,0,0.45) !important;
 }
 
+/* ── Event lobby readability pass: keep the boss art visible ───────────── */
+.event-overlay.event-state-lobby .event-lobby-card {
+  max-height: 34vh !important;
+  padding: 0 !important;
+  background: linear-gradient(180deg, rgba(5,5,13,0.50), rgba(5,5,13,0.68)) !important;
+  border-top-color: rgba(220, 38, 38, 0.38) !important;
+  box-shadow: 0 -4px 18px rgba(0,0,0,0.30) !important;
+  backdrop-filter: blur(3px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(3px) saturate(1.08) !important;
+}
+
+.event-overlay.event-state-lobby .event-lobby-head {
+  padding: 8px 12px 0 !important;
+}
+
+.event-overlay.event-state-lobby .event-lobby-reward {
+  margin-top: 4px !important;
+  padding: 5px 12px !important;
+  background: rgba(255,255,255,0.015) !important;
+  border-top-color: rgba(255,255,255,0.035) !important;
+}
+
+.event-overlay.event-state-lobby .event-lobby-reward .event-lobby-value {
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+
+.event-overlay.event-state-lobby .event-lobby-members {
+  padding: 4px 12px 0 !important;
+}
+
+.event-overlay.event-state-lobby .event-team-list {
+  max-height: 38px !important;
+  gap: 3px !important;
+  padding-top: 2px !important;
+}
+
+.event-overlay.event-state-lobby .event-team-member {
+  padding: 2px 7px !important;
+  font-size: 9px !important;
+  background: rgba(255,255,255,0.028) !important;
+  border-color: rgba(255,255,255,0.075) !important;
+}
+
+.event-overlay.event-state-lobby .event-lobby-actions {
+  margin-top: 6px !important;
+  border-top-color: rgba(255,255,255,0.04) !important;
+}
+
+.event-overlay.event-state-lobby .event-lobby-btn {
+  min-height: 42px !important;
+  padding: 8px 12px !important;
+  font-size: 10px !important;
+  background: rgba(5,5,13,0.54) !important;
+}
+
+.event-overlay.event-state-lobby #eventJoinBtn,
+.event-overlay.event-state-lobby .event-lobby-btn.join {
+  background: linear-gradient(150deg, rgba(220,38,38,0.075), rgba(5,5,13,0.52) 62%) !important;
+}
+
+.event-overlay.event-state-lobby #eventStartBtn,
+.event-overlay.event-state-lobby #eventCreateBtn,
+.event-overlay.event-state-lobby .event-lobby-btn.start {
+  background: linear-gradient(150deg, rgba(212,175,55,0.085), rgba(5,5,13,0.52) 62%) !important;
+}
+
+.event-overlay.event-state-lobby #eventLeaveBtn,
+.event-overlay.event-state-lobby .event-lobby-btn.leave {
+  background: rgba(5,5,13,0.48) !important;
+}
+
 /* Result win/lose container border animation -> keep but slow it */
 .event-overlay.event-terminal .event-lobby-card.event-result-win,
 .event-overlay.event-terminal .event-lobby-card.event-result-lose {
@@ -15915,18 +15991,22 @@ body.lite-mode .profile-card-home::after { display: none; }
   z-index: 130;
   display: flex;
   align-items: flex-end;
+  pointer-events: auto;
   background: rgba(0,0,0,0.72);
   backdrop-filter: blur(4px);
 }
 .event-info-modal-inner {
   position: relative;
   width: 100%;
-  max-height: 78vh;
+  max-height: min(78vh, calc(var(--app-height, 100dvh) - 58px));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   background: #0a0e14;
   border-top: 1px solid rgba(0,255,136,0.25);
   border-radius: 18px 18px 0 0;
-  padding: 24px 18px 32px;
+  padding: 24px 18px calc(32px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
 }
 .event-info-modal-close {
