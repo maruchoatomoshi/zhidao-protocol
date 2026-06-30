@@ -690,7 +690,9 @@ CONTRACT_AUTO_CONFIRM_HOURS = 24
 CONTRACT_CATEGORIES = {'living', 'chinese', 'app', 'reminder', 'trade', 'other'}
 LATIN_RE = re.compile(r'[A-Za-z]')
 PINYIN_RE = re.compile(r"^(?:[A-Za-züÜvV:]+[1-5])+(?:[ '\\-](?:[A-Za-züÜvV:]+[1-5])+)*$")
-ARCHITECT_DEFAULT_HP = 1200
+ARCHITECT_DEFAULT_HP = 5000
+ARCHITECT_DEFAULT_MIN_PLAYERS = 5
+ARCHITECT_DEFAULT_MAX_PLAYERS = 15
 ARCHITECT_PHASE2_THRESHOLD = 0.7
 ARCHITECT_PHASE3_THRESHOLD = 0.3
 ARCHITECT_FINAL_PHASE_SECONDS = 180
@@ -1293,8 +1295,8 @@ def init_db():
                   boss_name TEXT NOT NULL,
                   boss_image TEXT DEFAULT NULL,
                   reward_text TEXT DEFAULT NULL,
-                  min_players INTEGER NOT NULL DEFAULT 3,
-                  max_players INTEGER NOT NULL DEFAULT 5,
+                  min_players INTEGER NOT NULL DEFAULT 5,
+                  max_players INTEGER NOT NULL DEFAULT 15,
                   max_hp INTEGER NOT NULL,
                   current_hp INTEGER NOT NULL,
                   phase INTEGER NOT NULL,
@@ -1364,6 +1366,15 @@ def init_db():
                   correct_option TEXT NOT NULL,
                   explanation TEXT DEFAULT NULL,
                   created_at TEXT NOT NULL)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS event_question_draws
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  event_id INTEGER NOT NULL,
+                  action_type TEXT NOT NULL,
+                  question_id INTEGER NOT NULL,
+                  cycle INTEGER NOT NULL DEFAULT 1,
+                  telegram_id INTEGER DEFAULT NULL,
+                  created_at TEXT NOT NULL,
+                  UNIQUE(event_id, action_type, question_id, cycle))''')
     c.execute('''CREATE TABLE IF NOT EXISTS trip_quiz_questions
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   prompt TEXT NOT NULL,
@@ -1522,9 +1533,9 @@ def migrate_db():
         if 'reward_text' not in event_columns:
             c.execute("ALTER TABLE events ADD COLUMN reward_text TEXT DEFAULT NULL")
         if 'min_players' not in event_columns:
-            c.execute("ALTER TABLE events ADD COLUMN min_players INTEGER NOT NULL DEFAULT 3")
+            c.execute("ALTER TABLE events ADD COLUMN min_players INTEGER NOT NULL DEFAULT 5")
         if 'max_players' not in event_columns:
-            c.execute("ALTER TABLE events ADD COLUMN max_players INTEGER NOT NULL DEFAULT 5")
+            c.execute("ALTER TABLE events ADD COLUMN max_players INTEGER NOT NULL DEFAULT 15")
         if 'pressure_tick_at' not in event_columns:
             c.execute("ALTER TABLE events ADD COLUMN pressure_tick_at TEXT DEFAULT NULL")
     c.execute('''CREATE TABLE IF NOT EXISTS event_team_members
@@ -1650,6 +1661,7 @@ def migrate_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_legendary_actions ON legendary_implant_actions(actor_telegram_id, action_code)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_event_actions_eid ON event_actions(event_id, telegram_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_event_participants_eid ON event_participants(event_id, telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_event_question_draws_eac ON event_question_draws(event_id, action_type, cycle)")
 
     conn.commit()
     conn.close()
@@ -2609,16 +2621,7 @@ def get_blocking_event_id(event_code: Optional[str] = None):
     return blocking_id
 
 
-def choose_architect_question(c, action_type: str, event_code: str = 'architect'):
-    c.execute(
-        '''SELECT id, prompt, option_a, option_b, option_c, explanation
-           FROM event_questions
-           WHERE event_code=? AND action_type=?
-           ORDER BY RANDOM()
-           LIMIT 1''',
-        (event_code, action_type),
-    )
-    row = c.fetchone()
+def _event_question_payload(row):
     if not row:
         return None
     return {
@@ -2629,6 +2632,77 @@ def choose_architect_question(c, action_type: str, event_code: str = 'architect'
         "option_c": row[4],
         "explanation": row[5],
     }
+
+
+def choose_architect_question(
+    c,
+    action_type: str,
+    event_code: str = 'architect',
+    event_id: Optional[int] = None,
+    telegram_id: Optional[int] = None,
+):
+    """Pick a question without repeats inside the current event/action cycle."""
+    if event_id is None:
+        c.execute(
+            '''SELECT id, prompt, option_a, option_b, option_c, explanation
+               FROM event_questions
+               WHERE event_code=? AND action_type=?
+               ORDER BY RANDOM()
+               LIMIT 1''',
+            (event_code, action_type),
+        )
+        return _event_question_payload(c.fetchone())
+
+    c.execute(
+        "SELECT COUNT(*) FROM event_questions WHERE event_code=? AND action_type=?",
+        (event_code, action_type),
+    )
+    if (c.fetchone()[0] or 0) <= 0:
+        return None
+
+    c.execute(
+        "SELECT COALESCE(MAX(cycle), 1) FROM event_question_draws WHERE event_id=? AND action_type=?",
+        (int(event_id), action_type),
+    )
+    current_cycle = int(c.fetchone()[0] or 1)
+
+    for _ in range(3):
+        c.execute(
+            '''SELECT id, prompt, option_a, option_b, option_c, explanation
+               FROM event_questions
+               WHERE event_code=? AND action_type=?
+                 AND id NOT IN (
+                     SELECT question_id
+                     FROM event_question_draws
+                     WHERE event_id=? AND action_type=? AND cycle=?
+                 )
+               ORDER BY RANDOM()
+               LIMIT 1''',
+            (event_code, action_type, int(event_id), action_type, current_cycle),
+        )
+        row = c.fetchone()
+        if row:
+            try:
+                c.execute(
+                    '''INSERT INTO event_question_draws
+                       (event_id, action_type, question_id, cycle, telegram_id, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?)''',
+                    (int(event_id), action_type, int(row[0]), current_cycle, telegram_id, now_iso()),
+                )
+                return _event_question_payload(row)
+            except sqlite3.IntegrityError:
+                continue
+        current_cycle += 1
+
+    c.execute(
+        '''SELECT id, prompt, option_a, option_b, option_c, explanation
+           FROM event_questions
+           WHERE event_code=? AND action_type=?
+           ORDER BY RANDOM()
+           LIMIT 1''',
+        (event_code, action_type),
+    )
+    return _event_question_payload(c.fetchone())
 
 
 def get_architect_base_value(phase: int, action_type: str, is_correct: bool) -> int:
@@ -9730,8 +9804,8 @@ async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
         boss_name = data.get("boss_name") or "Архитектор"
         boss_image = data.get("boss_image")
         reward_text = data.get("reward_text") or "Приз не указан"
-        min_players = int(data.get("min_players") or 3)
-        max_players = int(data.get("max_players") or 5)
+        min_players = int(data.get("min_players") or ARCHITECT_DEFAULT_MIN_PLAYERS)
+        max_players = int(data.get("max_players") or ARCHITECT_DEFAULT_MAX_PLAYERS)
         max_hp = int(data.get("max_hp") or ARCHITECT_DEFAULT_HP)
         created_at = now_iso()
         if min_players < 1:
@@ -10027,6 +10101,7 @@ async def reset_event(event_id: int, x_admin_id: int = Header(None)):
         # Clear logs and action history for a clean test run
         c.execute("DELETE FROM event_logs WHERE event_id=?", (event_id,))
         c.execute("DELETE FROM event_actions WHERE event_id=?", (event_id,))
+        c.execute("DELETE FROM event_question_draws WHERE event_id=?", (event_id,))
         add_event_log(c, event_id, "system", "Ивент сброшен администратором. Регистрация открыта.")
         conn.commit()
         conn.close()
@@ -10062,7 +10137,14 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
                 "hint": "SYNC does not require a question in MVP.",
             }
 
-        question = choose_architect_question(c, action_type, event_code=event_code)
+        question = choose_architect_question(
+            c,
+            action_type,
+            event_code=event_code,
+            event_id=int(event_id),
+            telegram_id=int(telegram_id),
+        )
+        conn.commit()
         conn.close()
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
