@@ -824,6 +824,18 @@ ARCHITECT_QUESTION_SEEDS = {
         {"prompt": "Выбери перевод 我想喝水。", "option_a": "Я хочу пить воду", "option_b": "Я хочу есть рис", "option_c": "Я хочу идти домой", "correct_option": "a", "explanation": "我想喝水 — я хочу пить воду."},
         {"prompt": "Как переводится 右边?", "option_a": "Слева", "option_b": "Справа", "option_c": "Прямо", "correct_option": "b", "explanation": "右边 — справа."},
         {"prompt": "Что значит 便宜一点?", "option_a": "Немного дешевле", "option_b": "Немного быстрее", "option_c": "Немного дальше", "correct_option": "a", "explanation": "便宜一点 — немного дешевле."},
+        {"prompt": "Как переводится 左边?", "option_a": "Слева", "option_b": "Справа", "option_c": "Позади", "correct_option": "a", "explanation": "左边 — слева."},
+        {"prompt": "Что значит 出口?", "option_a": "Вход", "option_b": "Выход", "option_c": "Остановка", "correct_option": "b", "explanation": "出口 — выход."},
+        {"prompt": "Выбери перевод 入口.", "option_a": "Вход", "option_b": "Библиотека", "option_c": "Стадион", "correct_option": "a", "explanation": "入口 — вход."},
+        {"prompt": "Как переводится 宿舍?", "option_a": "Общежитие", "option_b": "Класс", "option_c": "Магазин", "correct_option": "a", "explanation": "宿舍 — общежитие."},
+        {"prompt": "Что значит 教室?", "option_a": "Столовая", "option_b": "Аудитория / класс", "option_c": "Банк", "correct_option": "b", "explanation": "教室 — аудитория, учебный класс."},
+        {"prompt": "Как переводится 食堂?", "option_a": "Столовая", "option_b": "Больница", "option_c": "Почта", "correct_option": "a", "explanation": "食堂 — столовая."},
+        {"prompt": "Что значит 图书馆?", "option_a": "Библиотека", "option_b": "Спортзал", "option_c": "Кофейня", "correct_option": "a", "explanation": "图书馆 — библиотека."},
+        {"prompt": "Выбери перевод 医院.", "option_a": "Медпункт / больница", "option_b": "Магазин", "option_c": "Метро", "correct_option": "a", "explanation": "医院 — больница, медицинский пункт."},
+        {"prompt": "Как переводится 手机?", "option_a": "Телефон", "option_b": "Паспорт", "option_c": "Карта", "correct_option": "a", "explanation": "手机 — мобильный телефон."},
+        {"prompt": "Что значит 护照?", "option_a": "Билет", "option_b": "Паспорт", "option_c": "Кошелёк", "correct_option": "b", "explanation": "护照 — паспорт."},
+        {"prompt": "Выбери перевод 太远了.", "option_a": "Слишком далеко", "option_b": "Слишком дорого", "option_c": "Слишком вкусно", "correct_option": "a", "explanation": "太远了 — слишком далеко."},
+        {"prompt": "Как переводится 快一点?", "option_a": "Немного быстрее", "option_b": "Немного дешевле", "option_c": "Немного холоднее", "correct_option": "a", "explanation": "快一点 — немного быстрее."},
     ],
     "protocol": [
         {"prompt": "Выбери логичный ответ на 你去哪儿？", "option_a": "我去商店。", "option_b": "三点半。", "option_c": "很好吃。", "correct_option": "a", "explanation": "На вопрос «Куда ты идёшь?» подходит «Я иду в магазин»."},
@@ -834,6 +846,18 @@ ARCHITECT_QUESTION_SEEDS = {
         {"prompt": "Что лучше ответить на 你叫什么名字？", "option_a": "我叫安娜。", "option_b": "我去车站。", "option_c": "我八点起床。", "correct_option": "a", "explanation": "我叫... — меня зовут..."},
         {"prompt": "Выбери правильную фразу:", "option_a": "我昨天去商店了。", "option_b": "我商店昨天去了。", "option_c": "昨天了我去商店。", "correct_option": "a", "explanation": "Нормальный порядок: 我昨天去商店了。"},
         {"prompt": "Что означает 请再说一遍？", "option_a": "Пожалуйста, повторите ещё раз", "option_b": "Пожалуйста, закрой дверь", "option_c": "Пожалуйста, дайте счёт", "correct_option": "a", "explanation": "请再说一遍 — пожалуйста, повторите ещё раз."},
+        {"prompt": "Какой ответ подходит к 你住在哪儿？", "option_a": "我住在宿舍。", "option_b": "我吃米饭。", "option_c": "我买水。", "correct_option": "a", "explanation": "你住在哪儿？ — где ты живёшь? 我住在宿舍。 — я живу в общежитии."},
+        {"prompt": "Выбери логичный ответ на 你想喝什么？", "option_a": "我想喝水。", "option_b": "我去学校。", "option_c": "现在八点。", "correct_option": "a", "explanation": "Вопрос о напитке: «Что хочешь пить?»"},
+        {"prompt": "Какой ответ подходит к 你从哪儿来？", "option_a": "我从俄罗斯来。", "option_b": "我去食堂。", "option_c": "我很饿。", "correct_option": "a", "explanation": "你从哪儿来？ — откуда ты приехал?"},
+        {"prompt": "Выбери правильный порядок слов для «Я сегодня иду в библиотеку».", "option_a": "我今天去图书馆。", "option_b": "去我图书馆今天。", "option_c": "今天图书馆我去。", "correct_option": "a", "explanation": "Нормальный порядок: 我 + время + 去 + место."},
+        {"prompt": "Какой ответ подходит к 你会说中文吗？", "option_a": "会一点儿。", "option_b": "二十块。", "option_c": "往右走。", "correct_option": "a", "explanation": "会一点儿。 — умею немного."},
+        {"prompt": "Выбери правильную фразу для покупки воды.", "option_a": "我要一瓶水。", "option_b": "我要一个地铁。", "option_c": "我要一本米饭。", "correct_option": "a", "explanation": "一瓶水 — одна бутылка воды."},
+        {"prompt": "Что лучше ответить на 你累吗？", "option_a": "有点儿累。", "option_b": "我在银行。", "option_c": "不要辣。", "correct_option": "a", "explanation": "有点儿累。 — немного устал."},
+        {"prompt": "Выбери правильное отрицание: «Я не понимаю».", "option_a": "我不懂。", "option_b": "我很懂。", "option_c": "我去懂。", "correct_option": "a", "explanation": "不 + глагол даёт отрицание: 我不懂。"},
+        {"prompt": "Какой ответ подходит к 你要不要辣？", "option_a": "不要辣。", "option_b": "我叫马克。", "option_c": "今天星期一。", "correct_option": "a", "explanation": "不要辣。 — не острое."},
+        {"prompt": "Выбери правильную фразу: «Пожалуйста, дайте чек».", "option_a": "请给我小票。", "option_b": "请给我天气。", "option_c": "请给我左边。", "correct_option": "a", "explanation": "小票 — чек."},
+        {"prompt": "Какой ответ подходит к 几点集合？", "option_a": "八点集合。", "option_b": "很好吃。", "option_c": "我不买。", "correct_option": "a", "explanation": "几点集合？ — во сколько сбор?"},
+        {"prompt": "Выбери правильный перевод фразы 我们一起走吧。", "option_a": "Пойдём вместе", "option_b": "Я хочу спать", "option_c": "Это слишком дорого", "correct_option": "a", "explanation": "一起 — вместе, 走吧 — пойдём."},
     ],
     "stabilize": [
         {"prompt": "Выбери вежливую просьбу о помощи:", "option_a": "请帮我一下。", "option_b": "你很贵。", "option_c": "我不喜欢坐车。", "correct_option": "a", "explanation": "请帮我一下。 — пожалуйста, помогите мне."},
@@ -844,6 +868,18 @@ ARCHITECT_QUESTION_SEEDS = {
         {"prompt": "Что означает 慢一点说?", "option_a": "Говорите медленнее", "option_b": "Говорите громче", "option_c": "Говорите тише", "correct_option": "a", "explanation": "慢一点说 — говорите немного медленнее."},
         {"prompt": "Выбери фразу для уточнения дороги:", "option_a": "请问，怎么走？", "option_b": "我会开车。", "option_c": "今天不忙。", "correct_option": "a", "explanation": "请问，怎么走？ — подскажите, как пройти?"},
         {"prompt": "Как переводится 我马上来?", "option_a": "Я сейчас приду", "option_b": "Я уже ушёл", "option_c": "Я хочу остаться", "correct_option": "a", "explanation": "我马上来 — я сейчас приду."},
+        {"prompt": "Выбери фразу для вежливого извинения.", "option_a": "不好意思。", "option_b": "太好了。", "option_c": "很好吃。", "correct_option": "a", "explanation": "不好意思 — извините / неловко беспокоить."},
+        {"prompt": "Что сказать, если нужно пройти?", "option_a": "借过一下。", "option_b": "我要米饭。", "option_c": "我很便宜。", "correct_option": "a", "explanation": "借过一下 — разрешите пройти."},
+        {"prompt": "Как попросить говорить медленнее и понятнее?", "option_a": "请说慢一点。", "option_b": "请走快一点。", "option_c": "请买便宜一点。", "correct_option": "a", "explanation": "请说慢一点 — пожалуйста, говорите медленнее."},
+        {"prompt": "Что означает 没问题?", "option_a": "Нет проблем", "option_b": "Нет денег", "option_c": "Нет времени", "correct_option": "a", "explanation": "没问题 — нет проблем."},
+        {"prompt": "Выбери фразу, если потерялся.", "option_a": "我迷路了。", "option_b": "我很热。", "option_c": "我买东西。", "correct_option": "a", "explanation": "我迷路了 — я заблудился."},
+        {"prompt": "Как попросить помощи у прохожего?", "option_a": "请问，可以帮我吗？", "option_b": "请问，可以吃饭吗？", "option_c": "请问，可以下雨吗？", "correct_option": "a", "explanation": "可以帮我吗？ — можете мне помочь?"},
+        {"prompt": "Что значит 别着急?", "option_a": "Не спеши / не волнуйся", "option_b": "Не покупай", "option_c": "Не ешь", "correct_option": "a", "explanation": "别着急 — не спеши, не волнуйся."},
+        {"prompt": "Выбери фразу для подтверждения: «Я понял».", "option_a": "我明白了。", "option_b": "我睡觉了。", "option_c": "我迟到了。", "correct_option": "a", "explanation": "我明白了 — я понял."},
+        {"prompt": "Как сказать «Подождите меня»?", "option_a": "等我一下。", "option_b": "看我一下。", "option_c": "吃我一下。", "correct_option": "a", "explanation": "等我一下 — подождите меня немного."},
+        {"prompt": "Что означает 没听清楚?", "option_a": "Не расслышал", "option_b": "Не купил", "option_c": "Не устал", "correct_option": "a", "explanation": "没听清楚 — не расслышал."},
+        {"prompt": "Выбери фразу для просьбы показать на карте.", "option_a": "请在地图上给我看。", "option_b": "请在米饭上给我看。", "option_c": "请在水上给我看。", "correct_option": "a", "explanation": "地图 — карта; 给我看 — покажите мне."},
+        {"prompt": "Как сказать «Мы вместе»?", "option_a": "我们在一起。", "option_b": "我们很贵。", "option_c": "我们不热。", "correct_option": "a", "explanation": "我们在一起 — мы вместе."},
     ],
 }
 
@@ -1689,28 +1725,36 @@ def ensure_seed_data():
                 ('raid', q["prompt"], q["option_a"], q["option_b"], q["option_c"],
                  q["correct_option"], q.get("explanation"), created_at),
             )
-    c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='architect'")
-    architect_count = c.fetchone()[0]
-    if architect_count == 0:
-        created_at = datetime.utcnow().isoformat()
-        for action_type, questions in ARCHITECT_QUESTION_SEEDS.items():
-            for question in questions:
-                c.execute(
-                    '''INSERT INTO event_questions
-                       (event_code, action_type, difficulty, prompt, option_a, option_b, option_c, correct_option, explanation, created_at)
-                       VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)''',
-                    (
-                        'architect',
-                        action_type,
-                        question["prompt"],
-                        question["option_a"],
-                        question["option_b"],
-                        question["option_c"],
-                        question["correct_option"],
-                        question.get("explanation"),
-                        created_at,
-                    ),
-                )
+    # Architect questions are seeded idempotently by prompt. The production DB
+    # already has the old seed rows, so a count==0 gate would never add new
+    # questions after expanding ARCHITECT_QUESTION_SEEDS.
+    created_at = datetime.utcnow().isoformat()
+    for action_type, questions in ARCHITECT_QUESTION_SEEDS.items():
+        for question in questions:
+            c.execute(
+                '''SELECT 1 FROM event_questions
+                   WHERE event_code='architect' AND action_type=? AND prompt=?
+                   LIMIT 1''',
+                (action_type, question["prompt"]),
+            )
+            if c.fetchone():
+                continue
+            c.execute(
+                '''INSERT INTO event_questions
+                   (event_code, action_type, difficulty, prompt, option_a, option_b, option_c, correct_option, explanation, created_at)
+                   VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    'architect',
+                    action_type,
+                    question["prompt"],
+                    question["option_a"],
+                    question["option_b"],
+                    question["option_c"],
+                    question["correct_option"],
+                    question.get("explanation"),
+                    created_at,
+                ),
+            )
 
     c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='wildai_breach'")
     wildai_count = c.fetchone()[0]
