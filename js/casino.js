@@ -714,7 +714,7 @@ async function loadCards(telegramId) {
       const isSecond = seen[card.card_id] > 1;
       const rarity = card.rarity || 4;
       const cfg = GS_CARD_CONFIGS[card.card_id] || {};
-      const pool = cfg.pool || (rarity === 5 ? 'gold' : 'blue');
+      const pool = cfg.pool || (rarity === 5 ? 'gold' : rarity >= 4 ? 'purple' : 'blue');
       const rarityColor = cfg.starsColor || (rarity === 5 ? '#c0a040' : rarity >= 4 ? '#9b59b6' : '#4b8fcf');
       const stars = '★'.repeat(rarity);
       const emoji = GENSHIN_EMOJIS[card.card_id] || '✨';
