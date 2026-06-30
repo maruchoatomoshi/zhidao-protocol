@@ -6,8 +6,16 @@ if (user) {
   loadPoints(user.id);
   startGlobalAlertPolling();
   if (typeof syncAdminUiVisibility === 'function') syncAdminUiVisibility();
-} else if (typeof hideStartupCover === 'function') {
-  hideStartupCover();
+} else {
+  // Telegram не передал данные пользователя (нестандартный клиент/прокси,
+  // открыто вне Telegram, и т.п.) — явно показываем причину вместо
+  // пустого "Загрузка..." навсегда.
+  if (typeof zSetText === 'function') {
+    zSetText('status', '● НЕТ ДАННЫХ TELEGRAM');
+    zSetText('username', 'Откройте приложение через кнопку бота в официальном Telegram');
+  }
+  if (typeof zSetStyle === 'function') zSetStyle('status', 'color', '#dbb165');
+  if (typeof hideStartupCover === 'function') hideStartupCover();
 }
 
 loadSavedTheme();
