@@ -217,6 +217,10 @@ function primeArchitectMusicUnlock() {
         .then(() => {
           try { audio.pause(); } catch (e) {}
           try { audio.currentTime = 0; } catch (e) {}
+          // Reset so the real track always triggers a fresh switch
+          if (architectMusicCurrentTrack === '' || architectMusicCurrentTrack === ARCHITECT_PHASE_MUSIC[1]) {
+            architectMusicCurrentTrack = '';
+          }
         })
         .catch(() => {
           armArchitectMusicGestureRetry();
@@ -385,7 +389,9 @@ function switchArchitectMusic(trackUrl, forceRetry = false) {
       });
   }
 
-  fadeArchitectMusic(activePlayer, nextPlayer);
+  // Stop old deck immediately (no fade-out) to prevent overlap with new track
+  try { activePlayer.pause(); activePlayer.volume = 0; } catch (e) {}
+  fadeArchitectMusic(null, nextPlayer);
   architectMusicActiveDeck = nextDeck;
   architectMusicCurrentTrack = trackUrl;
 }
