@@ -7624,7 +7624,7 @@ async def open_case(data: dict):
     if not telegram_id:
         raise HTTPException(status_code=400, detail="No telegram_id")
 
-    case_type = random.choices(['gold', 'purple', 'black'], weights=[789, 210, 1], k=1)[0]
+    case_type = random.choices(['gold', 'purple', 'black'], weights=[848, 150, 2], k=1)[0]
     if case_type == 'gold':
         prizes = [
             {"code": "empty",   "name": "Пустая миска риса", "points": 0,   "weight": 40, "icon": "🍚", "case_type": "gold"},
@@ -9260,7 +9260,7 @@ CARD_INFO = {
 
 GENSHIN_POOL = {
     'blue': {
-        'weight': 789,
+        'weight': 848,
         'items': [
             {'type': 'empty', 'weight': 40},
             {'type': 'points', 'amount': 30, 'weight': 24},
@@ -9270,7 +9270,7 @@ GENSHIN_POOL = {
         ],
     },
     'purple': {
-        'weight': 210,
+        'weight': 150,
         'items': [
             {'type': 'card', 'id': 'card_pyro', 'weight': 1},
             {'type': 'card', 'id': 'card_fox', 'weight': 1},
@@ -9282,7 +9282,7 @@ GENSHIN_POOL = {
         ],
     },
     'gold': {
-        'weight': 1,
+        'weight': 2,
         'items': [
             {'type': 'card', 'id': 'card_zhongli', 'weight': 1},
             {'type': 'card', 'id': 'card_star', 'weight': 1},
@@ -9341,7 +9341,7 @@ async def open_genshin_case(data: dict):
             c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
             status_row = c.fetchone()
 
-        pool_name = random.choices(['blue', 'purple', 'gold'], weights=[789, 210, 1])[0]
+        pool_name = random.choices(['blue', 'purple', 'gold'], weights=[848, 150, 2])[0]
         pool = GENSHIN_POOL[pool_name]
         item = random.choices(pool['items'], weights=[it['weight'] for it in pool['items']])[0]
         today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')

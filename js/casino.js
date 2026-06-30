@@ -91,9 +91,9 @@ const CASE_IMAGES = {
 };
 const CASE_ROULETTE_TYPES = ['gold', 'purple', 'gold', 'gold', 'purple', 'gold', 'gold', 'black'];
 const CASE_ROULETTE_LABELS = {
-  gold: 'COMMON // 78.9%',
-  purple: 'PURPLE // 21%',
-  black: 'BLACK // 0.1%',
+  gold: 'COMMON // 84.8%',
+  purple: 'PURPLE // 15%',
+  black: 'BLACK // 0.2%',
 };
 let currentRouletteTargetIdx = null;
 
