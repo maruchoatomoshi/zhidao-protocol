@@ -10,6 +10,7 @@ let duelTimerInterval = null;   // local 1s countdown ticker
 let duelCurrentId = null;
 let duelLastQuestionId = null;
 let duelAnsweredThisRound = false;
+let duelSelectedAnswer = null;
 
 // --- Tekken-style анимации: отслеживаем предыдущее состояние между рендерами ---
 let duelPrevYouHp = null;
@@ -17,6 +18,8 @@ let duelPrevOppHp = null;
 let duelPrevStatus = null;
 let duelPrevRound = null;
 let duelFinishShown = false;
+let duelRoundIntroKey = null;
+let duelAnnounceTimers = [];
 
 const DUEL_STAKES = [10, 25, 50, 100];
 
@@ -239,13 +242,19 @@ function openDuelOverlay(duelId) {
   duelCurrentId = duelId;
   duelLastQuestionId = null;
   duelAnsweredThisRound = false;
+  duelSelectedAnswer = null;
   duelPrevYouHp = null;
   duelPrevOppHp = null;
   duelPrevStatus = null;
   duelPrevRound = null;
   duelFinishShown = false;
+  duelRoundIntroKey = null;
+  clearDuelAnnounceQueue();
   const ov = document.getElementById('duel-overlay');
-  if (ov) ov.classList.add('show');
+  if (ov) {
+    ov.classList.remove('duel-finish-win', 'duel-finish-lose', 'duel-finish-draw', 'duel-hitstop');
+    ov.classList.add('show');
+  }
   startDuelPolling();
 }
 
@@ -290,27 +299,28 @@ function renderDuelState(st) {
   setDuelAvatar(oppAv, st.opponent && st.opponent.avatar_url, oppNm);
   if (youName) youName.textContent = 'ТЫ';
   setDuelAvatar(youAv, st.you && st.you.avatar_url, (st.you && st.you.name) || 'Я');
+  const ov = document.getElementById('duel-overlay');
 
   const maxHp = st.max_hp || 100;
   const youHp = st.you ? st.you.hp : maxHp;
   const oppHp = st.opponent ? st.opponent.hp : maxHp;
 
-  // --- Анонсы: смена статуса/раунда (БОЙ! / РАУНД X) ---
+  // --- Анонсы: смена статуса/раунда (ROUND / FINAL ROUND / FIGHT) ---
   if (st.status === 'active') {
-    if (duelPrevStatus !== 'active') {
-      announceDuel('БОЙ!', 'duel-announce-fight');
-    } else if (duelPrevRound !== null && st.round_no !== duelPrevRound) {
-      announceDuel('РАУНД ' + st.round_no, '');
+    const introKey = `${st.id || duelCurrentId}:${st.round_no}`;
+    if (duelPrevStatus !== 'active' || introKey !== duelRoundIntroKey) {
+      duelRoundIntroKey = introKey;
+      playDuelRoundIntro(st.round_no, st.max_rounds);
     }
     duelPrevRound = st.round_no;
   }
 
   // --- Детект урона: HP упал => удар попал. Анимируем ту сторону, кому досталось. ---
   if (duelPrevOppHp !== null && oppHp < duelPrevOppHp) {
-    triggerDuelHit('opp', duelPrevOppHp - oppHp);
+    triggerDuelHit('opp', duelPrevOppHp - oppHp, oppHp <= 0);
   }
   if (duelPrevYouHp !== null && youHp < duelPrevYouHp) {
-    triggerDuelHit('you', duelPrevYouHp - youHp);
+    triggerDuelHit('you', duelPrevYouHp - youHp, youHp <= 0);
   }
   duelPrevYouHp = youHp;
   duelPrevOppHp = oppHp;
@@ -318,6 +328,8 @@ function renderDuelState(st) {
 
   setDuelHp('duelYouHp', 'duelYouHpText', youHp, maxHp);
   setDuelHp('duelOppHp', 'duelOppHpText', oppHp, maxHp);
+  setDuelFighterCritical('duelYouFighter', youHp, maxHp);
+  setDuelFighterCritical('duelOppFighter', oppHp, maxHp);
 
   const roundLabel = document.getElementById('duelRoundLabel');
   const timer = document.getElementById('duelTimer');
@@ -348,6 +360,7 @@ function renderDuelState(st) {
     if (qid !== duelLastQuestionId) {
       duelLastQuestionId = qid;
       duelAnsweredThisRound = false;
+      duelSelectedAnswer = null;
     }
     if (st.you && st.you.answered) duelAnsweredThisRound = true;
 
@@ -356,7 +369,7 @@ function renderDuelState(st) {
       const opts = st.question.options || {};
       const locked = duelAnsweredThisRound;
       aEl.innerHTML = ['a', 'b', 'c'].map(k =>
-        `<button class="duel-answer-btn" ${locked ? 'disabled' : ''} onclick="submitDuelAnswer('${k}')">${escapeDuel(opts[k] || '')}</button>`
+        `<button class="duel-answer-btn ${duelSelectedAnswer === k ? 'duel-answer-selected' : ''}" ${locked ? 'disabled' : ''} onclick="submitDuelAnswer('${k}')">${escapeDuel(opts[k] || '')}</button>`
       ).join('');
     }
     if (statusLine) {
@@ -372,16 +385,21 @@ function renderDuelState(st) {
   if (st.status === 'finished') {
     if (duelTimerInterval) { clearInterval(duelTimerInterval); duelTimerInterval = null; }
     if (duelPollTimer) { clearInterval(duelPollTimer); duelPollTimer = null; }
+    clearDuelAnnounceQueue();
     if (roundLabel) roundLabel.textContent = 'Бой окончен';
     if (timer) timer.textContent = '';
     // Финишер: K.O.-вспышка + баннер один раз
     if (!duelFinishShown) {
       duelFinishShown = true;
       if (!st.draw) {
+        if (ov) ov.classList.add(st.you_won ? 'duel-finish-win' : 'duel-finish-lose');
         flashDuelScreen('strong');
         try { tg.HapticFeedback.notificationOccurred(st.you_won ? 'success' : 'error'); } catch (e) {}
         announceDuel('K.O.', 'duel-announce-ko');
+        const winnerHp = st.you_won ? youHp : oppHp;
+        if (winnerHp >= maxHp) queueDuelAnnouncement('PERFECT', 'duel-announce-perfect', 950);
       } else {
+        if (ov) ov.classList.add('duel-finish-draw');
         announceDuel('НИЧЬЯ', '');
       }
     }
@@ -412,6 +430,14 @@ function setDuelHp(fillId, textId, hp, maxHp) {
     fill.classList.toggle('duel-hp-low', pct <= 34);
   }
   if (txt) txt.textContent = hp;
+}
+
+function setDuelFighterCritical(fighterId, hp, maxHp) {
+  const fighter = document.getElementById(fighterId);
+  if (!fighter) return;
+  const pct = maxHp ? (hp / maxHp) * 100 : 100;
+  fighter.classList.toggle('duel-fighter-critical', pct > 0 && pct <= 34);
+  fighter.classList.toggle('duel-fighter-ko', hp <= 0);
 }
 
 function startDuelCountdown(secondsLeft) {
@@ -454,8 +480,16 @@ async function readyDuel() {
 async function submitDuelAnswer(option) {
   if (!duelCurrentId || duelAnsweredThisRound) return;
   duelAnsweredThisRound = true; // оптимистично — блокируем повторный тап
+  duelSelectedAnswer = option;
   // блокируем кнопки сразу
-  document.querySelectorAll('#duelAnswers .duel-answer-btn').forEach(b => { b.disabled = true; });
+  document.querySelectorAll('#duelAnswers .duel-answer-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${option}'`)) {
+      b.classList.add('duel-answer-selected');
+    }
+    b.disabled = true;
+  });
+  const statusLine = document.getElementById('duelStatusLine');
+  if (statusLine) statusLine.textContent = 'INPUT LOCKED // ждём результат...';
   try {
     const r = await fetch(`${API_URL}/api/duel/${duelCurrentId}/answer`, {
       method: 'POST',
@@ -469,9 +503,20 @@ async function submitDuelAnswer(option) {
       const d = await r.json().catch(() => ({}));
       showToast(d.detail || 'Ошибка ответа');
       duelAnsweredThisRound = false;
+      duelSelectedAnswer = null;
+      document.querySelectorAll('#duelAnswers .duel-answer-btn').forEach(b => {
+        b.disabled = false;
+        b.classList.remove('duel-answer-selected');
+      });
     }
   } catch (e) {
     showToast('Нет соединения');
+    duelAnsweredThisRound = false;
+    duelSelectedAnswer = null;
+    document.querySelectorAll('#duelAnswers .duel-answer-btn').forEach(b => {
+      b.disabled = false;
+      b.classList.remove('duel-answer-selected');
+    });
   }
 }
 
@@ -497,17 +542,26 @@ function setDuelAvatar(el, avatarUrl, name) {
 }
 
 // Удар попал: тряска экрана, вспышка, всплывающее число урона, дрожь аватара.
-function triggerDuelHit(side, dmg) {
+function triggerDuelHit(side, dmg, isKo) {
   const ov = document.getElementById('duel-overlay');
   const avatar = document.getElementById(side === 'opp' ? 'duelOppAvatar' : 'duelYouAvatar');
+  const striker = document.getElementById(side === 'opp' ? 'duelYouAvatar' : 'duelOppAvatar');
   const dmgEl = document.getElementById(side === 'opp' ? 'duelOppDmg' : 'duelYouDmg');
+  const hitWord = isKo ? 'K.O.' : 'CLEAN HIT';
 
+  applyDuelHitStop(isKo ? 190 : 120);
   flashDuelScreen('hit');
   if (ov) {
     ov.classList.remove('duel-shake');
     void ov.offsetWidth; // рестарт анимации
     ov.classList.add('duel-shake');
     setTimeout(() => ov.classList.remove('duel-shake'), 420);
+  }
+  if (striker) {
+    striker.classList.remove('duel-avatar-strike', 'duel-avatar-strike-you', 'duel-avatar-strike-opp');
+    void striker.offsetWidth;
+    striker.classList.add('duel-avatar-strike', side === 'opp' ? 'duel-avatar-strike-you' : 'duel-avatar-strike-opp');
+    setTimeout(() => striker.classList.remove('duel-avatar-strike', 'duel-avatar-strike-you', 'duel-avatar-strike-opp'), 360);
   }
   if (avatar) {
     avatar.classList.remove('duel-avatar-hit');
@@ -516,13 +570,42 @@ function triggerDuelHit(side, dmg) {
     setTimeout(() => avatar.classList.remove('duel-avatar-hit'), 500);
   }
   if (dmgEl && dmg > 0) {
-    dmgEl.textContent = '-' + dmg;
+    dmgEl.innerHTML = `<span>${hitWord}</span><strong>-${dmg}</strong>`;
     dmgEl.classList.remove('duel-dmg-show');
     void dmgEl.offsetWidth;
     dmgEl.classList.add('duel-dmg-show');
     setTimeout(() => { dmgEl.classList.remove('duel-dmg-show'); dmgEl.textContent = ''; }, 900);
   }
+  spawnDuelSparks(side);
   try { tg.HapticFeedback.impactOccurred(side === 'opp' ? 'heavy' : 'medium'); } catch (e) {}
+}
+
+function applyDuelHitStop(ms) {
+  const ov = document.getElementById('duel-overlay');
+  if (!ov) return;
+  ov.classList.remove('duel-hitstop');
+  void ov.offsetWidth;
+  ov.classList.add('duel-hitstop');
+  clearTimeout(ov._hitStopTimer);
+  ov._hitStopTimer = setTimeout(() => ov.classList.remove('duel-hitstop'), ms || 120);
+}
+
+function spawnDuelSparks(side) {
+  const ov = document.getElementById('duel-overlay');
+  if (!ov) return;
+  const burst = document.createElement('div');
+  burst.className = `duel-spark-burst duel-spark-${side}`;
+  for (let i = 0; i < 10; i += 1) {
+    const spark = document.createElement('i');
+    const angle = (Math.PI * 2 * i) / 10;
+    const dist = 34 + (i % 4) * 10;
+    spark.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+    spark.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+    spark.style.setProperty('--rot', `${angle}rad`);
+    burst.appendChild(spark);
+  }
+  ov.appendChild(burst);
+  setTimeout(() => burst.remove(), 620);
 }
 
 // Кратковременная вспышка экрана: 'hit' слабее, 'strong' для финишера.
@@ -534,6 +617,23 @@ function flashDuelScreen(kind) {
   flash.classList.add(kind === 'strong' ? 'duel-flash-strong' : 'duel-flash-hit');
   setTimeout(() => flash.classList.remove('duel-flash-hit', 'duel-flash-strong'),
     kind === 'strong' ? 650 : 320);
+}
+
+function playDuelRoundIntro(roundNo, maxRounds) {
+  clearDuelAnnounceQueue();
+  const isFinal = maxRounds && roundNo >= maxRounds;
+  announceDuel(isFinal ? 'FINAL ROUND' : 'ROUND ' + roundNo, isFinal ? 'duel-announce-final' : '');
+  queueDuelAnnouncement('FIGHT!', 'duel-announce-fight', 760);
+}
+
+function queueDuelAnnouncement(text, cls, delay) {
+  const t = setTimeout(() => announceDuel(text, cls), delay || 0);
+  duelAnnounceTimers.push(t);
+}
+
+function clearDuelAnnounceQueue() {
+  duelAnnounceTimers.forEach(t => clearTimeout(t));
+  duelAnnounceTimers = [];
 }
 
 // Большой баннер по центру (БОЙ! / РАУНД X / K.O.).

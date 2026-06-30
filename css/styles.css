@@ -19455,6 +19455,7 @@ body.is-admin .duel-tab-btn { display: block; }
 .duel-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 10001;
+  overflow: hidden;
   background:
     radial-gradient(ellipse at 50% 0%, rgba(255,40,60,0.10), transparent 55%),
     radial-gradient(ellipse at 50% 100%, rgba(0,255,136,0.10), transparent 55%),
@@ -19464,8 +19465,34 @@ body.is-admin .duel-tab-btn { display: block; }
   box-sizing: border-box;
   flex-direction: column;
 }
+.duel-overlay::before,
+.duel-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+}
+.duel-overlay::before {
+  z-index: 0;
+  background:
+    linear-gradient(90deg, transparent 0 47%, rgba(0,229,255,0.14) 48% 49%, transparent 50%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 9px);
+  opacity: 0.28;
+  transform: perspective(360px) rotateX(62deg) translateY(18%);
+  animation: duelStageGrid 5.6s linear infinite;
+}
+.duel-overlay::after {
+  z-index: 1;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(0,255,136,0.13), transparent 24%),
+    radial-gradient(circle at 82% 30%, rgba(255,50,80,0.15), transparent 24%),
+    repeating-linear-gradient(90deg, transparent 0 32px, rgba(255,255,255,0.035) 33px, transparent 34px);
+  mix-blend-mode: screen;
+  opacity: 0.38;
+  animation: duelSpeedLines 1.2s linear infinite;
+}
 .duel-overlay.show { display: flex; }
-.duel-vs-screen { display: flex; flex-direction: column; height: 100%; gap: 14px; }
+.duel-vs-screen { position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%; gap: 14px; }
 .duel-close {
   position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); right: 14px;
   background: none; border: none; color: rgba(232,255,243,0.6);
@@ -19486,6 +19513,14 @@ body.is-admin .duel-tab-btn { display: block; }
 }
 .duel-fighter:first-child .duel-avatar { border-color: rgba(0,255,136,0.7); box-shadow: 0 0 18px rgba(0,255,136,0.3); }
 .duel-fighter:last-child .duel-avatar { border-color: rgba(255,60,80,0.7); box-shadow: 0 0 18px rgba(255,60,80,0.3); }
+.duel-fighter-critical .duel-avatar,
+.duel-fighter-critical .duel-hpbar {
+  animation: duelCriticalPulse 0.72s steps(2, end) infinite;
+}
+.duel-fighter-ko {
+  opacity: 0.55;
+  filter: grayscale(0.8) brightness(0.72);
+}
 .duel-name {
   font-size: 12px; font-family: monospace; letter-spacing: 1px;
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -19537,6 +19572,13 @@ body.is-admin .duel-tab-btn { display: block; }
 }
 .duel-answer-btn:active { transform: scale(0.98); background: rgba(0,255,136,0.18); }
 .duel-answer-btn:disabled { opacity: 0.45; cursor: default; }
+.duel-answer-btn.duel-answer-selected {
+  opacity: 1;
+  background: linear-gradient(90deg, rgba(0,229,255,0.28), rgba(0,255,136,0.18));
+  border-color: rgba(0,229,255,0.85);
+  box-shadow: 0 0 18px rgba(0,229,255,0.28), inset 0 0 18px rgba(0,255,136,0.12);
+  transform: translateX(4px);
+}
 .duel-ready-btn { width: 100%; padding: 16px; font-family: monospace; letter-spacing: 1px; }
 .duel-ready-wait { text-align: center; color: rgba(232,255,243,0.7); font-family: monospace; padding: 16px; }
 .duel-status-line {
@@ -19550,6 +19592,19 @@ body.is-admin .duel-tab-btn { display: block; }
 
 /* ===== Tekken-style анимации боя ===== */
 .duel-fighter { position: relative; }
+
+@keyframes duelStageGrid {
+  0% { transform: perspective(360px) rotateX(62deg) translateY(10%); }
+  100% { transform: perspective(360px) rotateX(62deg) translateY(20%); }
+}
+@keyframes duelSpeedLines {
+  0% { transform: translate3d(-18px, 0, 0); }
+  100% { transform: translate3d(18px, 0, 0); }
+}
+@keyframes duelCriticalPulse {
+  0%, 100% { filter: brightness(1); box-shadow: 0 0 16px rgba(255,60,80,0.35); }
+  50% { filter: brightness(1.75) saturate(1.45); box-shadow: 0 0 26px rgba(255,60,80,0.78); }
+}
 
 /* Аватар-картинка вместо инициалов */
 .duel-avatar.duel-avatar-img {
@@ -19570,6 +19625,16 @@ body.is-admin .duel-tab-btn { display: block; }
   100% { transform: translate(0,0) scale(1); filter: none; }
 }
 
+/* Короткий выпад атакующего — визуальный "удар" до тряски цели */
+.duel-avatar-strike { animation: duelAvatarStrike 0.36s cubic-bezier(.2,.9,.2,1); }
+.duel-avatar-strike-you { --duel-strike-x: 22px; }
+.duel-avatar-strike-opp { --duel-strike-x: -22px; }
+@keyframes duelAvatarStrike {
+  0% { transform: translateX(0) scale(1); filter: brightness(1); }
+  38% { transform: translateX(var(--duel-strike-x, 18px)) scale(1.12); filter: brightness(1.55) drop-shadow(0 0 16px rgba(255,210,60,0.75)); }
+  100% { transform: translateX(0) scale(1); filter: brightness(1); }
+}
+
 /* Тряска всего экрана */
 .duel-shake { animation: duelShake 0.42s cubic-bezier(.36,.07,.19,.97); }
 @keyframes duelShake {
@@ -19583,6 +19648,16 @@ body.is-admin .duel-tab-btn { display: block; }
   70% { transform: translate(-4px,2px); }
   80% { transform: translate(4px,-1px); }
   90% { transform: translate(-2px,1px); }
+}
+
+/* Hit-stop: короткий "замороженный" кадр, который делает удар тяжелее */
+.duel-hitstop .duel-vs-screen {
+  animation: duelHitStop 0.16s steps(2, end);
+}
+@keyframes duelHitStop {
+  0% { filter: contrast(1) saturate(1); transform: scale(1); }
+  35% { filter: contrast(1.45) saturate(1.45) brightness(1.12); transform: scale(1.012); }
+  100% { filter: contrast(1) saturate(1); transform: scale(1); }
 }
 
 /* Полноэкранная вспышка */
@@ -19606,13 +19681,51 @@ body.is-admin .duel-tab-btn { display: block; }
   font-family: monospace; font-weight: 900; font-size: 30px;
   color: #ffd23c; text-shadow: 0 0 10px rgba(255,60,80,0.9), 0 2px 4px rgba(0,0,0,0.8);
   pointer-events: none; opacity: 0; z-index: 6;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
 }
+.duel-dmg span {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255,255,255,0.75), 0 2px 4px rgba(0,0,0,0.9);
+  white-space: nowrap;
+}
+.duel-dmg strong { font-size: 30px; line-height: 1; }
 .duel-dmg-show { animation: duelDmgFloat 0.9s ease-out; }
 @keyframes duelDmgFloat {
   0%   { opacity: 0; transform: translate(-50%, 10px) scale(0.5); }
   20%  { opacity: 1; transform: translate(-50%, -6px) scale(1.25); }
   40%  { transform: translate(-50%, -18px) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -48px) scale(0.9); }
+}
+
+/* Искры удара */
+.duel-spark-burst {
+  position: absolute;
+  top: 106px;
+  width: 0;
+  height: 0;
+  z-index: 7;
+  pointer-events: none;
+}
+.duel-spark-you { left: 25%; }
+.duel-spark-opp { right: 25%; }
+.duel-spark-burst i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fff, #ffd23c, rgba(255,60,80,0));
+  box-shadow: 0 0 12px rgba(255,210,60,0.9);
+  transform: rotate(var(--rot, 0rad));
+  animation: duelSparkFly 0.62s ease-out forwards;
+}
+@keyframes duelSparkFly {
+  0% { opacity: 0; transform: translate(0,0) rotate(var(--rot, 0rad)) scaleX(0.25); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 40px), var(--dy, 0)) rotate(var(--rot, 0rad)) scaleX(1); }
 }
 
 /* Центральный баннер-анонс (БОЙ! / РАУНД X / K.O.) */
@@ -19632,9 +19745,60 @@ body.is-admin .duel-tab-btn { display: block; }
   100% { opacity: 0; transform: scale(0.85); }
 }
 .duel-announce-fight { color: #00ff88; text-shadow: 0 0 22px rgba(0,255,136,0.9), 0 4px 10px rgba(0,0,0,0.7); }
+.duel-announce-final {
+  color: #ffd23c;
+  font-size: 38px;
+  text-shadow: 0 0 26px rgba(255,210,60,0.95), 0 0 18px rgba(255,60,80,0.7), 0 4px 10px rgba(0,0,0,0.8);
+}
+.duel-announce-perfect {
+  color: #00e5ff;
+  font-size: 42px;
+  text-shadow: 0 0 26px rgba(0,229,255,1), 0 0 18px rgba(0,255,136,0.65), 0 4px 10px rgba(0,0,0,0.8);
+}
 .duel-announce-ko {
   color: #ff3c50; font-size: 72px;
   text-shadow: 0 0 30px rgba(255,60,80,1), 0 4px 12px rgba(0,0,0,0.8);
+}
+
+.duel-finish-win {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(0,255,136,0.18), transparent 58%),
+    radial-gradient(ellipse at 50% 100%, rgba(255,210,60,0.13), transparent 58%),
+    #05060a;
+}
+.duel-finish-lose {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,60,80,0.22), transparent 58%),
+    radial-gradient(ellipse at 50% 100%, rgba(120,0,0,0.16), transparent 58%),
+    #05060a;
+}
+.duel-finish-draw {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(0,229,255,0.17), transparent 58%),
+    radial-gradient(ellipse at 50% 100%, rgba(255,255,255,0.08), transparent 58%),
+    #05060a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .duel-overlay::before,
+  .duel-overlay::after,
+  .duel-fighter-critical .duel-avatar,
+  .duel-fighter-critical .duel-hpbar,
+  .duel-timer-urgent {
+    animation: none !important;
+  }
+  .duel-shake,
+  .duel-avatar-hit,
+  .duel-avatar-strike,
+  .duel-hitstop .duel-vs-screen,
+  .duel-flash-hit,
+  .duel-flash-strong,
+  .duel-dmg-show,
+  .duel-announce-show,
+  .duel-spark-burst i {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 .duel-announce-ko.duel-announce-show { animation: duelAnnounceKo 1.6s ease-out; }
 @keyframes duelAnnounceKo {
