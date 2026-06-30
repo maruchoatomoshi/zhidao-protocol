@@ -19467,3 +19467,100 @@ body.is-admin .duel-tab-btn { display: block; }
 .duel-result-win { color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.6); }
 .duel-result-lose { color: #ff3c50; text-shadow: 0 0 20px rgba(255,60,80,0.5); }
 .duel-result-draw { color: #00e5ff; }
+
+/* ===== Tekken-style анимации боя ===== */
+.duel-fighter { position: relative; }
+
+/* Аватар-картинка вместо инициалов */
+.duel-avatar.duel-avatar-img {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: transparent;
+}
+
+/* Дрожь аватара при попадании + красная вспышка */
+.duel-avatar-hit { animation: duelAvatarHit 0.5s ease; }
+@keyframes duelAvatarHit {
+  0%   { transform: translate(0,0) scale(1); filter: none; }
+  15%  { transform: translate(-6px,2px) scale(1.08); filter: brightness(1.8) saturate(0.4) drop-shadow(0 0 12px rgba(255,60,80,0.9)); }
+  30%  { transform: translate(5px,-2px) scale(1.05); filter: brightness(1.5); }
+  45%  { transform: translate(-4px,1px) scale(1.03); }
+  60%  { transform: translate(3px,0) scale(1.01); }
+  100% { transform: translate(0,0) scale(1); filter: none; }
+}
+
+/* Тряска всего экрана */
+.duel-shake { animation: duelShake 0.42s cubic-bezier(.36,.07,.19,.97); }
+@keyframes duelShake {
+  0%,100% { transform: translate(0,0); }
+  10% { transform: translate(-8px,-4px); }
+  20% { transform: translate(7px,3px); }
+  30% { transform: translate(-9px,2px); }
+  40% { transform: translate(8px,-3px); }
+  50% { transform: translate(-6px,4px); }
+  60% { transform: translate(6px,-2px); }
+  70% { transform: translate(-4px,2px); }
+  80% { transform: translate(4px,-1px); }
+  90% { transform: translate(-2px,1px); }
+}
+
+/* Полноэкранная вспышка */
+.duel-flash {
+  position: absolute; inset: 0; z-index: 5;
+  pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.9), rgba(255,80,90,0.35) 55%, transparent 75%);
+}
+.duel-flash-hit { animation: duelFlashHit 0.32s ease-out; }
+@keyframes duelFlashHit { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+.duel-flash-strong {
+  background: radial-gradient(circle at 50% 42%, rgba(255,255,255,1), rgba(255,210,60,0.5) 50%, transparent 80%);
+  animation: duelFlashStrong 0.65s ease-out;
+}
+@keyframes duelFlashStrong { 0% { opacity: 1; } 60% { opacity: 0.5; } 100% { opacity: 0; } }
+
+/* Всплывающее число урона над бойцом */
+.duel-dmg {
+  position: absolute; top: 8px; left: 50%;
+  transform: translateX(-50%);
+  font-family: monospace; font-weight: 900; font-size: 30px;
+  color: #ffd23c; text-shadow: 0 0 10px rgba(255,60,80,0.9), 0 2px 4px rgba(0,0,0,0.8);
+  pointer-events: none; opacity: 0; z-index: 6;
+}
+.duel-dmg-show { animation: duelDmgFloat 0.9s ease-out; }
+@keyframes duelDmgFloat {
+  0%   { opacity: 0; transform: translate(-50%, 10px) scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%, -6px) scale(1.25); }
+  40%  { transform: translate(-50%, -18px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -48px) scale(0.9); }
+}
+
+/* Центральный баннер-анонс (БОЙ! / РАУНД X / K.O.) */
+.duel-announce {
+  position: absolute; top: 38%; left: 0; right: 0; z-index: 8;
+  text-align: center; pointer-events: none;
+  font-family: monospace; font-weight: 900; letter-spacing: 4px;
+  font-size: 46px; color: #fff;
+  text-shadow: 0 0 18px rgba(0,229,255,0.8), 0 4px 10px rgba(0,0,0,0.7);
+  opacity: 0;
+}
+.duel-announce-show { animation: duelAnnounce 1.1s ease-out; }
+@keyframes duelAnnounce {
+  0%   { opacity: 0; transform: scale(2.4); letter-spacing: 18px; }
+  20%  { opacity: 1; transform: scale(1); letter-spacing: 4px; }
+  75%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.85); }
+}
+.duel-announce-fight { color: #00ff88; text-shadow: 0 0 22px rgba(0,255,136,0.9), 0 4px 10px rgba(0,0,0,0.7); }
+.duel-announce-ko {
+  color: #ff3c50; font-size: 72px;
+  text-shadow: 0 0 30px rgba(255,60,80,1), 0 4px 12px rgba(0,0,0,0.8);
+}
+.duel-announce-ko.duel-announce-show { animation: duelAnnounceKo 1.6s ease-out; }
+@keyframes duelAnnounceKo {
+  0%   { opacity: 0; transform: scale(3) rotate(-8deg); }
+  18%  { opacity: 1; transform: scale(1.1) rotate(2deg); }
+  30%  { transform: scale(1) rotate(0); }
+  82%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}

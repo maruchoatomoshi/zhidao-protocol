@@ -11388,10 +11388,14 @@ def _public_duel_state(duel: dict, viewer_id):
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        "SELECT telegram_id, full_name FROM users WHERE telegram_id IN (?,?)",
+        "SELECT telegram_id, full_name, avatar_url FROM users WHERE telegram_id IN (?,?)",
         (duel["challenger_id"], duel["opponent_id"]),
     )
-    names = {r[0]: r[1] for r in c.fetchall()}
+    names = {}
+    avatars = {}
+    for r in c.fetchall():
+        names[r[0]] = r[1]
+        avatars[r[0]] = r[2]
     question = None
     if duel["status"] == "active" and duel["current_question_id"]:
         c.execute(
@@ -11406,6 +11410,7 @@ def _public_duel_state(duel: dict, viewer_id):
     role = _duel_role(duel, viewer_id)
     you_ch = role == "challenger"
     opp_id = duel["opponent_id"] if you_ch else duel["challenger_id"]
+    you_id = duel["challenger_id"] if you_ch else duel["opponent_id"]
     your_hp = duel["challenger_hp"] if you_ch else duel["opponent_hp"]
     opp_hp = duel["opponent_hp"] if you_ch else duel["challenger_hp"]
     your_ready = duel["challenger_ready"] if you_ch else duel["opponent_ready"]
@@ -11423,10 +11428,18 @@ def _public_duel_state(duel: dict, viewer_id):
         "max_hp": DUEL_MAX_HP,
         "max_rounds": DUEL_MAX_ROUNDS,
         "round_seconds": DUEL_ROUND_SECONDS,
-        "you": {"hp": your_hp, "ready": bool(your_ready), "answered": your_ans is not None},
+        "you": {
+            "telegram_id": you_id,
+            "name": names.get(you_id, "ТЫ"),
+            "avatar_url": avatars.get(you_id),
+            "hp": your_hp,
+            "ready": bool(your_ready),
+            "answered": your_ans is not None,
+        },
         "opponent": {
             "telegram_id": opp_id,
             "name": names.get(opp_id, str(opp_id)),
+            "avatar_url": avatars.get(opp_id),
             "hp": opp_hp,
             "ready": bool(opp_ready),
             "answered": opp_ans is not None,

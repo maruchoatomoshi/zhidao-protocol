@@ -11,6 +11,13 @@ let duelCurrentId = null;
 let duelLastQuestionId = null;
 let duelAnsweredThisRound = false;
 
+// --- Tekken-style анимации: отслеживаем предыдущее состояние между рендерами ---
+let duelPrevYouHp = null;
+let duelPrevOppHp = null;
+let duelPrevStatus = null;
+let duelPrevRound = null;
+let duelFinishShown = false;
+
 const DUEL_STAKES = [10, 25, 50, 100];
 
 function duelHeaders() {
@@ -232,6 +239,11 @@ function openDuelOverlay(duelId) {
   duelCurrentId = duelId;
   duelLastQuestionId = null;
   duelAnsweredThisRound = false;
+  duelPrevYouHp = null;
+  duelPrevOppHp = null;
+  duelPrevStatus = null;
+  duelPrevRound = null;
+  duelFinishShown = false;
   const ov = document.getElementById('duel-overlay');
   if (ov) ov.classList.add('show');
   startDuelPolling();
@@ -275,13 +287,37 @@ function renderDuelState(st) {
   const oppAv = document.getElementById('duelOppAvatar');
   const oppNm = (st.opponent && st.opponent.name) || 'СОПЕРНИК';
   if (oppName) oppName.textContent = oppNm;
-  if (oppAv) oppAv.textContent = (oppNm[0] || '?').toUpperCase();
+  setDuelAvatar(oppAv, st.opponent && st.opponent.avatar_url, oppNm);
   if (youName) youName.textContent = 'ТЫ';
-  if (youAv) youAv.textContent = 'Я';
+  setDuelAvatar(youAv, st.you && st.you.avatar_url, (st.you && st.you.name) || 'Я');
 
   const maxHp = st.max_hp || 100;
-  setDuelHp('duelYouHp', 'duelYouHpText', st.you ? st.you.hp : maxHp, maxHp);
-  setDuelHp('duelOppHp', 'duelOppHpText', st.opponent ? st.opponent.hp : maxHp, maxHp);
+  const youHp = st.you ? st.you.hp : maxHp;
+  const oppHp = st.opponent ? st.opponent.hp : maxHp;
+
+  // --- Анонсы: смена статуса/раунда (БОЙ! / РАУНД X) ---
+  if (st.status === 'active') {
+    if (duelPrevStatus !== 'active') {
+      announceDuel('БОЙ!', 'duel-announce-fight');
+    } else if (duelPrevRound !== null && st.round_no !== duelPrevRound) {
+      announceDuel('РАУНД ' + st.round_no, '');
+    }
+    duelPrevRound = st.round_no;
+  }
+
+  // --- Детект урона: HP упал => удар попал. Анимируем ту сторону, кому досталось. ---
+  if (duelPrevOppHp !== null && oppHp < duelPrevOppHp) {
+    triggerDuelHit('opp', duelPrevOppHp - oppHp);
+  }
+  if (duelPrevYouHp !== null && youHp < duelPrevYouHp) {
+    triggerDuelHit('you', duelPrevYouHp - youHp);
+  }
+  duelPrevYouHp = youHp;
+  duelPrevOppHp = oppHp;
+  duelPrevStatus = st.status;
+
+  setDuelHp('duelYouHp', 'duelYouHpText', youHp, maxHp);
+  setDuelHp('duelOppHp', 'duelOppHpText', oppHp, maxHp);
 
   const roundLabel = document.getElementById('duelRoundLabel');
   const timer = document.getElementById('duelTimer');
@@ -338,6 +374,17 @@ function renderDuelState(st) {
     if (duelPollTimer) { clearInterval(duelPollTimer); duelPollTimer = null; }
     if (roundLabel) roundLabel.textContent = 'Бой окончен';
     if (timer) timer.textContent = '';
+    // Финишер: K.O.-вспышка + баннер один раз
+    if (!duelFinishShown) {
+      duelFinishShown = true;
+      if (!st.draw) {
+        flashDuelScreen('strong');
+        try { tg.HapticFeedback.notificationOccurred(st.you_won ? 'success' : 'error'); } catch (e) {}
+        announceDuel('K.O.', 'duel-announce-ko');
+      } else {
+        announceDuel('НИЧЬЯ', '');
+      }
+    }
     if (qEl) {
       qEl.innerHTML = st.draw
         ? `<div class="duel-result duel-result-draw">НИЧЬЯ</div>`
@@ -426,6 +473,81 @@ async function submitDuelAnswer(option) {
   } catch (e) {
     showToast('Нет соединения');
   }
+}
+
+// ---------- Tekken-style анимации ----------
+// Аватар: если есть картинка — показываем её фоном, иначе первую букву имени.
+function setDuelAvatar(el, avatarUrl, name) {
+  if (!el) return;
+  if (avatarUrl) {
+    if (el.dataset.avatarUrl !== avatarUrl) {
+      el.dataset.avatarUrl = avatarUrl;
+      el.style.backgroundImage = `url('${String(avatarUrl).replace(/'/g, "%27")}')`;
+      el.classList.add('duel-avatar-img');
+      el.textContent = '';
+    }
+  } else {
+    if (el.dataset.avatarUrl) {
+      el.dataset.avatarUrl = '';
+      el.style.backgroundImage = '';
+      el.classList.remove('duel-avatar-img');
+    }
+    el.textContent = ((name || '?')[0] || '?').toUpperCase();
+  }
+}
+
+// Удар попал: тряска экрана, вспышка, всплывающее число урона, дрожь аватара.
+function triggerDuelHit(side, dmg) {
+  const ov = document.getElementById('duel-overlay');
+  const avatar = document.getElementById(side === 'opp' ? 'duelOppAvatar' : 'duelYouAvatar');
+  const dmgEl = document.getElementById(side === 'opp' ? 'duelOppDmg' : 'duelYouDmg');
+
+  flashDuelScreen('hit');
+  if (ov) {
+    ov.classList.remove('duel-shake');
+    void ov.offsetWidth; // рестарт анимации
+    ov.classList.add('duel-shake');
+    setTimeout(() => ov.classList.remove('duel-shake'), 420);
+  }
+  if (avatar) {
+    avatar.classList.remove('duel-avatar-hit');
+    void avatar.offsetWidth;
+    avatar.classList.add('duel-avatar-hit');
+    setTimeout(() => avatar.classList.remove('duel-avatar-hit'), 500);
+  }
+  if (dmgEl && dmg > 0) {
+    dmgEl.textContent = '-' + dmg;
+    dmgEl.classList.remove('duel-dmg-show');
+    void dmgEl.offsetWidth;
+    dmgEl.classList.add('duel-dmg-show');
+    setTimeout(() => { dmgEl.classList.remove('duel-dmg-show'); dmgEl.textContent = ''; }, 900);
+  }
+  try { tg.HapticFeedback.impactOccurred(side === 'opp' ? 'heavy' : 'medium'); } catch (e) {}
+}
+
+// Кратковременная вспышка экрана: 'hit' слабее, 'strong' для финишера.
+function flashDuelScreen(kind) {
+  const flash = document.getElementById('duelFlash');
+  if (!flash) return;
+  flash.classList.remove('duel-flash-hit', 'duel-flash-strong');
+  void flash.offsetWidth;
+  flash.classList.add(kind === 'strong' ? 'duel-flash-strong' : 'duel-flash-hit');
+  setTimeout(() => flash.classList.remove('duel-flash-hit', 'duel-flash-strong'),
+    kind === 'strong' ? 650 : 320);
+}
+
+// Большой баннер по центру (БОЙ! / РАУНД X / K.O.).
+function announceDuel(text, cls) {
+  const el = document.getElementById('duelAnnounce');
+  if (!el) return;
+  el.className = 'duel-announce';
+  el.textContent = text;
+  void el.offsetWidth;
+  el.classList.add('duel-announce-show');
+  if (cls) el.classList.add(cls);
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove('duel-announce-show'),
+    cls === 'duel-announce-ko' ? 1600 : 1100);
 }
 
 // ---------- утилиты ----------
