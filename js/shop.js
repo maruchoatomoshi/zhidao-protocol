@@ -57,6 +57,8 @@ const GS_CARD_CONFIGS = {
 // Призы не-карточки
 const GS_PRIZE_CONFIGS = {
   points: {emoji:'✦',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:15,petalColor:'rgba(219,177,101,0.7)',petals:['✦','★'],revealDelay:1200},
+  fate_guard:{emoji:'🔁',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:12,petalColor:'rgba(74,122,204,0.6)',petals:['🔁','✦'],revealDelay:1200},
+  scan:    {emoji:'🎲',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:12,petalColor:'rgba(74,122,204,0.6)',petals:['🎲','✦'],revealDelay:1200},
   immunity:{emoji:'🛡',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:12,petalColor:'rgba(74,122,204,0.6)',petals:['🛡','✦'],revealDelay:1200},
   walk:    {emoji:'🏮',pool:'blue',bgFrom:'#c8dff5',bgTo:'#d8e8f5',flashColor:'rgba(200,220,255,0.5)',rayColor:null,partCount:12,petalColor:'rgba(219,177,101,0.6)',petals:['🏮','✦'],revealDelay:1200},
   empty:   {emoji:'🍚',pool:'blue',bgFrom:'#d8d8d8',bgTo:'#e8e8e8',flashColor:'rgba(200,200,200,0.4)',rayColor:null,partCount:8,petalColor:'rgba(150,150,150,0.5)',petals:['✦'],revealDelay:1200},

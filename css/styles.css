@@ -3240,7 +3240,7 @@ body.theme-genshin-light .legendary-target-btn.cancel {
 /* Generic in-app confirm dialog — used instead of tg.showPopup/window.confirm,
    both of which can be unsupported or hang on some Telegram clients. */
 .confirm-dialog-modal {
-  position: fixed; inset: 0; z-index: 9400;
+  position: fixed; inset: 0; z-index: 20050;
   display: flex; align-items: center; justify-content: center;
   padding: 18px; background: rgba(3,2,7,0.72); backdrop-filter: blur(12px);
 }

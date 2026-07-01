@@ -3,8 +3,8 @@ const PRIZES = [
   { code:'small',   icon:'⭐', name:'+30 баллов',        desc:'Небольшой бонус',     points:30,  rarity:'common' },
   { code:'medium',  icon:'💫', name:'+60 баллов',        desc:'Неплохо!',            points:60,  rarity:'uncommon' },
   { code:'walk',    icon:'🕐', name:'+30 мин свободы',   desc:'Покажи скрин вожатому', points:0, rarity:'uncommon' },
-  { code:'laundry', icon:'🧺', name:'Вне очереди!',      desc:'Первым на стирку',    points:0,   rarity:'rare' },
-  { code:'skip',    icon:'🛡', name:'Иммунитет!',        desc:'Один пропуск без штрафа', points:0, rarity:'rare' },
+  { code:'fate_guard',icon:'🔁', name:'Гарант судьбы',    desc:'Следующая пустышка перебросится', points:0, rarity:'rare' },
+  { code:'scan',    icon:'🎲', name:'+1 попытка',        desc:'Ещё одно сканирование', points:0, rarity:'rare' },
   { code:'jackpot', icon:'👑', name:'НАГРАДА ОТ СИСТЕМЫ',          desc:'+100 баллов! Невероятно!', points:100, rarity:'jackpot' },
 ];
 const PURPLE_PRIZES = [
@@ -558,6 +558,7 @@ async function openGenshinCase() {
     currentPoints = data.new_points; updatePoints();
     if (data.scan_attempts != null) { scanAttempts = data.scan_attempts; }
     loadCasinoStatus();
+    if (data.fate_guard_used) showToast('🔁 Гарант судьбы спас пустой результат');
     if (typeof handleDiaryUnlocks === 'function') handleDiaryUnlocks(data.diary_unlocked);
     curGsCardId = data.card_id || null;
     const cfg = GS_CARD_CONFIGS[data.card_id] || GS_PRIZE_CONFIGS[data.type] || GS_PRIZE_CONFIGS.points;
@@ -665,6 +666,8 @@ const GENSHIN_HISTORY_MAP = {
   'genshin_duplicate_card_moon': { icon: '🌙', name: '嫦娥仙子 Богиня Луны · дубль +50★' },
   'genshin_points_30': { icon: '⭐', name: '+30★' },
   'genshin_points_60': { icon: '💫', name: '+60★' },
+  'genshin_fate_guard': { icon: '🔁', name: 'Гарант судьбы' },
+  'genshin_scan': { icon: '🎲', name: '+1 попытка' },
   'genshin_immunity': { icon: '🛡', name: 'Иммунитет' },
   'genshin_walk': { icon: '🕐', name: '+30 мин свободы' },
 };
@@ -912,6 +915,7 @@ async function openCase() {
     updatePoints();
     // Обновляем HUD попыток и текст кнопки
     loadCasinoStatus();
+    if (data.fate_guard_used) showToast('🔁 Гарант судьбы спас пустой результат');
     if (prize.code==='jackpot'||LEGENDARY_IMPLANT_INFO[prize.code]) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(100); }
     else if (prize.code.startsWith('implant_')) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(50); }
     else if (prize.points > 50) { try{tg.HapticFeedback.notificationOccurred('success');}catch(e){} launchConfetti(30); }
@@ -1180,7 +1184,11 @@ async function loadCasinoInventory() {
     const r = await fetch(`${API_URL}/api/casino/inventory/${currentUserId}`);
     const data = await r.json();
     const container = document.getElementById('casinoInventoryList');
-    if (!data.length) { container.innerHTML = '<div class="empty-state">Призов пока нет<br>Открывай кейсы!</div>'; return; }
+    if (!data.length) {
+      const emptyHint = currentThemePath === 'genshin' ? 'Соверши молитву!' : 'Открывай кейсы!';
+      container.innerHTML = `<div class="empty-state">Призов пока нет<br>${emptyHint}</div>`;
+      return;
+    }
     container.innerHTML = data.map(item => {
       const expires = item.expires_at ? `<div class="inventory-expiry">⏰ До ${item.expires_at.slice(11,16)}</div>` : '';
       return `<div class="inventory-item inventory-item-prize">
@@ -1225,7 +1233,11 @@ async function loadCasinoHistory() {
     const r = await fetch(`${API_URL}/api/casino/history/${currentUserId}`);
     const data = await r.json();
     const container = document.getElementById('casinoHistoryList');
-    if (!data.length) { container.innerHTML = '<div class="empty-state">История пуста<br>Открой первый кейс!</div>'; return; }
+    if (!data.length) {
+      const emptyHint = currentThemePath === 'genshin' ? 'Соверши первую молитву!' : 'Открой первый кейс!';
+      container.innerHTML = `<div class="empty-state">История пуста<br>${emptyHint}</div>`;
+      return;
+    }
     container.innerHTML = data.map(item => {
       const date = new Date(item.created_at).toLocaleDateString('ru-RU');
       const time = item.created_at.slice(11,16);

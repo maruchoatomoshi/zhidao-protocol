@@ -1122,6 +1122,7 @@ def init_db():
                   extra_cases INTEGER DEFAULT 0,
                   extra_raids INTEGER DEFAULT 0,
                   double_win INTEGER DEFAULT 0,
+                  fate_guard INTEGER DEFAULT 0,
                   title_date TEXT DEFAULT NULL,
                   theme_path TEXT DEFAULT NULL,
                   profile_showcase_kind TEXT DEFAULT NULL,
@@ -1466,6 +1467,8 @@ def migrate_db():
         c.execute("ALTER TABLE user_status ADD COLUMN scan_attempts INTEGER DEFAULT 0")
     if 'protocol_fragments' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN protocol_fragments INTEGER DEFAULT 0")
+    if 'fate_guard' not in columns:
+        c.execute("ALTER TABLE user_status ADD COLUMN fate_guard INTEGER DEFAULT 0")
     if 'equipped_frame' not in columns:
         c.execute("ALTER TABLE user_status ADD COLUMN equipped_frame TEXT DEFAULT NULL")
     if 'title_style' not in columns:
@@ -7631,8 +7634,8 @@ async def open_case(data: dict):
             {"code": "small",   "name": "+30 баллов",         "points": 30,  "weight": 24, "icon": "⭐", "case_type": "gold"},
             {"code": "medium",  "name": "+60 баллов",         "points": 60,  "weight": 12, "icon": "💫", "case_type": "gold"},
             {"code": "walk",    "name": "+30 мин свободы",    "points": 0,   "weight": 8,  "icon": "🕐", "case_type": "gold"},
-            {"code": "laundry", "name": "Вне очереди!",       "points": 0,   "weight": 10, "icon": "🧺", "case_type": "gold"},
-            {"code": "skip",    "name": "Иммунитет!",         "points": 0,   "weight": 5,  "icon": "🛡", "case_type": "gold"},
+            {"code": "fate_guard", "name": "Гарант судьбы",       "points": 0,   "weight": 10, "icon": "🔁", "case_type": "gold"},
+            {"code": "scan",    "name": "+1 попытка",         "points": 0,   "weight": 5,  "icon": "🎲", "case_type": "gold"},
             {"code": "jackpot", "name": "ДЖЕКПОТ! +100★",     "points": 100, "weight": 1,  "icon": "👑", "case_type": "gold"},
         ]
     elif case_type == 'purple':
@@ -7676,56 +7679,73 @@ async def open_case(data: dict):
                              ON CONFLICT(telegram_id) DO UPDATE SET
                                scan_attempts = MAX(0, scan_attempts - 1)""", (telegram_id,))
 
-            if prize["code"] == "skip":
-                c.execute("""INSERT INTO user_status (telegram_id, immunity) VALUES (?,1)
-                             ON CONFLICT(telegram_id) DO UPDATE SET immunity=1""", (telegram_id,))
-                c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_immunity', now_str, 'active'))
-            elif prize["code"] == "walk":
+            selected_prize = dict(prize)
+            fate_guard_used = False
+            if selected_prize["code"] == "empty":
+                c.execute("SELECT fate_guard FROM user_status WHERE telegram_id=?", (telegram_id,))
+                guard_row = c.fetchone()
+                if guard_row and (guard_row[0] or 0) > 0:
+                    c.execute("""UPDATE user_status
+                                 SET fate_guard=MAX(0, COALESCE(fate_guard,0)-1)
+                                 WHERE telegram_id=?""", (telegram_id,))
+                    reroll_prizes = [p for p in prizes if p["code"] != "empty"]
+                    selected_prize = dict(random.choices(reroll_prizes, weights=[p["weight"] for p in reroll_prizes], k=1)[0])
+                    selected_prize["name"] = f'Гарант судьбы → {selected_prize["name"]}'
+                    fate_guard_used = True
+
+            if selected_prize["code"] == "fate_guard":
+                c.execute("""INSERT INTO user_status (telegram_id, fate_guard) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET fate_guard=COALESCE(fate_guard,0)+1""", (telegram_id,))
+            elif selected_prize["code"] == "scan":
+                c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                             ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""", (telegram_id,))
+            elif selected_prize["code"] == "walk":
                 expires = now_beijing.strftime('%Y-%m-%d') + ' 22:00:00'
                 c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status, expires_at) VALUES (?,?,?,?,?)", (telegram_id, 'casino_walk', now_str, 'active', expires))
-            elif prize["code"] == "laundry":
-                c.execute("INSERT INTO shop_purchases (telegram_id, item_code, purchased_at, status) VALUES (?,?,?,?)", (telegram_id, 'casino_laundry', now_str, 'active'))
-            elif prize["code"].startswith("implant_"):
-                c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, prize["code"], now_str))
+            elif selected_prize["code"].startswith("implant_"):
+                c.execute("INSERT INTO user_implants (telegram_id, implant_id, durability, obtained_at) VALUES (?,?,3,?)", (telegram_id, selected_prize["code"], now_str))
             c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
             dw_row = c.fetchone()
             dw_active = bool(dw_row and dw_row[0])
-            if dw_active:
-                c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
             doubled_win = False
-            if prize.get("points", 0) > 0:
+            if selected_prize.get("points", 0) > 0:
                 if dw_active:
-                    prize["points"] *= 2
-                    prize["name"] = f'{prize["name"]} ×2'
+                    selected_prize["points"] *= 2
+                    selected_prize["name"] = f'{selected_prize["name"]} ×2'
                     doubled_win = True
-                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (prize["points"], telegram_id))
+                    c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
+                c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (selected_prize["points"], telegram_id))
 
-            c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, prize["code"], now_str))
+            c.execute("INSERT INTO casino_log (telegram_id, date, prize, created_at) VALUES (?,?,?,?)", (telegram_id, today, selected_prize["code"], now_str))
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
             scan_row = c.fetchone()
-            log_economy(c, telegram_id, 'case_open', 0, new_points, None, prize.get("case_type") or "case", prize.get("name") or prize.get("code"))
+            log_economy(c, telegram_id, 'case_open', 0, new_points, None, selected_prize.get("case_type") or "case", selected_prize.get("name") or selected_prize.get("code"))
+            if fate_guard_used:
+                log_economy(c, telegram_id, 'fate_guard_consumed', 0, new_points, None, "case", "Гарант судьбы")
 
             diary_unlocked = []
             if unlock_diary_entry(c, telegram_id, "first_spin"):
                 diary_unlocked.append("first_spin")
-            if prize["code"].startswith("implant_"):
+            if selected_prize["code"].startswith("implant_"):
                 if unlock_diary_entry(c, telegram_id, "first_item"):
                     diary_unlocked.append("first_item")
 
             award_achievement(c, telegram_id, "gambler")
-            if prize["code"] in ("jackpot", "implant_red_dragon"):
+            if selected_prize["code"] in ("jackpot", "implant_red_dragon"):
                 award_achievement(c, telegram_id, "lucky")
-            if prize["code"] == "implant_red_dragon":
+            if selected_prize["code"] == "implant_red_dragon":
                 award_achievement(c, telegram_id, "dragon")
             if doubled_win:
                 log_economy(c, telegram_id, 'double_win_consumed', 0, new_points, None, "shop_item", "Двойной сигнал")
             conn.commit()
             return {
+                "prize": selected_prize,
                 "new_points": new_points,
                 "scan_attempts": scan_row[0] if scan_row else 0,
                 "doubled_win": doubled_win,
+                "fate_guard_used": fate_guard_used,
                 "diary_unlocked": diary_unlocked,
             }
         finally:
@@ -7736,10 +7756,11 @@ async def open_case(data: dict):
         raise HTTPException(status_code=result["status"], detail=result["error"])
 
     return {
-        "prize": prize,
+        "prize": result["prize"],
         "new_points": result["new_points"],
         "scan_attempts": result["scan_attempts"],
         "doubled_win": result["doubled_win"],
+        "fate_guard_used": result["fate_guard_used"],
         "diary_unlocked": result["diary_unlocked"],
     }
 
@@ -7785,8 +7806,8 @@ def get_casino_history(telegram_id: int):
         "small": {"name": "+30 баллов", "icon": "⭐️"},
         "medium": {"name": "+60 баллов", "icon": "💫"},
         "walk": {"name": "+30 мин свободы", "icon": "🕐"},
-        "laundry": {"name": "Вне очереди!", "icon": "🧺"},
-        "skip": {"name": "Иммунитет!", "icon": "🛡"},
+        "fate_guard": {"name": "Гарант судьбы", "icon": "🔁"},
+        "scan": {"name": "+1 попытка", "icon": "🎲"},
         "jackpot": {"name": "ДЖЕКПОТ! +100!", "icon": "👑"},
         "implant_guanxi": {"name": "Имплант Гуаньси 关系", "icon": "🤝"},
         "implant_terracota": {"name": "Имплант Терракота 兵马俑", "icon": "🗿"},
@@ -9266,7 +9287,8 @@ GENSHIN_POOL = {
             {'type': 'points', 'amount': 30, 'weight': 24},
             {'type': 'points', 'amount': 60, 'weight': 12},
             {'type': 'walk', 'weight': 8},
-            {'type': 'immunity', 'weight': 5},
+            {'type': 'fate_guard', 'weight': 10},
+            {'type': 'scan', 'weight': 5},
         ],
     },
     'purple': {
@@ -9351,8 +9373,17 @@ async def open_genshin_case(data: dict):
         c.execute("SELECT double_win FROM user_status WHERE telegram_id=?", (telegram_id,))
         dw_row = c.fetchone()
         dw_active = bool(dw_row and dw_row[0])
-        if dw_active:
-            c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
+        fate_guard_used = False
+        if item['type'] == 'empty':
+            c.execute("SELECT fate_guard FROM user_status WHERE telegram_id=?", (telegram_id,))
+            guard_row = c.fetchone()
+            if guard_row and (guard_row[0] or 0) > 0:
+                c.execute("""UPDATE user_status
+                             SET fate_guard=MAX(0, COALESCE(fate_guard,0)-1)
+                             WHERE telegram_id=?""", (telegram_id,))
+                reroll_items = [it for it in pool['items'] if it['type'] != 'empty']
+                item = random.choices(reroll_items, weights=[it['weight'] for it in reroll_items])[0]
+                fate_guard_used = True
 
         if item['type'] == 'card':
             card_id = item['id']
@@ -9388,6 +9419,7 @@ async def open_genshin_case(data: dict):
             if dw_active:
                 amount *= 2
                 doubled_win = True
+                c.execute("UPDATE user_status SET double_win=0 WHERE telegram_id=?", (telegram_id,))
             c.execute("UPDATE users SET points = points + ? WHERE telegram_id=?", (amount, telegram_id))
             prize_code = f"genshin_points_{amount}"
             if fox_bonus:
@@ -9399,10 +9431,16 @@ async def open_genshin_case(data: dict):
                 balance_after = c.fetchone()[0] or 0
                 log_economy(c, telegram_id, "double_win_consumed", 0, balance_after, None, "shop_item", "Двойной сигнал")
             result = {"type": "points", "amount": amount, "pool": pool_name, "name": f"+{amount} ★" + (" ×2" if doubled_win else ""), "rarity": 0, "card_bonus": fox_bonus, "doubled_win": doubled_win}
-        elif item['type'] == 'immunity':
-            c.execute("INSERT INTO user_status (telegram_id, immunity) VALUES (?,1) ON CONFLICT(telegram_id) DO UPDATE SET immunity=1", (telegram_id,))
-            prize_code = "genshin_immunity"
-            result = {"type": "immunity", "pool": pool_name, "name": "Иммунитет", "rarity": 0}
+        elif item['type'] == 'fate_guard':
+            c.execute("""INSERT INTO user_status (telegram_id, fate_guard) VALUES (?,1)
+                         ON CONFLICT(telegram_id) DO UPDATE SET fate_guard=COALESCE(fate_guard,0)+1""", (telegram_id,))
+            prize_code = "genshin_fate_guard"
+            result = {"type": "fate_guard", "pool": pool_name, "name": "Гарант судьбы", "rarity": 0}
+        elif item['type'] == 'scan':
+            c.execute("""INSERT INTO user_status (telegram_id, scan_attempts) VALUES (?,1)
+                         ON CONFLICT(telegram_id) DO UPDATE SET scan_attempts=MIN(7, scan_attempts+1)""", (telegram_id,))
+            prize_code = "genshin_scan"
+            result = {"type": "scan", "pool": pool_name, "name": "+1 попытка", "rarity": 0}
         elif item['type'] == 'empty':
             prize_code = "genshin_empty"
             result = {"type": "empty", "pool": pool_name, "name": "Пустая миска риса", "rarity": 0}
@@ -9433,6 +9471,8 @@ async def open_genshin_case(data: dict):
         c.execute("SELECT scan_attempts FROM user_status WHERE telegram_id=?", (telegram_id,))
         sc_row = c.fetchone()
         log_economy(c, telegram_id, 'prayer_open', new_points - points, new_points, None, pool_name, result.get("name") or prize_code)
+        if fate_guard_used:
+            log_economy(c, telegram_id, "fate_guard_consumed", 0, new_points, None, "prayer", "Гарант судьбы")
 
         diary_unlocked = []
         if unlock_diary_entry(c, telegram_id, "first_spin"):
@@ -9453,6 +9493,7 @@ async def open_genshin_case(data: dict):
         if sea_bonus:
             result["sea_bonus"] = sea_bonus
         result["scan_attempts"] = sc_row[0] if sc_row else 0
+        result["fate_guard_used"] = fate_guard_used
         result["diary_unlocked"] = diary_unlocked
         return result
     return await db_write(_run)

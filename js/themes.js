@@ -160,6 +160,7 @@ function setTheme(theme, isUserAction = true) {
   if (el('moreCatalogIcon'))    el('moreCatalogIcon').className    = isG ? 'ti ti-cards more-item-icon' : 'ti ti-cpu more-item-icon';
   if (el('casino-page-cn'))      el('casino-page-cn').textContent   = isG ? '祈愿' : '箱子';
   if (el('casino-page-title') && el('casino-page-title').firstChild)   el('casino-page-title').firstChild.textContent = isG ? 'МОЛИТВЫ ' : 'КЕЙСЫ ';
+  if (el('casino-page-sub'))     el('casino-page-sub').textContent  = isG ? '> qí yuàn // 祈愿 испытать судьбу' : '> kāi xiāng // 开箱 открыть кейс';
   if (el('implants-page-cn'))    el('implants-page-cn').textContent = isG ? '卡片' : '植入物';
   if (el('implants-page-title') && el('implants-page-title').firstChild) el('implants-page-title').firstChild.textContent = isG ? 'КАРТОЧКИ ' : 'ИМПЛАНТЫ ';
   if (el('home-neuro-divider'))  el('home-neuro-divider').textContent = isG ? '✦ 卡片 артефакты ✦' : '🏮 网络链接 нейролинк 🏮';
