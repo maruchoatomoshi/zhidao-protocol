@@ -1690,7 +1690,7 @@ const RAID_CONFIG = {
     minPlayers: 3,
     maxPlayers: 15,
     cyberpunk: {
-        img: 'https://github.com/maruchoatomoshi/zhidao-protocol/blob/main/alpha_boss_netwatchtheme.png?raw=true',
+        img: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/alpha_boss_netwatchtheme.png?v=20260702alpha1',
         title: '// NIGHT RAID // TARGET: ALPHA',
         kicker: 'ALPHABOSS RAID // 夜间行动',
         chips: ['Stealth', 'Analyse', 'Risk: Variable'],
