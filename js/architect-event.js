@@ -52,9 +52,9 @@ const WILD_AI_BREACH_PHASE_VIDEOS = {
 // ?v= — обход кэша WebView: до 2026-07-02 тут лежали тяжёлые (16-23МБ)
 // файлы без faststart, которые фактически не загружались.
 const MJU_PHASE_VIDEOS = {
-  1: './mu_ivent_phase1.mp4?v=20260702enc1',
-  2: './mu_ivent_phase2.mp4?v=20260702enc1',
-  3: './mu_ivent_phase3.mp4?v=20260702enc1'
+  1: './mu_ivent_phase1.mp4?v=20260702enc2',
+  2: './mu_ivent_phase2.mp4?v=20260702enc2',
+  3: './mu_ivent_phase3.mp4?v=20260702enc2'
 };
 
 const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
