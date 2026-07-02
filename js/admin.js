@@ -1460,6 +1460,28 @@ async function setWildAiEventEnabled(enabled) {
   }
 }
 
+async function setMjuEventEnabled(enabled) {
+  try {
+    const r = await fetch(`${API_URL}/api/admin/mju-event`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({enabled})
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      showToast(data.detail || 'Ошибка переключения ивента МЮ');
+      return;
+    }
+
+    if (typeof syncMjuEventAvailability === 'function') {
+      syncMjuEventAvailability(!!data.mju_event);
+    }
+    showToast(enabled ? '⚡ Босс Протокола открыт!' : '⛔ Босс Протокола скрыт!');
+  } catch(e) {
+    showToast('Ошибка соединения');
+  }
+}
+
 // ===== ADMIN CONTRACTS =====
 
 let adminContractsActiveFilter = '';

@@ -1,5 +1,6 @@
 let architectEventPublicEnabled = !!window.ARCHITECT_EVENT_ENABLED;
 let wildAiEventPublicEnabled = !!window.WILDAI_EVENT_ENABLED;
+let mjuEventPublicEnabled = !!window.MJU_EVENT_ENABLED;
 let eventLobbyTabHint = 'architect';
 
 function isArchitectEventPublicEnabled() {
@@ -10,6 +11,10 @@ function isWildAiEventPublicEnabled() {
   return !!wildAiEventPublicEnabled;
 }
 
+function isMjuEventPublicEnabled() {
+  return !!mjuEventPublicEnabled;
+}
+
 function canOpenArchitectEvent() {
   return isAdmin || isArchitect || isArchitectEventPublicEnabled();
 }
@@ -17,6 +22,10 @@ function canOpenArchitectEvent() {
 function canOpenWildAiEvent() {
   const wildAiBreach = typeof isWildAiBreachActive === 'function' && isWildAiBreachActive();
   return isAdmin || isArchitect || isWildAiEventPublicEnabled() || wildAiBreach;
+}
+
+function canOpenMjuEvent() {
+  return isAdmin || isArchitect || isMjuEventPublicEnabled();
 }
 
 function syncArchitectEventAvailability(enabled) {
@@ -63,6 +72,28 @@ function syncWildAiEventAvailability(enabled) {
   }
 }
 
+function syncMjuEventAvailability(enabled) {
+  if (typeof enabled === 'boolean') {
+    mjuEventPublicEnabled = enabled;
+    window.MJU_EVENT_ENABLED = enabled;
+  }
+
+  const visible = canOpenMjuEvent();
+  const mjuCard = document.getElementById('homeMjuEventCard');
+  if (mjuCard) {
+    mjuCard.style.display = visible ? 'block' : 'none';
+    mjuCard.classList.toggle('event-disabled-admin-view', !isMjuEventPublicEnabled() && (isAdmin || isArchitect));
+  }
+
+  const status = document.getElementById('adminMjuEventStatus');
+  if (status) {
+    status.textContent = isMjuEventPublicEnabled()
+      ? 'STATUS // PUBLIC ACCESS ENABLED'
+      : 'STATUS // HIDDEN FROM STUDENTS';
+    status.classList.toggle('enabled', isMjuEventPublicEnabled());
+  }
+}
+
 async function loadArchitectEventAvailability() {
   try {
     const r = await fetch(`${API_URL}/api/settings`);
@@ -70,10 +101,12 @@ async function loadArchitectEventAvailability() {
     const settings = await r.json();
     syncArchitectEventAvailability(!!settings.architect_event);
     syncWildAiEventAvailability(!!settings.wildai_event);
+    syncMjuEventAvailability(!!settings.mju_event);
     if (typeof applyWildAiBreachState === 'function') applyWildAiBreachState(settings);
   } catch (e) {
     syncArchitectEventAvailability(!!window.ARCHITECT_EVENT_ENABLED);
     syncWildAiEventAvailability(!!window.WILDAI_EVENT_ENABLED);
+    syncMjuEventAvailability(!!window.MJU_EVENT_ENABLED);
   }
 }
 
@@ -83,16 +116,24 @@ function openEventOverlay(tabHint) {
     return;
   }
 
-  const wantWildAi = (tabHint === 'wildai_breach');
-  if (wantWildAi ? !canOpenWildAiEvent() : !canOpenArchitectEvent()) {
-    showToast(wantWildAi ? 'WILD AI BREACH пока закрыт.' : 'Architect Protocol пока закрыт.');
+  const requestedCode = tabHint === 'wildai_breach'
+    ? 'wildai_breach'
+    : (tabHint === 'mju_protocol_boss' ? 'mju_protocol_boss' : 'architect');
+  const allowed = requestedCode === 'wildai_breach'
+    ? canOpenWildAiEvent()
+    : (requestedCode === 'mju_protocol_boss' ? canOpenMjuEvent() : canOpenArchitectEvent());
+  if (!allowed) {
+    const closedText = requestedCode === 'wildai_breach'
+      ? 'WILD AI BREACH пока закрыт.'
+      : (requestedCode === 'mju_protocol_boss' ? 'Босс Протокола пока закрыт.' : 'Architect Protocol пока закрыт.');
+    showToast(closedText);
     return;
   }
 
   const overlay = document.getElementById('eventOverlay');
   if (!overlay) return;
 
-  eventLobbyTabHint = (tabHint === 'wildai_breach') ? 'wildai_breach' : 'architect';
+  eventLobbyTabHint = requestedCode;
 
   if (typeof closeCreateEventModal === 'function') {
     closeCreateEventModal();
@@ -111,9 +152,11 @@ function openEventOverlay(tabHint) {
     architectMusicUnlocked = true;
   }
   // Start lobby music synchronously in gesture context — iOS blocks autoplay on async calls
-  const lobbyMusic = (eventLobbyTabHint === 'wildai_breach' && typeof WILD_AI_BREACH_LOBBY_MUSIC !== 'undefined')
+  const lobbyMusic = eventLobbyTabHint === 'wildai_breach' && typeof WILD_AI_BREACH_LOBBY_MUSIC !== 'undefined'
     ? WILD_AI_BREACH_LOBBY_MUSIC
-    : (typeof ARCHITECT_LOBBY_MUSIC !== 'undefined' ? ARCHITECT_LOBBY_MUSIC : '');
+    : (eventLobbyTabHint === 'mju_protocol_boss' && typeof MJU_LOBBY_MUSIC !== 'undefined'
+      ? MJU_LOBBY_MUSIC
+      : (typeof ARCHITECT_LOBBY_MUSIC !== 'undefined' ? ARCHITECT_LOBBY_MUSIC : ''));
   if (typeof switchArchitectMusic === 'function' && lobbyMusic) {
     switchArchitectMusic(lobbyMusic);
   }
@@ -209,6 +252,7 @@ function openArchitectEventEntryBanner() {
   const audio = document.getElementById('architectEventEntryAudio');
   if (!overlay) return;
 
+  setEventEntryBannerCopy();
   overlay.classList.add('show');
 
   if (architectEventEntryBannerTimer) {
@@ -252,6 +296,47 @@ function closeArchitectEventEntryBanner() {
       audio.pause();
       audio.currentTime = 0;
     } catch (e) {}
+  }
+}
+
+function setEventEntryBannerCopy() {
+  const overlay = document.getElementById('architectEventEntryBanner');
+  if (!overlay) return;
+
+  const code = typeof getEventHintCode === 'function' ? getEventHintCode() : eventLobbyTabHint;
+  const isWildAi = code === 'wildai_breach';
+  const isMju = code === 'mju_protocol_boss';
+  const kicker = overlay.querySelector('.architect-event-entry-kicker');
+  const title = overlay.querySelector('.architect-event-entry-title');
+  const copy = overlay.querySelector('.architect-event-entry-copy');
+  const grid = overlay.querySelector('.architect-event-entry-grid');
+
+  const cfg = isMju
+    ? {
+        kicker: 'PROTOCOL BOSS // ACCESS CHECK',
+        title: 'ПРОВЕРКА ДОПУСКА',
+        copy: 'Цензор активировал сетевое сканирование.<br>Команде требуется дисциплина, точность и полный контроль нарушений.',
+        grid: ['CHECK // ACTIVE', 'VIOLATIONS // TRACKED', 'BOSS // MJU']
+      }
+    : (isWildAi
+      ? {
+          kicker: 'RED FIREWALL SECURITY // INTRUSION ALERT',
+          title: 'ВНИМАНИЕ!',
+          copy: 'Несанкционированный вход в сеть.<br>Черный Заслон под угрозой вторжения.',
+          grid: ['TRACE // ACTIVE', 'FIREWALL // BREACHED', 'THREAT // WILD AI']
+        }
+      : {
+          kicker: 'ARCHITECT PROTOCOL // SYSTEM ALERT',
+          title: 'АРХИТЕКТОР В СЕТИ',
+          copy: 'Канал протокола открыт.<br>Команде требуется пробить фазы и удержать перегрузку.',
+          grid: ['TRACE // ACTIVE', 'PHASES // ARMED', 'BOSS // ARCHITECT']
+        });
+
+  if (kicker) kicker.textContent = cfg.kicker;
+  if (title) title.textContent = cfg.title;
+  if (copy) copy.innerHTML = cfg.copy;
+  if (grid) {
+    grid.innerHTML = cfg.grid.map(item => `<span>${item}</span>`).join('');
   }
 }
 

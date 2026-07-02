@@ -21,6 +21,7 @@ window.ADMIN_CONTACT_URL = '';
 window.APP_LAUNCH_LOCK_ENABLED = false;
 window.APP_LAUNCH_TARGET_AT = '2026-07-04T09:00:00+08:00';
 window.ARCHITECT_EVENT_ENABLED = false;
+window.MJU_EVENT_ENABLED = false;
 
 // 
 // 

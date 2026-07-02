@@ -726,6 +726,18 @@ WILD_AI_BREACH_REWARD_REP = 30
 WILD_AI_BREACH_FRAME_ID = "redwall-defender"
 WILD_AI_BREACH_MVP_TITLE = "守墙者 / Хранитель Файрвола"
 
+MJU_EVENT_CODE = "mju_protocol_boss"
+MJU_DEFAULT_HP = 12000
+MJU_DEFAULT_MIN_PLAYERS = 5
+MJU_DEFAULT_MAX_PLAYERS = 15
+MJU_PHASE2_THRESHOLD = 0.66
+MJU_PHASE3_THRESHOLD = 0.33
+MJU_VIOLATION_THRESHOLD = 18
+MJU_CRITICAL_THRESHOLD = 45
+MJU_BOSS_COUNTER_EVERY = 6
+MJU_BOSS_COUNTER_PRESSURE = 3
+MJU_REWARD_REP = 20
+
 WILD_AI_BREACH_QUESTION_SEEDS = {
     "attack": [
         {"prompt": "Перехвачен код узла дикого ИИ: 删除 — что значит этот символ?", "option_a": "Сохранить", "option_b": "Удалить", "option_c": "Скопировать", "correct_option": "b", "explanation": "删除 — удалить."},
@@ -750,6 +762,39 @@ WILD_AI_BREACH_QUESTION_SEEDS = {
         {"prompt": "Как переводится 备份完成？", "option_a": "Резервное копирование завершено", "option_b": "Соединение потеряно", "option_c": "Загрузка началась", "correct_option": "a", "explanation": "备份完成 — резервное копирование завершено."},
         {"prompt": "Что означает 重新连接成功？", "option_a": "Повторное подключение успешно", "option_b": "Файл повреждён", "option_c": "Доступ запрещён", "correct_option": "a", "explanation": "重新连接成功 — повторное подключение прошло успешно."},
         {"prompt": "Выбери верный ответ на тревогу 检测到异常！", "option_a": "正在处理。", "option_b": "再见。", "option_c": "我在吃饭。", "correct_option": "a", "explanation": "正在处理 — обрабатывается (идёт устранение аномалии)."},
+    ],
+}
+
+MJU_QUESTION_SEEDS = {
+    "attack": [
+        {"prompt": "Проверка допуска: 纪律 означает...", "option_a": "Дисциплина", "option_b": "Скидка", "option_c": "Билет", "correct_option": "a", "explanation": "纪律 — дисциплина."},
+        {"prompt": "Что значит 规则?", "option_a": "Правила", "option_b": "Подарок", "option_c": "Погода", "correct_option": "a", "explanation": "规则 — правила."},
+        {"prompt": "Переведи 命令.", "option_a": "Команда / приказ", "option_b": "Ошибка", "option_c": "Перерыв", "correct_option": "a", "explanation": "命令 — команда, приказ."},
+        {"prompt": "Что означает 检查?", "option_a": "Проверять", "option_b": "Покупать", "option_c": "Спать", "correct_option": "a", "explanation": "检查 — проверять."},
+        {"prompt": "Выбери перевод 证件.", "option_a": "Документы / удостоверение", "option_b": "Еда", "option_c": "Зарядка", "correct_option": "a", "explanation": "证件 — документы, удостоверение."},
+        {"prompt": "Что значит 禁止?", "option_a": "Запрещено", "option_b": "Разрешено", "option_c": "Бесплатно", "correct_option": "a", "explanation": "禁止 — запрещать, запрещено."},
+        {"prompt": "Переведи 安静.", "option_a": "Тихо / спокойно", "option_b": "Быстро", "option_c": "Дорого", "correct_option": "a", "explanation": "安静 — тихий, спокойно."},
+        {"prompt": "Что значит 排队?", "option_a": "Стоять в очереди", "option_b": "Играть", "option_c": "Забыть", "correct_option": "a", "explanation": "排队 — стоять в очереди."},
+    ],
+    "protocol": [
+        {"prompt": "Выбери правильную фразу: «Пожалуйста, покажите документ».", "option_a": "请出示证件。", "option_b": "请喝一杯水。", "option_c": "请打开音乐。", "correct_option": "a", "explanation": "请出示证件 — пожалуйста, предъявите документ."},
+        {"prompt": "Как сказать «Я понял правила»?", "option_a": "我明白规则了。", "option_b": "我买苹果了。", "option_c": "我很饿了。", "correct_option": "a", "explanation": "我明白规则了 — я понял правила."},
+        {"prompt": "Выбери ответ на 你迟到了吗？", "option_a": "没有，我准时到了。", "option_b": "我不要辣。", "option_c": "这是多少钱？", "correct_option": "a", "explanation": "没有，我准时到了 — нет, я пришёл вовремя."},
+        {"prompt": "Что логично ответить на 请保持安静。", "option_a": "好的，我会安静。", "option_b": "我要两碗面。", "option_c": "我去银行。", "correct_option": "a", "explanation": "好的，我会安静 — хорошо, я буду тихо."},
+        {"prompt": "Как сказать «Собираемся в семь часов»?", "option_a": "七点集合。", "option_b": "七个苹果。", "option_c": "七块钱。", "correct_option": "a", "explanation": "集合 — собираться; 七点集合 — сбор в 7."},
+        {"prompt": "Выбери правильный порядок: «Сначала проверим список».", "option_a": "先检查名单。", "option_b": "名单先检查。", "option_c": "检查先名单。", "correct_option": "a", "explanation": "先检查名单 — сначала проверить список."},
+        {"prompt": "Как сказать «Не нарушай правила»?", "option_a": "不要违反规则。", "option_b": "不要买东西。", "option_c": "不要喝水。", "correct_option": "a", "explanation": "违反规则 — нарушать правила."},
+        {"prompt": "Что означает 请按顺序来？", "option_a": "Пожалуйста, подходите по порядку", "option_b": "Пожалуйста, говорите громче", "option_c": "Пожалуйста, откройте окно", "correct_option": "a", "explanation": "按顺序 — по порядку."},
+    ],
+    "stabilize": [
+        {"prompt": "Как сказать «Всё под контролем»?", "option_a": "一切都在控制中。", "option_b": "一切都很好吃。", "option_c": "一切都很便宜。", "correct_option": "a", "explanation": "一切都在控制中 — всё под контролем."},
+        {"prompt": "Выбери фразу для спокойного подтверждения.", "option_a": "没问题，我马上处理。", "option_b": "太贵了，我不买。", "option_c": "我想吃米饭。", "correct_option": "a", "explanation": "没问题，我马上处理 — нет проблем, сейчас разберусь."},
+        {"prompt": "Что значит 请冷静一点？", "option_a": "Пожалуйста, успокойтесь", "option_b": "Пожалуйста, ускорьтесь", "option_c": "Пожалуйста, заплатите", "correct_option": "a", "explanation": "冷静 — спокойный, хладнокровный."},
+        {"prompt": "Как сказать «Я сейчас проверю»?", "option_a": "我现在检查一下。", "option_b": "我现在睡觉一下。", "option_c": "我现在买一下。", "correct_option": "a", "explanation": "检查一下 — проверить немного/сейчас."},
+        {"prompt": "Выбери перевод 状态正常.", "option_a": "Состояние нормальное", "option_b": "Цена высокая", "option_c": "Комната пустая", "correct_option": "a", "explanation": "状态正常 — состояние нормальное."},
+        {"prompt": "Что означает 已经解决了？", "option_a": "Уже решено", "option_b": "Уже потеряно", "option_c": "Уже куплено", "correct_option": "a", "explanation": "解决 — решить проблему."},
+        {"prompt": "Как попросить повторить инструкцию?", "option_a": "请再说一遍说明。", "option_b": "请再买一瓶水。", "option_c": "请再去一次银行。", "correct_option": "a", "explanation": "说明 — инструкция, объяснение."},
+        {"prompt": "Выбери фразу для отчёта: «Команда готова».", "option_a": "队伍准备好了。", "option_b": "队伍很便宜。", "option_c": "队伍去吃饭。", "correct_option": "a", "explanation": "队伍准备好了 — команда готова."},
     ],
 }
 
@@ -1717,6 +1762,7 @@ def ensure_seed_data():
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('blackwall', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('architect_event', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('wildai_event', '0')")
+    c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('mju_event', '0')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_until', '')")
     c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('breach_seed', '')")
     # Raid schema migrations (idempotent)
@@ -1793,6 +1839,34 @@ def ensure_seed_data():
                         created_at,
                     ),
                 )
+
+    created_at = datetime.utcnow().isoformat()
+    for action_type, questions in MJU_QUESTION_SEEDS.items():
+        for question in questions:
+            c.execute(
+                '''SELECT 1 FROM event_questions
+                   WHERE event_code=? AND action_type=? AND prompt=?
+                   LIMIT 1''',
+                (MJU_EVENT_CODE, action_type, question["prompt"]),
+            )
+            if c.fetchone():
+                continue
+            c.execute(
+                '''INSERT INTO event_questions
+                   (event_code, action_type, difficulty, prompt, option_a, option_b, option_c, correct_option, explanation, created_at)
+                   VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    MJU_EVENT_CODE,
+                    action_type,
+                    question["prompt"],
+                    question["option_a"],
+                    question["option_b"],
+                    question["option_c"],
+                    question["correct_option"],
+                    question.get("explanation"),
+                    created_at,
+                ),
+            )
 
     # Duel question pool (Chinese-language, action_type='duel'). Educational,
     # not lore — keeps PvP duels about language learning, not random chance.
@@ -2374,6 +2448,36 @@ def apply_architect_phase_transitions(c, event_row: dict):
     return changed
 
 
+def apply_mju_phase_transitions(c, event_row: dict):
+    if event_row.get("code") != MJU_EVENT_CODE:
+        return False
+
+    changed = False
+    hp_ratio = event_row["current_hp"] / event_row["max_hp"] if event_row["max_hp"] else 0
+
+    if event_row["state"] == "ACTIVE" and event_row["phase"] == 1 and hp_ratio <= MJU_PHASE2_THRESHOLD:
+        event_row["phase"] = 2
+        event_row["phase_started_at"] = now_iso()
+        c.execute(
+            "UPDATE events SET phase=2, phase_started_at=? WHERE id=?",
+            (event_row["phase_started_at"], event_row["id"]),
+        )
+        add_event_log(c, event_row["id"], "boss", "ЦЕНЗОР: первичный регламент снят. Запущено сетевое сканирование.")
+        changed = True
+
+    if event_row["state"] == "ACTIVE" and event_row["phase"] == 2 and hp_ratio <= MJU_PHASE3_THRESHOLD:
+        event_row["phase"] = 3
+        event_row["phase_started_at"] = now_iso()
+        c.execute(
+            "UPDATE events SET phase=3, phase_started_at=? WHERE id=?",
+            (event_row["phase_started_at"], event_row["id"]),
+        )
+        add_event_log(c, event_row["id"], "boss", "ЦЕНЗОР: экзаменационный режим. Любая ошибка усиливает контроль.")
+        changed = True
+
+    return changed
+
+
 def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wild AI Breach auto-triggered (system integrity restoration failed)', send_broadcast: bool = True):
     until = (datetime.utcnow() + timedelta(days=WILD_AI_BREACH_DURATION_DAYS)).isoformat()
     seed = random.randint(0, 999999)
@@ -2410,6 +2514,13 @@ def distribute_wildai_victory_rewards(c, event_id: int, mvp_id: Optional[int]):
             (telegram_id,),
         )
         c.execute("UPDATE user_status SET wildai_mvp = ? WHERE telegram_id=?", (1 if telegram_id == mvp_id else 0, telegram_id))
+
+
+def distribute_mju_victory_rewards(c, event_id: int, mvp_id: Optional[int]):
+    c.execute("SELECT telegram_id FROM event_participants WHERE event_id=?", (event_id,))
+    participant_ids = [row[0] for row in c.fetchall()]
+    for telegram_id in participant_ids:
+        c.execute("UPDATE users SET rep_score = COALESCE(rep_score, 0) + ? WHERE telegram_id=?", (MJU_REWARD_REP, telegram_id))
 
 
 def refresh_event_state(c, event_row: dict):
@@ -2483,6 +2594,39 @@ def refresh_event_state(c, event_row: dict):
 
         return fetch_event_row(c, event_row["id"])
 
+    if event_row.get("code") == MJU_EVENT_CODE:
+        if event_row["state"] == "ACTIVE":
+            apply_mju_phase_transitions(c, event_row)
+
+            if event_row["overload_pressure"] >= MJU_CRITICAL_THRESHOLD:
+                event_row["overload_pressure"] = MJU_CRITICAL_THRESHOLD
+                c.execute(
+                    "UPDATE events SET overload_pressure=? WHERE id=?",
+                    (MJU_CRITICAL_THRESHOLD, event_row["id"]),
+                )
+
+            if event_row["current_hp"] <= 0:
+                event_row["current_hp"] = 0
+                event_row["state"] = "FINISHED"
+                event_row["phase"] = 4
+                event_row["ended_at"] = now_iso()
+                c.execute(
+                    """SELECT telegram_id FROM event_participants
+                       WHERE event_id=? ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
+                    (event_row["id"],),
+                )
+                mvp_row = c.fetchone()
+                mvp_id = mvp_row[0] if mvp_row else None
+                c.execute(
+                    "UPDATE events SET current_hp=0, state='FINISHED', phase=4, ended_at=?, mvp_user_id=? WHERE id=?",
+                    (event_row["ended_at"], mvp_id, event_row["id"]),
+                )
+                event_row["mvp_user_id"] = mvp_id
+                add_event_log(c, event_row["id"], "system", "Босс Протокола пройден. Цензор признал команду.")
+                distribute_mju_victory_rewards(c, event_row["id"], mvp_id)
+
+        return fetch_event_row(c, event_row["id"])
+
     if event_row["state"] == "ACTIVE" and event_row["phase"] == 3:
         deadline = parse_iso(event_row.get("final_phase_deadline"))
         if deadline and datetime.utcnow() >= deadline and event_row["current_hp"] > 0:
@@ -2546,6 +2690,7 @@ def get_event_snapshot(event_id: int):
     total_actions = action_row[0] if action_row else 0
     total_damage = action_row[1] if action_row else 0
     team_members = get_event_team_members(c, event_id)
+    overload_threshold = MJU_VIOLATION_THRESHOLD if event_row.get("code") == MJU_EVENT_CODE else ARCHITECT_OVERLOAD_PENALTY_THRESHOLD
 
     snapshot = {
         **event_row,
@@ -2556,7 +2701,7 @@ def get_event_snapshot(event_id: int):
         "total_damage": total_damage,
         "vulnerability_active": is_vulnerability_active(event_row),
         "vulnerability_until": event_row.get("vulnerability_until"),
-        "overload_penalty_active": event_row["overload_pressure"] >= ARCHITECT_OVERLOAD_PENALTY_THRESHOLD,
+        "overload_penalty_active": event_row["overload_pressure"] >= overload_threshold,
     }
     conn.close()
     return snapshot
@@ -2816,6 +2961,89 @@ def compute_wildai_action_result(c, event_row: dict, participant: dict, action_t
     }
 
 
+def get_mju_base_value(phase: int, action_type: str, is_correct: bool) -> int:
+    if action_type == "sync":
+        return 0
+
+    phase_values = {
+        1: {"attack": 30, "protocol": 24, "stabilize": 14},
+        2: {"attack": 24, "protocol": 34, "stabilize": 18},
+        3: {"attack": 20, "protocol": 42, "stabilize": 22},
+    }
+    full = phase_values.get(phase, phase_values[3]).get(action_type, 0)
+    if not is_correct:
+        return max(0, round(full * 0.2))
+    return full
+
+
+def compute_mju_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, telegram_id: int = 0):
+    phase = int(event_row.get("phase") or 1)
+    base_value = get_mju_base_value(phase, action_type, is_correct)
+    final_value = base_value
+    support_value = 0
+    pressure_delta = 0
+    penalty_active = event_row["overload_pressure"] >= MJU_VIOLATION_THRESHOLD
+
+    if action_type == "sync":
+        support_value = 2 if is_correct else 0
+        pressure_delta = -3 if is_correct else 4
+        maybe_trigger_sync_window(c, event_row)
+        return {
+            "base_value": 0,
+            "modifier_value": 0,
+            "final_value": 0,
+            "support_value": support_value,
+            "pressure_delta": pressure_delta,
+            "active_note": None,
+            "penalty_active": penalty_active,
+            "overload_threshold": MJU_VIOLATION_THRESHOLD,
+            "overload_pct_str": "35%",
+        }
+
+    if action_type in ("attack", "protocol"):
+        if not is_correct:
+            pressure_delta = 5
+        elif action_type == "attack":
+            pressure_delta = 1
+
+        if is_vulnerability_active(event_row) and final_value > 0:
+            bonus = max(1, round(final_value * 0.25))
+            final_value += bonus
+
+        if penalty_active and final_value > 0:
+            final_value = max(1, round(final_value * 0.65))
+
+        return {
+            "base_value": base_value,
+            "modifier_value": final_value - base_value,
+            "final_value": final_value,
+            "support_value": 0,
+            "pressure_delta": pressure_delta,
+            "active_note": None,
+            "penalty_active": penalty_active,
+            "overload_threshold": MJU_VIOLATION_THRESHOLD,
+            "overload_pct_str": "35%",
+        }
+
+    if is_correct:
+        support_value = base_value
+        pressure_delta = -6
+    else:
+        pressure_delta = 4
+
+    return {
+        "base_value": base_value,
+        "modifier_value": 0,
+        "final_value": 0,
+        "support_value": support_value,
+        "pressure_delta": pressure_delta,
+        "active_note": None,
+        "penalty_active": penalty_active,
+        "overload_threshold": MJU_VIOLATION_THRESHOLD,
+        "overload_pct_str": "35%",
+    }
+
+
 # ===== Implant/card combat bonuses (Architect Protocol & Wild AI Breach) =====
 # item_id -> (damage_pct, applicable action types)
 EVENT_ITEM_DAMAGE_BONUS = {
@@ -2907,6 +3135,8 @@ def apply_event_item_bonuses(c, event_row: dict, telegram_id: int, action_type: 
 def compute_event_action_result(c, event_row: dict, participant: dict, action_type: str, is_correct: bool, use_active_modifier: bool, telegram_id: int = 0):
     if event_row.get("code") == "wildai_breach":
         result = compute_wildai_action_result(c, event_row, participant, action_type, is_correct, telegram_id=telegram_id)
+    elif event_row.get("code") == MJU_EVENT_CODE:
+        result = compute_mju_action_result(c, event_row, participant, action_type, is_correct, telegram_id=telegram_id)
     else:
         result = compute_architect_action_result(c, event_row, participant, action_type, is_correct, use_active_modifier, telegram_id=telegram_id)
     apply_event_item_bonuses(c, event_row, telegram_id, action_type, is_correct, result)
@@ -8899,6 +9129,8 @@ async def get_settings():
         architect_event = c.fetchone()
         c.execute("SELECT value FROM settings WHERE key='wildai_event'")
         wildai_event = c.fetchone()
+        c.execute("SELECT value FROM settings WHERE key='mju_event'")
+        mju_event = c.fetchone()
         breach = get_wild_ai_breach_state(c)
         conn.commit()
         conn.close()
@@ -8906,6 +9138,7 @@ async def get_settings():
             "blackwall": blackwall[0] == '1' if blackwall else False,
             "architect_event": architect_event[0] == '1' if architect_event else False,
             "wildai_event": wildai_event[0] == '1' if wildai_event else False,
+            "mju_event": mju_event[0] == '1' if mju_event else False,
             **breach,
         }
     return await db_write(_run)
@@ -9050,6 +9283,27 @@ async def toggle_wildai_event(data: dict, x_admin_id: Optional[int] = Header(Non
         conn.commit()
         conn.close()
         return {"success": True, "wildai_event": enabled}
+    return await db_write(_run)
+
+
+@app.post("/api/admin/mju-event")
+async def toggle_mju_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        enabled = bool(data.get("enabled", False))
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('mju_event', ?)", ('1' if enabled else '0',))
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, NULL, 'mju_event', 0, ?, ?)''',
+            (x_admin_id, 'MJU event enabled' if enabled else 'MJU event disabled', now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {"success": True, "mju_event": enabled}
     return await db_write(_run)
 
 
@@ -9913,6 +10167,49 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
     return await db_write(_run)
 
 
+@app.post("/api/events/mju/create")
+async def create_mju_event(data: dict, x_admin_id: int = Header(None)):
+    def _run():
+        admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
+        if admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        blocking_event_id = get_blocking_event_id(MJU_EVENT_CODE)
+        if blocking_event_id:
+            raise HTTPException(status_code=409, detail="A Protocol Boss event is already active")
+
+        conn = get_conn()
+        c = conn.cursor()
+
+        title = data.get("title") or "БОСС ПРОТОКОЛА"
+        boss_name = data.get("boss_name") or "Михаил Юрьевич"
+        boss_image = data.get("boss_image")
+        reward_text = data.get("reward_text") or f"+{MJU_REWARD_REP} REP каждому участнику"
+        min_players = int(data.get("min_players") or MJU_DEFAULT_MIN_PLAYERS)
+        max_players = int(data.get("max_players") or MJU_DEFAULT_MAX_PLAYERS)
+        max_hp = int(data.get("max_hp") or MJU_DEFAULT_HP)
+        created_at = now_iso()
+        if min_players < 1:
+            min_players = 1
+        if max_players < min_players:
+            max_players = min_players
+        c.execute(
+            '''INSERT INTO events
+               (code, title, boss_name, boss_image, reward_text, min_players, max_players,
+                max_hp, current_hp, phase, state,
+                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
+            (MJU_EVENT_CODE, title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
+        )
+        event_id = c.lastrowid
+        add_event_log(c, event_id, "system", "Босс Протокола: набор команды открыт.")
+        add_event_log(c, event_id, "boss", "ЦЕНЗОР: ожидаю операторов. Нарушения будут зафиксированы.")
+        conn.commit()
+        conn.close()
+        return get_event_snapshot(event_id)
+    return await db_write(_run)
+
+
 @app.get("/api/events/current")
 async def get_current_event(code: Optional[str] = None):
     def _run():
@@ -10107,6 +10404,9 @@ async def start_event(event_id: int, data: dict = None, x_admin_id: int = Header
         if event_row["code"] == "wildai_breach":
             add_event_log(c, event_id, "system", "WILD AI BREACH: операция по вытеснению начата.")
             add_event_log(c, event_id, "boss", "обнаружено вторжение дикого ИИ в системные сектора.")
+        elif event_row["code"] == MJU_EVENT_CODE:
+            add_event_log(c, event_id, "system", "Босс Протокола: проверка допуска начата.")
+            add_event_log(c, event_id, "boss", "ЦЕНЗОР: тишина в сети. Отвечайте точно.")
         else:
             add_event_log(c, event_id, "system", "Architect event started.")
             add_event_log(c, event_id, "boss", "观察开始。 / Фаза наблюдения активирована.")
@@ -10283,6 +10583,7 @@ async def resolve_event_action(data: dict):
         )
 
         is_wildai = event_row["code"] == "wildai_breach"
+        is_mju = event_row["code"] == MJU_EVENT_CODE
         actor_name = get_user_display_name(c, int(telegram_id))
         if action_type in ("attack", "protocol"):
             event_row["current_hp"] = max(0, event_row["current_hp"] - result["final_value"])
@@ -10301,6 +10602,19 @@ async def resolve_event_action(data: dict):
                         add_event_log(c, int(event_id), "action", f"{actor_name} сбойнул(а) в {action_name} — частично восстановлено {partial}, заражение растёт")
                     else:
                         add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) в {action_name} — узел дикого ИИ не задет, заражение растёт")
+            elif is_mju:
+                mju_action_name = "регламент" if action_type == "protocol" else "удар"
+                if is_correct:
+                    if result.get("penalty_active"):
+                        add_event_log(c, int(event_id), "system", f"⚠ КОНТРОЛЬ ЦЕНЗОРА: {actor_name} провёл(ела) {mju_action_name}, но урон снижен ({result['final_value']})")
+                    else:
+                        add_event_log(c, int(event_id), "action", f"{actor_name} провёл(ела) {mju_action_name} по протоколу и снял(а) {result['final_value']} HP")
+                else:
+                    partial = result['final_value']
+                    if partial > 0:
+                        add_event_log(c, int(event_id), "action", f"{actor_name} допустил(а) нарушение — частичный эффект {partial} HP")
+                    else:
+                        add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) — Цензор зафиксировал нарушение")
             elif is_correct:
                 if result.get("penalty_active"):
                     pct = result.get("overload_pct_str", "50%")
@@ -10323,6 +10637,11 @@ async def resolve_event_action(data: dict):
                     add_event_log(c, int(event_id), "action", f"{actor_name} залатал(а) пробитый сектор — заражение снижено")
                 else:
                     add_event_log(c, int(event_id), "action", f"{actor_name} попытался(ась) залатать сектор, но ошибся(лась) — заражение растёт")
+            elif is_mju:
+                if is_correct:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} стабилизировал(а) дисциплину команды — нарушения снижены")
+                else:
+                    add_event_log(c, int(event_id), "action", f"{actor_name} ошибся(лась) при стабилизации — Цензор усиливает контроль")
             elif is_correct:
                 add_event_log(c, int(event_id), "action", f"{actor_name} стабилизировал(а) протокол (+{result['support_value']} support)")
             else:
@@ -10334,6 +10653,8 @@ async def resolve_event_action(data: dict):
             )
             if is_wildai:
                 add_event_log(c, int(event_id), "action", f"{actor_name} просканировал(а) сектора — узел дикого ИИ локализован")
+            elif is_mju:
+                add_event_log(c, int(event_id), "action", f"{actor_name} прошёл(ла) сетевое сканирование — регламент ослаблен")
             else:
                 add_event_log(c, int(event_id), "action", f"{actor_name} синхронизировал(а) канал")
             maybe_trigger_sync_window(c, event_row)
@@ -10345,22 +10666,37 @@ async def resolve_event_action(data: dict):
                 c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
                 if result["pressure_delta"] > 0:
                     add_event_log(c, int(event_id), "system", f"⚠ ЗАРАЖЕНИЕ РАСТЁТ: {event_row['overload_pressure']}/{WILD_AI_BREACH_INFECTION_THRESHOLD}")
-        elif action_type in ("attack", "protocol", "stabilize") and result["pressure_delta"] != 0:
+        elif action_type in ("attack", "protocol", "stabilize", "sync") and result["pressure_delta"] != 0:
             ovl_threshold = result["overload_threshold"]
             pct_str = result.get("overload_pct_str", "50%")
             old_pressure = event_row["overload_pressure"]
-            event_row["overload_pressure"] = max(0, old_pressure + result["pressure_delta"])
+            pressure_cap = MJU_CRITICAL_THRESHOLD if is_mju else 999999
+            event_row["overload_pressure"] = min(pressure_cap, max(0, old_pressure + result["pressure_delta"]))
             c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (event_row["overload_pressure"], int(event_id)))
-            if old_pressure < ovl_threshold <= event_row["overload_pressure"]:
-                add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА АКТИВНА — урон от атак снижен на {pct_str}")
-            elif old_pressure >= ovl_threshold > event_row["overload_pressure"]:
-                add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
+            if is_mju:
+                if old_pressure < ovl_threshold <= event_row["overload_pressure"]:
+                    add_event_log(c, int(event_id), "system", f"⚠ НАРУШЕНИЯ ПРОТОКОЛА: контроль Цензора активен, урон снижен на {pct_str}")
+                elif old_pressure >= ovl_threshold > event_row["overload_pressure"]:
+                    add_event_log(c, int(event_id), "system", "✓ Нарушения снижены — регламент снова пробивается")
+                if event_row["overload_pressure"] >= MJU_CRITICAL_THRESHOLD:
+                    add_event_log(c, int(event_id), "boss", "ЦЕНЗОР: критический уровень нарушений. Исправляйте протокол.")
+            else:
+                if old_pressure < ovl_threshold <= event_row["overload_pressure"]:
+                    add_event_log(c, int(event_id), "system", f"⚠ ПЕРЕГРУЗКА АКТИВНА — урон от атак снижен на {pct_str}")
+                elif old_pressure >= ovl_threshold > event_row["overload_pressure"]:
+                    add_event_log(c, int(event_id), "system", "✓ Перегрузка снята — атаки снова в полную силу")
 
         # Boss counter-attack: every N total actions adds pressure
         if not is_wildai:
             c.execute("SELECT COUNT(*) FROM event_actions WHERE event_id=?", (int(event_id),))
             total_actions_count = c.fetchone()[0]
-            if total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
+            if is_mju:
+                if total_actions_count > 0 and total_actions_count % MJU_BOSS_COUNTER_EVERY == 0:
+                    new_pressure = min(MJU_CRITICAL_THRESHOLD, event_row["overload_pressure"] + MJU_BOSS_COUNTER_PRESSURE)
+                    c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
+                    event_row["overload_pressure"] = new_pressure
+                    add_event_log(c, int(event_id), "boss", f"ЦЕНЗОР ПРОВОДИТ СКАНИРОВАНИЕ (+{MJU_BOSS_COUNTER_PRESSURE} нарушения)")
+            elif total_actions_count > 0 and total_actions_count % ARCHITECT_BOSS_COUNTER_EVERY == 0:
                 new_pressure = event_row["overload_pressure"] + ARCHITECT_BOSS_COUNTER_PRESSURE
                 c.execute("UPDATE events SET overload_pressure=? WHERE id=?", (new_pressure, int(event_id)))
                 event_row["overload_pressure"] = new_pressure

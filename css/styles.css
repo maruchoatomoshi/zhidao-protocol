@@ -13792,6 +13792,60 @@ body.is-architect .profile-card-spark.spark-bl {
   object-fit: cover;
 }
 
+/* — Protocol Boss / MJU: cold inspection palette — */
+.event-overlay.event-mju .event-hp-bar {
+  border-color: rgba(90, 220, 255, 0.34) !important;
+}
+
+.event-overlay.event-mju .event-hp-fill {
+  background: linear-gradient(90deg, #41d8ff 0%, #e8fbff 100%) !important;
+  box-shadow:
+    0 0 14px rgba(65, 216, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.event-overlay.event-mju.event-phase-2 .event-hp-fill {
+  background: linear-gradient(90deg, #1ec8ff 0%, #8dfff2 100%) !important;
+  box-shadow: 0 0 16px rgba(30, 200, 255, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.event-overlay.event-mju.event-phase-3 .event-hp-fill {
+  background: linear-gradient(90deg, #ffffff 0%, #5ae4ff 48%, #1b7cff 100%) !important;
+  box-shadow: 0 0 20px rgba(90, 228, 255, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.event-overlay.event-mju .event-boss-name,
+.event-overlay.event-mju .event-phase {
+  color: #dffbff !important;
+  text-shadow: 0 0 14px rgba(85, 225, 255, 0.62);
+}
+
+.event-overlay.event-mju .event-phase-warning {
+  color: #e8fbff !important;
+  border-color: rgba(90, 220, 255, 0.4) !important;
+  background: rgba(0, 28, 42, 0.72) !important;
+}
+
+.event-overlay.event-mju .event-action.attack {
+  --col: #66e7ff;
+  --col-dim: rgba(102, 231, 255, 0.10);
+}
+
+.event-overlay.event-mju .event-action.protocol {
+  --col: #f3fbff;
+  --col-dim: rgba(243, 251, 255, 0.10);
+}
+
+.event-overlay.event-mju .event-action.sync {
+  --col: #51a8ff;
+  --col-dim: rgba(81, 168, 255, 0.12);
+}
+
+.event-overlay.event-mju .event-action.stabilize {
+  --col: #76ffd8;
+  --col-dim: rgba(118, 255, 216, 0.10);
+}
+
 /* — Question modal premium cyber — */
 .event-question-modal {
   border-radius: 16px !important;

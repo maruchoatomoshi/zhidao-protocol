@@ -21,7 +21,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260701eventlobby">
+<link rel="stylesheet" href="./css/styles.css?v=20260702mju1">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -310,6 +310,28 @@
   </div>
   <div class="home-event-card-copy" style="margin-top:4px;font-size:12px;color:#bbb;line-height:1.5;">
     Операция вытеснения дикого ИИ из системы
+  </div>
+</div>
+
+<div class="home-event-card" id="homeMjuEventCard" onclick="openEventOverlay('mju_protocol_boss')" style="
+  margin:8px 12px 12px;
+  padding:14px 16px;
+  border-radius:16px;
+  border:1px solid rgba(0,210,255,0.34);
+  background:
+    linear-gradient(135deg, rgba(0,60,100,0.28), rgba(255,255,255,0.025)),
+    rgba(255,255,255,0.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+  cursor:pointer;
+">
+  <div class="home-event-card-kicker" style="font-size:10px;letter-spacing:1.8px;color:rgba(120,230,255,0.9);font-family:monospace;">
+    PROTOCOL BOSS
+  </div>
+  <div class="home-event-card-title" style="margin-top:4px;font-size:20px;font-weight:800;color:#fff;">
+    БОСС ПРОТОКОЛА
+  </div>
+  <div class="home-event-card-copy" style="margin-top:4px;font-size:12px;color:#bbb;line-height:1.5;">
+    Дисциплина, проверка и командный бой против МЮ
   </div>
 </div>
 
@@ -1317,6 +1339,19 @@
       <div class="admin-blackwall-btns">
         <button class="admin-bw-btn bw-on" onclick="setWildAiEventEnabled(true)">⚡ ОТКРЫТЬ ИВЕНТ</button>
         <button class="admin-bw-btn bw-off" onclick="setWildAiEventEnabled(false)">⛔ СКРЫТЬ ИВЕНТ</button>
+      </div>
+      <div class="admin-blackwall-card admin-architect-event-card">
+        <div class="admin-blackwall-glyph">检</div>
+        <div class="admin-blackwall-info">
+          <div class="admin-console-kicker">PROTOCOL BOSS // 检查</div>
+          <div class="admin-blackwall-title">Босс Протокола</div>
+          <div class="admin-blackwall-desc">Показывает или скрывает событие МЮ для детей.</div>
+          <div class="admin-architect-event-status" id="adminMjuEventStatus">STATUS // CHECKING</div>
+        </div>
+      </div>
+      <div class="admin-blackwall-btns">
+        <button class="admin-bw-btn bw-on" onclick="setMjuEventEnabled(true)">⚡ ОТКРЫТЬ ИВЕНТ</button>
+        <button class="admin-bw-btn bw-off" onclick="setMjuEventEnabled(false)">⛔ СКРЫТЬ ИВЕНТ</button>
       </div>
       <div class="admin-blackwall-card admin-architect-event-card">
         <div class="admin-blackwall-glyph">乱</div>
@@ -2717,7 +2752,7 @@
   </div>
 </div>
 
-<script src="./js/config.js?v=20260629freezeprofile"></script>
+<script src="./js/config.js?v=20260702mju1"></script>
 <script src="./js/state.js?v=20260625wildaibreach1"></script>
 <script src="./js/api.js?v=20260528a"></script>
 <script src="./js/ui.js?v=20260629architectgate"></script>
@@ -2740,15 +2775,15 @@
 <script src="./js/liza-curfew.js?v=20260617a"></script>
 <script src="./js/intro-novel.js?v=20260629olgawunan"></script>
 <script src="./js/contracts.js?v=20260625wildaibreach2"></script>
-<script src="./js/admin.js?v=20260702alpha1"></script>
+<script src="./js/admin.js?v=20260702mju1"></script>
 <script src="./js/trip-quiz.js?v=20260624tripquiz1"></script>
 <script src="./js/community-shop.js?v=20260628pct"></script>
 <script src="./js/presence.js?v=20260629leavepending"></script>
 <script src="./js/campus-map.js?v=20260625imgctxfix1"></script>
 <script src="./js/raid.js?v=20260702raidfast1"></script>
 <script src="./js/wild-ai-breach.js?v=20260625wildaibreach1"></script>
-<script src="./js/events.js?v=20260622popupfix1"></script>
-<script src="./js/architect-event.js?v=20260625wildaifix1"></script>
+<script src="./js/events.js?v=20260702mju1"></script>
+<script src="./js/architect-event.js?v=20260702mju1"></script>
 <script src="./js/demo.js?v=20260624nofragexchange1"></script>
 <script src="./js/instruction.js?v=20260628presencestep"></script>
 <script src="./js/rewind.js?v=20260625imgctxfix1"></script>

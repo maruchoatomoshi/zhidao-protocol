@@ -4,6 +4,8 @@ const WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2;
 
 const ARCHITECT_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/architect_ivent_lobby.png';
 const WILD_AI_BREACH_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wild_ai_lobby_picture.png';
+const MJU_EVENT_CODE = 'mju_protocol_boss';
+const MJU_LOBBY_IMAGE = 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/mu_ivent_lobby.png?v=20260702mju1';
 
 const ARCHITECT_PHASE_IMAGES = {
   1: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/Architect_phase1.png',
@@ -30,6 +32,11 @@ const WILD_AI_BREACH_TERMINAL_IMAGES = {
   FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/wildai_lose.png'
 };
 
+const MJU_TERMINAL_IMAGES = {
+  FINISHED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/mu_ivent_win.png?v=20260702mju1',
+  FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/mu_ivent_lose.png?v=20260702mju1'
+};
+
 const ARCHITECT_PHASE_VIDEOS = {
   1: 'architect_phase1.mp4',
   2: 'architect_phase2.mp4',
@@ -40,6 +47,12 @@ const WILD_AI_BREACH_PHASE_VIDEOS = {
   1: 'wildai_phase1_cut.mp4',
   2: 'wildai_phase2.mp4',
   3: 'wildai_phase3.mp4'
+};
+
+const MJU_PHASE_VIDEOS = {
+  1: 'mu_ivent_phase1.mp4',
+  2: 'mu_ivent_phase2.mp4',
+  3: 'mu_ivent_phase3.mp4'
 };
 
 const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
@@ -61,6 +74,13 @@ const WILD_AI_BREACH_PHASE_MUSIC = {
   3: 'wildai_phase3_theme.mp3'
 };
 const WILD_AI_BREACH_LOBBY_MUSIC = 'wildai_lobbytheme.mp3';
+
+const MJU_PHASE_MUSIC = {
+  1: 'mu_ivent_theme_phase1.mp3',
+  2: 'mi_ivent_theme_phase2.mp3',
+  3: 'mu_ivent_theme_phase3.mp3'
+};
+const MJU_LOBBY_MUSIC = 'mu_ivent_lobby_theme.mp3';
 
 const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
 const ARCHITECT_MUSIC_FADE_MS = 1400;
@@ -86,18 +106,68 @@ const ARCHITECT_RESULT_REVEAL_DELAY = 4500;
 // WildAI loss video runs ~10s; reveal the defeat banner right after it ends
 const WILD_AI_LOSE_REVEAL_DELAY = 10500;
 
+function getEventHintCode() {
+  if (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint) {
+    return eventLobbyTabHint;
+  }
+  return 'architect';
+}
+
+function isWildAiEventCode(code) {
+  return code === 'wildai_breach';
+}
+
+function isMjuEventCode(code) {
+  return code === MJU_EVENT_CODE;
+}
+
+function setEventActionButtonLabels(code) {
+  const isMju = isMjuEventCode(code);
+  const labels = isMju
+    ? {
+        attack: { kanji: '击', name: 'УДАР', sub: 'СНЯТЬ HP' },
+        protocol: { kanji: '规', name: 'РЕГЛАМЕНТ', sub: 'СИЛЬНЕЕ В 2-3 ФАЗЕ' },
+        sync: { kanji: '检', name: 'СКАНИРОВАНИЕ', sub: 'ОТКРЫТЬ РЕГЛАМЕНТ' },
+        stabilize: { kanji: '稳', name: 'ДИСЦИПЛИНА', sub: 'СНИЗИТЬ НАРУШЕНИЯ' }
+      }
+    : {
+        attack: { kanji: '攻', name: 'АТАКА', sub: 'ПРЯМОЙ УРОН' },
+        protocol: { kanji: '协', name: 'ПРОТОКОЛ', sub: 'ТАКТИЧЕСКИЙ УРОН' },
+        sync: { kanji: '同', name: 'СИНХРОНИЗАЦИЯ', sub: 'КОНТРОЛЬ УЯЗВИМОСТИ' },
+        stabilize: { kanji: '稳', name: 'СТАБИЛИЗАЦИЯ', sub: 'ДАВЛЕНИЕ И ПОДДЕРЖКА' }
+      };
+
+  Object.entries(labels).forEach(([action, cfg]) => {
+    const btn = document.querySelector(`.event-action.${action}`);
+    if (!btn) return;
+    const kanji = btn.querySelector('.event-action-kanji');
+    const name = btn.querySelector('.event-action-name');
+    const sub = btn.querySelector('.event-action-sub');
+    if (kanji) kanji.textContent = cfg.kanji;
+    if (name) name.textContent = cfg.name;
+    if (sub) sub.textContent = cfg.sub;
+  });
+}
+
 function getArchitectPhaseImage(eventData) {
   if (!eventData) {
-    return (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach')
-      ? WILD_AI_BREACH_LOBBY_IMAGE
-      : ARCHITECT_LOBBY_IMAGE;
+    const hint = getEventHintCode();
+    if (isWildAiEventCode(hint)) return WILD_AI_BREACH_LOBBY_IMAGE;
+    if (isMjuEventCode(hint)) return MJU_LOBBY_IMAGE;
+    return ARCHITECT_LOBBY_IMAGE;
   }
-  const isWildAi = eventData.code === 'wildai_breach';
+  const isWildAi = isWildAiEventCode(eventData.code);
+  const isMju = isMjuEventCode(eventData.code);
   const state = String(eventData.state || '').toUpperCase();
-  if (state === 'REGISTRATION') return isWildAi ? WILD_AI_BREACH_LOBBY_IMAGE : ARCHITECT_LOBBY_IMAGE;
-  const terminalImages = isWildAi ? WILD_AI_BREACH_TERMINAL_IMAGES : ARCHITECT_TERMINAL_IMAGES;
+  if (state === 'REGISTRATION') {
+    if (isWildAi) return WILD_AI_BREACH_LOBBY_IMAGE;
+    if (isMju) return MJU_LOBBY_IMAGE;
+    return ARCHITECT_LOBBY_IMAGE;
+  }
+  const terminalImages = isWildAi ? WILD_AI_BREACH_TERMINAL_IMAGES : (isMju ? MJU_TERMINAL_IMAGES : ARCHITECT_TERMINAL_IMAGES);
   if (terminalImages[state]) return terminalImages[state];
   if (isWildAi) return WILD_AI_BREACH_LOBBY_IMAGE;
+  if (isMju) return MJU_LOBBY_IMAGE;
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return ARCHITECT_PHASE_IMAGES[2];
   if (phase >= 3) return ARCHITECT_PHASE_IMAGES[3];
@@ -106,12 +176,13 @@ function getArchitectPhaseImage(eventData) {
 
 function getArchitectPhaseVideo(eventData) {
   if (!eventData) return '';
-  const isWildAi = eventData.code === 'wildai_breach';
+  const isWildAi = isWildAiEventCode(eventData.code);
+  const isMju = isMjuEventCode(eventData.code);
   const state = String(eventData.state || '').toUpperCase();
   if (state === 'REGISTRATION') return '';
   if (state === 'FAILED') return isWildAi ? WILD_AI_BREACH_LOSE_VIDEO : '';
   if (state === 'FINISHED') return '';
-  const videos = isWildAi ? WILD_AI_BREACH_PHASE_VIDEOS : ARCHITECT_PHASE_VIDEOS;
+  const videos = isWildAi ? WILD_AI_BREACH_PHASE_VIDEOS : (isMju ? MJU_PHASE_VIDEOS : ARCHITECT_PHASE_VIDEOS);
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return videos[2] || '';
   if (phase >= 3) return videos[3] || '';
@@ -119,14 +190,17 @@ function getArchitectPhaseVideo(eventData) {
 }
 
 function getArchitectPhaseMusic(eventData) {
-  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
-  const isWildAi = eventData ? eventData.code === 'wildai_breach' : hintIsWildAi;
+  const hint = getEventHintCode();
+  const code = eventData ? eventData.code : hint;
+  const isWildAi = isWildAiEventCode(code);
+  const isMju = isMjuEventCode(code);
   const state = eventData ? String(eventData.state || '').toUpperCase() : '';
   if (state === 'REGISTRATION' || (!eventData && ARCHITECT_LOBBY_MUSIC)) {
+    if (isMju) return MJU_LOBBY_MUSIC;
     return isWildAi ? WILD_AI_BREACH_LOBBY_MUSIC : ARCHITECT_LOBBY_MUSIC;
   }
   if (!eventData || state !== 'ACTIVE') return '';
-  const music = isWildAi ? WILD_AI_BREACH_PHASE_MUSIC : ARCHITECT_PHASE_MUSIC;
+  const music = isWildAi ? WILD_AI_BREACH_PHASE_MUSIC : (isMju ? MJU_PHASE_MUSIC : ARCHITECT_PHASE_MUSIC);
   const phase = Number(eventData.phase || 1);
   if (phase === 2) return music[2] || '';
   if (phase >= 3) return music[3] || '';
@@ -488,7 +562,8 @@ function renderArchitectActionResult(actionType, data) {
   const hp = Number(data.current_hp || 0);
   const phase = Number(data.phase || 1);
   const pressure = Number(data.overload_pressure || 0);
-  const isWildAi = data.code === 'wildai_breach';
+  const isWildAi = isWildAiEventCode(data.code);
+  const isMju = isMjuEventCode(data.code);
 
   let title = 'ДЕЙСТВИЕ ПРИНЯТО';
   let value = '';
@@ -515,6 +590,32 @@ function renderArchitectActionResult(actionType, data) {
       <div class="event-action-result-meta">
         <span>ЦЕЛОСТНОСТЬ: ${hp}</span>
         <span>ЗАРАЖЕНИЕ: ${pressure}/${WILD_AI_BREACH_INFECTION_THRESHOLD}</span>
+      </div>
+    `;
+  } else if (isMju) {
+    if (!isCorrect) {
+      title = 'НАРУШЕНИЕ ЗАФИКСИРОВАНО';
+      value = damage > 0 ? `-${damage} HP` : 'эффект не прошёл';
+    } else if (actionType === 'attack' || actionType === 'protocol') {
+      title = actionType === 'protocol' ? 'РЕГЛАМЕНТ ПРОБИТ' : 'УДАР ПРИНЯТ';
+      value = `-${damage} HP`;
+    } else if (actionType === 'stabilize') {
+      title = 'ДИСЦИПЛИНА ВОССТАНОВЛЕНА';
+      value = `+${support} SUPPORT`;
+    } else if (actionType === 'sync') {
+      title = 'СКАНИРОВАНИЕ ПРОЙДЕНО';
+      value = `+${support} SUPPORT`;
+    }
+
+    host.className = `event-explanation event-action-result ${isCorrect ? 'is-success' : 'is-fail'}`;
+    host.style.display = 'block';
+    host.innerHTML = `
+      <div class="event-action-result-title">${escapeHtml(title)}</div>
+      <div class="event-action-result-value">${escapeHtml(value)}</div>
+      <div class="event-action-result-meta">
+        <span>HP: ${hp}</span>
+        <span>ФАЗА: ${phase}</span>
+        <span>НАРУШЕНИЯ: ${pressure}/45</span>
       </div>
     `;
   } else {
@@ -599,6 +700,8 @@ function updateArchitectPhaseFxState(eventData) {
     'event-state-finished',
     'event-state-failed',
     'event-wildai-lobby',
+    'event-mju-lobby',
+    'event-mju',
     'event-phase-1',
     'event-phase-2',
     'event-phase-3',
@@ -610,6 +713,8 @@ function updateArchitectPhaseFxState(eventData) {
     overlay.classList.add('event-state-lobby');
     if (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach') {
       overlay.classList.add('event-wildai-lobby');
+    } else if (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === MJU_EVENT_CODE) {
+      overlay.classList.add('event-mju-lobby');
     }
     const standbyImg = document.getElementById('eventBossImage');
     if (standbyImg) standbyImg.classList.remove('result-image-reveal');
@@ -634,7 +739,8 @@ function updateArchitectPhaseFxState(eventData) {
     if (bossImg) bossImg.classList.remove('result-image-reveal');
   }
 
-  const isWildAi = eventData.code === 'wildai_breach';
+  const isWildAi = isWildAiEventCode(eventData.code);
+  const isMju = isMjuEventCode(eventData.code);
 
   overlay.classList.toggle('event-state-lobby', state === 'REGISTRATION');
   overlay.classList.toggle('event-state-active', isActive);
@@ -644,6 +750,8 @@ function updateArchitectPhaseFxState(eventData) {
   overlay.classList.toggle('event-state-failed', state === 'FAILED');
   overlay.classList.toggle('event-wildai-lobby', isWildAi && state === 'REGISTRATION');
   overlay.classList.toggle('event-wildai', isWildAi);
+  overlay.classList.toggle('event-mju-lobby', isMju && state === 'REGISTRATION');
+  overlay.classList.toggle('event-mju', isMju);
 
   if (isActive) {
     overlay.classList.add(`event-phase-${phase}`);
@@ -657,13 +765,17 @@ function updateArchitectPhaseFxState(eventData) {
     architectLastRenderedPhase = null;
   }
 
-  const overloadHigh = isActive && phase >= 3 && overload >= 12;
-  const overloadCritical = isActive && phase >= 3 && overload >= 20;
+  const highThreshold = isMju ? 18 : 12;
+  const criticalThreshold = isMju ? 35 : 20;
+  const overloadHigh = isActive && phase >= 3 && overload >= highThreshold;
+  const overloadCritical = isActive && phase >= 3 && overload >= criticalThreshold;
   overlay.classList.toggle('event-overload-high', overloadHigh);
   overlay.classList.toggle('event-overload-critical', overloadCritical);
 
   if (warning) {
-    warning.textContent = overloadCritical ? 'OVERLOAD CRITICAL' : 'OVERLOAD WARNING';
+    warning.textContent = isMju
+      ? (overloadCritical ? 'ПРОТОКОЛ КРИТИЧЕН' : 'НАРУШЕНИЯ РАСТУТ')
+      : (overloadCritical ? 'OVERLOAD CRITICAL' : 'OVERLOAD WARNING');
     warning.style.display = overloadHigh ? 'block' : 'none';
   }
 
@@ -771,9 +883,7 @@ function applyArchitectMedia(eventData) {
 
 async function loadCurrentArchitectEvent() {
   try {
-    const code = (typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach')
-      ? 'wildai_breach'
-      : 'architect';
+    const code = getEventHintCode();
     const res = await fetch(`${API_URL}/api/events/current?code=${encodeURIComponent(code)}`);
     const data = await res.json();
 
@@ -923,7 +1033,7 @@ window.closeArchitectBattlePopup = closeArchitectBattlePopup;
 // (REGISTRATION) — sessionStorage guard means it fires exactly once per event
 // per browser session, regardless of how many times the lobby re-polls.
 function maybeShowArchitectBattleSpeech(eventData) {
-  if (!eventData || eventData.code === 'wildai_breach') return;
+  if (!eventData || eventData.code !== 'architect') return;
   if (String(eventData.state || '').toUpperCase() !== 'REGISTRATION') return;
   const key = `arch_speech_start_${eventData.id}`;
   if (sessionStorage.getItem(key)) return;
@@ -936,7 +1046,7 @@ function maybeShowArchitectBattleSpeech(eventData) {
 // The popup itself is queued, not shown — it fires after the user exits the
 // event overlay (see flushPendingArchitectOutcomePopup in events.js).
 function maybeShowArchitectVictorySpeech(eventData) {
-  if (!eventData || eventData.code === 'wildai_breach') return;
+  if (!eventData || eventData.code !== 'architect') return;
   if (String(eventData.state || '').toUpperCase() !== 'FINISHED') return;
   const key = `arch_speech_win_${eventData.id}`;
   if (sessionStorage.getItem(key)) return;
@@ -950,7 +1060,7 @@ function maybeShowArchitectVictorySpeech(eventData) {
 
 // Mirror of the victory speech for a failed run — also queued until exit.
 function maybeShowArchitectDefeatSpeech(eventData) {
-  if (!eventData || eventData.code === 'wildai_breach') return;
+  if (!eventData || eventData.code !== 'architect') return;
   if (String(eventData.state || '').toUpperCase() !== 'FAILED') return;
   const key = `arch_speech_lose_${eventData.id}`;
   if (sessionStorage.getItem(key)) return;
@@ -987,8 +1097,10 @@ function renderArchitectLobby(eventData, errorText = '') {
     window._eventLobbyMarkup = lobbyCard.innerHTML;
   }
 
-  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
-  if (eventData && (eventData.code === 'wildai_breach') !== hintIsWildAi) {
+  const hintCode = getEventHintCode();
+  const hintIsWildAi = isWildAiEventCode(hintCode);
+  const hintIsMju = isMjuEventCode(hintCode);
+  if (eventData && eventData.code !== hintCode) {
     eventData = null;
   }
 
@@ -1004,6 +1116,14 @@ function renderArchitectLobby(eventData, errorText = '') {
           <div class="event-standby-title">${errorText || 'КРАСНЫЙ ФАЙРВОЛ ОНЛАЙН'}</div>
           <div class="event-standby-sub">Операция не активна. Вторжение Дикого ИИ пока не зафиксировано.</div>
           ${isAdmin ? `<button class="event-standby-create-btn" onclick="createWildAiEvent()">⚠ WILD AI BREACH // ОПЕРАЦИЯ ВЫТЕСНЕНИЯ</button>` : ''}
+        </div>`;
+    } else if (hintIsMju) {
+      lobbyCard.innerHTML = `
+        <div class="event-standby-screen">
+          <div class="event-standby-kicker">▣ БОСС ПРОТОКОЛА // STANDBY</div>
+          <div class="event-standby-title">${errorText || 'ЦЕНЗОР ОЖИДАЕТ'}</div>
+          <div class="event-standby-sub">Ивент МЮ не активен. Набор команды откроется после запуска админом.</div>
+          ${isAdmin ? `<button class="event-standby-create-btn" onclick="createMjuEvent()">▣ ЗАПУСТИТЬ ПРОВЕРКУ</button>` : ''}
         </div>`;
     } else {
       lobbyCard.innerHTML = `
@@ -1052,7 +1172,7 @@ function renderArchitectLobby(eventData, errorText = '') {
   statusEl.textContent = stateMap[eventData.state] || eventData.state || '—';
   rewardEl.textContent = eventData.reward_text || 'Приз не указан';
 
-  if (eventData.code !== 'wildai_breach' && typeof unlockArchitectDiaryEntry === 'function') {
+  if (eventData.code === 'architect' && typeof unlockArchitectDiaryEntry === 'function') {
     if (eventData.state === 'REGISTRATION') {
       unlockArchitectDiaryEntry('architect_intro');
     } else if (eventData.state === 'FINISHED') {
@@ -1085,7 +1205,8 @@ function renderArchitectLobby(eventData, errorText = '') {
     lobbyCard.classList.remove('result-banner-hidden', 'result-banner-reveal');
   }
 
-  const isWildAi = eventData.code === 'wildai_breach';
+  const isWildAi = isWildAiEventCode(eventData.code);
+  const isMju = isMjuEventCode(eventData.code);
   const verdictEl = document.getElementById('eventResultVerdict');
   const verdictRow = document.getElementById('eventResultHeader');
   const subtextEl = document.getElementById('eventResultSubtext');
@@ -1093,6 +1214,8 @@ function renderArchitectLobby(eventData, errorText = '') {
     if (isTerminal) {
       if (isWildAi) {
         verdictEl.textContent = eventData.state === 'FINISHED' ? 'ЦЕЛОСТНОСТЬ ВОССТАНОВЛЕНА' : 'СИСТЕМА ЗАРАЖЕНА';
+      } else if (isMju) {
+        verdictEl.textContent = eventData.state === 'FINISHED' ? 'РЕГЛАМЕНТ ПРОЙДЕН' : 'ПРОВЕРКА ПРОВАЛЕНА';
       } else {
         verdictEl.textContent = eventData.state === 'FINISHED' ? 'ПРОТОКОЛ ПРОБИТ' : 'МИССИЯ ПРОВАЛЕНА';
       }
@@ -1177,9 +1300,9 @@ function renderArchitectLobby(eventData, errorText = '') {
   createBtn.style.display = (isAdmin && isTerminal) ? 'inline-flex' : 'none';
   if (isAdmin && isTerminal) {
     // The inline onclick in index.html is hardcoded to createArchitectEvent();
-    // on a WildAI result screen it must create a WildAI event instead.
-    createBtn.onclick = isWildAi ? createWildAiEvent : createArchitectEvent;
-    createBtn.textContent = isWildAi ? 'Новая операция' : 'Создать';
+    // on alternate result screens it must create the matching event instead.
+    createBtn.onclick = isWildAi ? createWildAiEvent : (isMju ? createMjuEvent : createArchitectEvent);
+    createBtn.textContent = isWildAi ? 'Новая операция' : (isMju ? 'Новая проверка' : 'Создать');
   }
   joinBtn.style.display = canJoin ? 'inline-flex' : 'none';
   leaveBtn.style.display = canLeave ? 'inline-flex' : 'none';
@@ -1324,6 +1447,7 @@ function updateArchitectBattleVisibility(eventData) {
   }
 
   updateArchitectPhaseFxState(eventData);
+  setEventActionButtonLabels(eventData ? eventData.code : getEventHintCode());
 
   const isActive = !!eventData && eventData.state === 'ACTIVE';
   const isTerminal = !!eventData && (eventData.state === 'FAILED' || eventData.state === 'FINISHED');
@@ -1339,11 +1463,13 @@ function updateArchitectBattleVisibility(eventData) {
 
   if (!eventData) {
     applyArchitectMedia(null);
-    const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
+    const hint = getEventHintCode();
+    const hintIsWildAi = isWildAiEventCode(hint);
+    const hintIsMju = isMjuEventCode(hint);
     const kickerEl = document.getElementById('eventKicker');
     const bossNameEl = document.getElementById('eventBossName');
-    if (kickerEl) kickerEl.textContent = hintIsWildAi ? 'WILD AI BREACH' : 'ARCHITECT PROTOCOL';
-    if (bossNameEl) bossNameEl.textContent = hintIsWildAi ? 'ДИКИЙ ИИ' : 'АРХИТЕКТОР';
+    if (kickerEl) kickerEl.textContent = hintIsWildAi ? 'WILD AI BREACH' : (hintIsMju ? 'БОСС ПРОТОКОЛА' : 'ARCHITECT PROTOCOL');
+    if (bossNameEl) bossNameEl.textContent = hintIsWildAi ? 'ДИКИЙ ИИ' : (hintIsMju ? 'МИХАИЛ ЮРЬЕВИЧ' : 'АРХИТЕКТОР');
     hpText.textContent = '-- / ----';
     hpFill.style.width = '0%';
     phaseText.textContent = 'NO SIGNAL';
@@ -1369,14 +1495,15 @@ function updateArchitectBattleVisibility(eventData) {
   const maxHp = eventData.max_hp || 1;
   const currentHp = Math.max(0, eventData.current_hp || 0);
   const hpPercent = Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
-  const isWildAi = eventData.code === 'wildai_breach';
+  const isWildAi = isWildAiEventCode(eventData.code);
+  const isMju = isMjuEventCode(eventData.code);
 
   applyArchitectMedia(eventData);
 
   const kickerEl = document.getElementById('eventKicker');
   const bossNameEl = document.getElementById('eventBossName');
-  if (kickerEl) kickerEl.textContent = isWildAi ? 'WILD AI BREACH' : 'ARCHITECT PROTOCOL';
-  if (bossNameEl) bossNameEl.textContent = isWildAi ? (eventData.boss_name || 'ДИКИЙ ИИ') : 'АРХИТЕКТОР';
+  if (kickerEl) kickerEl.textContent = isWildAi ? 'WILD AI BREACH' : (isMju ? 'БОСС ПРОТОКОЛА' : 'ARCHITECT PROTOCOL');
+  if (bossNameEl) bossNameEl.textContent = isWildAi ? (eventData.boss_name || 'ДИКИЙ ИИ') : (isMju ? (eventData.boss_name || 'МИХАИЛ ЮРЬЕВИЧ') : 'АРХИТЕКТОР');
 
   hpText.textContent = `${currentHp} / ${maxHp}`;
   hpFill.style.width = `${hpPercent}%`;
@@ -1388,6 +1515,15 @@ function updateArchitectBattleVisibility(eventData) {
       : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
     phaseLabel.textContent = eventData.state === 'ACTIVE'
       ? `ВТОРЖЕНИЕ ${roman[phase] || phase}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+  } else if (isMju) {
+    const phase = eventData.phase || 1;
+    const phaseNames = {1: 'ПРОВЕРКА', 2: 'СКАНИРОВАНИЕ', 3: 'ЭКЗАМЕН'};
+    phaseText.textContent = eventData.state === 'ACTIVE'
+      ? `CHECK ${phase}`
+      : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
+    phaseLabel.textContent = eventData.state === 'ACTIVE'
+      ? (phaseNames[phase] || `ФАЗА ${phase}`)
       : (eventData.state === 'REGISTRATION' ? 'LOBBY' : 'END');
   } else {
     phaseText.textContent = eventData.state === 'ACTIVE'
@@ -1412,6 +1548,8 @@ function updateArchitectBattleVisibility(eventData) {
     const vulnerable = !!eventData.vulnerability_active && eventData.state === 'ACTIVE';
     if (isWildAi) {
       vulnerabilityBadge.textContent = vulnerable ? 'НОДА ВСКРЫТА' : 'СКРЫТА';
+    } else if (isMju) {
+      vulnerabilityBadge.textContent = vulnerable ? 'РЕГЛАМЕНТ ПРОБИТ' : 'СКАНИРУЕТ';
     } else {
       vulnerabilityBadge.textContent = vulnerable ? 'VULNERABLE' : 'SHIELDED';
     }
@@ -1423,7 +1561,7 @@ function updateArchitectBattleVisibility(eventData) {
     const overload = Number(eventData.overload_pressure || 0);
     overloadBadge.textContent = isWildAi
       ? `ЗАРАЖЕНИЕ ${overload}/${WILD_AI_BREACH_INFECTION_THRESHOLD}`
-      : `OVR ${overload}`;
+      : (isMju ? `НАРУШЕНИЯ ${overload}/45` : `OVR ${overload}`);
   }
 
   const logs = Array.isArray(eventData.logs) ? eventData.logs : [];
@@ -1600,6 +1738,36 @@ async function createWildAiEvent() {
 
     if (!res.ok) {
       showToast(data.detail || 'Не удалось создать операцию');
+      return;
+    }
+
+    currentArchitectEvent = data;
+    currentArchitectEventId = data.id;
+    renderArchitectLobby(data);
+
+    try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function createMjuEvent() {
+  if (!currentUserId || !isAdmin) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/events/mju/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Id': String(currentUserId || 0)
+      },
+      body: JSON.stringify({ telegram_id: currentUserId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showToast(data.detail || 'Не удалось создать Босса Протокола');
       return;
     }
 
@@ -1983,8 +2151,10 @@ function openEventInfoModal() {
   const body = document.getElementById('eventInfoModalBody');
   if (!modal || !body) return;
 
-  const hintIsWildAi = typeof eventLobbyTabHint !== 'undefined' && eventLobbyTabHint === 'wildai_breach';
-  const isWildAi = currentArchitectEvent ? currentArchitectEvent.code === 'wildai_breach' : hintIsWildAi;
+  const hint = getEventHintCode();
+  const code = currentArchitectEvent ? currentArchitectEvent.code : hint;
+  const isWildAi = isWildAiEventCode(code);
+  const isMju = isMjuEventCode(code);
 
   let title, intro;
   if (isWildAi) {
@@ -1996,6 +2166,17 @@ function openEventInfoModal() {
         Заражение растёт само по времени. Если оно достигнет 100% или истечёт лимит времени —
         операция провалена и активируется режим Wild AI Breach.<br>
         Если Целостность дойдёт до 0 — Дикий ИИ вытеснен, команда получает награду
+      </div>`;
+  } else if (isMju) {
+    title = '▣ БОСС ПРОТОКОЛА // СПРАВКА';
+    intro = `
+      <div class="event-info-text">
+        Бой против МЮ построен вокруг дисциплины и точности. <b>Атака</b> снимает HP,
+        <b>Протокол</b> сильнее раскрывается во 2-3 фазах, <b>Синхронизация</b> открывает регламент,
+        <b>Стабилизация</b> снижает нарушения.<br><br>
+        Ошибки и периодические сканирования повышают <b>Нарушения протокола</b>.
+        После критического порога Цензор снижает урон команды, поэтому часть игроков должна
+        не только бить босса, но и удерживать порядок.
       </div>`;
   } else {
     title = '⬡ ARCHITECT PROTOCOL // СПРАВКА';
