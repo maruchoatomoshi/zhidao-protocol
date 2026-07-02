@@ -1137,10 +1137,32 @@ function flushPendingArchitectOutcomePopup() {
 }
 window.flushPendingArchitectOutcomePopup = flushPendingArchitectOutcomePopup;
 
+// Предзагрузка медиа 1-й фазы, пока игроки сидят в лобби: к моменту старта
+// боя видео и музыка уже в HTTP-кэше браузера и стартуют без ожидания.
+// Качаем только 1-ю фазу (~7МБ) — 2-я и 3-я подтянутся уже во время боя,
+// пока движок держит предыдущий трек до готовности нового.
+let architectPrefetchedForCode = '';
+
+function prefetchEventPhaseAssets(code) {
+  if (!code || architectPrefetchedForCode === code) return;
+  architectPrefetchedForCode = code;
+  const isWildAi = isWildAiEventCode(code);
+  const isMju = isMjuEventCode(code);
+  const videos = isWildAi ? WILD_AI_BREACH_PHASE_VIDEOS : (isMju ? MJU_PHASE_VIDEOS : ARCHITECT_PHASE_VIDEOS);
+  const music = isWildAi ? WILD_AI_BREACH_PHASE_MUSIC : (isMju ? MJU_PHASE_MUSIC : ARCHITECT_PHASE_MUSIC);
+  [videos[1], music[1]].filter(Boolean).forEach((url) => {
+    try { fetch(url).catch(() => {}); } catch (e) {}
+  });
+}
+
 function renderArchitectLobby(eventData, errorText = '') {
   const lobbyCard = document.getElementById('eventLobbyCard');
   const overlay = document.getElementById('eventOverlay');
   if (!lobbyCard) return;
+
+  if (eventData && String(eventData.state || '').toUpperCase() === 'REGISTRATION') {
+    prefetchEventPhaseAssets(eventData.code);
+  }
 
   // The standby screen below replaces lobbyCard.innerHTML and destroys the
   // lobby elements (status, team list, buttons). Keep the original markup so
