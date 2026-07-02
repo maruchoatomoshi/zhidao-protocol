@@ -49,10 +49,12 @@ const WILD_AI_BREACH_PHASE_VIDEOS = {
   3: 'wildai_phase3.mp4'
 };
 
+// ?v= — обход кэша WebView: до 2026-07-02 тут лежали тяжёлые (16-23МБ)
+// файлы без faststart, которые фактически не загружались.
 const MJU_PHASE_VIDEOS = {
-  1: './mu_ivent_phase1.mp4',
-  2: './mu_ivent_phase2.mp4',
-  3: './mu_ivent_phase3.mp4'
+  1: './mu_ivent_phase1.mp4?v=20260702enc1',
+  2: './mu_ivent_phase2.mp4?v=20260702enc1',
+  3: './mu_ivent_phase3.mp4?v=20260702enc1'
 };
 
 const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
@@ -76,11 +78,11 @@ const WILD_AI_BREACH_PHASE_MUSIC = {
 const WILD_AI_BREACH_LOBBY_MUSIC = 'wildai_lobbytheme.mp3';
 
 const MJU_PHASE_MUSIC = {
-  1: './mu_ivent_theme_phase1.mp3',
-  2: './mi_ivent_theme_phase2.mp3',
-  3: './mu_ivent_theme_phase3.mp3'
+  1: './mu_ivent_theme_phase1.mp3?v=20260702enc1',
+  2: './mu_ivent_theme_phase2.mp3?v=20260702enc1',
+  3: './mu_ivent_theme_phase3.mp3?v=20260702enc1'
 };
-const MJU_LOBBY_MUSIC = './mu_ivent_lobby_theme.mp3';
+const MJU_LOBBY_MUSIC = './mu_ivent_lobby_theme.mp3?v=20260702enc1';
 
 const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
 const ARCHITECT_MUSIC_FADE_MS = 1400;
@@ -266,6 +268,30 @@ function scheduleArchitectMusicRetry(trackUrl) {
   }, 260 + architectMusicRetryAttempts * 340);
 }
 
+// Беззвучный WAV: разблокирует вторую деку внутри пользовательского жеста
+// без сетевого запроса. iOS требует, чтобы КАЖДЫЙ <audio> хоть раз сыграл
+// в жесте — иначе асинхронный play() при смене фазы будет отклонён.
+const ARCHITECT_SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
+function unlockIdleArchitectDeck(idleAudio) {
+  if (!idleAudio || idleAudio.dataset.gestureUnlocked === '1') return;
+  try {
+    idleAudio.volume = 0;
+    idleAudio.src = ARCHITECT_SILENT_WAV;
+    idleAudio.dataset.currentTrack = '';
+    const p = idleAudio.play();
+    if (p && typeof p.then === 'function') {
+      p.then(() => {
+        idleAudio.dataset.gestureUnlocked = '1';
+        try { idleAudio.pause(); } catch (e) {}
+      }).catch(() => {});
+    } else {
+      idleAudio.dataset.gestureUnlocked = '1';
+      try { idleAudio.pause(); } catch (e) {}
+    }
+  } catch (e) {}
+}
+
 function primeArchitectMusicUnlock(trackUrl = '') {
   stopArchitectMusicFade();
   architectMusicUnlocked = true;
@@ -276,6 +302,10 @@ function primeArchitectMusicUnlock(trackUrl = '') {
   if (!audio) return;
 
   architectMusicActiveDeck = 'a';
+
+  // Разблокируем и вторую деку, пока мы ещё в контексте жеста
+  const idleDeck = audio === players.a ? players.b : players.a;
+  unlockIdleArchitectDeck(idleDeck);
 
   try {
     const unlockTrack = trackUrl || getArchitectPhaseMusic(currentArchitectEvent) || ARCHITECT_PHASE_MUSIC[1];
@@ -294,6 +324,7 @@ function primeArchitectMusicUnlock(trackUrl = '') {
     if (unlockPromise && typeof unlockPromise.then === 'function') {
       unlockPromise
         .then(() => {
+          audio.dataset.gestureUnlocked = '1';
           if (trackUrl) {
             architectMusicCurrentTrack = unlockTrack;
             architectMusicPendingTrack = '';
@@ -457,12 +488,27 @@ function switchArchitectMusic(trackUrl, forceRetry = false) {
     } catch (e) {}
   }
 
+  // Старую деку глушим только когда новый трек РЕАЛЬНО начал играть.
+  // Тяжёлый mp3 по медленной сети буферизуется десятки секунд — если
+  // остановить старый трек сразу, всё это время будет висеть тишина.
+  const stopOldDeck = () => {
+    try { activePlayer.pause(); activePlayer.volume = 0; } catch (e) {}
+  };
+
   const playPromise = nextPlayer.play();
-  if (playPromise && typeof playPromise.catch === 'function') {
+  if (playPromise && typeof playPromise.then === 'function') {
     playPromise
       .then(() => {
+        nextPlayer.dataset.gestureUnlocked = '1';
+        // Пока грузился этот трек, могли переключить на другой — не мешаем
+        if (architectMusicCurrentTrack !== trackUrl) {
+          try { nextPlayer.pause(); nextPlayer.volume = 0; } catch (e) {}
+          return;
+        }
         architectMusicPendingTrack = '';
         architectMusicRetryAttempts = 0;
+        stopOldDeck();
+        fadeArchitectMusic(null, nextPlayer);
       })
       .catch(() => {
         try {
@@ -471,11 +517,11 @@ function switchArchitectMusic(trackUrl, forceRetry = false) {
         } catch (e) {}
         scheduleArchitectMusicRetry(trackUrl);
       });
+  } else {
+    stopOldDeck();
+    fadeArchitectMusic(null, nextPlayer);
   }
 
-  // Stop old deck immediately (no fade-out) to prevent overlap with new track
-  try { activePlayer.pause(); activePlayer.volume = 0; } catch (e) {}
-  fadeArchitectMusic(null, nextPlayer);
   architectMusicActiveDeck = nextDeck;
   architectMusicCurrentTrack = trackUrl;
 }
