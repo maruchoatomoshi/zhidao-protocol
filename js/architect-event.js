@@ -50,9 +50,9 @@ const WILD_AI_BREACH_PHASE_VIDEOS = {
 };
 
 const MJU_PHASE_VIDEOS = {
-  1: 'mu_ivent_phase1.mp4',
-  2: 'mu_ivent_phase2.mp4',
-  3: 'mu_ivent_phase3.mp4'
+  1: './mu_ivent_phase1.mp4',
+  2: './mu_ivent_phase2.mp4',
+  3: './mu_ivent_phase3.mp4'
 };
 
 const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
@@ -76,11 +76,11 @@ const WILD_AI_BREACH_PHASE_MUSIC = {
 const WILD_AI_BREACH_LOBBY_MUSIC = 'wildai_lobbytheme.mp3';
 
 const MJU_PHASE_MUSIC = {
-  1: 'mu_ivent_theme_phase1.mp3',
-  2: 'mi_ivent_theme_phase2.mp3',
-  3: 'mu_ivent_theme_phase3.mp3'
+  1: './mu_ivent_theme_phase1.mp3',
+  2: './mi_ivent_theme_phase2.mp3',
+  3: './mu_ivent_theme_phase3.mp3'
 };
-const MJU_LOBBY_MUSIC = 'mu_ivent_lobby_theme.mp3';
+const MJU_LOBBY_MUSIC = './mu_ivent_lobby_theme.mp3';
 
 const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
 const ARCHITECT_MUSIC_FADE_MS = 1400;
@@ -266,7 +266,7 @@ function scheduleArchitectMusicRetry(trackUrl) {
   }, 260 + architectMusicRetryAttempts * 340);
 }
 
-function primeArchitectMusicUnlock() {
+function primeArchitectMusicUnlock(trackUrl = '') {
   stopArchitectMusicFade();
   architectMusicUnlocked = true;
   architectMusicRetryAttempts = 0;
@@ -278,22 +278,32 @@ function primeArchitectMusicUnlock() {
   architectMusicActiveDeck = 'a';
 
   try {
+    const unlockTrack = trackUrl || getArchitectPhaseMusic(currentArchitectEvent) || ARCHITECT_PHASE_MUSIC[1];
     audio.loop = true;
     audio.preload = 'auto';
-    audio.volume = 0;
-    audio.src = ARCHITECT_PHASE_MUSIC[1];
-    audio.dataset.currentTrack = ARCHITECT_PHASE_MUSIC[1];
+    audio.volume = trackUrl ? ARCHITECT_MUSIC_TARGET_VOLUME : 0;
+    audio.src = unlockTrack;
+    audio.dataset.currentTrack = unlockTrack;
+    if (trackUrl) {
+      architectMusicCurrentTrack = unlockTrack;
+      architectMusicPendingTrack = '';
+    }
     audio.load();
 
     const unlockPromise = audio.play();
     if (unlockPromise && typeof unlockPromise.then === 'function') {
       unlockPromise
         .then(() => {
-          try { audio.pause(); } catch (e) {}
-          try { audio.currentTime = 0; } catch (e) {}
-          // Reset so the real track always triggers a fresh switch
-          if (architectMusicCurrentTrack === '' || architectMusicCurrentTrack === ARCHITECT_PHASE_MUSIC[1]) {
-            architectMusicCurrentTrack = '';
+          if (trackUrl) {
+            architectMusicCurrentTrack = unlockTrack;
+            architectMusicPendingTrack = '';
+          } else {
+            try { audio.pause(); } catch (e) {}
+            try { audio.currentTime = 0; } catch (e) {}
+            // Reset so the real track always triggers a fresh switch
+            if (architectMusicCurrentTrack === '' || architectMusicCurrentTrack === unlockTrack) {
+              architectMusicCurrentTrack = '';
+            }
           }
         })
         .catch(() => {
@@ -837,24 +847,20 @@ function applyArchitectMedia(eventData) {
         bossVideo.pause();
         bossVideo.style.display = 'none';
         clearTimeout(architectVideoStartTimer);
-        // Stagger the heavy video load/play so it doesn't compete with the
-        // entry-banner sting and lobby/phase music starting almost simultaneously —
-        // that pile-up of media inits is what crashed the WebView to a black screen.
-        architectVideoStartTimer = setTimeout(() => {
-          bossVideo.src = videoSrc;
-          bossVideo.dataset.currentSrc = videoSrc;
-          bossVideo.load();
-          const maybePromise = bossVideo.play();
-          if (maybePromise && typeof maybePromise.catch === 'function') {
-            maybePromise.catch(() => {});
-          }
-          bossVideo.addEventListener('playing', function onPlaying() {
-            bossVideo.removeEventListener('playing', onPlaying);
-            bossVideo.style.display = 'block';
-            if (bossImage) bossImage.style.display = 'none';
-            playWildAiLoseSound(eventData);
-          });
-        }, 450);
+        bossVideo.src = videoSrc;
+        bossVideo.dataset.currentSrc = videoSrc;
+        const showVideo = () => {
+          bossVideo.style.display = 'block';
+          if (bossImage) bossImage.style.display = 'none';
+          playWildAiLoseSound(eventData);
+        };
+        bossVideo.addEventListener('loadeddata', showVideo, { once: true });
+        bossVideo.addEventListener('playing', showVideo, { once: true });
+        bossVideo.load();
+        const maybePromise = bossVideo.play();
+        if (maybePromise && typeof maybePromise.catch === 'function') {
+          maybePromise.catch(() => {});
+        }
       } else {
         bossVideo.style.display = 'block';
         if (bossImage) bossImage.style.display = 'none';

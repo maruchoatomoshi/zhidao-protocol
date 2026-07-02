@@ -146,17 +146,17 @@ function openEventOverlay(tabHint) {
 
   document.body.style.overflow = 'hidden';
   setArchitectAmbientVisibility(false);
-  if (typeof primeArchitectMusicUnlock === 'function') {
-    primeArchitectMusicUnlock();
-  } else {
-    architectMusicUnlocked = true;
-  }
   // Start lobby music synchronously in gesture context — iOS blocks autoplay on async calls
   const lobbyMusic = eventLobbyTabHint === 'wildai_breach' && typeof WILD_AI_BREACH_LOBBY_MUSIC !== 'undefined'
     ? WILD_AI_BREACH_LOBBY_MUSIC
     : (eventLobbyTabHint === 'mju_protocol_boss' && typeof MJU_LOBBY_MUSIC !== 'undefined'
       ? MJU_LOBBY_MUSIC
       : (typeof ARCHITECT_LOBBY_MUSIC !== 'undefined' ? ARCHITECT_LOBBY_MUSIC : ''));
+  if (typeof primeArchitectMusicUnlock === 'function') {
+    primeArchitectMusicUnlock(lobbyMusic);
+  } else {
+    architectMusicUnlocked = true;
+  }
   if (typeof switchArchitectMusic === 'function' && lobbyMusic) {
     switchArchitectMusic(lobbyMusic);
   }
