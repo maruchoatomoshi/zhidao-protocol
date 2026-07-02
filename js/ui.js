@@ -344,8 +344,8 @@ function openMore(section) {
 // ── ADMIN EXCLUSIVE INTRO VIDEOS ─────────────────────────────
 
 const ADMIN_INTRO_ASSETS = {
-  cyberpunk: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/cyberpunktheme_intro.mp4',
-  genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_intro.mp4',
+  cyberpunk: (window.ZHIDAO_MEDIA_BASE || 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/') + 'cyberpunktheme_intro.mp4',
+  genshin: (window.ZHIDAO_MEDIA_BASE || 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/') + 'genshin_intro.mp4',
 };
 
 const ADMIN_INTRO_CAPTIONS = {
@@ -436,8 +436,8 @@ function skipAdminIntro() {
 // показывается при каждом запуске приложения.
 
 const THEME_INTRO_ASSETS = {
-  cyberpunk: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/cyberpunktheme_intro.mp4',
-  genshin: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/genshin_intro.mp4',
+  cyberpunk: (window.ZHIDAO_MEDIA_BASE || 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/') + 'cyberpunktheme_intro.mp4',
+  genshin: (window.ZHIDAO_MEDIA_BASE || 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/') + 'genshin_intro.mp4',
 };
 
 const THEME_INTRO_CAPTIONS = {

@@ -12,6 +12,9 @@ try { tg.setHeaderColor('#050510'); } catch(e) {}
 try { tg.setBackgroundColor('#050510'); } catch(e) {}
 
 const API_URL = 'https://hk.marucho.icu:8443';
+// Тяжёлые медиа (музыка/видео ивентов, интро) раздаются с нашего nginx:
+// GitHub Pages из Китая медленный, гонконгский сервер — быстрый.
+window.ZHIDAO_MEDIA_BASE = 'https://hk.marucho.icu:8444/media/';
 const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark', 'admin', 'admin-light', 'architect', 'aqua'];
 const WEATHER_KEY = '';
 const EXCHANGE_KEY = '';

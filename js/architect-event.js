@@ -37,52 +37,53 @@ const MJU_TERMINAL_IMAGES = {
   FAILED: 'https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/mu_ivent_lose.png?v=20260702mju1'
 };
 
+// Тяжёлые медиа льются с нашего HK-сервера (см. config.js). Фоллбэк на
+// относительные пути (GitHub Pages) — если у клиента закэширован старый config.js.
+const EVENT_MEDIA_BASE = (typeof window !== 'undefined' && window.ZHIDAO_MEDIA_BASE) ? window.ZHIDAO_MEDIA_BASE : './';
+
 const ARCHITECT_PHASE_VIDEOS = {
-  1: 'architect_phase1.mp4',
-  2: 'architect_phase2.mp4',
-  3: 'architect_phase3.mp4'
+  1: EVENT_MEDIA_BASE + 'architect_phase1.mp4',
+  2: EVENT_MEDIA_BASE + 'architect_phase2.mp4',
+  3: EVENT_MEDIA_BASE + 'architect_phase3.mp4'
 };
 
 const WILD_AI_BREACH_PHASE_VIDEOS = {
-  1: 'wildai_phase1_cut.mp4',
-  2: 'wildai_phase2.mp4',
-  3: 'wildai_phase3.mp4'
+  1: EVENT_MEDIA_BASE + 'wildai_phase1_cut.mp4',
+  2: EVENT_MEDIA_BASE + 'wildai_phase2.mp4',
+  3: EVENT_MEDIA_BASE + 'wildai_phase3.mp4'
 };
 
-// ?v= — обход кэша WebView: до 2026-07-02 тут лежали тяжёлые (16-23МБ)
-// файлы без faststart, которые фактически не загружались.
 const MJU_PHASE_VIDEOS = {
-  1: './mu_ivent_phase1.mp4?v=20260702enc2',
-  2: './mu_ivent_phase2.mp4?v=20260702enc2',
-  3: './mu_ivent_phase3.mp4?v=20260702enc2'
+  1: EVENT_MEDIA_BASE + 'mu_ivent_phase1.mp4',
+  2: EVENT_MEDIA_BASE + 'mu_ivent_phase2.mp4',
+  3: EVENT_MEDIA_BASE + 'mu_ivent_phase3.mp4'
 };
 
-const WILD_AI_BREACH_LOSE_VIDEO = 'wildai-lose_w2xvaPOC.mp4';
-// Defeat sting: upload a file with this exact name to the repo root and it
-// will play automatically when the loss video starts. Missing file = silent no-op.
-const WILD_AI_BREACH_LOSE_SOUND = 'wildai_losetheme.mp3';
+const WILD_AI_BREACH_LOSE_VIDEO = EVENT_MEDIA_BASE + 'wildai-lose_w2xvaPOC.mp4';
+// Defeat sting: plays automatically when the loss video starts.
+const WILD_AI_BREACH_LOSE_SOUND = EVENT_MEDIA_BASE + 'wildai_losetheme.mp3';
 let wildAiLoseSoundPlayedFor = null;
 
 const ARCHITECT_PHASE_MUSIC = {
-  1: 'architect_phase1_music.mp3',
-  2: 'architect_phase2_music.mp3',
-  3: 'architect_phase3_music.mp3'
+  1: EVENT_MEDIA_BASE + 'architect_phase1_music.mp3',
+  2: EVENT_MEDIA_BASE + 'architect_phase2_music.mp3',
+  3: EVENT_MEDIA_BASE + 'architect_phase3_music.mp3'
 };
-const ARCHITECT_LOBBY_MUSIC = 'architector_ivent_lobby_theme.mp3';
+const ARCHITECT_LOBBY_MUSIC = EVENT_MEDIA_BASE + 'architector_ivent_lobby_theme.mp3';
 
 const WILD_AI_BREACH_PHASE_MUSIC = {
-  1: 'wildai_phase1_theme.mp3',
-  2: 'wildai_phase2_theme.mp3',
-  3: 'wildai_phase3_theme.mp3'
+  1: EVENT_MEDIA_BASE + 'wildai_phase1_theme.mp3',
+  2: EVENT_MEDIA_BASE + 'wildai_phase2_theme.mp3',
+  3: EVENT_MEDIA_BASE + 'wildai_phase3_theme.mp3'
 };
-const WILD_AI_BREACH_LOBBY_MUSIC = 'wildai_lobbytheme.mp3';
+const WILD_AI_BREACH_LOBBY_MUSIC = EVENT_MEDIA_BASE + 'wildai_lobbytheme.mp3';
 
 const MJU_PHASE_MUSIC = {
-  1: './mu_ivent_theme_phase1.mp3?v=20260702enc1',
-  2: './mu_ivent_theme_phase2.mp3?v=20260702enc1',
-  3: './mu_ivent_theme_phase3.mp3?v=20260702enc1'
+  1: EVENT_MEDIA_BASE + 'mu_ivent_theme_phase1.mp3',
+  2: EVENT_MEDIA_BASE + 'mu_ivent_theme_phase2.mp3',
+  3: EVENT_MEDIA_BASE + 'mu_ivent_theme_phase3.mp3'
 };
-const MJU_LOBBY_MUSIC = './mu_ivent_lobby_theme.mp3?v=20260702enc1';
+const MJU_LOBBY_MUSIC = EVENT_MEDIA_BASE + 'mu_ivent_lobby_theme.mp3';
 
 const ARCHITECT_MUSIC_TARGET_VOLUME = 0.58;
 const ARCHITECT_MUSIC_FADE_MS = 1400;
