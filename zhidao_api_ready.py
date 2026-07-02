@@ -1023,6 +1023,33 @@ DB_WRITE_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
     thread_name_prefix="zhidao-db-writer",
 )
 
+# Отдельный пул для ЧТЕНИЙ. В WAL-режиме SQLite допускает много читателей
+# одновременно с единственным писателем, поэтому чтения:
+#   1) НЕ берут DB_WRITE_LOCK (не встают в очередь записи);
+#   2) уходят с event loop в этот пул (несколько воркеров) — раньше горячие
+#      GET-эндпоинты (рейтинг, дуэль-state, контракты, ачивки) выполняли
+#      синхронный SQLite прямо в event loop и на своё время морозили ВЕСЬ
+#      сервер. Теперь loop свободен, а чтения идут конкурентно.
+# Каждый воркер получает своё thread-local read-соединение через get_conn().
+DB_READ_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
+    max_workers=4,
+    thread_name_prefix="zhidao-db-reader",
+)
+
+
+async def db_read(fn, label=None):
+    """Выполнить читающую функцию в read-пуле без write-lock.
+
+    Использовать ТОЛЬКО для чистого чтения (никаких INSERT/UPDATE/DELETE/commit).
+    Записи по-прежнему идут через db_write (единый писатель)."""
+    t0 = time.time()
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(DB_READ_EXECUTOR, fn)
+    exec_ms = (time.time() - t0) * 1000
+    if exec_ms > 200:
+        print("ZHIDAO_DB_READ fn=%s exec=%.0fms" % (label or getattr(fn, "__name__", "?"), exec_ms), flush=True)
+    return result
+
 
 async def db_write(fn, label=None):
     import inspect as _inspect
@@ -7617,53 +7644,58 @@ async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None))
 async def get_leaderboard():
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     placeholders = ','.join('?' * len(ADMIN_IDS))
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute(
-        f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
-                 CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
-                 us.equipped_frame,
-                 CASE WHEN us.title_date=? THEN us.title_style ELSE NULL END as title_style,
-                 (SELECT implant_id FROM user_implants
-                  WHERE telegram_id=u.telegram_id
-                  AND durability > 0
-                  ORDER BY CASE implant_id
-                    WHEN 'implant_red_dragon' THEN 1
-                    WHEN 'implant_guanxi' THEN 2
-                    WHEN 'implant_terracota' THEN 3
-                    ELSE 4 END
-                  LIMIT 1) as top_implant,
-                 (SELECT card_id FROM user_cards
-                  WHERE telegram_id=u.telegram_id
-                  AND durability > 0
-                  ORDER BY CASE card_id
-                    WHEN 'card_star' THEN 1
-                    WHEN 'card_zhongli' THEN 2
-                    WHEN 'card_pyro' THEN 3
-                    WHEN 'card_moon' THEN 4
-                    ELSE 5 END
-                  LIMIT 1) as top_card
-                 FROM users u
-                 LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
-                 WHERE u.telegram_id IS NOT NULL
-                 AND u.telegram_id NOT IN ({placeholders})
-                 ORDER BY u.rep_score DESC, u.rowid ASC''',
-        [today, today] + ADMIN_IDS,
-    )
-    result = c.fetchall()
 
-    # Динамика рейтинга: сравнение с последним сохранённым срезом
-    c.execute("SELECT MAX(snapshot_date) FROM leaderboard_snapshots WHERE snapshot_date < ?", (today,))
-    prev_date_row = c.fetchone()
-    prev_date = prev_date_row[0] if prev_date_row else None
-    prev_ranks = {}
-    if prev_date:
-        c.execute("SELECT telegram_id, rank FROM leaderboard_snapshots WHERE snapshot_date=?", (prev_date,))
-        prev_ranks = {row[0]: row[1] for row in c.fetchall()}
+    def _read():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute(
+            f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
+                     CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
+                     us.equipped_frame,
+                     CASE WHEN us.title_date=? THEN us.title_style ELSE NULL END as title_style,
+                     (SELECT implant_id FROM user_implants
+                      WHERE telegram_id=u.telegram_id
+                      AND durability > 0
+                      ORDER BY CASE implant_id
+                        WHEN 'implant_red_dragon' THEN 1
+                        WHEN 'implant_guanxi' THEN 2
+                        WHEN 'implant_terracota' THEN 3
+                        ELSE 4 END
+                      LIMIT 1) as top_implant,
+                     (SELECT card_id FROM user_cards
+                      WHERE telegram_id=u.telegram_id
+                      AND durability > 0
+                      ORDER BY CASE card_id
+                        WHEN 'card_star' THEN 1
+                        WHEN 'card_zhongli' THEN 2
+                        WHEN 'card_pyro' THEN 3
+                        WHEN 'card_moon' THEN 4
+                        ELSE 5 END
+                      LIMIT 1) as top_card
+                     FROM users u
+                     LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
+                     WHERE u.telegram_id IS NOT NULL
+                     AND u.telegram_id NOT IN ({placeholders})
+                     ORDER BY u.rep_score DESC, u.rowid ASC''',
+            [today, today] + ADMIN_IDS,
+        )
+        result = c.fetchall()
 
-    c.execute("SELECT 1 FROM leaderboard_snapshots WHERE snapshot_date=? LIMIT 1", (today,))
-    has_today_snapshot = c.fetchone() is not None
-    conn.close()
+        # Динамика рейтинга: сравнение с последним сохранённым срезом
+        c.execute("SELECT MAX(snapshot_date) FROM leaderboard_snapshots WHERE snapshot_date < ?", (today,))
+        prev_date_row = c.fetchone()
+        prev_date = prev_date_row[0] if prev_date_row else None
+        prev_ranks = {}
+        if prev_date:
+            c.execute("SELECT telegram_id, rank FROM leaderboard_snapshots WHERE snapshot_date=?", (prev_date,))
+            prev_ranks = {row[0]: row[1] for row in c.fetchall()}
+
+        c.execute("SELECT 1 FROM leaderboard_snapshots WHERE snapshot_date=? LIMIT 1", (today,))
+        has_today_snapshot = c.fetchone() is not None
+        conn.close()
+        return result, prev_ranks, has_today_snapshot
+
+    result, prev_ranks, has_today_snapshot = await db_read(_read, label="leaderboard")
 
     if not has_today_snapshot:
         def _snapshot():
@@ -7771,13 +7803,16 @@ async def equip_frame(data: dict):
 
 @app.get("/api/achievements/{telegram_id}")
 async def get_user_achievements(telegram_id: int):
-    conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT code, name, description, icon, secret FROM achievements")
-    all_achievements = c.fetchall()
-    c.execute("SELECT achievement_code, earned_at FROM user_achievements WHERE telegram_id=?", (telegram_id,))
-    earned = {row[0]: row[1] for row in c.fetchall()}
-    conn.close()
+    def _read():
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT code, name, description, icon, secret FROM achievements")
+        all_achievements = c.fetchall()
+        c.execute("SELECT achievement_code, earned_at FROM user_achievements WHERE telegram_id=?", (telegram_id,))
+        earned = {row[0]: row[1] for row in c.fetchall()}
+        conn.close()
+        return all_achievements, earned
+    all_achievements, earned = await db_read(_read, label="achievements")
 
     if "legend" not in earned:
         def _check_legend():
@@ -10859,27 +10894,29 @@ def _check_blackwall(c, user_id):
 async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
     await db_write(expire_stale_open_contracts, label="expire_stale_open_contracts")
 
-    conn = get_conn()
-    c = conn.cursor()
-    _check_blackwall(c, x_telegram_id)
-    c.execute(
-        '''SELECT id, title, description, category, reward_stars, fee_stars,
-                  creator_telegram_id, assignee_telegram_id, status,
-                  is_suspicious, suspicious_reason,
-                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  expires_at, submitted_at, auto_confirm_at, is_anonymous
-           FROM contracts
-           WHERE status='open'
-           ORDER BY created_at DESC
-           LIMIT 50''',
-    )
-    rows = c.fetchall()
-    result = []
-    for row in rows:
-        cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), True))
-    conn.close()
-    return result
+    def _read():
+        conn = get_conn()
+        c = conn.cursor()
+        _check_blackwall(c, x_telegram_id)
+        c.execute(
+            '''SELECT id, title, description, category, reward_stars, fee_stars,
+                      creator_telegram_id, assignee_telegram_id, status,
+                      is_suspicious, suspicious_reason,
+                      created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                      expires_at, submitted_at, auto_confirm_at, is_anonymous
+               FROM contracts
+               WHERE status='open'
+               ORDER BY created_at DESC
+               LIMIT 50''',
+        )
+        rows = c.fetchall()
+        result = []
+        for row in rows:
+            cn, an, ca, aa = _resolve_names(c, row[6], row[7])
+            result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), True))
+        conn.close()
+        return result
+    return await db_read(_read, label="contracts")
 
 
 @app.get("/api/contracts/my")
@@ -10890,28 +10927,30 @@ async def my_contracts(x_telegram_id: Optional[int] = Header(None)):
     await db_write(expire_stale_open_contracts, label="expire_stale_open_contracts")
     await db_write(auto_confirm_submitted_contracts, label="auto_confirm_submitted_contracts")
 
-    conn = get_conn()
-    c = conn.cursor()
-    _check_blackwall(c, x_telegram_id)
-    c.execute(
-        '''SELECT id, title, description, category, reward_stars, fee_stars,
-                  creator_telegram_id, assignee_telegram_id, status,
-                  is_suspicious, suspicious_reason,
-                  created_at, accepted_at, completed_at, cancelled_at, disputed_at,
-                  expires_at, submitted_at, auto_confirm_at, is_anonymous
-           FROM contracts
-           WHERE creator_telegram_id=? OR assignee_telegram_id=?
-           ORDER BY created_at DESC
-           LIMIT 100''',
-        (x_telegram_id, x_telegram_id),
-    )
-    rows = c.fetchall()
-    result = []
-    for row in rows:
-        cn, an, ca, aa = _resolve_names(c, row[6], row[7])
-        result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), False))
-    conn.close()
-    return result
+    def _read():
+        conn = get_conn()
+        c = conn.cursor()
+        _check_blackwall(c, x_telegram_id)
+        c.execute(
+            '''SELECT id, title, description, category, reward_stars, fee_stars,
+                      creator_telegram_id, assignee_telegram_id, status,
+                      is_suspicious, suspicious_reason,
+                      created_at, accepted_at, completed_at, cancelled_at, disputed_at,
+                      expires_at, submitted_at, auto_confirm_at, is_anonymous
+               FROM contracts
+               WHERE creator_telegram_id=? OR assignee_telegram_id=?
+               ORDER BY created_at DESC
+               LIMIT 100''',
+            (x_telegram_id, x_telegram_id),
+        )
+        rows = c.fetchall()
+        result = []
+        for row in rows:
+            cn, an, ca, aa = _resolve_names(c, row[6], row[7])
+            result.append(_contract_to_dict(row[:19], cn, an, ca, aa, x_telegram_id, bool(row[19]), False))
+        conn.close()
+        return result
+    return await db_read(_read, label="contracts_my")
 
 
 @app.post("/api/contracts")
@@ -12279,13 +12318,16 @@ async def duel_answer(duel_id: int, data: dict):
 
 @app.get("/api/duel/{duel_id}/state")
 async def duel_state(duel_id: int, telegram_id: int):
-    conn = get_conn()
-    c = conn.cursor()
-    duel = _fetch_duel(c, duel_id)
-    conn.close()
+    def _read_duel():
+        conn = get_conn()
+        c = conn.cursor()
+        d = _fetch_duel(c, duel_id)
+        conn.close()
+        return d
+    duel = await db_read(_read_duel, label="duel_state_fetch")
     if duel and duel["status"] == "active" and _round_due(duel):
         duel = await db_write(lambda: _resolve_round_locked(duel_id))
-    return _public_duel_state(duel, telegram_id)
+    return await db_read(lambda: _public_duel_state(duel, telegram_id), label="duel_state_public")
 
 
 @app.get("/api/duel/leaderboard")
