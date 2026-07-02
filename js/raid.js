@@ -6,6 +6,9 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const RAID_ANSWER_FEEDBACK_MS = 220;
+const RAID_POST_JOIN_REFRESH_MS = 350;
+
 function setRaidButtonState(text, disabled, background = '', color = '') {
     const btn = document.getElementById('raid-action-btn');
     if (!btn) return;
@@ -436,7 +439,7 @@ async function _executeRaidJoin(answer, questionId) {
                 correct ? '✓ Анализ точный — уязвимость обнаружена' : '✗ Анализ промахнулся. Продолжаем операцию',
                 correct ? '#2ecc71' : '#e67e22'
             );
-            await sleep(900);
+            await sleep(RAID_ANSWER_FEEDBACK_MS);
         }
 
         if (data.launched && data.result === 'success') {
@@ -462,8 +465,10 @@ async function _executeRaidJoin(answer, questionId) {
         } catch(e) {}
 
         showToast(data.message || 'Рейд обновлён');
-        loadLeaderboard();
-        loadPoints(currentUserId);
+        setTimeout(() => {
+            if (typeof loadPoints === 'function') loadPoints(currentUserId);
+            if (data.launched && typeof loadLeaderboard === 'function') loadLeaderboard();
+        }, RAID_POST_JOIN_REFRESH_MS);
     } catch(e) {
         showToast('Ошибка соединения с рейдом');
     } finally {
