@@ -283,6 +283,17 @@ Frontend deploy:
 - Push to `main` on GitHub.
 - User checks GitHub Pages / raw assets through the Telegram Mini App.
 
+### Heavy media hosting (rule established 2026-07-02, after MJU event media failures)
+
+Heavy media (event videos, phase/lobby music, intro videos) is served from the HK server, NOT from GitHub Pages: `https://hk.marucho.icu:8444/media/` → nginx (`/etc/nginx/conf.d/zhidao_media.conf`) → `/var/www/zhidao_media/`. GitHub Pages is slow/unstable from mainland China; 16-23MB event videos at 6.5Mbps bitrate with the moov atom at file end simply never loaded. The base URL lives in `js/config.js` (`window.ZHIDAO_MEDIA_BASE`); consumers (`js/architect-event.js` `EVENT_MEDIA_BASE`, `js/ui.js` intro assets, `<audio>` tags in `index.html`) fall back to relative/GitHub paths if the base is missing.
+
+**Rules for any new event media:**
+1. Compress BEFORE shipping: video ≈ 720p H.264, CRF 28-30, `-movflags +faststart`, strip audio track (event videos always play muted); music = 128kbps MP3. Target: video ≤ 3MB per phase, music ≤ 5MB. ffmpeg one-liner: `ffmpeg -i in.mp4 -vf "scale=-2:720" -c:v libx264 -crf 30 -preset slow -pix_fmt yuv420p -an -movflags +faststart out.mp4`.
+2. Upload to BOTH places: the git repo (fallback + source of truth) and `/var/www/zhidao_media/` on the server (`wget` from raw.githubusercontent works fine from the HK box).
+3. Port 443 on the server belongs to Xray/Marzban (VPN) — never touch it; 8443 is the API (uvicorn), 8444 is media (nginx).
+
+The event music engine (`js/architect-event.js`) also encodes two hard-won fixes: both audio decks must be gesture-unlocked when the overlay opens (iOS rejects async `play()` on a never-touched element — deck B is unlocked with a silent data-URI WAV), and on track switch the old deck keeps playing until the new track's `play()` promise resolves (on slow links a phase track buffers for many seconds; killing the old track immediately meant long silences that read as "music is broken").
+
 Backend deploy:
 
 - The server runs `zhidao_api.service`.
