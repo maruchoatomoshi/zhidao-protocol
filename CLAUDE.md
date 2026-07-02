@@ -292,6 +292,8 @@ Heavy media (event videos, phase/lobby music, intro videos) is served from the H
 2. Upload to BOTH places: the git repo (fallback + source of truth) and `/var/www/zhidao_media/` on the server (`wget` from raw.githubusercontent works fine from the HK box).
 3. Port 443 on the server belongs to Xray/Marzban (VPN) — never touch it; 8443 is the API (uvicorn), 8444 is media (nginx).
 
+**Open question (2026-07-02): mainland-China reachability of hk.marucho.icu is UNVERIFIED.** Tianhao reported the VPN from this server doesn't work in China — could mean protocol-level blocking only (app fine) or a full IP blackhole by the GFW (app dead on local Wi-Fi/Chinese SIMs; the whole API lives on this IP). Decision: leave as is. Mitigations: media falls back to GitHub Pages automatically; Russian SIMs in roaming bypass the GFW entirely (traffic exits via the home carrier). **First day on the ground: open the Mini App on local Wi-Fi — if the profile loads, the IP is clean; if not, users must switch to roaming data, and consider moving the VPN to a separate disposable VPS to keep the app server's IP clean.**
+
 The event music engine (`js/architect-event.js`) also encodes two hard-won fixes: both audio decks must be gesture-unlocked when the overlay opens (iOS rejects async `play()` on a never-touched element — deck B is unlocked with a silent data-URI WAV), and on track switch the old deck keeps playing until the new track's `play()` promise resolves (on slow links a phase track buffers for many seconds; killing the old track immediately meant long silences that read as "music is broken").
 
 Backend deploy:
