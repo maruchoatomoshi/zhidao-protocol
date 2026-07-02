@@ -276,6 +276,7 @@ function startTianhaoFactPoller() {
 window.startTianhaoFactPoller = startTianhaoFactPoller;
 
 async function checkActiveTianhaoFact() {
+  if (document.hidden) return; // не бьём в API, пока мини-апп свёрнут
   try {
     const r = await fetch(`${API_URL}/api/tianhao-fact/active`);
     if (!r.ok) return;

@@ -20,6 +20,7 @@ let duelPrevRound = null;
 let duelFinishShown = false;
 let duelRoundIntroKey = null;
 let duelAnnounceTimers = [];
+let duelComboCount = 0;      // серия ударов подряд по сопернику (комбо)
 
 const DUEL_STAKES = [10, 25, 50, 100];
 
@@ -249,6 +250,7 @@ function openDuelOverlay(duelId) {
   duelPrevRound = null;
   duelFinishShown = false;
   duelRoundIntroKey = null;
+  duelComboCount = 0;
   clearDuelAnnounceQueue();
   const ov = document.getElementById('duel-overlay');
   if (ov) {
@@ -428,6 +430,10 @@ function setDuelHp(fillId, textId, hp, maxHp) {
   if (fill) {
     fill.style.width = pct + '%';
     fill.classList.toggle('duel-hp-low', pct <= 34);
+    // «Призрачный» chip-бар: жёлтая полоса за основной, оседает с задержкой —
+    // фирменный приём файтингов (видно, сколько урона только что прошло).
+    const ghost = document.getElementById(fillId + 'Ghost');
+    if (ghost) ghost.style.width = pct + '%';
   }
   if (txt) txt.textContent = hp;
 }
@@ -577,7 +583,25 @@ function triggerDuelHit(side, dmg, isKo) {
     setTimeout(() => { dmgEl.classList.remove('duel-dmg-show'); dmgEl.textContent = ''; }, 900);
   }
   spawnDuelSparks(side);
+  // Комбо: серия ударов по сопернику подряд. Получил сам — серия сбрасывается.
+  if (side === 'opp') {
+    duelComboCount += 1;
+    if (duelComboCount >= 2 && !isKo) showDuelCombo(duelComboCount);
+  } else {
+    duelComboCount = 0;
+  }
   try { tg.HapticFeedback.impactOccurred(side === 'opp' ? 'heavy' : 'medium'); } catch (e) {}
+}
+
+function showDuelCombo(n) {
+  const el = document.getElementById('duelCombo');
+  if (!el) return;
+  el.innerHTML = `<strong>${n}</strong><span>COMBO</span>`;
+  el.classList.remove('duel-combo-show');
+  void el.offsetWidth;
+  el.classList.add('duel-combo-show');
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove('duel-combo-show'), 1200);
 }
 
 function applyDuelHitStop(ms) {

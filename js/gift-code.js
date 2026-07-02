@@ -26,6 +26,7 @@ window.startGiftCodePoller = startGiftCodePoller;
 
 async function checkActiveGiftCode() {
   if (!currentUserId) return;
+  if (document.hidden) return; // не бьём в API, пока мини-апп свёрнут
   try {
     const { data } = await apiGetJson('/api/gift-code/active');
     if (!data || !data.active) return;
