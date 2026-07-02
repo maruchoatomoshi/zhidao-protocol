@@ -2222,6 +2222,23 @@ def get_presence_message_text(check_type: str, attempt_no: int = 1):
     )
 
 
+_TELEGRAM_SESSION: Optional[aiohttp.ClientSession] = None
+
+
+async def _get_telegram_session() -> aiohttp.ClientSession:
+    # Один переиспользуемый HTTP-клиент на весь процесс. Раньше каждый вызов
+    # send_telegram_message открывал новую aiohttp.ClientSession (новое TCP+TLS
+    # соединение к api.telegram.org) — при массовой рассылке по циклу это давало
+    # ~200мс накладных расходов НА КАЖДОЕ сообщение. При ~90 юзерах отсюда и
+    # росла заметная задержка публикации новостей (2026-07-02).
+    global _TELEGRAM_SESSION
+    if _TELEGRAM_SESSION is None or _TELEGRAM_SESSION.closed:
+        _TELEGRAM_SESSION = aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(limit=30, keepalive_timeout=60)
+        )
+    return _TELEGRAM_SESSION
+
+
 async def send_telegram_message(chat_id: int, text: str, reply_markup: Optional[dict] = None):
     if not BOT_TOKEN:
         return False, {"detail": "BOT_TOKEN is not configured"}
@@ -2230,18 +2247,18 @@ async def send_telegram_message(chat_id: int, text: str, reply_markup: Optional[
     if reply_markup:
         payload["reply_markup"] = reply_markup
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-            json=payload,
-        ) as r:
-            if r.status >= 400:
-                try:
-                    data = await r.json()
-                except Exception:
-                    data = {"detail": await r.text()}
-                return False, data
-            return True, await r.json()
+    session = await _get_telegram_session()
+    async with session.post(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+        json=payload,
+    ) as r:
+        if r.status >= 400:
+            try:
+                data = await r.json()
+            except Exception:
+                data = {"detail": await r.text()}
+            return False, data
+        return True, await r.json()
 
 
 async def broadcast_announcement_to_telegram(text: str):
@@ -2256,15 +2273,29 @@ async def broadcast_announcement_to_telegram(text: str):
     recipients = [int(row[0]) for row in c.fetchall() if row[0]]
     conn.close()
 
+    message = f"📢 Объявление:\n\n{text}"
+
+    # Раньше рассылка шла строго последовательно (один await за другим) —
+    # при ~90 юзерах это и давало те самые 15-18с, пока не отправится
+    # последнее сообщение, всё это время админ ждал ответа на публикацию
+    # новости. Telegram допускает ~30 сообщений/сек — шлём пачками по 20
+    # параллельно, с паузой между пачками, чтобы не улететь в 429.
+    BATCH_SIZE = 20
     sent = 0
     failed = 0
-    message = f"📢 Объявление:\n\n{text}"
-    for telegram_id in recipients:
-        ok, _ = await send_telegram_message(telegram_id, message)
-        if ok:
-            sent += 1
-        else:
-            failed += 1
+    for i in range(0, len(recipients), BATCH_SIZE):
+        batch = recipients[i:i + BATCH_SIZE]
+        results = await asyncio.gather(
+            *(send_telegram_message(tid, message) for tid in batch),
+            return_exceptions=True,
+        )
+        for r in results:
+            if isinstance(r, Exception) or not (isinstance(r, tuple) and r[0]):
+                failed += 1
+            else:
+                sent += 1
+        if i + BATCH_SIZE < len(recipients):
+            await asyncio.sleep(0.6)
 
     return {"total": len(recipients), "sent": sent, "failed": failed}
 

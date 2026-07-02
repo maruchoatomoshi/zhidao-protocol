@@ -7902,8 +7902,14 @@ body.theme-nw-light .diary-admin-refresh:hover { background: rgba(0,0,0,0.05); }
   bottom: 0;
   width: 100vw;
   height: calc(100vh - 132px);
-  object-fit: contain;
-  object-position: center center;
+  /* Portrait event art/video (~0.56-0.67 aspect) is wider than a typical
+     phone's hero box (~0.55 aspect) — object-fit:contain left dark bars on
+     the sides or a hard cutoff at the bottom depending on device (2026-07-02
+     report). cover fills the box edge-to-edge instead, same fix WildAI
+     already uses below; object-position biased up so faces (usually in the
+     upper third of the art) survive the side crop rather than getting cut. */
+  object-fit: cover;
+  object-position: center 22%;
   display: block;
   transform: none;
   filter: saturate(1.08) contrast(1.05);
