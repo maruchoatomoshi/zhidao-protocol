@@ -4030,24 +4030,68 @@ def build_diary_entry_payload(c, entry_id: int) -> dict:
     }
 
 
-async def get_token():
-    async with aiohttp.ClientSession() as session:
+# /api/user (профиль) — самый частый запрос в приложении. Раньше он на КАЖДУЮ
+# загрузку логинился в Marzban за токеном и открывал две новые сессии, без
+# таймаута. Это: (1) тормозило профиль на два внешних round-trip; (2) при
+# недоступном/отвечающем с ошибкой Marzban могло подвесить профиль (и дать
+# чёрный экран); (3) спамило Marzban запросами /api/admin/token (те 401 в
+# логах). Кешируем токен (живёт ~сутки), держим одну сессию с таймаутом и
+# мягко деградируем к профилю без VPN-данных, если Marzban недоступен.
+_MARZBAN_TOKEN_CACHE = {"token": None, "expires_at": 0.0}
+_MARZBAN_SESSION: Optional[aiohttp.ClientSession] = None
+
+
+async def _get_marzban_session() -> aiohttp.ClientSession:
+    global _MARZBAN_SESSION
+    if _MARZBAN_SESSION is None or _MARZBAN_SESSION.closed:
+        _MARZBAN_SESSION = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=6)
+        )
+    return _MARZBAN_SESSION
+
+
+async def get_token(force_refresh: bool = False):
+    now = time.time()
+    if not force_refresh and _MARZBAN_TOKEN_CACHE["token"] and _MARZBAN_TOKEN_CACHE["expires_at"] > now:
+        return _MARZBAN_TOKEN_CACHE["token"]
+    try:
+        session = await _get_marzban_session()
         async with session.post(
             f"{MARZBAN_URL}/api/admin/token",
             data={"username": MARZBAN_USER, "password": MARZBAN_PASS},
         ) as r:
             data = await r.json()
-            return data.get("access_token")
+            token = data.get("access_token")
+            if token:
+                # токены Marzban живут ~24ч; кешируем на 23ч с запасом
+                _MARZBAN_TOKEN_CACHE["token"] = token
+                _MARZBAN_TOKEN_CACHE["expires_at"] = now + 23 * 3600
+            return token
+    except Exception as e:
+        print("ZHIDAO_MARZBAN_TOKEN_ERROR %s" % e, flush=True)
+        return None
 
 
 async def get_user_data(marzban_username):
     token = await get_token()
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"{MARZBAN_URL}/api/user/{marzban_username}",
-            headers={"Authorization": f"Bearer {token}"},
-        ) as r:
-            return await r.json()
+    if not token:
+        return {}
+    try:
+        session = await _get_marzban_session()
+        url = f"{MARZBAN_URL}/api/user/{marzban_username}"
+        headers = {"Authorization": f"Bearer {token}"}
+        async with session.get(url, headers=headers) as r:
+            if r.status == 401:
+                # кешированный токен протух — один повтор со свежим
+                token = await get_token(force_refresh=True)
+                if not token:
+                    return {}
+                async with session.get(url, headers={"Authorization": f"Bearer {token}"}) as r2:
+                    return await r2.json() if r2.status < 400 else {}
+            return await r.json() if r.status < 400 else {}
+    except Exception as e:
+        print("ZHIDAO_MARZBAN_USER_ERROR %s" % e, flush=True)
+        return {}
 
 
 def get_marzban_access_link(data: dict) -> Optional[str]:
@@ -6455,12 +6499,25 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
     failed = []
     markup = get_presence_keyboard_markup(check_type, check_date)
     text = get_presence_message_text(check_type, attempt_no)
-    for telegram_id in eligible:
-        ok, response = await send_telegram_message(telegram_id, text, markup)
-        if ok:
-            sent.append(telegram_id)
-        else:
-            failed.append({"telegram_id": telegram_id, "error": response})
+    # Раньше перекличка рассылалась строго последовательно — при ~90 учениках
+    # это ~15-18с, всё это время админ ждёт ответа на запуск. Шлём пачками по
+    # 20 параллельно с паузой между пачками (лимит Telegram ~30 msg/s).
+    BATCH_SIZE = 20
+    for i in range(0, len(eligible), BATCH_SIZE):
+        batch = eligible[i:i + BATCH_SIZE]
+        results = await asyncio.gather(
+            *(send_telegram_message(tid, text, markup) for tid in batch),
+            return_exceptions=True,
+        )
+        for tid, r in zip(batch, results):
+            if isinstance(r, Exception):
+                failed.append({"telegram_id": tid, "error": str(r)})
+            elif isinstance(r, tuple) and r[0]:
+                sent.append(tid)
+            else:
+                failed.append({"telegram_id": tid, "error": r[1] if isinstance(r, tuple) else "unknown"})
+        if i + BATCH_SIZE < len(eligible):
+            await asyncio.sleep(0.6)
 
     if sent:
         def _mark_sent():
