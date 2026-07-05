@@ -45,5 +45,5 @@ window.APP_FROZEN_FEATURES = {
   'profile-rank':     true,
   'profile-showcase': true,
 };
-// Таймер обратного отсчёта в окне заморозки: открытие утром 6 июля 7:00 (по Пекину).
-window.APP_FREEZE_TARGET_AT = '2026-07-06T07:00:00+08:00';
+// Таймер обратного отсчёта в окне заморозки: открытие 6 июля в 18:00 (по Пекину).
+window.APP_FREEZE_TARGET_AT = '2026-07-06T18:00:00+08:00';
