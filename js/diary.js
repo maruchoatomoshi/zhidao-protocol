@@ -165,10 +165,9 @@ function positionDiaryStarsPopup(anchorEl) {
   sheet.style.bottom = 'auto';
   sheet.style.overflowY = 'auto';
 
-  const sheetHeight = Math.min(sheet.offsetHeight || 360, viewportH - margin - safeBottom);
-  sheet.style.maxHeight = `${sheetHeight}px`;
-
   if (!anchorEl || !anchorEl.getBoundingClientRect) {
+    const sheetHeight = Math.min(sheet.offsetHeight || 360, viewportH - margin - safeBottom);
+    sheet.style.maxHeight = `${sheetHeight}px`;
     sheet.style.top = `${Math.max(margin, (viewportH - sheetHeight) / 2)}px`;
     return;
   }
@@ -176,19 +175,12 @@ function positionDiaryStarsPopup(anchorEl) {
   const rect = anchorEl.getBoundingClientRect();
   const anchoredLeft = rect.left + rect.width / 2 - width / 2;
   const left = Math.min(Math.max(margin, anchoredLeft), viewportW - width - margin);
-  const belowTop = rect.bottom + 8;
-  const aboveTop = rect.top - sheetHeight - 8;
-  const maxTop = viewportH - sheetHeight - safeBottom;
-  let top = belowTop;
-
-  if (belowTop + sheetHeight > viewportH - safeBottom && aboveTop >= margin) {
-    top = aboveTop;
-  } else if (belowTop + sheetHeight > viewportH - safeBottom) {
-    top = Math.min(Math.max(margin, rect.top - 18), maxTop);
-  }
+  const top = Math.max(margin, rect.top);
+  const maxHeight = Math.max(220, viewportH - top - safeBottom - margin);
 
   sheet.style.left = `${left}px`;
-  sheet.style.top = `${Math.max(margin, top)}px`;
+  sheet.style.top = `${top}px`;
+  sheet.style.maxHeight = `${maxHeight}px`;
 }
 
 function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus, anchorEl) {
