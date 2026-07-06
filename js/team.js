@@ -52,7 +52,7 @@ const TEAM_DATA = [
     color: "#ffaa00",
     // avatar: "https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/team_tianhao.png"
     avatar: "🏮",
-    tgLink: "https://t.me/+8617614130674"
+    tgLink: "https://t.me/suntianhao"
   },
   {
     id: "wunan",
