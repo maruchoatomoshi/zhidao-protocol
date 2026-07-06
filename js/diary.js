@@ -111,16 +111,22 @@ function renderDiaryStarsList(entries, date) {
   const rows = entries.map(entry => {
     const stars = entry.stars || 0;
     const bonus = entry.bonus || false;
+    const isRated = !!entry.rated_at;
     const starsHtml = stars ? '💎'.repeat(stars) : '—';
     const bonusHtml = bonus ? ' <span style="color:#2ecc71;font-size:10px;">+✨</span>' : '';
-    const pointsEarned = stars ? STAR_POINTS[stars] + (bonus ? 20 : 0) : 0;
+    const pointsEarned = (STAR_POINTS[stars] || 0) + (bonus ? 20 : 0);
+    const ratingHtml = isRated
+      ? (pointsEarned > 0
+        ? `${starsHtml}${bonusHtml} · +${pointsEarned}★`
+        : '<span style="color:#ff8a65;">0★ · дневник не выполнен</span>')
+      : 'ещё не оценено';
     const canRate = isAdmin;
     const isMe = entry.telegram_id === currentUserId;
     if (!isAdmin && !isMe) return '';
 
     const safeName = escapeHtml(entry.full_name);
     const onclickAttr = canRate
-      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}', ${stars}, ${bonus ? 1 : 0}, this)"`
+      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}', ${stars}, ${bonus ? 1 : 0}, this, ${isRated ? 1 : 0})"`
       : '';
     return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
       ${onclickAttr}>
@@ -183,21 +189,23 @@ function positionDiaryStarsPopup(anchorEl) {
   sheet.style.maxHeight = `${maxHeight}px`;
 }
 
-function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus, anchorEl) {
+function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus, anchorEl, currentRated) {
   if (!isAdmin) return;
-  diaryStarsCurrentStudent = { telegramId, name, date, currentStars: currentStars || 0, currentBonus: !!currentBonus };
+  diaryStarsCurrentStudent = { telegramId, name, date, currentStars: currentStars || 0, currentBonus: !!currentBonus, currentRated: !!currentRated };
   document.getElementById('diaryStarsPopupName').textContent = name;
   document.getElementById('diaryStarsPopupDate').textContent = date;
 
   const hasStars = currentStars > 0;
   const hasBonus = !!currentBonus;
-  const hasRating = hasStars || hasBonus;
+  const hasRating = hasStars || hasBonus || !!currentRated;
 
   const currentEl = document.getElementById('diaryStarsPopupCurrent');
   if (currentEl) {
     const starsStr = hasStars ? '💎'.repeat(currentStars) : '';
     const bonusStr = hasBonus ? ' +✨бонус' : '';
-    currentEl.textContent = hasRating ? `Сейчас: ${starsStr}${bonusStr}` : 'Оценки нет';
+    currentEl.textContent = hasRating
+      ? (starsStr || bonusStr ? `Сейчас: ${starsStr}${bonusStr}` : 'Сейчас: 0★ · дневник не выполнен')
+      : 'Оценки нет';
   }
 
   const bonusBtn = document.getElementById('diaryBonusBtn');
@@ -229,7 +237,14 @@ function selectDiaryStarsAction(value) {
   const { name, currentBonus } = diaryStarsCurrentStudent;
   let title = '', sub = '';
 
-  if (value === 'reset') {
+  if (value === 0) {
+    title = '0★ · дневник не выполнен?';
+    sub = `0★ / 0 REP / 0 кристаллов для ${name}`;
+    document.getElementById('diaryStarsConfirmBtn').textContent = 'ДА, ПОСТАВИТЬ 0';
+    document.getElementById('diaryStarsConfirmBtn').style.color = '#ff8a65';
+    document.getElementById('diaryStarsConfirmBtn').style.borderColor = 'rgba(255,138,101,0.45)';
+    document.getElementById('diaryStarsConfirmBtn').style.background = 'rgba(255,138,101,0.10)';
+  } else if (value === 'reset') {
     title = '🗑 Сбросить оценку?';
     sub = 'Все баллы за дневник вернутся назад';
     document.getElementById('diaryStarsConfirmBtn').textContent = 'ДА, СБРОСИТЬ';
@@ -1006,12 +1021,13 @@ function initDiaryPage() {
 async function submitDiaryStars() {
   if (!diaryStarsCurrentStudent || !isAdmin) return;
   const { telegramId, name, date, pendingAction, currentBonus } = diaryStarsCurrentStudent;
-  if (!pendingAction) return;
+  if (pendingAction === undefined || pendingAction === null) return;
 
   const popup = document.getElementById('diaryStarsPopup');
   const buttons = popup ? popup.querySelectorAll('button') : [];
   const isBonus = pendingAction === 'bonus';
-  const isReset = pendingAction === 'reset';
+  const isNoDiary = pendingAction === 0;
+  const isReset = pendingAction === 'reset' || isNoDiary;
   const isRemoveBonus = isBonus && currentBonus;
   const payload = {
     telegram_id: telegramId,
@@ -1038,6 +1054,7 @@ async function submitDiaryStars() {
       if (cached) {
         cached.stars = data.stars;
         cached.bonus = data.bonus;
+        cached.rated_at = data.rated_at || cached.rated_at || new Date().toISOString();
         renderDiaryStarsList(filterDiaryStarsEntries(diaryStarsEntriesCache), diaryStarsEntriesDate);
       } else {
         loadDiaryStarsList();
