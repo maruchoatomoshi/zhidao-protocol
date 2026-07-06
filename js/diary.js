@@ -120,7 +120,7 @@ function renderDiaryStarsList(entries, date) {
 
     const safeName = escapeHtml(entry.full_name);
     const onclickAttr = canRate
-      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}', ${stars}, ${bonus ? 1 : 0})"`
+      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}', ${stars}, ${bonus ? 1 : 0}, this)"`
       : '';
     return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
       ${onclickAttr}>
@@ -141,7 +141,57 @@ function renderDiaryStarsList(entries, date) {
     : '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет записей за этот день</div>';
 }
 
-function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus) {
+function positionDiaryStarsPopup(anchorEl) {
+  const popup = document.getElementById('diaryStarsPopup');
+  const sheet = popup ? popup.firstElementChild : null;
+  if (!popup || !sheet) return;
+
+  const viewportW = window.innerWidth || document.documentElement.clientWidth || 360;
+  const viewportH = window.innerHeight || document.documentElement.clientHeight || 640;
+  const margin = 12;
+  const bottomReserve = 82;
+  const safeBottom = Math.max(margin, bottomReserve);
+  const width = Math.max(280, Math.min(480, viewportW - margin * 2));
+
+  popup.style.alignItems = 'flex-start';
+  popup.style.justifyContent = 'center';
+
+  sheet.style.position = 'fixed';
+  sheet.style.width = `${width}px`;
+  sheet.style.maxWidth = `${width}px`;
+  sheet.style.borderRadius = '16px';
+  sheet.style.left = `${Math.max(margin, (viewportW - width) / 2)}px`;
+  sheet.style.right = 'auto';
+  sheet.style.bottom = 'auto';
+  sheet.style.overflowY = 'auto';
+
+  const sheetHeight = Math.min(sheet.offsetHeight || 360, viewportH - margin - safeBottom);
+  sheet.style.maxHeight = `${sheetHeight}px`;
+
+  if (!anchorEl || !anchorEl.getBoundingClientRect) {
+    sheet.style.top = `${Math.max(margin, (viewportH - sheetHeight) / 2)}px`;
+    return;
+  }
+
+  const rect = anchorEl.getBoundingClientRect();
+  const anchoredLeft = rect.left + rect.width / 2 - width / 2;
+  const left = Math.min(Math.max(margin, anchoredLeft), viewportW - width - margin);
+  const belowTop = rect.bottom + 8;
+  const aboveTop = rect.top - sheetHeight - 8;
+  const maxTop = viewportH - sheetHeight - safeBottom;
+  let top = belowTop;
+
+  if (belowTop + sheetHeight > viewportH - safeBottom && aboveTop >= margin) {
+    top = aboveTop;
+  } else if (belowTop + sheetHeight > viewportH - safeBottom) {
+    top = Math.min(Math.max(margin, rect.top - 18), maxTop);
+  }
+
+  sheet.style.left = `${left}px`;
+  sheet.style.top = `${Math.max(margin, top)}px`;
+}
+
+function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus, anchorEl) {
   if (!isAdmin) return;
   diaryStarsCurrentStudent = { telegramId, name, date, currentStars: currentStars || 0, currentBonus: !!currentBonus };
   document.getElementById('diaryStarsPopupName').textContent = name;
@@ -176,6 +226,7 @@ function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus)
 
   const popup = document.getElementById('diaryStarsPopup');
   popup.style.display = 'flex';
+  requestAnimationFrame(() => positionDiaryStarsPopup(anchorEl));
 }
 
 function selectDiaryStarsAction(value) {
