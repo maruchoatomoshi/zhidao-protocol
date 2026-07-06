@@ -29,7 +29,7 @@ window.MJU_EVENT_ENABLED = false;
 // 
 // 
 // 
-window.APP_FEATURE_FREEZE_ENABLED = true;
+window.APP_FEATURE_FREEZE_ENABLED = false;
 window.APP_FROZEN_FEATURES = {
   casino:        true,
   shop:          true,
