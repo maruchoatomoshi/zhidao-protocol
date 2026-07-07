@@ -126,7 +126,7 @@ function renderDiaryStarsList(entries, date) {
 
     const safeName = escapeHtml(entry.full_name);
     const onclickAttr = canRate
-      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}', ${stars}, ${bonus ? 1 : 0}, this, ${isRated ? 1 : 0})"`
+      ? `onclick="openDiaryStarsPopup(${entry.telegram_id}, &quot;${safeName}&quot;, '${date}', ${stars}, ${bonus ? 1 : 0}, this, ${isRated ? 1 : 0}, event)"`
       : '';
     return `<div class="diary-card" style="margin-bottom:8px;cursor:${canRate?'pointer':'default'};"
       ${onclickAttr}>
@@ -147,7 +147,7 @@ function renderDiaryStarsList(entries, date) {
     : '<div class="diary-day-chip-empty" style="padding:20px;text-align:center;">Нет записей за этот день</div>';
 }
 
-function positionDiaryStarsPopup(anchorEl) {
+function positionDiaryStarsPopup(anchorEl, pointerEvent) {
   const popup = document.getElementById('diaryStarsPopup');
   const sheet = popup ? popup.firstElementChild : null;
   if (!popup || !sheet) return;
@@ -155,9 +155,8 @@ function positionDiaryStarsPopup(anchorEl) {
   const viewportW = window.innerWidth || document.documentElement.clientWidth || 360;
   const viewportH = window.innerHeight || document.documentElement.clientHeight || 640;
   const margin = 12;
-  const bottomReserve = 82;
-  const safeBottom = Math.max(margin, bottomReserve);
-  const width = Math.max(280, Math.min(480, viewportW - margin * 2));
+  const bottomReserve = Math.max(92, Math.min(150, viewportH * 0.12));
+  const width = Math.max(280, Math.min(420, viewportW - margin * 2));
 
   popup.style.alignItems = 'flex-start';
   popup.style.justifyContent = 'center';
@@ -169,27 +168,31 @@ function positionDiaryStarsPopup(anchorEl) {
   sheet.style.left = `${Math.max(margin, (viewportW - width) / 2)}px`;
   sheet.style.right = 'auto';
   sheet.style.bottom = 'auto';
-  sheet.style.overflowY = 'auto';
+  sheet.style.top = '0px';
+  sheet.style.maxHeight = 'none';
+  sheet.style.overflowY = 'visible';
 
-  if (!anchorEl || !anchorEl.getBoundingClientRect) {
-    const sheetHeight = Math.min(sheet.offsetHeight || 360, viewportH - margin - safeBottom);
-    sheet.style.maxHeight = `${sheetHeight}px`;
-    sheet.style.top = `${Math.max(margin, (viewportH - sheetHeight) / 2)}px`;
-    return;
-  }
+  const rect = anchorEl && anchorEl.getBoundingClientRect ? anchorEl.getBoundingClientRect() : null;
+  const anchorCenterX = rect ? rect.left + rect.width / 2 : viewportW / 2;
+  const eventY = pointerEvent && Number.isFinite(pointerEvent.clientY) ? pointerEvent.clientY : null;
+  const anchorY = eventY !== null ? eventY : (rect ? rect.top + Math.min(24, rect.height / 2) : viewportH / 2);
 
-  const rect = anchorEl.getBoundingClientRect();
-  const anchoredLeft = rect.left + rect.width / 2 - width / 2;
+  const anchoredLeft = anchorCenterX - width / 2;
   const left = Math.min(Math.max(margin, anchoredLeft), viewportW - width - margin);
-  const top = Math.max(margin, rect.top);
-  const maxHeight = Math.max(220, viewportH - top - safeBottom - margin);
+  const naturalHeight = Math.ceil(sheet.getBoundingClientRect().height || sheet.offsetHeight || 320);
+  const availableHeight = Math.max(240, viewportH - bottomReserve - margin * 2);
+  const sheetHeight = Math.min(naturalHeight, availableHeight);
+  const preferredTop = anchorY - 20;
+  const maxTop = Math.max(margin, viewportH - bottomReserve - sheetHeight - margin);
+  const top = Math.min(Math.max(margin, preferredTop), maxTop);
 
   sheet.style.left = `${left}px`;
   sheet.style.top = `${top}px`;
-  sheet.style.maxHeight = `${maxHeight}px`;
+  sheet.style.maxHeight = `${sheetHeight}px`;
+  sheet.style.overflowY = naturalHeight > availableHeight ? 'auto' : 'visible';
 }
 
-function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus, anchorEl, currentRated) {
+function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus, anchorEl, currentRated, pointerEvent) {
   if (!isAdmin) return;
   diaryStarsCurrentStudent = { telegramId, name, date, currentStars: currentStars || 0, currentBonus: !!currentBonus, currentRated: !!currentRated };
   document.getElementById('diaryStarsPopupName').textContent = name;
@@ -226,7 +229,7 @@ function openDiaryStarsPopup(telegramId, name, date, currentStars, currentBonus,
 
   const popup = document.getElementById('diaryStarsPopup');
   popup.style.display = 'flex';
-  requestAnimationFrame(() => positionDiaryStarsPopup(anchorEl));
+  requestAnimationFrame(() => positionDiaryStarsPopup(anchorEl, pointerEvent));
 }
 
 function selectDiaryStarsAction(value) {

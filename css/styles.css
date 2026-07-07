@@ -19929,3 +19929,88 @@ body.is-admin .duel-tab-btn { display: block; }
   82%  { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.9); }
 }
+
+/* Compact floating diary rating card. Overrides old bottom-sheet sizing. */
+#diaryStarsPopup > div {
+  padding: 14px !important;
+  border-radius: 14px !important;
+  max-width: 420px !important;
+}
+
+#diaryStarsPopup > div > button:first-child {
+  top: 10px !important;
+  right: 10px !important;
+  font-size: 18px !important;
+}
+
+#diaryStarsPopupName {
+  font-size: 13px !important;
+  line-height: 1.15 !important;
+  padding-right: 28px !important;
+}
+
+#diaryStarsPopupDate {
+  margin-bottom: 2px !important;
+}
+
+#diaryStarsPopupCurrent {
+  margin-bottom: 8px !important;
+  min-height: 12px !important;
+  line-height: 1.2 !important;
+}
+
+#diaryStarsSelection > div {
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+#diaryStarsSelection > div > button {
+  min-height: 74px !important;
+  padding: 8px 4px !important;
+  border-radius: 11px !important;
+}
+
+#diaryStarsSelection > div > button > div:first-child {
+  font-size: 18px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  letter-spacing: -2px !important;
+}
+
+#diaryStarsSelection > div > button > div:nth-child(2) {
+  font-size: 9px !important;
+  margin-top: 4px !important;
+  line-height: 1.15 !important;
+}
+
+#diaryStarsSelection > div > button > div:nth-child(3) {
+  font-size: 10px !important;
+  margin-top: 2px !important;
+  line-height: 1.1 !important;
+}
+
+#diaryBonusBtn,
+#diaryNoDiaryBtn,
+#diaryStarsResetBtn,
+#diaryStarsSelection > button:last-child {
+  padding: 8px !important;
+  margin-bottom: 6px !important;
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+}
+
+#diaryStarsPopup #diaryStarsConfirmText {
+  margin-bottom: 4px !important;
+}
+
+#diaryStarsPopup #diaryStarsConfirmSub {
+  margin-bottom: 12px !important;
+}
+
+#diaryStarsPopup #diaryStarsConfirm button {
+  padding: 10px !important;
+}
+
+body.tg-ios #diaryStarsPopup > div {
+  padding-bottom: 14px !important;
+}
