@@ -619,7 +619,8 @@ RAID_DAILY_LIMIT = 3
 RAID_USER_DAILY_LIMIT = 2
 RAID_MIN_PLAYERS = 3
 SHOP_EXTRA_RAID_CODE = "extra_raid_attempt"
-SHOP_EXTRA_RAID_PRICE = 80
+SHOP_EXTRA_RAID_PRICE = 30
+SHOP_EXTRA_RAID_DAILY_LIMIT = 10
 SHOP_ITEM_SEEDS = [
     # (code, name, desc, icon, price, daily_limit, category)
     # daily_limit=-1 → unlimited; >0 → global units sold per day cap
@@ -633,7 +634,7 @@ SHOP_ITEM_SEEDS = [
     ("poizon",      "Poizon",             "Премиальная награда",                           "👕", 600,  3, "vip"),
     ("double_win",  "Двойной сигнал",     "Удваивает очки первого открытия кейса или молитвы — после использования сгорает", "🎴", 130, 10, "privilege"),
     ("title_player","Титул дня",          "Особый титул профиля на сегодня",               "👑", 150, -1, "vip"),
-    (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня",                        "⚔️", SHOP_EXTRA_RAID_PRICE, -1, "privilege"),
+    (SHOP_EXTRA_RAID_CODE, "Доп. рейд-попытка", "+1 рейд сегодня · лимит 10/день",       "⚔️", SHOP_EXTRA_RAID_PRICE, SHOP_EXTRA_RAID_DAILY_LIMIT, "privilege"),
     ("path_switch", "Смена пути 转换",    "Переключиться между NetWatch и Genshin",        "🔁", 500, -1, "vip"),
 ]
 # Items removed from active catalog (deactivated on every startup so seeds don't re-enable them)

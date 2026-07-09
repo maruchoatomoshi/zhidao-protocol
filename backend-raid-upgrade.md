@@ -19,7 +19,8 @@ RAID_SUCCESS_CHANCE = 0.4
 RAID_DAILY_LIMIT = 3
 RAID_MIN_PLAYERS = 3
 SHOP_EXTRA_RAID_CODE = "extra_raid_attempt"
-SHOP_EXTRA_RAID_PRICE = 80
+SHOP_EXTRA_RAID_PRICE = 30
+SHOP_EXTRA_RAID_DAILY_LIMIT = 10
 ```
 
 ## 2. Обновите `init_db()` и добавьте миграцию
@@ -66,10 +67,10 @@ migrate_db()
 INSERT OR REPLACE INTO shop_items
   (code, name, description, icon, price, daily_limit, category, active)
 VALUES
-  ('extra_raid_attempt', 'Доп. рейд-попытка', '+1 рейд сегодня', '⚔️', 80, -1, 'privilege', 1);
+  ('extra_raid_attempt', 'Доп. рейд-попытка', '+1 рейд сегодня · лимит 10/день', '⚔️', 30, 10, 'privilege', 1);
 ```
 
-Если захотите потом зажать экономику, меняйте `daily_limit` с `-1` на конкретное число.
+Экономика после правки: цена `30★`, дневной глобальный лимит `10` лотов.
 
 ## 4. Обновите `/api/points/{telegram_id}`
 
