@@ -1714,7 +1714,58 @@ RAID_QUESTION_SEEDS = [
         "option_c": "Китайский закончился вчера",
         "correct_option": "a",
         "explanation": "虽然...但是... — хотя..., но...; 越来越喜欢 — нравится всё больше."
-    }
+    },
+        {"difficulty": 1, "prompt": "Альфабосс мигает кодом 门. Что это?", "option_a": "Дверь", "option_b": "Окно", "option_c": "Карта", "correct_option": "a", "explanation": "门 — дверь."},
+        {"difficulty": 1, "prompt": "На терминале рейда написано 开门. Что нужно сделать?", "option_a": "Закрыть дверь", "option_b": "Открыть дверь", "option_c": "Купить билет", "correct_option": "b", "explanation": "开门 — открыть дверь."},
+        {"difficulty": 1, "prompt": "Система просит пароль: 密码. Что это?", "option_a": "Пароль", "option_b": "Адрес", "option_c": "Расписание", "correct_option": "a", "explanation": "密码 — пароль."},
+        {"difficulty": 1, "prompt": "В логе рейда стоит ошибка 错. Что значит 错?", "option_a": "Правильно", "option_b": "Поздно", "option_c": "Ошибка / неверно", "correct_option": "c", "explanation": "错 — ошибка, неверно."},
+        {"difficulty": 1, "prompt": "Команда отряда: 跟我走. Что это значит?", "option_a": "Следуй за мной", "option_b": "Жди здесь", "option_c": "Покупай воду", "correct_option": "a", "explanation": "跟我走 — иди/следуй за мной."},
+        {"difficulty": 1, "prompt": "На карте отмечено 北门. Где точка?", "option_a": "Южные ворота", "option_b": "Северные ворота", "option_c": "Западная столовая", "correct_option": "b", "explanation": "北 — север, 门 — ворота/дверь."},
+        {"difficulty": 1, "prompt": "Альфабосс спрашивает 几个人？ Что он хочет узнать?", "option_a": "Сколько людей", "option_b": "Сколько стоит", "option_c": "Который час", "correct_option": "a", "explanation": "几个人？ — сколько человек?"},
+        {"difficulty": 1, "prompt": "Сканер показывает 红色. Какой это цвет?", "option_a": "Зелёный", "option_b": "Синий", "option_c": "Красный", "correct_option": "c", "explanation": "红色 — красный цвет."},
+        {"difficulty": 1, "prompt": "Рейдовый чат: 快走！ Что значит?", "option_a": "Иди быстрее", "option_b": "Спи дольше", "option_c": "Плати меньше", "correct_option": "a", "explanation": "快走 — идти быстрее / быстрее уходим."},
+        {"difficulty": 1, "prompt": "В инструкции написано 不要跑. Что запрещено?", "option_a": "Бежать", "option_b": "Пить воду", "option_c": "Слушать", "correct_option": "a", "explanation": "不要跑 — не бегай."},
+        {"difficulty": 2, "prompt": "Альфабосс блокирует проход: 请排队. Что надо сделать?", "option_a": "Встать в очередь", "option_b": "Повернуть налево", "option_c": "Позвонить домой", "correct_option": "a", "explanation": "请排队 — пожалуйста, встаньте в очередь."},
+        {"difficulty": 2, "prompt": "Команда координатора: 先集合，再出发. Какой порядок действий?", "option_a": "Сначала выезд, потом сбор", "option_b": "Сначала сбор, потом отправление", "option_c": "Сначала обед, потом сон", "correct_option": "b", "explanation": "先...再... — сначала..., потом..."},
+        {"difficulty": 2, "prompt": "В отчёте: 门已经关上了. Что произошло с дверью?", "option_a": "Дверь уже закрыли", "option_b": "Дверь сломалась", "option_c": "Дверь стала дорогой", "correct_option": "a", "explanation": "已经关上了 — уже закрыто."},
+        {"difficulty": 2, "prompt": "Система спрашивает 你带钥匙了吗？ Что проверяют?", "option_a": "Взял ли ключ", "option_b": "Купил ли рис", "option_c": "Понял ли погоду", "correct_option": "a", "explanation": "带钥匙 — взять ключ с собой."},
+        {"difficulty": 2, "prompt": "Выбери правильный ответ на 你在哪儿？", "option_a": "我在宿舍门口。", "option_b": "三十块钱。", "option_c": "很好吃。", "correct_option": "a", "explanation": "На вопрос «где ты?» отвечает место."},
+        {"difficulty": 2, "prompt": "Фраза 到门口等我 означает:", "option_a": "Жди меня у входа", "option_b": "Купи мне чай", "option_c": "Иди в библиотеку", "correct_option": "a", "explanation": "门口 — вход/у двери; 等我 — жди меня."},
+        {"difficulty": 2, "prompt": "В канале тревоги: 不要离开队伍. Что нельзя делать?", "option_a": "Отходить от группы", "option_b": "Пить горячую воду", "option_c": "Говорить медленно", "correct_option": "a", "explanation": "离开队伍 — покидать группу."},
+        {"difficulty": 2, "prompt": "Альфабосс требует: 请确认人数. Что нужно подтвердить?", "option_a": "Количество людей", "option_b": "Стоимость билета", "option_c": "Номер автобуса", "correct_option": "a", "explanation": "确认人数 — подтвердить число людей."},
+        {"difficulty": 2, "prompt": "Команда в рейде: 把手机收起来. Что сделать с телефоном?", "option_a": "Убрать телефон", "option_b": "Купить телефон", "option_c": "Зарядить телефон", "correct_option": "a", "explanation": "把手机收起来 — убрать телефон."},
+        {"difficulty": 2, "prompt": "Сигнал: 如果迷路，就打电话. Что делать, если заблудился?", "option_a": "Позвонить", "option_b": "Бежать", "option_c": "Молчать", "correct_option": "a", "explanation": "如果...就... — если..., то...; 打电话 — звонить."},
+        {"difficulty": 2, "prompt": "Выбери верный перевод: 我们马上到。", "option_a": "Мы сейчас прибудем", "option_b": "Мы вчера купили", "option_c": "Мы далеко живём", "correct_option": "a", "explanation": "马上到 — скоро/сейчас прибудем."},
+        {"difficulty": 2, "prompt": "Фраза 这里人很多 означает:", "option_a": "Здесь много людей", "option_b": "Здесь очень тихо", "option_c": "Здесь нет воды", "correct_option": "a", "explanation": "人很多 — много людей."},
+        {"difficulty": 2, "prompt": "На экране: 请保持联系. Что просят делать?", "option_a": "Оставаться на связи", "option_b": "Сохранять чек", "option_c": "Открыть карту", "correct_option": "a", "explanation": "保持联系 — поддерживать связь."},
+        {"difficulty": 2, "prompt": "Что означает 不要大声说话？", "option_a": "Не говорите громко", "option_b": "Не идите налево", "option_c": "Не покупайте дорого", "correct_option": "a", "explanation": "大声说话 — говорить громко."},
+        {"difficulty": 2, "prompt": "Выбери правильную фразу: «Мы ждём учителя». ", "option_a": "我们等老师。", "option_b": "我们买老师。", "option_c": "我们吃老师。", "correct_option": "a", "explanation": "等老师 — ждать учителя."},
+        {"difficulty": 2, "prompt": "Альфабосс пишет: 检查一下护照. Что проверить?", "option_a": "Паспорт", "option_b": "Погоду", "option_c": "Лапшу", "correct_option": "a", "explanation": "护照 — паспорт; 检查一下 — проверить."},
+        {"difficulty": 2, "prompt": "Команда: 从东门进去. Откуда входить?", "option_a": "Через восточные ворота", "option_b": "Через северный парк", "option_c": "Через западную столовую", "correct_option": "a", "explanation": "东门 — восточные ворота."},
+        {"difficulty": 2, "prompt": "Что значит 别忘了集合时间？", "option_a": "Не забудь время сбора", "option_b": "Не покупай билет", "option_c": "Не ешь острое", "correct_option": "a", "explanation": "别忘了 — не забудь; 集合时间 — время сбора."},
+        {"difficulty": 2, "prompt": "Фраза 老师已经到了 означает:", "option_a": "Учитель уже пришёл", "option_b": "Учитель ещё спит", "option_c": "Учитель купил воду", "correct_option": "a", "explanation": "已经到了 — уже прибыл/пришёл."},
+        {"difficulty": 2, "prompt": "Выбери логичный ответ на 你看到老师了吗？", "option_a": "看到了。", "option_b": "很好吃。", "option_c": "三点半。", "correct_option": "a", "explanation": "看到了 — увидел."},
+        {"difficulty": 2, "prompt": "В протоколе: 走错路了. Что случилось?", "option_a": "Пошли не той дорогой", "option_b": "Купили не тот чай", "option_c": "Встали слишком рано", "correct_option": "a", "explanation": "走错路 — пойти не той дорогой."},
+        {"difficulty": 2, "prompt": "Что означает 请大家一起走？", "option_a": "Пожалуйста, идите все вместе", "option_b": "Пожалуйста, ешьте отдельно", "option_c": "Пожалуйста, платите быстрее", "correct_option": "a", "explanation": "大家一起走 — все идут вместе."},
+        {"difficulty": 3, "prompt": "Альфабосс даёт условие: 如果有人没到，就先等一下. Что делать, если кто-то не пришёл?", "option_a": "Сначала немного подождать", "option_b": "Сразу уехать", "option_c": "Купить ещё билет", "correct_option": "a", "explanation": "如果有人没到，就先等一下 — если кто-то не пришёл, сначала подождать."},
+        {"difficulty": 3, "prompt": "Расшифруй: 虽然人很多，但是队伍很整齐. Что описано?", "option_a": "Людей много, но строй/очередь аккуратные", "option_b": "Людей мало и все ушли", "option_c": "Очередь дорогая, но вкусная", "correct_option": "a", "explanation": "虽然...但是... — хотя..., но...; 整齐 — аккуратный, стройный."},
+        {"difficulty": 3, "prompt": "Фраза 他把钥匙交给老师了 означает:", "option_a": "Он передал ключ учителю", "option_b": "Он потерял учителя", "option_c": "Он купил ключ у учителя", "correct_option": "a", "explanation": "把钥匙交给老师 — передать ключ учителю."},
+        {"difficulty": 3, "prompt": "Что значит 离宿舍有点远？", "option_a": "Немного далеко от общежития", "option_b": "Очень близко к столовой", "option_c": "Дешевле возле метро", "correct_option": "a", "explanation": "离...远 — далеко от...; 有点 — немного."},
+        {"difficulty": 3, "prompt": "Выбери перевод: 我们到了以后再给你打电话。", "option_a": "Мы позвоним тебе после того, как приедем", "option_b": "Мы купим тебе билет до приезда", "option_c": "Мы спали, потому что опоздали", "correct_option": "a", "explanation": "到了以后 — после прибытия; 再 — затем."},
+        {"difficulty": 3, "prompt": "Альфабосс пишет: 为了安全，请不要单独行动. Почему нельзя действовать одному?", "option_a": "Ради безопасности", "option_b": "Ради скидки", "option_c": "Ради завтрака", "correct_option": "a", "explanation": "为了安全 — ради безопасности; 单独行动 — действовать одному."},
+        {"difficulty": 3, "prompt": "Фраза 如果听不懂，就请老师再说一遍 означает:", "option_a": "Если не понял на слух, попроси учителя повторить", "option_b": "Если не купил билет, попроси скидку", "option_c": "Если устал, открой дверь", "correct_option": "a", "explanation": "听不懂 — не понимать на слух; 再说一遍 — повторить ещё раз."},
+        {"difficulty": 3, "prompt": "Что означает 先确认房间号，再发钥匙？", "option_a": "Сначала подтвердить номер комнаты, потом выдать ключ", "option_b": "Сначала купить ключ, потом забыть комнату", "option_c": "Сначала есть рис, потом идти в метро", "correct_option": "a", "explanation": "确认房间号 — подтвердить номер комнаты; 发钥匙 — выдать ключ."},
+        {"difficulty": 3, "prompt": "Выбери правильный смысл: 因为下雨，所以我们改坐公交车. Почему изменили транспорт?", "option_a": "Из-за дождя", "option_b": "Из-за жары", "option_c": "Из-за экзамена", "correct_option": "a", "explanation": "因为下雨，所以... — потому что идёт дождь, поэтому..."},
+        {"difficulty": 3, "prompt": "Команда: 请把名单发给我. Что нужно отправить?", "option_a": "Список имён", "option_b": "Бутылку воды", "option_c": "Номер автобуса устно", "correct_option": "a", "explanation": "名单 — список; 发给我 — отправить мне."},
+        {"difficulty": 3, "prompt": "Что значит 只要大家都到了，我们就出发？", "option_a": "Как только все прибудут, мы отправимся", "option_b": "Если все устали, мы купим чай", "option_c": "Пока все спят, мы подождём", "correct_option": "a", "explanation": "只要...就... — как только/если условие выполнено, то..."},
+        {"difficulty": 3, "prompt": "Расшифруй: 这个入口比那个入口近. Что сравнивают?", "option_a": "Этот вход ближе, чем тот", "option_b": "Этот билет дороже, чем тот", "option_c": "Эта комната тише, чем та", "correct_option": "a", "explanation": "比 — сравнение; 近 — близко."},
+        {"difficulty": 3, "prompt": "Что означает 别忘了带学生证？", "option_a": "Не забудь взять студенческий/ученический документ", "option_b": "Не забудь купить чай", "option_c": "Не забудь закрыть метро", "correct_option": "a", "explanation": "学生证 — студенческий/ученический документ."},
+        {"difficulty": 3, "prompt": "Фраза 我们按照老师的安排行动 означает:", "option_a": "Мы действуем по плану/распоряжению учителя", "option_b": "Мы едим по расписанию столовой", "option_c": "Мы спорим о цене билета", "correct_option": "a", "explanation": "按照安排行动 — действовать согласно плану."},
+        {"difficulty": 3, "prompt": "Выбери смысл: 如果手机没电，就用同学的手机联系老师. Что делать, если телефон разрядился?", "option_a": "Связаться с учителем через телефон одногруппника", "option_b": "Купить новый телефон", "option_c": "Идти одному к метро", "correct_option": "a", "explanation": "没电 — разрядился; 联系老师 — связаться с учителем."},
+        {"difficulty": 3, "prompt": "Альфабосс проверяет: 你能不能说明一下情况？ Что он просит?", "option_a": "Кратко объяснить ситуацию", "option_b": "Показать скидку", "option_c": "Купить воду", "correct_option": "a", "explanation": "说明情况 — объяснить ситуацию."},
+        {"difficulty": 3, "prompt": "Что значит 到了以后不要乱走？", "option_a": "После прибытия не ходить куда попало", "option_b": "После еды не покупать чай", "option_c": "До приезда не говорить громко", "correct_option": "a", "explanation": "乱走 — ходить хаотично/куда попало."},
+        {"difficulty": 3, "prompt": "Выбери перевод: 这件事应该先告诉负责人. Что нужно сделать сначала?", "option_a": "Сначала сообщить ответственному", "option_b": "Сначала купить билет", "option_c": "Сначала открыть окно", "correct_option": "a", "explanation": "负责人 — ответственный; 应该先 — следует сначала."},
+        {"difficulty": 3, "prompt": "Фраза 为了不迟到，我们提前十分钟出发 означает:", "option_a": "Чтобы не опоздать, выходим на 10 минут раньше", "option_b": "Чтобы купить дешевле, ждём 10 минут", "option_c": "Чтобы поспать, приходим позже", "correct_option": "a", "explanation": "为了不迟到 — чтобы не опоздать; 提前 — заранее."},
 ]
 
 ARCHITECT_QUESTION_SEEDS = {
@@ -1759,6 +1810,26 @@ ARCHITECT_QUESTION_SEEDS = {
         {"difficulty": 3, "prompt": "Как переводится 先集合，然后出发?", "option_a": "Сначала сбор, потом отправляемся", "option_b": "Сначала еда, потом сон", "option_c": "Сначала покупка, потом скидка", "correct_option": "a", "explanation": "先...然后... — сначала..., затем..."},
         {"difficulty": 3, "prompt": "Что значит 一直往前走?", "option_a": "Идти всё время прямо", "option_b": "Повернуть назад", "option_c": "Подождать в комнате", "correct_option": "a", "explanation": "一直 — всё время; 往前走 — идти вперёд."},
         {"difficulty": 3, "prompt": "Как переводится 附近有地铁站吗?", "option_a": "Рядом есть станция метро?", "option_b": "Сколько стоит рис?", "option_c": "Где мой паспорт?", "correct_option": "a", "explanation": "附近 — рядом; 地铁站 — станция метро."},
+        {"difficulty": 2, "prompt": "Архитектор шифрует маршрут: 从宿舍到教室要走十分钟. Сколько идти от общежития до класса?", "option_a": "10 минут", "option_b": "20 минут", "option_c": "1 час", "correct_option": "a", "explanation": "要走十分钟 — нужно идти 10 минут."},
+        {"difficulty": 2, "prompt": "Что значит 信号很弱，需要靠近一点？", "option_a": "Сигнал слабый, нужно подойти ближе", "option_b": "Сигнал сильный, нужно уйти", "option_c": "Сигнал дорогой, нужно купить", "correct_option": "a", "explanation": "信号很弱 — сигнал слабый; 靠近一点 — подойти ближе."},
+        {"difficulty": 2, "prompt": "Выбери перевод: 这个入口暂时关闭。", "option_a": "Этот вход временно закрыт", "option_b": "Этот выход очень далеко", "option_c": "Эта дверь открыта навсегда", "correct_option": "a", "explanation": "暂时关闭 — временно закрыто."},
+        {"difficulty": 2, "prompt": "Архитектор пишет: 先扫描二维码. Что сделать сначала?", "option_a": "Сначала отсканировать QR-код", "option_b": "Сначала купить воду", "option_c": "Сначала идти спать", "correct_option": "a", "explanation": "先 — сначала; 扫描二维码 — сканировать QR-код."},
+        {"difficulty": 2, "prompt": "Что означает 请把护照放在桌子上？", "option_a": "Положите паспорт на стол", "option_b": "Покажите билет в метро", "option_c": "Поставьте воду под стол", "correct_option": "a", "explanation": "把护照放在桌子上 — положить паспорт на стол."},
+        {"difficulty": 2, "prompt": "Выбери смысл: 我们快到了.", "option_a": "Мы скоро прибудем", "option_b": "Мы уже заблудились", "option_c": "Мы не покупаем", "correct_option": "a", "explanation": "快到了 — скоро прибудем."},
+        {"difficulty": 2, "prompt": "Что значит 右边第二个门？", "option_a": "Вторая дверь справа", "option_b": "Вторая дверь слева", "option_c": "Первое окно справа", "correct_option": "a", "explanation": "右边 — справа; 第二个门 — вторая дверь."},
+        {"difficulty": 2, "prompt": "Архитектор показывает 状态异常. Что с системой?", "option_a": "Состояние необычное / сбой", "option_b": "Состояние нормальное", "option_c": "Цена снижена", "correct_option": "a", "explanation": "异常 — аномалия, ненормальное состояние."},
+        {"difficulty": 3, "prompt": "Расшифруй: 这个地方离地铁站比离宿舍近. Что ближе к этому месту?", "option_a": "Станция метро", "option_b": "Общежитие", "option_c": "Аэропорт", "correct_option": "a", "explanation": "比...近 — ближе, чем..."},
+        {"difficulty": 3, "prompt": "Что значит 如果网络断了，就重新连接？", "option_a": "Если сеть отключилась, подключиться заново", "option_b": "Если идёт дождь, купить билет", "option_c": "Если устал, закрыть дверь", "correct_option": "a", "explanation": "如果...就... — если..., то...; 重新连接 — подключиться заново."},
+        {"difficulty": 3, "prompt": "Выбери перевод: 他把资料发给老师了。", "option_a": "Он отправил материалы учителю", "option_b": "Он купил материалы в магазине", "option_c": "Он потерял учителя", "correct_option": "a", "explanation": "把资料发给老师 — отправить материалы учителю."},
+        {"difficulty": 3, "prompt": "Фраза 虽然有点难，但是可以完成 означает:", "option_a": "Хотя немного сложно, но можно завершить", "option_b": "Потому что легко, можно уйти", "option_c": "Хотя дешево, но нельзя купить", "correct_option": "a", "explanation": "虽然...但是... — хотя..., но...; 完成 — завершить."},
+        {"difficulty": 3, "prompt": "Архитектор спрашивает: 你能解释这个原因吗？ Что он просит?", "option_a": "Объяснить причину", "option_b": "Повторить имя", "option_c": "Сказать цену", "correct_option": "a", "explanation": "解释原因 — объяснить причину."},
+        {"difficulty": 3, "prompt": "Что означает 系统正在恢复，请不要操作？", "option_a": "Система восстанавливается, не выполняйте действий", "option_b": "Система покупает билет", "option_c": "Система просит идти быстрее", "correct_option": "a", "explanation": "正在恢复 — восстанавливается; 不要操作 — не действуйте."},
+        {"difficulty": 3, "prompt": "Выбери смысл: 为了节省时间，我们坐地铁. Почему едут на метро?", "option_a": "Чтобы сэкономить время", "option_b": "Чтобы купить дешевле", "option_c": "Чтобы увидеть учителя", "correct_option": "a", "explanation": "为了节省时间 — чтобы сэкономить время."},
+        {"difficulty": 3, "prompt": "Что значит 入口在前面，但是出口在后面？", "option_a": "Вход впереди, а выход сзади", "option_b": "Вход справа, а выход слева", "option_c": "Вход закрыт, а выход дорогой", "correct_option": "a", "explanation": "前面 — впереди; 后面 — сзади."},
+        {"difficulty": 3, "prompt": "Архитектор пишет: 只有管理员可以修改设置. Кто может менять настройки?", "option_a": "Только администратор", "option_b": "Любой студент", "option_c": "Только водитель", "correct_option": "a", "explanation": "只有...可以... — только ... может ..."},
+        {"difficulty": 3, "prompt": "Выбери перевод: 请确认所有人都收到了消息。", "option_a": "Подтвердите, что все получили сообщение", "option_b": "Подтвердите, что все купили воду", "option_c": "Скажите, что сообщение дорогое", "correct_option": "a", "explanation": "确认 — подтвердить; 收到消息 — получить сообщение."},
+        {"difficulty": 3, "prompt": "Что означает 数据更新以后，界面会自动刷新？", "option_a": "После обновления данных интерфейс обновится автоматически", "option_b": "После покупки билета дверь закроется", "option_c": "После ужина телефон пропадёт", "correct_option": "a", "explanation": "以后 — после; 自动刷新 — обновиться автоматически."},
+        {"difficulty": 3, "prompt": "Фраза 如果发现错误，请马上报告 означает:", "option_a": "Если обнаружишь ошибку, сразу сообщи", "option_b": "Если купишь билет, сразу ешь", "option_c": "Если идёт дождь, спи", "correct_option": "a", "explanation": "发现错误 — обнаружить ошибку; 报告 — сообщить."},
     ],
     "protocol": [
         {"prompt": "Выбери логичный ответ на 你去哪儿？", "option_a": "我去商店。", "option_b": "三点半。", "option_c": "很好吃。", "correct_option": "a", "explanation": "На вопрос «Куда ты идёшь?» подходит «Я иду в магазин»."},
@@ -1801,6 +1872,26 @@ ARCHITECT_QUESTION_SEEDS = {
         {"difficulty": 3, "prompt": "Что логично ответить на 你觉得今天的活动怎么样？", "option_a": "我觉得很有意思。", "option_b": "我坐右边。", "option_c": "我不要护照。", "correct_option": "a", "explanation": "觉得...怎么样 — спрашивают мнение; 很有意思 — интересно."},
         {"difficulty": 3, "prompt": "Выбери правильное продолжение: 因为太晚了，所以...", "option_a": "我们回宿舍。", "option_b": "我们买昨天。", "option_c": "我们喝左边。", "correct_option": "a", "explanation": "因为太晚了，所以我们回宿舍 — потому что слишком поздно, возвращаемся в общежитие."},
         {"difficulty": 3, "prompt": "Как вежливо уточнить, можно ли сфотографировать?", "option_a": "可以拍照吗？", "option_b": "可以睡觉吗？", "option_c": "可以迟到吗？", "correct_option": "a", "explanation": "拍照 — фотографировать; 可以...吗？ — можно ли...?"},
+        {"difficulty": 2, "prompt": "Выбери правильный порядок: «Мы сегодня вечером проверим список».", "option_a": "我们今天晚上检查名单。", "option_b": "检查名单我们今天晚上。", "option_c": "今天名单我们晚上检查。", "correct_option": "a", "explanation": "Кто + время + действие + объект."},
+        {"difficulty": 2, "prompt": "Как ответить на 你为什么没来集合？", "option_a": "因为我迷路了。", "option_b": "我要一杯茶。", "option_c": "这里很便宜。", "correct_option": "a", "explanation": "Вопрос почему — нужен ответ с причиной."},
+        {"difficulty": 2, "prompt": "Что логично сказать администратору: «Я уже отправил сообщение»?", "option_a": "我已经发消息了。", "option_b": "我已经吃消息了。", "option_c": "我已经贵消息了。", "correct_option": "a", "explanation": "发消息 — отправить сообщение."},
+        {"difficulty": 2, "prompt": "Выбери фразу: «Пожалуйста, проверьте ещё раз».", "option_a": "请再检查一遍。", "option_b": "请再吃一遍。", "option_c": "请再买一遍。", "correct_option": "a", "explanation": "再...一遍 — ещё раз выполнить действие."},
+        {"difficulty": 2, "prompt": "Как спросить «Можно я задам вопрос?»", "option_a": "我可以问一个问题吗？", "option_b": "我可以吃一个问题吗？", "option_c": "我可以买一个问题吗？", "correct_option": "a", "explanation": "问一个问题 — задать вопрос."},
+        {"difficulty": 2, "prompt": "Что ответить на 你收到通知了吗？", "option_a": "收到了。", "option_b": "很辣。", "option_c": "在左边。", "correct_option": "a", "explanation": "收到了 — получил."},
+        {"difficulty": 2, "prompt": "Выбери правильную фразу: «Не забудь взять карту».", "option_a": "别忘了带地图。", "option_b": "别忘了吃地图。", "option_c": "别忘了买老师。", "correct_option": "a", "explanation": "带地图 — взять карту."},
+        {"difficulty": 2, "prompt": "Как сказать «Я сейчас иду к входу»?", "option_a": "我现在去入口。", "option_b": "我现在吃入口。", "option_c": "我现在买入口。", "correct_option": "a", "explanation": "去入口 — идти ко входу."},
+        {"difficulty": 3, "prompt": "Выбери смысл: 如果你不确定，就问负责人.", "option_a": "Если не уверен, спроси ответственного", "option_b": "Если не устал, купи билет", "option_c": "Если не холодно, открой воду", "correct_option": "a", "explanation": "不确定 — не уверен; 负责人 — ответственный."},
+        {"difficulty": 3, "prompt": "Как правильно сказать: «После того как все подтвердят, мы начнём».", "option_a": "大家确认以后，我们开始。", "option_b": "我们开始以后，大家确认。", "option_c": "确认大家我们以后开始。", "correct_option": "a", "explanation": "...以后 — после того как..."},
+        {"difficulty": 3, "prompt": "Что означает 他不是没来，而是迟到了？", "option_a": "Он не не пришёл, а опоздал", "option_b": "Он пришёл рано и ушёл", "option_c": "Он купил билет вместо воды", "correct_option": "a", "explanation": "不是...而是... — не..., а..."},
+        {"difficulty": 3, "prompt": "Выбери корректный ответ на 你把钥匙放在哪儿了？", "option_a": "我把钥匙放在桌子上了。", "option_b": "我把桌子放在钥匙上了。", "option_c": "我把天气放在水里了。", "correct_option": "a", "explanation": "Вопрос: куда положил ключ? Ответ с 把 + ключ + место."},
+        {"difficulty": 3, "prompt": "Фраза 这个问题比刚才的问题难一点 означает:", "option_a": "Этот вопрос немного сложнее предыдущего", "option_b": "Этот вопрос дешевле билета", "option_c": "Эта проблема ближе к метро", "correct_option": "a", "explanation": "比...难一点 — немного сложнее, чем..."},
+        {"difficulty": 3, "prompt": "Как сказать «Я понял, но хочу уточнить одну деталь»?", "option_a": "我明白了，但是想确认一个细节。", "option_b": "我吃饭了，但是想买一个细节。", "option_c": "我迟到了，所以想睡觉。", "correct_option": "a", "explanation": "但是 — но; 确认细节 — уточнить деталь."},
+        {"difficulty": 3, "prompt": "Что значит 为了避免迟到，请提前出发？", "option_a": "Чтобы избежать опоздания, выходите заранее", "option_b": "Чтобы купить дешевле, выходите позже", "option_c": "Чтобы не спать, ешьте заранее", "correct_option": "a", "explanation": "避免迟到 — избежать опоздания; 提前出发 — выйти заранее."},
+        {"difficulty": 3, "prompt": "Выбери правильную фразу: «Если сообщение не пришло, обнови страницу».", "option_a": "如果消息没收到，就刷新页面。", "option_b": "如果页面没吃饭，就买消息。", "option_c": "如果老师没刷新，就迟到。", "correct_option": "a", "explanation": "刷新页面 — обновить страницу."},
+        {"difficulty": 3, "prompt": "Что означает 我们先确认人数，再分组行动？", "option_a": "Сначала подтверждаем число людей, потом действуем по группам", "option_b": "Сначала едим, потом покупаем билеты", "option_c": "Сначала ждём дождь, потом идём спать", "correct_option": "a", "explanation": "分组行动 — действовать по группам."},
+        {"difficulty": 3, "prompt": "Как ответить на 你能不能再说慢一点？", "option_a": "可以，我说慢一点。", "option_b": "不可以，我很贵。", "option_c": "可以，我吃慢一点。", "correct_option": "a", "explanation": "可以 — можно; 说慢一点 — говорить медленнее."},
+        {"difficulty": 3, "prompt": "Фраза 只要按规则做，就不会有问题 означает:", "option_a": "Если действовать по правилам, проблем не будет", "option_b": "Если купить рис, будет скидка", "option_c": "Если идти быстро, будет дождь", "correct_option": "a", "explanation": "只要...就... — если выполнить условие, то..."},
+        {"difficulty": 3, "prompt": "Что значит 请把这个情况告诉所有队员？", "option_a": "Сообщите эту ситуацию всем членам команды", "option_b": "Купите всем членам команды чай", "option_c": "Покажите всем номер комнаты", "correct_option": "a", "explanation": "告诉所有队员 — сообщить всем членам команды."},
     ],
     "stabilize": [
         {"prompt": "Выбери вежливую просьбу о помощи:", "option_a": "请帮我一下。", "option_b": "你很贵。", "option_c": "我不喜欢坐车。", "correct_option": "a", "explanation": "请帮我一下。 — пожалуйста, помогите мне."},
@@ -1843,6 +1934,26 @@ ARCHITECT_QUESTION_SEEDS = {
         {"difficulty": 3, "prompt": "Что означает 有问题的话，马上联系我?", "option_a": "Если есть проблема, сразу свяжись со мной", "option_b": "Если есть вода, сразу купи рис", "option_c": "Если есть билет, сразу спи", "correct_option": "a", "explanation": "有问题的话 — если есть проблема; 马上联系我 — сразу свяжись со мной."},
         {"difficulty": 3, "prompt": "Как сказать «Мы уже решили эту проблему»?", "option_a": "我们已经解决这个问题了。", "option_b": "我们已经买这个问题了。", "option_c": "我们已经喝这个问题了。", "correct_option": "a", "explanation": "解决问题 — решить проблему."},
         {"difficulty": 3, "prompt": "Выбери фразу для спокойного отчёта: «Все вернулись в общежитие».", "option_a": "大家都回宿舍了。", "option_b": "大家都买宿舍了。", "option_c": "大家都吃宿舍了。", "correct_option": "a", "explanation": "大家都...了 — все уже...; 回宿舍 — вернуться в общежитие."},
+        {"difficulty": 2, "prompt": "Как сказать «Сначала успокойся, потом объясни»?", "option_a": "先冷静一下，然后解释。", "option_b": "先解释一下，然后冷静。", "option_c": "冷静然后先解释一下。", "correct_option": "a", "explanation": "先...然后... — сначала..., затем..."},
+        {"difficulty": 2, "prompt": "Что означает 我来帮你处理？", "option_a": "Я помогу тебе разобраться/обработать", "option_b": "Я куплю тебе билет", "option_c": "Я пойду вместо тебя спать", "correct_option": "a", "explanation": "处理 — обработать, разобраться с делом."},
+        {"difficulty": 2, "prompt": "Выбери фразу для поддержки: «Ничего, мы вместе решим». ", "option_a": "没关系，我们一起解决。", "option_b": "太贵了，我们一起吃。", "option_c": "不要辣，我们一起买。", "correct_option": "a", "explanation": "一起解决 — решить вместе."},
+        {"difficulty": 2, "prompt": "Как попросить не отходить от группы?", "option_a": "请不要离开队伍。", "option_b": "请不要吃队伍。", "option_c": "请不要买队伍。", "correct_option": "a", "explanation": "离开队伍 — отходить/покидать группу."},
+        {"difficulty": 2, "prompt": "Что значит 有问题马上说？", "option_a": "Если есть проблема, сразу скажи", "option_b": "Если есть деньги, сразу купи", "option_c": "Если есть дождь, сразу беги", "correct_option": "a", "explanation": "马上说 — сразу сказать."},
+        {"difficulty": 2, "prompt": "Выбери фразу: «Я не расслышал, повторите пожалуйста». ", "option_a": "我没听清楚，请再说一遍。", "option_b": "我没买清楚，请再吃一遍。", "option_c": "我没走清楚，请再贵一遍。", "correct_option": "a", "explanation": "没听清楚 — не расслышал; 再说一遍 — повторите."},
+        {"difficulty": 2, "prompt": "Как сказать «Подождите, я проверю список»?", "option_a": "等一下，我检查名单。", "option_b": "等一下，我吃名单。", "option_c": "等一下，我买地图。", "correct_option": "a", "explanation": "检查名单 — проверить список."},
+        {"difficulty": 2, "prompt": "Что означает 大家不要着急？", "option_a": "Всем не нужно волноваться/спешить", "option_b": "Всем нужно купить воду", "option_c": "Всем нельзя пить чай", "correct_option": "a", "explanation": "不要着急 — не волнуйтесь, не спешите."},
+        {"difficulty": 3, "prompt": "Выбери перевод: 如果有人不舒服，请马上告诉老师。", "option_a": "Если кому-то плохо, сразу скажите учителю", "option_b": "Если кому-то дорого, купите билет", "option_c": "Если кто-то заблудился, молчите", "correct_option": "a", "explanation": "不舒服 — плохо себя чувствовать; 告诉老师 — сказать учителю."},
+        {"difficulty": 3, "prompt": "Как сказать «Мы уже связались с ответственным»?", "option_a": "我们已经联系负责人了。", "option_b": "我们已经买负责人了。", "option_c": "我们已经吃负责人了。", "correct_option": "a", "explanation": "联系负责人 — связаться с ответственным."},
+        {"difficulty": 3, "prompt": "Что значит 先确认安全，再继续行动？", "option_a": "Сначала убедиться в безопасности, потом продолжать", "option_b": "Сначала купить билет, потом отдыхать", "option_c": "Сначала спорить, потом звонить", "correct_option": "a", "explanation": "确认安全 — подтвердить безопасность; 继续行动 — продолжать действовать."},
+        {"difficulty": 3, "prompt": "Фраза 虽然出了问题，但是已经解决了 означает:", "option_a": "Хотя возникла проблема, её уже решили", "option_b": "Потому что проблема дорогая, её купили", "option_c": "Хотя нет воды, все ушли", "correct_option": "a", "explanation": "出了问题 — возникла проблема; 已经解决了 — уже решено."},
+        {"difficulty": 3, "prompt": "Выбери фразу для отчёта: «Все в безопасности, никто не потерялся». ", "option_a": "大家都安全，没有人迷路。", "option_b": "大家都很贵，没有人吃饭。", "option_c": "大家都迟到，没有人买票。", "correct_option": "a", "explanation": "没有人迷路 — никто не заблудился."},
+        {"difficulty": 3, "prompt": "Что означает 请把情况说清楚一点？", "option_a": "Пожалуйста, объясните ситуацию немного яснее", "option_b": "Пожалуйста, купите немного дешевле", "option_c": "Пожалуйста, идите немного быстрее", "correct_option": "a", "explanation": "说清楚一点 — объяснить яснее."},
+        {"difficulty": 3, "prompt": "Как сказать «Если не знаешь, не действуй один»?", "option_a": "如果不知道，不要一个人行动。", "option_b": "如果不买，不要一个人吃饭。", "option_c": "如果不热，不要一个人睡觉。", "correct_option": "a", "explanation": "一个人行动 — действовать одному."},
+        {"difficulty": 3, "prompt": "Выбери смысл: 为了安全，我们先回宿舍。", "option_a": "Ради безопасности сначала вернёмся в общежитие", "option_b": "Ради скидки купим чай", "option_c": "Ради времени откроем дверь", "correct_option": "a", "explanation": "为了安全 — ради безопасности; 回宿舍 — вернуться в общежитие."},
+        {"difficulty": 3, "prompt": "Что значит 老师让我们在门口等？", "option_a": "Учитель попросил нас ждать у входа", "option_b": "Учитель попросил нас купить дверь", "option_c": "Учитель попросил нас спать в метро", "correct_option": "a", "explanation": "让我们... — велел/попросил нас...; 在门口等 — ждать у входа."},
+        {"difficulty": 3, "prompt": "Как сказать «Я проверил, всё нормально»?", "option_a": "我检查过了，一切正常。", "option_b": "我买过了，一切很辣。", "option_c": "我睡过了，一切很远。", "correct_option": "a", "explanation": "检查过了 — уже проверил; 一切正常 — всё нормально."},
+        {"difficulty": 3, "prompt": "Фраза 如果找不到路，就打开地图 означает:", "option_a": "Если не можешь найти дорогу, открой карту", "option_b": "Если нет воды, открой дверь", "option_c": "Если опоздал, купи билет", "correct_option": "a", "explanation": "找不到路 — не найти дорогу; 打开地图 — открыть карту."},
+        {"difficulty": 3, "prompt": "Что означает 不要担心，我马上过来？", "option_a": "Не волнуйся, я сейчас подойду", "option_b": "Не покупай, я сейчас поем", "option_c": "Не спи, я завтра приду", "correct_option": "a", "explanation": "马上过来 — сейчас подойду/приду."},
     ],
 }
 
@@ -3762,6 +3873,43 @@ def _event_question_payload(row):
         "option_c": row[4],
         "explanation": row[5],
     }
+
+
+QUESTION_OPTION_KEYS = ("a", "b", "c")
+
+
+def stable_question_seed(*parts) -> int:
+    raw = "|".join(str(part) for part in parts)
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    return int(digest[:16], 16)
+
+
+def shuffled_question_options(option_a: str, option_b: str, option_c: str, *seed_parts):
+    entries = [
+        ("a", option_a),
+        ("b", option_b),
+        ("c", option_c),
+    ]
+    rng = random.Random(stable_question_seed(*seed_parts))
+    rng.shuffle(entries)
+    options = {}
+    display_to_original = {}
+    for display_key, (original_key, text) in zip(QUESTION_OPTION_KEYS, entries):
+        options[display_key] = text
+        display_to_original[display_key] = original_key
+    return options, display_to_original
+
+
+def is_shuffled_answer_correct(
+    answer_option: str,
+    correct_option: str,
+    option_a: str,
+    option_b: str,
+    option_c: str,
+    *seed_parts,
+) -> bool:
+    _, display_to_original = shuffled_question_options(option_a, option_b, option_c, *seed_parts)
+    return display_to_original.get(answer_option) == correct_option
 
 
 def choose_architect_question(
@@ -10452,11 +10600,20 @@ async def join_raid(data: dict):
         answer_correct = 0
         if answer in ("a", "b", "c") and question_id:
             c.execute(
-                "SELECT correct_option FROM event_questions WHERE id=? AND event_code='raid'",
+                "SELECT option_a, option_b, option_c, correct_option FROM event_questions WHERE id=? AND event_code='raid'",
                 (int(question_id),),
             )
             q_row = c.fetchone()
-            if q_row and q_row[0] == answer:
+            if q_row and is_shuffled_answer_correct(
+                answer,
+                q_row[3],
+                q_row[0],
+                q_row[1],
+                q_row[2],
+                "raid",
+                datetime.now(BEIJING_TZ).strftime('%Y-%m-%d'),
+                int(question_id),
+            ):
                 answer_correct = 1
         c.execute(
             "UPDATE raid_participants SET answer_correct=? WHERE raid_id=? AND telegram_id=?",
@@ -10546,7 +10703,7 @@ async def join_raid(data: dict):
 
 
 @app.get("/api/raid/question")
-def get_raid_question():
+def get_raid_question(telegram_id: int = 0):
     conn = get_conn()
     c = conn.cursor()
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
@@ -10576,12 +10733,20 @@ def get_raid_question():
     conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="No raid questions available")
+    options, _ = shuffled_question_options(
+        row[2],
+        row[3],
+        row[4],
+        "raid",
+        today,
+        int(row[0]),
+    )
     return {
         "id": row[0],
         "prompt": row[1],
-        "option_a": row[2],
-        "option_b": row[3],
-        "option_c": row[4],
+        "option_a": options["a"],
+        "option_b": options["b"],
+        "option_c": options["c"],
         "difficulty": row[5],
     }
 
@@ -11554,6 +11719,17 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
         conn.close()
         if not question:
             raise HTTPException(status_code=404, detail="Question not found")
+        options, _ = shuffled_question_options(
+            question["option_a"],
+            question["option_b"],
+            question["option_c"],
+            "event",
+            int(event_id),
+            int(telegram_id),
+            action_type,
+            int(question["id"]),
+            event_code,
+        )
         return {
             "event_id": event_id,
             "action_type": action_type,
@@ -11561,9 +11737,9 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
                 "id": question["id"],
                 "prompt": question["prompt"],
                 "options": {
-                    "a": question["option_a"],
-                    "b": question["option_b"],
-                    "c": question["option_c"],
+                    "a": options["a"],
+                    "b": options["b"],
+                    "c": options["c"],
                 },
             },
         }
@@ -11608,7 +11784,7 @@ async def resolve_event_action(data: dict):
                 conn.close()
                 raise HTTPException(status_code=400, detail="Question and answer required")
             c.execute(
-                '''SELECT id, correct_option, explanation
+                '''SELECT id, option_a, option_b, option_c, correct_option, explanation
                    FROM event_questions
                    WHERE id=? AND event_code=? AND action_type=?''',
                 (question_id, event_row["code"], action_type),
@@ -11617,8 +11793,20 @@ async def resolve_event_action(data: dict):
             if not row:
                 conn.close()
                 raise HTTPException(status_code=404, detail="Question not found")
-            question = {"id": row[0], "correct_option": row[1], "explanation": row[2]}
-            is_correct = 1 if row[1] == answer_option else 0
+            question = {"id": row[0], "correct_option": row[4], "explanation": row[5]}
+            is_correct = 1 if is_shuffled_answer_correct(
+                answer_option,
+                row[4],
+                row[1],
+                row[2],
+                row[3],
+                "event",
+                int(event_id),
+                int(telegram_id),
+                action_type,
+                int(question_id),
+                event_row["code"],
+            ) else 0
 
         result = compute_event_action_result(
             c,
