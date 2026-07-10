@@ -1060,7 +1060,7 @@ function adminRenderPresenceOverview(checkType, data) {
 
   const counts = data.counts || {};
   const checks = Array.isArray(data.checks) ? data.checks : [];
-  const activeRows = checks.filter(row => ['pending', 'leave_rejected', 'needs_attention'].includes(row.status));
+  const activeRows = checks.filter(row => ['pending', 'leave_requested', 'leave_rejected', 'needs_attention'].includes(row.status));
   const confirmedRows = checks.filter(row => ['confirmed', 'free_time', 'admin_approved'].includes(row.status));
   const chipKeys = ['pending', 'confirmed', 'penalized'];
   const statusGrid = chipKeys.map(key => `
@@ -1073,7 +1073,7 @@ function adminRenderPresenceOverview(checkType, data) {
   const checkDate = escapeHtml(String(data.check_date || ''));
   const attentionList = activeRows.length
     ? `<div class="admin-presence-list">
-        ${activeRows.slice(0, 8).map(row => {
+        ${activeRows.map(row => {
           const room = row.room_number ? `<span class="admin-presence-room"> · #${escapeHtml(row.room_number)}</span>` : '';
           const actions = row.status === 'leave_requested'
             ? `<div class="admin-presence-row-actions">
