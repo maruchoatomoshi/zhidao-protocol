@@ -638,36 +638,6 @@ async def notify_admins(text, reply_markup=None):
             pass
 
 
-def split_telegram_message(text: str, limit: int = 3600) -> list[str]:
-    if len(text) <= limit:
-        return [text]
-
-    chunks = []
-    current = ""
-    for line in text.splitlines(keepends=True):
-        if current and len(current) + len(line) > limit:
-            chunks.append(current.rstrip())
-            current = ""
-        if len(line) > limit:
-            for i in range(0, len(line), limit):
-                part = line[i:i + limit]
-                if part:
-                    chunks.append(part.rstrip())
-            continue
-        current += line
-    if current.strip():
-        chunks.append(current.rstrip())
-    return chunks
-
-
-async def notify_admins_long(text: str):
-    chunks = split_telegram_message(text)
-    total = len(chunks)
-    for index, chunk in enumerate(chunks, start=1):
-        suffix = f"\n\n[{index}/{total}]" if total > 1 else ""
-        await notify_admins(f"{chunk}{suffix}")
-
-
 async def notify_bug_recipients(text):
     for admin_id in BUG_REPORT_RECIPIENT_IDS:
         try:
@@ -821,7 +791,6 @@ async def send_presence_attempt(check_type, attempt_no=1, create_check=False):
 
     overview = await presence_overview(check_type)
     sent = 0
-    targets = []
 
     for check in overview.get("checks", []):
         tg_id = check.get("telegram_id")
@@ -829,7 +798,6 @@ async def send_presence_attempt(check_type, attempt_no=1, create_check=False):
         if not tg_id or tg_id in ADMIN_IDS or status not in PRESENCE_RETRY_STATUSES:
             continue
 
-        targets.append(check)
         try:
             await bot.send_message(
                 tg_id,
@@ -845,29 +813,11 @@ async def send_presence_attempt(check_type, attempt_no=1, create_check=False):
         except Exception:
             pass
 
-    lines = [
-        f"Presence {check_type}: попытка {attempt_no}/3 отправлена ({sent}/{len(targets)} чел.)",
-        "",
-    ]
-    if targets:
-        lines.append("Ещё не отметились / ждём ответ:")
-        for index, check in enumerate(targets, start=1):
-            tg_id = check.get("telegram_id")
-            name = check.get("full_name") or str(tg_id)
-            status = check.get("status") or "pending"
-            attempts = check.get("attempts_sent", 0)
-            lines.append(f"{index}. {name} — {status}, попыток: {attempts}")
-    else:
-        lines.append("Все уже отмечены, отправлять некому.")
-    await notify_admins_long("\n".join(lines))
+    await notify_admins(f"📡 Presence {check_type}: попытка {attempt_no}/3 отправлена ({sent} чел.)")
 
 
 async def send_checkin():
     await send_presence_attempt("evening", attempt_no=1, create_check=True)
-
-
-async def send_manual_checkin():
-    await send_presence_attempt("manual", attempt_no=1, create_check=True)
 
 
 async def check_missing():
@@ -903,7 +853,7 @@ async def escalate_presence(check_type):
     text = f"🚨 Presence {check_type}: нужно проверить вручную\n\n"
     for row in rows:
         text += f"• {row.get('full_name') or row.get('telegram_id')} — {row.get('attempts_sent', 0)} попытки\n"
-    await notify_admins_long(text)
+    await notify_admins(text)
 
 
 async def penalize_presence(check_type):
@@ -928,7 +878,7 @@ async def penalize_presence(check_type):
             )
         except Exception:
             pass
-    await notify_admins_long(text)
+    await notify_admins(text)
 
 
 async def send_goodnight():
@@ -1417,8 +1367,8 @@ async def manual_checkin(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    await message.answer("✅ Запускаю внеплановую перекличку...")
-    await send_manual_checkin()
+    await message.answer("✅ Запускаю вечернюю отметку...")
+    await send_checkin()
 
 
 @dp.message(Command("подъем"))
