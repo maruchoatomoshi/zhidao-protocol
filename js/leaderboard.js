@@ -127,6 +127,30 @@ function updateProfilePathBadge(path = currentThemePath) {
   }
 }
 
+function updateProfileStudyGroupBadge(studyGroup) {
+  const badge = document.getElementById('profileStudyGroupBadge');
+  if (!badge) return;
+  const code = typeof studyGroup === 'object'
+    ? String(studyGroup.code || '').trim()
+    : String(studyGroup || '').trim();
+  const label = typeof studyGroup === 'object' && studyGroup.label
+    ? String(studyGroup.label)
+    : ({
+        A0: '1班 · A0',
+        'A普': '2班 · A普',
+        'A+': '3班 · A+',
+        'B普': '4班 · B普',
+        SUPER: '5班 · SUPER',
+      }[code] || code);
+  if (!label) {
+    badge.style.display = 'none';
+    badge.textContent = '';
+    return;
+  }
+  badge.style.display = '';
+  badge.textContent = label;
+}
+
 function setProfileText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
@@ -143,6 +167,7 @@ function renderProfileDossier(profile = {}) {
   setProfileText('myRankSub', (profile.rank || 'D') + '-RANK');
   setProfileText('profileLeaderboardPlace', place);
   updateProfilePathBadge(profile.theme_path || currentThemePath);
+  updateProfileStudyGroupBadge(profile.study_group);
 
   applyAvatarFrame(document.getElementById('profileAvatarWrap'), profile.equipped_frame);
 

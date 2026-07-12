@@ -13,6 +13,46 @@ let adminDossierRefreshTimer = null;
 let adminEconomyMutationInFlight = false;
 
 const ADMIN_MUTATION_TIMEOUT_MS = 45000;
+const ADMIN_STUDY_GROUPS = [
+  { code: 'A0', label: '1班 · A0', note: 'нули / старт' },
+  { code: 'A普', label: '2班 · A普', note: 'несколько месяцев' },
+  { code: 'A+', label: '3班 · A+', note: 'средний+' },
+  { code: 'B普', label: '4班 · B普', note: 'HSK 3-4' },
+  { code: 'SUPER', label: '5班 · SUPER', note: 'сильная группа' },
+];
+
+function adminStudyGroupCode(value) {
+  if (!value) return '';
+  if (typeof value === 'object') return String(value.code || '').trim();
+  return String(value || '').trim();
+}
+
+function adminStudyGroupLabel(value) {
+  const code = adminStudyGroupCode(value);
+  if (!code) return '';
+  const found = ADMIN_STUDY_GROUPS.find(group => group.code === code);
+  if (found) return found.label;
+  if (typeof value === 'object' && value.label) return String(value.label);
+  return code;
+}
+
+function adminStudyGroupNote(value) {
+  const code = adminStudyGroupCode(value);
+  const found = ADMIN_STUDY_GROUPS.find(group => group.code === code);
+  if (found) return found.note;
+  if (typeof value === 'object' && value.description) return String(value.description);
+  return 'не задана';
+}
+
+function adminStudyGroupOptions(selectedValue) {
+  const selected = adminStudyGroupCode(selectedValue);
+  return [
+    `<option value="" ${!selected ? 'selected' : ''}>Группа не задана</option>`,
+    ...ADMIN_STUDY_GROUPS.map(group =>
+      `<option value="${group.code}" ${group.code === selected ? 'selected' : ''}>${group.label}</option>`
+    ),
+  ].join('');
+}
 
 function adminRequestId(prefix = 'admin') {
   const rand = Math.random().toString(36).slice(2, 8);
@@ -547,10 +587,12 @@ function adminUserAvatarHtml(user, large = false) {
 function adminRenderUserCard(user) {
   const active = adminSelectedUser && adminSelectedUser.telegram_id === user.telegram_id;
   const room = String(user.room_number || '').trim();
+  const studyGroup = adminStudyGroupLabel(user.study_group);
   return `<div class="admin-user-card ${active ? 'active' : ''}" onclick="adminSelectUserById(${Number(user.telegram_id) || 0})">
     ${adminUserAvatarHtml(user)}
     <div class="admin-user-main">
       <div class="admin-user-name">${escapeHtml(user.full_name)} ${user.is_admin ? '<span class="inventory-pill">ADMIN</span>' : ''}</div>
+      ${studyGroup ? `<div class="admin-user-meta">${escapeHtml(studyGroup)}</div>` : ''}
       <div class="admin-user-meta">ID ${user.telegram_id}${user.username ? ` · ${escapeHtml(user.username)}` : ''}${room ? ` · комната ${escapeHtml(room)}` : ''}</div>
     </div>
     <div class="admin-user-points">${user.points || 0}★</div>
@@ -636,6 +678,7 @@ function adminDossierCheckTypeLabel(type) {
 
 function adminDossierActionLabel(action) {
   const labels = {
+    study_group_update: 'Группа',
     points_adjust: 'Баллы',
     rep_adjust: 'Репутация',
     room_update: 'Комната',
@@ -865,6 +908,8 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
   const selected = document.getElementById('adminDossierBody');
   if (selected) {
     const room = String(adminSelectedUser.room_number || '').trim();
+    const studyGroup = adminSelectedUser.study_group || {};
+    const studyGroupLabel = adminStudyGroupLabel(studyGroup);
     const roommates = adminSelectedUser.roommates || [];
     const dossier = adminSelectedUser.dossier || {};
     const stats = dossier.stats || {};
@@ -884,6 +929,7 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
         ${adminRenderDossierStat('★ Баланс', `${points || 0}★`, 'расходный кошелёк')}
         ${adminRenderDossierStat('REP', adminSelectedUser.rep_score || 0, 'рейтинг протокола')}
         ${adminRenderDossierStat('Комната', room || '—', roommates.length ? `соседей: ${roommates.length}` : 'не задана')}
+        ${adminRenderDossierStat('Группа', studyGroupLabel || '—', adminStudyGroupNote(studyGroup))}
         ${adminRenderDossierStat('Отметки', stats.presence_confirmed || 0, `${stats.presence_attention || 0} требуют внимания`)}
         ${adminRenderDossierStat('Дневник', `${stats.diary_stars || 0}★`, `${stats.diary_days || 0} дней`)}
         ${adminRenderDossierStat('Контракты', `${stats.contracts_created || 0} / ${stats.contracts_done || 0}`, `создал / выполнил · споры: ${stats.contracts_disputed || 0}`)}
@@ -903,6 +949,10 @@ function adminSelectUser(telegramId, fullName, points, extra = {}, options = {})
         <div class="admin-room-row">
           <input class="admin-input admin-room-input" id="adminRoomInput" placeholder="Комната" value="${escapeHtml(room)}">
           <button class="admin-console-refresh" onclick="adminSaveSelectedRoom()">СОХРАНИТЬ</button>
+        </div>
+        <div class="admin-room-row" style="margin-top:8px;">
+          <select class="admin-input admin-room-input" id="adminStudyGroupInput">${adminStudyGroupOptions(studyGroup)}</select>
+          <button class="admin-console-refresh" onclick="adminSaveSelectedStudyGroup()">ГРУППА</button>
         </div>
         <div class="admin-roommate-title">Соседи</div>
         <div id="adminRoommates" class="admin-roommate-list">${adminRenderRoommates(roommates)}</div>
@@ -978,6 +1028,35 @@ async function adminSaveSelectedRoom() {
     const list = document.getElementById('adminRoommates');
     if (list) list.innerHTML = adminRenderRoommates(adminSelectedUser.roommates);
     showToast(data.room_number ? `Комната сохранена: ${data.room_number}` : 'Комната очищена');
+    adminSearchUsers();
+    adminLoadActionLog();
+    adminLoadUserDossier(adminSelectedUser.telegram_id);
+  } catch (e) {
+    showToast('Ошибка соединения');
+  }
+}
+
+async function adminSaveSelectedStudyGroup() {
+  if (!adminSelectedUser || !currentUserId) {
+    showToast('Сначала выбери игрока');
+    return;
+  }
+  const input = document.getElementById('adminStudyGroupInput');
+  const studyGroup = String(input?.value || '').trim();
+  try {
+    const r = await fetch(`${API_URL}/api/admin/user/study-group`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'x-admin-id': currentUserId},
+      body: JSON.stringify({telegram_id: adminSelectedUser.telegram_id, study_group: studyGroup}),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.detail || 'Не удалось сохранить группу');
+      return;
+    }
+    adminSelectedUser.study_group = data.study_group || {};
+    const label = adminStudyGroupLabel(adminSelectedUser.study_group);
+    showToast(label ? `Группа сохранена: ${label}` : 'Группа очищена');
     adminSearchUsers();
     adminLoadActionLog();
     adminLoadUserDossier(adminSelectedUser.telegram_id);

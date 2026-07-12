@@ -1518,6 +1518,11 @@ body.is-admin .profile-card-kicker {
   border-color: rgba(255,255,255,0.14);
   color: var(--text2);
 }
+.profile-badge-group {
+  background: rgba(0,229,255,0.10);
+  border-color: rgba(0,229,255,0.26);
+  color: var(--cyan);
+}
 .profile-badge-path {
   background: rgba(180,20,20,0.12);
   border-color: rgba(180,20,20,0.28);

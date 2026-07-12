@@ -77,6 +77,83 @@ except ValueError:
     RATE_LIMIT_MAX_REQUESTS_PER_IP = 300
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
+STUDY_GROUPS = {
+    "A0": {
+        "label": "1班 · A0",
+        "description": "нули / начинающие",
+        "duel_min_difficulty": 1,
+        "duel_max_difficulty": 1,
+        "rank": 1,
+    },
+    "A普": {
+        "label": "2班 · A普",
+        "description": "несколько месяцев - год",
+        "duel_min_difficulty": 1,
+        "duel_max_difficulty": 2,
+        "rank": 2,
+    },
+    "A+": {
+        "label": "3班 · A+",
+        "description": "примерно пару лет",
+        "duel_min_difficulty": 2,
+        "duel_max_difficulty": 3,
+        "rank": 3,
+    },
+    "B普": {
+        "label": "4班 · B普",
+        "description": "HSK 3-4",
+        "duel_min_difficulty": 3,
+        "duel_max_difficulty": 4,
+        "rank": 4,
+    },
+    "SUPER": {
+        "label": "5班 · SUPER",
+        "description": "уверенный HSK 4",
+        "duel_min_difficulty": 4,
+        "duel_max_difficulty": 4,
+        "rank": 5,
+    },
+}
+
+
+def normalize_study_group(value: Optional[str]) -> Optional[str]:
+    raw = str(value or "").strip()
+    aliases = {
+        "": None,
+        "0": None,
+        "none": None,
+        "null": None,
+        "a0": "A0",
+        "а0": "A0",
+        "a普": "A普",
+        "а普": "A普",
+        "a+": "A+",
+        "а+": "A+",
+        "b普": "B普",
+        "б普": "B普",
+        "super": "SUPER",
+        "супер": "SUPER",
+        "strong": "SUPER",
+        "hsk4+": "SUPER",
+    }
+    mapped = aliases.get(raw.lower(), raw)
+    return mapped if mapped in STUDY_GROUPS else None
+
+
+def study_group_payload(value: Optional[str]) -> dict:
+    code = normalize_study_group(value)
+    meta = STUDY_GROUPS.get(code or "")
+    if not code or not meta:
+        return {
+            "code": None,
+            "label": "",
+            "description": "",
+            "duel_min_difficulty": None,
+            "duel_max_difficulty": None,
+            "rank": None,
+        }
+    return {"code": code, **meta}
+
 
 def shop_day_str() -> str:
     """Shop daily limits/stock reset at 07:00 Beijing time, not midnight."""
@@ -2683,6 +2760,7 @@ def init_db():
                  full_name TEXT,
                   avatar_url TEXT DEFAULT NULL,
                   room_number TEXT DEFAULT NULL,
+                  study_group TEXT DEFAULT NULL,
                   points INTEGER DEFAULT 0,
                   rep_score INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS schedule
@@ -3085,6 +3163,8 @@ def migrate_db():
         c.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT NULL")
     if 'room_number' not in user_columns:
         c.execute("ALTER TABLE users ADD COLUMN room_number TEXT DEFAULT NULL")
+    if 'study_group' not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN study_group TEXT DEFAULT NULL")
     if 'rep_score' not in user_columns:
         c.execute("ALTER TABLE users ADD COLUMN rep_score INTEGER DEFAULT 0")
 
@@ -5825,7 +5905,7 @@ def get_user_profile_dossier(telegram_id: int):
     c.execute(
         '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
                   us.profile_showcase_kind, us.profile_showcase_code, u.rep_score, us.equipped_frame,
-                  us.wildai_mvp
+                  us.wildai_mvp, u.study_group
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -5836,7 +5916,7 @@ def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame, wildai_mvp = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame, wildai_mvp, study_group = user_row
     if equipped_frame not in FRAME_IDS:
         equipped_frame = None
     points = points or 0
@@ -6021,6 +6101,7 @@ def get_user_profile_dossier(telegram_id: int):
         "points": points,
         "rep_score": rep_score,
         "theme_path": theme_path,
+        "study_group": study_group_payload(study_group),
         "admin_intro_variant": admin_intro_variant,
         "path_label": path_label,
         "rank": rank,
@@ -6960,7 +7041,7 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
     if query and query.isdigit():
         like = f"%{query}%"
         c.execute(
-            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
+            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number, study_group
                FROM users
                WHERE telegram_id IS NOT NULL
                  AND (CAST(telegram_id AS TEXT) LIKE ? OR full_name LIKE ? OR marzban_username LIKE ?)
@@ -6974,7 +7055,7 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
         # different case (e.g. "марк" vs "Марк") never matched — filter in
         # Python with a Unicode-aware lower() instead.
         c.execute(
-            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
+            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number, study_group
                FROM users
                WHERE telegram_id IS NOT NULL
                ORDER BY points DESC''',
@@ -6986,7 +7067,7 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
         ][:20]
     else:
         c.execute(
-            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number
+            '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number, study_group
                FROM users
                WHERE telegram_id IS NOT NULL
                ORDER BY points DESC
@@ -7021,6 +7102,7 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
                 "points": row[3] or 0,
                 "avatar_url": row[4],
                 "room_number": row[5] or "",
+                "study_group": study_group_payload(row[6]),
                 "roommates": [
                     roommate for roommate in roommate_map.get(row[5], [])
                     if roommate["telegram_id"] != row[0]
@@ -7096,6 +7178,51 @@ async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(
     return await db_write(_run)
 
 
+@app.post("/api/admin/user/study-group")
+async def admin_update_user_study_group(data: dict, x_admin_id: Optional[int] = Header(None)):
+    def _run():
+        if x_admin_id not in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+        try:
+            telegram_id = int(data.get("telegram_id"))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+        raw_group = str(data.get("study_group") or "").strip()
+        study_group = normalize_study_group(raw_group)
+        if raw_group and not study_group:
+            raise HTTPException(status_code=400, detail="Invalid study group")
+
+        conn = get_conn()
+        c = conn.cursor()
+        c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
+        target = c.fetchone()
+        if not target:
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+
+        c.execute(
+            "UPDATE users SET study_group=? WHERE telegram_id=?",
+            (study_group, telegram_id),
+        )
+        c.execute(
+            '''INSERT INTO admin_action_logs
+               (admin_id, target_id, action_type, points_delta, reason, created_at)
+               VALUES (?, ?, 'study_group_update', 0, ?, ?)''',
+            (x_admin_id, telegram_id, f"study_group: {study_group or 'empty'}", now_iso()),
+        )
+        conn.commit()
+        conn.close()
+        return {
+            "success": True,
+            "telegram_id": telegram_id,
+            "full_name": target[0] or str(telegram_id),
+            "study_group": study_group_payload(study_group),
+        }
+    return await db_write(_run)
+
+
 @app.post("/api/admin/user/reset_avatar")
 async def admin_reset_user_avatar(data: dict, x_admin_id: Optional[int] = Header(None)):
     def _run():
@@ -7141,7 +7268,7 @@ def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None
     c = conn.cursor()
     c.execute(
         '''SELECT u.telegram_id, u.full_name, u.marzban_username, u.points,
-                  u.avatar_url, u.room_number, us.theme_path, u.rep_score
+                  u.avatar_url, u.room_number, u.study_group, us.theme_path, u.rep_score
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -7264,10 +7391,11 @@ def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None
             "full_name": user_row[1] or str(user_row[0]),
             "username": user_row[2] or "",
             "points": user_row[3] or 0,
-            "rep_score": user_row[7] or 0,
+            "rep_score": user_row[8] or 0,
             "avatar_url": user_row[4],
             "room_number": room_number,
-            "theme_path": user_row[6],
+            "study_group": study_group_payload(user_row[6]),
+            "theme_path": user_row[7],
             "is_admin": user_row[0] in ADMIN_IDS,
             "roommates": roommates,
         },
@@ -13580,6 +13708,36 @@ def _duel_allowed(telegram_id) -> bool:
     return DUELS_PUBLIC or telegram_id in ADMIN_IDS
 
 
+def _duel_user_study_group(c, telegram_id) -> Optional[str]:
+    c.execute("SELECT study_group FROM users WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    return normalize_study_group(row[0]) if row else None
+
+
+def _duel_group_bypass(*telegram_ids) -> bool:
+    return any(int(tid) in ADMIN_IDS for tid in telegram_ids if tid is not None)
+
+
+def _duel_groups_compatible(c, challenger_id, opponent_id) -> tuple[bool, Optional[str], Optional[str]]:
+    challenger_group = _duel_user_study_group(c, challenger_id)
+    opponent_group = _duel_user_study_group(c, opponent_id)
+    if _duel_group_bypass(challenger_id, opponent_id):
+        return True, challenger_group, opponent_group
+    return bool(challenger_group and challenger_group == opponent_group), challenger_group, opponent_group
+
+
+def _duel_match_study_group(c, duel: dict) -> Optional[str]:
+    challenger_group = _duel_user_study_group(c, duel["challenger_id"])
+    opponent_group = _duel_user_study_group(c, duel["opponent_id"])
+    if challenger_group and challenger_group == opponent_group:
+        return challenger_group
+    if challenger_group and duel["opponent_id"] in ADMIN_IDS:
+        return challenger_group
+    if opponent_group and duel["challenger_id"] in ADMIN_IDS:
+        return opponent_group
+    return None
+
+
 def _duel_role(duel: dict, telegram_id):
     if telegram_id == duel["challenger_id"]:
         return "challenger"
@@ -13596,21 +13754,36 @@ def _fetch_duel(c, duel_id):
     return dict(zip(DUEL_COLUMNS, row))
 
 
-def choose_duel_question(c, exclude_id=None):
+def choose_duel_question(c, exclude_id=None, study_group: Optional[str] = None):
+    group = normalize_study_group(study_group)
+    difficulty_filter = ""
+    params = []
+    if group:
+        meta = STUDY_GROUPS[group]
+        difficulty_filter = " AND difficulty BETWEEN ? AND ?"
+        params.extend([meta["duel_min_difficulty"], meta["duel_max_difficulty"]])
+
     if exclude_id:
         c.execute(
             "SELECT id, prompt, option_a, option_b, option_c FROM event_questions "
-            "WHERE event_code='duel' AND id!=? ORDER BY RANDOM() LIMIT 1",
-            (exclude_id,),
+            f"WHERE event_code='duel'{difficulty_filter} AND id!=? ORDER BY RANDOM() LIMIT 1",
+            tuple(params + [exclude_id]),
         )
         row = c.fetchone()
         if row:
             return {"id": row[0], "prompt": row[1], "option_a": row[2], "option_b": row[3], "option_c": row[4]}
     c.execute(
         "SELECT id, prompt, option_a, option_b, option_c FROM event_questions "
-        "WHERE event_code='duel' ORDER BY RANDOM() LIMIT 1"
+        f"WHERE event_code='duel'{difficulty_filter} ORDER BY RANDOM() LIMIT 1",
+        tuple(params),
     )
     row = c.fetchone()
+    if not row and group:
+        c.execute(
+            "SELECT id, prompt, option_a, option_b, option_c FROM event_questions "
+            "WHERE event_code='duel' ORDER BY RANDOM() LIMIT 1"
+        )
+        row = c.fetchone()
     if not row:
         return None
     return {"id": row[0], "prompt": row[1], "option_a": row[2], "option_b": row[3], "option_c": row[4]}
@@ -13707,7 +13880,11 @@ def _resolve_round(c, duel: dict):
         settled = _fetch_duel(c, duel["id"])
         _settle_duel(c, settled, winner_id)
     else:
-        nextq = choose_duel_question(c, exclude_id=duel["current_question_id"])
+        nextq = choose_duel_question(
+            c,
+            exclude_id=duel["current_question_id"],
+            study_group=_duel_match_study_group(c, duel),
+        )
         c.execute(
             "UPDATE duels SET challenger_hp=?, opponent_hp=?, round_no=round_no+1, current_question_id=?, "
             "round_started_at=?, challenger_answer=NULL, opponent_answer=NULL, "
@@ -13737,14 +13914,16 @@ def _public_duel_state(duel: dict, viewer_id):
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        "SELECT telegram_id, full_name, avatar_url FROM users WHERE telegram_id IN (?,?)",
+        "SELECT telegram_id, full_name, avatar_url, study_group FROM users WHERE telegram_id IN (?,?)",
         (duel["challenger_id"], duel["opponent_id"]),
     )
     names = {}
     avatars = {}
+    groups = {}
     for r in c.fetchall():
         names[r[0]] = r[1]
         avatars[r[0]] = r[2]
+        groups[r[0]] = study_group_payload(r[3])
     question = None
     if duel["status"] == "active" and duel["current_question_id"]:
         c.execute(
@@ -13781,6 +13960,7 @@ def _public_duel_state(duel: dict, viewer_id):
             "telegram_id": you_id,
             "name": names.get(you_id, "ТЫ"),
             "avatar_url": avatars.get(you_id),
+            "study_group": groups.get(you_id, study_group_payload(None)),
             "hp": your_hp,
             "ready": bool(your_ready),
             "answered": your_ans is not None,
@@ -13789,6 +13969,7 @@ def _public_duel_state(duel: dict, viewer_id):
             "telegram_id": opp_id,
             "name": names.get(opp_id, str(opp_id)),
             "avatar_url": avatars.get(opp_id),
+            "study_group": groups.get(opp_id, study_group_payload(None)),
             "hp": opp_hp,
             "ready": bool(opp_ready),
             "answered": opp_ans is not None,
@@ -13810,9 +13991,14 @@ def _public_duel_state(duel: dict, viewer_id):
 
 @app.post("/api/duel/challenge")
 async def duel_challenge(data: dict):
-    challenger_id = data.get("challenger_id")
-    opponent_id = data.get("opponent_id")
-    stake = data.get("stake")
+    try:
+        challenger_id = int(data.get("challenger_id"))
+        opponent_id = int(data.get("opponent_id"))
+        stake = int(data.get("stake"))
+    except (TypeError, ValueError):
+        challenger_id = None
+        opponent_id = None
+        stake = None
 
     def _run():
         if not challenger_id or not opponent_id:
@@ -13836,6 +14022,12 @@ async def duel_challenge(data: dict):
         if rows[challenger_id][1] < stake:
             conn.close()
             raise HTTPException(status_code=400, detail="Недостаточно баллов для ставки")
+        compatible, challenger_group, opponent_group = _duel_groups_compatible(c, challenger_id, opponent_id)
+        if not compatible:
+            conn.close()
+            if not challenger_group or not opponent_group:
+                raise HTTPException(status_code=400, detail="Сначала нужно назначить учебную группу обоим игрокам")
+            raise HTTPException(status_code=403, detail="Дуэль доступна только внутри своей учебной группы")
         c.execute(
             "SELECT id FROM duels WHERE status IN ('pending','accepted','ready','active') "
             "AND (challenger_id=? OR opponent_id=?) LIMIT 1",
@@ -13878,13 +14070,20 @@ def duel_incoming(telegram_id: int):
     c = conn.cursor()
     cutoff = (datetime.utcnow() - timedelta(seconds=DUEL_CHALLENGE_EXPIRY_SECONDS)).isoformat()
     c.execute(
-        "SELECT d.id, d.challenger_id, u.full_name, d.stake, d.created_at FROM duels d "
+        "SELECT d.id, d.challenger_id, u.full_name, d.stake, d.created_at, u.study_group FROM duels d "
         "JOIN users u ON u.telegram_id = d.challenger_id "
         "WHERE d.opponent_id=? AND d.status='pending' AND d.created_at>=? ORDER BY d.id DESC",
         (telegram_id, cutoff),
     )
     items = [
-        {"duel_id": r[0], "challenger_id": r[1], "challenger_name": r[2], "stake": r[3], "created_at": r[4]}
+        {
+            "duel_id": r[0],
+            "challenger_id": r[1],
+            "challenger_name": r[2],
+            "stake": r[3],
+            "created_at": r[4],
+            "study_group": study_group_payload(r[5]),
+        }
         for r in c.fetchall()
     ]
     conn.close()
@@ -13932,6 +14131,10 @@ async def duel_accept(duel_id: int, data: dict):
         if duel["status"] != "pending":
             conn.close()
             raise HTTPException(status_code=409, detail="Вызов уже не активен")
+        compatible, challenger_group, opponent_group = _duel_groups_compatible(c, duel["challenger_id"], duel["opponent_id"])
+        if not compatible:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Дуэль доступна только внутри своей учебной группы")
         created = parse_iso(duel["created_at"])
         if created and (datetime.utcnow() - created).total_seconds() > DUEL_CHALLENGE_EXPIRY_SECONDS:
             c.execute("UPDATE duels SET status='expired', updated_at=? WHERE id=?", (now_iso(), duel_id))
@@ -13969,19 +14172,29 @@ async def duel_decline(duel_id: int, data: dict):
         if not duel:
             conn.close()
             raise HTTPException(status_code=404, detail="Дуэль не найдена")
-        if duel["opponent_id"] != telegram_id:
+        role = _duel_role(duel, telegram_id)
+        if duel["status"] == "pending":
+            if duel["opponent_id"] != telegram_id:
+                conn.close()
+                raise HTTPException(status_code=403, detail="Это не твой вызов")
+            next_status = "declined"
+            notify_id = duel["challenger_id"]
+        elif duel["status"] in ("accepted", "ready") and role:
+            next_status = "cancelled"
+            notify_id = duel["opponent_id"] if role == "challenger" else duel["challenger_id"]
+        else:
             conn.close()
-            raise HTTPException(status_code=403, detail="Это не твой вызов")
-        if duel["status"] != "pending":
-            conn.close()
-            raise HTTPException(status_code=409, detail="Вызов уже не активен")
-        c.execute("UPDATE duels SET status='declined', updated_at=? WHERE id=?", (now_iso(), duel_id))
+            raise HTTPException(status_code=409, detail="Дуэль уже нельзя отклонить")
+        c.execute("UPDATE duels SET status=?, updated_at=? WHERE id=?", (next_status, now_iso(), duel_id))
         conn.commit()
         conn.close()
-        return {"challenger_id": duel["challenger_id"]}
+        return {"notify_id": notify_id, "status": next_status}
 
     res = await db_write(_run)
-    await send_telegram_message(res["challenger_id"], "⚔️ Твой вызов на дуэль отклонён.")
+    await send_telegram_message(
+        res["notify_id"],
+        "⚔️ Твой вызов на дуэль отклонён." if res["status"] == "declined" else "⚔️ Дуэль отменена до старта боя.",
+    )
     return {"success": True}
 
 
@@ -14026,6 +14239,10 @@ async def duel_ready(duel_id: int, data: dict):
         if not role:
             conn.close()
             raise HTTPException(status_code=403, detail="Ты не участник дуэли")
+        compatible, challenger_group, opponent_group = _duel_groups_compatible(c, duel["challenger_id"], duel["opponent_id"])
+        if not compatible:
+            conn.close()
+            raise HTTPException(status_code=403, detail="Дуэль доступна только внутри своей учебной группы")
         if duel["status"] not in ("accepted", "ready"):
             conn.close()
             raise HTTPException(status_code=409, detail="Сейчас нельзя готовиться")
@@ -14034,7 +14251,7 @@ async def duel_ready(duel_id: int, data: dict):
         c.execute(f"UPDATE duels SET {col}=1, status='ready', updated_at=? WHERE id=?", (now, duel_id))
         duel = _fetch_duel(c, duel_id)
         if duel["challenger_ready"] and duel["opponent_ready"]:
-            q = choose_duel_question(c)
+            q = choose_duel_question(c, study_group=_duel_match_study_group(c, duel))
             c.execute(
                 "UPDATE duels SET status='active', round_no=1, current_question_id=?, round_started_at=?, "
                 "challenger_hp=?, opponent_hp=?, updated_at=? WHERE id=?",
@@ -14141,8 +14358,9 @@ def duel_opponents(telegram_id: int):
     for admin-vs-admin testing)."""
     conn = get_conn()
     c = conn.cursor()
+    viewer_group = _duel_user_study_group(c, telegram_id)
     c.execute(
-        "SELECT telegram_id, full_name, avatar_url, COALESCE(rep_score,0) FROM users "
+        "SELECT telegram_id, full_name, avatar_url, COALESCE(rep_score,0), study_group FROM users "
         "WHERE telegram_id IS NOT NULL AND telegram_id!=? ORDER BY full_name COLLATE NOCASE",
         (telegram_id,),
     )
@@ -14152,5 +14370,27 @@ def duel_opponents(telegram_id: int):
     for r in rows:
         if not DUELS_PUBLIC and r[0] not in ADMIN_IDS:
             continue
-        out.append({"telegram_id": r[0], "name": r[1] or str(r[0]), "avatar_url": r[2], "rep": r[3]})
-    return {"opponents": out, "enabled": _duel_allowed(telegram_id)}
+        opponent_group = normalize_study_group(r[4])
+        if DUELS_PUBLIC and telegram_id not in ADMIN_IDS:
+            if r[0] in ADMIN_IDS:
+                continue
+            if not viewer_group:
+                continue
+            if opponent_group != viewer_group:
+                continue
+        out.append({
+            "telegram_id": r[0],
+            "name": r[1] or str(r[0]),
+            "avatar_url": r[2],
+            "rep": r[3],
+            "study_group": study_group_payload(opponent_group),
+        })
+    message = ""
+    if DUELS_PUBLIC and telegram_id not in ADMIN_IDS and not viewer_group:
+        message = "Сначала попроси вожатого назначить учебную группу"
+    return {
+        "opponents": out,
+        "enabled": _duel_allowed(telegram_id),
+        "study_group": study_group_payload(viewer_group),
+        "message": message,
+    }

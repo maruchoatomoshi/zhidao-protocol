@@ -4,6 +4,7 @@
 // admin-only via CSS (body.is-admin .duel-tab-btn).
 
 let duelOpponents = [];
+let duelOpponentsMessage = '';
 let duelSelectedStake = 25;
 let duelPollTimer = null;       // polls /state while overlay is open
 let duelTimerInterval = null;   // local 1s countdown ticker
@@ -23,6 +24,21 @@ let duelAnnounceTimers = [];
 let duelComboCount = 0;      // серия ударов подряд по сопернику (комбо)
 
 const DUEL_STAKES = [10, 25, 50, 100];
+const DUEL_GROUP_LABELS = {
+  A0: '1班 · A0',
+  'A普': '2班 · A普',
+  'A+': '3班 · A+',
+  'B普': '4班 · B普',
+  SUPER: '5班 · SUPER',
+};
+
+function duelStudyGroupLabel(value) {
+  if (!value) return '';
+  const code = typeof value === 'object' ? String(value.code || '').trim() : String(value || '').trim();
+  if (!code) return '';
+  if (typeof value === 'object' && value.label) return String(value.label);
+  return DUEL_GROUP_LABELS[code] || code;
+}
 
 function duelHeaders() {
   const h = { 'Content-Type': 'application/json' };
@@ -73,16 +89,17 @@ async function refreshDuelHubStatus(allowAutoOpen) {
     if (list.length) {
       incomingWrap.innerHTML =
         `<div class="cn-divider">📥 ВХОДЯЩИЕ ВЫЗОВЫ</div>` +
-        list.map(ch =>
-          `<div class="duel-card">
+        list.map(ch => {
+          const groupLabel = duelStudyGroupLabel(ch.study_group);
+          return `<div class="duel-card">
              <div class="duel-card-title">${escapeDuel(ch.challenger_name)} вызывает тебя</div>
-             <div class="duel-card-sub">Ставка: ${ch.stake}★</div>
+             <div class="duel-card-sub">Ставка: ${ch.stake}★${groupLabel ? ` · ${escapeDuel(groupLabel)}` : ''}</div>
              <div class="duel-card-actions">
                <button class="btn btn-primary" onclick="acceptDuel(${ch.duel_id})">Принять</button>
                <button class="btn duel-btn-secondary" onclick="declineDuel(${ch.duel_id})">Отклонить</button>
              </div>
-           </div>`
-        ).join('');
+           </div>`;
+        }).join('');
     } else {
       incomingWrap.innerHTML = '';
     }
@@ -128,8 +145,10 @@ async function openDuelChallenge() {
     const r = await fetch(`${API_URL}/api/duel/opponents/${currentUserId}`, { headers: duelHeaders() });
     const data = r.ok ? await r.json() : { opponents: [] };
     duelOpponents = data.opponents || [];
+    duelOpponentsMessage = data.message || '';
     renderDuelOpponentList();
   } catch (e) {
+    duelOpponentsMessage = '';
     listEl.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
   }
 }
@@ -158,15 +177,16 @@ function renderDuelOpponentList() {
   const q = (document.getElementById('duelOpponentSearch')?.value || '').trim().toLowerCase();
   const filtered = duelOpponents.filter(o => !q || (o.name || '').toLowerCase().includes(q));
   if (!filtered.length) {
-    listEl.innerHTML = '<div class="empty-state">Никого не найдено</div>';
+    listEl.innerHTML = `<div class="empty-state">${escapeDuel(duelOpponentsMessage || 'Никого не найдено')}</div>`;
     return;
   }
-  listEl.innerHTML = filtered.map(o =>
-    `<div class="duel-opp-row" onclick="confirmDuelChallenge(${o.telegram_id})">
+  listEl.innerHTML = filtered.map(o => {
+    const groupLabel = duelStudyGroupLabel(o.study_group);
+    return `<div class="duel-opp-row" onclick="confirmDuelChallenge(${o.telegram_id})">
        <div class="duel-opp-name">${escapeDuel(o.name)}</div>
-       <div class="duel-opp-rep">${o.rep}★</div>
-     </div>`
-  ).join('');
+       <div class="duel-opp-rep">${groupLabel ? `${escapeDuel(groupLabel)} · ` : ''}${o.rep}★</div>
+     </div>`;
+  }).join('');
 }
 
 async function confirmDuelChallenge(opponentId) {
@@ -225,6 +245,8 @@ async function duelAction(duelId, action, okMsg) {
       if (okMsg) showToast(okMsg);
       if (action === 'accept') {
         openDuelOverlay(duelId);
+      } else if (duelCurrentId === duelId) {
+        closeDuelOverlay();
       } else {
         refreshDuelHubStatus();
       }
@@ -347,8 +369,10 @@ function renderDuelState(st) {
     const oppReady = st.opponent && st.opponent.ready;
     if (aEl) {
       aEl.innerHTML = youReady
-        ? `<div class="duel-ready-wait">Ты готов. Ждём соперника…</div>`
-        : `<button class="btn btn-primary duel-ready-btn" onclick="readyDuel()">Я ГОТОВ</button>`;
+        ? `<div class="duel-ready-wait">Ты готов. Ждём соперника…</div>
+           <button class="btn duel-btn-secondary duel-ready-btn" onclick="declineDuel(${duelCurrentId})">ОТКАЗАТЬСЯ</button>`
+        : `<button class="btn btn-primary duel-ready-btn" onclick="readyDuel()">Я ГОТОВ</button>
+           <button class="btn duel-btn-secondary duel-ready-btn" onclick="declineDuel(${duelCurrentId})">ОТКАЗАТЬСЯ</button>`;
     }
     if (statusLine) statusLine.textContent = `Соперник: ${oppReady ? 'готов ✅' : 'ещё не готов…'}`;
     if (duelTimerInterval) { clearInterval(duelTimerInterval); duelTimerInterval = null; }
