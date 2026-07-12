@@ -1,7 +1,7 @@
 // ===== PvP ДУЭЛИ (Tekken-style live quiz battle) =====
 // Async challenge -> accept -> ready-check -> live polled rounds.
-// Admin/flag-gated on the backend (DUELS_PUBLIC=False); the UI tab is also
-// admin-only via CSS (body.is-admin .duel-tab-btn).
+// Public duel hub. Students are group-matched against students; admins can
+// challenge anyone from their own admin view.
 
 let duelOpponents = [];
 let duelOpponentsMessage = '';
@@ -171,6 +171,11 @@ function selectDuelStake(s) {
   renderDuelStakeRow();
 }
 
+function duelStakeForOpponent(opponent) {
+  const required = Number(opponent && opponent.required_stake);
+  return required > 0 ? required : duelSelectedStake;
+}
+
 function renderDuelOpponentList() {
   const listEl = document.getElementById('duelOpponentList');
   if (!listEl) return;
@@ -182,9 +187,12 @@ function renderDuelOpponentList() {
   }
   listEl.innerHTML = filtered.map(o => {
     const groupLabel = duelStudyGroupLabel(o.study_group);
+    const requiredStake = Number(o.required_stake || 0);
+    const stakeHint = requiredStake > 0 ? `Вызов: ${requiredStake}★ · ` : '';
+    const adminHint = o.is_admin ? 'SYSTEM · ' : '';
     return `<div class="duel-opp-row" onclick="confirmDuelChallenge(${o.telegram_id})">
        <div class="duel-opp-name">${escapeDuel(o.name)}</div>
-       <div class="duel-opp-rep">${groupLabel ? `${escapeDuel(groupLabel)} · ` : ''}${o.rep}★</div>
+       <div class="duel-opp-rep">${escapeDuel(adminHint)}${escapeDuel(stakeHint)}${groupLabel ? `${escapeDuel(groupLabel)} · ` : ''}${o.rep}★</div>
      </div>`;
   }).join('');
 }
@@ -192,23 +200,24 @@ function renderDuelOpponentList() {
 async function confirmDuelChallenge(opponentId) {
   const opp = duelOpponents.find(o => o.telegram_id === opponentId);
   const name = opp ? opp.name : 'соперника';
+  const stake = duelStakeForOpponent(opp);
   if (typeof showConfirmDialog === 'function') {
     const ok = await showConfirmDialog({
       title: '⚔ Вызов на дуэль',
-      message: `Вызвать ${name} на дуэль со ставкой ${duelSelectedStake}★?`,
+      message: `Вызвать ${name} на дуэль со ставкой ${stake}★?`,
       confirmText: 'Вызвать'
     });
     if (!ok) return;
   }
-  sendDuelChallenge(opponentId);
+  sendDuelChallenge(opponentId, stake);
 }
 
-async function sendDuelChallenge(opponentId) {
+async function sendDuelChallenge(opponentId, stake = duelSelectedStake) {
   try {
     const r = await fetch(`${API_URL}/api/duel/challenge`, {
       method: 'POST',
       headers: duelHeaders(),
-      body: JSON.stringify({ challenger_id: currentUserId, opponent_id: opponentId, stake: duelSelectedStake })
+      body: JSON.stringify({ challenger_id: currentUserId, opponent_id: opponentId, stake })
     });
     if (r.ok) {
       closeDuelChallenge();

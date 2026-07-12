@@ -13688,8 +13688,10 @@ async def admin_resolve_contract(contract_id: int, data: dict,
 # See CLAUDE.md PvP spec.
 # ======================================================================
 
-DUELS_PUBLIC = False          # while False, duels are admins-only (rollout flag)
+DUELS_PUBLIC = True
 DUEL_STAKE_TIERS = [10, 25, 50, 100]
+ALPHABOSS_ID = int(os.getenv("ALPHABOSS_ID", "244487659") or "244487659")
+DUEL_ALPHABOSS_STAKE = int(os.getenv("DUEL_ALPHABOSS_STAKE", "200") or "200")
 DUEL_MAX_HP = 100
 DUEL_HIT_DAMAGE = 20
 DUEL_MAX_ROUNDS = 7
@@ -13706,6 +13708,19 @@ DUEL_COLUMNS = [
 
 def _duel_allowed(telegram_id) -> bool:
     return DUELS_PUBLIC or telegram_id in ADMIN_IDS
+
+
+def _duel_required_stake(challenger_id, opponent_id) -> Optional[int]:
+    if opponent_id == ALPHABOSS_ID and challenger_id != ALPHABOSS_ID:
+        return DUEL_ALPHABOSS_STAKE
+    return None
+
+
+def _duel_stake_allowed(challenger_id, opponent_id, stake) -> bool:
+    required_stake = _duel_required_stake(challenger_id, opponent_id)
+    if required_stake is not None:
+        return stake == required_stake
+    return stake in DUEL_STAKE_TIERS
 
 
 def _duel_user_study_group(c, telegram_id) -> Optional[str]:
@@ -14005,7 +14020,12 @@ async def duel_challenge(data: dict):
             raise HTTPException(status_code=400, detail="Не указаны игроки")
         if challenger_id == opponent_id:
             raise HTTPException(status_code=400, detail="Нельзя вызвать самого себя")
-        if stake not in DUEL_STAKE_TIERS:
+        if challenger_id not in ADMIN_IDS and opponent_id in ADMIN_IDS:
+            raise HTTPException(status_code=403, detail="Админов могут вызывать только админы")
+        required_stake = _duel_required_stake(challenger_id, opponent_id)
+        if not _duel_stake_allowed(challenger_id, opponent_id, stake):
+            if required_stake is not None:
+                raise HTTPException(status_code=400, detail=f"Вызов Альфабосса стоит {required_stake}★")
             raise HTTPException(status_code=400, detail="Недопустимая ставка")
         if not _duel_allowed(challenger_id) or not _duel_allowed(opponent_id):
             raise HTTPException(status_code=403, detail="Дуэли пока доступны только админам")
@@ -14353,9 +14373,8 @@ def duel_leaderboard():
 
 @app.get("/api/duel/opponents/{telegram_id}")
 def duel_opponents(telegram_id: int):
-    """Pickable opponents. While DUELS_PUBLIC is False, only other admins are
-    returned (the main /api/leaderboard excludes admins, so it can't be reused
-    for admin-vs-admin testing)."""
+    """Pickable opponents. Students are group-matched against students.
+    Admins can challenge anyone, but students cannot challenge admins."""
     conn = get_conn()
     c = conn.cursor()
     viewer_group = _duel_user_study_group(c, telegram_id)
@@ -14371,22 +14390,26 @@ def duel_opponents(telegram_id: int):
         if not DUELS_PUBLIC and r[0] not in ADMIN_IDS:
             continue
         opponent_group = normalize_study_group(r[4])
-        if DUELS_PUBLIC and telegram_id not in ADMIN_IDS:
+        if telegram_id not in ADMIN_IDS:
             if r[0] in ADMIN_IDS:
                 continue
             if not viewer_group:
                 continue
             if opponent_group != viewer_group:
                 continue
+        required_stake = _duel_required_stake(telegram_id, r[0])
         out.append({
             "telegram_id": r[0],
             "name": r[1] or str(r[0]),
             "avatar_url": r[2],
             "rep": r[3],
             "study_group": study_group_payload(opponent_group),
+            "is_admin": r[0] in ADMIN_IDS,
+            "required_stake": required_stake,
+            "stake_tiers": [required_stake] if required_stake is not None else DUEL_STAKE_TIERS,
         })
     message = ""
-    if DUELS_PUBLIC and telegram_id not in ADMIN_IDS and not viewer_group:
+    if DUELS_PUBLIC and telegram_id not in ADMIN_IDS and not viewer_group and not out:
         message = "Сначала попроси вожатого назначить учебную группу"
     return {
         "opponents": out,

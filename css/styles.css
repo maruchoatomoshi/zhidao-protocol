@@ -19396,9 +19396,8 @@ body.theme-aqua .cn-divider::after { background: linear-gradient(90deg, transpar
    PvP ДУЭЛИ — хаб (следует теме) + полноэкранный VS-бой (фикс. неон-киберпанк)
    ========================================================================= */
 
-/* Вкладка «Дуэли» в рейтинге — только для админов */
-.duel-tab-btn { display: none; }
-body.is-admin .duel-tab-btn { display: block; }
+/* Вкладка дуэлей открыта всем; список соперников фильтруется API по группам. */
+.duel-tab-btn { display: block; }
 
 /* ---- Хаб ---- */
 .duel-hub { padding: 4px 0 12px; }
