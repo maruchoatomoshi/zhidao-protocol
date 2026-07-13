@@ -14354,7 +14354,8 @@ def duel_leaderboard():
         "FROM duels WHERE status='finished' AND winner_id IS NOT NULL GROUP BY loser"
     )
     losses = {r[0]: r[1] for r in c.fetchall()}
-    ids = set(wins) | set(losses)
+    # Admin duel activity is operational/testing noise, not student ranking.
+    ids = (set(wins) | set(losses)) - set(ADMIN_IDS)
     names = {}
     if ids:
         qmarks = ",".join("?" * len(ids))
