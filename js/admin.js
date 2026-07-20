@@ -247,6 +247,7 @@ function closeArchitectArrivalBanner() {
 // ===== РАСПИСАНИЕ =====
 
 function showAdminSection(name, btn) {
+  syncAdminCohortUi();
   ['schedule','announce','laundry','users','presence','blackwall','contracts','report','giftcode','tianhao-fact','trip-quiz','community-shop'].forEach(s => {
     const el = document.getElementById('admin-'+s); if(el) el.style.display='none';
   });
@@ -257,7 +258,7 @@ function showAdminSection(name, btn) {
     const now = new Date();
     const dateStr = now.toLocaleDateString('ru-RU', { weekday:'short', day:'numeric', month:'short' });
     const timeStr = now.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
-    statusEl.textContent = `${dateStr} · ${timeStr} · SYS:${name.toUpperCase()}`;
+    statusEl.textContent = `${dateStr} · ${timeStr} · ${getActiveCohortCode().toUpperCase()} · SYS:${name.toUpperCase()}`;
   }
   const el = document.getElementById('admin-'+name);
   if(el) el.style.display = 'block';
