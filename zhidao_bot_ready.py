@@ -86,6 +86,10 @@ def parse_int_list_env(name: str) -> list[int]:
 
 
 ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
+FLATLINED_IDS = set(
+    parse_int_list_env("FLATLINED_IDS")
+    or [6157647579, 8579518402, 8580665130]
+)
 ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS")
 BUG_REPORT_RECIPIENT_IDS = parse_int_list_env("BUG_REPORT_RECIPIENT_IDS") or ARCHITECT_IDS or [ADMIN_IDS[0]]
 REGISTRATION_BYPASS_IDS = set(parse_int_list_env("REGISTRATION_BYPASS_IDS"))
@@ -492,12 +496,13 @@ def get_points(telegram_id):
 def get_leaderboard():
     conn = db_connect()
     c = conn.cursor()
-    placeholders = ",".join("?" for _ in ADMIN_IDS)
+    excluded_ids = sorted(set(ADMIN_IDS) | FLATLINED_IDS)
+    placeholders = ",".join("?" for _ in excluded_ids)
     c.execute(
         f"""SELECT full_name, points FROM users
             WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders})
             ORDER BY points DESC LIMIT 10""",
-        ADMIN_IDS,
+        excluded_ids,
     )
     result = c.fetchall()
     conn.close()
