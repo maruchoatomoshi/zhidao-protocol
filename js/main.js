@@ -2,6 +2,7 @@ const user = tg.initDataUnsafe?.user;
 if (user) {
   currentUserId = user.id;
   isAdmin = ADMIN_IDS.includes(user.id);
+  initializeCohortStateForUser();
   loadUserData(user.id);
   loadPoints(user.id);
   startGlobalAlertPolling();
@@ -34,6 +35,7 @@ window.setInterval(() => {
 // ===== НАВИГАЦИЯ =====
 
 document.addEventListener('DOMContentLoaded', () => {
+  syncAdminCohortUi();
   if (typeof syncLaunchGateVisibility === 'function') syncLaunchGateVisibility();
   if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
 
