@@ -215,6 +215,14 @@ def load_expected_student_names() -> list[str]:
 
 ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
 ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS") or [-1]
+# Sanctioned accounts stay usable, but never appear in competitive rankings.
+# Override through FLATLINED_IDS when the roster changes.
+FLATLINED_IDS = frozenset(
+    parse_int_list_env("FLATLINED_IDS")
+    or [6157647579, 8579518402, 8580665130]
+)
+FLATLINED_ID_LIST = sorted(FLATLINED_IDS)
+FLATLINED_PLACEHOLDERS = ",".join("?" * len(FLATLINED_ID_LIST))
 INTRO_CYBERPUNK_ADMIN_IDS = set(parse_int_list_env("INTRO_CYBERPUNK_ADMIN_IDS"))
 INTRO_GENSHIN_ADMIN_IDS = set(parse_int_list_env("INTRO_GENSHIN_ADMIN_IDS"))
 
@@ -4307,9 +4315,11 @@ def refresh_event_state(c, event_row: dict):
                 event_row["state"] = "FINISHED"
                 event_row["ended_at"] = now_iso()
                 c.execute(
-                    """SELECT telegram_id FROM event_participants
-                       WHERE event_id=? ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
-                    (event_row["id"],),
+                    f"""SELECT telegram_id FROM event_participants
+                       WHERE event_id=?
+                         AND telegram_id NOT IN ({FLATLINED_PLACEHOLDERS})
+                       ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
+                    (event_row["id"], *FLATLINED_ID_LIST),
                 )
                 mvp_row = c.fetchone()
                 mvp_id = mvp_row[0] if mvp_row else None
@@ -4340,9 +4350,11 @@ def refresh_event_state(c, event_row: dict):
                 event_row["phase"] = 4
                 event_row["ended_at"] = now_iso()
                 c.execute(
-                    """SELECT telegram_id FROM event_participants
-                       WHERE event_id=? ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
-                    (event_row["id"],),
+                    f"""SELECT telegram_id FROM event_participants
+                       WHERE event_id=?
+                         AND telegram_id NOT IN ({FLATLINED_PLACEHOLDERS})
+                       ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
+                    (event_row["id"], *FLATLINED_ID_LIST),
                 )
                 mvp_row = c.fetchone()
                 mvp_id = mvp_row[0] if mvp_row else None
@@ -4375,9 +4387,11 @@ def refresh_event_state(c, event_row: dict):
         event_row["ended_at"] = now_iso()
         # Calculate MVP: participant with highest total_damage
         c.execute(
-            """SELECT telegram_id FROM event_participants
-               WHERE event_id=? ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
-            (event_row["id"],),
+            f"""SELECT telegram_id FROM event_participants
+               WHERE event_id=?
+                 AND telegram_id NOT IN ({FLATLINED_PLACEHOLDERS})
+               ORDER BY total_damage DESC, total_support DESC LIMIT 1""",
+            (event_row["id"], *FLATLINED_ID_LIST),
         )
         mvp_row = c.fetchone()
         mvp_id = mvp_row[0] if mvp_row else None
@@ -6020,16 +6034,17 @@ def get_user_profile_dossier(telegram_id: int):
         )
         showcase = card_showcase(card_id, durability)
 
-    admin_placeholders = ','.join('?' * len(ADMIN_IDS))
+    rank_excluded_ids = sorted(set(ADMIN_IDS) | FLATLINED_IDS)
+    rank_placeholders = ','.join('?' * len(rank_excluded_ids))
     leaderboard_rank = None
-    if telegram_id not in ADMIN_IDS:
+    if telegram_id not in rank_excluded_ids:
         c.execute(
             f'''SELECT COUNT(*) + 1
                 FROM users
                 WHERE telegram_id IS NOT NULL
-                  AND telegram_id NOT IN ({admin_placeholders})
+                  AND telegram_id NOT IN ({rank_placeholders})
                   AND points > ?''',
-            ADMIN_IDS + [points],
+            rank_excluded_ids + [points],
         )
         leaderboard_rank = c.fetchone()[0]
     conn.close()
@@ -6101,6 +6116,7 @@ def get_user_profile_dossier(telegram_id: int):
         "points": points,
         "rep_score": rep_score,
         "theme_path": theme_path,
+        "flatlined": telegram_id in FLATLINED_IDS,
         "study_group": study_group_payload(study_group),
         "admin_intro_variant": admin_intro_variant,
         "path_label": path_label,
@@ -6121,7 +6137,11 @@ def get_user_profile_dossier(telegram_id: int):
             "raids": raid_count,
             "raid_wins": raid_wins,
         },
-        "status_line": f"状态：在线 // 权限：{permission_label} // 同步率：{sync_rate}%",
+        "status_line": (
+            "状态：断开 // NETWATCH：FLATLINED // 排名权限已撤销"
+            if telegram_id in FLATLINED_IDS
+            else f"状态：在线 // 权限：{permission_label} // 同步率：{sync_rate}%"
+        ),
     }
 
 
@@ -7027,6 +7047,7 @@ def get_points(telegram_id: int):
         "immunity": status[2] if status else 0,
         "extra_raids": status[3] if status else 0,
         "theme_path": status[4] if status else None,
+        "flatlined": telegram_id in FLATLINED_IDS,
     }
 
 
@@ -9142,7 +9163,8 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
 
 @app.get("/api/diary/stars/leaderboard")
 def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
-    placeholders = ','.join('?' * len(ADMIN_IDS))
+    excluded_ids = sorted(set(ADMIN_IDS) | FLATLINED_IDS)
+    placeholders = ','.join('?' * len(excluded_ids))
     conn = get_conn()
     c = conn.cursor()
     c.execute(
@@ -9165,7 +9187,7 @@ def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_a
              AND u.telegram_id NOT IN ({placeholders})
            GROUP BY u.telegram_id, u.full_name, u.avatar_url, us.theme_path
            ORDER BY total_stars DESC, days_rated DESC, total_bonus DESC, u.full_name COLLATE NOCASE''',
-        ADMIN_IDS,
+        excluded_ids,
     )
     rows = c.fetchall()
     conn.close()
@@ -9487,7 +9509,8 @@ async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None))
 @app.get("/api/leaderboard")
 async def get_leaderboard():
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
-    placeholders = ','.join('?' * len(ADMIN_IDS))
+    excluded_ids = sorted(set(ADMIN_IDS) | FLATLINED_IDS)
+    placeholders = ','.join('?' * len(excluded_ids))
 
     def _read():
         conn = get_conn()
@@ -9521,7 +9544,7 @@ async def get_leaderboard():
                      WHERE u.telegram_id IS NOT NULL
                      AND u.telegram_id NOT IN ({placeholders})
                      ORDER BY u.rep_score DESC, u.rowid ASC''',
-            [today, today] + ADMIN_IDS,
+            [today, today] + excluded_ids,
         )
         result = c.fetchall()
 
@@ -9551,7 +9574,7 @@ async def get_leaderboard():
                         SELECT telegram_id, ROW_NUMBER() OVER (ORDER BY rep_score DESC, rowid ASC), rep_score, ?
                         FROM users
                         WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders}) AND rep_score > 0''',
-                    [today] + ADMIN_IDS,
+                    [today] + excluded_ids,
                 )
                 conn2.commit()
             finally:
@@ -12671,11 +12694,12 @@ def get_event_leaderboard(event_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute(
-        '''SELECT telegram_id, total_damage, total_support
+        f'''SELECT telegram_id, total_damage, total_support
            FROM event_participants
            WHERE event_id=?
+             AND telegram_id NOT IN ({FLATLINED_PLACEHOLDERS})
            ORDER BY total_damage DESC, total_support DESC, telegram_id ASC''',
-        (event_id,),
+        (event_id, *FLATLINED_ID_LIST),
     )
     rows = c.fetchall()
     conn.close()
@@ -14354,8 +14378,8 @@ def duel_leaderboard():
         "FROM duels WHERE status='finished' AND winner_id IS NOT NULL GROUP BY loser"
     )
     losses = {r[0]: r[1] for r in c.fetchall()}
-    # Admin duel activity is operational/testing noise, not student ranking.
-    ids = (set(wins) | set(losses)) - set(ADMIN_IDS)
+    # Admin and FLATLINED duel activity is operational/sanctioned noise.
+    ids = (set(wins) | set(losses)) - set(ADMIN_IDS) - FLATLINED_IDS
     names = {}
     if ids:
         qmarks = ",".join("?" * len(ids))
