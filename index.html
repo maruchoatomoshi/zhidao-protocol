@@ -21,7 +21,7 @@
 })();
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="./css/styles.css?v=20260720flatlined1">
+<link rel="stylesheet" href="./css/styles.css?v=20260720cohort1">
 </head>
 <body>
 <div id="startupCover" class="startup-cover" aria-hidden="true" style="position:fixed;inset:0;z-index:9997;background:#020205;"></div>
@@ -1062,6 +1062,16 @@
         <div class="admin-panel-status" id="adminPanelStatus"></div>
       </div>
       <div class="admin-panel-badge">👑 ADMIN</div>
+    </div>
+    <div class="admin-cohort-switcher" id="adminCohortSwitcher" aria-label="Контур администрирования">
+      <div class="admin-cohort-copy">
+        <span class="admin-cohort-kicker">КОНТУР ДОСТУПА</span>
+        <strong id="adminCohortLabel">Пекин // основной контур</strong>
+      </div>
+      <div class="admin-cohort-options">
+        <button type="button" data-cohort="beijing" onclick="setAdminCohort('beijing')">北京 ПЕКИН</button>
+        <button type="button" data-cohort="mju" onclick="setAdminCohort('mju')">МЮ 上海</button>
+      </div>
     </div>
     <div class="admin-nav-grid">
       <button class="admin-sec-btn" onclick="showAdminSection('announce',this)"><span class="admin-nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a2 2 0 0 0 2 2h1l3.5 5v-7"/><path d="M9 6 19 3v15l-10-3"/><path d="M19 8a3 3 0 0 1 0 5"/></svg></span><span class="admin-nav-label">Объявления</span></button>
@@ -2769,8 +2779,8 @@
 </div>
 
 <script src="./js/config.js?v=20260706launch2"></script>
-<script src="./js/state.js?v=20260625wildaibreach1"></script>
-<script src="./js/api.js?v=20260528a"></script>
+<script src="./js/state.js?v=20260720cohort1"></script>
+<script src="./js/api.js?v=20260720cohort1"></script>
 <script src="./js/ui.js?v=20260702media1"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js?v=20260702casino-subtitle"></script>
@@ -2779,7 +2789,7 @@
 <script src="./js/announcements.js"></script>
 <script src="./js/laundry.js?v=20260624myu2"></script>
 <script src="./js/achievements.js?v=20260622spinlock1"></script>
-<script src="./js/leaderboard.js?v=20260720flatlined1"></script>
+<script src="./js/leaderboard.js?v=20260720cohort1"></script>
 <script src="./js/shop.js?v=20260702fateguard"></script>
 <script src="./js/casino.js?v=20260702fateguard"></script>
 <script src="./js/diary.js?v=20260707diarycompact1"></script>
@@ -2791,7 +2801,7 @@
 <script src="./js/liza-curfew.js?v=20260617a"></script>
 <script src="./js/intro-novel.js?v=20260629olgawunan"></script>
 <script src="./js/contracts.js?v=20260625wildaibreach2"></script>
-<script src="./js/admin.js?v=20260712duelgroups1"></script>
+<script src="./js/admin.js?v=20260720cohort1"></script>
 <script src="./js/trip-quiz.js?v=20260624tripquiz1"></script>
 <script src="./js/community-shop.js?v=20260628pct"></script>
 <script src="./js/presence.js?v=20260629leavepending"></script>
@@ -2804,7 +2814,7 @@
 <script src="./js/instruction.js?v=20260628presencestep"></script>
 <script src="./js/rewind.js?v=20260625imgctxfix1"></script>
 <script src="./js/duel.js?v=20260712duelpublic1"></script>
-<script src="./js/main.js?v=20260624newsdeeplink1"></script>
+<script src="./js/main.js?v=20260720cohort1"></script>
 
 <!-- ── ДУЭЛЬ: экран вызова соперника ── -->
 <div id="duelChallengeModal" class="duel-modal">
