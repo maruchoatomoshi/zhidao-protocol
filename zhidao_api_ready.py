@@ -616,6 +616,7 @@ async def enforce_verified_cohort(
             (r"^/api/laundry/schedule/(\d+)", "laundry_schedule"),
             (r"^/api/laundry/(\d+)$", "laundry"),
             (r"^/api/water/schedule/(\d+)", "water_schedule"),
+            (r"^/api/duel/(\d+)", "duels"),
         )
         for pattern, table_name in resource_checks:
             match = re.match(pattern, path)
@@ -3342,6 +3343,7 @@ def init_db():
                   opponent_id INTEGER NOT NULL,
                   stake INTEGER NOT NULL,
                   status TEXT NOT NULL DEFAULT 'pending',
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing',
                   challenger_hp INTEGER NOT NULL DEFAULT 100,
                   opponent_hp INTEGER NOT NULL DEFAULT 100,
                   challenger_ready INTEGER NOT NULL DEFAULT 0,
@@ -3360,6 +3362,7 @@ def init_db():
                   finished_at TEXT DEFAULT NULL)''')
     c.execute("CREATE INDEX IF NOT EXISTS idx_duels_opponent ON duels(opponent_id, status)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_duels_challenger ON duels(challenger_id, status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_duels_cohort ON duels(cohort_code, status)")
     conn.commit()
     conn.close()
 
@@ -3604,7 +3607,7 @@ def migrate_db():
         "schedule", "announcements", "community_shop_proposals", "laundry",
         "raids", "laundry_schedule", "water_schedule", "events",
         "daily_checks", "admin_action_logs", "contracts", "gift_codes",
-        "global_alerts", "expected_students",
+        "global_alerts", "expected_students", "duels",
     )
     for table_name in cohort_tables:
         c.execute(f"PRAGMA table_info({table_name})")
@@ -3614,6 +3617,16 @@ def migrate_db():
                 f"ALTER TABLE {table_name} "
                 "ADD COLUMN cohort_code TEXT NOT NULL DEFAULT 'beijing'"
             )
+
+    c.execute(
+        """UPDATE duels
+           SET cohort_code=COALESCE(
+             (SELECT u.cohort_code
+              FROM users u
+              WHERE u.telegram_id=duels.challenger_id),
+             'beijing'
+           )"""
+    )
 
     # The legacy laundry table had a global UNIQUE(date, time), which would
     # still make identical Beijing/MJU slots conflict. Rebuild it once with the
@@ -8247,7 +8260,6 @@ async def redeem_gift_code(data: dict):
     code = str(data.get("code") or "").strip().upper()
     if not code:
         raise HTTPException(status_code=400, detail="Code required")
-
     if _gift_code_attempt_locked_out(telegram_id):
         raise HTTPException(status_code=429, detail="Too many attempts, try again later")
 
@@ -8255,7 +8267,13 @@ async def redeem_gift_code(data: dict):
         conn = get_conn()
         try:
             c = conn.cursor()
-            c.execute("SELECT reward_stars, max_uses, used_count, expires_at FROM gift_codes WHERE code=?", (code,))
+            cohort_code = get_user_cohort(c, telegram_id)
+            c.execute(
+                """SELECT reward_stars, max_uses, used_count, expires_at
+                   FROM gift_codes
+                   WHERE code=? AND cohort_code=?""",
+                (code, cohort_code),
+            )
             row = c.fetchone()
             if not row:
                 return {"error": "Code not found", "status": 404}
@@ -8268,20 +8286,31 @@ async def redeem_gift_code(data: dict):
                 return {"error": "Code exhausted", "status": 410}
 
             c.execute(
-                "INSERT OR IGNORE INTO gift_code_redemptions (telegram_id, code, redeemed_at) VALUES (?,?,?)",
+                "INSERT OR IGNORE INTO gift_code_redemptions "
+                "(telegram_id, code, redeemed_at) VALUES (?,?,?)",
                 (telegram_id, code, now_iso()),
             )
             if c.rowcount == 0:
                 return {"error": "Already redeemed", "status": 409}
 
-            c.execute("UPDATE gift_codes SET used_count = used_count + 1 WHERE code=?", (code,))
-            c.execute("UPDATE users SET points = COALESCE(points, 0) + ? WHERE telegram_id=?", (reward_stars, telegram_id))
+            c.execute(
+                "UPDATE gift_codes SET used_count=used_count+1 "
+                "WHERE code=? AND cohort_code=?",
+                (code, cohort_code),
+            )
+            c.execute(
+                "UPDATE users SET points=COALESCE(points,0)+? WHERE telegram_id=?",
+                (reward_stars, telegram_id),
+            )
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             urow = c.fetchone()
             if not urow:
                 return {"error": "User not found", "status": 404}
             new_points = urow[0]
-            log_economy(c, telegram_id, 'gift_code', reward_stars, new_points, reference_type='gift_code', note=code)
+            log_economy(
+                c, telegram_id, 'gift_code', reward_stars, new_points,
+                reference_type='gift_code', note=code,
+            )
             conn.commit()
             return {"reward_stars": reward_stars, "new_points": new_points}
         finally:
@@ -8292,13 +8321,20 @@ async def redeem_gift_code(data: dict):
         if result["status"] == 404:
             _gift_code_record_failed_attempt(telegram_id)
         raise HTTPException(status_code=result["status"], detail=result["error"])
-
     _gift_code_clear_failed_attempts(telegram_id)
-    return {"success": True, "reward_stars": result["reward_stars"], "new_points": result["new_points"]}
+    return {
+        "success": True,
+        "reward_stars": result["reward_stars"],
+        "new_points": result["new_points"],
+    }
 
 
 @app.post("/api/admin/gift-code")
-async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def admin_create_gift_code(
+    data: dict,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -8321,13 +8357,34 @@ async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(
         conn = get_conn()
         try:
             c = conn.cursor()
+            cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+            c.execute("SELECT cohort_code FROM gift_codes WHERE code=?", (code,))
+            existing = c.fetchone()
+            if existing and normalize_cohort_code(existing[0]) != cohort_code:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Этот код уже используется в другом контуре",
+                )
             c.execute(
-                '''INSERT OR REPLACE INTO gift_codes (code, reward_stars, max_uses, used_count, expires_at, created_at, note, show_at)
-                   VALUES (?, ?, ?, COALESCE((SELECT used_count FROM gift_codes WHERE code=?), 0), ?, ?, ?, ?)''',
-                (code, reward_stars, max_uses, code, expires_at, now_iso(), note, show_at),
+                """INSERT OR REPLACE INTO gift_codes
+                   (code, reward_stars, max_uses, used_count, expires_at,
+                    created_at, note, show_at, cohort_code)
+                   VALUES (
+                     ?, ?, ?,
+                     COALESCE(
+                       (SELECT used_count FROM gift_codes
+                        WHERE code=? AND cohort_code=?),
+                       0
+                     ),
+                     ?, ?, ?, ?, ?
+                   )""",
+                (
+                    code, reward_stars, max_uses, code, cohort_code,
+                    expires_at, now_iso(), note, show_at, cohort_code,
+                ),
             )
             conn.commit()
-            return {"success": True}
+            return {"success": True, "cohort_code": cohort_code}
         finally:
             conn.close()
 
@@ -8335,40 +8392,83 @@ async def admin_create_gift_code(data: dict, x_admin_id: Optional[int] = Header(
 
 
 @app.get("/api/gift-code/active")
-def get_active_gift_code():
+def get_active_gift_code(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(
+        c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+    )
     now_dt = datetime.now(BEIJING_TZ)
     now = now_dt.strftime('%Y-%m-%d %H:%M:%S')
     window_end = (now_dt - timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
     c.execute(
-        "SELECT code, reward_stars, max_uses, used_count FROM gift_codes "
-        "WHERE show_at IS NOT NULL AND show_at <= ? AND show_at >= ? AND used_count < max_uses "
-        "AND (expires_at IS NULL OR expires_at > ?) ORDER BY show_at DESC LIMIT 1",
-        (now, window_end, now)
+        """SELECT code, reward_stars, max_uses, used_count
+           FROM gift_codes
+           WHERE cohort_code=?
+             AND show_at IS NOT NULL
+             AND show_at<=?
+             AND show_at>=?
+             AND used_count<max_uses
+             AND (expires_at IS NULL OR expires_at>?)
+           ORDER BY show_at DESC
+           LIMIT 1""",
+        (cohort_code, now, window_end, now),
     )
     row = c.fetchone()
     conn.close()
     if not row:
-        return {"active": False}
-    return {"active": True, "code": row[0], "reward_stars": row[1], "max_uses": row[2], "used_count": row[3]}
+        return {"active": False, "cohort_code": cohort_code}
+    return {
+        "active": True,
+        "code": row[0],
+        "reward_stars": row[1],
+        "max_uses": row[2],
+        "used_count": row[3],
+        "cohort_code": cohort_code,
+    }
 
 
 @app.get("/api/admin/gift-code")
-def admin_list_gift_codes(x_admin_id: Optional[int] = Header(None)):
+def admin_list_gift_codes(
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT code, reward_stars, max_uses, used_count, expires_at, created_at, note, show_at FROM gift_codes ORDER BY created_at DESC")
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+    c.execute(
+        """SELECT code, reward_stars, max_uses, used_count, expires_at,
+                  created_at, note, show_at
+           FROM gift_codes
+           WHERE cohort_code=?
+           ORDER BY created_at DESC""",
+        (cohort_code,),
+    )
     rows = c.fetchall()
-
-    return {"codes": [
-        {"code": r[0], "reward_stars": r[1], "max_uses": r[2], "used_count": r[3], "expires_at": r[4], "created_at": r[5], "note": r[6], "show_at": r[7]}
-        for r in rows
-    ]}
-
+    conn.close()
+    return {
+        "cohort_code": cohort_code,
+        "codes": [
+            {
+                "code": row[0],
+                "reward_stars": row[1],
+                "max_uses": row[2],
+                "used_count": row[3],
+                "expires_at": row[4],
+                "created_at": row[5],
+                "note": row[6],
+                "show_at": row[7],
+            }
+            for row in rows
+        ],
+    }
 
 @app.post("/api/admin/tianhao-fact")
 async def admin_create_tianhao_fact(data: dict, x_admin_id: Optional[int] = Header(None)):
@@ -14714,6 +14814,8 @@ def _public_duel_state(duel: dict, viewer_id):
     conn.close()
 
     role = _duel_role(duel, viewer_id)
+    if not role:
+        raise HTTPException(status_code=403, detail="Ты не участник этой дуэли")
     you_ch = role == "challenger"
     opp_id = duel["opponent_id"] if you_ch else duel["challenger_id"]
     you_id = duel["challenger_id"] if you_ch else duel["opponent_id"]
@@ -14794,8 +14896,7 @@ async def duel_challenge(data: dict):
             raise HTTPException(status_code=403, detail="Дуэли пока доступны только админам")
         conn = get_conn()
         c = conn.cursor()
-        if challenger_id not in GLOBAL_ADMIN_IDS:
-            require_same_user_cohort(c, challenger_id, opponent_id)
+        require_same_user_cohort(c, challenger_id, opponent_id)
         c.execute(
             "SELECT telegram_id, full_name, COALESCE(points,0) FROM users WHERE telegram_id IN (?,?)",
             (challenger_id, opponent_id),
@@ -14830,9 +14931,10 @@ async def duel_challenge(data: dict):
             raise HTTPException(status_code=409, detail="Соперник сейчас в бою")
         now = now_iso()
         c.execute(
-            "INSERT INTO duels (challenger_id, opponent_id, stake, status, created_at, updated_at) "
-            "VALUES (?,?,?, 'pending', ?, ?)",
-            (challenger_id, opponent_id, stake, now, now),
+            "INSERT INTO duels "
+            "(challenger_id, opponent_id, stake, status, cohort_code, created_at, updated_at) "
+            "VALUES (?,?,?, 'pending', ?, ?, ?)",
+            (challenger_id, opponent_id, stake, get_user_cohort(c, challenger_id), now, now),
         )
         duel_id = c.lastrowid
         conn.commit()
