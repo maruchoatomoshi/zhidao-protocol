@@ -14,12 +14,21 @@ function isApiRequest(input) {
 function withTelegramAuthHeaders(input, options = {}) {
   if (!isApiRequest(input)) return options;
 
-  const initData = getTelegramInitData();
-  if (!initData) return options;
-
   const headers = new Headers(options.headers || {});
-  if (!headers.has('X-Telegram-Init-Data')) {
+  const initData = getTelegramInitData();
+  if (initData && !headers.has('X-Telegram-Init-Data')) {
     headers.set('X-Telegram-Init-Data', initData);
+  }
+
+  if (currentUserId) {
+    const identityHeader = isAdmin ? 'X-Admin-Id' : 'X-Telegram-Id';
+    if (!headers.has(identityHeader)) {
+      headers.set(identityHeader, String(currentUserId));
+    }
+  }
+
+  if (typeof getActiveCohortCode === 'function' && !headers.has('X-Cohort-Code')) {
+    headers.set('X-Cohort-Code', getActiveCohortCode());
   }
 
   return { ...options, headers };
