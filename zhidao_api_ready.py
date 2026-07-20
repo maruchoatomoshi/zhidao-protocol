@@ -215,6 +215,19 @@ def load_expected_student_names() -> list[str]:
 
 ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
 ARCHITECT_IDS = parse_int_list_env("ARCHITECT_IDS") or [-1]
+
+COHORT_BEIJING = "beijing"
+COHORT_MJU = "mju"
+COHORT_CODES = {COHORT_BEIJING, COHORT_MJU}
+MJU_ADMIN_IDS = frozenset(parse_int_list_env("MJU_ADMIN_IDS") or [244487659])
+MJU_MEMBER_IDS = frozenset({
+    5024821858, 5243992893, 5043234233, 5270862724, 1049679249,
+    7366133308, 5973073048, 1324443747, 2055808907, 1295956600,
+    244487659, 5983453551, 5306057873, 1541846222, 5220506877,
+    5455635461, 5112589598, 5245376585, 5718009801, 5581257126,
+    6480285200, 1192650264,
+})
+GLOBAL_ADMIN_IDS = frozenset(set(ADMIN_IDS) - set(MJU_ADMIN_IDS))
 # Sanctioned accounts stay usable, but never appear in competitive rankings.
 # Override through FLATLINED_IDS when the roster changes.
 FLATLINED_IDS = frozenset(
@@ -407,6 +420,7 @@ def extract_path_telegram_id(path: str) -> Optional[int]:
         r"^/api/shop/inventory/(\d+)$",
         r"^/api/cards/(\d+)$",
         r"^/api/diary/(\d+)(?:/[^/]+)?$",
+        r"^/api/diary/architect/(\d+)$",
     ]
     for pattern in protected_patterns:
         match = re.match(pattern, path)
@@ -525,6 +539,108 @@ async def enforce_verified_user_identity(request: Request, verified_id: Optional
     return None
 
 
+async def enforce_verified_cohort(
+    request: Request,
+    verified_id: Optional[int],
+    is_admin_request: bool,
+):
+    if not verified_id:
+        return None
+
+    requested_cohort = request.headers.get("x-cohort-code")
+    conn = get_conn()
+    try:
+        c = conn.cursor()
+        viewer_cohort = resolve_viewer_cohort(c, verified_id, requested_cohort)
+        request.state.cohort_code = viewer_cohort
+
+        candidate_ids = []
+        path = request.url.path
+        for pattern in (
+            r"^/api/admin/user/(\d+)/dossier$",
+            r"^/api/diary/(\d+)(?:/[^/]+)?$",
+        r"^/api/diary/architect/(\d+)$",
+            r"^/api/duel/(?:incoming|current|opponents)/(\d+)$",
+        ):
+            match = re.match(pattern, path)
+            if match:
+                candidate_ids.append(int(match.group(1)))
+
+        for key in ("telegram_id", "caller_id"):
+            value = request.query_params.get(key)
+            if value:
+                try:
+                    candidate_ids.append(int(value))
+                except ValueError:
+                    return auth_error_response(request, f"Invalid {key}", 400)
+
+        body = None
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            if "application/json" in request.headers.get("content-type", ""):
+                try:
+                    body = await request.json()
+                except Exception:
+                    body = None
+        if isinstance(body, dict):
+            for key in (
+                "telegram_id", "target_id", "to_id", "from_id", "opponent_id",
+                "challenger_id", "creator_id", "assignee_id", "user_id",
+            ):
+                value = body.get(key)
+                if value is None:
+                    continue
+                try:
+                    candidate_ids.append(int(value))
+                except (TypeError, ValueError):
+                    return auth_error_response(request, f"Invalid {key}", 400)
+
+        for candidate_id in set(candidate_ids):
+            if candidate_id == verified_id:
+                continue
+            target_cohort = get_user_cohort(c, candidate_id)
+            if target_cohort != viewer_cohort:
+                return auth_error_response(
+                    request,
+                    "Пользователь находится в другом контуре",
+                    403,
+                )
+
+        resource_checks = (
+            (r"^/api/events/(\d+)", "events"),
+            (r"^/api/contracts/(\d+)", "contracts"),
+            (r"^/api/admin/contracts/(\d+)", "contracts"),
+            (r"^/api/announcements/(\d+)", "announcements"),
+            (r"^/api/schedule/(\d+)", "schedule"),
+            (r"^/api/community-shop/proposals/(\d+)", "community_shop_proposals"),
+            (r"^/api/admin/community-shop/proposals/(\d+)", "community_shop_proposals"),
+            (r"^/api/laundry/schedule/(\d+)", "laundry_schedule"),
+            (r"^/api/laundry/(\d+)$", "laundry"),
+            (r"^/api/water/schedule/(\d+)", "water_schedule"),
+        )
+        for pattern, table_name in resource_checks:
+            match = re.match(pattern, path)
+            if not match:
+                continue
+            c.execute(
+                f"SELECT cohort_code FROM {table_name} WHERE id=?",
+                (int(match.group(1)),),
+            )
+            row = c.fetchone()
+            if row and normalize_cohort_code(row[0]) != viewer_cohort:
+                return auth_error_response(request, "Ресурс находится в другом контуре", 403)
+            break
+
+        if isinstance(body, dict) and body.get("event_id"):
+            c.execute("SELECT cohort_code FROM events WHERE id=?", (int(body["event_id"]),))
+            row = c.fetchone()
+            if row and normalize_cohort_code(row[0]) != viewer_cohort:
+                return auth_error_response(request, "Ивент находится в другом контуре", 403)
+    finally:
+        conn.close()
+
+    return None
+
+
 def _log_telegram_auth(request: Request, verified_id: Optional[int], reason: str):
     request_id = getattr(request.state, "request_id", "-")
     init_data = request.headers.get("x-telegram-init-data", "")
@@ -564,14 +680,20 @@ async def telegram_auth_middleware(request: Request, call_next):
         _log_telegram_auth(request, verified_id, "missing_or_invalid_init_data")
         return auth_error_response(request, "Telegram auth required", 401)
 
+    verified_admin = is_verified_admin_request(request, verified_id)
     identity_error = await enforce_verified_user_identity(
         request,
         verified_id,
-        is_verified_admin_request(request, verified_id),
+        verified_admin,
     )
     if identity_error:
         _log_telegram_auth(request, verified_id, "identity_mismatch")
         return identity_error
+
+    cohort_error = await enforce_verified_cohort(request, verified_id, verified_admin)
+    if cohort_error:
+        _log_telegram_auth(request, verified_id, "cohort_mismatch")
+        return cohort_error
 
     if TELEGRAM_AUTH_DEBUG_LOG and extract_path_telegram_id(request.url.path) is not None:
         _log_telegram_auth(request, verified_id, "ok")
@@ -2648,6 +2770,86 @@ def _open_raw_conn():
     return conn
 
 
+def normalize_cohort_code(value: Optional[str], default: str = COHORT_BEIJING) -> str:
+    code = str(value or "").strip().lower()
+    return code if code in COHORT_CODES else default
+
+
+def cohort_setting_key(key: str, cohort_code: str) -> str:
+    return f"{normalize_cohort_code(cohort_code)}:{key}"
+
+
+def get_cohort_setting(c, key: str, cohort_code: str, default: Optional[str] = None):
+    cohort_code = normalize_cohort_code(cohort_code)
+    c.execute("SELECT value FROM settings WHERE key=?", (cohort_setting_key(key, cohort_code),))
+    row = c.fetchone()
+    if row:
+        return row[0]
+    if cohort_code == COHORT_BEIJING:
+        c.execute("SELECT value FROM settings WHERE key=?", (key,))
+        legacy = c.fetchone()
+        if legacy:
+            return legacy[0]
+    return default
+
+
+def set_cohort_setting(c, key: str, value, cohort_code: str):
+    c.execute(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+        (cohort_setting_key(key, cohort_code), str(value)),
+    )
+
+
+def get_user_cohort(c, telegram_id: Optional[int]) -> str:
+    if telegram_id in MJU_MEMBER_IDS or telegram_id in MJU_ADMIN_IDS:
+        return COHORT_MJU
+    if not telegram_id:
+        return COHORT_BEIJING
+    c.execute("SELECT cohort_code FROM users WHERE telegram_id=?", (int(telegram_id),))
+    row = c.fetchone()
+    return normalize_cohort_code(row[0] if row else None)
+
+
+def resolve_viewer_cohort(
+    c,
+    viewer_id: Optional[int],
+    requested_cohort: Optional[str] = None,
+) -> str:
+    if viewer_id in MJU_ADMIN_IDS:
+        return COHORT_MJU
+    if viewer_id in GLOBAL_ADMIN_IDS:
+        return normalize_cohort_code(requested_cohort)
+    return get_user_cohort(c, viewer_id)
+
+
+def require_target_cohort(
+    c,
+    viewer_id: Optional[int],
+    target_id: Optional[int],
+    requested_cohort: Optional[str] = None,
+) -> str:
+    viewer_cohort = resolve_viewer_cohort(c, viewer_id, requested_cohort)
+    target_cohort = get_user_cohort(c, target_id)
+    if target_cohort != viewer_cohort:
+        raise HTTPException(status_code=403, detail="Пользователь находится в другом контуре")
+    return viewer_cohort
+
+
+def require_same_user_cohort(c, first_id: Optional[int], second_id: Optional[int]) -> str:
+    first_cohort = get_user_cohort(c, first_id)
+    second_cohort = get_user_cohort(c, second_id)
+    if first_cohort != second_cohort:
+        raise HTTPException(status_code=403, detail="Межконтурное взаимодействие запрещено")
+    return first_cohort
+
+
+def get_request_actor_id(
+    x_telegram_id: Optional[int] = None,
+    x_admin_id: Optional[int] = None,
+) -> Optional[int]:
+    return x_admin_id if x_admin_id in ADMIN_IDS else x_telegram_id
+
+
 def get_conn():
     """Return a _PersistentConn wrapping the thread-local raw connection.
 
@@ -2769,15 +2971,18 @@ def init_db():
                   avatar_url TEXT DEFAULT NULL,
                   room_number TEXT DEFAULT NULL,
                   study_group TEXT DEFAULT NULL,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing',
                   points INTEGER DEFAULT 0,
                   rep_score INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS schedule
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  day TEXT, time TEXT, subject TEXT, location TEXT)''')
+                  day TEXT, time TEXT, subject TEXT, location TEXT,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing')''')
     c.execute('''CREATE TABLE IF NOT EXISTS announcements
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   text TEXT,
-                  created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing')''')
     c.execute('''CREATE TABLE IF NOT EXISTS announcement_reactions
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   announcement_id INTEGER,
@@ -2793,7 +2998,8 @@ def init_db():
                   created_at TEXT NOT NULL,
                   moderated_by INTEGER DEFAULT NULL,
                   moderated_at TEXT DEFAULT NULL,
-                  moderation_note TEXT DEFAULT NULL)''')
+                  moderation_note TEXT DEFAULT NULL,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing')''')
     c.execute('''CREATE TABLE IF NOT EXISTS community_shop_reactions
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   proposal_id INTEGER NOT NULL,
@@ -2821,6 +3027,7 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS laundry
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   date TEXT, time TEXT, telegram_id INTEGER, username TEXT,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing',
                   UNIQUE(date, time))''')
     c.execute('''CREATE TABLE IF NOT EXISTS casino_log
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -2911,7 +3118,8 @@ def init_db():
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   date TEXT, status TEXT DEFAULT 'open',
                   result TEXT DEFAULT NULL,
-                  created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing')''')
     c.execute('''CREATE TABLE IF NOT EXISTS raid_participants
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   raid_id INTEGER, telegram_id INTEGER,
@@ -2921,7 +3129,8 @@ def init_db():
                   day TEXT, time TEXT, note TEXT,
                   capacity INTEGER DEFAULT 1,
                   taken_by INTEGER DEFAULT NULL,
-                  created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing')''')
     c.execute('''CREATE TABLE IF NOT EXISTS laundry_bookings
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   slot_id INTEGER NOT NULL,
@@ -2932,7 +3141,8 @@ def init_db():
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   day TEXT, time TEXT, floor TEXT DEFAULT '', note TEXT,
                   capacity INTEGER DEFAULT 1,
-                  created_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing')''')
     c.execute('''CREATE TABLE IF NOT EXISTS water_bookings
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   slot_id INTEGER NOT NULL,
@@ -3038,7 +3248,8 @@ def init_db():
                   final_phase_deadline TEXT DEFAULT NULL,
                   vulnerability_until TEXT DEFAULT NULL,
                   overload_pressure INTEGER NOT NULL DEFAULT 0,
-                  created_at TEXT NOT NULL)''')
+                  created_at TEXT NOT NULL,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing')''')
     # Migrate: add mvp_user_id and extra_participants if not present
     try:
         c.execute("ALTER TABLE events ADD COLUMN mvp_user_id INTEGER DEFAULT NULL")
@@ -3175,6 +3386,14 @@ def migrate_db():
         c.execute("ALTER TABLE users ADD COLUMN study_group TEXT DEFAULT NULL")
     if 'rep_score' not in user_columns:
         c.execute("ALTER TABLE users ADD COLUMN rep_score INTEGER DEFAULT 0")
+    if 'cohort_code' not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN cohort_code TEXT NOT NULL DEFAULT 'beijing'")
+    c.execute("UPDATE users SET cohort_code='beijing'")
+    mju_placeholders = ",".join("?" for _ in MJU_MEMBER_IDS)
+    c.execute(
+        f"UPDATE users SET cohort_code='mju' WHERE telegram_id IN ({mju_placeholders})",
+        sorted(MJU_MEMBER_IDS),
+    )
 
     c.execute("PRAGMA table_info(shop_purchases)")
     shop_purchase_columns = {row[1] for row in c.fetchall()}
@@ -3379,7 +3598,78 @@ def migrate_db():
                   show_at TEXT NOT NULL,
                   created_at TEXT NOT NULL)''')
 
+    cohort_tables = (
+        "schedule", "announcements", "community_shop_proposals", "laundry",
+        "raids", "laundry_schedule", "water_schedule", "events",
+        "daily_checks", "admin_action_logs", "contracts", "gift_codes",
+        "global_alerts",
+    )
+    for table_name in cohort_tables:
+        c.execute(f"PRAGMA table_info({table_name})")
+        table_columns = {row[1] for row in c.fetchall()}
+        if table_columns and "cohort_code" not in table_columns:
+            c.execute(
+                f"ALTER TABLE {table_name} "
+                "ADD COLUMN cohort_code TEXT NOT NULL DEFAULT 'beijing'"
+            )
+
+    # The legacy laundry table had a global UNIQUE(date, time), which would
+    # still make identical Beijing/MJU slots conflict. Rebuild it once with the
+    # cohort included in the unique key.
+    c.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='laundry'")
+    laundry_sql_row = c.fetchone()
+    normalized_laundry_sql = re.sub(r"\s+", "", (laundry_sql_row[0] if laundry_sql_row else "")).upper()
+    if "UNIQUE(DATE,TIME)" in normalized_laundry_sql:
+        c.execute('''CREATE TABLE laundry_cohort_new
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      date TEXT,
+                      time TEXT,
+                      telegram_id INTEGER,
+                      username TEXT,
+                      cohort_code TEXT NOT NULL DEFAULT 'beijing',
+                      UNIQUE(date, time, cohort_code))''')
+        c.execute('''INSERT INTO laundry_cohort_new
+                     (id, date, time, telegram_id, username, cohort_code)
+                     SELECT id, date, time, telegram_id, username,
+                            COALESCE(NULLIF(cohort_code, ''), 'beijing')
+                     FROM laundry''')
+        c.execute("DROP TABLE laundry")
+        c.execute("ALTER TABLE laundry_cohort_new RENAME TO laundry")
+
+    for setting_key in (
+        "blackwall", "architect_event", "wildai_event", "mju_event",
+        "breach_until", "breach_seed",
+    ):
+        c.execute(
+            "INSERT OR IGNORE INTO settings (key, value) "
+            "SELECT ?, value FROM settings WHERE key=?",
+            (cohort_setting_key(setting_key, COHORT_BEIJING), setting_key),
+        )
+        c.execute(
+            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            (
+                cohort_setting_key(setting_key, COHORT_MJU),
+                "" if setting_key in {"breach_until", "breach_seed"} else "0",
+            ),
+        )
+
+    c.execute('''CREATE TABLE IF NOT EXISTS shop_daily_counts_cohort
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  item_code TEXT NOT NULL,
+                  date TEXT NOT NULL,
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing',
+                  count INTEGER DEFAULT 0,
+                  UNIQUE(item_code, date, cohort_code))''')
+    c.execute('''INSERT OR IGNORE INTO shop_daily_counts_cohort
+                 (item_code, date, cohort_code, count)
+                 SELECT item_code, date, 'beijing', count
+                 FROM shop_daily_counts''')
+
     c.execute("CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_users_cohort ON users(cohort_code, telegram_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_events_cohort ON events(cohort_code, state, code)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_raids_cohort ON raids(cohort_code, date, status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_daily_checks_cohort ON daily_checks(cohort_code, check_type, check_date)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_economy_log_telegram_id ON economy_log(telegram_id, created_at)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_user_implants_tid ON user_implants(telegram_id, implant_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_user_cards_tid ON user_cards(telegram_id, card_id)")
@@ -3599,13 +3889,17 @@ def ensure_seed_data():
     conn.close()
 
 
-def create_global_alert(alert_type: str, title: str, message: str):
+def create_global_alert(alert_type: str, title: str, message: str, cohort_code: str):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("UPDATE global_alerts SET is_active = 0 WHERE is_active = 1")
+    cohort_code = normalize_cohort_code(cohort_code)
     c.execute(
-        "INSERT INTO global_alerts (alert_type, title, message, created_at, is_active) VALUES (?, ?, ?, ?, 1)",
-        (alert_type, title, message, datetime.utcnow().isoformat()),
+        "UPDATE global_alerts SET is_active = 0 WHERE is_active = 1 AND cohort_code=?",
+        (cohort_code,),
+    )
+    c.execute(
+        "INSERT INTO global_alerts (alert_type, title, message, created_at, is_active, cohort_code) VALUES (?, ?, ?, ?, 1, ?)",
+        (alert_type, title, message, datetime.utcnow().isoformat(), cohort_code),
     )
     alert_id = c.lastrowid
     conn.commit()
@@ -3613,15 +3907,17 @@ def create_global_alert(alert_type: str, title: str, message: str):
     return alert_id
 
 
-def get_current_global_alert():
+def get_current_global_alert(cohort_code: str):
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = normalize_cohort_code(cohort_code)
     c.execute(
         '''SELECT id, alert_type, title, message, created_at, is_active
            FROM global_alerts
-           WHERE is_active = 1
+           WHERE is_active = 1 AND cohort_code=?
            ORDER BY id DESC
-           LIMIT 1'''
+           LIMIT 1''',
+        (cohort_code,),
     )
     row = c.fetchone()
     conn.close()
@@ -3759,15 +4055,15 @@ def new_manual_presence_session() -> str:
     return datetime.now(BEIJING_TZ).strftime('%Y-%m-%d__%H%M%S%f')
 
 
-def latest_manual_presence_session(c) -> Optional[str]:
+def latest_manual_presence_session(c, cohort_code: str) -> Optional[str]:
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     c.execute(
         '''SELECT check_date
            FROM daily_checks
-           WHERE check_type='manual' AND check_date LIKE ?
+           WHERE check_type='manual' AND check_date LIKE ? AND cohort_code=?
            ORDER BY check_date DESC
            LIMIT 1''',
-        (f"{today}__%",),
+        (f"{today}__%", normalize_cohort_code(cohort_code)),
     )
     row = c.fetchone()
     return row[0] if row else None
@@ -3810,12 +4106,13 @@ def fetch_presence_row(c, check_type: str, check_date: str, telegram_id: int):
 
 def ensure_presence_check(c, check_type: str, check_date: str, telegram_id: int, note: str = ""):
     now = now_iso()
+    cohort_code = get_user_cohort(c, telegram_id)
     c.execute(
         '''INSERT INTO daily_checks
-           (check_type, check_date, telegram_id, status, note, created_at, updated_at)
-           VALUES (?, ?, ?, 'pending', ?, ?, ?)
+           (check_type, check_date, telegram_id, status, note, created_at, updated_at, cohort_code)
+           VALUES (?, ?, ?, 'pending', ?, ?, ?, ?)
            ON CONFLICT(check_type, check_date, telegram_id) DO NOTHING''',
-        (check_type, check_date, telegram_id, note, now, now),
+        (check_type, check_date, telegram_id, note, now, now, cohort_code),
     )
     return fetch_presence_row(c, check_type, check_date, telegram_id)
 
@@ -3940,14 +4237,15 @@ async def send_telegram_message(chat_id: int, text: str, reply_markup: Optional[
         return True, await r.json()
 
 
-async def broadcast_announcement_to_telegram(text: str):
+async def broadcast_announcement_to_telegram(text: str, cohort_code: str):
     conn = get_conn()
     c = conn.cursor()
     c.execute(
         '''SELECT telegram_id
            FROM users
-           WHERE telegram_id IS NOT NULL
-           ORDER BY full_name COLLATE NOCASE'''
+           WHERE telegram_id IS NOT NULL AND cohort_code=?
+           ORDER BY full_name COLLATE NOCASE''',
+        (normalize_cohort_code(cohort_code),),
     )
     recipients = [int(row[0]) for row in c.fetchall() if row[0]]
     conn.close()
@@ -4071,7 +4369,7 @@ def fetch_event_row(c, event_id: int):
                   max_hp, current_hp, phase, state,
                   phase_started_at, started_at, ended_at, final_phase_deadline,
                   vulnerability_until, overload_pressure, created_at,
-                  mvp_user_id, extra_participants, pressure_tick_at
+                  mvp_user_id, extra_participants, pressure_tick_at, cohort_code
            FROM events WHERE id=?''',
         (event_id,),
     )
@@ -4107,6 +4405,7 @@ def fetch_event_row(c, event_id: int):
         "mvp_user_id": row[19],
         "extra_participants": extra,
         "pressure_tick_at": row[21],
+        "cohort_code": row[22] or COHORT_BEIJING,
     }
 
 
@@ -4215,24 +4514,30 @@ def apply_mju_phase_transitions(c, event_row: dict):
     return changed
 
 
-def activate_wildai_breach(c, admin_id: Optional[int] = None, reason: str = 'Wild AI Breach auto-triggered (system integrity restoration failed)', send_broadcast: bool = True):
+def activate_wildai_breach(
+    c,
+    admin_id: Optional[int] = None,
+    reason: str = 'Wild AI Breach auto-triggered (system integrity restoration failed)',
+    send_broadcast: bool = True,
+    cohort_code: str = COHORT_BEIJING,
+):
+    cohort_code = normalize_cohort_code(cohort_code)
     until = (datetime.utcnow() + timedelta(days=WILD_AI_BREACH_DURATION_DAYS)).isoformat()
     seed = random.randint(0, 999999)
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', ?)", (until,))
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', ?)", (str(seed),))
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '1')")
+    set_cohort_setting(c, 'breach_until', until, cohort_code)
+    set_cohort_setting(c, 'breach_seed', seed, cohort_code)
+    set_cohort_setting(c, 'blackwall', '1', cohort_code)
     phrase = WILD_AI_BREACH_PHRASES[seed % len(WILD_AI_BREACH_PHRASES)]
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_glitch', ?)", (phrase["glitch"],))
-    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_phrase_translation', ?)", (phrase["translation"],))
+    set_cohort_setting(c, 'breach_broadcast_phrase_glitch', phrase["glitch"], cohort_code)
+    set_cohort_setting(c, 'breach_broadcast_phrase_translation', phrase["translation"], cohort_code)
     if send_broadcast:
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_broadcast_pending', '1')")
+        set_cohort_setting(c, 'breach_broadcast_pending', '1', cohort_code)
     c.execute(
         '''INSERT INTO admin_action_logs
-           (admin_id, target_id, action_type, points_delta, reason, created_at)
-           VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
-        (admin_id if admin_id is not None else 0, reason, now_iso()),
+           (admin_id, target_id, action_type, points_delta, reason, created_at, cohort_code)
+           VALUES (?, NULL, 'wildai_breach', 0, ?, ?, ?)''',
+        (admin_id if admin_id is not None else 0, reason, now_iso(), cohort_code),
     )
-
 
 def distribute_architect_victory_rewards(c, event_id: int):
     c.execute("SELECT telegram_id FROM event_participants WHERE event_id=?", (event_id,))
@@ -4308,7 +4613,7 @@ def refresh_event_state(c, event_row: dict):
                 )
                 reason = "заражение достигло критического уровня" if infection_critical else "время истекло"
                 add_event_log(c, event_row["id"], "system", f"WILD AI BREACH: операция провалена — {reason}. Дикий ИИ закрепился в системе.")
-                activate_wildai_breach(c, send_broadcast=False)
+                activate_wildai_breach(c, send_broadcast=False, cohort_code=event_row.get('cohort_code', COHORT_BEIJING))
 
             if event_row["current_hp"] <= 0:
                 event_row["current_hp"] = 0
@@ -4453,13 +4758,20 @@ def get_event_snapshot(event_id: int):
 ARCHITECT_RESULT_VISIBLE_HOURS = 12
 
 
-def get_current_or_latest_event_id(event_code: Optional[str] = None):
+def get_current_or_latest_event_id(event_code: Optional[str] = None, cohort_code: str = COHORT_BEIJING):
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = normalize_cohort_code(cohort_code)
     if event_code:
-        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? ORDER BY id DESC", (event_code,))
+        c.execute(
+            "SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? AND cohort_code=? ORDER BY id DESC",
+            (event_code, cohort_code),
+        )
     else:
-        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
+        c.execute(
+            "SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND cohort_code=? ORDER BY id DESC",
+            (cohort_code,),
+        )
     rows = c.fetchall()
     row = None
     for candidate in rows:
@@ -4472,16 +4784,16 @@ def get_current_or_latest_event_id(event_code: Optional[str] = None):
     if row:
         conn.close()
         return row[0]
-    # No live event: keep showing the latest finished/failed one for a while
-    # so participants see the result screen instead of the standby lobby.
+
     if event_code:
         c.execute(
-            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') AND code=? ORDER BY id DESC LIMIT 1",
-            (event_code,)
+            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') AND code=? AND cohort_code=? ORDER BY id DESC LIMIT 1",
+            (event_code, cohort_code),
         )
     else:
         c.execute(
-            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') ORDER BY id DESC LIMIT 1"
+            "SELECT id, ended_at FROM events WHERE state IN ('FINISHED', 'FAILED') AND cohort_code=? ORDER BY id DESC LIMIT 1",
+            (cohort_code,),
         )
     terminal = c.fetchone()
     conn.close()
@@ -4492,13 +4804,20 @@ def get_current_or_latest_event_id(event_code: Optional[str] = None):
     return None
 
 
-def get_blocking_event_id(event_code: Optional[str] = None):
+def get_blocking_event_id(event_code: Optional[str] = None, cohort_code: str = COHORT_BEIJING):
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = normalize_cohort_code(cohort_code)
     if event_code:
-        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? ORDER BY id DESC", (event_code,))
+        c.execute(
+            "SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND code=? AND cohort_code=? ORDER BY id DESC",
+            (event_code, cohort_code),
+        )
     else:
-        c.execute("SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') ORDER BY id DESC")
+        c.execute(
+            "SELECT id FROM events WHERE state IN ('REGISTRATION', 'ACTIVE') AND cohort_code=? ORDER BY id DESC",
+            (cohort_code,),
+        )
     rows = c.fetchall()
     blocking_id = None
     for candidate in rows:
@@ -4510,7 +4829,6 @@ def get_blocking_event_id(event_code: Optional[str] = None):
     conn.commit()
     conn.close()
     return blocking_id
-
 
 def _event_question_payload(row):
     if not row:
@@ -5061,42 +5379,45 @@ def get_extra_raids(c, telegram_id: int) -> int:
     return row[0] if row else 0
 
 
-def user_raid_attempt_count(c, today: str, telegram_id: int) -> int:
+def user_raid_attempt_count(c, today: str, telegram_id: int, cohort_code: str) -> int:
     c.execute(
         '''SELECT COUNT(DISTINCT rp.raid_id)
            FROM raid_participants rp
            JOIN raids r ON r.id = rp.raid_id
-           WHERE rp.telegram_id=? AND r.date=?''',
-        (telegram_id, today),
+           WHERE rp.telegram_id=? AND r.date=? AND r.cohort_code=?''',
+        (telegram_id, today, cohort_code),
     )
     row = c.fetchone()
     return row[0] if row and row[0] is not None else 0
 
 
-def public_finished_raid_count(c, today: str) -> int:
+def public_finished_raid_count(c, today: str, cohort_code: str) -> int:
     placeholders = ','.join('?' * len(ADMIN_IDS))
     c.execute(
         f'''SELECT COUNT(DISTINCT r.id)
             FROM raids r
             JOIN raid_participants rp ON rp.raid_id = r.id
-            WHERE r.date=? AND r.status='finished'
+            WHERE r.date=? AND r.status='finished' AND r.cohort_code=?
             AND rp.telegram_id NOT IN ({placeholders})''',
-        [today] + ADMIN_IDS,
+        [today, cohort_code] + ADMIN_IDS,
     )
     row = c.fetchone()
     return row[0] if row and row[0] is not None else 0
 
 
-def latest_visible_raid(c, today: str, telegram_id: int):
+def latest_visible_raid(c, today: str, telegram_id: int, cohort_code: str):
     if telegram_id in ADMIN_IDS:
-        c.execute("SELECT id, status, result FROM raids WHERE date=? ORDER BY id DESC LIMIT 1", (today,))
+        c.execute(
+            "SELECT id, status, result FROM raids WHERE date=? AND cohort_code=? ORDER BY id DESC LIMIT 1",
+            (today, cohort_code),
+        )
         return c.fetchone()
 
     placeholders = ','.join('?' * len(ADMIN_IDS))
     c.execute(
         f'''SELECT r.id, r.status, r.result
             FROM raids r
-            WHERE r.date=?
+            WHERE r.date=? AND r.cohort_code=?
               AND (
                 r.status='open'
                 OR EXISTS (
@@ -5108,7 +5429,7 @@ def latest_visible_raid(c, today: str, telegram_id: int):
               )
             ORDER BY r.id DESC
             LIMIT 1''',
-        [today] + ADMIN_IDS,
+        [today, cohort_code] + ADMIN_IDS,
     )
     return c.fetchone()
 
@@ -5919,7 +6240,7 @@ def get_user_profile_dossier(telegram_id: int):
     c.execute(
         '''SELECT u.full_name, u.points, u.avatar_url, us.theme_path,
                   us.profile_showcase_kind, us.profile_showcase_code, u.rep_score, us.equipped_frame,
-                  us.wildai_mvp, u.study_group
+                  us.wildai_mvp, u.study_group, u.cohort_code
            FROM users u
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            WHERE u.telegram_id=?''',
@@ -5930,7 +6251,7 @@ def get_user_profile_dossier(telegram_id: int):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame, wildai_mvp, study_group = user_row
+    full_name, points, avatar_url, theme_path, manual_showcase_kind, manual_showcase_code, rep_score, equipped_frame, wildai_mvp, study_group, cohort_code = user_row
     if equipped_frame not in FRAME_IDS:
         equipped_frame = None
     points = points or 0
@@ -6042,9 +6363,10 @@ def get_user_profile_dossier(telegram_id: int):
             f'''SELECT COUNT(*) + 1
                 FROM users
                 WHERE telegram_id IS NOT NULL
+                  AND cohort_code=?
                   AND telegram_id NOT IN ({rank_placeholders})
                   AND points > ?''',
-            rank_excluded_ids + [points],
+            [normalize_cohort_code(cohort_code)] + rank_excluded_ids + [points],
         )
         leaderboard_rank = c.fetchone()[0]
     conn.close()
@@ -6118,6 +6440,7 @@ def get_user_profile_dossier(telegram_id: int):
         "theme_path": theme_path,
         "flatlined": telegram_id in FLATLINED_IDS,
         "study_group": study_group_payload(study_group),
+        "cohort_code": normalize_cohort_code(cohort_code),
         "admin_intro_variant": admin_intro_variant,
         "path_label": path_label,
         "rank": rank,
@@ -6641,8 +6964,12 @@ async def update_user_avatar(data: dict):
 
 
 @app.post("/api/global-alert")
-async def create_global_alert_endpoint(data: dict):
-    caller_id = data.get("telegram_id")
+async def create_global_alert_endpoint(
+    data: dict,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
+    caller_id = x_admin_id or data.get("telegram_id")
     if caller_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -6650,7 +6977,12 @@ async def create_global_alert_endpoint(data: dict):
     title = data.get("title") or "ARCHITECT ONLINE"
     message = data.get("message") or "Critical override detected."
 
-    alert_id = create_global_alert(alert_type, title, message)
+    conn = get_conn()
+    try:
+        cohort_code = resolve_viewer_cohort(conn.cursor(), caller_id, x_cohort_code)
+    finally:
+        conn.close()
+    alert_id = create_global_alert(alert_type, title, message, cohort_code)
     return {
         "success": True,
         "alert_id": alert_id,
@@ -6658,30 +6990,60 @@ async def create_global_alert_endpoint(data: dict):
 
 
 @app.get("/api/global-alert/current")
-async def get_global_alert_current():
+async def get_global_alert_current(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
+    conn = get_conn()
+    try:
+        cohort_code = resolve_viewer_cohort(
+            conn.cursor(), get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+        )
+    finally:
+        conn.close()
     return {
-        "alert": get_current_global_alert(),
+        "alert": get_current_global_alert(cohort_code),
     }
 
 
 @app.get("/api/schedule")
-def get_schedule():
+def get_schedule(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, day, time, subject, location FROM schedule ORDER BY day, time")
+    cohort_code = resolve_viewer_cohort(
+        c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+    )
+    c.execute(
+        "SELECT id, day, time, subject, location FROM schedule "
+        "WHERE cohort_code=? ORDER BY day, time",
+        (cohort_code,),
+    )
     rows = c.fetchall()
     conn.close()
     return [{"id": r[0], "day": r[1], "time": r[2], "subject": r[3], "location": r[4]} for r in rows]
 
 
 @app.post("/api/schedule")
-async def add_schedule(item: ScheduleItem, x_admin_id: Optional[int] = Header(None)):
+async def add_schedule(
+    item: ScheduleItem,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         conn = get_conn()
         c = conn.cursor()
-        c.execute("INSERT INTO schedule (day, time, subject, location) VALUES (?,?,?,?)", (item.day, item.time, item.subject, item.location))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        c.execute(
+            "INSERT INTO schedule (day, time, subject, location, cohort_code) VALUES (?,?,?,?,?)",
+            (item.day, item.time, item.subject, item.location, cohort_code),
+        )
         conn.commit()
         conn.close()
         return {"success": True}
@@ -6689,13 +7051,18 @@ async def add_schedule(item: ScheduleItem, x_admin_id: Optional[int] = Header(No
 
 
 @app.delete("/api/schedule/{item_id}")
-async def delete_schedule(item_id: int, x_admin_id: Optional[int] = Header(None)):
+async def delete_schedule(
+    item_id: int,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         conn = get_conn()
         c = conn.cursor()
-        c.execute("DELETE FROM schedule WHERE id=?", (item_id,))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        c.execute("DELETE FROM schedule WHERE id=? AND cohort_code=?", (item_id, cohort_code))
         conn.commit()
         conn.close()
         return {"success": True}
@@ -6703,17 +7070,32 @@ async def delete_schedule(item_id: int, x_admin_id: Optional[int] = Header(None)
 
 
 @app.get("/api/announcements")
-def get_announcements():
+def get_announcements(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, text, created_at FROM announcements ORDER BY created_at DESC LIMIT 10")
+    cohort_code = resolve_viewer_cohort(
+        c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+    )
+    c.execute(
+        "SELECT id, text, created_at FROM announcements "
+        "WHERE cohort_code=? ORDER BY created_at DESC LIMIT 10",
+        (cohort_code,),
+    )
     rows = c.fetchall()
     conn.close()
     return [{"id": r[0], "text": r[1], "created_at": r[2]} for r in rows]
 
 
 @app.post("/api/announcements")
-async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Header(None)):
+async def add_announcement(
+    item: Announcement,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     text = item.text.strip()
@@ -6724,7 +7106,11 @@ async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Heade
         conn = get_conn()
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO announcements (text) VALUES (?)", (text,))
+            cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+            c.execute(
+                "INSERT INTO announcements (text, cohort_code) VALUES (?,?)",
+                (text, cohort_code),
+            )
             announcement_id = c.lastrowid
             conn.commit()
             return announcement_id
@@ -6732,18 +7118,29 @@ async def add_announcement(item: Announcement, x_admin_id: Optional[int] = Heade
             conn.close()
 
     announcement_id = await db_write(_run)
-    telegram_delivery = await broadcast_announcement_to_telegram(text)
+    conn = get_conn()
+    cohort_code = resolve_viewer_cohort(conn.cursor(), x_admin_id, x_cohort_code)
+    conn.close()
+    telegram_delivery = await broadcast_announcement_to_telegram(text, cohort_code)
     return {"success": True, "id": announcement_id, "telegram_delivery": telegram_delivery}
 
 
 @app.delete("/api/announcements/{item_id}")
-async def delete_announcement(item_id: int, x_admin_id: Optional[int] = Header(None)):
+async def delete_announcement(
+    item_id: int,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         conn = get_conn()
         c = conn.cursor()
-        c.execute("DELETE FROM announcements WHERE id=?", (item_id,))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        c.execute(
+            "DELETE FROM announcements WHERE id=? AND cohort_code=?",
+            (item_id, cohort_code),
+        )
         conn.commit()
         conn.close()
         return {"success": True}
@@ -6788,7 +7185,13 @@ def _community_shop_demand(c, proposal_id: int):
     c.execute("SELECT emoji, COUNT(*) FROM community_shop_reactions WHERE proposal_id=? GROUP BY emoji", (proposal_id,))
     reaction_counts = {row[0]: row[1] for row in c.fetchall()}
     crown_count = reaction_counts.get(COMMUNITY_SHOP_VOTE_EMOJI, 0)
-    c.execute("SELECT COUNT(*) FROM users")
+    c.execute(
+        "SELECT cohort_code FROM community_shop_proposals WHERE id=?",
+        (proposal_id,),
+    )
+    proposal_row = c.fetchone()
+    proposal_cohort = normalize_cohort_code(proposal_row[0] if proposal_row else None)
+    c.execute("SELECT COUNT(*) FROM users WHERE cohort_code=?", (proposal_cohort,))
     total_users = c.fetchone()[0] or 0
     participation_pct = (crown_count / total_users) if total_users else 0.0
     demand_confirmed = crown_count >= COMMUNITY_SHOP_DEMAND_LIKES or participation_pct >= COMMUNITY_SHOP_DEMAND_PCT
@@ -6809,9 +7212,12 @@ async def community_shop_propose(data: dict):
         conn = get_conn()
         try:
             c = conn.cursor()
+            cohort_code = get_user_cohort(c, telegram_id)
             c.execute(
-                "INSERT INTO community_shop_proposals (telegram_id, title, description, created_at) VALUES (?,?,?,?)",
-                (telegram_id, title, description, now_iso()),
+                "INSERT INTO community_shop_proposals "
+                "(telegram_id, title, description, created_at, cohort_code) "
+                "VALUES (?,?,?,?,?)",
+                (telegram_id, title, description, now_iso(), cohort_code),
             )
             conn.commit()
             return {"success": True, "id": c.lastrowid}
@@ -6822,13 +7228,22 @@ async def community_shop_propose(data: dict):
 
 
 @app.get("/api/community-shop/proposals")
-def community_shop_proposals():
+def community_shop_proposals(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(
+        c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+    )
     c.execute(
         '''SELECT p.id, p.title, p.description, p.status, p.created_at, p.telegram_id, COALESCE(u.full_name, p.telegram_id)
            FROM community_shop_proposals p LEFT JOIN users u ON u.telegram_id = p.telegram_id
-           WHERE p.status != 'rejected' ORDER BY p.created_at DESC'''
+           WHERE p.status != 'rejected' AND p.cohort_code=?
+           ORDER BY p.created_at DESC''',
+        (cohort_code,),
     )
     rows = c.fetchall()
     result = []
@@ -6881,16 +7296,22 @@ async def community_shop_react(proposal_id: int, data: dict):
 
 
 @app.get("/api/admin/community-shop/proposals")
-def admin_community_shop_proposals(x_admin_id: Optional[int] = Header(None)):
+def admin_community_shop_proposals(
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
     c.execute(
         '''SELECT p.id, p.title, p.description, p.status, p.created_at, p.telegram_id,
                   COALESCE(u.full_name, p.telegram_id), p.moderation_note
            FROM community_shop_proposals p LEFT JOIN users u ON u.telegram_id = p.telegram_id
-           ORDER BY p.created_at DESC'''
+           WHERE p.cohort_code=?
+           ORDER BY p.created_at DESC''',
+        (cohort_code,),
     )
     rows = c.fetchall()
     result = []
@@ -6974,10 +7395,20 @@ async def admin_reject_community_shop_proposal(proposal_id: int, data: dict, x_a
 
 
 @app.get("/api/laundry")
-def get_laundry():
+def get_laundry(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, date, time, telegram_id, username FROM laundry ORDER BY date, time")
+    cohort_code = resolve_viewer_cohort(
+        c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+    )
+    c.execute(
+        "SELECT id, date, time, telegram_id, username FROM laundry WHERE cohort_code=? ORDER BY date, time",
+        (cohort_code,),
+    )
     rows = c.fetchall()
     conn.close()
     return [{"id": r[0], "date": r[1], "time": r[2], "telegram_id": r[3], "username": r[4]} for r in rows]
@@ -6988,7 +7419,11 @@ async def book_laundry(item: LaundryBook):
     def _run():
         conn = get_conn()
         c = conn.cursor()
-        c.execute("SELECT id FROM laundry WHERE date=? AND time=?", (item.date, item.time))
+        cohort_code = get_user_cohort(c, item.telegram_id)
+        c.execute(
+            "SELECT id FROM laundry WHERE date=? AND time=? AND cohort_code=?",
+            (item.date, item.time, cohort_code),
+        )
         if c.fetchone():
             conn.close()
             raise HTTPException(status_code=409, detail="Slot already booked")
@@ -6996,7 +7431,10 @@ async def book_laundry(item: LaundryBook):
         if c.fetchone():
             conn.close()
             raise HTTPException(status_code=409, detail="Already booked for this day")
-        c.execute("INSERT INTO laundry (date, time, telegram_id, username) VALUES (?,?,?,?)", (item.date, item.time, item.telegram_id, item.username))
+        c.execute(
+            "INSERT INTO laundry (date, time, telegram_id, username, cohort_code) VALUES (?,?,?,?,?)",
+            (item.date, item.time, item.telegram_id, item.username, cohort_code),
+        )
         diary_unlocked = []
         if unlock_diary_entry(c, item.telegram_id, "first_laundry"):
             diary_unlocked.append("first_laundry")
@@ -7030,7 +7468,7 @@ async def cancel_laundry(item_id: int, x_telegram_id: Optional[int] = Header(Non
 def get_points(telegram_id: int):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT points, full_name, rep_score FROM users WHERE telegram_id=?", (telegram_id,))
+    c.execute("SELECT points, full_name, rep_score, cohort_code FROM users WHERE telegram_id=?", (telegram_id,))
     result = c.fetchone()
     if not result:
         conn.close()
@@ -7042,6 +7480,7 @@ def get_points(telegram_id: int):
         "points": result[0] or 0,
         "full_name": result[1],
         "rep_score": result[2] or 0,
+        "cohort_code": normalize_cohort_code(result[3]),
         "double_win": status[0] if status else 0,
         "extra_cases": status[1] if status else 0,
         "immunity": status[2] if status else 0,
@@ -7052,23 +7491,28 @@ def get_points(telegram_id: int):
 
 
 @app.get("/api/admin/users")
-def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
+def admin_search_users(
+    q: str = "",
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     query = str(q or "").strip()
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
     if query and query.isdigit():
         like = f"%{query}%"
         c.execute(
             '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number, study_group
                FROM users
-               WHERE telegram_id IS NOT NULL
+               WHERE telegram_id IS NOT NULL AND cohort_code=?
                  AND (CAST(telegram_id AS TEXT) LIKE ? OR full_name LIKE ? OR marzban_username LIKE ?)
                ORDER BY points DESC
                LIMIT 20''',
-            (like, like, like),
+            (cohort_code, like, like, like),
         )
         rows = c.fetchall()
     elif query:
@@ -7078,8 +7522,9 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
         c.execute(
             '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number, study_group
                FROM users
-               WHERE telegram_id IS NOT NULL
+               WHERE telegram_id IS NOT NULL AND cohort_code=?
                ORDER BY points DESC''',
+            (cohort_code,),
         )
         needle = query.lower()
         rows = [
@@ -7090,9 +7535,10 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
         c.execute(
             '''SELECT telegram_id, full_name, marzban_username, points, avatar_url, room_number, study_group
                FROM users
-               WHERE telegram_id IS NOT NULL
+               WHERE telegram_id IS NOT NULL AND cohort_code=?
                ORDER BY points DESC
                LIMIT 20''',
+            (cohort_code,),
         )
         rows = c.fetchall()
     roommate_map = {}
@@ -7101,9 +7547,9 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
         c.execute(
             '''SELECT telegram_id, full_name, avatar_url
                FROM users
-               WHERE room_number=? AND telegram_id IS NOT NULL
+               WHERE room_number=? AND cohort_code=? AND telegram_id IS NOT NULL
                ORDER BY full_name COLLATE NOCASE''',
-            (room_number,),
+            (room_number, cohort_code),
         )
         roommate_map[room_number] = [
             {
@@ -7136,7 +7582,11 @@ def admin_search_users(q: str = "", x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/user/room")
-async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def admin_update_user_room(
+    data: dict,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
@@ -7152,6 +7602,7 @@ async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(
 
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = require_target_cohort(c, x_admin_id, telegram_id, x_cohort_code)
         c.execute("SELECT full_name FROM users WHERE telegram_id=?", (telegram_id,))
         target = c.fetchone()
         if not target:
@@ -7168,10 +7619,11 @@ async def admin_update_user_room(data: dict, x_admin_id: Optional[int] = Header(
                 '''SELECT telegram_id, full_name, avatar_url
                    FROM users
                    WHERE room_number=?
+                     AND cohort_code=?
                      AND telegram_id IS NOT NULL
                      AND telegram_id != ?
                    ORDER BY full_name COLLATE NOCASE''',
-                (room_number, telegram_id),
+                (room_number, cohort_code, telegram_id),
             )
             roommates = [
                 {
@@ -7281,12 +7733,17 @@ async def admin_reset_user_avatar(data: dict, x_admin_id: Optional[int] = Header
 
 
 @app.get("/api/admin/user/{telegram_id}/dossier")
-def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None)):
+def admin_user_dossier(
+    telegram_id: int,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = require_target_cohort(c, x_admin_id, telegram_id, x_cohort_code)
     c.execute(
         '''SELECT u.telegram_id, u.full_name, u.marzban_username, u.points,
                   u.avatar_url, u.room_number, u.study_group, us.theme_path, u.rep_score
@@ -7307,10 +7764,11 @@ def admin_user_dossier(telegram_id: int, x_admin_id: Optional[int] = Header(None
             '''SELECT telegram_id, full_name, avatar_url
                FROM users
                WHERE room_number=?
+                 AND cohort_code=?
                  AND telegram_id IS NOT NULL
                  AND telegram_id != ?
                ORDER BY full_name COLLATE NOCASE''',
-            (room_number, telegram_id),
+            (room_number, cohort_code, telegram_id),
         )
         roommates = [
             {
@@ -8125,22 +8583,28 @@ async def trip_quiz_submit(data: dict):
 
 
 @app.get("/api/admin/actions")
-def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(None)):
+def admin_action_log(
+    limit: int = 30,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     safe_limit = max(1, min(int(limit or 30), 100))
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
     c.execute(
         '''SELECT l.id, l.admin_id, au.full_name, l.target_id, tu.full_name,
                   l.action_type, l.points_delta, l.reason, l.created_at
            FROM admin_action_logs l
            LEFT JOIN users au ON au.telegram_id = l.admin_id
            LEFT JOIN users tu ON tu.telegram_id = l.target_id
+           WHERE COALESCE(tu.cohort_code, au.cohort_code, l.cohort_code, 'beijing')=?
            ORDER BY l.id DESC
            LIMIT ?''',
-        (safe_limit,),
+        (cohort_code, safe_limit),
     )
     rows = c.fetchall()
     conn.close()
@@ -8163,7 +8627,11 @@ def admin_action_log(limit: int = 30, x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/presence/start")
-async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def start_presence_check(
+    data: dict,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
@@ -8175,6 +8643,7 @@ async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(No
 
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
         if target_ids:
             ids = []
             for raw_id in target_ids:
@@ -8182,15 +8651,19 @@ async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(No
                     ids.append(int(raw_id))
                 except (TypeError, ValueError):
                     continue
-            ids = [tid for tid in ids if tid not in ADMIN_IDS]
+            ids = [
+                tid for tid in ids
+                if tid not in ADMIN_IDS and get_user_cohort(c, tid) == cohort_code
+            ]
         else:
             placeholders = ','.join('?' * len(ADMIN_IDS))
             c.execute(
                 f'''SELECT telegram_id
                     FROM users
                     WHERE telegram_id IS NOT NULL
-                      AND telegram_id NOT IN ({placeholders})''',
-                ADMIN_IDS,
+                      AND telegram_id NOT IN ({placeholders})
+                      AND cohort_code=?''',
+                ADMIN_IDS + [cohort_code],
             )
             ids = [row[0] for row in c.fetchall()]
 
@@ -8211,7 +8684,11 @@ async def start_presence_check(data: dict, x_admin_id: Optional[int] = Header(No
 
 
 @app.post("/api/presence/admin/dispatch")
-async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def dispatch_presence_check(
+    data: dict,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -8225,6 +8702,7 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
         conn = get_conn()
         c = conn.cursor()
         try:
+            cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
             if target_ids:
                 ids = []
                 for raw_id in target_ids:
@@ -8232,15 +8710,19 @@ async def dispatch_presence_check(data: dict, x_admin_id: Optional[int] = Header
                         ids.append(int(raw_id))
                     except (TypeError, ValueError):
                         continue
-                ids = [tid for tid in ids if tid not in ADMIN_IDS]
+                ids = [
+                    tid for tid in ids
+                    if tid not in ADMIN_IDS and get_user_cohort(c, tid) == cohort_code
+                ]
             else:
                 placeholders = ','.join('?' * len(ADMIN_IDS))
                 c.execute(
                     f'''SELECT telegram_id
                         FROM users
                         WHERE telegram_id IS NOT NULL
-                          AND telegram_id NOT IN ({placeholders})''',
-                    ADMIN_IDS,
+                          AND telegram_id NOT IN ({placeholders})
+                          AND cohort_code=?''',
+                    ADMIN_IDS + [cohort_code],
                 )
                 ids = [row[0] for row in c.fetchall()]
 
@@ -8685,7 +9167,11 @@ async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header
 
 
 @app.post("/api/presence/admin/cancel")
-async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def cancel_presence_check(
+    data: dict,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
@@ -8696,9 +9182,10 @@ async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(N
 
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
         check_date = str(data.get("check_date") or "").strip()
         if not check_date and check_type == "manual":
-            check_date = latest_manual_presence_session(c) or normalize_presence_date()
+            check_date = latest_manual_presence_session(c, cohort_code) or normalize_presence_date()
         else:
             check_date = normalize_presence_date(check_date)
         c.execute(
@@ -8708,8 +9195,9 @@ async def cancel_presence_check(data: dict, x_admin_id: Optional[int] = Header(N
                    updated_at=?
                WHERE check_type=?
                  AND check_date=?
-                 AND status IN ('pending', 'leave_requested', 'leave_rejected', 'needs_attention')''',
-            (reason, now, check_type, check_date),
+                 AND status IN ('pending', 'leave_requested', 'leave_rejected', 'needs_attention')
+                 AND cohort_code=?''',
+            (reason, now, check_type, check_date, cohort_code),
         )
         cancelled = c.rowcount
         c.execute(
@@ -8860,15 +9348,21 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
 
 
 @app.get("/api/presence/admin/overview")
-def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
+def presence_admin_overview(
+    check_type: str,
+    check_date: Optional[str] = None,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     check_type = normalize_presence_check_type(check_type)
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
     if not check_date and check_type == "manual":
-        check_date = latest_manual_presence_session(c) or normalize_presence_date()
+        check_date = latest_manual_presence_session(c, cohort_code) or normalize_presence_date()
     else:
         check_date = normalize_presence_date(check_date)
     c.execute(
@@ -8878,7 +9372,7 @@ def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x
                   dc.penalty_points, dc.note, u.points, u.room_number
            FROM daily_checks dc
            LEFT JOIN users u ON u.telegram_id = dc.telegram_id
-           WHERE dc.check_type=? AND dc.check_date=?
+           WHERE dc.check_type=? AND dc.check_date=? AND dc.cohort_code=?
            ORDER BY
              CASE dc.status
                WHEN 'needs_attention' THEN 1
@@ -8889,7 +9383,7 @@ def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x
                ELSE 9
              END,
              u.full_name COLLATE NOCASE''',
-        (check_type, check_date),
+        (check_type, check_date, cohort_code),
     )
     checks = []
     for row in c.fetchall():
@@ -8909,15 +9403,21 @@ def presence_admin_overview(check_type: str, check_date: Optional[str] = None, x
 
 
 @app.get("/api/diary/admin/overview")
-def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Optional[int] = Header(None)):
+def diary_admin_overview(
+    entry_date: Optional[str] = None,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if not is_diary_staff(x_admin_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     target_date = entry_date or datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+    admin_placeholders = ",".join("?" for _ in ADMIN_IDS)
     c.execute(
-        '''SELECT u.telegram_id, u.full_name, de.id, de.status, de.submitted_at, de.locked_at,
+        f'''SELECT u.telegram_id, u.full_name, de.id, de.status, de.submitted_at, de.locked_at,
                   COALESCE(ds.lesson_score, ''), COALESCE(ds.diary_score, ''),
                   COALESCE(ds.awarded_diary_points, 0), COALESCE(ds.auto_diary_points, 0),
                   ds.manual_diary_points, COALESCE(ds.validation_warnings, '[]')
@@ -8927,8 +9427,10 @@ def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Optional[
            LEFT JOIN diary_scores ds
              ON ds.entry_id = de.id
            WHERE u.telegram_id IS NOT NULL
+             AND u.cohort_code=?
+             AND u.telegram_id NOT IN ({admin_placeholders})
            ORDER BY u.full_name COLLATE NOCASE''',
-        (target_date,),
+        [target_date, cohort_code] + ADMIN_IDS,
     )
     rows = c.fetchall()
     result = []
@@ -8972,7 +9474,12 @@ def diary_admin_overview(entry_date: Optional[str] = None, x_admin_id: Optional[
 
 
 @app.get("/api/diary/stars/overview")
-def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def get_diary_stars_overview(
+    entry_date: str,
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     viewer_id = x_admin_id if is_diary_staff(x_admin_id) else x_telegram_id
     if not entry_date:
         raise HTTPException(status_code=400, detail="Missing entry_date")
@@ -8980,6 +9487,7 @@ def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int] = Hea
     placeholders = ','.join('?' * len(ADMIN_IDS))
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, viewer_id, x_cohort_code)
     c.execute(
         f'''SELECT u.telegram_id, u.full_name,
                   COALESCE(ds.stars, 0), COALESCE(ds.bonus, 0),
@@ -8988,9 +9496,10 @@ def get_diary_stars_overview(entry_date: str, x_telegram_id: Optional[int] = Hea
            LEFT JOIN diary_stars ds
              ON ds.telegram_id = u.telegram_id AND ds.entry_date = ?
            WHERE u.telegram_id IS NOT NULL
+             AND u.cohort_code=?
              AND u.telegram_id NOT IN ({placeholders})
            ORDER BY u.full_name COLLATE NOCASE''',
-        [entry_date] + ADMIN_IDS,
+        [entry_date, cohort_code] + ADMIN_IDS,
     )
     rows = c.fetchall()
     conn.close()
@@ -9162,11 +9671,17 @@ async def rate_diary_stars(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/diary/stars/leaderboard")
-def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_admin_id: Optional[int] = Header(None)):
+def get_diary_stars_leaderboard(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     excluded_ids = sorted(set(ADMIN_IDS) | FLATLINED_IDS)
     placeholders = ','.join('?' * len(excluded_ids))
     conn = get_conn()
     c = conn.cursor()
+    viewer_id = get_request_actor_id(x_telegram_id, x_admin_id)
+    cohort_code = resolve_viewer_cohort(c, viewer_id, x_cohort_code)
     c.execute(
         f'''SELECT u.telegram_id, u.full_name, u.avatar_url, us.theme_path,
                   COALESCE(SUM(ds.stars), 0) as total_stars,
@@ -9184,10 +9699,11 @@ def get_diary_stars_leaderboard(x_telegram_id: Optional[int] = Header(None), x_a
            LEFT JOIN user_status us ON us.telegram_id = u.telegram_id
            LEFT JOIN diary_stars ds ON ds.telegram_id = u.telegram_id
            WHERE u.telegram_id IS NOT NULL
+             AND u.cohort_code=?
              AND u.telegram_id NOT IN ({placeholders})
            GROUP BY u.telegram_id, u.full_name, u.avatar_url, us.theme_path
            ORDER BY total_stars DESC, days_rated DESC, total_bonus DESC, u.full_name COLLATE NOCASE''',
-        excluded_ids,
+        [cohort_code] + excluded_ids,
     )
     rows = c.fetchall()
     conn.close()
@@ -9507,7 +10023,11 @@ async def lock_diary_entry(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/leaderboard")
-async def get_leaderboard():
+async def get_leaderboard(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     excluded_ids = sorted(set(ADMIN_IDS) | FLATLINED_IDS)
     placeholders = ','.join('?' * len(excluded_ids))
@@ -9515,6 +10035,8 @@ async def get_leaderboard():
     def _read():
         conn = get_conn()
         c = conn.cursor()
+        viewer_id = get_request_actor_id(x_telegram_id, x_admin_id)
+        cohort_code = resolve_viewer_cohort(c, viewer_id, x_cohort_code)
         c.execute(
             f'''SELECT u.full_name, u.rep_score, u.telegram_id, u.avatar_url, us.theme_path,
                      CASE WHEN us.title_date=? THEN 1 ELSE 0 END as has_title,
@@ -9542,9 +10064,10 @@ async def get_leaderboard():
                      FROM users u
                      LEFT JOIN user_status us ON u.telegram_id = us.telegram_id
                      WHERE u.telegram_id IS NOT NULL
+                     AND u.cohort_code=?
                      AND u.telegram_id NOT IN ({placeholders})
                      ORDER BY u.rep_score DESC, u.rowid ASC''',
-            [today, today] + excluded_ids,
+            [today, today, cohort_code] + excluded_ids,
         )
         result = c.fetchall()
 
@@ -9557,7 +10080,12 @@ async def get_leaderboard():
             c.execute("SELECT telegram_id, rank FROM leaderboard_snapshots WHERE snapshot_date=?", (prev_date,))
             prev_ranks = {row[0]: row[1] for row in c.fetchall()}
 
-        c.execute("SELECT 1 FROM leaderboard_snapshots WHERE snapshot_date=? LIMIT 1", (today,))
+        c.execute(
+            '''SELECT 1 FROM leaderboard_snapshots ls
+               JOIN users u ON u.telegram_id=ls.telegram_id
+               WHERE ls.snapshot_date=? AND u.cohort_code=? LIMIT 1''',
+            (today, cohort_code),
+        )
         has_today_snapshot = c.fetchone() is not None
         conn.close()
         return result, prev_ranks, has_today_snapshot
@@ -9573,8 +10101,11 @@ async def get_leaderboard():
                     f'''INSERT OR IGNORE INTO leaderboard_snapshots (telegram_id, rank, rep, snapshot_date)
                         SELECT telegram_id, ROW_NUMBER() OVER (ORDER BY rep_score DESC, rowid ASC), rep_score, ?
                         FROM users
-                        WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders}) AND rep_score > 0''',
-                    [today] + excluded_ids,
+                        WHERE telegram_id IS NOT NULL
+                          AND cohort_code=?
+                          AND telegram_id NOT IN ({placeholders})
+                          AND rep_score > 0''',
+                    [today, cohort_code] + excluded_ids,
                 )
                 conn2.commit()
             finally:
@@ -10487,10 +11018,17 @@ async def use_casino_prize(purchase_id: int, data: dict):
 
 
 @app.get("/api/shop")
-def get_shop(telegram_id: int = 0):
+def get_shop(
+    telegram_id: int = 0,
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     today = shop_day_str()
     conn = get_conn()
     c = conn.cursor()
+    actor_id = get_request_actor_id(x_telegram_id, x_admin_id) or telegram_id
+    cohort_code = resolve_viewer_cohort(c, actor_id, x_cohort_code)
     is_frozen = user_netwatch_locked(c, telegram_id)
     c.execute("SELECT code, name, description, icon, price, daily_limit, category FROM shop_items WHERE active=1")
     items = c.fetchall()
@@ -10503,7 +11041,10 @@ def get_shop(telegram_id: int = 0):
             effective_price = max(0, int(effective_price * 0.9))
         if has_zhongli:
             effective_price = max(0, int(effective_price * 0.93))
-        c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (code, today))
+        c.execute(
+            "SELECT count FROM shop_daily_counts_cohort WHERE item_code=? AND date=? AND cohort_code=?",
+            (code, today, cohort_code),
+        )
         row = c.fetchone()
         sold_today = row[0] if row else 0
         c.execute("""SELECT COUNT(*) FROM shop_purchases
@@ -10547,6 +11088,7 @@ async def buy_item(data: dict):
         conn = get_conn()
         try:
             c = conn.cursor()
+            cohort_code = get_user_cohort(c, telegram_id)
             if user_netwatch_locked(c, telegram_id):
                 return {"error": "Account frozen", "status": 403}
 
@@ -10563,7 +11105,10 @@ async def buy_item(data: dict):
                 price = max(0, int(price * 0.93))
 
             if daily_limit != -1:
-                c.execute("SELECT count FROM shop_daily_counts WHERE item_code=? AND date=?", (item_code, shop_day))
+                c.execute(
+                    "SELECT count FROM shop_daily_counts_cohort WHERE item_code=? AND date=? AND cohort_code=?",
+                    (item_code, shop_day, cohort_code),
+                )
                 row = c.fetchone()
                 if row and row[0] >= daily_limit:
                     return {"error": "Daily limit reached", "status": 409}
@@ -10602,8 +11147,12 @@ async def buy_item(data: dict):
                 expires_at = None
             c.execute("INSERT INTO shop_purchases (telegram_id, item_code, expires_at) VALUES (?,?,?)",
                       (telegram_id, item_code, expires_at))
-            c.execute("""INSERT INTO shop_daily_counts (item_code, date, count) VALUES (?,?,1)
-                         ON CONFLICT(item_code, date) DO UPDATE SET count=count+1""", (item_code, shop_day))
+            c.execute(
+                """INSERT INTO shop_daily_counts_cohort (item_code, date, cohort_code, count)
+                   VALUES (?,?,?,1)
+                   ON CONFLICT(item_code, date, cohort_code) DO UPDATE SET count=count+1""",
+                (item_code, shop_day, cohort_code),
+            )
             c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
             new_points = c.fetchone()[0]
             log_economy(c, telegram_id, 'shop_purchase', -price, new_points, None, 'shop_item', name)
@@ -10680,10 +11229,12 @@ def search_users_for_gift(q: str = "", caller_id: Optional[int] = None):
         raise HTTPException(status_code=400, detail="caller_id required")
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE telegram_id=?", (caller_id,))
-    if not c.fetchone():
+    c.execute("SELECT cohort_code FROM users WHERE telegram_id=?", (caller_id,))
+    caller_row = c.fetchone()
+    if not caller_row:
         conn.close()
         raise HTTPException(status_code=403, detail="Unknown caller")
+    cohort_code = normalize_cohort_code(caller_row[0])
     query = str(q or "").strip()
     if query:
         like = f"%{query}%"
@@ -10691,19 +11242,21 @@ def search_users_for_gift(q: str = "", caller_id: Optional[int] = None):
             '''SELECT telegram_id, full_name, avatar_url, points
                FROM users
                WHERE telegram_id IS NOT NULL AND telegram_id != ?
+                 AND cohort_code=?
                  AND (full_name LIKE ? OR CAST(telegram_id AS TEXT) LIKE ?)
                ORDER BY full_name COLLATE NOCASE
                LIMIT 15''',
-            (caller_id, like, like),
+            (caller_id, cohort_code, like, like),
         )
     else:
         c.execute(
             '''SELECT telegram_id, full_name, avatar_url, points
                FROM users
                WHERE telegram_id IS NOT NULL AND telegram_id != ?
+                 AND cohort_code=?
                ORDER BY full_name COLLATE NOCASE
                LIMIT 20''',
-            (caller_id,),
+            (caller_id, cohort_code),
         )
     rows = c.fetchall()
     conn.close()
@@ -10926,14 +11479,21 @@ async def freeze_user(data: dict, x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/reset_shop")
-async def reset_shop(x_admin_id: Optional[int] = Header(None)):
+async def reset_shop(
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         today = shop_day_str()
         conn = get_conn()
         c = conn.cursor()
-        c.execute("DELETE FROM shop_daily_counts WHERE date=?", (today,))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        c.execute(
+            "DELETE FROM shop_daily_counts_cohort WHERE date=? AND cohort_code=?",
+            (today, cohort_code),
+        )
         c.execute(
             '''INSERT INTO admin_action_logs
                (admin_id, target_id, action_type, points_delta, reason, created_at)
@@ -10987,26 +11547,26 @@ async def send_question(data: dict):
     return {"success": True, "question_id": question_id}
 
 
-def get_wild_ai_breach_state(c) -> dict:
-    """Returns the current Wild AI Breach state, auto-clearing it if expired."""
-    c.execute("SELECT value FROM settings WHERE key='breach_until'")
-    until_row = c.fetchone()
-    until = parse_iso(until_row[0]) if until_row and until_row[0] else None
+def get_wild_ai_breach_state(c, cohort_code: str) -> dict:
+    """Returns the current cohort's Wild AI Breach state."""
+    cohort_code = normalize_cohort_code(cohort_code)
+    until_raw = get_cohort_setting(c, 'breach_until', cohort_code, '')
+    until = parse_iso(until_raw) if until_raw else None
 
     if until and datetime.utcnow() >= until:
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '0')")
+        set_cohort_setting(c, 'breach_until', '', cohort_code)
+        set_cohort_setting(c, 'breach_seed', '', cohort_code)
+        set_cohort_setting(c, 'blackwall', '0', cohort_code)
         return {"breach_active": False, "breach_until": None, "breach_seed": None, "breach_phrase": None}
 
     if not until:
         return {"breach_active": False, "breach_until": None, "breach_seed": None, "breach_phrase": None}
 
-    c.execute("SELECT value FROM settings WHERE key='breach_seed'")
-    seed_row = c.fetchone()
-    seed = int(seed_row[0]) if seed_row and seed_row[0] else 0
-
-    hours_elapsed = int((datetime.utcnow() - (until - timedelta(days=WILD_AI_BREACH_DURATION_DAYS))).total_seconds() // 3600)
+    seed_raw = get_cohort_setting(c, 'breach_seed', cohort_code, '0')
+    seed = int(seed_raw or 0)
+    hours_elapsed = int(
+        (datetime.utcnow() - (until - timedelta(days=WILD_AI_BREACH_DURATION_DAYS))).total_seconds() // 3600
+    )
     phrase_index = (seed + hours_elapsed // WILD_AI_BREACH_PHRASE_ROTATE_HOURS) % len(WILD_AI_BREACH_PHRASES)
 
     return {
@@ -11018,33 +11578,30 @@ def get_wild_ai_breach_state(c) -> dict:
 
 
 @app.get("/api/settings")
-async def get_settings():
-    # Routed through the single-writer executor: get_wild_ai_breach_state() does
-    # INSERT OR REPLACE writes when a breach expires. A sync GET would run in
-    # FastAPI's default threadpool and race the writer thread (hard rule 3).
+async def get_settings(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         conn = get_conn()
         c = conn.cursor()
-        c.execute("SELECT value FROM settings WHERE key='blackwall'")
-        blackwall = c.fetchone()
-        c.execute("SELECT value FROM settings WHERE key='architect_event'")
-        architect_event = c.fetchone()
-        c.execute("SELECT value FROM settings WHERE key='wildai_event'")
-        wildai_event = c.fetchone()
-        c.execute("SELECT value FROM settings WHERE key='mju_event'")
-        mju_event = c.fetchone()
-        breach = get_wild_ai_breach_state(c)
-        conn.commit()
-        conn.close()
-        return {
-            "blackwall": blackwall[0] == '1' if blackwall else False,
-            "architect_event": architect_event[0] == '1' if architect_event else False,
-            "wildai_event": wildai_event[0] == '1' if wildai_event else False,
-            "mju_event": mju_event[0] == '1' if mju_event else False,
+        cohort_code = resolve_viewer_cohort(
+            c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+        )
+        breach = get_wild_ai_breach_state(c, cohort_code)
+        result = {
+            "cohort_code": cohort_code,
+            "blackwall": get_cohort_setting(c, 'blackwall', cohort_code, '0') == '1',
+            "architect_event": get_cohort_setting(c, 'architect_event', cohort_code, '0') == '1',
+            "wildai_event": get_cohort_setting(c, 'wildai_event', cohort_code, '0') == '1',
+            "mju_event": get_cohort_setting(c, 'mju_event', cohort_code, '0') == '1',
             **breach,
         }
+        conn.commit()
+        conn.close()
+        return result
     return await db_write(_run)
-
 
 @app.get("/api/campus-map")
 def get_campus_map():
@@ -11097,19 +11654,20 @@ async def save_campus_map(data: dict, x_admin_id: Optional[int] = Header(None)):
 
 
 @app.post("/api/admin/blackwall")
-async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None), x_cohort_code: Optional[str] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         enabled = data.get("enabled", False)
         conn = get_conn()
         c = conn.cursor()
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', ?)", ('1' if enabled else '0',))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        set_cohort_setting(c, 'blackwall', '1' if enabled else '0', cohort_code)
         c.execute(
             '''INSERT INTO admin_action_logs
-               (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, NULL, 'blackwall', 0, ?, ?)''',
-            (x_admin_id, 'Red Firewall enabled' if enabled else 'Red Firewall disabled', now_iso()),
+               (admin_id, target_id, action_type, points_delta, reason, created_at, cohort_code)
+               VALUES (?, NULL, 'blackwall', 0, ?, ?, ?)''',
+            (x_admin_id, 'Red Firewall enabled' if enabled else 'Red Firewall disabled', now_iso(), cohort_code),
         )
         conn.commit()
         conn.close()
@@ -11118,27 +11676,28 @@ async def toggle_blackwall(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.post("/api/admin/wildai-breach")
-async def toggle_wildai_breach(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def toggle_wildai_breach(data: dict, x_admin_id: Optional[int] = Header(None), x_cohort_code: Optional[str] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         enabled = data.get("enabled", False)
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
         if enabled:
             # TEMPORARY (2026-06-25): broadcast disabled during testing so manual
             # toggles don't spam every user. Set back to default (omit the
             # argument, or pass True) once testing is done.
-            activate_wildai_breach(c, admin_id=x_admin_id, reason='Wild AI Breach enabled (manual)', send_broadcast=False)
+            activate_wildai_breach(c, admin_id=x_admin_id, reason='Wild AI Breach enabled (manual)', send_broadcast=False, cohort_code=cohort_code)
         else:
-            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_until', '')")
-            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('breach_seed', '')")
-            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('blackwall', '0')")
+            set_cohort_setting(c, 'breach_until', '', cohort_code)
+            set_cohort_setting(c, 'breach_seed', '', cohort_code)
+            set_cohort_setting(c, 'blackwall', '0', cohort_code)
             c.execute(
                 '''INSERT INTO admin_action_logs
-                   (admin_id, target_id, action_type, points_delta, reason, created_at)
-                   VALUES (?, NULL, 'wildai_breach', 0, ?, ?)''',
-                (x_admin_id, 'Wild AI Breach disabled', now_iso()),
+                   (admin_id, target_id, action_type, points_delta, reason, created_at, cohort_code)
+                   VALUES (?, NULL, 'wildai_breach', 0, ?, ?, ?)''',
+                (x_admin_id, 'Wild AI Breach disabled', now_iso(), cohort_code),
             )
         conn.commit()
         conn.close()
@@ -11147,19 +11706,20 @@ async def toggle_wildai_breach(data: dict, x_admin_id: Optional[int] = Header(No
 
 
 @app.post("/api/admin/architect-event")
-async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(None), x_cohort_code: Optional[str] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         enabled = bool(data.get("enabled", False))
         conn = get_conn()
         c = conn.cursor()
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('architect_event', ?)", ('1' if enabled else '0',))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        set_cohort_setting(c, 'architect_event', '1' if enabled else '0', cohort_code)
         c.execute(
             '''INSERT INTO admin_action_logs
-               (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, NULL, 'architect_event', 0, ?, ?)''',
-            (x_admin_id, 'Architect event enabled' if enabled else 'Architect event disabled', now_iso()),
+               (admin_id, target_id, action_type, points_delta, reason, created_at, cohort_code)
+               VALUES (?, NULL, 'architect_event', 0, ?, ?, ?)''',
+            (x_admin_id, 'Architect event enabled' if enabled else 'Architect event disabled', now_iso(), cohort_code),
         )
         conn.commit()
         conn.close()
@@ -11168,19 +11728,20 @@ async def toggle_architect_event(data: dict, x_admin_id: Optional[int] = Header(
 
 
 @app.post("/api/admin/wildai-event")
-async def toggle_wildai_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def toggle_wildai_event(data: dict, x_admin_id: Optional[int] = Header(None), x_cohort_code: Optional[str] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         enabled = bool(data.get("enabled", False))
         conn = get_conn()
         c = conn.cursor()
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('wildai_event', ?)", ('1' if enabled else '0',))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        set_cohort_setting(c, 'wildai_event', '1' if enabled else '0', cohort_code)
         c.execute(
             '''INSERT INTO admin_action_logs
-               (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, NULL, 'wildai_event', 0, ?, ?)''',
-            (x_admin_id, 'Wild AI event enabled' if enabled else 'Wild AI event disabled', now_iso()),
+               (admin_id, target_id, action_type, points_delta, reason, created_at, cohort_code)
+               VALUES (?, NULL, 'wildai_event', 0, ?, ?, ?)''',
+            (x_admin_id, 'Wild AI event enabled' if enabled else 'Wild AI event disabled', now_iso(), cohort_code),
         )
         conn.commit()
         conn.close()
@@ -11189,19 +11750,20 @@ async def toggle_wildai_event(data: dict, x_admin_id: Optional[int] = Header(Non
 
 
 @app.post("/api/admin/mju-event")
-async def toggle_mju_event(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def toggle_mju_event(data: dict, x_admin_id: Optional[int] = Header(None), x_cohort_code: Optional[str] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
         enabled = bool(data.get("enabled", False))
         conn = get_conn()
         c = conn.cursor()
-        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('mju_event', ?)", ('1' if enabled else '0',))
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
+        set_cohort_setting(c, 'mju_event', '1' if enabled else '0', cohort_code)
         c.execute(
             '''INSERT INTO admin_action_logs
-               (admin_id, target_id, action_type, points_delta, reason, created_at)
-               VALUES (?, NULL, 'mju_event', 0, ?, ?)''',
-            (x_admin_id, 'MJU event enabled' if enabled else 'MJU event disabled', now_iso()),
+               (admin_id, target_id, action_type, points_delta, reason, created_at, cohort_code)
+               VALUES (?, NULL, 'mju_event', 0, ?, ?, ?)''',
+            (x_admin_id, 'MJU event enabled' if enabled else 'MJU event disabled', now_iso(), cohort_code),
         )
         conn.commit()
         conn.close()
@@ -11210,18 +11772,25 @@ async def toggle_mju_event(data: dict, x_admin_id: Optional[int] = Header(None))
 
 
 @app.get("/api/raid/status")
-def get_raid_status(telegram_id: int = 0):
+def get_raid_status(
+    telegram_id: int = 0,
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     conn = get_conn()
     c = conn.cursor()
-    finished_today = public_finished_raid_count(c, today)
+    actor_id = get_request_actor_id(x_telegram_id, x_admin_id) or telegram_id
+    cohort_code = resolve_viewer_cohort(c, actor_id, x_cohort_code)
+    finished_today = public_finished_raid_count(c, today, cohort_code)
     extra_raids = 0 if telegram_id in ADMIN_IDS else (get_extra_raids(c, telegram_id) if telegram_id else 0)
-    user_attempts = 0 if telegram_id in ADMIN_IDS else (user_raid_attempt_count(c, today, telegram_id) if telegram_id else 0)
+    user_attempts = 0 if telegram_id in ADMIN_IDS else (user_raid_attempt_count(c, today, telegram_id, cohort_code) if telegram_id else 0)
     base_remaining = max(0, RAID_USER_DAILY_LIMIT - user_attempts)
     if finished_today >= RAID_DAILY_LIMIT:
         base_remaining = 0
     remaining_today = 999 if telegram_id in ADMIN_IDS else base_remaining + extra_raids
-    raid = latest_visible_raid(c, today, telegram_id)
+    raid = latest_visible_raid(c, today, telegram_id, cohort_code)
     if not raid:
         conn.close()
         return {
@@ -11269,9 +11838,10 @@ async def join_raid(data: dict):
             conn.close()
             raise HTTPException(status_code=400, detail="Not enough points")
 
-        finished_count = public_finished_raid_count(c, today)
+        cohort_code = get_user_cohort(c, telegram_id)
+        finished_count = public_finished_raid_count(c, today, cohort_code)
         extra_raids = 0 if telegram_id in ADMIN_IDS else get_extra_raids(c, telegram_id)
-        user_attempts = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
+        user_attempts = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id, cohort_code)
         consumed_extra_attempt = False
         needs_extra_attempt = telegram_id not in ADMIN_IDS and (
             finished_count >= RAID_DAILY_LIMIT or user_attempts >= RAID_USER_DAILY_LIMIT
@@ -11285,12 +11855,15 @@ async def join_raid(data: dict):
             consumed_extra_attempt = True
 
         c.execute("""SELECT r.id FROM raids r
-                     WHERE r.date=? AND r.status='open'
+                     WHERE r.date=? AND r.status='open' AND r.cohort_code=?
                      AND r.id NOT IN (SELECT raid_id FROM raid_participants WHERE telegram_id=?)
-                     LIMIT 1""", (today, telegram_id))
+                     LIMIT 1""", (today, cohort_code, telegram_id))
         raid = c.fetchone()
         if not raid:
-            c.execute("INSERT INTO raids (date, created_at) VALUES (?,?)", (today, now_str))
+            c.execute(
+                "INSERT INTO raids (date, created_at, cohort_code) VALUES (?,?,?)",
+                (today, now_str, cohort_code),
+            )
             raid_id = c.lastrowid
         else:
             raid_id = raid[0]
@@ -11378,8 +11951,8 @@ async def join_raid(data: dict):
         conn.commit()
         c.execute("SELECT points FROM users WHERE telegram_id=?", (telegram_id,))
         new_points = c.fetchone()[0]
-        finished_today = public_finished_raid_count(c, today)
-        attempts_today = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id)
+        finished_today = public_finished_raid_count(c, today, cohort_code)
+        attempts_today = 0 if telegram_id in ADMIN_IDS else user_raid_attempt_count(c, today, telegram_id, cohort_code)
         base_remaining = max(0, RAID_USER_DAILY_LIMIT - attempts_today)
         if finished_today >= RAID_DAILY_LIMIT:
             base_remaining = 0
@@ -11410,9 +11983,16 @@ async def join_raid(data: dict):
 
 
 @app.get("/api/raid/question")
-def get_raid_question(telegram_id: int = 0):
+def get_raid_question(
+    telegram_id: int = 0,
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
+    actor_id = get_request_actor_id(x_telegram_id, x_admin_id) or telegram_id
+    cohort_code = resolve_viewer_cohort(c, actor_id, x_cohort_code)
     today = datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')
     day_seed = int(datetime.now(BEIJING_TZ).strftime('%Y%m%d'))
     c.execute("SELECT COUNT(*) FROM event_questions WHERE event_code='raid' AND action_type='scan'")
@@ -11424,8 +12004,8 @@ def get_raid_question(telegram_id: int = 0):
         '''SELECT COUNT(*)
            FROM raid_participants rp
            JOIN raids r ON r.id = rp.raid_id
-           WHERE r.date=?''',
-        (today,),
+           WHERE r.date=? AND r.cohort_code=?''',
+        (today, cohort_code),
     )
     daily_offset = (c.fetchone()[0] or 0) % total_questions
     c.execute(
@@ -11752,10 +12332,21 @@ async def disassemble_card(card_id: int, data: dict):
 
 
 @app.get("/api/laundry/schedule")
-def get_laundry_schedule():
+def get_laundry_schedule(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, day, time, note, COALESCE(capacity, 1), COALESCE(assignee, '') FROM laundry_schedule ORDER BY id")
+    cohort_code = resolve_viewer_cohort(
+        c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+    )
+    c.execute(
+        "SELECT id, day, time, note, COALESCE(capacity, 1), COALESCE(assignee, '') "
+        "FROM laundry_schedule WHERE cohort_code=? ORDER BY id",
+        (cohort_code,),
+    )
     rows = c.fetchall()
     result = []
     for row in rows:
@@ -11787,16 +12378,21 @@ def get_laundry_schedule():
 
 
 @app.post("/api/laundry/schedule")
-async def add_laundry_slot(data: dict, x_admin_id: int = Header(None)):
+async def add_laundry_slot(
+    data: dict,
+    x_admin_id: int = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Not admin")
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
         capacity = max(int(data.get("capacity") or 1), 1)
         c.execute(
-            "INSERT INTO laundry_schedule (day, time, note, capacity, assignee) VALUES (?,?,?,?,?)",
-            (data.get("day"), data.get("time"), data.get("note", ""), capacity, data.get("assignee", "")),
+            "INSERT INTO laundry_schedule (day, time, note, capacity, assignee, cohort_code) VALUES (?,?,?,?,?,?)",
+            (data.get("day"), data.get("time"), data.get("note", ""), capacity, data.get("assignee", ""), cohort_code),
         )
         conn.commit()
         conn.close()
@@ -11887,10 +12483,21 @@ async def admin_cancel_laundry_booking(slot_id: int, data: dict, x_admin_id: int
 
 
 @app.get("/api/water/schedule")
-def get_water_schedule():
+def get_water_schedule(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, day, time, COALESCE(floor, ''), note, COALESCE(capacity, 1), COALESCE(assignee, '') FROM water_schedule ORDER BY id")
+    cohort_code = resolve_viewer_cohort(
+        c, get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+    )
+    c.execute(
+        "SELECT id, day, time, COALESCE(floor, ''), note, COALESCE(capacity, 1), COALESCE(assignee, '') "
+        "FROM water_schedule WHERE cohort_code=? ORDER BY id",
+        (cohort_code,),
+    )
     rows = c.fetchall()
     result = []
     for row in rows:
@@ -11922,15 +12529,20 @@ def get_water_schedule():
 
 
 @app.post("/api/water/schedule")
-async def add_water_slot(data: dict, x_admin_id: int = Header(None)):
+async def add_water_slot(
+    data: dict,
+    x_admin_id: int = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Not admin")
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
         capacity = max(int(data.get("capacity") or 1), 1)
         c.execute(
-            "INSERT INTO water_schedule (day, time, floor, note, capacity, assignee) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO water_schedule (day, time, floor, note, capacity, assignee, cohort_code) VALUES (?,?,?,?,?,?,?)",
             (
                 data.get("day"),
                 data.get("time"),
@@ -11938,6 +12550,7 @@ async def add_water_slot(data: dict, x_admin_id: int = Header(None)):
                 data.get("note", ""),
                 capacity,
                 data.get("assignee", ""),
+                cohort_code,
             ),
         )
         conn.commit()
@@ -12019,13 +12632,22 @@ async def admin_cancel_water_booking(slot_id: int, data: dict, x_admin_id: int =
 
 
 @app.post("/api/events/architect/create")
-async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
+async def create_architect_event(
+    data: dict,
+    x_admin_id: int = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
         if admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-        blocking_event_id = get_blocking_event_id('architect')
+        scope_conn = get_conn()
+        try:
+            cohort_code = resolve_viewer_cohort(scope_conn.cursor(), admin_id, x_cohort_code)
+        finally:
+            scope_conn.close()
+        blocking_event_id = get_blocking_event_id('architect', cohort_code)
         if blocking_event_id:
             raise HTTPException(status_code=409, detail="Another Architect Protocol event is already active")
 
@@ -12048,9 +12670,10 @@ async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
             '''INSERT INTO events
                (code, title, boss_name, boss_image, reward_text, min_players, max_players,
                 max_hp, current_hp, phase, state,
-                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
-            ('architect', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
+                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at,
+                cohort_code)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?, ?)''',
+            ('architect', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at, cohort_code),
         )
         event_id = c.lastrowid
         add_event_log(c, event_id, "system", "Architect event created. Team registration is open.")
@@ -12062,13 +12685,22 @@ async def create_architect_event(data: dict, x_admin_id: int = Header(None)):
 
 
 @app.post("/api/events/wildai/create")
-async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
+async def create_wildai_event(
+    data: dict,
+    x_admin_id: int = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
         if admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-        blocking_event_id = get_blocking_event_id('wildai_breach')
+        scope_conn = get_conn()
+        try:
+            cohort_code = resolve_viewer_cohort(scope_conn.cursor(), admin_id, x_cohort_code)
+        finally:
+            scope_conn.close()
+        blocking_event_id = get_blocking_event_id('wildai_breach', cohort_code)
         if blocking_event_id:
             raise HTTPException(status_code=409, detail="A WILD AI BREACH event is already active")
 
@@ -12091,9 +12723,10 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
             '''INSERT INTO events
                (code, title, boss_name, boss_image, reward_text, min_players, max_players,
                 max_hp, current_hp, phase, state,
-                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
-            ('wildai_breach', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
+                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at,
+                cohort_code)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?, ?)''',
+            ('wildai_breach', title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at, cohort_code),
         )
         event_id = c.lastrowid
         add_event_log(c, event_id, "system", "WILD AI BREACH: обнаружено вторжение. Набор команды для зачистки открыт.")
@@ -12105,13 +12738,22 @@ async def create_wildai_event(data: dict, x_admin_id: int = Header(None)):
 
 
 @app.post("/api/events/mju/create")
-async def create_mju_event(data: dict, x_admin_id: int = Header(None)):
+async def create_mju_event(
+    data: dict,
+    x_admin_id: int = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
         admin_id = x_admin_id if x_admin_id is not None else data.get("telegram_id")
         if admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
 
-        blocking_event_id = get_blocking_event_id(MJU_EVENT_CODE)
+        scope_conn = get_conn()
+        try:
+            cohort_code = resolve_viewer_cohort(scope_conn.cursor(), admin_id, x_cohort_code)
+        finally:
+            scope_conn.close()
+        blocking_event_id = get_blocking_event_id(MJU_EVENT_CODE, cohort_code)
         if blocking_event_id:
             raise HTTPException(status_code=409, detail="A Protocol Boss event is already active")
 
@@ -12134,9 +12776,10 @@ async def create_mju_event(data: dict, x_admin_id: int = Header(None)):
             '''INSERT INTO events
                (code, title, boss_name, boss_image, reward_text, min_players, max_players,
                 max_hp, current_hp, phase, state,
-                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?)''',
-            (MJU_EVENT_CODE, title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at),
+                phase_started_at, started_at, final_phase_deadline, vulnerability_until, overload_pressure, created_at,
+                cohort_code)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'REGISTRATION', NULL, NULL, NULL, NULL, 0, ?, ?)''',
+            (MJU_EVENT_CODE, title, boss_name, boss_image, reward_text, min_players, max_players, max_hp, max_hp, created_at, cohort_code),
         )
         event_id = c.lastrowid
         add_event_log(c, event_id, "system", "Босс Протокола: набор команды открыт.")
@@ -12148,9 +12791,21 @@ async def create_mju_event(data: dict, x_admin_id: int = Header(None)):
 
 
 @app.get("/api/events/current")
-async def get_current_event(code: Optional[str] = None):
+async def get_current_event(
+    code: Optional[str] = None,
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     def _run():
-        event_id = get_current_or_latest_event_id(code)
+        conn = get_conn()
+        try:
+            cohort_code = resolve_viewer_cohort(
+                conn.cursor(), get_request_actor_id(x_telegram_id, x_admin_id), x_cohort_code
+            )
+        finally:
+            conn.close()
+        event_id = get_current_or_latest_event_id(code, cohort_code)
         return {"event": get_event_snapshot(event_id) if event_id else None}
     return await db_write(_run)
 
@@ -12810,9 +13465,9 @@ def _resolve_names(c, creator_id, assignee_id):
 
 
 def _check_blackwall(c, user_id):
-    c.execute("SELECT value FROM settings WHERE key='blackwall'")
-    bw = c.fetchone()
-    if bw and bw[0] == '1' and (user_id is None or user_id not in ADMIN_IDS):
+    cohort_code = get_user_cohort(c, user_id)
+    blackwall_active = get_cohort_setting(c, 'blackwall', cohort_code, '0') == '1'
+    if blackwall_active and (user_id is None or user_id not in ADMIN_IDS):
         raise HTTPException(status_code=403, detail="Доска поручений временно заблокирована режимом Великого Красного Файрвола")
 
 
@@ -12824,6 +13479,7 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
         conn = get_conn()
         c = conn.cursor()
         _check_blackwall(c, x_telegram_id)
+        cohort_code = get_user_cohort(c, x_telegram_id)
         c.execute(
             '''SELECT id, title, description, category, reward_stars, fee_stars,
                       creator_telegram_id, assignee_telegram_id, status,
@@ -12831,9 +13487,10 @@ async def list_open_contracts(x_telegram_id: Optional[int] = Header(None)):
                       created_at, accepted_at, completed_at, cancelled_at, disputed_at,
                       expires_at, submitted_at, auto_confirm_at, is_anonymous
                FROM contracts
-               WHERE status='open'
+               WHERE status='open' AND cohort_code=?
                ORDER BY created_at DESC
                LIMIT 50''',
+            (cohort_code,),
         )
         rows = c.fetchall()
         result = []
@@ -12958,12 +13615,18 @@ async def create_contract(data: dict, x_telegram_id: Optional[int] = Header(None
             c.execute("SELECT points FROM users WHERE telegram_id=?", (x_telegram_id,))
             balance_after = c.fetchone()[0] or 0
 
+            cohort_code = get_user_cohort(c, x_telegram_id)
             c.execute(
                 '''INSERT INTO contracts
                    (title, description, category, reward_stars, fee_stars,
-                    creator_telegram_id, status, is_suspicious, suspicious_reason, is_anonymous, created_at, expires_at)
-                   VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?)''',
-                (title, description, category, reward, local_fee, x_telegram_id, int(is_susp), susp_reason, int(is_anonymous), now_str, expires_at),
+                    creator_telegram_id, status, is_suspicious, suspicious_reason,
+                    is_anonymous, created_at, expires_at, cohort_code)
+                   VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?)''',
+                (
+                    title, description, category, reward, local_fee,
+                    x_telegram_id, int(is_susp), susp_reason,
+                    int(is_anonymous), now_str, expires_at, cohort_code,
+                ),
             )
             contract_id = c.lastrowid
             log_economy(c, x_telegram_id, 'contract_freeze', -reward, balance_after,
@@ -13257,12 +13920,16 @@ async def dispute_contract(contract_id: int,
 
 
 @app.get("/api/admin/contracts")
-def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
-                                status: Optional[str] = None):
+def admin_list_contracts(
+    x_admin_id: Optional[int] = Header(None),
+    status: Optional[str] = None,
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
     if status:
         c.execute(
             '''SELECT c.id, c.title, c.description, c.category, c.reward_stars, c.fee_stars,
@@ -13274,9 +13941,9 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
                LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
-               WHERE c.status=?
+               WHERE c.status=? AND c.cohort_code=?
                ORDER BY c.created_at DESC LIMIT 100''',
-            (status,),
+            (status, cohort_code),
         )
     else:
         c.execute(
@@ -13289,7 +13956,9 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
                FROM contracts c
                LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
                LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
+               WHERE c.cohort_code=?
                ORDER BY c.created_at DESC LIMIT 100''',
+            (cohort_code,),
         )
     rows = c.fetchall()
     conn.close()
@@ -13304,26 +13973,38 @@ def admin_list_contracts(x_admin_id: Optional[int] = Header(None),
 
 
 @app.get("/api/admin/contracts/monitor")
-def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
+def admin_contract_monitor(
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
 
     c.execute(
         '''SELECT status, COUNT(*), COALESCE(SUM(reward_stars),0),
                   COALESCE(SUM(CASE WHEN status='completed' THEN fee_stars ELSE 0 END),0)
            FROM contracts
-           GROUP BY status'''
+           WHERE cohort_code=?
+           GROUP BY status''',
+        (cohort_code,),
     )
     status_rows = c.fetchall()
     status_counts = {row[0]: row[1] for row in status_rows}
     reward_by_status = {row[0]: row[2] for row in status_rows}
     fee_burned = sum(row[3] or 0 for row in status_rows)
 
-    c.execute("SELECT COUNT(*), COALESCE(SUM(reward_stars),0) FROM contracts")
+    c.execute(
+        "SELECT COUNT(*), COALESCE(SUM(reward_stars),0) FROM contracts WHERE cohort_code=?",
+        (cohort_code,),
+    )
     total_count, total_turnover = c.fetchone()
-    c.execute("SELECT COUNT(*) FROM contracts WHERE is_suspicious=1")
+    c.execute(
+        "SELECT COUNT(*) FROM contracts WHERE is_suspicious=1 AND cohort_code=?",
+        (cohort_code,),
+    )
     suspicious_count = c.fetchone()[0] or 0
 
     c.execute(
@@ -13340,10 +14021,11 @@ def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
            FROM contracts c
            LEFT JOIN users u1 ON u1.telegram_id=c.creator_telegram_id
            LEFT JOIN users u2 ON u2.telegram_id=c.assignee_telegram_id
-           WHERE c.assignee_telegram_id IS NOT NULL
+           WHERE c.assignee_telegram_id IS NOT NULL AND c.cohort_code=?
            GROUP BY c.creator_telegram_id, c.assignee_telegram_id
            ORDER BY reward_total DESC, contract_count DESC
-           LIMIT 30'''
+           LIMIT 30''',
+        (cohort_code,),
     )
     contract_pairs = []
     for row in c.fetchall():
@@ -13382,10 +14064,11 @@ def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
            LEFT JOIN shop_items si ON si.code=sp.item_code
            LEFT JOIN users uf ON uf.telegram_id=sp.given_to
            LEFT JOIN users ut ON ut.telegram_id=sp.telegram_id
-           WHERE sp.given_to IS NOT NULL
+           WHERE sp.given_to IS NOT NULL AND ut.cohort_code=?
            GROUP BY sp.given_to, sp.telegram_id
            ORDER BY item_value DESC, gift_count DESC
-           LIMIT 30'''
+           LIMIT 30''',
+        (cohort_code,),
     )
     gift_pairs = []
     for row in c.fetchall():
@@ -13415,9 +14098,10 @@ def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
            LEFT JOIN shop_items si ON si.code=sp.item_code
            LEFT JOIN users uf ON uf.telegram_id=sp.given_to
            LEFT JOIN users ut ON ut.telegram_id=sp.telegram_id
-           WHERE sp.given_to IS NOT NULL
+           WHERE sp.given_to IS NOT NULL AND ut.cohort_code=?
            ORDER BY COALESCE(sp.gifted_at, sp.purchased_at) DESC
-           LIMIT 50'''
+           LIMIT 50''',
+        (cohort_code,),
     )
     recent_gifts = [{
         "id": row[0],
@@ -13453,8 +14137,12 @@ def admin_contract_monitor(x_admin_id: Optional[int] = Header(None)):
 
 
 @app.get("/api/admin/economy/report")
-def admin_economy_report(since: Optional[str] = None, until: Optional[str] = None,
-                          x_admin_id: Optional[int] = Header(None)):
+def admin_economy_report(
+    since: Optional[str] = None,
+    until: Optional[str] = None,
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -13469,6 +14157,7 @@ def admin_economy_report(since: Optional[str] = None, until: Optional[str] = Non
 
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
 
     admin_placeholders = ','.join('?' * len(ADMIN_IDS))
     c.execute(
@@ -13515,9 +14204,10 @@ def admin_economy_report(since: Optional[str] = None, until: Optional[str] = Non
              GROUP BY telegram_id
            ) e ON e.telegram_id = u.telegram_id
            WHERE u.telegram_id IS NOT NULL
+             AND u.cohort_code=?
              AND u.telegram_id NOT IN ({})
            ORDER BY tx_count DESC, u.full_name COLLATE NOCASE'''.format(admin_placeholders),
-        [since, until] + ADMIN_IDS,
+        [since, until, cohort_code] + ADMIN_IDS,
     )
     rows = c.fetchall()
     conn.close()
@@ -13565,7 +14255,10 @@ def admin_economy_report(since: Optional[str] = None, until: Optional[str] = Non
 
 
 @app.get("/api/admin/activity/report")
-def admin_activity_report(x_admin_id: Optional[int] = Header(None)):
+def admin_activity_report(
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -13573,6 +14266,7 @@ def admin_activity_report(x_admin_id: Optional[int] = Header(None)):
 
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
 
     admin_placeholders = ','.join('?' * len(ADMIN_IDS))
     c.execute(
@@ -13603,9 +14297,10 @@ def admin_activity_report(x_admin_id: Optional[int] = Header(None)):
              GROUP BY telegram_id
            ) a ON a.telegram_id = u.telegram_id
            WHERE u.telegram_id IS NOT NULL
+             AND u.cohort_code=?
              AND u.telegram_id NOT IN ({})
            ORDER BY today_count DESC, total_count DESC, u.full_name COLLATE NOCASE'''.format(admin_placeholders),
-        [today] + ADMIN_IDS,
+        [today, cohort_code] + ADMIN_IDS,
     )
     rows = c.fetchall()
     conn.close()
@@ -14055,6 +14750,8 @@ async def duel_challenge(data: dict):
             raise HTTPException(status_code=403, detail="Дуэли пока доступны только админам")
         conn = get_conn()
         c = conn.cursor()
+        if challenger_id not in GLOBAL_ADMIN_IDS:
+            require_same_user_cohort(c, challenger_id, opponent_id)
         c.execute(
             "SELECT telegram_id, full_name, COALESCE(points,0) FROM users WHERE telegram_id IN (?,?)",
             (challenger_id, opponent_id),
@@ -14366,9 +15063,15 @@ async def duel_state(duel_id: int, telegram_id: int):
 
 
 @app.get("/api/duel/leaderboard")
-def duel_leaderboard():
+def duel_leaderboard(
+    x_telegram_id: Optional[int] = Header(None),
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     conn = get_conn()
     c = conn.cursor()
+    viewer_id = get_request_actor_id(x_telegram_id, x_admin_id)
+    cohort_code = resolve_viewer_cohort(c, viewer_id, x_cohort_code)
     c.execute(
         "SELECT winner_id, COUNT(*) FROM duels WHERE status='finished' AND winner_id IS NOT NULL GROUP BY winner_id"
     )
@@ -14383,8 +15086,13 @@ def duel_leaderboard():
     names = {}
     if ids:
         qmarks = ",".join("?" * len(ids))
-        c.execute(f"SELECT telegram_id, full_name, avatar_url FROM users WHERE telegram_id IN ({qmarks})", tuple(ids))
+        c.execute(
+            f"SELECT telegram_id, full_name, avatar_url FROM users "
+            f"WHERE cohort_code=? AND telegram_id IN ({qmarks})",
+            (cohort_code, *tuple(ids)),
+        )
         names = {r[0]: (r[1], r[2]) for r in c.fetchall()}
+        ids &= set(names)
     conn.close()
     board = []
     for tid in ids:
@@ -14397,16 +15105,21 @@ def duel_leaderboard():
 
 
 @app.get("/api/duel/opponents/{telegram_id}")
-def duel_opponents(telegram_id: int):
+def duel_opponents(
+    telegram_id: int,
+    x_cohort_code: Optional[str] = Header(None),
+):
     """Pickable opponents. Students are group-matched against students.
     Admins can challenge anyone, but students cannot challenge admins."""
     conn = get_conn()
     c = conn.cursor()
     viewer_group = _duel_user_study_group(c, telegram_id)
+    cohort_code = resolve_viewer_cohort(c, telegram_id, x_cohort_code)
     c.execute(
         "SELECT telegram_id, full_name, avatar_url, COALESCE(rep_score,0), study_group FROM users "
-        "WHERE telegram_id IS NOT NULL AND telegram_id!=? ORDER BY full_name COLLATE NOCASE",
-        (telegram_id,),
+        "WHERE telegram_id IS NOT NULL AND telegram_id!=? AND cohort_code=? "
+        "ORDER BY full_name COLLATE NOCASE",
+        (telegram_id, cohort_code),
     )
     rows = c.fetchall()
     conn.close()
