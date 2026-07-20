@@ -11,6 +11,7 @@ async function loadPoints(telegramId) {
     const r = await fetch(`${API_URL}/api/points/${telegramId}`);
     if (r.ok) {
       const data = await r.json();
+      syncUserCohortFromPayload(data);
       currentPoints = data.points || 0;
       updatePoints();
       syncFlatlinedBanner(data.flatlined);
