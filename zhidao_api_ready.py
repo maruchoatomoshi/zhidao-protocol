@@ -10231,9 +10231,9 @@ async def get_leaderboard(
         )
         has_today_snapshot = c.fetchone() is not None
         conn.close()
-        return result, prev_ranks, has_today_snapshot
+        return result, prev_ranks, has_today_snapshot, cohort_code
 
-    result, prev_ranks, has_today_snapshot = await db_read(_read, label="leaderboard")
+    result, prev_ranks, has_today_snapshot, cohort_code = await db_read(_read, label="leaderboard")
 
     if not has_today_snapshot:
         def _snapshot():
