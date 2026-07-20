@@ -1,7 +1,11 @@
 function syncFlatlinedBanner(active) {
   const banner = document.getElementById('flatlinedBanner');
+  const logo = banner ? banner.querySelector('.flatlined-banner-logo img') : null;
   const enabled = Boolean(active);
   document.body.classList.toggle('is-flatlined', enabled);
+  if (logo && logo.getAttribute('src') !== './NetWatch.png') {
+    logo.setAttribute('src', './NetWatch.png');
+  }
   if (banner) banner.hidden = !enabled;
 }
 
