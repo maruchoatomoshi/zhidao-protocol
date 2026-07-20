@@ -1,3 +1,10 @@
+function syncFlatlinedBanner(active) {
+  const banner = document.getElementById('flatlinedBanner');
+  const enabled = Boolean(active);
+  document.body.classList.toggle('is-flatlined', enabled);
+  if (banner) banner.hidden = !enabled;
+}
+
 async function loadPoints(telegramId) {
   if (!telegramId) return;
   try {
@@ -6,6 +13,7 @@ async function loadPoints(telegramId) {
       const data = await r.json();
       currentPoints = data.points || 0;
       updatePoints();
+      syncFlatlinedBanner(data.flatlined);
 
       const b = document.getElementById('casinoBonusBanner');
       if (b) {
