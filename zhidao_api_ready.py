@@ -3362,7 +3362,6 @@ def init_db():
                   finished_at TEXT DEFAULT NULL)''')
     c.execute("CREATE INDEX IF NOT EXISTS idx_duels_opponent ON duels(opponent_id, status)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_duels_challenger ON duels(challenger_id, status)")
-    c.execute("CREATE INDEX IF NOT EXISTS idx_duels_cohort ON duels(cohort_code, status)")
     conn.commit()
     conn.close()
 
@@ -3627,6 +3626,8 @@ def migrate_db():
              'beijing'
            )"""
     )
+
+    c.execute("CREATE INDEX IF NOT EXISTS idx_duels_cohort ON duels(cohort_code, status)")
 
     # The legacy laundry table had a global UNIQUE(date, time), which would
     # still make identical Beijing/MJU slots conflict. Rebuild it once with the
