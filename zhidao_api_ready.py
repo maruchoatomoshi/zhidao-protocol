@@ -3022,6 +3022,7 @@ def init_db():
                   room_number TEXT DEFAULT NULL,
                   telegram_id INTEGER DEFAULT NULL,
                   status TEXT DEFAULT 'pending',
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing',
                   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                   updated_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
     c.execute('''CREATE TABLE IF NOT EXISTS laundry
@@ -3374,6 +3375,7 @@ def migrate_db():
                   room_number TEXT DEFAULT NULL,
                   telegram_id INTEGER DEFAULT NULL,
                   status TEXT DEFAULT 'pending',
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing',
                   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                   updated_at TEXT DEFAULT CURRENT_TIMESTAMP)''')
     c.execute("PRAGMA table_info(users)")
@@ -3602,7 +3604,7 @@ def migrate_db():
         "schedule", "announcements", "community_shop_proposals", "laundry",
         "raids", "laundry_schedule", "water_schedule", "events",
         "daily_checks", "admin_action_logs", "contracts", "gift_codes",
-        "global_alerts",
+        "global_alerts", "expected_students",
     )
     for table_name in cohort_tables:
         c.execute(f"PRAGMA table_info({table_name})")
@@ -3652,6 +3654,13 @@ def migrate_db():
                 "" if setting_key in {"breach_until", "breach_seed"} else "0",
             ),
         )
+
+    mju_placeholders = ",".join("?" * len(MJU_MEMBER_IDS))
+    c.execute(
+        f"UPDATE expected_students SET cohort_code=? "
+        f"WHERE telegram_id IN ({mju_placeholders})",
+        [COHORT_MJU] + sorted(MJU_MEMBER_IDS),
+    )
 
     c.execute('''CREATE TABLE IF NOT EXISTS shop_daily_counts_cohort
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -5880,8 +5889,12 @@ def ensure_legendary_action_ready(c, actor_id: int, implant_id: str, action_code
 
 
 def find_action_target(c, actor_id: int, target_id: Optional[int], target_name: Optional[str]):
+    actor_cohort = get_user_cohort(c, actor_id)
     if target_id:
-        c.execute("SELECT telegram_id, full_name, COALESCE(points, 0) FROM users WHERE telegram_id=?", (target_id,))
+        c.execute(
+            "SELECT telegram_id, full_name, COALESCE(points, 0) FROM users WHERE telegram_id=? AND cohort_code=?",
+            (target_id, actor_cohort),
+        )
     else:
         query = str(target_name or '').strip()
         if not query:
@@ -5889,10 +5902,10 @@ def find_action_target(c, actor_id: int, target_id: Optional[int], target_name: 
         c.execute(
             '''SELECT telegram_id, full_name, COALESCE(points, 0)
                FROM users
-               WHERE full_name LIKE ?
+               WHERE full_name LIKE ? AND cohort_code=?
                ORDER BY CASE WHEN full_name=? THEN 0 ELSE 1 END, full_name
                LIMIT 1''',
-            (f"%{query}%", query),
+            (f"%{query}%", actor_cohort, query),
         )
     row = c.fetchone()
     if not row:
@@ -6872,10 +6885,13 @@ async def set_profile_showcase(data: dict):
     return await db_write(_run)
 
 
-def get_last_event_mvp_id(c) -> Optional[int]:
-    """Return mvp_user_id of the most recently finished event, or None."""
+def get_last_event_mvp_id(c, cohort_code: str) -> Optional[int]:
+    """Return the latest finished-event MVP inside one cohort."""
     c.execute(
-        "SELECT mvp_user_id FROM events WHERE state='FINISHED' ORDER BY ended_at DESC LIMIT 1"
+        "SELECT mvp_user_id FROM events "
+        "WHERE state='FINISHED' AND cohort_code=? "
+        "ORDER BY ended_at DESC LIMIT 1",
+        (normalize_cohort_code(cohort_code),),
     )
     row = c.fetchone()
     return row[0] if row else None
@@ -6887,9 +6903,16 @@ async def get_user(telegram_id: int):
         conn = get_conn()
         try:
             c = conn.cursor()
-            c.execute("SELECT full_name, avatar_url, marzban_username FROM users WHERE telegram_id=?", (telegram_id,))
+            c.execute(
+                "SELECT full_name, avatar_url, marzban_username, cohort_code "
+                "FROM users WHERE telegram_id=?",
+                (telegram_id,),
+            )
             profile_row = c.fetchone()
-            is_last_mvp = get_last_event_mvp_id(c) == telegram_id
+            is_last_mvp = bool(
+                profile_row
+                and get_last_event_mvp_id(c, profile_row[3]) == telegram_id
+            )
             return profile_row, is_last_mvp
         finally:
             conn.close()
@@ -6898,7 +6921,7 @@ async def get_user(telegram_id: int):
     if not profile_row:
         raise HTTPException(status_code=404, detail="User not found")
 
-    full_name, avatar_url, marzban_user = profile_row
+    full_name, avatar_url, marzban_user, cohort_code = profile_row
     if not marzban_user:
         return {
             "username": full_name or f"student_{telegram_id}",
@@ -6912,6 +6935,7 @@ async def get_user(telegram_id: int):
             "is_architect": telegram_id in ARCHITECT_IDS,
             "has_vpn": False,
             "is_last_mvp": is_last_mvp,
+            "cohort_code": normalize_cohort_code(cohort_code),
         }
 
     data = await get_user_data(marzban_user)
@@ -6928,6 +6952,7 @@ async def get_user(telegram_id: int):
         "is_architect": telegram_id in ARCHITECT_IDS,
         "has_vpn": True,
         "is_last_mvp": is_last_mvp,
+        "cohort_code": normalize_cohort_code(cohort_code),
     }
 
 
@@ -7945,13 +7970,18 @@ def admin_user_dossier(
 
 
 @app.get("/api/admin/expected-students")
-def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None)):
+def admin_expected_students(
+    q: str = "",
+    x_admin_id: Optional[int] = Header(None),
+    x_cohort_code: Optional[str] = Header(None),
+):
     if x_admin_id not in ADMIN_IDS:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     query = str(q or "").strip()
     conn = get_conn()
     c = conn.cursor()
+    cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
     if query:
         like = f"%{query}%"
         c.execute(
@@ -7959,10 +7989,15 @@ def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None
                       es.telegram_id, es.status, u.full_name, u.avatar_url
                FROM expected_students es
                LEFT JOIN users u ON u.telegram_id = es.telegram_id
-               WHERE es.full_name LIKE ? OR es.group_label LIKE ? OR CAST(es.telegram_id AS TEXT) LIKE ?
+               WHERE es.cohort_code=?
+                 AND (
+                   es.full_name LIKE ?
+                   OR es.group_label LIKE ?
+                   OR CAST(es.telegram_id AS TEXT) LIKE ?
+                 )
                ORDER BY es.status ASC, es.full_name COLLATE NOCASE
                LIMIT 120''',
-            (like, like, like),
+            (cohort_code, like, like, like),
         )
     else:
         c.execute(
@@ -7970,12 +8005,15 @@ def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None
                       es.telegram_id, es.status, u.full_name, u.avatar_url
                FROM expected_students es
                LEFT JOIN users u ON u.telegram_id = es.telegram_id
+               WHERE es.cohort_code=?
                ORDER BY es.status ASC, es.full_name COLLATE NOCASE
                LIMIT 160''',
+            (cohort_code,),
         )
     rows = c.fetchall()
     conn.close()
     return {
+        "cohort_code": cohort_code,
         "students": [
             {
                 "id": row[0],
@@ -7988,9 +8026,8 @@ def admin_expected_students(q: str = "", x_admin_id: Optional[int] = Header(None
                 "avatar_url": row[7],
             }
             for row in rows
-        ]
+        ],
     }
-
 
 @app.post("/api/admin/points")
 async def admin_adjust_points(data: dict, x_admin_id: Optional[int] = Header(None)):
@@ -9126,7 +9163,7 @@ async def reject_presence_leave(data: dict, x_admin_id: Optional[int] = Header(N
 
 
 @app.post("/api/presence/admin/escalate")
-async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header(None), x_cohort_code: Optional[str] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
@@ -9135,6 +9172,7 @@ async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header
         check_date = normalize_presence_date(data.get("check_date"))
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
         now = now_iso()
         c.execute(
             '''UPDATE daily_checks
@@ -9144,8 +9182,9 @@ async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header
                WHERE check_type=?
                  AND check_date=?
                  AND status IN ('pending', 'leave_requested', 'leave_rejected')
-                 AND attempts_sent >= ?''',
-            (now, now, check_type, check_date, PRESENCE_ATTEMPT_LIMIT),
+                 AND attempts_sent >= ?
+                 AND cohort_code=?''',
+            (now, now, check_type, check_date, PRESENCE_ATTEMPT_LIMIT, cohort_code),
         )
         changed = c.rowcount
         conn.commit()
@@ -9157,8 +9196,9 @@ async def escalate_presence_check(data: dict, x_admin_id: Optional[int] = Header
                FROM daily_checks dc
                LEFT JOIN users u ON u.telegram_id = dc.telegram_id
                WHERE dc.check_type=? AND dc.check_date=? AND dc.status='needs_attention'
+                 AND dc.cohort_code=?
                ORDER BY u.full_name COLLATE NOCASE''',
-            (check_type, check_date),
+            (check_type, check_date, cohort_code),
         )
         rows = [serialize_presence_row(row) for row in c.fetchall()]
         conn.close()
@@ -9213,7 +9253,7 @@ async def cancel_presence_check(
 
 
 @app.post("/api/presence/admin/penalize")
-async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None)):
+async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header(None), x_cohort_code: Optional[str] = Header(None)):
     def _run():
         if x_admin_id not in ADMIN_IDS:
             raise HTTPException(status_code=403, detail="Forbidden")
@@ -9226,6 +9266,7 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
 
         conn = get_conn()
         c = conn.cursor()
+        cohort_code = resolve_viewer_cohort(c, x_admin_id, x_cohort_code)
         c.execute(
             '''SELECT dc.telegram_id, u.full_name, COALESCE(u.points, 0), COALESCE(u.rep_score, 0)
                FROM daily_checks dc
@@ -9233,8 +9274,9 @@ async def penalize_presence_check(data: dict, x_admin_id: Optional[int] = Header
                WHERE dc.check_type=?
                  AND dc.check_date=?
                  AND dc.status='needs_attention'
+                 AND dc.cohort_code=?
                  AND dc.telegram_id NOT IN ({})'''.format(','.join('?' * len(ADMIN_IDS))),
-            [check_type, check_date] + ADMIN_IDS,
+            [check_type, check_date, cohort_code] + ADMIN_IDS,
         )
         targets = c.fetchall()
         penalized = []
@@ -10701,9 +10743,10 @@ async def netwatch_formatting(data: dict):
                    WHERE telegram_id NOT IN (?, ?)
                      AND telegram_id NOT IN ({})
                      AND COALESCE(points, 0) >= 80
+                     AND cohort_code=?
                    ORDER BY RANDOM()
                    LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
-                [actor_id, tid] + ADMIN_IDS,
+                [actor_id, tid] + ADMIN_IDS + [get_user_cohort(c, actor_id)],
             )
             secondary = c.fetchone()
             secondary_id = secondary[0] if secondary else None
@@ -10882,9 +10925,10 @@ async def zhongli_earth_contract(data: dict):
                WHERE telegram_id NOT IN (?, ?)
                  AND telegram_id NOT IN ({})
                  AND COALESCE(points, 0) >= 80
+                 AND cohort_code=?
                ORDER BY RANDOM()
                LIMIT 1'''.format(','.join('?' * len(ADMIN_IDS))),
-            [actor_id, target_id] + ADMIN_IDS,
+            [actor_id, target_id] + ADMIN_IDS + [get_user_cohort(c, actor_id)],
         )
         secondary = c.fetchone()
         secondary_id = secondary[0] if secondary else None
@@ -15073,12 +15117,24 @@ def duel_leaderboard(
     viewer_id = get_request_actor_id(x_telegram_id, x_admin_id)
     cohort_code = resolve_viewer_cohort(c, viewer_id, x_cohort_code)
     c.execute(
-        "SELECT winner_id, COUNT(*) FROM duels WHERE status='finished' AND winner_id IS NOT NULL GROUP BY winner_id"
+        """SELECT d.winner_id, COUNT(*)
+           FROM duels d
+           JOIN users challenger ON challenger.telegram_id=d.challenger_id
+           WHERE d.status='finished' AND d.winner_id IS NOT NULL
+             AND challenger.cohort_code=?
+           GROUP BY d.winner_id""",
+        (cohort_code,),
     )
     wins = {r[0]: r[1] for r in c.fetchall()}
     c.execute(
-        "SELECT CASE WHEN winner_id=challenger_id THEN opponent_id ELSE challenger_id END AS loser, COUNT(*) "
-        "FROM duels WHERE status='finished' AND winner_id IS NOT NULL GROUP BY loser"
+        """SELECT CASE WHEN d.winner_id=d.challenger_id THEN d.opponent_id ELSE d.challenger_id END AS loser,
+                  COUNT(*)
+           FROM duels d
+           JOIN users challenger ON challenger.telegram_id=d.challenger_id
+           WHERE d.status='finished' AND d.winner_id IS NOT NULL
+             AND challenger.cohort_code=?
+           GROUP BY loser""",
+        (cohort_code,),
     )
     losses = {r[0]: r[1] for r in c.fetchall()}
     # Admin and FLATLINED duel activity is operational/sanctioned noise.
