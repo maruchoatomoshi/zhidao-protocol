@@ -20018,3 +20018,143 @@ body.theme-aqua .cn-divider::after { background: linear-gradient(90deg, transpar
 body.tg-ios #diaryStarsPopup > div {
   padding-bottom: 14px !important;
 }
+
+
+/* ===== FLATLINED / NETWATCH SANCTION ===== */
+.flatlined-banner[hidden] { display: none !important; }
+
+.flatlined-banner {
+  position: fixed;
+  top: calc(var(--tg-safe-top) + 12px);
+  left: max(10px, var(--tg-safe-left));
+  right: max(10px, var(--tg-safe-right));
+  z-index: 9994;
+  width: min(560px, calc(100vw - 20px));
+  min-height: 112px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px 12px 12px;
+  overflow: hidden;
+  pointer-events: none;
+  border: 2px solid #ff2b36;
+  border-radius: 10px;
+  background:
+    linear-gradient(100deg, rgba(4, 5, 8, 0.98), rgba(24, 0, 3, 0.98)),
+    repeating-linear-gradient(135deg, transparent 0 10px, rgba(255, 43, 54, 0.08) 10px 20px);
+  box-shadow: 0 0 0 1px rgba(255, 43, 54, 0.28), 0 0 32px rgba(255, 0, 28, 0.52);
+  color: #fff;
+  isolation: isolate;
+  animation: flatlinedSignal 2.4s steps(1, end) infinite;
+}
+
+.flatlined-banner::before,
+.flatlined-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.flatlined-banner::before {
+  background: repeating-linear-gradient(0deg, transparent 0 4px, rgba(255,255,255,0.025) 4px 5px);
+}
+
+.flatlined-banner::after {
+  inset: 0 auto 0 -35%;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, rgba(255, 43, 54, 0.2), transparent);
+  transform: skewX(-18deg);
+  animation: flatlinedSweep 3.2s linear infinite;
+}
+
+.flatlined-banner-logo {
+  flex: 0 0 86px;
+  width: 86px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 43, 54, 0.7);
+  border-radius: 8px;
+  background: radial-gradient(circle, rgba(255, 43, 54, 0.18), rgba(0, 0, 0, 0.82) 68%);
+  box-shadow: inset 0 0 20px rgba(255, 0, 28, 0.18);
+}
+
+.flatlined-banner-logo img {
+  width: 78px;
+  height: 78px;
+  object-fit: contain;
+  filter: saturate(1.2) contrast(1.12) drop-shadow(0 0 7px rgba(255, 43, 54, 0.72));
+}
+
+.flatlined-banner-copy {
+  min-width: 0;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+}
+
+.flatlined-banner-kicker {
+  margin-bottom: 3px;
+  color: #ff7780;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+}
+
+.flatlined-banner-title {
+  color: #ff2b36;
+  font-size: clamp(28px, 9vw, 44px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  text-shadow: 2px 0 #fff, -2px 0 rgba(0, 220, 255, 0.7), 0 0 18px rgba(255, 0, 28, 0.72);
+}
+
+.flatlined-banner-message {
+  margin-top: 7px;
+  color: rgba(255,255,255,0.78);
+  font-size: 9px;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+}
+
+@keyframes flatlinedSweep {
+  to { transform: translateX(500%) skewX(-18deg); }
+}
+
+@keyframes flatlinedSignal {
+  0%, 91%, 100% { transform: translateX(0); }
+  92% { transform: translateX(-2px); }
+  94% { transform: translateX(2px); }
+  96% { transform: translateX(0); }
+}
+
+@media (max-width: 390px) {
+  .flatlined-banner {
+    min-height: 98px;
+    gap: 10px;
+    padding: 10px;
+  }
+  .flatlined-banner-logo {
+    flex-basis: 72px;
+    width: 72px;
+    height: 72px;
+  }
+  .flatlined-banner-logo img {
+    width: 66px;
+    height: 66px;
+  }
+  .flatlined-banner-title {
+    font-size: 26px;
+  }
+  .flatlined-banner-message {
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flatlined-banner,
+  .flatlined-banner::after {
+    animation: none;
+  }
+}
