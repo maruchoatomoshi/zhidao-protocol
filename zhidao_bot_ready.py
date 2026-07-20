@@ -86,6 +86,22 @@ def parse_int_list_env(name: str) -> list[int]:
 
 
 ADMIN_IDS = parse_int_list_env("ADMIN_IDS") or [-1]
+COHORT_BEIJING = "beijing"
+COHORT_MJU = "mju"
+COHORT_CODES = (COHORT_BEIJING, COHORT_MJU)
+MJU_ADMIN_IDS = frozenset(parse_int_list_env("MJU_ADMIN_IDS") or [244487659])
+MJU_MEMBER_IDS = frozenset({
+    5024821858, 5243992893, 5043234233, 5270862724, 1049679249,
+    7366133308, 5973073048, 1324443747, 2055808907, 1295956600,
+    244487659, 5983453551, 5306057873, 1541846222, 5220506877,
+    5455635461, 5112589598, 5245376585, 5718009801, 5581257126,
+    6480285200, 1192650264,
+})
+GLOBAL_ADMIN_IDS = frozenset(set(ADMIN_IDS) - set(MJU_ADMIN_IDS))
+COHORT_ALIASES = {
+    "мю": COHORT_MJU, "mju": COHORT_MJU,
+    "пекин": COHORT_BEIJING, "beijing": COHORT_BEIJING,
+}
 FLATLINED_IDS = set(
     parse_int_list_env("FLATLINED_IDS")
     or [6157647579, 8579518402, 8580665130]
@@ -129,6 +145,29 @@ def init_db():
                   full_name TEXT,
                   points INTEGER DEFAULT 0)"""
     )
+    c.execute("PRAGMA table_info(users)")
+    user_columns = {row[1] for row in c.fetchall()}
+    if "cohort_code" not in user_columns:
+        c.execute("ALTER TABLE users ADD COLUMN cohort_code TEXT NOT NULL DEFAULT 'beijing'")
+    c.execute("UPDATE users SET cohort_code='beijing'")
+    c.executemany(
+        "UPDATE users SET cohort_code='mju' WHERE telegram_id=?",
+        [(telegram_id,) for telegram_id in MJU_MEMBER_IDS],
+    )
+    c.execute("PRAGMA table_info(expected_students)")
+    expected_columns = {row[1] for row in c.fetchall()}
+    if expected_columns and "cohort_code" not in expected_columns:
+        c.execute(
+            "ALTER TABLE expected_students "
+            "ADD COLUMN cohort_code TEXT NOT NULL DEFAULT 'beijing'"
+        )
+    if expected_columns:
+        placeholders = ",".join("?" * len(MJU_MEMBER_IDS))
+        c.execute(
+            f"UPDATE expected_students SET cohort_code='mju' "
+            f"WHERE telegram_id IN ({placeholders})",
+            tuple(sorted(MJU_MEMBER_IDS)),
+        )
     c.execute(
         """CREATE TABLE IF NOT EXISTS dragon_actions
                  (telegram_id INTEGER PRIMARY KEY,
@@ -144,6 +183,7 @@ def init_db():
                   room_number TEXT DEFAULT NULL,
                   telegram_id INTEGER DEFAULT NULL,
                   status TEXT DEFAULT 'pending',
+                  cohort_code TEXT NOT NULL DEFAULT 'beijing',
                   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                   updated_at TEXT DEFAULT CURRENT_TIMESTAMP)"""
     )
@@ -198,15 +238,32 @@ def code_exists(code):
     return bool(result)
 
 
-def add_user(code, marzban_username):
+def add_user(code, marzban_username, cohort_code=COHORT_BEIJING):
     conn = db_connect()
     c = conn.cursor()
+    cohort_code = normalize_cohort_code(cohort_code)
     c.execute(
-        "INSERT OR REPLACE INTO users (code, marzban_username) VALUES (?,?)",
-        (code, marzban_username or None),
+        """INSERT INTO users (code, marzban_username, cohort_code)
+           VALUES (?,?,?)
+           ON CONFLICT(code) DO UPDATE SET
+             marzban_username=excluded.marzban_username,
+             cohort_code=CASE
+               WHEN users.telegram_id IS NULL THEN excluded.cohort_code
+               ELSE users.cohort_code
+             END""",
+        (code, marzban_username or None, cohort_code),
     )
     conn.commit()
     conn.close()
+
+
+def get_code_cohort(code):
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute("SELECT cohort_code FROM users WHERE code=?", (code,))
+    row = c.fetchone()
+    conn.close()
+    return normalize_cohort_code(row[0] if row else COHORT_BEIJING)
 
 
 def save_telegram_id(code, telegram_id, full_name):
@@ -230,7 +287,7 @@ def is_cyrillic_full_name(value):
     return bool(re.fullmatch(r"[А-Яа-яЁё][А-Яа-яЁё'\-]+ [А-Яа-яЁё][А-Яа-яЁё'\-]+(?: [А-Яа-яЁё][А-Яа-яЁё'\-]+)?", text))
 
 
-def validate_expected_student_name(full_name, telegram_id):
+def validate_expected_student_name(full_name, telegram_id, cohort_code=COHORT_BEIJING):
     if telegram_id in ADMIN_IDS or telegram_id in REGISTRATION_BYPASS_IDS:
         return True, full_name, ""
 
@@ -251,8 +308,9 @@ def validate_expected_student_name(full_name, telegram_id):
         return True, full_name, ""
 
     c.execute(
-        "SELECT full_name, telegram_id FROM expected_students WHERE normalized_name=?",
-        (normalized,),
+        "SELECT full_name, telegram_id FROM expected_students "
+        "WHERE normalized_name=? AND cohort_code=?",
+        (normalized, normalize_cohort_code(cohort_code)),
     )
     row = c.fetchone()
     conn.close()
@@ -266,7 +324,7 @@ def validate_expected_student_name(full_name, telegram_id):
     return True, canonical_name, ""
 
 
-def link_expected_student(full_name, telegram_id):
+def link_expected_student(full_name, telegram_id, cohort_code=COHORT_BEIJING):
     normalized = normalize_registration_name(full_name)
     conn = db_connect()
     c = conn.cursor()
@@ -277,24 +335,62 @@ def link_expected_student(full_name, telegram_id):
     c.execute(
         """UPDATE expected_students
            SET telegram_id=?, status='registered', updated_at=CURRENT_TIMESTAMP
-           WHERE normalized_name=?""",
-        (telegram_id, normalized),
+           WHERE normalized_name=? AND cohort_code=?""",
+        (telegram_id, normalized, normalize_cohort_code(cohort_code)),
     )
     conn.commit()
     conn.close()
 
 
-def get_all_users():
+def normalize_cohort_code(value):
+    return COHORT_MJU if str(value or "").strip().lower() == COHORT_MJU else COHORT_BEIJING
+
+
+def get_user_cohort(telegram_id):
+    if telegram_id in MJU_MEMBER_IDS or telegram_id in MJU_ADMIN_IDS:
+        return COHORT_MJU
     conn = db_connect()
     c = conn.cursor()
-    c.execute("SELECT telegram_id, full_name FROM users WHERE telegram_id IS NOT NULL")
+    c.execute("SELECT cohort_code FROM users WHERE telegram_id=?", (telegram_id,))
+    row = c.fetchone()
+    conn.close()
+    return normalize_cohort_code(row[0] if row else COHORT_BEIJING)
+
+
+def admins_for_cohort(cohort_code):
+    cohort_code = normalize_cohort_code(cohort_code)
+    result = set(GLOBAL_ADMIN_IDS)
+    if cohort_code == COHORT_MJU:
+        result.update(MJU_ADMIN_IDS)
+    return sorted(result)
+
+
+def parse_admin_cohort(admin_id, tokens, default=COHORT_BEIJING):
+    tokens = list(tokens)
+    if admin_id in MJU_ADMIN_IDS:
+        if tokens and tokens[0].strip().lower() in COHORT_ALIASES:
+            tokens.pop(0)
+        return COHORT_MJU, tokens
+    if tokens and tokens[0].strip().lower() in COHORT_ALIASES:
+        return COHORT_ALIASES[tokens.pop(0).strip().lower()], tokens
+    return normalize_cohort_code(default), tokens
+
+
+def get_all_users(cohort_code=COHORT_BEIJING):
+    conn = db_connect()
+    c = conn.cursor()
+    c.execute(
+        "SELECT telegram_id, full_name FROM users "
+        "WHERE telegram_id IS NOT NULL AND cohort_code=?",
+        (normalize_cohort_code(cohort_code),),
+    )
     result = c.fetchall()
     conn.close()
     return result
 
 
-def get_all_telegram_ids():
-    return [row[0] for row in get_all_users()]
+def get_all_telegram_ids(cohort_code=COHORT_BEIJING):
+    return [row[0] for row in get_all_users(cohort_code)]
 
 
 def get_setting(key, default=None):
@@ -325,12 +421,22 @@ def internal_api_headers(extra=None):
     return headers
 
 
-async def api_request(method, path, json_data=None, params=None, admin=False):
+async def api_request(
+    method,
+    path,
+    json_data=None,
+    params=None,
+    admin=False,
+    admin_id=None,
+    cohort_code=None,
+):
     headers = {}
     if API_INTERNAL_TOKEN:
         headers["x-internal-token"] = API_INTERNAL_TOKEN
     if admin:
-        headers["x-admin-id"] = str(PRESENCE_ADMIN_ID)
+        headers["x-admin-id"] = str(admin_id or PRESENCE_ADMIN_ID)
+    if cohort_code:
+        headers["x-cohort-code"] = normalize_cohort_code(cohort_code)
 
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
         async with session.request(
@@ -351,21 +457,25 @@ async def api_request(method, path, json_data=None, params=None, admin=False):
             return data
 
 
-async def presence_start(check_type, note=""):
+async def presence_start(check_type, note="", cohort_code=COHORT_BEIJING, admin_id=PRESENCE_ADMIN_ID):
     return await api_request(
         "POST",
         "/api/presence/start",
         {"check_type": check_type, "note": note},
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
 
 
-async def presence_attempt(check_type, telegram_id):
+async def presence_attempt(check_type, telegram_id, cohort_code, admin_id=PRESENCE_ADMIN_ID):
     return await api_request(
         "POST",
         "/api/presence/attempt",
         {"check_type": check_type, "telegram_id": telegram_id},
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
 
 
@@ -383,34 +493,45 @@ async def presence_confirm(telegram_id, check_type, action, note="", check_date=
     )
 
 
-async def presence_overview(check_type):
+async def presence_overview(check_type, cohort_code, admin_id=PRESENCE_ADMIN_ID):
     return await api_request(
         "GET",
         "/api/presence/admin/overview",
         params={"check_type": check_type},
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
 
 
-async def presence_escalate(check_type):
+async def presence_escalate(check_type, cohort_code, admin_id=PRESENCE_ADMIN_ID):
     return await api_request(
         "POST",
         "/api/presence/admin/escalate",
         {"check_type": check_type},
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
 
 
-async def presence_penalize(check_type, penalty_points=PRESENCE_PENALTY_POINTS):
+async def presence_penalize(
+    check_type,
+    cohort_code,
+    penalty_points=PRESENCE_PENALTY_POINTS,
+    admin_id=PRESENCE_ADMIN_ID,
+):
     return await api_request(
         "POST",
         "/api/presence/admin/penalize",
         {"check_type": check_type, "penalty_points": penalty_points},
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
 
 
-async def presence_cancel(check_type, admin_id, reason="manual cancel from bot"):
+async def presence_cancel(check_type, admin_id, cohort_code, reason="manual cancel from bot"):
     return await api_request(
         "POST",
         "/api/presence/admin/cancel",
@@ -420,10 +541,13 @@ async def presence_cancel(check_type, admin_id, reason="manual cancel from bot")
             "reason": reason,
         },
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
 
 
 async def presence_approve(telegram_id, check_type, admin_id, reason="admin_approved", check_date=None):
+    cohort_code = get_user_cohort(telegram_id)
     return await api_request(
         "POST",
         "/api/presence/admin/approve",
@@ -435,10 +559,13 @@ async def presence_approve(telegram_id, check_type, admin_id, reason="admin_appr
             "reason": reason,
         },
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
 
 
 async def presence_reject(telegram_id, check_type, admin_id, reason="leave rejected", check_date=None):
+    cohort_code = get_user_cohort(telegram_id)
     return await api_request(
         "POST",
         "/api/presence/admin/reject",
@@ -450,8 +577,9 @@ async def presence_reject(telegram_id, check_type, admin_id, reason="leave rejec
             "reason": reason,
         },
         admin=True,
+        admin_id=admin_id,
+        cohort_code=cohort_code,
     )
-
 
 def has_dragon(telegram_id):
     conn = db_connect()
@@ -493,7 +621,7 @@ def get_points(telegram_id):
     return result[0] if result else 0
 
 
-def get_leaderboard():
+def get_leaderboard(cohort_code):
     conn = db_connect()
     c = conn.cursor()
     excluded_ids = sorted(set(ADMIN_IDS) | FLATLINED_IDS)
@@ -501,20 +629,21 @@ def get_leaderboard():
     c.execute(
         f"""SELECT full_name, points FROM users
             WHERE telegram_id IS NOT NULL AND telegram_id NOT IN ({placeholders})
+              AND cohort_code=?
             ORDER BY points DESC LIMIT 10""",
-        excluded_ids,
+        excluded_ids + [normalize_cohort_code(cohort_code)],
     )
     result = c.fetchall()
     conn.close()
     return result
 
 
-def find_user_by_name(query):
+def find_user_by_name(query, cohort_code):
     conn = db_connect()
     c = conn.cursor()
     c.execute(
-        "SELECT telegram_id, full_name, points FROM users WHERE full_name LIKE ?",
-        (f"%{query}%",),
+        "SELECT telegram_id, full_name, points FROM users WHERE full_name LIKE ? AND cohort_code=?",
+        (f"%{query}%", normalize_cohort_code(cohort_code)),
     )
     result = c.fetchone()
     conn.close()
@@ -635,8 +764,8 @@ def get_presence_admin_keyboard(check_type, telegram_id, check_date=None):
     )
 
 
-async def notify_admins(text, reply_markup=None):
-    for admin_id in ADMIN_IDS:
+async def notify_admins(text, reply_markup=None, cohort_code=COHORT_BEIJING):
+    for admin_id in admins_for_cohort(cohort_code):
         try:
             await bot.send_message(admin_id, text, reply_markup=reply_markup)
         except Exception:
@@ -721,15 +850,17 @@ def mark_anon_question_answered(question_id: int, admin_name: str):
     conn.close()
 
 
-def get_recent_bug_reports(limit: int = 10):
+def get_recent_bug_reports(cohort_code, limit: int = 10):
     conn = db_connect()
     c = conn.cursor()
     c.execute(
-        """SELECT id, telegram_id, full_name, username, text, status, created_at
-           FROM bug_reports
-           ORDER BY id DESC
+        """SELECT br.id, br.telegram_id, br.full_name, br.username, br.text, br.status, br.created_at
+           FROM bug_reports br
+           JOIN users u ON u.telegram_id=br.telegram_id
+           WHERE u.cohort_code=?
+           ORDER BY br.id DESC
            LIMIT ?""",
-        (limit,),
+        (normalize_cohort_code(cohort_code), limit),
     )
     rows = c.fetchall()
     conn.close()
@@ -787,14 +918,21 @@ def get_presence_message(check_type, attempt_no=1):
     )
 
 
-async def send_presence_attempt(check_type, attempt_no=1, create_check=False):
+async def send_presence_attempt(
+    check_type,
+    attempt_no=1,
+    create_check=False,
+    cohort_code=COHORT_BEIJING,
+    admin_id=PRESENCE_ADMIN_ID,
+):
     if not reminders_enabled:
         return
 
+    cohort_code = normalize_cohort_code(cohort_code)
     if create_check:
-        await presence_start(check_type, f"bot attempt {attempt_no}")
+        await presence_start(check_type, f"bot attempt {attempt_no}", cohort_code, admin_id)
 
-    overview = await presence_overview(check_type)
+    overview = await presence_overview(check_type, cohort_code, admin_id)
     sent = 0
 
     for check in overview.get("checks", []):
@@ -810,65 +948,95 @@ async def send_presence_attempt(check_type, attempt_no=1, create_check=False):
                 reply_markup=get_presence_keyboard(check_type, overview.get("check_date")),
             )
             sent += 1
-
-            attempt = await presence_attempt(check_type, tg_id)
+            attempt = await presence_attempt(check_type, tg_id, cohort_code, admin_id)
             if attempt.get("needs_admin_alert"):
                 name = check.get("full_name") or str(tg_id)
-                await notify_admins(f"⚠️ {name}: 3 попытки без подтверждения ({check_type}). Нужно проверить.")
+                await notify_admins(
+                    f"⚠️ {name}: 3 попытки без подтверждения ({check_type}). Нужно проверить.",
+                    cohort_code=cohort_code,
+                )
         except Exception:
             pass
 
-    await notify_admins(f"📡 Presence {check_type}: попытка {attempt_no}/3 отправлена ({sent} чел.)")
+    await notify_admins(
+        f"📡 Presence {check_type}: попытка {attempt_no}/3 отправлена ({sent} чел.)",
+        cohort_code=cohort_code,
+    )
 
 
 async def send_checkin():
-    await send_presence_attempt("evening", attempt_no=1, create_check=True)
+    for cohort_code in COHORT_CODES:
+        await send_presence_attempt("evening", attempt_no=1, create_check=True, cohort_code=cohort_code)
 
 
 async def check_missing():
-    await escalate_presence("evening")
+    for cohort_code in COHORT_CODES:
+        await escalate_presence("evening", cohort_code)
 
 
 async def check_wakeup_missing():
-    await escalate_presence("morning")
+    for cohort_code in COHORT_CODES:
+        await escalate_presence("morning", cohort_code)
 
 
 async def send_morning_presence():
-    await send_presence_attempt("morning", attempt_no=1, create_check=True)
+    for cohort_code in COHORT_CODES:
+        await send_presence_attempt("morning", attempt_no=1, create_check=True, cohort_code=cohort_code)
 
 
 async def retry_evening_presence(attempt_no):
-    await send_presence_attempt("evening", attempt_no=attempt_no, create_check=False)
+    for cohort_code in COHORT_CODES:
+        await send_presence_attempt("evening", attempt_no=attempt_no, create_check=False, cohort_code=cohort_code)
 
 
 async def retry_morning_presence(attempt_no):
-    await send_presence_attempt("morning", attempt_no=attempt_no, create_check=False)
+    for cohort_code in COHORT_CODES:
+        await send_presence_attempt("morning", attempt_no=attempt_no, create_check=False, cohort_code=cohort_code)
 
 
-async def escalate_presence(check_type):
+async def escalate_presence(check_type, cohort_code, admin_id=PRESENCE_ADMIN_ID):
     if not reminders_enabled:
         return
 
-    data = await presence_escalate(check_type)
+    data = await presence_escalate(check_type, cohort_code, admin_id)
     rows = data.get("needs_attention", [])
     if not rows:
-        await notify_admins(f"✅ Presence {check_type}: все в порядке, тревог нет.")
+        await notify_admins(
+            f"✅ Presence {check_type}: все в порядке, тревог нет.",
+            cohort_code=cohort_code,
+        )
         return
 
     text = f"🚨 Presence {check_type}: нужно проверить вручную\n\n"
     for row in rows:
         text += f"• {row.get('full_name') or row.get('telegram_id')} — {row.get('attempts_sent', 0)} попытки\n"
-    await notify_admins(text)
+    await notify_admins(text, cohort_code=cohort_code)
 
 
-async def penalize_presence(check_type):
+async def penalize_presence(
+    check_type,
+    cohort_code=None,
+    admin_id=PRESENCE_ADMIN_ID,
+):
     if not reminders_enabled:
         return
+    if cohort_code is None:
+        for current_cohort in COHORT_CODES:
+            await penalize_presence(check_type, current_cohort, admin_id)
+        return
 
-    data = await presence_penalize(check_type, PRESENCE_PENALTY_POINTS)
+    data = await presence_penalize(
+        check_type,
+        cohort_code,
+        PRESENCE_PENALTY_POINTS,
+        admin_id,
+    )
     penalized = data.get("penalized", [])
     if not penalized:
-        await notify_admins(f"✅ Presence {check_type}: штрафовать некого.")
+        await notify_admins(
+            f"✅ Presence {check_type}: штрафовать некого.",
+            cohort_code=cohort_code,
+        )
         return
 
     text = f"⚠️ Presence {check_type}: применён штраф -{PRESENCE_PENALTY_POINTS}★\n\n"
@@ -883,23 +1051,23 @@ async def penalize_presence(check_type):
             )
         except Exception:
             pass
-    await notify_admins(text)
+    await notify_admins(text, cohort_code=cohort_code)
 
 
 async def send_goodnight():
     if not reminders_enabled:
         return
-    ids = get_all_telegram_ids()
-    for tg_id in ids:
-        try:
-            await bot.send_message(
-                tg_id,
-                "🌙 Отбой!\n\n"
-                "Спокойной ночи! Завтра занятия — не проспи! ⏰\n"
-                "Телефоны на зарядку 📱",
-            )
-        except Exception:
-            pass
+    for cohort_code in COHORT_CODES:
+        for tg_id in get_all_telegram_ids(cohort_code):
+            try:
+                await bot.send_message(
+                    tg_id,
+                    "🌙 Отбой!\n\n"
+                    "Спокойной ночи! Завтра занятия — не проспи! ⏰\n"
+                    "Телефоны на зарядку 📱",
+                )
+            except Exception:
+                pass
 
 
 @dp.callback_query(lambda c: c.data and c.data.startswith("presence:"))
@@ -930,6 +1098,7 @@ async def presence_child_callback(callback: types.CallbackQuery):
             await notify_admins(
                 f"🙋 Запрос отгула ({check_type})\n\n{name} / {user_id} просит разрешение.",
                 reply_markup=get_presence_admin_keyboard(check_type, user_id, check_date),
+                cohort_code=get_user_cohort(user_id),
             )
         else:
             await callback.answer("Неизвестное действие", show_alert=True)
@@ -1037,7 +1206,10 @@ async def process_name(message: types.Message, state: FSMContext):
         await message.answer("❌ Ошибка. Попробуйте снова через /start КОД")
         await state.clear()
         return
-    is_valid_name, canonical_name, validation_error = validate_expected_student_name(full_name, user_id)
+    cohort_code = get_code_cohort(code)
+    is_valid_name, canonical_name, validation_error = validate_expected_student_name(
+        full_name, user_id, cohort_code
+    )
     if not is_valid_name:
         await message.answer(
             "❌ Не удалось подтвердить ФИО.\n\n"
@@ -1047,7 +1219,7 @@ async def process_name(message: types.Message, state: FSMContext):
         return
     full_name = canonical_name
     save_telegram_id(code, user_id, full_name)
-    link_expected_student(full_name, user_id)
+    link_expected_student(full_name, user_id, cohort_code)
     del pending_codes[user_id]
     await state.clear()
     marzban_user = get_marzban_user(code)
@@ -1128,7 +1300,8 @@ async def bug_reports_list(message: types.Message):
         await message.answer("❌ У вас нет прав администратора.")
         return
 
-    reports = get_recent_bug_reports(10)
+    cohort_code, _ = parse_admin_cohort(message.from_user.id, message.text.split()[1:])
+    reports = get_recent_bug_reports(cohort_code, 10)
     if not reports:
         await message.answer(
             "Баг-репортов пока нет.",
@@ -1198,7 +1371,7 @@ async def debug_document(message: types.Message):
 @dp.message(Command("баллы", "points"))
 async def my_points(message: types.Message):
     points = get_points(message.from_user.id)
-    lb = get_leaderboard()
+    lb = get_leaderboard(get_user_cohort(message.from_user.id))
     rank = next((i + 1 for i, (name, p) in enumerate(lb) if p == points), "—")
     await message.answer(
         f"⭐ Ваши баллы: *{points}*\n🏆 Место в рейтинге: {rank}",
@@ -1208,7 +1381,7 @@ async def my_points(message: types.Message):
 
 @dp.message(Command("рейтинг", "leaderboard"))
 async def leaderboard(message: types.Message):
-    lb = get_leaderboard()
+    lb = get_leaderboard(get_user_cohort(message.from_user.id))
     if not lb:
         await message.answer("Рейтинг пока пуст.")
         return
@@ -1257,53 +1430,61 @@ async def admin_help(message: types.Message):
         )
         return
     status = "✅ вкл" if reminders_enabled else "❌ выкл"
+    scope_hint = "МЮ (фиксированный контур)" if message.from_user.id in MJU_ADMIN_IDS else "аргумент [мю|пекин], по умолчанию Пекин"
     await message.answer(
         "👑 Команды администратора:\n\n"
-        "/adduser КОД [USERNAME] — добавить пользователя, VPN можно позже\n"
-        "/listusers — список пользователей\n"
-        "/broadcast ТЕКСТ — рассылка всем\n"
-        "/bugs — последние баг-репорты\n"
-        "/разбудить ИМЯ — будильник\n"
-        "/перекличка — запустить вечернюю отметку\n"
-        "/подъем — запустить утреннюю отметку\n"
-        "/presence morning|evening — статус отметки\n"
-        "/отмена morning|evening — отменить случайную отметку\n"
-        "/award ИМЯ БАЛЛЫ ПРИЧИНА — начислить баллы\n"
-        "/penalize ИМЯ БАЛЛЫ ПРИЧИНА — снять баллы\n"
-        "/зп СУММА — воскресная зарплата\n"
+        f"Контуры: {scope_hint}\n"
+        "/adduser [мю|пекин] КОД [USERNAME] — добавить пользователя\n"
+        "/listusers [мю|пекин] — список пользователей\n"
+        "/broadcast [мю|пекин] ТЕКСТ — рассылка\n"
+        "/bugs [мю|пекин] — последние баг-репорты\n"
+        "/разбудить [мю|пекин] ИМЯ — будильник\n"
+        "/перекличка [мю|пекин] — вечерняя отметка\n"
+        "/подъем [мю|пекин] — утренняя отметка\n"
+        "/presence [мю|пекин] morning|evening — статус\n"
+        "/отмена [мю|пекин] morning|evening — отменить отметку\n"
+        "/award [мю|пекин] ИМЯ БАЛЛЫ ПРИЧИНА — начислить\n"
+        "/penalize [мю|пекин] ИМЯ БАЛЛЫ ПРИЧИНА — снять\n"
+        "/зп [мю|пекин] СУММА — зарплата\n"
         f"/напоминания вкл|выкл — сейчас {status}\n"
         "/admin — это меню",
         reply_markup=get_main_reply_keyboard(message.from_user.id),
     )
-
 
 @dp.message(Command("adduser", "добавить"))
 async def add_user_cmd(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    args = message.text.split()
-    if len(args) not in (2, 3):
+    raw_args = message.text.split()[1:]
+    cohort_code, args = parse_admin_cohort(message.from_user.id, raw_args)
+    if len(args) not in (1, 2):
         await message.answer(
             "Использование:\n"
-            "/adduser КОД — student-only без VPN\n"
-            "/adduser КОД MARZBAN_USERNAME — с VPN"
+            "/adduser [мю|пекин] КОД — student-only без VPN\n"
+            "/adduser [мю|пекин] КОД MARZBAN_USERNAME — с VPN"
         )
         return
-    marzban_username = args[2] if len(args) == 3 else None
-    add_user(args[1], marzban_username)
+    marzban_username = args[1] if len(args) == 2 else None
+    add_user(args[0], marzban_username, cohort_code)
     suffix = f" → {marzban_username}" if marzban_username else " → student-only"
-    await message.answer(f"✅ Добавлен: код {args[1]}{suffix}")
-
+    await message.answer(
+        f"✅ Добавлен в {cohort_code.upper()}: код {args[0]}{suffix}"
+    )
 
 @dp.message(Command("listusers", "список"))
 async def list_users(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
+    cohort_code, _ = parse_admin_cohort(message.from_user.id, message.text.split()[1:])
     conn = db_connect()
     c = conn.cursor()
-    c.execute("SELECT code, marzban_username, telegram_id, full_name, points FROM users")
+    c.execute(
+        "SELECT code, marzban_username, telegram_id, full_name, points "
+        "FROM users WHERE cohort_code=?",
+        (cohort_code,),
+    )
     users = c.fetchall()
     conn.close()
     if not users:
@@ -1318,7 +1499,7 @@ async def list_users(message: types.Message):
 
     # Telegram caps messages at 4096 chars — with 100+ users a single message
     # would silently fail to send, so chunk into multiple messages instead.
-    header = f"👥 Пользователи ({len(users)}):\n\n"
+    header = f"👥 Пользователи {cohort_code.upper()} ({len(users)}):\n\n"
     chunk = header
     for line in lines:
         if len(chunk) + len(line) + 1 > 3500:
@@ -1330,22 +1511,24 @@ async def list_users(message: types.Message):
 
 
 async def check_wildai_breach_broadcast():
-    if get_setting("breach_broadcast_pending") != "1":
-        return
-    glitch = get_setting("breach_broadcast_phrase_glitch", "")
-    translation = get_setting("breach_broadcast_phrase_translation", "")
-    text = (
-        "⚠️ SYSTEM ERROR // RED FIREWALL: ОФФЛАЙН\n\n"
-        "Операция по вытеснению Дикого ИИ провалена. Файрвол пал — система захвачена на 3 дня.\n\n"
-        f"{glitch}\n— \"{translation}\""
-    )
-    for tg_id in get_all_telegram_ids():
-        try:
-            await bot.send_message(tg_id, text)
-        except Exception:
-            pass
-        await asyncio.sleep(0.05)
-    set_setting("breach_broadcast_pending", "0")
+    for cohort_code in COHORT_CODES:
+        prefix = f"{cohort_code}:"
+        if get_setting(prefix + "breach_broadcast_pending") != "1":
+            continue
+        glitch = get_setting(prefix + "breach_broadcast_phrase_glitch", "")
+        translation = get_setting(prefix + "breach_broadcast_phrase_translation", "")
+        text = (
+            "⚠️ SYSTEM ERROR // RED FIREWALL: ОФФЛАЙН\n\n"
+            "Операция по вытеснению Дикого ИИ провалена. Файрвол пал — система захвачена на 3 дня.\n\n"
+            f"{glitch}\n— \"{translation}\""
+        )
+        for tg_id in get_all_telegram_ids(cohort_code):
+            try:
+                await bot.send_message(tg_id, text)
+            except Exception:
+                pass
+            await asyncio.sleep(0.05)
+        set_setting(prefix + "breach_broadcast_pending", "0")
 
 
 @dp.message(Command("broadcast", "рассылка"))
@@ -1353,18 +1536,24 @@ async def broadcast(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2:
-        await message.answer("Использование: /broadcast ТЕКСТ")
+    raw = message.text.split(maxsplit=1)
+    if len(raw) < 2:
+        await message.answer("Использование: /broadcast [мю|пекин] ТЕКСТ")
         return
+    parts = raw[1].split(maxsplit=1)
+    cohort_code, parts = parse_admin_cohort(message.from_user.id, parts)
+    if not parts:
+        await message.answer("Укажи текст рассылки")
+        return
+    text = " ".join(parts)
     sent = 0
-    for tg_id in get_all_telegram_ids():
+    for tg_id in get_all_telegram_ids(cohort_code):
         try:
-            await bot.send_message(tg_id, f"📢 Объявление:\n\n{args[1]}")
+            await bot.send_message(tg_id, f"📢 Объявление:\n\n{text}")
             sent += 1
         except Exception:
             pass
-    await message.answer(f"✅ Отправлено {sent} пользователям.")
+    await message.answer(f"✅ {cohort_code.upper()}: отправлено {sent} пользователям.")
 
 
 @dp.message(Command("перекличка"))
@@ -1372,8 +1561,15 @@ async def manual_checkin(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    await message.answer("✅ Запускаю вечернюю отметку...")
-    await send_checkin()
+    cohort_code, _ = parse_admin_cohort(message.from_user.id, message.text.split()[1:])
+    await message.answer(f"✅ Запускаю вечернюю отметку: {cohort_code.upper()}...")
+    await send_presence_attempt(
+        "evening",
+        attempt_no=1,
+        create_check=True,
+        cohort_code=cohort_code,
+        admin_id=message.from_user.id,
+    )
 
 
 @dp.message(Command("подъем"))
@@ -1381,8 +1577,15 @@ async def manual_morning_presence(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    await message.answer("✅ Запускаю утреннюю отметку...")
-    await send_morning_presence()
+    cohort_code, _ = parse_admin_cohort(message.from_user.id, message.text.split()[1:])
+    await message.answer(f"✅ Запускаю утреннюю отметку: {cohort_code.upper()}...")
+    await send_presence_attempt(
+        "morning",
+        attempt_no=1,
+        create_check=True,
+        cohort_code=cohort_code,
+        admin_id=message.from_user.id,
+    )
 
 
 @dp.message(Command("отмена", "presence_cancel"))
@@ -1391,16 +1594,19 @@ async def presence_cancel_cmd(message: types.Message):
         await message.answer("❌ У вас нет прав администратора.")
         return
 
-    args = message.text.split(maxsplit=2)
-    check_type = args[1] if len(args) > 1 else "evening"
-    reason = args[2] if len(args) > 2 else "Отменено администратором"
+    cohort_code, args = parse_admin_cohort(
+        message.from_user.id,
+        message.text.split()[1:],
+    )
+    check_type = args.pop(0) if args else "evening"
+    reason = " ".join(args) if args else "Отменено администратором"
 
     if check_type not in ("morning", "evening"):
         await message.answer("Использование: /отмена morning или /отмена evening")
         return
 
     try:
-        data = await presence_cancel(check_type, message.from_user.id, reason)
+        data = await presence_cancel(check_type, message.from_user.id, cohort_code, reason)
         cancelled = data.get("cancelled", 0)
         label = PRESENCE_TYPE_LABELS.get(check_type, check_type)
         await message.answer(f"✅ {label.capitalize()} отменена.\nСтатусов сброшено: {cancelled}")
@@ -1413,15 +1619,15 @@ async def presence_status_cmd(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    args = message.text.split()
-    check_type = args[1] if len(args) > 1 else "evening"
+    cohort_code, args = parse_admin_cohort(message.from_user.id, message.text.split()[1:])
+    check_type = args[0] if args else "evening"
     if check_type not in ("morning", "evening"):
         await message.answer("Использование: /presence morning или /presence evening")
         return
-    data = await presence_overview(check_type)
+    data = await presence_overview(check_type, cohort_code, message.from_user.id)
     counts = data.get("counts", {})
     label = PRESENCE_TYPE_LABELS.get(check_type, check_type)
-    text = f"📊 {label.capitalize()}\n\n"
+    text = f"📊 {label.capitalize()} · {cohort_code.upper()}\n\n"
     for key in PRESENCE_STATUS_ORDER:
         text += f"• {PRESENCE_STATUS_LABELS.get(key, key)}: {counts.get(key, 0)}\n"
     await message.answer(text)
@@ -1432,17 +1638,22 @@ async def award_points(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    args = message.text.split(maxsplit=3)
-    if len(args) < 4:
-        await message.answer("Использование: /award ИМЯ БАЛЛЫ ПРИЧИНА")
+    cohort_code, args = parse_admin_cohort(
+        message.from_user.id,
+        message.text.split(maxsplit=4)[1:],
+    )
+    if len(args) < 3:
+        await message.answer("Использование: /award [мю|пекин] ИМЯ БАЛЛЫ ПРИЧИНА")
         return
-    name_query, points_str, reason = args[1], args[2], args[3]
+    name_query, points_str = args[0], args[1]
+    reason = " ".join(args[2:])
+
     try:
         points = int(points_str)
     except Exception:
         await message.answer("❌ Баллы должны быть числом")
         return
-    user = find_user_by_name(name_query)
+    user = find_user_by_name(name_query, cohort_code)
     if not user:
         await message.answer(f"❌ Пользователь '{name_query}' не найден")
         return
@@ -1464,17 +1675,22 @@ async def penalize_points(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    args = message.text.split(maxsplit=3)
-    if len(args) < 4:
-        await message.answer("Использование: /penalize ИМЯ БАЛЛЫ ПРИЧИНА")
+    cohort_code, args = parse_admin_cohort(
+        message.from_user.id,
+        message.text.split(maxsplit=4)[1:],
+    )
+    if len(args) < 3:
+        await message.answer("Использование: /penalize [мю|пекин] ИМЯ БАЛЛЫ ПРИЧИНА")
         return
-    name_query, points_str, reason = args[1], args[2], args[3]
+    name_query, points_str = args[0], args[1]
+    reason = " ".join(args[2:])
+
     try:
         points = int(points_str)
     except Exception:
         await message.answer("❌ Баллы должны быть числом")
         return
-    user = find_user_by_name(name_query)
+    user = find_user_by_name(name_query, cohort_code)
     if not user:
         await message.answer(f"❌ Пользователь '{name_query}' не найден")
         return
@@ -1508,9 +1724,14 @@ async def salary(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ Нет прав.")
         return
-    args = message.text.split()
-    amount = int(args[1]) if len(args) > 1 else 100
-    users = get_all_users()
+    cohort_code, args = parse_admin_cohort(message.from_user.id, message.text.split()[1:])
+    try:
+        amount = int(args[0]) if args else 100
+    except ValueError:
+        await message.answer("Использование: /зп [мю|пекин] [СУММА]")
+        return
+    users = get_all_users(cohort_code)
+
     sent = 0
     for tg_id, full_name in users:
         if tg_id in ADMIN_IDS:
@@ -1527,7 +1748,7 @@ async def salary(message: types.Message):
             sent += 1
         except Exception:
             pass
-    await message.answer(f"✅ Зарплата выдана {sent} игрокам.")
+    await message.answer(f"✅ {cohort_code.upper()}: зарплата выдана {sent} игрокам.")
 
 
 @dp.message(Command("разбудить"))
@@ -1535,13 +1756,14 @@ async def wake_up(message: types.Message):
     if not is_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав администратора.")
         return
-    args = message.text.split(maxsplit=1)
-    if len(args) != 2:
-        await message.answer("Использование: /разбудить ИМЯ")
+    cohort_code, args = parse_admin_cohort(message.from_user.id, message.text.split()[1:])
+    if not args:
+        await message.answer("Использование: /разбудить [мю|пекин] ИМЯ")
         return
-    user = find_user_by_name(args[1].strip())
+    query = " ".join(args).strip()
+    user = find_user_by_name(query, cohort_code)
     if not user or not user[0]:
-        await message.answer(f"❌ Пользователь '{args[1]}' не найден.")
+        await message.answer(f"❌ Пользователь '{query}' не найден.")
         return
     target_id, full_name, _ = user
     try:
@@ -1563,7 +1785,10 @@ async def woke_up(message: types.Message):
     try:
         await presence_confirm(message.from_user.id, "morning", "confirm")
         await message.answer("✅ Подъём подтверждён. Доброе утро!")
-        await notify_admins(f"✅ {message.from_user.first_name} подтвердил подъём.")
+        await notify_admins(
+            f"✅ {message.from_user.first_name} подтвердил подъём.",
+            cohort_code=get_user_cohort(message.from_user.id),
+        )
     except Exception as e:
         await message.answer(f"❌ Не удалось подтвердить подъём: {e}")
 
@@ -1579,7 +1804,7 @@ async def gift_item_cmd(message: types.Message):
     except Exception:
         await message.answer("❌ Неверный ID предмета — должно быть число")
         return
-    recipient = find_user_by_name(args[1])
+    recipient = find_user_by_name(args[1], get_user_cohort(message.from_user.id))
     if not recipient:
         await message.answer(f"❌ Пользователь '{args[1]}' не найден")
         return
@@ -1631,6 +1856,7 @@ async def anonymous_question(message: types.Message):
         f"TG: {message.from_user.id}\n\n"
         f"{args[1]}",
         reply_markup=reply_kb,
+        cohort_code=get_user_cohort(message.from_user.id),
     )
 
 
@@ -1645,6 +1871,12 @@ async def anon_reply_start(callback: types.CallbackQuery, state: FSMContext):
         await callback.answer("Вопрос не найден", show_alert=True)
         return
     _target_id, _full_name, status, answered_by_name = row
+    if (
+        callback.from_user.id in MJU_ADMIN_IDS
+        and get_user_cohort(_target_id) != COHORT_MJU
+    ):
+        await callback.answer("Этот вопрос относится к контуру Пекин", show_alert=True)
+        return
     await state.set_state(Form.waiting_anon_reply)
     await state.update_data(anon_question_id=question_id)
     cancel_kb = InlineKeyboardMarkup(
@@ -1687,6 +1919,12 @@ async def anon_reply_send(message: types.Message, state: FSMContext):
         await message.answer("❌ Не удалось найти вопрос для ответа.")
         return
     target_telegram_id, _full_name, _status, _answered_by_name = row
+    if (
+        message.from_user.id in MJU_ADMIN_IDS
+        and get_user_cohort(target_telegram_id) != COHORT_MJU
+    ):
+        await message.answer("❌ Этот вопрос относится к контуру Пекин.")
+        return
     admin_name = message.from_user.full_name or str(message.from_user.id)
     try:
         await bot.send_message(
@@ -1696,7 +1934,8 @@ async def anon_reply_send(message: types.Message, state: FSMContext):
         await message.answer(f"✅ Ответ на вопрос #{question_id} отправлен.")
         mark_anon_question_answered(question_id, admin_name)
         await notify_admins(
-            f"ℹ️ Вопрос #{question_id} получил ответ от {admin_name}. Отвечать ещё раз не нужно."
+            f"ℹ️ Вопрос #{question_id} получил ответ от {admin_name}. Отвечать ещё раз не нужно.",
+            cohort_code=get_user_cohort(target_telegram_id),
         )
     except Exception:
         await message.answer("❌ Не получилось отправить ответ. Возможно, пользователь заблокировал бота.")
