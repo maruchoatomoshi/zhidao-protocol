@@ -923,12 +923,12 @@ WILD_AI_BREACH_PHRASES = [
 ]
 
 # ===== Wild AI Breach battle (system intrusion repel event) =====
-WILD_AI_BREACH_DEFAULT_HP = 1000
+WILD_AI_BREACH_DEFAULT_HP = 5000
 WILD_AI_BREACH_INFECTION_THRESHOLD = 100
-WILD_AI_BREACH_TIME_LIMIT_SECONDS = 900  # 15 minutes
+WILD_AI_BREACH_TIME_LIMIT_SECONDS = 1200  # 20 minutes
 WILD_AI_BREACH_INFECTION_TICK_SECONDS = 30
 WILD_AI_BREACH_INFECTION_TICK_AMOUNT = 1
-WILD_AI_BREACH_INFECTION_ON_ERROR = 3
+WILD_AI_BREACH_INFECTION_ON_ERROR = 5
 WILD_AI_BREACH_INFECTION_STABILIZE_REDUCTION = 5
 WILD_AI_BREACH_INFECTION_SYNC_REDUCTION = 2
 WILD_AI_BREACH_REWARD_REP = 30
@@ -4903,76 +4903,127 @@ def is_shuffled_answer_correct(
     return display_to_original.get(answer_option) == correct_option
 
 
+def get_event_question_difficulty_bounds(event_code: str, event_phase: Optional[int]):
+    if event_code != 'wildai_breach':
+        return None
+
+    phase = max(1, min(3, int(event_phase or 1)))
+    return {
+        1: (1, 1),
+        2: (2, 2),
+        3: (2, 3),
+    }[phase]
+
+
 def choose_architect_question(
     c,
     action_type: str,
     event_code: str = 'architect',
     event_id: Optional[int] = None,
     telegram_id: Optional[int] = None,
+    event_phase: Optional[int] = None,
 ):
     """Pick a question without repeats inside the current event/action cycle."""
-    if event_id is None:
+    difficulty_bounds = get_event_question_difficulty_bounds(event_code, event_phase)
+    difficulty_clause = ""
+    joined_difficulty_clause = ""
+    difficulty_params = ()
+    if difficulty_bounds:
+        difficulty_clause = " AND difficulty BETWEEN ? AND ?"
+        joined_difficulty_clause = " AND q.difficulty BETWEEN ? AND ?"
+        difficulty_params = difficulty_bounds
+
+    if event_id is None or telegram_id is None:
         c.execute(
-            '''SELECT id, prompt, option_a, option_b, option_c, explanation
-               FROM event_questions
-               WHERE event_code=? AND action_type=?
-               ORDER BY RANDOM()
-               LIMIT 1''',
-            (event_code, action_type),
+            f'''SELECT id, prompt, option_a, option_b, option_c, explanation
+                FROM event_questions
+                WHERE event_code=? AND action_type=?{difficulty_clause}
+                ORDER BY RANDOM()
+                LIMIT 1''',
+            (event_code, action_type, *difficulty_params),
         )
         return _event_question_payload(c.fetchone())
 
     c.execute(
-        "SELECT COUNT(*) FROM event_questions WHERE event_code=? AND action_type=?",
-        (event_code, action_type),
+        f"SELECT COUNT(*) FROM event_questions WHERE event_code=? AND action_type=?{difficulty_clause}",
+        (event_code, action_type, *difficulty_params),
     )
-    if (c.fetchone()[0] or 0) <= 0:
+    total_questions = c.fetchone()[0]
+    if total_questions <= 0:
         return None
 
     c.execute(
-        "SELECT COALESCE(MAX(cycle), 1) FROM event_question_draws WHERE event_id=? AND action_type=?",
-        (int(event_id), action_type),
+        '''SELECT COALESCE(MAX(cycle_number), 0)
+           FROM event_question_requests
+           WHERE event_id=? AND telegram_id=? AND action_type=?''',
+        (event_id, telegram_id, action_type),
     )
-    current_cycle = int(c.fetchone()[0] or 1)
+    current_cycle = int(c.fetchone()[0] or 0)
 
-    for _ in range(3):
-        c.execute(
-            '''SELECT id, prompt, option_a, option_b, option_c, explanation
-               FROM event_questions
-               WHERE event_code=? AND action_type=?
-                 AND id NOT IN (
-                     SELECT question_id
-                     FROM event_question_draws
-                     WHERE event_id=? AND action_type=? AND cycle=?
-                 )
-               ORDER BY RANDOM()
-               LIMIT 1''',
-            (event_code, action_type, int(event_id), action_type, current_cycle),
-        )
-        row = c.fetchone()
-        if row:
-            try:
-                c.execute(
-                    '''INSERT INTO event_question_draws
-                       (event_id, action_type, question_id, cycle, telegram_id, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?)''',
-                    (int(event_id), action_type, int(row[0]), current_cycle, telegram_id, now_iso()),
-                )
-                return _event_question_payload(row)
-            except sqlite3.IntegrityError:
-                continue
+    c.execute(
+        f'''SELECT COUNT(*)
+            FROM event_question_requests r
+            JOIN event_questions q ON q.id = r.question_id
+            WHERE r.event_id=? AND r.telegram_id=? AND r.action_type=?
+              AND r.cycle_number=?
+              AND q.event_code=? AND q.action_type=?{joined_difficulty_clause}''',
+        (
+            event_id,
+            telegram_id,
+            action_type,
+            current_cycle,
+            event_code,
+            action_type,
+            *difficulty_params,
+        ),
+    )
+    drawn_in_cycle = c.fetchone()[0]
+    if drawn_in_cycle >= total_questions:
         current_cycle += 1
 
     c.execute(
-        '''SELECT id, prompt, option_a, option_b, option_c, explanation
-           FROM event_questions
-           WHERE event_code=? AND action_type=?
-           ORDER BY RANDOM()
-           LIMIT 1''',
-        (event_code, action_type),
+        f'''SELECT id, prompt, option_a, option_b, option_c, explanation
+            FROM event_questions
+            WHERE event_code=? AND action_type=?{difficulty_clause}
+              AND id NOT IN (
+                  SELECT question_id
+                  FROM event_question_requests
+                  WHERE event_id=? AND telegram_id=? AND action_type=? AND cycle_number=?
+              )
+            ORDER BY RANDOM()
+            LIMIT 1''',
+        (
+            event_code,
+            action_type,
+            *difficulty_params,
+            event_id,
+            telegram_id,
+            action_type,
+            current_cycle,
+        ),
     )
-    return _event_question_payload(c.fetchone())
+    row = c.fetchone()
+    if not row:
+        current_cycle += 1
+        c.execute(
+            f'''SELECT id, prompt, option_a, option_b, option_c, explanation
+                FROM event_questions
+                WHERE event_code=? AND action_type=?{difficulty_clause}
+                ORDER BY RANDOM()
+                LIMIT 1''',
+            (event_code, action_type, *difficulty_params),
+        )
+        row = c.fetchone()
+    if not row:
+        return None
 
+    c.execute(
+        '''INSERT INTO event_question_requests
+           (event_id, telegram_id, action_type, question_id, cycle_number, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)''',
+        (event_id, telegram_id, action_type, row[0], current_cycle, now_iso()),
+    )
+    return _event_question_payload(row)
 
 def get_architect_base_value(phase: int, action_type: str, is_correct: bool) -> int:
     if action_type == "sync":
@@ -5025,7 +5076,7 @@ def get_wildai_base_value(action_type: str, is_correct: bool) -> int:
     base_values = {"attack": 22, "protocol": 16, "stabilize": 14}
     full = base_values.get(action_type, 0)
     if not is_correct:
-        return max(0, round(full * 0.25))
+        return 0
     return full
 
 
@@ -13221,6 +13272,7 @@ async def get_event_question(event_id: int, telegram_id: int, action_type: str):
             event_code=event_code,
             event_id=int(event_id),
             telegram_id=int(telegram_id),
+            event_phase=int(snapshot.get("phase") or 1),
         )
         conn.commit()
         conn.close()
