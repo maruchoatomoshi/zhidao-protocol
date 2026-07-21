@@ -4926,14 +4926,12 @@ def choose_architect_question(
     """Pick a question without repeats inside the current event/action cycle."""
     difficulty_bounds = get_event_question_difficulty_bounds(event_code, event_phase)
     difficulty_clause = ""
-    joined_difficulty_clause = ""
     difficulty_params = ()
     if difficulty_bounds:
         difficulty_clause = " AND difficulty BETWEEN ? AND ?"
-        joined_difficulty_clause = " AND q.difficulty BETWEEN ? AND ?"
         difficulty_params = difficulty_bounds
 
-    if event_id is None or telegram_id is None:
+    if event_id is None:
         c.execute(
             f'''SELECT id, prompt, option_a, option_b, option_c, explanation
                 FROM event_questions
@@ -4948,82 +4946,59 @@ def choose_architect_question(
         f"SELECT COUNT(*) FROM event_questions WHERE event_code=? AND action_type=?{difficulty_clause}",
         (event_code, action_type, *difficulty_params),
     )
-    total_questions = c.fetchone()[0]
-    if total_questions <= 0:
+    if (c.fetchone()[0] or 0) <= 0:
         return None
 
     c.execute(
-        '''SELECT COALESCE(MAX(cycle_number), 0)
-           FROM event_question_requests
-           WHERE event_id=? AND telegram_id=? AND action_type=?''',
-        (event_id, telegram_id, action_type),
+        "SELECT COALESCE(MAX(cycle), 1) FROM event_question_draws WHERE event_id=? AND action_type=?",
+        (int(event_id), action_type),
     )
-    current_cycle = int(c.fetchone()[0] or 0)
+    current_cycle = int(c.fetchone()[0] or 1)
 
-    c.execute(
-        f'''SELECT COUNT(*)
-            FROM event_question_requests r
-            JOIN event_questions q ON q.id = r.question_id
-            WHERE r.event_id=? AND r.telegram_id=? AND r.action_type=?
-              AND r.cycle_number=?
-              AND q.event_code=? AND q.action_type=?{joined_difficulty_clause}''',
-        (
-            event_id,
-            telegram_id,
-            action_type,
-            current_cycle,
-            event_code,
-            action_type,
-            *difficulty_params,
-        ),
-    )
-    drawn_in_cycle = c.fetchone()[0]
-    if drawn_in_cycle >= total_questions:
+    for _ in range(4):
+        c.execute(
+            f'''SELECT id, prompt, option_a, option_b, option_c, explanation
+                FROM event_questions
+                WHERE event_code=? AND action_type=?{difficulty_clause}
+                  AND id NOT IN (
+                      SELECT question_id
+                      FROM event_question_draws
+                      WHERE event_id=? AND action_type=? AND cycle=?
+                  )
+                ORDER BY RANDOM()
+                LIMIT 1''',
+            (
+                event_code,
+                action_type,
+                *difficulty_params,
+                int(event_id),
+                action_type,
+                current_cycle,
+            ),
+        )
+        row = c.fetchone()
+        if row:
+            try:
+                c.execute(
+                    '''INSERT INTO event_question_draws
+                       (event_id, action_type, question_id, cycle, telegram_id, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?)''',
+                    (int(event_id), action_type, int(row[0]), current_cycle, telegram_id, now_iso()),
+                )
+                return _event_question_payload(row)
+            except sqlite3.IntegrityError:
+                continue
         current_cycle += 1
 
     c.execute(
         f'''SELECT id, prompt, option_a, option_b, option_c, explanation
             FROM event_questions
             WHERE event_code=? AND action_type=?{difficulty_clause}
-              AND id NOT IN (
-                  SELECT question_id
-                  FROM event_question_requests
-                  WHERE event_id=? AND telegram_id=? AND action_type=? AND cycle_number=?
-              )
             ORDER BY RANDOM()
             LIMIT 1''',
-        (
-            event_code,
-            action_type,
-            *difficulty_params,
-            event_id,
-            telegram_id,
-            action_type,
-            current_cycle,
-        ),
+        (event_code, action_type, *difficulty_params),
     )
-    row = c.fetchone()
-    if not row:
-        current_cycle += 1
-        c.execute(
-            f'''SELECT id, prompt, option_a, option_b, option_c, explanation
-                FROM event_questions
-                WHERE event_code=? AND action_type=?{difficulty_clause}
-                ORDER BY RANDOM()
-                LIMIT 1''',
-            (event_code, action_type, *difficulty_params),
-        )
-        row = c.fetchone()
-    if not row:
-        return None
-
-    c.execute(
-        '''INSERT INTO event_question_requests
-           (event_id, telegram_id, action_type, question_id, cycle_number, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)''',
-        (event_id, telegram_id, action_type, row[0], current_cycle, now_iso()),
-    )
-    return _event_question_payload(row)
+    return _event_question_payload(c.fetchone())
 
 def get_architect_base_value(phase: int, action_type: str, is_correct: bool) -> int:
     if action_type == "sync":
