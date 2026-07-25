@@ -30,6 +30,7 @@ initLaundry();
 
 window.setInterval(() => {
   if (typeof updateLaunchGateCountdowns === 'function') updateLaunchGateCountdowns();
+  if (typeof syncFeatureFreezeBadges === 'function') syncFeatureFreezeBadges();
 }, 1000);
 
 // ===== НАВИГАЦИЯ =====
@@ -37,6 +38,7 @@ window.setInterval(() => {
 document.addEventListener('DOMContentLoaded', () => {
   syncAdminCohortUi();
   if (typeof syncLaunchGateVisibility === 'function') syncLaunchGateVisibility();
+  if (typeof syncFeatureFreezeBadges === 'function') syncFeatureFreezeBadges();
   if (typeof loadArchitectEventAvailability === 'function') loadArchitectEventAvailability();
 
   // Deep-link: ссылка вида t.me/<bot>/<app>?startapp=news открывает раздел НОВОСТИ сразу при старте.

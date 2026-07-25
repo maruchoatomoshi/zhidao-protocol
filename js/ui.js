@@ -102,29 +102,43 @@ const FEATURE_FREEZE_LABELS = {
   'diary-stars': 'ДНЕВНИК ★',
   rating:        'РЕЙТИНГ',
   contracts:     'ДОСКА ПОРУЧЕНИЙ',
+  map:           'КАРТА КАМПУСА',
   'profile-frame':    'РАМКИ АВАТАРА',
   'profile-rank':     'РАНГ',
   'profile-showcase': 'ВИТРИНА / ВЫБОР ИМПЛАНТА',
 };
 
-function isFeatureFrozen(name) {
+function getFeatureFreezeTargetDate() {
+  const value = window.APP_FEATURE_FREEZE_START_AT || window.APP_FREEZE_TARGET_AT || '';
+  const target = new Date(value);
+  return Number.isNaN(target.getTime()) ? null : target;
+}
+
+function isFeatureFreezeActive() {
   if (!window.APP_FEATURE_FREEZE_ENABLED) return false;
+  const target = getFeatureFreezeTargetDate();
+  return !target || Date.now() >= target.getTime();
+}
+
+function isFeatureFrozen(name) {
+  if (!isFeatureFreezeActive()) return false;
   if (!currentUserId || isAdmin || isArchitect) return false;
   return !!(window.APP_FROZEN_FEATURES || {})[name];
 }
 
 function formatFeatureFreezeCountdown() {
-  const target = new Date(window.APP_FREEZE_TARGET_AT || '');
-  if (Number.isNaN(target.getTime())) return '';
+  const target = getFeatureFreezeTargetDate();
+  if (!target) return '';
   const diff = target.getTime() - Date.now();
-  if (diff <= 0) return 'Скоро открытие';
+  if (diff <= 0) return '';
+
   const totalSeconds = Math.floor(diff / 1000);
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   const pad = (n) => String(n).padStart(2, '0');
-  return `${days}д ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  return `до завершения: ${days}д ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 function showFeatureFreezeOverlay(name) {
@@ -145,10 +159,21 @@ function closeFeatureFreezeOverlay() {
 }
 
 // Помечает замочком пункты навигации/меню с data-feature, если раздел заморожен.
+function syncTripEndVisibility() {
+  const active = isFeatureFreezeActive();
+  document.body.classList.toggle('trip-ended', active);
+
+  const rewindCard = document.getElementById('homeRewindCard');
+  if (rewindCard) {
+    rewindCard.style.display = active && currentUserId ? 'block' : 'none';
+  }
+}
+
 function syncFeatureFreezeBadges() {
   document.querySelectorAll('[data-feature]').forEach(el => {
     el.classList.toggle('feature-frozen', isFeatureFrozen(el.getAttribute('data-feature')));
   });
+  syncTripEndVisibility();
 }
 
 let _currentPage = 'schedule';

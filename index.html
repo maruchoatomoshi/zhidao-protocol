@@ -256,6 +256,31 @@
     <div class="launch-gate-note">RED FIREWALL HOLD // WAITING FOR SETTLEMENT</div>
   </div>
 
+  <div class="home-event-card" id="homeRewindCard" onclick="showRewind()" style="
+    display:none;
+    margin:0 12px 14px;
+    padding:18px 18px 16px;
+    border-radius:18px;
+    border:1px solid rgba(212,175,55,0.62);
+    background:
+      radial-gradient(circle at 88% 12%, rgba(212,175,55,0.24), transparent 34%),
+      linear-gradient(135deg, rgba(0,90,72,0.42), rgba(5,5,16,0.98) 68%);
+    box-shadow:0 16px 44px rgba(0,0,0,0.38), inset 0 0 28px rgba(0,255,170,0.04);
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+  ">
+    <div style="font-size:9px;letter-spacing:2.2px;color:#67f5c4;font-family:monospace;">旅程结束 // TRIP COMPLETE</div>
+    <div style="margin-top:6px;font-size:27px;font-weight:900;letter-spacing:-0.7px;color:#fff;">ZHIDAO REWIND</div>
+    <div style="margin-top:7px;font-size:12px;color:rgba(255,255,255,0.72);line-height:1.55;">
+      Поздравляем, поездка окончена! Спасибо за ваше участие.<br>
+      Открой свои личные итоги и сохрани карточку на память.
+    </div>
+    <div style="margin-top:13px;display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid rgba(212,175,55,0.46);border-radius:999px;color:#f2d66d;font:700 9px monospace;letter-spacing:1.2px;">
+      СМОТРЕТЬ REWIND <span style="font-size:14px;">›</span>
+    </div>
+  </div>
+
   <div class="cn-divider" id="home-neuro-divider">🏮 网络链接 нейролинк 🏮</div>
 
   <div class="card neuro-card">
@@ -784,7 +809,7 @@
       <div class="more-item-name">ПОГОДА</div>
       <div class="more-item-cn">天气 tiān qì</div>
     </div>
-    <div class="more-item" onclick="openMore('map')">
+    <div class="more-item" data-feature="map" onclick="openMore('map')">
       <i class="ti ti-map-2 more-item-icon" style="color:#00d4ff;"></i>
       <div class="more-item-name">КАРТА</div>
       <div class="more-item-cn">校园地图 xiào yuán dì tú</div>
@@ -2767,21 +2792,22 @@
   <div class="launch-gate-panel" onclick="event.stopPropagation()">
     <div class="launch-gate-scan"></div>
     <button class="launch-gate-close" onclick="closeFeatureFreezeOverlay()">×</button>
-    <div class="launch-gate-kicker">SYSTEM // MODULE LOCKED</div>
-    <div class="launch-gate-big">即将开放</div>
-    <div class="launch-gate-panel-title">Раздел <span id="featureFreezeTitle">—</span> заморожен</div>
+    <div class="launch-gate-kicker">TRIP COMPLETE // MODULE ARCHIVED</div>
+    <div class="launch-gate-big">旅程结束</div>
+    <div class="launch-gate-panel-title">Раздел <span id="featureFreezeTitle">—</span> закрыт</div>
     <div class="launch-gate-panel-copy">
-      Этот модуль откроется ближе к старту. Следи за объявлениями — доступ включат всем сразу.
+      Поздравляем, поездка окончена! Спасибо за ваше участие!<br>
+      Дневник, рейтинг и ZHIDAO Rewind остаются доступны.
     </div>
     <div class="launch-gate-panel-timer" id="featureFreezeTimer" data-freeze-countdown style="display:none;"></div>
     <button class="launch-gate-return" onclick="closeFeatureFreezeOverlay()">Понятно</button>
   </div>
 </div>
 
-<script src="./js/config.js?v=20260706launch2"></script>
+<script src="./js/config.js?v=20260726tripend1"></script>
 <script src="./js/state.js?v=20260720cohort1"></script>
 <script src="./js/api.js?v=20260720cohort1"></script>
-<script src="./js/ui.js?v=20260702media1"></script>
+<script src="./js/ui.js?v=20260726tripend1"></script>
 <script src="./js/telegram-compat.js"></script>
 <script src="./js/themes.js?v=20260702casino-subtitle"></script>
 <script src="./js/blackwall.js?v=20260625wildaibreach2"></script>
@@ -2812,9 +2838,9 @@
 <script src="./js/architect-event.js?v=20260702media1"></script>
 <script src="./js/demo.js?v=20260624nofragexchange1"></script>
 <script src="./js/instruction.js?v=20260628presencestep"></script>
-<script src="./js/rewind.js?v=20260625imgctxfix1"></script>
+<script src="./js/rewind.js?v=20260726tripend1"></script>
 <script src="./js/duel.js?v=20260712duelpublic1"></script>
-<script src="./js/main.js?v=20260720cohort1"></script>
+<script src="./js/main.js?v=20260726tripend1"></script>
 
 <!-- ── ДУЭЛЬ: экран вызова соперника ── -->
 <div id="duelChallengeModal" class="duel-modal">

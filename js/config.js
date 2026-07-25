@@ -29,21 +29,17 @@ window.MJU_EVENT_ENABLED = false;
 // 
 // 
 // 
-window.APP_FEATURE_FREEZE_ENABLED = false;
+window.APP_FEATURE_FREEZE_ENABLED = true;
+window.APP_FEATURE_FREEZE_START_AT = '2026-07-26T07:00:00+08:00';
+// Legacy alias used by the existing freeze overlay/countdown helpers.
+window.APP_FREEZE_TARGET_AT = window.APP_FEATURE_FREEZE_START_AT;
+window.APP_REWIND_UNLOCK_AT = window.APP_FEATURE_FREEZE_START_AT;
+window.APP_TRIP_END_MESSAGE = 'Поздравляем, поездка окончена! Спасибо за ваше участие!';
+
 window.APP_FROZEN_FEATURES = {
-  casino:        true,
-  shop:          true,
-  implants:      true,
-  laundry:       false,
-  achievements:  true,
-  'diary-stars': true,
-  rating:        true,
-  contracts:     true,
-  presence:      false,
-  // Элементы карточки игрока: рамки, ранг и выбор импланта (витрина).
-  'profile-frame':    true,
-  'profile-rank':     true,
-  'profile-showcase': true,
+  casino:   true,
+  shop:     true,
+  map:      true,
+  laundry:  true,
+  contracts:true,
 };
-// Таймер обратного отсчёта в окне заморозки: открытие 6 июля в 18:00 (по Пекину).
-window.APP_FREEZE_TARGET_AT = '2026-07-06T18:00:00+08:00';

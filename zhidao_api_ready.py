@@ -77,6 +77,30 @@ except ValueError:
     RATE_LIMIT_MAX_REQUESTS_PER_IP = 300
 BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
+TRIP_END_AT = BEIJING_TZ.localize(datetime(2026, 7, 26, 7, 0, 0))
+TRIP_END_AT_ISO = "2026-07-26T07:00:00+08:00"
+TRIP_END_MESSAGE = "Поздравляем, поездка окончена! Спасибо за ваше участие!"
+TRIP_END_BLOCKED_API_PREFIXES = (
+    "/api/casino",
+    "/api/genshin",
+    "/api/shop",
+    "/api/laundry",
+    "/api/water",
+    "/api/contracts",
+    "/api/community-shop",
+)
+
+
+def is_trip_ended() -> bool:
+    return datetime.now(BEIJING_TZ) >= TRIP_END_AT
+
+
+def is_trip_end_blocked_api_request(request: Request) -> bool:
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return False
+    path = request.url.path
+    return any(path == prefix or path.startswith(prefix + "/") for prefix in TRIP_END_BLOCKED_API_PREFIXES)
+
 STUDY_GROUPS = {
     "A0": {
         "label": "1班 · A0",
@@ -682,6 +706,15 @@ async def telegram_auth_middleware(request: Request, call_next):
         return auth_error_response(request, "Telegram auth required", 401)
 
     verified_admin = is_verified_admin_request(request, verified_id)
+    if (
+        verified_id
+        and verified_id not in ADMIN_IDS
+        and is_trip_ended()
+        and is_trip_end_blocked_api_request(request)
+    ):
+        _log_telegram_auth(request, verified_id, "trip_ended")
+        return auth_error_response(request, TRIP_END_MESSAGE, 423)
+
     identity_error = await enforce_verified_user_identity(
         request,
         verified_id,
@@ -6525,7 +6558,7 @@ def get_user_profile_dossier(telegram_id: int):
 # registration timestamp on `users`, so trip length must come from these
 # fixed dates rather than from the DB. Update before each trip.
 REWIND_TRIP_START = "2026-07-04"
-REWIND_TRIP_END = "2026-07-27"
+REWIND_TRIP_END = "2026-07-26"
 
 
 def _rewind_format_date_range(start_iso: str, end_iso: str) -> str:
@@ -11767,6 +11800,10 @@ async def get_settings(
             "architect_event": get_cohort_setting(c, 'architect_event', cohort_code, '0') == '1',
             "wildai_event": get_cohort_setting(c, 'wildai_event', cohort_code, '0') == '1',
             "mju_event": get_cohort_setting(c, 'mju_event', cohort_code, '0') == '1',
+            "trip_ended": is_trip_ended(),
+            "trip_end_at": TRIP_END_AT_ISO,
+            "trip_end_message": TRIP_END_MESSAGE,
+            "rewind_enabled": is_trip_ended(),
             **breach,
         }
         conn.commit()
