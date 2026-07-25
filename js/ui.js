@@ -165,7 +165,8 @@ function syncTripEndVisibility() {
 
   const rewindCard = document.getElementById('homeRewindCard');
   if (rewindCard) {
-    rewindCard.style.display = active && currentUserId ? 'block' : 'none';
+    const adminPreview = Boolean(isAdmin || isArchitect);
+    rewindCard.style.display = (active || adminPreview) && currentUserId ? 'block' : 'none';
   }
 }
 
