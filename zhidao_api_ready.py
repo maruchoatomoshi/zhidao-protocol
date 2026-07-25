@@ -20,7 +20,7 @@ import aiohttp
 import pytz
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -6559,6 +6559,11 @@ def get_user_profile_dossier(telegram_id: int):
 # fixed dates rather than from the DB. Update before each trip.
 REWIND_TRIP_START = "2026-07-04"
 REWIND_TRIP_END = "2026-07-26"
+REWIND_EXPORT_TTL_SECONDS = 600
+REWIND_EXPORT_MAX_BYTES = 4 * 1024 * 1024
+REWIND_EXPORT_MAX_ITEMS = 128
+_rewind_export_lock = threading.Lock()
+_rewind_exports: dict[str, dict] = {}
 
 
 def _rewind_format_date_range(start_iso: str, end_iso: str) -> str:
@@ -6638,6 +6643,93 @@ def _rewind_drop_info(prize_code: str):
     if not info:
         return None
     return {"name": info["name"], "rarity": info["rarity"], "image_url": REWIND_IMPLANT_IMAGES.get(prize_code)}
+
+
+def _purge_rewind_exports(now: Optional[float] = None):
+    current = now if now is not None else time.time()
+    expired = [
+        token
+        for token, item in _rewind_exports.items()
+        if item["expires_at"] <= current
+    ]
+    for token in expired:
+        _rewind_exports.pop(token, None)
+
+    while len(_rewind_exports) >= REWIND_EXPORT_MAX_ITEMS:
+        oldest_token = min(
+            _rewind_exports,
+            key=lambda key: _rewind_exports[key]["expires_at"],
+        )
+        _rewind_exports.pop(oldest_token, None)
+
+
+@app.post("/api/rewind/image/export")
+async def create_rewind_image_export(request: Request):
+    telegram_id = getattr(request.state, "telegram_id", None)
+    if not telegram_id:
+        raise HTTPException(status_code=401, detail="Telegram auth required")
+
+    content_type = (request.headers.get("content-type") or "").split(";", 1)[0].strip().lower()
+    if content_type != "image/png":
+        raise HTTPException(status_code=415, detail="PNG image required")
+
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > REWIND_EXPORT_MAX_BYTES:
+                raise HTTPException(status_code=413, detail="Image is too large")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid content length")
+
+    content = await request.body()
+    if not content or len(content) > REWIND_EXPORT_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Image is empty or too large")
+    if not content.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(status_code=415, detail="Invalid PNG image")
+
+    token = uuid.uuid4().hex
+    file_name = f"zhidao_rewind_{telegram_id}.png"
+    expires_at = time.time() + REWIND_EXPORT_TTL_SECONDS
+    with _rewind_export_lock:
+        _purge_rewind_exports()
+        _rewind_exports[token] = {
+            "content": content,
+            "file_name": file_name,
+            "expires_at": expires_at,
+        }
+
+    return {
+        "url": str(request.url_for("download_rewind_image", token=token)),
+        "file_name": file_name,
+        "expires_in": REWIND_EXPORT_TTL_SECONDS,
+    }
+
+
+@app.api_route(
+    "/api/rewind/image/export/{token}",
+    methods=["GET", "HEAD"],
+    name="download_rewind_image",
+)
+def download_rewind_image(token: str, request: Request):
+    with _rewind_export_lock:
+        _purge_rewind_exports()
+        item = _rewind_exports.get(token)
+        if not item:
+            raise HTTPException(status_code=404, detail="Rewind image expired")
+        content = item["content"]
+        file_name = item["file_name"]
+
+    headers = {
+        "Content-Disposition": f'attachment; filename="{file_name}"',
+        "Access-Control-Allow-Origin": "https://web.telegram.org",
+        "Cache-Control": f"private, max-age={REWIND_EXPORT_TTL_SECONDS}",
+        "X-Content-Type-Options": "nosniff",
+    }
+    return Response(
+        content=b"" if request.method == "HEAD" else content,
+        media_type="image/png",
+        headers=headers,
+    )
 
 
 @app.get("/api/rewind/{telegram_id}")

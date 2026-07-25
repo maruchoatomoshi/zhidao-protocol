@@ -334,7 +334,97 @@ function _rewindCardHtml(d) {
     <div class="rewind-sub" style="margin-top:10px;">нажми мимо кнопки, чтобы закрыть</div>`;
 }
 
+let _rewindExportBusy = false;
+
+function _rewindDownloadWithAnchor(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+async function _rewindShareFile(blob, fileName) {
+  if (typeof navigator.share !== 'function' || typeof File !== 'function') return false;
+  const file = new File([blob], fileName, { type: 'image/png' });
+  if (typeof navigator.canShare === 'function' && !navigator.canShare({ files: [file] })) return false;
+
+  try {
+    await navigator.share({
+      files: [file],
+      title: 'ZHIDAO REWIND',
+      text: 'Моя итоговая карточка ZHIDAO Protocol'
+    });
+    return true;
+  } catch (error) {
+    // Cancelling the native share sheet is a completed user action, not an error.
+    if (error && error.name === 'AbortError') return true;
+    return false;
+  }
+}
+
+async function _rewindDeliverImage(blob) {
+  const fileName = `zhidao_rewind_${currentUserId || 'operator'}.png`;
+  let exported = null;
+
+  try {
+    const response = await fetch(`${API_URL}/api/rewind/image/export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/png' },
+      body: blob
+    });
+    if (response.ok) exported = await response.json();
+  } catch (error) {
+    console.warn('[REWIND] HTTPS export failed', error);
+  }
+
+  if (exported && exported.url && tg && typeof tg.downloadFile === 'function') {
+    try {
+      tg.downloadFile({
+        url: exported.url,
+        file_name: exported.file_name || fileName
+      }, (accepted) => {
+        showToast(
+          accepted ? 'Загрузка картинки началась' : 'Сохранение отменено',
+          accepted ? 'success' : 'info'
+        );
+      });
+      return;
+    } catch (error) {
+      console.warn('[REWIND] Telegram downloadFile failed', error);
+    }
+  }
+
+  if (await _rewindShareFile(blob, fileName)) return;
+
+  if (exported && exported.url) {
+    try {
+      if (tg && typeof tg.openLink === 'function') {
+        tg.openLink(exported.url);
+      } else {
+        window.open(exported.url, '_blank', 'noopener');
+      }
+      showToast('Картинка открыта для сохранения', 'success');
+      return;
+    } catch (error) {
+      console.warn('[REWIND] External download failed', error);
+    }
+  }
+
+  _rewindDownloadWithAnchor(blob, fileName);
+  showToast('Картинка готова', 'success');
+}
+
 function _rewindShareCard() {
+  if (_rewindExportBusy) {
+    showToast('Картинка уже готовится');
+    return;
+  }
   const cardSlide = _rewindSlides[_rewindSlides.length - 1];
   const d = cardSlide ? cardSlide.data : null;
   if (!d) return;
@@ -390,17 +480,19 @@ function _rewindShareCard() {
   ctx.font = '18px sans-serif';
   ctx.fillText('智能电子解决方案', w / 2, h - 60);
 
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'zhidao_rewind.png';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-  });
+  _rewindExportBusy = true;
+  showToast('Готовим картинку...');
+  canvas.toBlob(async (blob) => {
+    try {
+      if (!blob) {
+        showToast('Не удалось создать картинку', 'error');
+        return;
+      }
+      await _rewindDeliverImage(blob);
+    } finally {
+      _rewindExportBusy = false;
+    }
+  }, 'image/png');
 }
 window._rewindShareCard = _rewindShareCard;
 
