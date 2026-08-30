@@ -11,7 +11,13 @@ try { tg.expand(); } catch(e) {}
 try { tg.setHeaderColor('#050510'); } catch(e) {}
 try { tg.setBackgroundColor('#050510'); } catch(e) {}
 
-const API_URL = 'https://hk.marucho.icu:8443';
+const API_URL = (() => {
+  const productionUrl = 'https://hk.marucho.icu:8443';
+  const isLocalPreview = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+  if (!isLocalPreview) return productionUrl;
+  const localOverride = new URLSearchParams(window.location.search).get('api');
+  return localOverride || `${window.location.protocol}//${window.location.hostname}:8767`;
+})();
 const THEMES = ['', 'nw-light', 'genshin-light', 'genshin-dark', 'admin', 'admin-light', 'architect', 'aqua'];
 const WEATHER_KEY = '';
 const EXCHANGE_KEY = '';

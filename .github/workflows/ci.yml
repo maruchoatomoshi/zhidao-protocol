@@ -23,8 +23,14 @@ jobs:
       - name: Install standalone web dependencies
         run: python -m pip install -r requirements-web.txt
 
+      - name: Install legacy Travel dependencies
+        run: python -m pip install -r requirements-travel.txt
+
       - name: Standalone learning web tests
         run: python -m unittest tests.test_web_learning_flow -v
+
+      - name: Legacy Travel startup tests
+        run: python -m unittest tests.test_travel_startup -v
 
       - uses: actions/setup-node@v4
         with:

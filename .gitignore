@@ -13,6 +13,7 @@ _raid_check.js
 !.env.example
 .claude/
 .venv-web/
+.venv-travel/
 .codex-tmp/
 data/*.db
 data/*.db-*

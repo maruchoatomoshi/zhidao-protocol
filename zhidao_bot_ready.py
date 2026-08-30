@@ -34,6 +34,7 @@ BEIJING_TZ = pytz.timezone("Asia/Shanghai")
 
 API_URL = os.getenv("API_URL", "https://127.0.0.1:8443")
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
+DB_PATH = os.getenv("ZHIDAO_DB_PATH", "/root/zhidao.db")
 PRESENCE_PENALTY_POINTS = 50
 PRESENCE_RETRY_STATUSES = {"pending", "leave_rejected"}
 PRESENCE_STATUS_LABELS = {
@@ -100,7 +101,7 @@ def db_connect():
     # that holds SQLite's single write lock for 100ms+ per commit and starves
     # the API's writes (observed as 15-27s stalls / black screen). NORMAL + WAL
     # means commits no longer fsync, so the bot releases the write lock fast.
-    conn = sqlite3.connect("/root/zhidao.db", timeout=30)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA wal_autocheckpoint=0")  # bot must not auto-checkpoint; the API owns WAL maintenance (hard rule, 2026-06-09)
