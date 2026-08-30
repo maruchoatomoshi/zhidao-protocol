@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#05070d">
+  <title>ZHIDAO // Learning Protocol</title>
+  <link rel="stylesheet" href="/static/css/site.css?v=3">
+</head>
+<body class="student-theme">
+  <div class="ambient-grid" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <main id="loginScreen" class="login-screen">
+    <section class="login-card glass-panel">
+      <div class="protocol-mark" aria-hidden="true">道</div>
+      <div class="eyebrow">ZHIDAO PROTOCOL // 学习网络</div>
+      <h1>Вход в учебную сеть</h1>
+      <p class="muted">Введи имя оператора и секретный PIN.</p>
+      <form id="loginForm" class="stack-form">
+        <label>Имя оператора<input id="loginName" name="username" autocomplete="username" required maxlength="64" placeholder="Например: operator"></label>
+        <label>Секретный PIN<input id="loginSecret" name="secret" type="password" inputmode="numeric" autocomplete="current-password" required minlength="4" maxlength="128" placeholder="••••"></label>
+        <button class="primary-button" type="submit"><span>ПОДКЛЮЧИТЬСЯ</span><b>→</b></button>
+      </form>
+      <p id="loginError" class="form-error" role="alert"></p>
+      <a class="teacher-link" href="/teacher">Вход для Архитектора</a>
+    </section>
+  </main>
+
+  <div id="studentApp" class="app-shell is-hidden">
+    <header class="topbar">
+      <button id="profileButton" class="operator-chip" aria-label="Открыть профиль">
+        <span class="operator-avatar">操</span>
+        <span><small>ОПЕРАТОР</small><b id="headerName">—</b></span>
+      </button>
+      <div class="resource-row">
+        <div class="resource-chip xp-chip"><small>XP</small><b id="headerXp">0</b></div>
+        <div class="resource-chip stars-chip"><small>★</small><b id="headerStars">0</b></div>
+      </div>
+    </header>
+
+    <section id="hqView" class="view active-view">
+      <article id="mentorCard" class="mentor-card glass-panel" tabindex="0" role="button" aria-label="Сообщение Архитектора">
+        <img src="/media/architect/explaining" alt="Архитектор">
+        <div class="mentor-copy">
+          <div class="signal-label"><span></span> АРХИТЕКТОР В СЕТИ</div>
+          <h2 id="mentorTitle">Новый сигнал</h2>
+          <p id="mentorText">Оператор, учебный канал активирован. Начинаем протокол знакомства.</p>
+          <span class="text-button">ОТКРЫТЬ СООБЩЕНИЕ →</span>
+        </div>
+      </article>
+
+      <section class="progress-panel glass-panel">
+        <div class="section-heading">
+          <div><small>ЛИЧНЫЙ ПРОГРЕСС</small><h2>Уровень <span id="levelValue">1</span></h2></div>
+          <div class="streak-badge"><span>⚡</span><b id="streakValue">0</b><small>серия</small></div>
+        </div>
+        <div class="xp-track"><span id="xpTrack"></span></div>
+        <div class="track-labels"><span id="xpFloor">0 XP</span><span id="xpCeiling">200 XP</span></div>
+      </section>
+
+      <section class="mission-section">
+        <div class="section-heading">
+          <div><small id="chapterKicker">ГЛАВА 01</small><h2 id="chapterTitle">Приветствие и знакомство</h2></div>
+          <span id="missionCountChip" class="week-chip">2 занятия</span>
+        </div>
+        <div id="missionList" class="mission-list" aria-live="polite"></div>
+      </section>
+
+      <section class="rewards-section">
+        <div class="section-heading"><div><small>АРХИВ</small><h2>Награды</h2></div></div>
+        <div id="rewardList" class="reward-strip"></div>
+      </section>
+    </section>
+
+    <section id="chapterView" class="view">
+      <div class="page-title">
+        <small>ТЕКУЩАЯ ГЛАВА</small>
+        <h1 id="chapterPageTitle">Приветствие и знакомство</h1>
+        <p id="chapterPageSummary">Два узла связи. Четыре ключевые фразы.</p>
+        <div class="chapter-meta"><span>拼音 // PINYIN ВКЛЮЧЁН</span><span>РЕЖИМ НОВИЧКА</span></div>
+      </div>
+      <div id="chapterMissionList" class="timeline-list"></div>
+      <article class="phrase-vault glass-panel">
+        <div class="section-heading"><div><small>PHRASE VAULT</small><h2>Фразы недели</h2></div><span class="pinyin-mode-chip">拼音 ON</span></div>
+        <div id="phraseGrid" class="phrase-grid"></div>
+      </article>
+    </section>
+
+    <section id="profileView" class="view">
+      <article class="profile-hero glass-panel">
+        <div class="profile-emblem">操</div>
+        <small>ZHIDAO OPERATOR</small>
+        <h1 id="profileName">—</h1>
+        <p>Учебный канал активен</p>
+      </article>
+      <div class="profile-stats">
+        <div><small>УРОВЕНЬ</small><b id="profileLevel">1</b></div>
+        <div><small>ОПЫТ</small><b id="profileXp">0 XP</b></div>
+        <div><small>ВАЛЮТА</small><b id="profileStars">0 ★</b></div>
+        <div><small>СЕРИЯ</small><b id="profileStreak">0 ⚡</b></div>
+      </div>
+      <button id="logoutButton" class="secondary-button danger-button" type="button">ЗАВЕРШИТЬ СЕАНС</button>
+      <a class="travel-card glass-panel" href="/travel"><span>旅</span><div><small>АРХИВНЫЙ КАНАЛ</small><b>Travel Season</b><p>Старый режим поездки сохранён отдельно.</p></div><strong>→</strong></a>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Основная навигация">
+      <button class="nav-button active" data-view="hqView"><span>⌂</span><b>ШТАБ</b></button>
+      <button class="nav-button" data-view="chapterView"><span>章</span><b>ГЛАВА</b></button>
+      <button class="nav-button" data-view="profileView"><span>操</span><b>ПРОФИЛЬ</b></button>
+    </nav>
+  </div>
+
+  <div id="missionOverlay" class="overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="missionTitle">
+    <section class="mission-shell">
+      <header class="mission-header">
+        <button id="closeMission" class="icon-button" type="button" aria-label="Закрыть миссию">×</button>
+        <div class="mission-header-copy"><small id="missionLabel">МИССИЯ</small><h1 id="missionTitle">—</h1></div>
+        <div class="mission-step-count" id="missionStepCount">0/0</div>
+      </header>
+      <div class="mission-progress"><span id="missionProgress"></span></div>
+      <div id="missionContent" class="mission-content"></div>
+      <footer id="missionFooter" class="mission-footer"></footer>
+    </section>
+  </div>
+
+  <div id="architectPopup" class="overlay architect-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="architectPopupTitle">
+    <section class="architect-dialog">
+      <button id="closeArchitect" class="icon-button dialog-close" type="button" aria-label="Закрыть">×</button>
+      <div class="architect-hologram"><img id="architectImage" src="/media/architect/explaining" alt="Архитектор"><span></span></div>
+      <div class="architect-dialog-copy">
+        <small>PRIVATE CHANNEL // ARCHITECT</small>
+        <h2 id="architectPopupTitle">Сообщение Архитектора</h2>
+        <p id="architectPopupText"></p>
+        <button id="architectConfirm" class="primary-button" type="button">ПРИНЯТО</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/js/api.js?v=1"></script>
+  <script src="/static/js/student.js?v=6"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
+</body>
+</html>
