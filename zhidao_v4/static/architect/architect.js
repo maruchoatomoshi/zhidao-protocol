@@ -328,11 +328,13 @@ function switchView(view) {
 }
 
 function showConsole() {
+  document.body.dataset.surface = "console";
   elements.loginView.hidden = true;
   elements.consoleView.hidden = false;
 }
 
 function showLogin() {
+  document.body.dataset.surface = "login";
   elements.consoleView.hidden = true;
   elements.loginView.hidden = false;
   elements.usernameInput.focus();
@@ -349,7 +351,7 @@ function resetState() {
 
 function setLoginBusy(busy) {
   elements.loginButton.disabled = busy;
-  elements.loginButton.firstElementChild.textContent = busy ? "Проверяю контур…" : "Войти в контур";
+  elements.loginButton.firstElementChild.textContent = busy ? "Проверяю контур…" : "Открыть контур";
 }
 
 function togglePassword() {

@@ -78,6 +78,17 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertIn("default-src 'self'", console.headers["content-security-policy"])
         self.assertEqual(console.headers["x-frame-options"], "DENY")
 
+        stylesheet = self.client.get("/architect/architect.css")
+        self.assertEqual(stylesheet.status_code, 200)
+        self.assertIn("text/css", stylesheet.headers["content-type"])
+
+        hainan_scene = self.client.get(
+            "/architect/assets/hainan-promised-tomorrow.png"
+        )
+        self.assertEqual(hainan_scene.status_code, 200)
+        self.assertIn("image/png", hainan_scene.headers["content-type"])
+        self.assertGreater(len(hainan_scene.content), 100_000)
+
     def test_login_stores_only_token_hashes_and_exposes_roles(self):
         wrong = self.client.post(
             "/api/v4/auth/login",

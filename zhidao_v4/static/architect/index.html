@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#dffbf8">
+  <meta name="theme-color" content="#c8f5ff">
   <meta name="color-scheme" content="light">
   <title>ZHIDAO V4 · Architect Console</title>
-  <link rel="stylesheet" href="./architect.css?v=20260830a">
+  <link rel="stylesheet" href="./architect.css?v=20260830b">
 </head>
 <body>
   <div class="ambient" aria-hidden="true">
@@ -14,47 +14,70 @@
     <span class="orb orb-b"></span>
     <span class="orb orb-c"></span>
     <span class="grid"></span>
+    <span class="ambient-arc"></span>
+    <span class="ambient-grain"></span>
   </div>
 
   <main id="loginView" class="login-view">
-    <section class="login-card" aria-labelledby="loginTitle">
-      <div class="brand-mark brand-mark-large" aria-hidden="true">
-        <svg viewBox="0 0 72 72" role="img">
-          <path d="M36 5 62 20v32L36 67 10 52V20Z"></path>
-          <path d="M23 25h26M23 36h26M30 47h12"></path>
-        </svg>
-      </div>
-      <div class="eyebrow">ZHIDAO PROTOCOL · V4</div>
-      <h1 id="loginTitle">Architect Console</h1>
-      <p class="login-copy">Центр управления сезоном Hainan. Только конфигурация ядра — без участников и экономики.</p>
-
-      <form id="loginForm" class="login-form">
-        <label class="field">
-          <span>Логин</span>
-          <input id="usernameInput" name="username" autocomplete="username" inputmode="text" required maxlength="64" placeholder="architect">
-        </label>
-        <div class="field">
-          <label for="passwordInput">Пароль</label>
-          <span class="password-field">
-            <input id="passwordInput" name="password" type="password" autocomplete="current-password" required maxlength="128" placeholder="••••••••••••">
-            <button id="passwordToggle" class="reveal-button" type="button" aria-label="Показать пароль">Показать</button>
-          </span>
+    <div class="login-shell">
+      <section class="arrival-copy" aria-label="ZHIDAO Hainan">
+        <div class="arrival-index"><span>18°19′N / 109°30′E</span><span>NODE 04</span></div>
+        <p class="arrival-system">ZHIDAO EXPEDITION SYSTEM</p>
+        <h1><span>Обещанное</span><strong>завтра.</strong></h1>
+        <p class="arrival-lead">Будущее, которое всё-таки наступило.</p>
+        <div class="arrival-route" aria-hidden="true">
+          <span>MOW</span><i></i><b>↗</b><i></i><span>SYX</span>
         </div>
-        <button id="loginButton" class="primary-button login-button" type="submit">
-          <span>Войти в контур</span><span aria-hidden="true">→</span>
-        </button>
-        <p id="loginError" class="form-error" role="alert" hidden></p>
-      </form>
+        <div class="arrival-caption">
+          <span>TRAVEL SEASON / HAINAN</span>
+          <small>CLEAR SKY · OPEN WATER · NEW START</small>
+        </div>
+      </section>
 
-      <div class="secure-note">
-        <span class="pulse-dot"></span>
-        <span>Локальная идентичность · защищённая сессия</span>
-      </div>
-    </section>
+      <section class="login-card" aria-labelledby="loginTitle">
+        <div class="terminal-head">
+          <div class="brand-mark brand-mark-large" aria-hidden="true">
+            <svg viewBox="0 0 72 72" role="img">
+              <path d="M36 5 62 20v32L36 67 10 52V20Z"></path>
+              <path d="M23 25h26M23 36h26M30 47h12"></path>
+            </svg>
+          </div>
+          <div class="terminal-code"><span>ACCESS TERMINAL</span><strong>04</strong></div>
+        </div>
+        <div class="eyebrow">ZHIDAO PROTOCOL · V4</div>
+        <h2 id="loginTitle">Вход Архитектора</h2>
+        <p class="login-copy">Управление экспедиционным контуром Hainan. Подтвердите локальную идентичность.</p>
+
+        <form id="loginForm" class="login-form">
+          <label class="field">
+            <span>Идентификатор</span>
+            <input id="usernameInput" name="username" autocomplete="username" inputmode="text" required maxlength="64" placeholder="architect">
+          </label>
+          <div class="field">
+            <label for="passwordInput">Ключ доступа</label>
+            <span class="password-field">
+              <input id="passwordInput" name="password" type="password" autocomplete="current-password" required maxlength="128" placeholder="••••••••••••">
+              <button id="passwordToggle" class="reveal-button" type="button" aria-label="Показать пароль">Показать</button>
+            </span>
+          </div>
+          <button id="loginButton" class="primary-button login-button" type="submit">
+            <span>Открыть контур</span><span aria-hidden="true">→</span>
+          </button>
+          <p id="loginError" class="form-error" role="alert" hidden></p>
+        </form>
+
+        <div class="secure-note">
+          <span class="pulse-dot"></span>
+          <span>ЗАЩИЩЁННАЯ ЛОКАЛЬНАЯ СЕССИЯ</span>
+          <b>ONLINE</b>
+        </div>
+      </section>
+    </div>
   </main>
 
   <div id="consoleView" class="console" hidden>
     <aside class="sidebar">
+      <div class="sidebar-index"><span>ZH / 04</span><span>18°N</span></div>
       <div class="sidebar-brand">
         <div class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 72 72">
@@ -62,7 +85,7 @@
             <path d="M23 25h26M23 36h26M30 47h12"></path>
           </svg>
         </div>
-        <div><strong>ZHIDAO</strong><span>ARCHITECT / V4</span></div>
+        <div><strong>ZHIDAO</strong><span>HAINAN ARCHITECT / V4</span></div>
       </div>
 
       <nav class="side-nav" aria-label="Разделы консоли">
@@ -81,6 +104,7 @@
         <span class="scope-label">ТЕКУЩИЙ КОНТУР</span>
         <strong>Travel · Hainan</strong>
         <span><i class="status-dot"></i> Локальная разработка</span>
+        <div class="scope-route"><b>MOW</b><i></i><b>SYX</b></div>
       </div>
 
       <button id="logoutButton" class="ghost-button logout-button" type="button">Выйти</button>
@@ -93,6 +117,7 @@
           <h1 id="viewTitle">Обзор протокола</h1>
         </div>
         <div class="topbar-actions">
+          <div class="weather-chip" aria-hidden="true"><span>HAINAN</span><strong>28°</strong><i>☼</i></div>
           <button id="refreshButton" class="icon-button" type="button" aria-label="Обновить данные">↻</button>
           <div class="identity-chip">
             <span id="identityInitial" class="identity-avatar">A</span>
@@ -103,6 +128,7 @@
 
       <section id="overviewPanel" class="view-panel active" data-panel="overview">
         <article class="hero-card glass-panel">
+          <div class="hero-index" aria-hidden="true"><span>EXPEDITION / 04</span><span>18°19′N</span></div>
           <div class="hero-copy">
             <div class="status-pill"><i></i><span id="heroSeasonStatus">DRAFT</span></div>
             <p class="eyebrow">PRIMARY TRAVEL SEASON</p>
@@ -117,7 +143,9 @@
             <span class="orbit orbit-one"></span>
             <span class="orbit orbit-two"></span>
             <span class="core-symbol">海</span>
+            <span class="orbit-caption">HAINAN NODE</span>
           </div>
+          <span class="hero-wordmark" aria-hidden="true">HAI<br>NAN</span>
         </article>
 
         <div class="metric-grid" aria-label="Состояние системы">
@@ -230,6 +258,6 @@
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script src="./architect.js?v=20260830a" defer></script>
+  <script src="./architect.js?v=20260830b" defer></script>
 </body>
 </html>
