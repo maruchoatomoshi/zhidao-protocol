@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#bdefff">
+  <meta name="color-scheme" content="light">
+  <title>ZHIDAO Hainan · App Preview</title>
+  <link rel="stylesheet" href="./app.css?v=20260830a">
+</head>
+<body>
+  <div class="world" aria-hidden="true">
+    <span class="world-glow"></span>
+    <span class="world-bubble bubble-one"></span>
+    <span class="world-bubble bubble-two"></span>
+    <span class="world-bubble bubble-three"></span>
+  </div>
+
+  <main class="app-shell">
+    <div class="app-stage">
+      <header class="app-header">
+        <div class="app-brand" aria-label="ZHIDAO Hainan">
+          <span class="brand-orb">知</span>
+          <span><strong>ZHIDAO</strong><small>HAINAN PERSONAL SYSTEM</small></span>
+        </div>
+        <div class="header-status">
+          <span id="clock">--:--</span>
+          <i aria-label="Система доступна"></i>
+        </div>
+      </header>
+
+      <section class="screen active" data-screen="schedule" aria-labelledby="scheduleTitle">
+        <div class="screen-intro">
+          <div><span class="system-label">PERSONAL NODE / PREVIEW</span><h1 id="scheduleTitle">Привет,<br>путешественник.</h1></div>
+          <span class="preview-chip">DESIGN PREVIEW</span>
+        </div>
+
+        <article class="journey-card">
+          <div class="journey-index"><span>TRAVEL SEASON / 04</span><span>18°19′N</span></div>
+          <div class="journey-copy">
+            <span class="online-pill"><i></i> HAINAN NODE ONLINE</span>
+            <p>ОБЕЩАННОЕ ЗАВТРА</p>
+            <h2>Курс на<br>Хайнань</h2>
+            <div class="journey-meta"><span>SYX</span><i></i><b>海</b></div>
+          </div>
+          <div class="weather-orb"><strong>28°</strong><span>ЯСНО</span></div>
+        </article>
+
+        <div class="status-grid" aria-label="Предпросмотр показателей">
+          <article class="status-module rep-module"><span>REP</span><strong>—</strong><small>Рейтинг подключим позже</small></article>
+          <article class="status-module season-module"><span>СЕЗОН</span><strong>04</strong><small>Hainan · DRAFT</small></article>
+        </div>
+
+        <article class="glass-card today-card">
+          <div class="section-heading"><div><span class="system-label">TODAY / 今天</span><h3>Сегодня</h3></div><button type="button" data-toast="Расписание появится после активации сезона">Все планы</button></div>
+          <div class="timeline-empty">
+            <span class="timeline-mark"><i></i></span>
+            <div><strong>Маршрут ещё не активирован</strong><p>Здесь появятся встречи, выезды и важные точки дня.</p></div>
+            <span class="locked-tag">STANDBY</span>
+          </div>
+        </article>
+
+        <article class="signal-card">
+          <span class="signal-orb">✦</span>
+          <div><span class="system-label">WELCOME SIGNAL</span><h3>Будущее на связи</h3><p>Личный контур будет готов, когда мы подключим участников.</p></div>
+          <button type="button" aria-label="Подробнее" data-toast="Это дизайн-превью будущего личного контура">›</button>
+        </article>
+      </section>
+
+      <section class="screen placeholder-screen" data-screen="rating" aria-labelledby="ratingTitle" hidden>
+        <div class="placeholder-hero gold"><img src="./assets/icons/nav-rating.png" alt=""><span class="system-label">SEASON REPUTATION</span><h1 id="ratingTitle">Рейтинг REP</h1><p>Индивидуальный сезонный рейтинг появится после подключения участников.</p></div>
+        <div class="glass-card placeholder-card"><span>01</span><div><strong>Основа рейтинга</strong><p>Только REP — без отдельной системы сезонных очков.</p></div></div>
+        <div class="glass-card placeholder-card disabled"><span>—</span><div><strong>Данные отключены</strong><p>Сейчас экран показывает только будущую композицию.</p></div></div>
+      </section>
+
+      <section class="screen placeholder-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
+        <div class="placeholder-hero aqua"><img src="./assets/icons/nav-shop.png" alt=""><span class="system-label">EXPEDITION SUPPLY</span><h1 id="shopTitle">Магазин</h1><p>Полезные расходники и правила экономики определим отдельным этапом.</p></div>
+        <div class="locked-window"><span>ECONOMY MODULE</span><strong>LOCKED</strong><small>★ rollover выполняется в самом конце</small></div>
+      </section>
+
+      <section class="screen placeholder-screen" data-screen="cases" aria-labelledby="casesTitle" hidden>
+        <div class="placeholder-hero violet"><img src="./assets/icons/nav-cases.png" alt=""><span class="system-label">COLLECTION ARCHIVE</span><h1 id="casesTitle">Коллекция</h1><p>Новый сезон начнёт новую коллекцию. Утерянная база Beijing не переносится.</p></div>
+        <div class="glass-card collection-preview"><i></i><i></i><i></i><span>3 SLOTS / EMPTY</span></div>
+      </section>
+
+      <section class="screen placeholder-screen" data-screen="tasks" aria-labelledby="tasksTitle" hidden>
+        <div class="placeholder-hero lime"><img src="./assets/icons/nav-tasks.png" alt=""><span class="system-label">MISSION BOARD</span><h1 id="tasksTitle">Задания</h1><p>Ивенты и задания появятся после утверждения основного интерфейса.</p></div>
+        <div class="glass-card placeholder-card"><span>✓</span><div><strong>Дизайн-система</strong><p>Первый активный этап — собрать удобный личный контур.</p></div></div>
+      </section>
+
+      <section class="screen placeholder-screen" data-screen="more" aria-labelledby="moreTitle" hidden>
+        <div class="placeholder-hero pearl"><img src="./assets/icons/nav-more.png" alt=""><span class="system-label">PERSONAL SETTINGS</span><h1 id="moreTitle">Ещё</h1><p>Связь, справка и настройки устройства будут собраны здесь.</p></div>
+        <div class="settings-list glass-card">
+          <button type="button" data-toast="Профиль появится вместе с аккаунтами"><span>Профиль</span><b>›</b></button>
+          <button type="button" data-toast="Уведомления пока не подключены"><span>Уведомления</span><b>›</b></button>
+          <button type="button" data-toast="Версия дизайн-превью 0.1"><span>О приложении</span><b>›</b></button>
+        </div>
+      </section>
+    </div>
+
+    <nav class="app-dock" aria-label="Разделы приложения">
+      <button class="active" type="button" data-target="schedule" aria-label="Сегодня">
+        <span class="dock-icon"><img src="./assets/icons/nav-schedule.png" alt=""></span><small>Сегодня</small>
+      </button>
+      <button type="button" data-target="rating" aria-label="Рейтинг">
+        <span class="dock-icon"><img src="./assets/icons/nav-rating.png" alt=""></span><small>REP</small>
+      </button>
+      <button type="button" data-target="shop" aria-label="Магазин">
+        <span class="dock-icon"><img src="./assets/icons/nav-shop.png" alt=""></span><small>Магазин</small>
+      </button>
+      <button type="button" data-target="cases" aria-label="Коллекция">
+        <span class="dock-icon"><img src="./assets/icons/nav-cases.png" alt=""></span><small>Кейсы</small>
+      </button>
+      <button type="button" data-target="tasks" aria-label="Задания">
+        <span class="dock-icon"><img src="./assets/icons/nav-tasks.png" alt=""></span><small>Задания</small>
+      </button>
+      <button type="button" data-target="more" aria-label="Ещё">
+        <span class="dock-icon"><img src="./assets/icons/nav-more.png" alt=""></span><small>Ещё</small>
+      </button>
+    </nav>
+  </main>
+
+  <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
+  <script src="./app.js?v=20260830a" defer></script>
+</body>
+</html>

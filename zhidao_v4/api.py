@@ -40,6 +40,7 @@ from .seasons import (
 SESSION_COOKIE = "zhidao_v4_session"
 CSRF_COOKIE = "zhidao_v4_csrf"
 ARCHITECT_STATIC_DIR = Path(__file__).resolve().parent / "static" / "architect"
+APP_STATIC_DIR = Path(__file__).resolve().parent / "static" / "app"
 
 
 class LoginPayload(BaseModel):
@@ -184,7 +185,7 @@ def create_app(
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "same-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-        if request.url.path.startswith("/architect"):
+        if request.url.path.startswith(("/architect", "/app")):
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; style-src 'self'; script-src 'self'; "
                 "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
@@ -390,6 +391,11 @@ def create_app(
         "/architect",
         StaticFiles(directory=ARCHITECT_STATIC_DIR, html=True),
         name="architect-console",
+    )
+    app.mount(
+        "/app",
+        StaticFiles(directory=APP_STATIC_DIR, html=True),
+        name="participant-app-preview",
     )
 
     return app

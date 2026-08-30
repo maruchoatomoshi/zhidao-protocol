@@ -89,6 +89,24 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertIn("image/png", hainan_scene.headers["content-type"])
         self.assertGreater(len(hainan_scene.content), 100_000)
 
+    def test_participant_design_preview_is_served_without_account_data(self):
+        preview = self.client.get("/app/")
+        self.assertEqual(preview.status_code, 200)
+        self.assertIn("DESIGN PREVIEW", preview.text)
+        self.assertIn("Курс на", preview.text)
+        self.assertIn("default-src 'self'", preview.headers["content-security-policy"])
+        self.assertEqual(preview.headers["x-frame-options"], "DENY")
+
+        stylesheet = self.client.get("/app/app.css")
+        self.assertEqual(stylesheet.status_code, 200)
+        self.assertIn("text/css", stylesheet.headers["content-type"])
+        self.assertIn('"Trebuchet MS"', stylesheet.text)
+
+        icon = self.client.get("/app/assets/icons/nav-schedule.png")
+        self.assertEqual(icon.status_code, 200)
+        self.assertIn("image/png", icon.headers["content-type"])
+        self.assertGreater(len(icon.content), 20_000)
+
     def test_login_stores_only_token_hashes_and_exposes_roles(self):
         wrong = self.client.post(
             "/api/v4/auth/login",
