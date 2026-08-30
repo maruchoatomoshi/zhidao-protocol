@@ -1,7 +1,7 @@
 # ZHIDAO V4 — фундамент схемы данных
 
-Первая V4-миграция создаёт новый namespace таблиц `v4_*` рядом с Legacy
-Travel. Она не переименовывает, не удаляет и не заполняет старые таблицы.
+V4-миграции создают новый namespace таблиц `v4_*` рядом с Legacy Travel. Они
+не переименовывают, не удаляют и не заполняют старые таблицы.
 
 ## Состав
 
@@ -15,6 +15,10 @@ Account ──< ExternalIdentity >── IdentityProvider
                     └──────────────< GroupMembership
 
 AuditLog ── actor Account / Season / произвольная сущность
+
+LocalIdentity ── Credential
+Account ──< Session
+Account ──< IdempotencyKey
 ```
 
 - `v4_accounts` — стабильная внутренняя личность, не зависящая от мессенджера;
@@ -24,11 +28,18 @@ AuditLog ── actor Account / Season / произвольная сущност
   поездке;
 - `v4_groups` и `v4_group_memberships` — отряды внутри сезона;
 - `v4_audit_log` — неизменяемый журнал административных действий;
+- `v4_local_credentials` — только scrypt-хеши паролей и состояние блокировки;
+- `v4_sessions` — SHA-256-хеши сессионных и CSRF-токенов;
+- `v4_idempotency_keys` — защита критических POST-запросов от повтора;
 - `v4_schema_migrations` — версии и SHA-256 исходных SQL-файлов.
 
 Активный участник может состоять только в одном отряде сезона. Оператор может
 быть привязан к нескольким отрядам. Одна внешняя учётная запись не может быть
 связана с двумя аккаунтами ZHIDAO.
+
+Каждое runtime-подключение к SQLite обязано выполнять
+`PRAGMA foreign_keys=ON`; helper `zhidao_v4.db.connect_database` делает это
+автоматически.
 
 ## Локальное применение
 

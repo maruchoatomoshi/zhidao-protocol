@@ -35,6 +35,9 @@ jobs:
       - name: V4 schema migration tests
         run: python -m unittest tests.test_v4_migrations -v
 
+      - name: V4 authentication and role tests
+        run: python -m unittest tests.test_v4_auth_api -v
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"

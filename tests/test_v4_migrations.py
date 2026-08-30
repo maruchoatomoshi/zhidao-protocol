@@ -38,7 +38,13 @@ class V4MigrationTests(unittest.TestCase):
         first = apply_migrations(self.db_path)
         second = apply_migrations(self.db_path)
 
-        self.assertEqual(first, ["0001_identity_seasons_groups.sql"])
+        self.assertEqual(
+            first,
+            [
+                "0001_identity_seasons_groups.sql",
+                "0002_local_auth_sessions.sql",
+            ],
+        )
         self.assertEqual(second, [])
 
         conn = self.connect()
@@ -59,6 +65,9 @@ class V4MigrationTests(unittest.TestCase):
                 "v4_groups",
                 "v4_group_memberships",
                 "v4_audit_log",
+                "v4_local_credentials",
+                "v4_sessions",
+                "v4_idempotency_keys",
             }
             self.assertTrue(expected.issubset(tables))
             self.assertEqual(
@@ -126,7 +135,13 @@ print(json.dumps({
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout.strip().splitlines()[-1])
-        self.assertEqual(payload["applied"], ["0001_identity_seasons_groups.sql"])
+        self.assertEqual(
+            payload["applied"],
+            [
+                "0001_identity_seasons_groups.sql",
+                "0002_local_auth_sessions.sql",
+            ],
+        )
         self.assertEqual(payload["health"]["status"], "ok")
         self.assertTrue(payload["has_legacy"])
         self.assertTrue(payload["has_v4"])
