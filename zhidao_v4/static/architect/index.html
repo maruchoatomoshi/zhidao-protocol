@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#dffbf8">
+  <meta name="color-scheme" content="light">
+  <title>ZHIDAO V4 · Architect Console</title>
+  <link rel="stylesheet" href="./architect.css?v=20260830a">
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+    <span class="grid"></span>
+  </div>
+
+  <main id="loginView" class="login-view">
+    <section class="login-card" aria-labelledby="loginTitle">
+      <div class="brand-mark brand-mark-large" aria-hidden="true">
+        <svg viewBox="0 0 72 72" role="img">
+          <path d="M36 5 62 20v32L36 67 10 52V20Z"></path>
+          <path d="M23 25h26M23 36h26M30 47h12"></path>
+        </svg>
+      </div>
+      <div class="eyebrow">ZHIDAO PROTOCOL · V4</div>
+      <h1 id="loginTitle">Architect Console</h1>
+      <p class="login-copy">Центр управления сезоном Hainan. Только конфигурация ядра — без участников и экономики.</p>
+
+      <form id="loginForm" class="login-form">
+        <label class="field">
+          <span>Логин</span>
+          <input id="usernameInput" name="username" autocomplete="username" inputmode="text" required maxlength="64" placeholder="architect">
+        </label>
+        <div class="field">
+          <label for="passwordInput">Пароль</label>
+          <span class="password-field">
+            <input id="passwordInput" name="password" type="password" autocomplete="current-password" required maxlength="128" placeholder="••••••••••••">
+            <button id="passwordToggle" class="reveal-button" type="button" aria-label="Показать пароль">Показать</button>
+          </span>
+        </div>
+        <button id="loginButton" class="primary-button login-button" type="submit">
+          <span>Войти в контур</span><span aria-hidden="true">→</span>
+        </button>
+        <p id="loginError" class="form-error" role="alert" hidden></p>
+      </form>
+
+      <div class="secure-note">
+        <span class="pulse-dot"></span>
+        <span>Локальная идентичность · защищённая сессия</span>
+      </div>
+    </section>
+  </main>
+
+  <div id="consoleView" class="console" hidden>
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 72 72">
+            <path d="M36 5 62 20v32L36 67 10 52V20Z"></path>
+            <path d="M23 25h26M23 36h26M30 47h12"></path>
+          </svg>
+        </div>
+        <div><strong>ZHIDAO</strong><span>ARCHITECT / V4</span></div>
+      </div>
+
+      <nav class="side-nav" aria-label="Разделы консоли">
+        <button class="nav-item active" type="button" data-view="overview">
+          <span class="nav-glyph">◈</span><span>Обзор</span>
+        </button>
+        <button class="nav-item" type="button" data-view="season">
+          <span class="nav-glyph">◎</span><span>Сезон Hainan</span>
+        </button>
+        <button class="nav-item" type="button" data-view="system">
+          <span class="nav-glyph">⌁</span><span>Система</span>
+        </button>
+      </nav>
+
+      <div class="scope-card">
+        <span class="scope-label">ТЕКУЩИЙ КОНТУР</span>
+        <strong>Travel · Hainan</strong>
+        <span><i class="status-dot"></i> Локальная разработка</span>
+      </div>
+
+      <button id="logoutButton" class="ghost-button logout-button" type="button">Выйти</button>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <p id="viewKicker" class="eyebrow">CONTROL SURFACE</p>
+          <h1 id="viewTitle">Обзор протокола</h1>
+        </div>
+        <div class="topbar-actions">
+          <button id="refreshButton" class="icon-button" type="button" aria-label="Обновить данные">↻</button>
+          <div class="identity-chip">
+            <span id="identityInitial" class="identity-avatar">A</span>
+            <span><strong id="identityName">Architect</strong><small id="identityRole">Архитектор</small></span>
+          </div>
+        </div>
+      </header>
+
+      <section id="overviewPanel" class="view-panel active" data-panel="overview">
+        <article class="hero-card glass-panel">
+          <div class="hero-copy">
+            <div class="status-pill"><i></i><span id="heroSeasonStatus">DRAFT</span></div>
+            <p class="eyebrow">PRIMARY TRAVEL SEASON</p>
+            <h2 id="heroSeasonName">ZHIDAO Protocol V4.0 Hainan</h2>
+            <p id="heroSeasonMeta">Конфигурация сезона загружается…</p>
+            <div class="hero-actions">
+              <button id="editSeasonButton" class="primary-button" type="button">Настроить сезон</button>
+              <span id="heroRevision" class="revision-label">REV —</span>
+            </div>
+          </div>
+          <div class="hero-orbit" aria-hidden="true">
+            <span class="orbit orbit-one"></span>
+            <span class="orbit orbit-two"></span>
+            <span class="core-symbol">海</span>
+          </div>
+        </article>
+
+        <div class="metric-grid" aria-label="Состояние системы">
+          <article class="metric-card"><span class="metric-icon mint">◌</span><div><strong id="metricSeasons">—</strong><span>Сезоны</span></div></article>
+          <article class="metric-card"><span class="metric-icon blue">◇</span><div><strong id="metricDrafts">—</strong><span>Черновики</span></div></article>
+          <article class="metric-card"><span class="metric-icon lilac">⌁</span><div><strong id="metricSessions">—</strong><span>Активные сессии</span></div></article>
+          <article class="metric-card"><span class="metric-icon pearl">≋</span><div><strong id="metricAudit">—</strong><span>Записи журнала</span></div></article>
+        </div>
+
+        <div class="content-grid">
+          <article class="glass-panel activity-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">AUDIT STREAM</p><h3>Последние действия</h3></div>
+              <span class="live-badge"><i></i> LIVE</span>
+            </div>
+            <div id="activityList" class="activity-list" aria-live="polite"></div>
+          </article>
+
+          <article class="glass-panel boundaries-panel">
+            <div class="panel-heading"><div><p class="eyebrow">SCOPE LOCK</p><h3>Границы этапа</h3></div></div>
+            <ul class="boundary-list">
+              <li><span class="check">✓</span><div><strong>Архитектор и Hainan</strong><small>Активный контур разработки</small></div></li>
+              <li><span class="pause">—</span><div><strong>Участники</strong><small>Выдача аккаунтов отложена</small></div></li>
+              <li><span class="pause">—</span><div><strong>Экономика и ★</strong><small>Rollover выполняется последним</small></div></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="seasonPanel" class="view-panel" data-panel="season" hidden>
+        <div class="season-layout">
+          <article class="glass-panel season-form-card">
+            <div class="panel-heading">
+              <div><p class="eyebrow">SEASON CONFIG</p><h3>Параметры Hainan</h3></div>
+              <span id="seasonStatusBadge" class="status-pill compact"><i></i>DRAFT</span>
+            </div>
+            <form id="seasonForm" class="season-form">
+              <div class="form-row two-columns">
+                <label class="field"><span>Системный код</span><input id="seasonCode" disabled></label>
+                <label class="field"><span>Версия записи</span><input id="seasonRevision" disabled></label>
+              </div>
+              <label class="field"><span>Название сезона</span><input id="seasonName" required maxlength="120"></label>
+              <div class="form-row two-columns">
+                <label class="field"><span>Дата начала</span><input id="seasonStart" type="date"></label>
+                <label class="field"><span>Дата завершения</span><input id="seasonEnd" type="date"></label>
+              </div>
+              <div class="form-row two-columns">
+                <label class="field">
+                  <span>Часовой пояс</span>
+                  <select id="seasonTimezone">
+                    <option value="Asia/Shanghai">Asia/Shanghai · Китай</option>
+                    <option value="Europe/Moscow">Europe/Moscow</option>
+                    <option value="UTC">UTC</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Визуальная тема</span>
+                  <select id="seasonTheme">
+                    <option value="hainan-aqua">Hainan Aqua</option>
+                    <option value="protocol-pearl">Protocol Pearl</option>
+                    <option value="legacy-blackwall">Legacy BLACKWALL</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form-notice">
+                <span>i</span><p>Пока сезон находится в статусе DRAFT, настройки можно менять безопасно. Запуск сезона ещё не реализован.</p>
+              </div>
+              <div class="form-actions">
+                <span id="seasonSaveState" class="save-state">Изменений нет</span>
+                <button id="seasonSaveButton" class="primary-button" type="submit">Сохранить конфигурацию</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="season-preview glass-panel">
+            <p class="eyebrow">LIVE PREVIEW</p>
+            <div class="preview-art"><span>海</span><i></i></div>
+            <span class="preview-label">TRAVEL SEASON</span>
+            <h3 id="previewName">ZHIDAO Hainan</h3>
+            <p id="previewDates">Даты не заданы</p>
+            <div class="preview-footer"><span id="previewTheme">hainan-aqua</span><strong>V4</strong></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="systemPanel" class="view-panel" data-panel="system" hidden>
+        <div class="system-grid">
+          <article class="glass-panel system-card">
+            <span class="system-glyph">⌁</span><p class="eyebrow">API CORE</p><h3>Travel V4</h3>
+            <dl><div><dt>Статус</dt><dd class="ok-text">ONLINE</dd></div><div><dt>Схема</dt><dd id="systemSchema">—</dd></div><div><dt>Режим</dt><dd>Architect only</dd></div></dl>
+          </article>
+          <article class="glass-panel system-card">
+            <span class="system-glyph">◇</span><p class="eyebrow">IDENTITY</p><h3 id="systemIdentity">Architect</h3>
+            <dl><div><dt>Провайдер</dt><dd>Local</dd></div><div><dt>Роль</dt><dd>Architect</dd></div><div><dt>Сессия</dt><dd class="ok-text">ACTIVE</dd></div></dl>
+            <button id="systemLogoutButton" class="ghost-button system-logout" type="button">Завершить сессию</button>
+          </article>
+          <article class="glass-panel system-card muted-card">
+            <span class="system-glyph">◎</span><p class="eyebrow">PARTICIPANTS</p><h3>Контур отключён</h3>
+            <p>Аккаунты детей, отряды и массовые операции появятся отдельным этапом.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <nav class="mobile-nav" aria-label="Мобильная навигация">
+      <button class="active" type="button" data-view="overview"><span>◈</span>Обзор</button>
+      <button type="button" data-view="season"><span>◎</span>Hainan</button>
+      <button type="button" data-view="system"><span>⌁</span>Система</button>
+    </nav>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="./architect.js?v=20260830a" defer></script>
+</body>
+</html>

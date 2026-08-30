@@ -43,6 +43,7 @@ class V4MigrationTests(unittest.TestCase):
             [
                 "0001_identity_seasons_groups.sql",
                 "0002_local_auth_sessions.sql",
+                "0003_architect_console.sql",
             ],
         )
         self.assertEqual(second, [])
@@ -140,6 +141,7 @@ print(json.dumps({
             [
                 "0001_identity_seasons_groups.sql",
                 "0002_local_auth_sessions.sql",
+                "0003_architect_console.sql",
             ],
         )
         self.assertEqual(payload["health"]["status"], "ok")

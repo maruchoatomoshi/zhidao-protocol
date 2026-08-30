@@ -47,6 +47,20 @@ production-сервере cookie обязана оставаться `Secure`.
 
 Проверка: `http://127.0.0.1:8770/api/v4/health`.
 
+Админка Архитектора: `http://127.0.0.1:8770/architect/`.
+
+После входа доступны:
+
+- обзор состояния V4 и текущего Hainan draft;
+- последние записи AuditLog;
+- редактирование названия, дат, часового пояса и темы Hainan;
+- системная диагностика и версия схемы;
+- адаптивный интерфейс для desktop и телефона.
+
+Форма сезона использует optimistic locking. Если та же конфигурация была
+изменена в другой вкладке, устаревшая форма не перезапишет новые данные и
+получит конфликт версии.
+
 ## 3. Контракт входа
 
 ```text
@@ -55,6 +69,8 @@ GET  /api/v4/auth/me
 POST /api/v4/auth/logout
 GET  /api/v4/seasons
 POST /api/v4/seasons
+PATCH /api/v4/seasons/{season_id}
+GET  /api/v4/admin/overview
 ```
 
 Для мутаций клиент передаёт session cookie, CSRF cookie,

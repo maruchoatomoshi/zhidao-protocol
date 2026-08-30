@@ -9,9 +9,11 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .admin import architect_overview
 from .auth import (
     AuthenticationError,
     Principal,
@@ -25,14 +27,19 @@ from .migrations import apply_migrations
 from .seasons import (
     IdempotencyConflict,
     SeasonConflict,
+    SeasonNotFound,
+    SeasonRevisionConflict,
+    SeasonStateConflict,
     SeasonValidationError,
     create_draft_season,
     list_seasons,
+    update_draft_season,
 )
 
 
 SESSION_COOKIE = "zhidao_v4_session"
 CSRF_COOKIE = "zhidao_v4_csrf"
+ARCHITECT_STATIC_DIR = Path(__file__).resolve().parent / "static" / "architect"
 
 
 class LoginPayload(BaseModel):
@@ -42,6 +49,15 @@ class LoginPayload(BaseModel):
 
 class SeasonCreatePayload(BaseModel):
     code: str = Field(min_length=2, max_length=64)
+    name: str = Field(min_length=1, max_length=120)
+    starts_on: date | None = None
+    ends_on: date | None = None
+    timezone: str = Field(default="Asia/Shanghai", min_length=1, max_length=64)
+    theme_key: str | None = Field(default=None, max_length=64)
+
+
+class SeasonUpdatePayload(BaseModel):
+    expected_revision: int = Field(ge=1)
     name: str = Field(min_length=1, max_length=120)
     starts_on: date | None = None
     ends_on: date | None = None
@@ -96,6 +112,28 @@ def _system_admin(
     return principal
 
 
+def _architect_reader(
+    principal: Principal = Depends(_current_principal),
+) -> Principal:
+    if not (
+        principal.has_global_role("architect")
+        or principal.has_global_role("system_admin")
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
+    return principal
+
+
+def _architect_writer(
+    principal: Principal = Depends(_csrf_principal),
+) -> Principal:
+    if not (
+        principal.has_global_role("architect")
+        or principal.has_global_role("system_admin")
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
+    return principal
+
+
 def create_app(
     db_path: str | Path | None = None,
     *,
@@ -144,6 +182,14 @@ def create_app(
         response.headers["X-Request-ID"] = request.state.request_id
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "same-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        if request.url.path.startswith("/architect"):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; style-src 'self'; script-src 'self'; "
+                "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
+                "base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+            )
         if request.url.path.startswith("/api/v4/auth"):
             response.headers["Cache-Control"] = "no-store"
         return response
@@ -289,5 +335,61 @@ def create_app(
         response = JSONResponse(season, status_code=status.HTTP_201_CREATED)
         response.headers["X-Idempotent-Replayed"] = str(replayed).lower()
         return response
+
+    @app.patch("/api/v4/seasons/{season_id}")
+    def update_season(
+        season_id: int,
+        payload: SeasonUpdatePayload,
+        request: Request,
+        principal: Principal = Depends(_architect_writer),
+    ):
+        idempotency_key = request.headers.get("x-idempotency-key", "")
+        conn = connect_database(app.state.db_path)
+        try:
+            with immediate_transaction(conn):
+                season, replayed = update_draft_season(
+                    conn,
+                    season_id=season_id,
+                    actor_account_id=principal.account_id,
+                    expected_revision=payload.expected_revision,
+                    idempotency_key=idempotency_key,
+                    request_id=request.state.request_id,
+                    name=payload.name,
+                    starts_on=payload.starts_on,
+                    ends_on=payload.ends_on,
+                    timezone=payload.timezone,
+                    theme_key=payload.theme_key,
+                )
+        except SeasonValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except SeasonNotFound as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except (IdempotencyConflict, SeasonStateConflict, SeasonRevisionConflict) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        finally:
+            conn.close()
+
+        response = JSONResponse(season)
+        response.headers["X-Idempotent-Replayed"] = str(replayed).lower()
+        return response
+
+    @app.get("/api/v4/admin/overview")
+    def admin_overview(principal: Principal = Depends(_architect_reader)):
+        del principal
+        conn = connect_database(app.state.db_path)
+        try:
+            return architect_overview(conn)
+        finally:
+            conn.close()
+
+    @app.get("/", include_in_schema=False)
+    def root_redirect():
+        return RedirectResponse(url="/architect/")
+
+    app.mount(
+        "/architect",
+        StaticFiles(directory=ARCHITECT_STATIC_DIR, html=True),
+        name="architect-console",
+    )
 
     return app

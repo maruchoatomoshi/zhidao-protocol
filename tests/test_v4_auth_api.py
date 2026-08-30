@@ -48,6 +48,10 @@ class V4AuthApiTests(unittest.TestCase):
 
     def test_bootstrap_creates_admin_and_hainan_draft_once(self):
         self.assertEqual(self.bootstrap["account"]["role_code"], "system_admin")
+        self.assertEqual(
+            self.bootstrap["account"]["role_codes"],
+            ["system_admin", "architect"],
+        )
         self.assertEqual(self.bootstrap["season"]["code"], "hainan-v4")
         self.assertEqual(self.bootstrap["season"]["status"], "draft")
 
@@ -61,7 +65,18 @@ class V4AuthApiTests(unittest.TestCase):
 
         health = self.client.get("/api/v4/health")
         self.assertEqual(health.status_code, 200)
-        self.assertEqual(health.json()["schema_version"], 2)
+        self.assertEqual(health.json()["schema_version"], 3)
+
+    def test_architect_console_is_served_with_security_headers(self):
+        redirect = self.client.get("/", follow_redirects=False)
+        self.assertIn(redirect.status_code, {302, 307})
+        self.assertEqual(redirect.headers["location"], "/architect/")
+
+        console = self.client.get("/architect/")
+        self.assertEqual(console.status_code, 200)
+        self.assertIn("Architect Console", console.text)
+        self.assertIn("default-src 'self'", console.headers["content-security-policy"])
+        self.assertEqual(console.headers["x-frame-options"], "DENY")
 
     def test_login_stores_only_token_hashes_and_exposes_roles(self):
         wrong = self.client.post(
@@ -213,7 +228,7 @@ class V4AuthApiTests(unittest.TestCase):
                 """
                 UPDATE v4_role_assignments
                 SET revoked_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-                WHERE account_id = ? AND role_code = 'system_admin'
+                WHERE account_id = ? AND role_code IN ('system_admin', 'architect')
                 """,
                 (self.bootstrap["account"]["id"],),
             )
@@ -231,6 +246,58 @@ class V4AuthApiTests(unittest.TestCase):
         )
         self.assertEqual(denied.status_code, 403)
         self.assertEqual(denied.json()["detail"], "Insufficient role")
+
+    def test_architect_updates_hainan_with_revision_protection(self):
+        csrf_token = self.login_admin()
+        seasons = self.client.get("/api/v4/seasons").json()["items"]
+        hainan = next(item for item in seasons if item["code"] == "hainan-v4")
+        payload = {
+            "expected_revision": hainan["revision"],
+            "name": "ZHIDAO V4 · Hainan Expedition",
+            "starts_on": "2027-03-15",
+            "ends_on": "2027-03-29",
+            "timezone": "Asia/Shanghai",
+            "theme_key": "hainan-aqua",
+        }
+        headers = {
+            "x-csrf-token": csrf_token,
+            "x-idempotency-key": "architect:hainan:update:0001",
+        }
+        updated = self.client.patch(
+            f"/api/v4/seasons/{hainan['id']}",
+            json=payload,
+            headers=headers,
+        )
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertEqual(updated.json()["revision"], hainan["revision"] + 1)
+        self.assertEqual(updated.json()["starts_on"], "2027-03-15")
+        self.assertEqual(updated.headers["x-idempotent-replayed"], "false")
+
+        replay = self.client.patch(
+            f"/api/v4/seasons/{hainan['id']}",
+            json=payload,
+            headers=headers,
+        )
+        self.assertEqual(replay.status_code, 200, replay.text)
+        self.assertEqual(replay.json(), updated.json())
+        self.assertEqual(replay.headers["x-idempotent-replayed"], "true")
+
+        stale = self.client.patch(
+            f"/api/v4/seasons/{hainan['id']}",
+            json=dict(payload, name="Stale update"),
+            headers={
+                "x-csrf-token": csrf_token,
+                "x-idempotency-key": "architect:hainan:update:stale",
+            },
+        )
+        self.assertEqual(stale.status_code, 409)
+        self.assertIn("another session", stale.json()["detail"])
+
+        overview = self.client.get("/api/v4/admin/overview")
+        self.assertEqual(overview.status_code, 200)
+        self.assertEqual(overview.json()["schema_version"], 3)
+        actions = [item["action"] for item in overview.json()["recent_activity"]]
+        self.assertIn("season.updated", actions)
 
     def test_logout_revokes_session_and_bad_passwords_lock_account(self):
         csrf_token = self.login_admin()

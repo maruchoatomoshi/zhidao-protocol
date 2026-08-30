@@ -52,6 +52,36 @@ def bootstrap_system_admin(
             except (CredentialValidationError, ProvisioningError) as exc:
                 raise BootstrapError(str(exc)) from exc
 
+            role_cursor = conn.execute(
+                """
+                INSERT INTO v4_role_assignments(
+                    account_id, role_code, granted_by_account_id, reason
+                ) VALUES (?, 'architect', ?, 'bootstrap Architect console')
+                """,
+                (account["id"], account["id"]),
+            )
+            conn.execute(
+                """
+                INSERT INTO v4_audit_log(
+                    actor_account_id, action, entity_type, entity_id, after_json
+                ) VALUES (?, 'role.assigned', 'role_assignment', ?, ?)
+                """,
+                (
+                    account["id"],
+                    str(int(role_cursor.lastrowid)),
+                    json.dumps(
+                        {
+                            "account_id": account["id"],
+                            "role_code": "architect",
+                            "season_id": None,
+                        },
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    ),
+                ),
+            )
+            account["role_codes"] = ["system_admin", "architect"]
+
             season = None
             if create_hainan_draft:
                 season, _ = create_draft_season(

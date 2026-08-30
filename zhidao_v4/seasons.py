@@ -34,6 +34,18 @@ class IdempotencyConflict(RuntimeError):
     pass
 
 
+class SeasonNotFound(RuntimeError):
+    pass
+
+
+class SeasonStateConflict(RuntimeError):
+    pass
+
+
+class SeasonRevisionConflict(RuntimeError):
+    pass
+
+
 def normalize_season_code(code: str) -> str:
     normalized = str(code or "").strip().lower()
     if not SEASON_CODE_RE.fullmatch(normalized):
@@ -116,6 +128,8 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
         "theme_key": row["theme_key"],
         "created_by_account_id": row["created_by_account_id"],
         "created_at": str(row["created_at"]),
+        "updated_at": str(row["updated_at"]),
+        "revision": int(row["revision"]),
     }
 
 
@@ -185,7 +199,7 @@ def create_draft_season(
     row = conn.execute(
         """
         SELECT id, code, name, status, starts_on, ends_on, timezone, theme_key,
-               created_by_account_id, created_at
+               created_by_account_id, created_at, updated_at, revision
         FROM v4_seasons WHERE id = ?
         """,
         (season_id,),
@@ -220,11 +234,137 @@ def create_draft_season(
     return response, False
 
 
+def update_draft_season(
+    conn: sqlite3.Connection,
+    *,
+    season_id: int,
+    actor_account_id: int,
+    expected_revision: int,
+    idempotency_key: str,
+    name: str,
+    starts_on: date | str | None,
+    ends_on: date | str | None,
+    timezone: str,
+    theme_key: str | None,
+    request_id: str | None = None,
+) -> tuple[dict, bool]:
+    key = normalize_idempotency_key(idempotency_key)
+    if expected_revision < 1:
+        raise SeasonValidationError("Expected revision must be positive")
+    editable = _normalize_payload(
+        code="placeholder",
+        name=name,
+        starts_on=starts_on,
+        ends_on=ends_on,
+        timezone=timezone,
+        theme_key=theme_key,
+    )
+    editable.pop("code")
+    request_payload = {
+        "season_id": season_id,
+        "expected_revision": expected_revision,
+        **editable,
+    }
+    request_hash = hashlib.sha256(
+        _canonical_json(request_payload).encode("utf-8")
+    ).hexdigest()
+    operation = f"season.update:{season_id}"
+
+    existing = conn.execute(
+        """
+        SELECT request_hash, response_json
+        FROM v4_idempotency_keys
+        WHERE account_id = ? AND operation = ? AND idempotency_key = ?
+        """,
+        (actor_account_id, operation, key),
+    ).fetchone()
+    if existing:
+        if str(existing["request_hash"]) != request_hash:
+            raise IdempotencyConflict("Idempotency key was already used for another request")
+        return json.loads(str(existing["response_json"])), True
+
+    row = conn.execute(
+        """
+        SELECT id, code, name, status, starts_on, ends_on, timezone, theme_key,
+               created_by_account_id, created_at, updated_at, revision
+        FROM v4_seasons WHERE id = ?
+        """,
+        (season_id,),
+    ).fetchone()
+    if row is None:
+        raise SeasonNotFound("Season not found")
+    if str(row["status"]) != "draft":
+        raise SeasonStateConflict("Only a draft season can be edited")
+    if int(row["revision"]) != expected_revision:
+        raise SeasonRevisionConflict("Season was changed in another session")
+
+    before = _row_to_dict(row)
+    now = utc_text()
+    cursor = conn.execute(
+        """
+        UPDATE v4_seasons
+        SET name = ?, starts_on = ?, ends_on = ?, timezone = ?, theme_key = ?,
+            updated_at = ?, revision = revision + 1
+        WHERE id = ? AND status = 'draft' AND revision = ?
+        """,
+        (
+            editable["name"],
+            editable["starts_on"],
+            editable["ends_on"],
+            editable["timezone"],
+            editable["theme_key"],
+            now,
+            season_id,
+            expected_revision,
+        ),
+    )
+    if cursor.rowcount != 1:
+        raise SeasonRevisionConflict("Season was changed in another session")
+
+    updated_row = conn.execute(
+        """
+        SELECT id, code, name, status, starts_on, ends_on, timezone, theme_key,
+               created_by_account_id, created_at, updated_at, revision
+        FROM v4_seasons WHERE id = ?
+        """,
+        (season_id,),
+    ).fetchone()
+    response = _row_to_dict(updated_row)
+    response_json = _canonical_json(response)
+    conn.execute(
+        """
+        INSERT INTO v4_audit_log(
+            actor_account_id, season_id, action, entity_type, entity_id,
+            request_id, before_json, after_json, metadata_json
+        ) VALUES (?, ?, 'season.updated', 'season', ?, ?, ?, ?, ?)
+        """,
+        (
+            actor_account_id,
+            season_id,
+            str(season_id),
+            request_id,
+            _canonical_json(before),
+            response_json,
+            _canonical_json({"idempotency_key": key}),
+        ),
+    )
+    conn.execute(
+        """
+        INSERT INTO v4_idempotency_keys(
+            account_id, operation, idempotency_key, request_hash,
+            response_status, response_json
+        ) VALUES (?, ?, ?, ?, 200, ?)
+        """,
+        (actor_account_id, operation, key, request_hash, response_json),
+    )
+    return response, False
+
+
 def list_seasons(conn: sqlite3.Connection) -> list[dict]:
     rows = conn.execute(
         """
         SELECT id, code, name, status, starts_on, ends_on, timezone, theme_key,
-               created_by_account_id, created_at
+               created_by_account_id, created_at, updated_at, revision
         FROM v4_seasons
         ORDER BY created_at DESC, id DESC
         """
