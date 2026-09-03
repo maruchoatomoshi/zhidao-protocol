@@ -1,387 +1,270 @@
-﻿# CLAUDE.md
+# CLAUDE.md
 
 Context and working rules for Claude / Claude Code in the `ZHIDAO Protocol` repository.
 
-This project is a Telegram Mini App plus a FastAPI backend file used for deployment. The app is intentionally game-like: cyberpunk / NetWatch / Genshin themes, points economy, cases, raids, diary scoring, Architect Protocol event, profile cards, inventory, and admin tools.
-
-## Project Incident History
-
-### 2026-05-27 — Великий датакрэш (The Great Data Crash)
-
-Server/API/DB ended up in a near-empty state: `users=0`, `expected_students=0`, `shop_items=1`, `achievements=0`, `settings=0`. The environment had to be rebuilt from scratch:
-
-- API and bot were in a reset/old state
-- All users, admins, testers, shop items, settings and seed data were gone
-- Had to reconfigure all systemd env vars: `ADMIN_IDS`, `ARCHITECT_IDS`, `TELEGRAM_AUTH_REQUIRED`, `API_INTERNAL_TOKEN`, `BOT_TOKEN`, `EXPECTED_STUDENTS_FILE`
-- HTTPS/certificate was broken; restored via `certbot --nginx -d hk.marucho.icu`
-- Restored the student list via `/root/expected_students.txt` (85 students)
-- Manually re-added admins and test accounts: Марк, Юля, МЮ, Лиза, Илья, Тяньхао, 原马克
-- Restored VPN/Marzban username bindings
-- Restored shop inventory
-- Re-verified registration, themes, profiles, Mini App, bot, API
-
-This crash prompted the known-good backup approach and more careful handling of env/secrets.
-
-### 2026-06-09 — Второй датакрэш (The Second Data Crash)
-
-SQLite WAL/checkpoint experiments caused cascading 27–1463 second stalls on all write endpoints (shop purchases, point adjustments). Root causes identified and fixed:
-
-- `wal_checkpoint(TRUNCATE/RESTART)` in a background loop competed with active writers — took 49–72 s and blocked everything
-- `await asyncio.to_thread(startup_checkpoint)` inside `@app.on_event("startup")` blocked uvicorn from completing startup — port 8443 unreachable
-- Per-request `sqlite3.connect()` scanned the entire WAL file on open (100–300 s when WAL was large)
-
-Resolution: persistent thread-local connections (`_PersistentConn`), PASSIVE-only checkpoint loop (opt-in via env var), startup checkpoint as fire-and-forget background task. Rolled back to known-good backup:
-```
-/root/zhidao_known_good/zhidao_known_good_20260609_123206.tar.gz
-sha256: d842860f72718193c24151f60e6ece7f0041a7dc6c201e770e50c2b840b2c07a
-```
-
-### 2026-06-29 — Первый боевой запуск (First Live Launch) — 59 пользователей
-
-59 real students launched the Mini App simultaneously. No lag, everyone could open it, no `database is locked` errors. `journalctl -u zhidao_api.service -u zhidao_bot.service --since "2 hours ago"` over the launch window showed only:
-
-- `lock_wait=0ms` on every DB write (the write queue never backed up)
-- `open_case` ~508–579ms, `save_campus_map` ~147–154ms — normal
-- one `admin_resolve_contract` at 1690ms — a single admin action, not a systemic issue
-- `WAL_CHECKPOINT` up to 4302ms but always `busy=0` with frames fully checkpointed — not blocking
-- two `ZHIDAO_DB_WRITE_ERROR ... HTTPException: 409: Path already chosen` at 21:14:08 — expected/handled 409 from a user double-submitting their theme path choice, not a crash
-
-Conclusion: the current SQLite write-lock + persistent-connection architecture (`DB_WRITE_LOCK`, single-worker `DB_WRITE_EXECUTOR`, thread-local `_PersistentConn`) holds up under real concurrent load. **Do not change SQLite/WAL handling based on this result** — it just passed its first real test, leave it alone until there's an actual problem.
-
-Follow-up backup taken right after this launch — see `/root/zhidao_launch_backups/` on the server for the `launch_ok_59_users_<timestamp>.tar.gz` snapshot (API + bot + systemd units + DB), taken via the launch-backup command in the Deployment Notes section below.
-
-## Current Priority
-
-**Backend is stable on the server.** The server runs a known-good version of `/root/zhidao_api.py` that was backed up on 2026-06-09:
-
-```
-/root/zhidao_known_good/zhidao_known_good_20260609_123206.tar.gz
-sha256: d842860f72718193c24151f60e6ece7f0041a7dc6c201e770e50c2b840b2c07a
-```
-
-**CRITICAL: The repo's `zhidao_api_ready.py` diverged from the server during SQLite debugging on 2026-06-09.** Before deploying from the repo, compare the two files or verify with the user.
-
-To check what's running vs what's in the repo:
-```bash
-diff /root/zhidao_api.py <(curl -sL https://raw.githubusercontent.com/maruchoatomoshi/zhidao-protocol/main/zhidao_api_ready.py)
-```
-
-Monitoring command:
-```bash
-journalctl -u zhidao_api.service -u zhidao_bot.service --since "10 minutes ago" --no-pager -l \
-  | grep -E "ZHIDAO_DB_WRITE|ZHIDAO_SLOW_CONN|ZHIDAO_WAL|database is locked|ERROR|Traceback"
-
-ls -lh /root/zhidao.db*
-```
-
-Healthy state: no grep hits, WAL file ≤ 4MB.
-
-Latest launch snapshot:
-
-- `PROJECT_STATUS_2026-06-17.md` records the current repository state on commit `d01875e`.
-- The current repo implementation uses `DB_WRITE_LOCK` plus a single-worker `DB_WRITE_EXECUTOR` and thread-local persistent SQLite connections. Treat this as the known current architecture; do not remove or rewrite it without benchmarking against the live server.
-- Frontend feature freeze and launch lock are currently disabled in `js/config.js`.
-
-## Repository Structure
-
-Main files:
-
-- `index.html` is the app shell and markup.
-- `css/styles.css` contains all CSS.
-- `js/*.js` contains classic browser scripts, not ES modules.
-- `zhidao_api_ready.py` is the deployable FastAPI backend source.
-- Root media files are used directly by GitHub Pages / raw GitHub URLs.
-
-JavaScript file roles:
-
-- `js/config.js`: Telegram WebApp fallback/bootstrap, API URL, global constants.
-- `js/state.js`: shared runtime state such as current user, points, admin status, theme path.
-- `js/api.js`: shared request helpers and thin backend wrappers where present.
-- `js/ui.js`: page navigation, generic UI helpers, user loading, global utilities.
-- `js/themes.js`: theme switching, path logic, CloudStorage/localStorage theme sync.
-- `js/telegram-compat.js`: iOS / Telegram Mini App viewport and safe-area compatibility layer.
-- `js/shop.js`: shop rendering, inventory, purchases, item use/gift/sell.
-- `js/casino.js`: cases, roulette, Genshin prayers, implants/cards, case animation.
-- `js/leaderboard.js`: main leaderboard, diary leaderboard, points/rating display.
-- `js/diary.js`: diary stars page, extended diary archive, diary scoring, admin diary tools.
-- `js/admin.js`: admin panels and admin-only actions.
-- `js/raid.js`: raid UI and raid status/actions.
-- `js/events.js`: generic event overlay functions.
-- `js/architect-event.js`: Architect Protocol event, HUD, questions, music/effects, battle flow.
-- `js/blackwall.js`: BlackWall visual/state logic.
-- `js/schedule.js`, `js/announcements.js`, `js/laundry.js`, `js/achievements.js`, `js/team.js`: feature-specific sections.
-
-Script loading is classic `<script src="..."></script>`. Do not convert to modules unless the whole app migration is planned.
-
-## Important Project Rules
-
-Do not break globals.
-
-Many functions are called directly from inline HTML handlers such as `onclick="..."`. Avoid renaming public functions unless you update every caller.
-
-Do not change API routes casually.
-
-Frontend and backend are tightly coupled. If you add a route to `zhidao_api_ready.py`, also provide the server update command to the user.
-
-Avoid broad rewrites.
-
-This project was split from a monolithic `index.html`. Keep changes targeted and mechanical unless the user explicitly asks for redesign/refactor.
-
-Be careful with encoding.
-
-Some historical files may display mojibake in PowerShell output. Do not "fix" encoding globally unless specifically tasked. Use UTF-8-safe edits and check the browser visually when possible.
-
-Use `apply_patch` for manual code edits.
-
-Do not use destructive git commands. The user often has active work and expects changes to be preserved.
-
-## Recent Work Summary
-
-### Profile 2.0
-
-Added and polished the operator profile concept:
-
-- Profile card moved toward the main experience.
-- Supports avatar, path, rank, title, showcase item, stats, and status line.
-- Backend has `/api/profile/{telegram_id}` in `zhidao_api_ready.py`.
-- Admin/Architect permissions are shown with Chinese labels:
-  - Architect: `架构师`
-  - System architect/admin variants may use admin-specific labels.
-  - Normal user: `学生节点`
-
-### Favorite showcase item
-
-The profile can show a favorite implant/card-like operator item. Current implementation is lightweight and should not affect economy.
-
-### Leaderboard polish
-
-Main leaderboard has richer operator cards.
-
-Alpha boss should be displayed as a highlighted block above the normal ranking, not as rank 1.
-
-### Diary stars system
-
-The old extended diary still exists but is now admin-only:
-
-- `index.html`: the `АРХИВ` item has `id="diaryArchiveItem"` and is hidden by default.
-- `js/diary.js`: `openDiaryPage()` blocks non-admins.
-- `js/diary.js`: `syncDiaryAccessVisibility()` reveals the archive only for admins.
-- `js/ui.js`: calls `syncDiaryAccessVisibility()` after loading user data.
-
-The new intended flow for ordinary users:
-
-- They should not use the extended diary archive.
-- Admins use `ДНЕВНИК ★` to assign stars/bonus.
-- Diary rating should show all ordinary users, even if they have zero diary scores.
-
-Backend additions in `zhidao_api_ready.py`:
-
-- `diary_stars` table.
-- `GET /api/diary/stars/overview`
-- `POST /api/diary/stars/rate`
-- `GET /api/diary/stars/leaderboard`
-
-If diary stars show `Ошибка загрузки`, first verify that the deployed backend really includes those routes.
-
-### Architect Protocol
-
-Architect Protocol is a central event/boss fight system.
-
-Important assets:
-
-- `architect_phase1.mp4`
-- `architect_phase2.mp4`
-- `architect_phase3.mp4`
-- `Architect_phase1.png`
-- `Architect_phase2.png`
-- `Architect_phase3.png`
-- `architect_phase1_music.mp3`
-- `architect_phase2_music.mp3`
-- `architect_phase3_music.mp3`
-- `architect_ivent_win.png`
-- `architect_ivent_lose.png`
-- `entered_architect_event.mp3`
-- `architect-arrival.ogg`
-
-Recent direction:
-
-- Full-screen battle video/background.
-- Floating HUD, combat log, and command panel above media.
-- Phase/button effects exist and can be polished further.
-- iPhone/TG safe-area and question modal were partially stabilized.
-- Avoid shrinking the boss media into a small stage area unless user asks.
-
-Architect event action meanings:
-
-- Attack: direct damage, especially useful in phase 1.
-- Protocol: higher tactical damage, stronger in later phases.
-- Sync: opens/helps vulnerability windows, control/support role.
-- Stabilize: support action, manages pressure/overload and contributes support.
-
-### Themes
-
-Themes currently need ongoing visual polish:
-
-- NetWatch dark/default.
-- NetWatch light.
-- Genshin light/dark.
-
-Known focus areas:
-
-- Avoid white-on-light text.
-- Avoid overly acidic/bright Genshin event banners.
-- Keep inventory cards readable in light themes.
-- Keep case/prayer UI switching correctly for admins and normal users.
-
-### Aqua / Hainan theme — draft, paused (2026-06-24)
-
-A sixth theme (`theme-aqua`) was built as a CSS-only experiment after the user shared a reference screenshot of a glossy ocean/glass UI (dragon-in-glass-orb logo, bubbles, light rays, Frutiger-Aero-style glassmorphic cards) and asked for something close to it, framed for the upcoming Hainan trip and explicitly wanted visible only to himself for now.
-
-What exists:
-
-- `js/config.js`: `'aqua'` added to the `THEMES` array.
-- `index.html`: `theme-btn-aqua` picker card in `#more-themes` (hidden by default via inline `display:none`), plus an `.aqua-layer` ambient background block (rays/caustics/18 bubble `span`s) inserted after `#matrixRain`.
-- `js/ui.js`: `syncAdminUiVisibility()` shows the `theme-btn-aqua` card only when `isDevOwner` (`telegram_id === 389741116`) — same gating mechanism used for the existing dev-only test buttons. No other user can see or select this theme.
-- `css/styles.css`: a `body.theme-aqua` block at the end of the file — ocean gradient background, animated rays/caustics/rising bubbles, glassmorphic overrides for `.card`, `.btn-primary`, `.btn-gold`, `.bottom-nav`, `.nav-item`, `.page-title`, plus the usual dark-text-on-light-background override list (same pattern as `theme-nw-light`).
-
-What's missing to actually match the reference image: the dragon-in-glass-orb logo art and fish imagery are drawn assets that can't be produced with CSS alone — closing the gap needs real generated/commissioned art assets, not more CSS tuning.
-
-User feedback after seeing it live: "пока выглядит, конечно, голо, но прикольно всё равно" (looks bare for now, but still cool). Explicit instruction: save this as a draft and possibly come back to it later — **do not continue polishing this theme unless the user explicitly asks to resume it.**
-
-### Inventory
-
-Inventory was improved toward a unified card standard:
-
-- Image/avatar.
-- Rarity/type.
-- Charges/durability.
-- Date obtained.
-- Action affordances.
-
-Implants/cards may still need per-item visual cleanup.
-
-### Casino / cases
-
-Frontend roulette was changed conceptually to show mixed case types in the same field while preserving backend economy. Backend probabilities should remain authoritative.
-
-Do not change case probabilities without explicitly discussing economy.
-
-### Economy
-
-There is an `ECONOMY_PASSPORT.md`. Use it before changing rewards, prices, or limits.
-
-Current principle:
-
-- Backend economy is source of truth.
-- Frontend should visualize outcomes, not decide rewards.
-- 80 stars is an intentional threshold/guardrail before users can burn currency on cases.
-
-## Deployment Notes
-
-Frontend deploy:
-
-- Push to `main` on GitHub.
-- User checks GitHub Pages / raw assets through the Telegram Mini App.
-
-### Heavy media hosting (rule established 2026-07-02, after MJU event media failures)
-
-Heavy media (event videos, phase/lobby music, intro videos) is served from the HK server, NOT from GitHub Pages: `https://hk.marucho.icu:8444/media/` → nginx (`/etc/nginx/conf.d/zhidao_media.conf`) → `/var/www/zhidao_media/`. GitHub Pages is slow/unstable from mainland China; 16-23MB event videos at 6.5Mbps bitrate with the moov atom at file end simply never loaded. The base URL lives in `js/config.js` (`window.ZHIDAO_MEDIA_BASE`); consumers (`js/architect-event.js` `EVENT_MEDIA_BASE`, `js/ui.js` intro assets, `<audio>` tags in `index.html`) fall back to relative/GitHub paths if the base is missing.
-
-**Rules for any new event media:**
-1. Compress BEFORE shipping: video ≈ 720p H.264, CRF 28-30, `-movflags +faststart`, strip audio track (event videos always play muted); music = 128kbps MP3. Target: video ≤ 3MB per phase, music ≤ 5MB. ffmpeg one-liner: `ffmpeg -i in.mp4 -vf "scale=-2:720" -c:v libx264 -crf 30 -preset slow -pix_fmt yuv420p -an -movflags +faststart out.mp4`.
-2. Upload to BOTH places: the git repo (fallback + source of truth) and `/var/www/zhidao_media/` on the server (`wget` from raw.githubusercontent works fine from the HK box).
-3. Port 443 on the server belongs to Xray/Marzban (VPN) — never touch it; 8443 is the API (uvicorn), 8444 is media (nginx).
-
-**China reachability: CONFIRMED WORKING (2026-07-02).** Tianhao verified from mainland China: the Mini App opens and media loads — so both the API (:8443) and the media host (:8444) on hk.marucho.icu are reachable from China. The GFW blocked only the VPN protocol on this server (Xray on 443), not the IP itself. If the VPN keeps getting hammered, there remains a residual risk of a future full-IP block — if the app ever stops working on Chinese networks while working in roaming, that's the signature, and the fix is moving Xray/Marzban to a separate disposable VPS. Russian SIMs in roaming bypass the GFW entirely either way.
-
-The event music engine (`js/architect-event.js`) also encodes two hard-won fixes: both audio decks must be gesture-unlocked when the overlay opens (iOS rejects async `play()` on a never-touched element — deck B is unlocked with a silent data-URI WAV), and on track switch the old deck keeps playing until the new track's `play()` promise resolves (on slow links a phase track buffers for many seconds; killing the old track immediately meant long silences that read as "music is broken").
-
-Backend deploy:
-
-- The server runs `zhidao_api.service`.
-- The deployed file is `/root/zhidao_api.py`.
-- Source of truth in repo is `zhidao_api_ready.py`.
-
-Service checks:
-
-```bash
-systemctl status zhidao_api.service --no-pager
-journalctl -u zhidao_api.service -n 120 --no-pager
-```
-
-The bot is a separate service:
-
-```bash
-systemctl status zhidao_bot.service --no-pager
-```
-
-Post-launch backup (run after any successful real-world launch window, e.g. the 2026-06-29 59-user launch):
-
-```bash
-TS=$(date +%Y%m%d_%H%M%S)
-mkdir -p /root/zhidao_launch_backups/$TS
-
-cp -a /root/zhidao_api.py /root/zhidao_launch_backups/$TS/
-cp -a /root/zhidao_bot.py /root/zhidao_launch_backups/$TS/
-cp -a /root/zhidao.db* /root/zhidao_launch_backups/$TS/ 2>/dev/null || true
-cp -a /etc/systemd/system/zhidao_api.service /root/zhidao_launch_backups/$TS/
-cp -a /etc/systemd/system/zhidao_bot.service /root/zhidao_launch_backups/$TS/
-cp -a /etc/systemd/system/zhidao_api.service.d /root/zhidao_launch_backups/$TS/ 2>/dev/null || true
-cp -a /etc/systemd/system/zhidao_bot.service.d /root/zhidao_launch_backups/$TS/ 2>/dev/null || true
-
-tar -czf /root/zhidao_launch_backups/launch_ok_$TS.tar.gz -C /root/zhidao_launch_backups/$TS .
-sha256sum /root/zhidao_launch_backups/launch_ok_$TS.tar.gz
-```
-
-Some admin IDs must be added both in backend and bot code if bot/admin behavior differs.
-
-## Smoke Test Checklist
-
-After frontend changes:
-
-- App opens without console errors.
-- Bottom navigation works.
-- Home/profile card renders.
-- Rating opens.
-- Diary rating tab renders.
-- `ДНЕВНИК ★` opens.
-- Normal users do not see/open `АРХИВ`.
-- Admins do see/open `АРХИВ`.
-- Shop opens.
-- Casino opens.
-- Theme switching works.
-- Architect overlay opens.
-- Architect action buttons open a question and submit an answer.
-- iPhone safe-area does not cover bottom nav or command panels.
-
-After backend changes:
-
-- `python3 -m py_compile /root/zhidao_api.py`
-- `systemctl restart zhidao_api.service`
-- `curl -k https://127.0.0.1:8443/api/user/<id>`
-- `curl -k https://127.0.0.1:8443/api/profile/<id>`
-- For diary stars:
-
-```bash
-curl -k "https://127.0.0.1:8443/api/diary/stars/overview?entry_date=2026-04-29" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
-curl -k "https://127.0.0.1:8443/api/diary/stars/leaderboard" -H "X-Admin-Id: ADMIN_ID_EXAMPLE"
-```
-
-## Git Workflow
-
-The user often asks to push directly.
-
-Before commit:
+Last restructured: 2026-09-03.
+
+## What this repository is now
+
+ZHIDAO Protocol is a game-like participant system for educational travel seasons:
+REP rating, seasonal currency, missions, events/raids, collectible cards and
+implants, a shop, diary scoring and administrator tools.
+
+The repository currently holds **three separate bodies of work**. Do not confuse
+them, and do not mix edits across them without an explicit request.
+
+| Body of work | Location | Status |
+|---|---|---|
+| Season 1 — Beijing Telegram Mini App | root `index.html`, `css/`, `js/`, `zhidao_api_ready.py`, `zhidao_bot_ready.py` | **Archive.** Finished, frozen, not deployable — see `SEASON1_BEIJING_ARCHIVE.md` |
+| Season 2 — Hainan V4 web app/PWA | `zhidao_v4/`, `migrations/v4/`, `tests/` | **Active development line** |
+| PS2-style game experiment | `game_assets/` (untracked here) + separate Unity project | Experimental companion, not a dependency of the web app |
+
+Learning MVP (`zhidao_web.py`, `web/`) is a **frozen experiment**, kept as a
+baseline. It is not the foundation of the Hainan V4 interface.
+
+## Current state — read this before planning anything
+
+**The Beijing production server is dead.** `hk.marucho.icu` (API on 8443, media
+on 8444) is gone, and so is the production database. Confirmed by the user
+2026-09-03.
+
+Consequences that override every older instruction in this repository:
+
+- There is **no live backend to compare against, diff, restart or deploy to**.
+  Any instruction of the form `diff /root/zhidao_api.py …`, `systemctl restart
+  zhidao_api.service`, or "check current server state first" is historical.
+  Do not follow it and do not ask the user to run it.
+- Beijing balances, REP, cards, implants and logs are **not recoverable** from
+  this repository. A Beijing archive shown to veterans is a memorial season
+  archive, not a restoration of personal progress.
+- Bringing up a new server and porting the backend is a **known future task and
+  explicitly not a current priority**. Do not start it, and do not block other
+  work on it.
+- Until a test server exists, all work is **local only, on temporary
+  databases**. Production deploy is forbidden (`V4_DECISIONS.md` §2).
+
+The old Telegram Mini App is additionally feature-frozen in code:
+`js/config.js` has `APP_FEATURE_FREEZE_ENABLED = true` since `2026-07-26`, with
+casino, shop, map, laundry and contracts closed and trip-end copy shown.
+
+## Branches and tags
+
+- `main` — the V4 (Hainan) development line. It contains the full season-1
+  history plus the V4 packages; `codex/v4-hainan` was merged into it on
+  2026-09-03 and is now redundant.
+- `season1-beijing` (tag, at `550ff15`) — the frozen season-1 tree, including
+  the original season-1 `CLAUDE.md` verbatim.
+- Older `codex/*` branches are historical.
+
+## Where to read before touching something
+
+Do not start work from this file alone. Read the document that owns the area:
+
+| Working on | Read first |
+|---|---|
+| Any V4 scope/product decision | `V4_DECISIONS.md` |
+| V4 login, roles, sessions, CSRF | `V4_AUTH.md` |
+| V4 schema, migrations | `V4_SCHEMA.md` |
+| Hainan visual language | `V4_DESIGN.md` |
+| Hainan app + campus map, in detail | `CLAUDE_HANDOFF_HAINAN_V4_2026-09-03.md` |
+| Blender characters, Unity game | `CLAUDE_HANDOFF_GAME_BLENDER_2026-09-03.md` |
+| Rewards, prices, limits, currency | `ECONOMY_PASSPORT.md` |
+| Season-1 mechanics, history, МЮ backlog, lore | `SEASON1_BEIJING_ARCHIVE.md` |
+| Learning MVP experiment | `WEB_MVP.md`, `COURSE_CONTENT.md` |
+| Running legacy code locally | `TRAVEL_LOCAL.md` |
+
+## Hainan V4 — the active line
+
+Independent web app/PWA. Telegram is a possible external identity provider, not
+a required container. Expected scale: ~60 participants, 5–6 operators, one
+Architect.
+
+Layout:
+
+- `zhidao_v4/api.py` — FastAPI app; mounts the participant app at `/app/` and
+  the Architect console at `/architect/`; endpoints under `/api/v4/`.
+- `zhidao_v4/auth.py`, `security.py` — local accounts, scrypt password hashing,
+  session/CSRF token hashes, lockout, rate limiting.
+- `zhidao_v4/seasons.py`, `db.py`, `migrations.py` — seasons, storage,
+  versioned additive migrations (`migrations/v4/`).
+- `zhidao_v4/static/app/` — participant app (Сегодня / REP / Магазин / Кейсы /
+  Задания / Ещё). Most sections are deliberate placeholders — they must not
+  display invented users, balances or events.
+- `zhidao_v4/static/architect/` — Architect console.
+- `tests/` — the first automated tests in this repository. Keep them passing.
+
+Identity model: an internal `account_id` independent of any messenger, with
+`ExternalIdentity` rows (`local` | `telegram` | `max`). A Beijing Telegram ID
+identifies a veteran and unlocks their archive; it is not the internal V4 ID.
+
+Season economy: REP is the seasonal rating and stays in the season archive; ★ is
+the spendable seasonal currency; at season rollover 30% of the closing ★ balance
+carries over (rounded down) and 70% burns, written as two journalled operations
+sharing one `rollover_id` and protected by an idempotency key. Rollover is the
+**last** thing to implement, after economy, rewards, shop and archive stabilize.
+
+Stack decisions, already made — do not relitigate them without the user:
+
+- Python, FastAPI and SQLite stay until measurements prove otherwise.
+- **React is deliberately not introduced.** V4 is plain HTML, CSS and browser
+  JavaScript. Do not add a framework, DI container, or async/networking package.
+- The new schema is additive and versioned; it does not destroy season-1 data
+  structures.
+- Permissions are enforced server-side. Hiding a button is not access control.
+- Critical POST requests take an idempotency key; economy, purchases, review and
+  admin corrections go to a shared operation journal and AuditLog.
+
+### Campus map — the current active task
+
+Digitize the real Lingshui Li'an campus inside the participant app. The
+governing rule, from the user:
+
+> First make the geography true; then make it look like ZHIDAO.
+
+An earlier pass drew an attractive invented schematic and was rejected. **Do not
+invent campus geometry.** Every outline, road, path and marker must come from a
+georeferenced source or be traced against the supplied satellite reference.
+AMap/GCJ-02 is the primary provider; never place Baidu BD-09 coordinates onto an
+AMap layer. Never fill an unknown coordinate with a guess — leave
+`verified: false`. Provider keys must not be committed. Details, POI ids and the
+step order live in `CLAUDE_HANDOFF_HAINAN_V4_2026-09-03.md` §5–§11.
+
+## PS2-style game — summary only
+
+A visual novel with light RPG/exploration elements, deliberately PS1/PS2-era
+stylized, not photorealism and not AAA. It shares design, story and assets with
+the web app but **no runtime state**: there is no WebGL build in `/app/`, no API
+auth from Unity, no REP synchronization, no shared save.
+
+What exists: Blender sources under `game_assets/` (Architect character through
+`architect-reference-v16.blend`, Hainan campus `hainan-campus-ps2-v02.blend`),
+and a real Unity project at `C:\projects\ZHIDAO-Campus` (Unity 6000.3.23f1,
+Built-in RP) with an imported campus, first-person controller, the static
+Architect v16 NPC, a first-meeting dialogue episode and Windows builds. Do not
+say Unity has not been started or the campus has not been imported.
+
+Architect v16 is a finished **static appearance model**: no armature, no skin
+weights, no facial rig, no animation clips, no LODs, no tested deformation or
+retargeting. Numerical validation of a static mesh proves consistency, not
+rigging quality or artistic likeness. The campus level is artistically
+condensed and is **not** survey-accurate — never use it as authoritative
+geography, and never claim it matches the real campus map.
+
+Everything else about the game — module lists, texture atlas contract, rigging
+strategy, per-character workflow, QA reports — is in
+`CLAUDE_HANDOFF_GAME_BLENDER_2026-09-03.md`. **Read that file before changing
+anything under `game_assets/` or in the Unity project.**
+
+`game_assets/` (~210 MB) and the Unity project are not versioned in this
+repository. Planned: a separate `zhidao-game` repository with Git LFS.
+
+## Hard rules
+
+### Generated files
+
+Several assets are produced by generator scripts, and rerunning a generator
+silently destroys manual edits. Before editing by hand, find out whether the
+file is generated:
+
+- Blender scripts under `game_assets/architect/blender/`
+  (`architect_finish_v16.py`, `architect_hair_v16.py`, `export_*`, …).
+  Diagnostic and render scripts must read and render only — they must not save
+  over a source model.
+- Unity Editor builders under `Assets/Campus/Editor`
+  (`CampusFirstMeetingBuilder.AssembleAndBuild`, `CampusSceneBuilder`)
+  regenerate scenes and prefabs from a preserved baseline.
+
+If manual work matters, save it to a new path or update the builder as the
+source of truth. Never rerun a builder that will erase it.
+
+### Asset and version safety
+
+- Never overwrite an approved `.blend`, `.unity`, prefab or build. Make a new
+  numbered version instead; v01–v16 exist as history for a reason.
+- Never use `git clean`, destructive resets or bulk deletion around untracked
+  `game_assets/` and uncommitted map work.
+- Keep a character FBX and its baked atlas from the same export together.
+  Never mix a new FBX with an old atlas.
+- Preserve axis, metre scale and ground plane across Blender and Unity.
+- Fix geometry in normal 3D coordinates; never deform a model to flatter a
+  camera angle.
+
+### SQLite and backend
+
+These were learned from a real outage on 2026-06-09 that caused 27–1463 second
+stalls on every write endpoint. V4 is still FastAPI + SQLite, so they still
+apply.
+
+- **Never run `wal_checkpoint(RESTART)` or `wal_checkpoint(TRUNCATE)` in a live
+  background loop.** Use `PASSIVE` only, accept that the WAL will not shrink,
+  and control size with `wal_autocheckpoint`.
+- **Never `await` a startup checkpoint inside a startup event handler.** It
+  blocked uvicorn from finishing startup and made the port unreachable. Run it
+  fire-and-forget after the server is up.
+- **A second writer process starves the first.** In season 1 the bot was a
+  second writer: any change that lengthened its write-lock hold time (e.g.
+  Telegram sends before commit) stalled the API. A writer must commit and close
+  before any `await`. If V4 ever grows a bot or worker, this is the failure mode
+  to design against — prefer routing its writes through the API.
+- **Do not add an extra writer executor or thread-pool layer** on top of a write
+  lock without benchmarking; it only adds latency.
+
+### Code
+
+- **Season-1 code only:** many functions are called from inline `onclick=`
+  handlers. Do not rename a public function without updating every caller. Do
+  not introduce ES modules. Scripts load classically with cache-busting `?v=`
+  query tags — bump the tag when you change a file.
+- Do not change economy values — rewards, prices, limits, drop probabilities —
+  casually. Read `ECONOMY_PASSPORT.md` first and discuss with the user. Backend
+  is the source of truth; the frontend visualizes outcomes, it does not decide
+  rewards.
+- Be careful with encoding. Some files show mojibake in PowerShell output. Do
+  not "fix" encoding globally; use UTF-8-safe edits and check visually.
+- Keep changes targeted and mechanical unless the user asks for a redesign.
+- Do not add secrets or provider keys to git.
+
+## Validation
+
+CI (`.github/workflows/ci.yml`) runs syntax checks only — it does not prove
+behaviour. Run the checks that match what you touched.
+
+Season-1 code:
 
 ```powershell
-node --check js\diary.js
-node --check js\ui.js
-node --check js\leaderboard.js
+python -m py_compile zhidao_api_ready.py zhidao_bot_ready.py
+node --check js\<changed>.js
 git diff --check
-git status --short
 ```
 
-Commit and push:
+V4 frontend:
+
+```powershell
+node --check zhidao_v4\static\app\app.js
+```
+
+V4 backend, locally, on a temporary database:
+
+```powershell
+$env:ZHIDAO_V4_DB_PATH = "C:\path\to\temporary-preview.sqlite3"
+$env:ZHIDAO_V4_COOKIE_SECURE = "false"
+.\.venv-web\Scripts\python.exe -m uvicorn zhidao_v4.api:create_app --factory --host 127.0.0.1 --port 8770
+```
+
+Then check `/app/` visually: bottom navigation works; `Ещё → Карта кампуса`
+opens and Back returns; markers are click- and keyboard-accessible; Chinese
+names stay valid UTF-8; nothing is clipped at narrow mobile widths; the app does
+not imply GPS accuracy while the map is a prototype.
+
+Validate saved and reopened files, not only an in-memory scene. Compare renders
+at equal scale and lighting — never judge likeness from differently framed
+images.
+
+## Git workflow
+
+The user often asks to push directly. Before committing, run the checks above,
+plus `git status --short` to confirm you are not sweeping up unrelated
+untracked work.
 
 ```powershell
 git add <changed files>
@@ -389,148 +272,28 @@ git commit -m "Short clear message"
 git push origin main
 ```
 
-Do not amend commits unless explicitly requested.
+Do not amend commits unless explicitly requested. Do not use destructive git
+commands — the user frequently has active uncommitted work, and `game_assets/`
+plus in-progress map changes are untracked.
 
-## Things To Avoid
+## Things to avoid
 
-- Do not globally "fix" mojibake based only on terminal output.
-- Do not remove old systems unless the user explicitly says to delete them.
-- Do not change economy values casually.
+- Do not treat the dead Beijing server as if it were alive.
+- Do not plan work around restoring Beijing production data.
+- Do not introduce React or another framework into V4.
+- Do not introduce ES modules into the season-1 app.
 - Do not rename inline-handler functions.
-- Do not introduce ES modules into the current app.
-- Do not make Architect video a small contained box unless explicitly requested.
-- Do not hide admin tools for admins while simplifying normal-user UX.
+- Do not change economy values casually.
+- Do not globally "fix" mojibake from terminal output.
+- Do not remove old systems unless the user explicitly says to delete them.
+- Do not claim static mesh validation proves rigging quality.
+- Do not claim the artistic campus level is geographically accurate.
+- Do not expand the game into an open world; keep it small, finishable episodes.
+- Do not connect the game to the V4 API before authentication, anti-replay and
+  the reward question are decided.
 
-## SQLite / Backend — Hard Rules (learned 2026-06-09)
+## Core principle
 
-These rules exist because a series of WAL/checkpoint experiments caused cascading 27–1463 second stalls and a broken startup. Do not repeat them.
-
-**Never run `wal_checkpoint(RESTART)` or `wal_checkpoint(TRUNCATE)` on a live background loop.** Both modes can compete with active writers and cause `database is locked` or 30–70 second stalls that block all API writes. If a checkpoint loop is needed, use `PASSIVE` only, accept that the WAL file won't shrink, and control WAL size via `wal_autocheckpoint`.
-
-**Never add an `await asyncio.to_thread(startup_checkpoint)` inside `@app.on_event("startup")` before the server is ready.** This blocked uvicorn from completing startup — port 8443 was unreachable until manually killed. If a startup checkpoint is needed, run it as a fire-and-forget background task after `asyncio.create_task(...)`.
-
-**The bot is a second writer process.** Any change that increases write lock hold time in the bot (e.g. doing Telegram sends before commit) can starve the API. The bot's `db_connect()` must: commit + close before any `await`, and set `PRAGMA wal_autocheckpoint=0` so it doesn't trigger auto-checkpoints.
-
-**Do not add a dedicated writer executor or thread pool for DB writes** without benchmarking. An extra queue layer just adds latency on top of `DB_WRITE_LOCK`.
-
-**Before any backend change:** check current server state first:
-```bash
-ls -lh /root/zhidao.db*
-journalctl -u zhidao_api.service -n 20 --no-pager | grep -E "WRITE|SLOW|WAL|locked"
-```
-
-**If the server degrades again:**
-1. Stop both services, run `python3 -c "import sqlite3; c=sqlite3.connect('/root/zhidao.db'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()"`, restart.
-2. If that doesn't help, restore from `/root/zhidao_known_good/`.
-3. Only then investigate root cause with logs before changing any code.
-
-## Recommended Next Steps
-
-1. Continue profile polish and UX features — backend is stable.
-2. If slow writes return: check if the bot is holding a write transaction during async Telegram sends (the main historical cause).
-3. After the trip: consider migrating the bot to API-only writes via `X-Internal-Token` so there is only one SQLite writer process.
-4. PostgreSQL migration is plan B, only if SQLite continues to cause issues after the bot write isolation is done.
-5. Expand event question pools (user request 2026-06-11): Architect has only 8 questions per action, WildAI Breach only 6 — questions visibly repeat every couple of uses. Seeds live in `ARCHITECT_QUESTION_SEEDS` / `WILD_AI_BREACH_QUESTION_SEEDS` in `zhidao_api_ready.py`; selection is `ORDER BY RANDOM() LIMIT 1` from `event_questions` with no recent-question memory. Note: seeding only runs when the table count for that event_code is 0, so adding seeds requires either deleting existing rows for that code or inserting new rows directly on the server DB.
-6. **Feature brainstorm (2026-06-21) — scope is now considered final, no more new features planned beyond these two:**
-   - **PvP duels between students**: build after the trip, not before — touches the live points economy and needs unhurried testing. Challenge another operator to a quiz/coinflip duel, wagering points. Reuses the existing quiz-question pattern (Architect/WildAI) and the existing points economy. Fills a real gap — the app currently has no student-vs-student interaction, only student-vs-system progression.
-     - Draft mechanic discussed 2026-06-21 (not yet final — Mikhail Yuryevich/МЮ may add requirements around attendance/discipline control before this is built): **hybrid random** outcome (coinflip-style, optionally weighted slightly by rating/points rather than a live synced quiz, since two students are rarely online at the exact same moment); **asynchronous challenge flow** via the bot (A challenges B with a stake, B gets notified and accepts/declines whenever they next open the app — no need for both to be online simultaneously); **zero-sum wager** with fixed stake tiers (e.g. 10/25/50/100 points) rather than arbitrary amounts, so duels redistribute points instead of creating new ones (must not inflate the economy).
-     - МЮ cares more about attendance/check-in discipline than fun features, so when revisiting this, consider whether duels should gate on attendance (e.g. only available to students who haven't missed a check-in) per his likely input.
-     - **Updated draft (2026-06-28) — "Tekken-style" duel concept layered on top of the async challenge flow, recorded only, not implemented:**
-       - **Flow stays async at the challenge/accept stage, goes live for the actual fight**: A challenges B with a stake via the bot (as above). B accepts whenever they next open the app. Once both sides have accepted, a "ready-check" fires — both need to tap "готов" while in the app at the same time (bot notifies both, gives a window, e.g. 2–5 minutes, to confirm); only once both are ready does the live duel screen actually start. This avoids requiring the whole cohort to be online at once while still delivering a genuinely real-time VS moment.
-       - **Visual presentation**: VS screen with both avatars side by side, HP bar under each (fixed pool, e.g. 100 HP). Rounds: both players get the same Chinese-language question at the same instant; first correct answer lands a hit (e.g. -20 HP); a wrong answer scores nothing that round (no self-damage, to keep it low-stakes/fun rather than punishing). Ties (both correct) broken by answer speed. Match ends when one side's HP hits 0, or after a max round count as a tiebreaker (whoever has more HP wins).
-       - **Questions**: reuse the existing quiz-question infrastructure (`event_questions` pattern used by Architect/WildAI), but as a new tagged pool specifically for Chinese-language content rather than lore/event trivia — keeps duels educational, not just a random-chance gimmick.
-       - **Implants/cards as one-time battle effects**: rather than computing complex combat stats from cosmetic items, give a small curated subset of implants/cards a single-use modifier when slotted into a duel — e.g. extra HP buffer, a one-round "shield" (blocks the next hit), or shaving time off the opponent's answer window. Needs a deliberate allow-list of which existing items qualify (not all inventory items should become combat-relevant) — discuss with user before wiring any specific item to a battle effect, per the "don't change economy casually" rule.
-       - **Stakes**: keep the fixed zero-sum tiers from the original draft (10/25/50/100★) — the Tekken presentation is a skin on top of the same wager mechanic, it doesn't change the economy model.
-       - **"Приколюхи" (extra flavor) — ideas to revisit, not committed**: pre-fight taunt lines per player (maybe pulled from a small canned list), a finisher animation/screen on the winning hit, a post-match win/loss badge or short combo streak counter (cosmetic only, separate from REP/points so it can't be farmed), a duel-specific leaderboard (wins/losses) kept apart from the main rating so it doesn't skew the serious progression track.
-       - Still blocked the same way as the rest of this item: build after the trip, and confirm with МЮ whether attendance-gating should apply before any of this goes into code.
-     - **Status update (2026-06-30) — PvP duels shipped, contradicting the "build after the trip" note above**: at some point after the above was written, a first version of PvP duels was actually implemented and deployed — `js/duel.js`, duel modal/overlay markup in `index.html` (`#duelChallengeModal`, `#duel-overlay`), and a 14-question Chinese-language quiz pool (`DUEL_QUESTION_SEEDS`, action_type='duel') in `zhidao_api_ready.py`. Confirmed live and working (a `NameError: DUEL_QUESTION_SEEDS` startup crash was hit and fixed on 2026-06-30 — the constant was defined after `ensure_seed_data()`'s module-scope call; moved earlier in the file, verified via `py_compile` and a live `systemctl restart`). This note in CLAUDE.md was stale and should be treated as superseded — duels are live, not blocked.
-     - **МЮ feedback (2026-06-30) on the live duel system**: "Кайф!" (positive). Two remaining asks, recorded only, not yet implemented:
-       - **Tekken-style animation polish**: the hit/finisher presentation should read more like an actual fighting-game animation (impact frames, screen shake/flash on a landed hit, etc.) rather than a flat HP-bar tick — matches the "Tekken-style" framing from the 2026-06-28 draft above (VS screen, HP bars, finisher screen on the winning hit).
-       - **Level-appropriate question difficulty**: figure out how to match duel questions to each player's level/skill rather than pulling uniformly from the same pool — exact mechanism (e.g. tagging `DUEL_QUESTION_SEEDS` by difficulty and matching by rating/points, or by some other proficiency signal) not yet decided; needs scoping before implementation.
-   - **Trip Rewind / "yearbook"**: decided 2026-06-21 to build the feature itself *before* departure (not after) so it's fully tested and just needs flipping on at the end of the trip — there won't be dev time during/right after the trip. It's read-only aggregation over existing tables with no new tables and no economy impact, so it's safe to build now despite the 2-week runway. An end-of-trip auto-generated summary card per user (points earned, achievements, a fun stat-based "role"), in the spirit of Spotify Wrapped. All underlying data already exists (points, achievements, diary stars, casino history) — this is mostly an aggregation screen plus a shareable visual format.
-     - Data draft (2026-06-21): pull from existing tables only, no new tracking needed — `economy_log` (points earned/spent), `casino_log` (case/prayer count, best drop), `user_achievements`, `diary_stars`/`diary_entries` (entries submitted, average stars), `shop_purchases` (spend + gifts), `raid_participants`+`raids` (raids joined/won), `contracts`, `daily_checks` (attendance %), `event_participants`/`event_actions` (Architect/WildAI participation, answer accuracy). `users` table has no `created_at`, so "trip duration" should be computed from the trip's known start/end dates, not per-user registration time. Can partially reuse the existing `/api/profile/{telegram_id}` aggregation logic. Suggested new endpoint: `/api/rewind/{telegram_id}` (read-only, joins existing tables, no new tables required).
-     - Card content draft: title with trip date range; points earned/spent/final balance; case-opening highlights (best drop, e.g. "only one who pulled a legendary"); attendance % (framed as a compliment, not just a discipline metric); diary stats (entries + average star rating); event participation (times helped repel Architect/WildAI); a closing fun "role" generated from whichever stat is most pronounced for that user (e.g. biggest shop spender → "Шопоголик Протокола", most legendaries → "Любимец рандома", perfect attendance → "Образцовый оператор").
-     - Visual design draft (2026-06-21): full-screen swipeable "story" slides (like Instagram/Spotify Wrapped stories), one stat per slide, large bold typography, not a single long stats page. Fixed brand palette independent of the user's currently active theme (NetWatch/Genshin/admin) — similar to how Wrapped has its own look regardless of device theme; reuse the existing Architect-event neon cyberpunk palette (green/red on black) since it already reads as "event-grade" in this app. Per-slide accent color driven by the existing casino rarity colors (gold = legendary, purple = epic, blue = common) so a "best drop" slide visually reads as rarity without inventing new color rules. Final slide = a condensed shareable summary card with the 3-4 best numbers plus the fun "role" — this is the one meant to be screenshotted and shared in the class chat. Cheap, high-impact technique: animate each big number counting up from 0 on slide entry.
-7. **Feature brainstorm from МЮ (2026-06-24) — recorded as specs to implement later, no code written yet:**
-   - **Стирка (laundry) UI redesign**: replace the free-text date field with three buttons — Сегодня / Завтра / Послезавтра. The time field should open a popup time-picker instead of accepting free text. Remove the "notes" field entirely. Add a new field "к кому подходить" (who to approach) as a fixed dropdown/list of names: Марк Альбертович, Елизавета Сергеевна, Сунь Тяньхао, Ву Нан, Ольга.
-   - **Вода (water) — same redesign**: apply the identical date-buttons/time-popup/no-notes/"к кому подходить" redesign to the water booking flow, and additionally remove the per-slot person-count limit entirely for water (laundry keeps its limit).
-   - **Стирка → VIP shop tier**: make laundry booking a VIP-tier shop item and raise its price in the shop (economy-affecting — discuss actual price with user before implementing, per the "do not change economy values casually" rule).
-   - **Admin point-granting tool**: add a selectable points-amount field and a "reason" field to both crediting and deducting points (currently presumably free-text amount only, no reason capture).
-   - **New/updated admin "Отчёт" (Report) tab**: show daily activity, last-activity timestamp, and all-time activity per user; needs ranking by activity (most → least active).
-   - **"Факты о поездке" (Trip facts) quiz**: add a quiz about trip locations/places. Everyone must take it; those who pass successfully get a reward.
-   - **"Фразы от Тяньхао" (Phrases from Tianhao)**: should surface during breakfast, lunch, and dinner — exact times to be specified later by the user.
-   - **Перекличка (roll call) redesign**: beyond kids self-marking, admins must separately confirm the wake-up before points are awarded (or a penalty applies if overslept). If kids are late/delayed at wake-up, admins mark them with a yellow flag. Needs a room roster for admin reference during roll call — roughly 48 rooms, 2 students per room.
-   - **Отбой (lights-out/curfew check)**: apply the exact same admin-confirmation system as the wake-up roll call (yellow-flag lateness, points only after admin confirms).
-   - **"Вне расписания" (off-schedule) catch-all**: after everyone has pressed their own confirmation button, admins should also be able to press confirm on behalf of anyone still present/remaining (manual override for stragglers).
-   - **Народный магазин (Folk/community shop) demand pipeline**: users propose an item with a description; if it reaches a demand threshold (70% of kids voting, 70 likes), that signals strong demand. Admins see this activity, and — after moderation — can promote the item into the main shop catalog.
-   - All 11 items above are recorded per the user's explicit instruction ("фиксируй наработки от МЮ. потом сделаем") — documentation only, implement later, not yet scheduled or estimated.
-   - **Status update (2026-06-24, later same day)**: items 1-2 (laundry/water UI redesign: date buttons, native time picker, "к кому подходить" dropdown, no person-limit for water) and item 3 (Стирка VIP shop price raised to 150★ to match Иммунитет, per explicit user instruction) are **implemented, committed, deployed to the live server, and verified working**. Additionally, per a follow-up МЮ note ("Надо подтверждение спрашивать, а то можно мискликнуть"), booking now requires a confirm dialog ("Записываю: <день>, <время>. Подтверждаете?") before the request is sent — implemented in `js/laundry.js` via the existing `showConfirmDialog` helper, no backend change needed. Item 4 (admin point-granting reason field) was investigated and found **already implemented** in the current codebase — `js/admin.js` (`adminAdjustPointsFromForm`/`adminAdjustRepFromForm`) already requires both an amount and a non-empty reason before submitting; quick-preset buttons for common amounts/reasons already exist too (`adminPreparePointAction`/`adminPrepareRepAction`, wired to ±10★/±50★/±5 REP/etc. buttons). Worth revisiting with the user whether anything beyond this is wanted (e.g. a dropdown of preset reasons instead of free text) before considering item 4 closed.
-   - **New item 12 (2026-06-24) — navigation redesign, recorded only, not yet implemented ("Пока фиксируй, сделаем потом")**: turn the main/home screen (currently the leftmost bottom-nav tab, `主页`/`showPage('home')`) into something reached via a button rather than a permanent bottom-nav tab. Put the news/schedule tab (`日程`/`showPage('schedule')`, already exists and already loads `loadAnnouncements()`+`loadSchedule()`) in its place as the new default/leading tab. Add a new button fixed at the **top-right corner, visible across all sections/pages**, that opens the player menu (i.e. what is currently the home screen/profile) — clicking it should behave like the current home tab does today. Implementation will need: removing the `主页` `<button class="nav-item" onclick="showPage('home',this)">` entry from `<nav class="bottom-nav">` in `index.html` (~line 2474), adding a persistent top-right button (likely fixed-position, present on every `.page`, not just one) that calls `showPage('home')`, and changing whatever currently defaults to the `home` page on first load/launch-gate logic to default to `schedule` instead (check `index.html` `class="page active" id="page-home"` at ~line 95 and any launch-gate/`isLaunchGateActive` logic in `js/ui.js` that already special-cases `name !== 'home'`, since `showPage` exempts `home` from the launch gate — that exemption may need to move to `schedule` instead).
-   - **New item 13 (2026-06-28) — Перекличка / Отбой / Вне расписания redesign, recorded only, not implemented ("пока фиксируй... мы ничего из этого пока не делаем")**:
-     - **Перекличка (morning roll call)**: remove the "отгул" feature (the "нужен отгул"/leave-request button) entirely from this flow — it does not belong to morning roll call. The "who hasn't responded yet" need is already mostly covered by the existing list of everyone the bot messaged, which already shows each person's current status (e.g. `wait`) — when revisited, check whether a plain status list is sufficient or whether admins specifically want a filtered/surfaced subset of just the still-`wait` entries to "check on" rather than scrolling the full roster.
-     - **Отбой (curfew/lights-out)**: starts at 20:00 Beijing time; bot follow-up messages at 20:15 and a final one at 20:50. Kids who have a legitimate reason to be out past curfew (in a friend's room, sports outside, walking) until 21:00 need to be able to self-submit a request for this — this is where the "отгул" concept stays (it is only removed from morning roll call, not from curfew). Admins need a list of these self-submitted curfew-exception requests to check/approve.
-     - **Вне расписания (off-schedule / catch-all)**: display this section pinned above all roll-call sections in the admin UI. Keep only two sub-lists — `оштрафованы` (penalized) and `подтвердили` (confirmed) — remove all other status sections that currently exist for this category. Admins need a list of everyone still needing to be marked. **Clarified 2026-06-28**: no time-based broadcast/schedule is needed for "вне расписания" — admins manually trigger/start this roll call themselves, and kids see they need to check in at that moment (this corrects the original ask, which assumed a scheduled broadcast).
-     - **Roll-call response list display (applies to Перекличка and likely Отбой)**: next to each player's name, show their room number in the same bold weight as the name. Next to each player's status badge (e.g. `Wait`), add a button that lets an admin mark the check-in on that player's behalf (covers dead phone / forgot / etc.).
-     - **Игроки (players) tab — future item, explicitly deferred ("добавим позже")**: add search/filter by room number, since students will be housed two per room. Not part of this round of work.
-   - **New item 14 (2026-06-28) — player dossier group list, recorded only, blocked on groups existing**: the operator dossier (admin player card, `js/admin.js` dossier modal) should eventually show which group(s) the player belongs to. Explicitly blocked: groups don't exist yet — this can't be scoped or built until the group structure is actually formed/decided. Revisit once groups are defined.
-   - **Status update (2026-06-28) — backlog implementation pass**: per explicit instruction ("поехали всё делать и фиксить, кроме пвп режима" — go implement and fix everything except PvP), items 12 and 13 above (plus the Народный магазин 70% threshold and the Тяньхао breakfast window from earlier in this list) are now **implemented, committed, and pushed to `main`**:
-     - Item 12 (navigation redesign) turned out to be **already implemented** before this pass — `index.html`'s bottom nav has no `主页` entry, `schedule` is already the default/active tab, and a fixed-position `.profile-fab` button (top-right, `toggleProfileFab()` in `js/ui.js`) already opens/returns from the home/profile screen on every page. No code changes were needed for this item; only this status note.
-     - Item 13: removed the "🙋 Нужна помощь" (leave-request) button from the morning roll-call keyboard in `get_presence_keyboard_markup()` (`zhidao_api_ready.py`); shifted the curfew schedule to 20:00/20:15/20:50 in both `zhidao_api_ready.py` (admin-dispatch message text) and `zhidao_bot_ready.py` (actual cron jobs — `send_checkin`, retries, `check_missing`, `send_goodnight`, `penalize_presence`), which also fixed a pre-existing drift between the two files (21:00 vs 22:00); added `/api/presence/admin/mark` (admin marks a player present on their behalf, sharing reward logic with self-confirm via a new `_presence_confirm_logic` helper) and wired up the previously-unused `/api/presence/admin/approve`/`reject` endpoints into `js/admin.js`; pinned the "Вне расписания" admin card above morning/evening in `index.html` and trimmed its status chips to `pending`/`confirmed`/`penalized`; added `room_number` to `/api/presence/admin/overview` and display it next to each player's name in the admin presence rows.
-     - Народный магазин: `_community_shop_demand()` now confirms demand when crown votes reach 70 **or** participation reaches 70% of total users (`participation_pct` exposed on both proposal endpoints, surfaced in `js/community-shop.js` and the admin moderation list in `js/admin.js`).
-     - Тяньхао phrases: added a 07:00–09:00 breakfast window (one new phrase per trip day) to `js/tianhao.js`, alongside the existing lunch (13:00–16:00) and dinner (18:00–21:00) windows.
-     - Explicitly excluded from this pass per the user's instruction: PvP duels (item 6) and the dossier group list (item 14, blocked on groups existing).
-     - Two more items from the original 2026-06-24 МЮ list were checked and found **already fully implemented** before this pass, so no code changes were needed: the admin "Отчёт" report tab (`/api/admin/activity/report` in `zhidao_api_ready.py`, rendered by `adminLoadActivityReport()`/`adminRenderActivityReport()` in `js/admin.js` — already shows today/all-time activity counts, last-active timestamp, and ranks most→least active), and the "Факты о поездке" trip quiz (`js/trip-quiz.js` + `/api/trip-quiz/*` in `zhidao_api_ready.py` — already enforces one attempt, a 70% pass ratio, and a 50★ reward only on pass).
-     - The breakfast time window (07:00–09:00) was chosen as a reasonable default rather than a user-specified time — flag for adjustment if it doesn't match actual breakfast hours.
-   - **New item 15 (2026-06-28) — Shanghai sub-trip group split, recorded only, not implemented**: part of the group will travel to Shanghai with МЮ while the rest stay on the main (Beijing/Hainan) track — these two groups need to be separated in the app. Requirements stated by МЮ:
-     - Achievements (and implicitly other player progress/state — points, inventory, etc., since МЮ said "достижения переносятся вместе с игроками") carry over with each player regardless of which group/track they end up on — no data wipe or reset when a player is assigned to the Shanghai group.
-     - Contacts/curation: once split, the Shanghai group's admin contact narrows to just МЮ — he becomes the sole curator for that sub-group going forward (other admins/vožатые presumably stay attached to the main group, though this wasn't explicitly stated and should be confirmed before implementing).
-     - Open questions to resolve before scoping real implementation: how a player gets assigned to a group (manual admin action vs. self-select), whether schedule/announcements/roll-call also need to fork per group or stay shared, and whether this reuses the still-undefined "groups" concept already blocked in item 14 (player dossier group list) — if so, items 14 and 15 should likely be scoped together once the group structure is actually decided.
-     - Not scheduled, not estimated. Per the same pattern as other МЮ-sourced backlog items: "фиксируй, потом сделаем."
-
-## Hainan Trip Sequel Lore — "Blue Horizon" Corporate Buyout Concept (recorded 2026-06-25, draft only, not implemented)
-
-User explicitly asked to record this as a lore document only — no code written. Possible future migration to React was mentioned as a reason to defer implementation, so do not start building this against the current vanilla-JS/classic-script architecture without re-confirming.
-
-### Core idea
-
-The Hainan ("season 2") app is not a new skin bolted onto the Beijing ("season 1") ZHIDAO lore — it's framed as a **corporate rebrand/buyout** so new students get a zero-friction onboarding while Beijing veterans get a hidden continuity layer.
-
-- **BlueJoy Corporation / 蓝悦集团** did not buy ZHIDAO outright — it obtained a **license/access/corporate integration to the ZHIDAO Core**, and shipped its own glossy shell as **Blue Horizon OS v4.0.0** (the Frutiger-Aero ocean/glass aesthetic from the reference screenshot, reusing/extending the paused `theme-aqua` draft from 2026-06-24). Avoid the literal phrasing "BlueJoy bought ZHIDAO" even in-lore — keep it deliberately ambiguous: BlueJoy *believes* it owns the system; the Architect knows the core can't be fully bought.
-- **ZHIDAO Core / Legacy PEK Engine** — the old hacker backend, still alive underneath the corporate shell.
-- **Coral Firewall / 珊瑚防火墙** — the Hainan-season equivalent of the Великий Красный Файрвол / BlackWall, themed as the corporate-resort protective layer that ends up triggering the season's central malfunction.
-- **Season title**: ZHIDAO Protocol: Blue Horizon / 海岛蓝图.
-
-### Onboarding split by veteran status
-
-A single `VETERAN_IDS` array on the backend would gate which intro branch a user sees in `intro-novel.js`:
-
-- **New students** (no Beijing history): see a clean, friction-free corporate welcome — "Blue Horizon OS v4.0.0 / Добро пожаловать на остров. BlueJoy создаёт для вас идеальный день." No mention of BlackWall, NetWatch, or the Architect as a dark/threatening entity. They are full "factory" users of a resort CRM-style app (quests, points, laundry, cards, dolphins).
-- **Veterans** (Beijing history): see a glitch on first launch — a fake "system error" revealing a fragment of the old red/black Beijing UI or the Architect's pixel silhouette over the ocean background, e.g. a fake log block:
-  ```
-  [ERROR] Legacy Core detected. Sector: PEK-2026
-  BlackWall residue: archived. Architect signature: active.
-  Corporate shell restored. Do not mention this incident.
-  ```
-  followed by an Architect message: "Ты это видел. Значит, они не всё стёрли." Veterans may also get a subtle non-power-affecting badge like `Legacy Operator: Sector PEK` on their profile (explicitly NOT meant to grant economy/rank advantages — narrative-only, so new students don't feel second-class).
-
-### Mid-trip climax — "the shell cracks"
-
-The planned story beat for the middle of the trip: the perfect BlueJoy/Coral Firewall system throws an error and locks the group, and the glossy Blue Horizon interface visibly degrades back toward the old red/black ZHIDAO look (panels glitching, corporate copy like "Пожалуйста, сохраняйте позитивный настрой" overlaid on a hard system-recovery log, e.g.):
-```
-ZHIDAO CORE RECOVERY MODE
-PEK LEGACY ENGINE: ONLINE
-BLACKWALL ARCHIVE: PARTIAL
-ARCHITECT MANUAL OVERRIDE: REQUESTED
-```
-New students panic/are confused by the sudden tone shift; veterans become mentors/elite who already know how this engine behaves ("мы так две недели в Пекине жили") and walk the group through manual recovery via the existing contracts mechanic. The intended payoff is narrative status for veterans (not mechanical power), and a thematic point that BlueJoy can optimize/route/suggest but can't take responsibility or make a real decision under failure — that has to come from the people who lived through Beijing.
-
-### Key phrases / canon lines
-
-- BlueJoy's stance: "BlueJoy знает, где вам будет лучше." / corporate framing of old modules as "Mood Index, Harmony Tasks, Resort Rewards" replacing the deprecated "BlackWall, NetWatch, Architect Event" naming.
-- Architect's stance: "Они поняли механику. Но не поняли, зачем она была создана." — proposed as the season's defining line.
-- Season moral: an idealized convenience system can route, suggest, and optimize, but cannot take responsibility or act under real failure — that requires the people who already have lived experience with the unfiltered system.
-
-### Status
-
-Recorded as a narrative/lore draft only, per explicit user instruction ("пока можешь зафиксировать в документе"). Not scheduled, not estimated, no backend/frontend work started. User is also weighing an eventual migration to React, which would affect how/whether this gets built against the current architecture — re-confirm scope and stack before any implementation work begins.
-
+> Build a small, honest, finishable thing with reusable parts. Do not turn a
+> deliberate stylistic experiment into an unfinished modern AAA project, and do
+> not describe prototypes as finished systems.
