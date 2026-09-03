@@ -155,8 +155,17 @@ strategy, per-character workflow, QA reports — is in
 `CLAUDE_HANDOFF_GAME_BLENDER_2026-09-03.md`. **Read that file before changing
 anything under `game_assets/` or in the Unity project.**
 
-`game_assets/` (~210 MB) and the Unity project are not versioned in this
-repository. Planned: a separate `zhidao-game` repository with Git LFS.
+The game sources live in their own repository:
+**`maruchoatomoshi/zhidao-game`** (private, Git LFS). The Blender sources were
+pushed there on 2026-09-03; the Unity project has not been moved into it yet
+and still sits at `C:\projects\ZHIDAO-Campus`.
+
+`game_assets/` is still present in this working tree as the pre-split copy, and
+it is still untracked here — this repository never versioned it. Do not commit
+it here; make changes in `zhidao-game` instead.
+
+Cloning `zhidao-game` requires `git lfs install` first, or you get pointer
+files instead of models and textures.
 
 ## Hard rules
 
