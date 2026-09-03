@@ -1,0 +1,4 @@
+# Markdown uses two trailing spaces as a hard line break, so `git diff --check`
+# (run strictly in CI) must not treat trailing whitespace in .md as an error.
+# Code keeps the default whitespace checks.
+*.md -whitespace
