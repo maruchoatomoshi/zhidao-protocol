@@ -12,6 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whitespace check below diffs HEAD~1 against HEAD, which needs
+          # the parent commit. actions/checkout clones with depth 1 by default,
+          # so without this the step dies on "unknown revision HEAD~1".
+          fetch-depth: 2
 
       - uses: actions/setup-python@v5
         with:
