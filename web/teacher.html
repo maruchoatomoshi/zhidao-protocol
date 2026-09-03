@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#05070d">
+  <title>ZHIDAO // Architect Console</title>
+  <link rel="stylesheet" href="/static/css/site.css?v=3">
+</head>
+<body class="teacher-theme">
+  <div class="ambient-grid" aria-hidden="true"></div><div class="scanlines" aria-hidden="true"></div>
+  <main id="teacherLogin" class="login-screen">
+    <section class="login-card glass-panel architect-login-card">
+      <img class="architect-login-image" src="/media/architect/logo" alt="Логотип Архитектора">
+      <div class="eyebrow">ARCHITECT ACCESS // 管理协议</div>
+      <h1>Консоль Архитектора</h1>
+      <p class="muted">Защищённый канал Марка Альбертовича.</p>
+      <form id="teacherLoginForm" class="stack-form">
+        <label>Логин<input id="teacherLoginName" autocomplete="username" required maxlength="64"></label>
+        <label>Пароль<input id="teacherLoginSecret" type="password" autocomplete="current-password" required minlength="4" maxlength="128"></label>
+        <button class="primary-button" type="submit">ОТКРЫТЬ КОНСОЛЬ <b>→</b></button>
+      </form>
+      <p id="teacherLoginError" class="form-error" role="alert"></p>
+      <a class="teacher-link" href="/">Вернуться на сайт ученика</a>
+    </section>
+  </main>
+
+  <div id="teacherApp" class="teacher-shell is-hidden">
+    <header class="teacher-topbar">
+      <div><small>ZHIDAO // ARCHITECT CONSOLE</small><h1>Учебный центр</h1></div>
+      <div class="teacher-top-actions"><span id="teacherName">Марк Альбертович</span><button id="teacherLogout" class="icon-button" aria-label="Выйти">↪</button></div>
+    </header>
+
+    <nav class="teacher-tabs">
+      <button class="teacher-tab active" data-panel="teacherOverviewPanel">УЧЕНИК</button>
+      <button class="teacher-tab" data-panel="teacherReviewPanel">ПРОВЕРКА <span id="reviewCount">0</span></button>
+      <button class="teacher-tab" data-panel="teacherMissionsPanel">МИССИИ</button>
+    </nav>
+
+    <main class="teacher-main">
+      <section id="teacherOverviewPanel" class="teacher-panel active-panel">
+        <div class="console-heading"><div><small>OPERATOR DOSSIER</small><h2>Ученик</h2></div><button id="refreshTeacher" class="secondary-button">ОБНОВИТЬ</button></div>
+        <div id="studentOverview" class="student-overview"></div>
+        <article class="console-card glass-panel">
+          <div class="console-card-head"><div><small>PRIVATE CHANNEL</small><h3>Сообщение наставника</h3></div><span>通</span></div>
+          <form id="mentorMessageForm" class="inline-form">
+            <textarea id="mentorMessageText" required maxlength="400" placeholder="Короткое сообщение ученику..."></textarea>
+            <button class="primary-button" type="submit">ОТПРАВИТЬ</button>
+          </form>
+        </article>
+      </section>
+
+      <section id="teacherReviewPanel" class="teacher-panel">
+        <div class="console-heading"><div><small>SUBMISSION QUEUE</small><h2>Ответы на проверку</h2></div></div>
+        <div id="submissionList" class="submission-list"></div>
+      </section>
+
+      <section id="teacherMissionsPanel" class="teacher-panel">
+        <div class="console-heading"><div><small>MISSION CONTROL</small><h2>Учебные миссии</h2></div><button id="createMissionButton" class="primary-button compact-button">+ МИССИЯ</button></div>
+        <div id="teacherMissionList" class="teacher-mission-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="missionEditor" class="overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <section class="editor-dialog glass-panel">
+      <header><div><small>MISSION BLUEPRINT</small><h2 id="editorTitle">Редактор миссии</h2></div><button id="closeEditor" class="icon-button" aria-label="Закрыть">×</button></header>
+      <form id="missionEditorForm" class="editor-form">
+        <input id="editorMissionId" type="hidden">
+        <div class="form-grid">
+          <label>Название<input id="editorMissionTitle" required maxlength="100"></label>
+          <label>Порядок<input id="editorMissionOrder" type="number" min="1" max="999" required></label>
+        </div>
+        <label>Подзаголовок<input id="editorMissionSubtitle" maxlength="160"></label>
+        <label>Сюжет<textarea id="editorMissionLore" maxlength="1200"></textarea></label>
+        <div class="form-grid">
+          <label>XP<input id="editorMissionXp" type="number" min="0" max="1000"></label>
+          <label>★<input id="editorMissionStars" type="number" min="0" max="500"></label>
+        </div>
+        <div class="form-grid">
+          <label>Код награды<input id="editorRewardCode" required maxlength="80"></label>
+          <label>Название награды<input id="editorRewardTitle" required maxlength="120"></label>
+        </div>
+        <label>Содержимое заданий (JSON)<textarea id="editorMissionContent" class="code-area" required spellcheck="false"></textarea></label>
+        <p id="editorError" class="form-error"></p>
+        <button class="primary-button" type="submit">СОХРАНИТЬ BLUEPRINT</button>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/js/api.js?v=1"></script>
+  <script src="/static/js/teacher.js?v=3"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
+</body>
+</html>

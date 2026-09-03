@@ -18,7 +18,27 @@ jobs:
           python-version: "3.11"
 
       - name: Python syntax — API and bot
-        run: python -m py_compile zhidao_api_ready.py zhidao_bot_ready.py
+        run: |
+          python -m py_compile zhidao_api_ready.py zhidao_bot_ready.py zhidao_web.py scripts/init_web_accounts.py
+          python -m compileall -q zhidao_v4
+
+      - name: Install standalone web dependencies
+        run: python -m pip install -r requirements-web.txt
+
+      - name: Install legacy Travel dependencies
+        run: python -m pip install -r requirements-travel.txt
+
+      - name: Standalone learning web tests
+        run: python -m unittest tests.test_web_learning_flow -v
+
+      - name: Legacy Travel startup tests
+        run: python -m unittest tests.test_travel_startup -v
+
+      - name: V4 schema migration tests
+        run: python -m unittest tests.test_v4_migrations -v
+
+      - name: V4 authentication and role tests
+        run: python -m unittest tests.test_v4_auth_api -v
 
       - uses: actions/setup-node@v4
         with:
@@ -27,7 +47,7 @@ jobs:
       - name: JavaScript syntax — all frontend modules
         run: |
           status=0
-          for f in js/*.js; do
+          for f in js/*.js web/js/*.js zhidao_v4/static/architect/*.js; do
             if ! node --check "$f"; then
               status=1
             fi
@@ -35,4 +55,4 @@ jobs:
           exit $status
 
       - name: Git whitespace check
-        run: git diff --check HEAD~1 HEAD || true
+        run: git diff --check HEAD~1 HEAD

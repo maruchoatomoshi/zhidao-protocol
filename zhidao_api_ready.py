@@ -61,6 +61,7 @@ try:
 except ValueError:
     TELEGRAM_AUTH_MAX_AGE_SECONDS = 86400
 API_INTERNAL_TOKEN = os.getenv("API_INTERNAL_TOKEN", "").strip()
+DB_PATH = os.getenv("ZHIDAO_DB_PATH", "/root/zhidao.db")
 API_ERROR_LOG_PATH = os.getenv("ZHIDAO_API_ERROR_LOG", "/root/zhidao_api_error.log")
 # Per-IP request rate limit (in-process, since nginx does not front this port).
 # 0 disables the limit.
@@ -2788,7 +2789,7 @@ class _PersistentConn:
 
 def _open_raw_conn():
     t0 = time.time()
-    conn = sqlite3.connect('/root/zhidao.db', timeout=30, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, timeout=30, check_same_thread=False)
     conn.execute("PRAGMA busy_timeout=5000")
     conn.execute("PRAGMA synchronous=NORMAL")
     # wal_autocheckpoint=0: with a nonzero threshold, commit() runs an
@@ -2908,6 +2909,18 @@ def get_conn():
         raw = _open_raw_conn()
         _THREAD_LOCAL.conn = raw
     return _PersistentConn(raw)
+
+
+@app.get("/api/health")
+def api_health():
+    conn = get_conn()
+    row = conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'").fetchone()
+    conn.close()
+    return {
+        "status": "ok",
+        "mode": "travel-legacy",
+        "database_ready": bool(row and row[0]),
+    }
 
 
 DB_WRITE_LOCK = asyncio.Lock()
@@ -4008,7 +4021,7 @@ async def wal_checkpoint_loop():
             t0 = time.time()
 
             def _checkpoint():
-                conn = sqlite3.connect('/root/zhidao.db', timeout=1)
+                conn = sqlite3.connect(DB_PATH, timeout=1)
                 try:
                     conn.execute("PRAGMA busy_timeout=100")
                     # PASSIVE checkpoints what it can and returns immediately if
@@ -4047,7 +4060,7 @@ async def start_background_tasks():
     # competing with admin/shop writes. Keep this as opt-in maintenance only.
     def _startup_checkpoint():
         try:
-            conn = sqlite3.connect('/root/zhidao.db', timeout=5)
+            conn = sqlite3.connect(DB_PATH, timeout=5)
             try:
                 conn.execute("PRAGMA busy_timeout=1000")
                 # PASSIVE only — RESTART/TRUNCATE compete with writers and were
