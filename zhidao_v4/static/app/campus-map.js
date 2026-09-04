@@ -38,6 +38,17 @@ function project(lon, lat, origin) {
   };
 }
 
+function polygonArea(ring, origin) {
+  // Формула шнурков по спроецированным метрам.
+  let a = 0;
+  for (let i = 0; i < ring.length - 1; i += 1) {
+    const p = project(ring[i][0], ring[i][1], origin);
+    const q = project(ring[i + 1][0], ring[i + 1][1], origin);
+    a += p.x * q.y - q.x * p.y;
+  }
+  return Math.abs(a) / 2;
+}
+
 function ringsOf(feature) {
   const g = feature.geometry;
   if (!g) return [];
@@ -85,7 +96,17 @@ function computeFrame(features) {
 
 /* Порядок рисования: границы под всем, дороги над ними, здания сверху.
    Иначе здание окажется под дорогой и станет некликабельным. */
-const DRAW_ORDER = ["boundary", "road", "school", "civic", "sport", "food", "academic"];
+const DRAW_ORDER = [
+  "boundary", "living-zone", "park", "road",
+  "building", "sport", "civic", "academic", "library", "dorm", "food",
+];
+
+/* Подписи только у именованных объектов и только у крупных: подписать
+   четырнадцать одинаковых общежитий значит залить карту словом «Общежитие». */
+const LABEL_MIN_AREA = 1200;   // кв. метры
+const LABEL_CATEGORIES = new Set([
+  "academic", "library", "food", "sport", "civic", "living-zone", "boundary",
+]);
 
 function buildSvg(host, data) {
   const features = data.features.slice().sort(
@@ -134,6 +155,39 @@ function buildSvg(host, data) {
       node.setAttribute("aria-label", `${p.name_ru}. ${p.name_zh}`);
     }
     layer.appendChild(node);
+  });
+
+  // Подписи поверх всего. Только именованные и только достаточно крупные:
+  // четырнадцать одинаковых «Общежитий» превратили бы карту в кашу, для них
+  // работает легенда и тап по объекту.
+  features.forEach((f) => {
+    const p = f.properties;
+    if (!p.named || !LABEL_CATEGORIES.has(p.category)) return;
+    const ring = f.geometry.type === "Polygon" ? f.geometry.coordinates[0] : f.geometry.coordinates;
+    if (f.geometry.type === "Polygon" && polygonArea(ring, origin) < LABEL_MIN_AREA) return;
+
+    let sx = 0;
+    let sy = 0;
+    ring.forEach(([lon, lat]) => {
+      const q = project(lon, lat, origin);
+      sx += q.x;
+      sy += q.y;
+    });
+    const label = document.createElementNS(NS, "text");
+    label.setAttribute("class", `campus-label campus-label-${p.category}`);
+    // Размер задаётся в пользовательских единицах, а они здесь метры: 11 единиц
+    // при виде на 1250 м дают три пикселя на экране. Считаем от ширины кадра.
+    const base = (bounds.maxX - bounds.minX) / 46;
+    const size = p.category === "boundary" ? base * 1.25
+      : p.category === "living-zone" ? base * 0.82
+      : base;
+    label.setAttribute("font-size", size.toFixed(1));
+    label.setAttribute("stroke-width", (size * 0.30).toFixed(1));
+    label.setAttribute("x", (sx / ring.length).toFixed(1));
+    label.setAttribute("y", (sy / ring.length).toFixed(1));
+    label.setAttribute("text-anchor", "middle");
+    label.textContent = p.approximate ? `${p.name_ru} ?` : p.name_ru;
+    layer.appendChild(label);
   });
 
   // Отметка «где я» — создаётся сразу, показывается после первого фикса GPS.
@@ -320,6 +374,27 @@ function startLocating(ui, statusEl) {
   );
 }
 
+
+const LEGEND_LABELS = {
+  academic: "Учебные", library: "Библиотека", dorm: "Общежития",
+  food: "Еда", sport: "Спорт", "living-zone": "Жилые зоны",
+  civic: "Общественные", park: "Парк",
+};
+
+function buildLegend(data) {
+  const host = document.querySelector("#campusLegend");
+  if (!host) return;
+  const present = new Set(data.features.map((f) => f.properties.category));
+  host.innerHTML = "";
+  Object.keys(LEGEND_LABELS).forEach((cat) => {
+    if (!present.has(cat)) return;
+    const item = document.createElement("span");
+    item.className = "campus-legend-item";
+    item.innerHTML = `<i class="campus-swatch campus-swatch-${cat}"></i>${LEGEND_LABELS[cat]}`;
+    host.appendChild(item);
+  });
+}
+
 /* --- инициализация -------------------------------------------------------- */
 
 async function initCampusMap() {
@@ -346,6 +421,8 @@ async function initCampusMap() {
   if (locate && status) {
     locate.addEventListener("click", () => startLocating(ui, status));
   }
+
+  buildLegend(data);
 
   const count = data.features.length;
   const missing = (data.missing || []).length;
