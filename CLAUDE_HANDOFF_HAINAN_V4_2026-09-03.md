@@ -195,22 +195,41 @@ Do not claim this pass is an accurate vector map or navigation-ready.
 
 ## 7. Correct implementation direction
 
-The preferred production architecture is:
+**Superseded 2026-09-04.** This section originally called for AMap as the live
+basemap. The user decided against it, and the decision stands: obtaining an
+AMap key requires Chinese real-name verification (`实名认证`), which a foreign
+individual cannot complete alone. The only route was to ask a Chinese
+colleague to put their identity documents behind our key, and the user
+declined to ask that of anyone. That reasoning is not a technical detail — do
+not reopen it by proposing "just get a key".
 
-1. Use **one** official provider as the live basemap. AMap (`高德地图`) is the
-   preferred primary provider for the Chinese campus.
-2. Obtain an AMap Web JS API key plus its `securityJsCode`. Do not hardcode
-   private keys in committed frontend source; use deployment configuration and
-   the provider-recommended security/proxy setup.
-3. Store project-owned location metadata and overlays separately from the
-   provider layer, ideally as reviewed GeoJSON or an equivalent small location
-   registry.
-4. Use AMap/GCJ-02 coordinates consistently for the primary map. Do not place
-   Baidu BD-09 coordinates directly onto an AMap layer.
-5. Keep Baidu as an external fallback/deep link unless there is a deliberate
-   second-provider integration and coordinate conversion plan.
-6. Preserve provider attribution and comply with Chinese map licensing and
-   survey-number requirements.
+The architecture is now a **self-contained vector map**:
+
+1. Geometry is project-owned GeoJSON at
+   `zhidao_v4/static/app/assets/maps/campus.geojson`, currently seeded from
+   OpenStreetMap (ODbL, attribution required and present in the file).
+2. **All coordinates are WGS-84.** This is deliberate: device GPS returns
+   WGS-84, so a WGS-84 map means positions land where they belong with no
+   conversion step and no class of offset bugs.
+3. No runtime provider dependency: no key, nothing to block from mainland
+   China, works offline in the PWA, and the whole dataset is tens of KB rather
+   than a tile stream.
+4. **Never draw these coordinates on an AMap or Baidu tile layer** without
+   converting WGS-84 -> GCJ-02 first. The old warning about mixing datums
+   applies with the sides swapped, and it is now the likelier mistake.
+5. Baidu and AMap remain external deep links only.
+6. Every feature carries `verified: false` until checked against the ground or
+   a second source. Do not fill an unknown coordinate with a guess; leave it
+   out and record it under `missing`.
+
+Known trade-off, recorded honestly: publishing maps of China is regulated and
+a licensed Chinese provider would settle that question, which OSM-derived
+geometry does not. For an internal tool used by roughly sixty participants the
+practical exposure is small, but the question exists and was weighed rather
+than overlooked.
+
+If a key ever does arrive, the swap is cheap by construction: coordinates stay
+WGS-84 in storage and conversion happens once at render time.
 
 A safe data model for each campus object should include:
 

@@ -592,3 +592,157 @@
       var(--orb-mid) 54%,
       var(--orb-deep) 100%);
 }
+
+/* =========================================================================
+   8. Векторная карта кампуса
+   Своя геометрия вместо подложки провайдера: ключ AMap требует китайской
+   верификации личности, решение обходиться без него — в handoff §7.
+   Координаты WGS-84, как их отдаёт GPS, поэтому «где я» ложится без сдвига.
+   ========================================================================= */
+
+.campus-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.campus-locate {
+  flex: none;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-edge);
+  border-top-color: var(--border-chrome);
+  font: 700 12px/1 var(--font-ui);
+  color: var(--text-primary);
+  background: linear-gradient(to bottom, #ffffff 0%, #eaf7fd 48%, #cfeafa 49%, #e6f6fe 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-sm);
+  cursor: pointer;
+}
+
+.campus-locate:active { transform: translateY(1px); }
+
+.campus-status {
+  font: 700 9px/1.4 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.campus-canvas {
+  width: 100%;
+  aspect-ratio: 1 / 1.05;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 30% 10%, rgba(255, 255, 255, .75), transparent 60%),
+    linear-gradient(to bottom, #dff3fb 0%, #cfeaf6 52%, #bfe2f1 53%, #d6eff9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -14px 26px -20px rgba(6, 60, 100, .5);
+  touch-action: none;           /* жесты обрабатываем сами */
+}
+
+.campus-svg { width: 100%; height: 100%; display: block; cursor: grab; }
+.campus-svg:active { cursor: grabbing; }
+
+.campus-feat { transition: fill .15s ease, stroke .15s ease; }
+
+/* Граница территории — под всем, только контур. */
+.campus-boundary {
+  fill: rgba(12, 203, 208, .07);
+  stroke: rgba(8, 126, 232, .55);
+  stroke-width: 2.5;
+  stroke-dasharray: 12 8;
+}
+
+.campus-road {
+  fill: none;
+  stroke: rgba(255, 255, 255, .92);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.campus-academic,
+.campus-food,
+.campus-sport,
+.campus-civic,
+.campus-school {
+  stroke: rgba(255, 255, 255, .9);
+  stroke-width: 1.4;
+  cursor: pointer;
+}
+
+.campus-academic { fill: #6fb2e0; }
+.campus-food     { fill: var(--grass); }
+.campus-sport    { fill: #f0c14c; }
+.campus-civic    { fill: #a077e0; }
+.campus-school   { fill: #8fa8ba; }
+
+.campus-feat.is-selected {
+  stroke: #ffffff;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 10px rgba(12, 203, 208, .9));
+}
+
+.campus-feat:focus-visible {
+  outline: none;
+  stroke: #ffffff;
+  stroke-width: 3;
+}
+
+/* Отметка «где я». */
+.campus-me {
+  fill: #0a86f0;
+  stroke: #ffffff;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px rgba(10, 134, 240, .8));
+}
+
+.campus-badge {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font: 700 8px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-edge);
+  background: rgba(255, 255, 255, .7);
+}
+
+/* Несверенная точка не должна выглядеть как проверенная. */
+.campus-badge.is-unverified {
+  color: #8a5a00;
+  border-color: rgba(240, 193, 76, .8);
+  background: rgba(255, 240, 200, .85);
+}
+
+.campus-distance {
+  margin-top: 6px;
+  font: 700 11px/1 var(--font-ui);
+  color: var(--accent-primary);
+}
+
+.campus-error { padding: var(--space-7); color: var(--text-secondary); font-size: 12px; }
+
+/* app.css задаёт .map-point-card как grid 42px + 1fr под старую разметку с
+   номерным кружком. У векторной карточки один дочерний блок, и он попадал в
+   колонку шириной 42 px — заголовок переносился по буквам. */
+#campusInfo {
+  display: block;
+  margin-top: var(--space-5);
+}
+
+#campusInfo .map-point-copy { min-width: 0; }
+
+#campusInfo h2 {
+  margin: 0 0 4px;
+  font: 700 17px/1.2 var(--font-ui);
+  color: var(--text-primary);
+}
+
+#campusInfo p[data-field="name-zh"] {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}

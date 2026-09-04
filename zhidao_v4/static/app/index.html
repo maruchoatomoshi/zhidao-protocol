@@ -233,37 +233,29 @@
         <div class="map-screen-head">
           <button class="map-back" type="button" data-open-screen="more" aria-label="Назад">‹</button>
           <div><span class="system-label">CAMPUS NAV / 校园地图</span><h1 id="campusMapTitle">Карта кампуса</h1></div>
-          <span class="map-status"><i></i> DRAFT</span>
+          <span class="map-status"><i></i> WGS-84</span>
         </div>
 
-        <article class="campus-map" aria-label="Схема отмеченных точек кампуса">
-          <img class="campus-satellite" src="./assets/maps/campus-satellite-reference.png" alt="Спутниковый снимок центральной территории кампуса">
-          <div class="campus-boundary" aria-hidden="true"></div>
-          <button class="map-pin active" type="button" data-map-point="sports" aria-label="Спортивный центр">
-            <span>01</span><b>体育中心</b>
-          </button>
-          <button class="map-pin" type="button" data-map-point="library" aria-label="Библиотека">
-            <span>02</span><b>图书馆</b>
-          </button>
-          <button class="map-pin" type="button" data-map-point="teaching" aria-label="Общий учебный корпус">
-            <span>03</span><b>公共教学楼</b>
-          </button>
-          <button class="map-pin" type="button" data-map-point="canteen" aria-label="Столовая номер 1">
-            <span>04</span><b>1号食堂</b>
-          </button>
-          <span class="map-north">N<br>↑</span>
-          <span class="map-scale">百度地图 · SATELLITE REFERENCE</span>
+        <div class="campus-toolbar">
+          <button id="campusLocate" class="campus-locate" type="button">Где я</button>
+          <span id="campusStatus" class="campus-status">GPS не запрошен</span>
+        </div>
+
+        <article class="campus-map" aria-label="Векторная карта кампуса">
+          <div id="campusCanvas" class="campus-canvas"></div>
+          <span class="map-north">N<br>&uarr;</span>
         </article>
 
-        <article class="glass-card map-point-card" aria-live="polite">
-          <div class="map-point-index" id="mapPointIndex">01</div>
-          <div class="map-point-copy"><span id="mapPointKind">SPORT / 体育</span><h2 id="mapPointTitle">海南陵水黎安国际教育创新试验区体育中心</h2><p id="mapPointDescription">Стадион и спортивный центр в северо-западной части выбранного квартала.</p></div>
-          <div class="map-provider-links">
-            <a id="mapAmapLink" href="https://www.amap.com/" target="_blank" rel="noopener noreferrer">Найти в 高德</a>
-            <a id="mapBaiduLink" href="https://map.baidu.com/" target="_blank" rel="noopener noreferrer">Найти в 百度</a>
+        <article class="glass-card map-point-card" id="campusInfo" aria-live="polite" hidden>
+          <div class="map-point-copy">
+            <span class="campus-badge" data-field="verified">НЕ СВЕРЕНО</span>
+            <h2 data-field="name-ru">&mdash;</h2>
+            <p data-field="name-zh">&mdash;</p>
+            <p class="campus-distance" data-field="distance" hidden></p>
           </div>
         </article>
-        <p class="map-disclaimer">Спутниковая основа теперь сохраняет реальные дороги, расстояния и ориентацию. Голубая рамка показывает оцифровываемый квартал.</p>
+
+        <p class="map-disclaimer" id="campusSourceNote">Загрузка данных карты&hellip;</p>
       </section>
 
       <!-- ============================================================
@@ -349,6 +341,7 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./app.js?v=20260903-aero2" defer></script>
+  <script src="./campus-map.js?v=20260904-vector1" defer></script>
+  <script src="./app.js?v=20260904-vector1" defer></script>
 </body>
 </html>
