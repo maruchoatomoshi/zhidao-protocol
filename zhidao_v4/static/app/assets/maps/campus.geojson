@@ -12,21 +12,14 @@
   }
  ],
  "exploration": {
-  "mode": "core-feature-envelope",
+  "mode": "campus-boundary-envelope",
   "label_ru": "НЕИЗВЕДАННЫЕ РЕГИОНЫ",
   "label_zh": "未探索区域",
   "padding_metres": 55,
-  "unknown_band_metres": 125,
-  "note": "Visual exploration state, not an administrative or surveyed boundary.",
+  "unknown_band_metres": 200,
+  "note": "Visual exploration state, not an administrative or surveyed boundary. The sector is the bounding box of the OSM campus outline plus padding, so anything mapped on the campus falls inside it without maintaining a list.",
   "core_feature_ids": [
-   "osm-way-1125998153",
-   "osm-way-1125998154",
-   "osm-way-1125998155",
-   "osm-way-1125998156",
-   "osm-way-1125998157",
-   "osm-way-1125998158",
-   "osm-way-1125998165",
-   "osm-way-1223487854"
+   "osm-way-1125998151"
   ],
   "anchor_points": [
    {
@@ -1430,98 +1423,6 @@
     "named": false,
     "source": "openstreetmap",
     "osm_id": "way/737370459",
-    "verified": false
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Polygon",
-    "coordinates": [
-     [
-      [
-       110.0247368,
-       18.4066522
-      ],
-      [
-       110.0214806,
-       18.4020839
-      ],
-      [
-       110.0243701,
-       18.4001677
-      ],
-      [
-       110.0260591,
-       18.3990476
-      ],
-      [
-       110.0267109,
-       18.3995515
-      ],
-      [
-       110.0271535,
-       18.3997857
-      ],
-      [
-       110.0288352,
-       18.4022798
-      ],
-      [
-       110.0285429,
-       18.4025013
-      ],
-      [
-       110.0288272,
-       18.4030255
-      ],
-      [
-       110.0285563,
-       18.403308
-      ],
-      [
-       110.0285482,
-       18.4040919
-      ],
-      [
-       110.0285697,
-       18.4044278
-      ],
-      [
-       110.028956,
-       18.4050692
-      ],
-      [
-       110.0279984,
-       18.4057131
-      ],
-      [
-       110.027824,
-       18.4053262
-      ],
-      [
-       110.0269416,
-       18.4058887
-      ],
-      [
-       110.0254986,
-       18.4066064
-      ],
-      [
-       110.0247368,
-       18.4066522
-      ]
-     ]
-    ]
-   },
-   "properties": {
-    "id": "osm-way-737370460",
-    "name_zh": "",
-    "name_ru": "Жилая зона",
-    "category": "living-zone",
-    "named": false,
-    "source": "openstreetmap",
-    "osm_id": "way/737370460",
     "verified": false
    }
   },
