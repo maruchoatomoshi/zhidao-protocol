@@ -1,0 +1,594 @@
+/* =========================================================================
+   ZHIDAO Hainan — colour grade, typography and the Metalheart widget
+   Loaded AFTER app.css and aero.css.
+
+   aero.css fixed the *material* (convex glossy plastic instead of frosted
+   glass). This file fixes the *grade*: the reference boards for Frutiger
+   Aero are dominated by vivid photographic nature — deep blue sky against
+   saturated green — while our screens sat in one pale cyan band with the
+   photograph almost fully veiled out.
+
+   Three things happen here:
+     1. the veil over the photograph is opened up towards the bottom of the
+        screen, so the empty lower half of a screen becomes a view instead
+        of a void;
+     2. green is promoted from a decorative accent to half of the palette,
+        the way grass occupies half of every reference image;
+     3. the dark Metalheart layer finally appears on real screens, shaped
+        like the Winamp / Windows Media Player widget the references show
+        sitting inside the bright aqua world.
+   ========================================================================= */
+
+/* =========================================================================
+   0. Self-hosted UI face
+   Google Fonts is blocked in mainland China and this app is *for* a trip to
+   China, so the CDN is not an option — the season-1 media had to move off
+   GitHub Pages for exactly this reason. Both files are the Open Sans
+   variable font (SIL OFL 1.1, see assets/fonts/OFL.txt), 75 KB total.
+   ========================================================================= */
+
+@font-face {
+  font-family: "ZHIDAO Sans";
+  src: url("./assets/fonts/open-sans-cyrillic.woff2") format("woff2");
+  font-weight: 300 800;
+  font-display: swap;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "ZHIDAO Sans";
+  src: url("./assets/fonts/open-sans-latin.woff2") format("woff2");
+  font-weight: 300 800;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+                 U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+                 U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+                 U+FEFF, U+FFFD;
+}
+
+:root {
+  --font-ui: "ZHIDAO Sans", "Segoe UI", "Trebuchet MS",
+             "Microsoft YaHei", "PingFang SC", sans-serif;
+
+  /* Vivid end of the palette — the references live here, we did not. */
+  --sky-vivid: #0a86f0;
+  --grass: #6fd12a;
+  --grass-deep: #2f9c3f;
+
+  /* Metalheart / media widget */
+  --metal-face-1: #dbe7ef;
+  --metal-face-2: #9db3c4;
+  --metal-face-3: #6d8598;
+  --lcd-bg: #071b16;
+  --lcd-ink: #7dfcb4;
+}
+
+/* =========================================================================
+   1. Open up the photograph
+   .app-shell carried an 88/77/94% white gradient — that, not the body
+   layer, was what bleached the scene. It now stays dense only where the
+   content actually sits and releases towards the bottom.
+   ========================================================================= */
+
+.app-shell {
+  background:
+    linear-gradient(180deg,
+      rgba(238, 253, 255, 0.86) 0%,
+      rgba(233, 251, 255, 0.72) 26%,
+      rgba(228, 249, 255, 0.42) 52%,
+      rgba(226, 248, 255, 0.16) 74%,
+      rgba(226, 248, 255, 0.02) 100%);
+}
+
+/* Nature comes back in: a blue sky wash at the top, a green ground glow at
+   the foot of the screen. Half blue / half green, as in every reference. */
+.app-shell::before {
+  background:
+    radial-gradient(circle at 108% 16%, rgba(10, 134, 240, 0.3), transparent 34%),
+    radial-gradient(circle at -10% 46%, rgba(111, 209, 42, 0.26), transparent 32%),
+    radial-gradient(ellipse 120% 40% at 50% 104%, rgba(111, 209, 42, 0.42), transparent 68%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px);
+}
+
+/* The big white blob was adding a second layer of wash on top of the photo. */
+.world-glow {
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 90px 45px rgba(255, 255, 255, 0.26);
+}
+
+/* Text that sits directly on the shell (not inside a card) has to survive
+   the newly visible photograph underneath it. */
+.board-empty-note,
+.map-disclaimer {
+  color: #06405f;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 12px rgba(255, 255, 255, 0.85);
+}
+
+/* =========================================================================
+   2. Typography — put the serif back in its box
+   V4_DESIGN.md reserves Georgia for "большие маршрутные заголовки". It had
+   spread to nine selectors: every screen title, the stat numerals, the
+   brand glyph, even the chevrons in the settings list. A serif reads as
+   editorial print; Frutiger Aero is humanist sans. Georgia now survives on
+   exactly one element — the route headline on the journey card.
+   ========================================================================= */
+
+.placeholder-hero h1,
+.screen-intro h1,
+.section-heading h3,
+.signal-card h3,
+.status-module strong,
+.weather-orb strong,
+.journey-meta b,
+.settings-list b,
+.brand-orb {
+  font-family: var(--font-ui);
+}
+
+.screen-intro h1,
+.placeholder-hero h1 {
+  font-weight: 300;
+  letter-spacing: -0.015em;
+}
+
+.status-module strong,
+.weather-orb strong {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.settings-list b {
+  font-weight: 400;
+}
+
+/* The one sanctioned serif moment. */
+.journey-copy h2 {
+  font-family: var(--font-story);
+}
+
+/* =========================================================================
+   2b. The season card becomes a real scene
+   V4_DESIGN.md: "карточка сезона — живая сцена Хайнаня, а не абстрактный
+   градиент". It was an abstract gradient whose lower half was an empty
+   slab of blue — the weakest element on the main screen. The photograph
+   now carries the card, with a gradient scrim only where type sits.
+   ========================================================================= */
+
+.journey-card {
+  background:
+    linear-gradient(180deg,
+      rgba(6, 46, 80, 0.62) 0%,
+      rgba(6, 46, 80, 0.34) 38%,
+      rgba(8, 90, 150, 0.12) 62%,
+      rgba(10, 120, 180, 0.05) 100%),
+    url("../architect/assets/hainan-promised-tomorrow.png") center 38% / cover;
+}
+
+/* Keep the convex highlight, but let it sit on the photograph rather than
+   wash it out. */
+.journey-card::after {
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.34),
+    rgba(255, 255, 255, 0.07) 88%,
+    rgba(255, 255, 255, 0));
+}
+
+.journey-card h2,
+.journey-copy p {
+  text-shadow: 0 2px 14px rgba(2, 28, 52, 0.8), 0 1px 3px rgba(2, 28, 52, 0.7);
+}
+
+.journey-index span {
+  text-shadow: 0 1px 6px rgba(2, 28, 52, 0.9);
+}
+
+/* =========================================================================
+   3. Crisper edges
+   The reference collages are built from nested boxes with visible thin
+   borders. Ours relied on soft shadow alone, which dissolves against a
+   busy photograph.
+   ========================================================================= */
+
+.glass-card,
+.status-module,
+.signal-card,
+.settings-list,
+.shop-item-card,
+.mission-row,
+.case-row,
+.profile-card,
+.stat-tile {
+  border-color: rgba(150, 200, 226, 0.85);
+  border-top-color: rgba(255, 255, 255, 0.98);
+}
+
+/* =========================================================================
+   4. Green as a real half of the palette
+   ========================================================================= */
+
+.online-pill i,
+.signal-orb {
+  box-shadow: 0 0 14px rgba(111, 209, 42, 0.75);
+}
+
+.signal-orb {
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.2) 34%, transparent 56%),
+    linear-gradient(150deg, #a6f06a 0%, var(--grass) 52%, var(--grass-deep) 100%);
+}
+
+.podium-slot.first .podium-avatar {
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.9),
+    0 0 20px rgba(240, 193, 76, 0.6);
+}
+
+/* =========================================================================
+   5. Metalheart — the media-player widget
+   The references show a Winamp / WMP panel living inside the bright aqua
+   world without breaking it: chrome bezel, dark face, green LCD readout.
+   That is the shape our 5% dark layer should take, rather than an abstract
+   dark rectangle.
+   ========================================================================= */
+
+.media-widget {
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 14px;
+  padding: 5px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(to bottom,
+    var(--metal-face-1) 0%,
+    #c2d4e0 46%,
+    var(--metal-face-2) 47%,
+    #b6cad8 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.6),
+    var(--lift-md);
+}
+
+.media-widget-face {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--metal-face-3);
+  background: linear-gradient(to bottom, #16334a 0%, #0b2033 52%, #061725 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 6px 14px -8px rgba(0, 0, 0, 0.9);
+}
+
+/* LCD readout: dark green ground, mono green ink, faint scanlines. */
+.media-lcd {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 9px;
+  border-radius: 4px;
+  border: 1px solid #04120e;
+  background:
+    repeating-linear-gradient(0deg, rgba(125, 252, 180, 0.07) 0 1px, transparent 1px 3px),
+    linear-gradient(to bottom, #0b2a20, var(--lcd-bg));
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+  color: var(--lcd-ink);
+  font: 700 10px/1.35 var(--font-system);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 6px rgba(125, 252, 180, 0.55);
+  overflow: hidden;
+}
+
+.media-lcd b {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.media-lcd span {
+  display: block;
+  opacity: 0.72;
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Small chrome transport buttons. */
+.media-keys {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+.media-keys i {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  font-style: normal;
+  font-size: 9px;
+  color: #23425c;
+  border: 1px solid #8fa8ba;
+  background: linear-gradient(to bottom, #ffffff 0%, #dce8f0 48%, #bdd0de 49%, #d6e4ee 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), 0 1px 2px rgba(4, 40, 66, 0.4);
+}
+
+/* A thin equaliser strip, purely decorative. */
+.media-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  flex: none;
+  height: 22px;
+}
+
+.media-eq i {
+  width: 3px;
+  border-radius: 1px;
+  background: linear-gradient(to top, var(--grass-deep), var(--lcd-ink));
+  box-shadow: 0 0 5px rgba(125, 252, 180, 0.5);
+  animation: eq-bounce 1.5s ease-in-out infinite;
+}
+
+.media-eq i:nth-child(1) { height: 34%; animation-delay: 0s; }
+.media-eq i:nth-child(2) { height: 70%; animation-delay: .18s; }
+.media-eq i:nth-child(3) { height: 48%; animation-delay: .36s; }
+.media-eq i:nth-child(4) { height: 86%; animation-delay: .54s; }
+.media-eq i:nth-child(5) { height: 56%; animation-delay: .72s; }
+
+@keyframes eq-bounce {
+  0%, 100% { transform: scaleY(0.55); }
+  50% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-eq i { animation: none; transform: none; }
+}
+
+/* =========================================================================
+   6. The rest of the screens, graded to match
+   ========================================================================= */
+
+/* --- Магазин: LOCKED is a system state, so it belongs to Metalheart ------
+   It was a pale frosted panel that dissolved into the background. A locked
+   economy module is exactly the "error / core / system" case the dark layer
+   is reserved for. */
+
+.locked-window {
+  position: relative;
+  display: grid;
+  grid-auto-rows: auto;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 132px;
+  padding: 24px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  background: linear-gradient(to bottom,
+    var(--metal-face-1) 0%, #c2d4e0 46%, var(--metal-face-2) 47%, #b6cad8 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.6),
+    var(--lift-md);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* The dark face sits inside the chrome bezel, behind the text. */
+.locked-window::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  z-index: 0;
+  border-radius: 9px;
+  border: 1px solid var(--metal-face-3);
+  background:
+    repeating-linear-gradient(0deg, rgba(125, 252, 180, 0.06) 0 1px, transparent 1px 3px),
+    linear-gradient(to bottom, #0b2a20 0%, var(--lcd-bg) 60%, #04120e 100%);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+.locked-window span,
+.locked-window strong,
+.locked-window small {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: var(--lcd-ink);
+  text-shadow: 0 0 8px rgba(125, 252, 180, 0.5);
+}
+
+.locked-window span { opacity: 0.75; }
+.locked-window strong { font-family: var(--font-system); letter-spacing: 0.3em; }
+.locked-window small { opacity: 0.7; color: var(--lcd-ink); }
+
+/* --- Кейсы: let the rarity actually glow over the photograph ----------- */
+
+.case-orb.common {
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.75), var(--lift-sm),
+    0 0 16px rgba(75, 143, 207, 0.45);
+}
+
+.case-orb.rare {
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.75), var(--lift-sm),
+    0 0 18px rgba(160, 119, 224, 0.55);
+}
+
+.case-orb.legendary {
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.85), var(--lift-sm),
+    0 0 22px rgba(240, 193, 76, 0.65);
+}
+
+/* Empty collection slots were near-invisible dashed boxes; over a live
+   photograph they read as damage rather than as empty inventory. */
+.collection-slot {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.72), rgba(214, 240, 250, 0.52) 50%,
+      rgba(190, 228, 244, 0.5) 51%, rgba(226, 246, 253, 0.62) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), var(--lift-sm);
+}
+
+.collection-slot::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 46%;
+  border-radius: 13px 13px 60% 60% / 13px 13px 16px 16px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.1));
+}
+
+/* --- Skeletons: readable as content, not as a rendering fault ---------- */
+
+.skeleton .board-avatar,
+.skeleton .board-value,
+.skeleton .line-lg,
+.skeleton .line-sm,
+.shop-item-card.skeleton .shop-item-icon,
+.shop-item-card.skeleton .line-lg,
+.shop-item-card.skeleton .line-sm,
+.shop-item-card.skeleton .shop-item-price {
+  background: linear-gradient(100deg,
+    rgba(140, 195, 226, 0.72) 20%,
+    rgba(240, 251, 255, 0.95) 42%,
+    rgba(140, 195, 226, 0.72) 64%);
+  background-size: 200% 100%;
+}
+
+/* --- Tabs and settings over a live photograph -------------------------- */
+
+.tabs {
+  border-color: rgba(160, 208, 232, 0.9);
+  background: linear-gradient(to bottom, rgba(224, 246, 253, 0.94), rgba(255, 255, 255, 0.82));
+}
+
+.tab { color: #17587d; }
+
+/* --- Profile: give the operator card the same scene treatment ---------- */
+
+.profile-card {
+  background:
+    linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.97) 0%,
+      rgba(234, 247, 253, 0.92) 50%,
+      rgba(198, 233, 248, 0.9) 51%,
+      rgba(226, 246, 254, 0.95) 100%);
+}
+
+.profile-avatar {
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.85),
+    inset 0 -6px 12px -6px rgba(2, 34, 62, 0.7),
+    var(--lift-sm),
+    0 0 20px rgba(12, 203, 208, 0.45);
+}
+
+/* =========================================================================
+   7. The orb primitive
+   Six elements were each carrying their own copy of the same sphere recipe
+   — a white radial highlight at 34%/26%, a three-stop body gradient, an
+   inset top highlight and an inset bottom shadow. Only the three colours
+   ever differed. The recipe now lives once; components override the
+   --orb-* triplet from tokens.css and nothing else.
+   ========================================================================= */
+
+.brand-orb,
+.profile-fab,
+.podium-avatar,
+.profile-avatar,
+.signal-orb {
+  border-radius: var(--radius-circle);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background:
+    radial-gradient(circle at 34% 26%,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(255, 255, 255, 0.22) 30%,
+      transparent 52%),
+    linear-gradient(150deg,
+      var(--orb-light) 0%,
+      var(--orb-mid) 54%,
+      var(--orb-deep) 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.85),
+    inset 0 -6px 12px -6px rgba(2, 34, 62, 0.8),
+    var(--lift-sm);
+}
+
+/* Per-element colour, and nothing else. */
+.brand-orb,
+.profile-fab,
+.profile-avatar {
+  --orb-light: #2ec2ea;
+  --orb-mid: #0f7ec6;
+  --orb-deep: #0a4f92;
+  color: #f6feff;
+  text-shadow: 0 1px 4px rgba(2, 40, 74, 0.7);
+}
+
+.podium-avatar {
+  --orb-light: var(--rarity-common);
+  --orb-mid: var(--rarity-common-mid);
+  --orb-deep: var(--rarity-common-deep);
+}
+
+.podium-slot.first .podium-avatar {
+  --orb-light: var(--rarity-legendary);
+  --orb-mid: var(--rarity-legendary-mid);
+  --orb-deep: var(--rarity-legendary-deep);
+}
+
+.signal-orb {
+  --orb-light: #a6f06a;
+  --orb-mid: var(--grass);
+  --orb-deep: var(--grass-deep);
+}
+
+/* Glows that are specific to a role, kept out of the shared recipe. */
+.brand-orb,
+.profile-fab { box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.85),
+    inset 0 -6px 12px -6px rgba(2, 34, 62, 0.8),
+    var(--lift-sm), var(--glow-aqua); }
+
+.profile-avatar { box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.85),
+    inset 0 -6px 12px -6px rgba(2, 34, 62, 0.8),
+    var(--lift-sm), 0 0 20px rgba(12, 203, 208, 0.45); }
+
+.signal-orb { box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.85),
+    inset 0 -6px 12px -6px rgba(2, 34, 62, 0.8),
+    var(--lift-sm), 0 0 14px rgba(111, 209, 42, 0.75); }
+
+.podium-slot.first .podium-avatar { box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.9),
+    inset 0 -6px 12px -6px rgba(2, 34, 62, 0.7),
+    0 0 20px rgba(240, 193, 76, 0.6); }
+
+/* Case capsules share the rarity triplet too, but stay squircles. */
+.case-orb.common {
+  background: linear-gradient(150deg, var(--rarity-common), var(--rarity-common-mid) 55%, var(--rarity-common-deep) 100%);
+}
+.case-orb.rare {
+  background: linear-gradient(150deg, var(--rarity-rare), var(--rarity-rare-mid) 55%, var(--rarity-rare-deep) 100%);
+}
+.case-orb.legendary {
+  background: linear-gradient(150deg, var(--rarity-legendary), var(--rarity-legendary-mid) 55%, var(--rarity-legendary-deep) 100%);
+}
+
+/* The first-place avatar carries a more specific selector in aero.css, so it
+   needs the shared recipe restated at matching specificity to stop that older
+   copy from winning. */
+.podium-slot.first .podium-avatar {
+  background:
+    radial-gradient(circle at 34% 26%,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(255, 255, 255, 0.22) 30%,
+      transparent 52%),
+    linear-gradient(150deg,
+      var(--orb-light) 0%,
+      var(--orb-mid) 54%,
+      var(--orb-deep) 100%);
+}

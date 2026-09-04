@@ -6,7 +6,10 @@
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light">
   <title>ZHIDAO Hainan · App Preview</title>
-  <link rel="stylesheet" href="./app.css?v=20260830a">
+  <link rel="stylesheet" href="./tokens.css?v=20260903-tok1">
+  <link rel="stylesheet" href="./app.css?v=20260901-map3">
+  <link rel="stylesheet" href="./aero.css?v=20260903-aero2">
+  <link rel="stylesheet" href="./aero-grade.css?v=20260903-grade2">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -27,8 +30,14 @@
           <span id="clock">--:--</span>
           <i aria-label="Система доступна"></i>
         </div>
+        <button class="profile-fab" type="button" data-open-screen="profile" aria-label="Профиль">
+          <span class="profile-fab-orb">操</span>
+        </button>
       </header>
 
+      <!-- ============================================================
+           СЕГОДНЯ — главный экран
+           ============================================================ -->
       <section class="screen active" data-screen="schedule" aria-labelledby="scheduleTitle">
         <div class="screen-intro">
           <div><span class="system-label">PERSONAL NODE / PREVIEW</span><h1 id="scheduleTitle">Привет,<br>путешественник.</h1></div>
@@ -51,6 +60,17 @@
           <article class="status-module season-module"><span>СЕЗОН</span><strong>04</strong><small>Hainan · DRAFT</small></article>
         </div>
 
+        <article class="media-widget" aria-label="Состояние узла">
+          <div class="media-widget-face">
+            <div class="media-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="media-lcd">
+              <b>NODE / HAINAN</b>
+              <span>SEASON 04 · STANDBY · NO SIGNAL YET</span>
+            </div>
+            <div class="media-keys" aria-hidden="true"><i>&#9646;&#9646;</i><i>&#9654;</i></div>
+          </div>
+        </article>
+
         <article class="glass-card today-card">
           <div class="section-heading"><div><span class="system-label">TODAY / 今天</span><h3>Сегодня</h3></div><button type="button" data-toast="Расписание появится после активации сезона">Все планы</button></div>
           <div class="timeline-empty">
@@ -67,33 +87,241 @@
         </article>
       </section>
 
+      <!-- ============================================================
+           REP — рейтинг (структура: подиум + список, как в Пекине)
+           ============================================================ -->
       <section class="screen placeholder-screen" data-screen="rating" aria-labelledby="ratingTitle" hidden>
-        <div class="placeholder-hero gold"><img src="./assets/icons/nav-rating.png" alt=""><span class="system-label">SEASON REPUTATION</span><h1 id="ratingTitle">Рейтинг REP</h1><p>Индивидуальный сезонный рейтинг появится после подключения участников.</p></div>
-        <div class="glass-card placeholder-card"><span>01</span><div><strong>Основа рейтинга</strong><p>Только REP — без отдельной системы сезонных очков.</p></div></div>
-        <div class="glass-card placeholder-card disabled"><span>—</span><div><strong>Данные отключены</strong><p>Сейчас экран показывает только будущую композицию.</p></div></div>
+        <div class="screen-intro">
+          <div><span class="system-label">SEASON REPUTATION / 排名</span><h1 id="ratingTitle">Рейтинг REP</h1></div>
+          <span class="preview-chip">STRUCTURE PREVIEW</span>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Раздел рейтинга" data-tab-group="rating">
+          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="season">Сезон</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="diary">Дневник</button>
+        </div>
+
+        <article class="glass-card podium-card" data-tab-panel="rating:season">
+          <div class="podium" aria-label="Топ-3 предпросмотра">
+            <div class="podium-slot second"><span class="podium-avatar"></span><span class="podium-rank">2</span></div>
+            <div class="podium-slot first"><span class="podium-avatar"></span><span class="podium-rank">1</span></div>
+            <div class="podium-slot third"><span class="podium-avatar"></span><span class="podium-rank">3</span></div>
+          </div>
+          <p class="board-empty-note">Подиум соберётся из реальных участников после старта сезона.</p>
+        </article>
+
+        <article class="glass-card board-list" data-tab-panel="rating:season">
+          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">04</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value"></span></div>
+          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">05</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value"></span></div>
+          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">06</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value"></span></div>
+        </article>
+
+        <article class="glass-card board-list" data-tab-panel="rating:diary" hidden>
+          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">01</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
+          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">02</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
+          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">03</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
+          <p class="board-empty-note">Дневниковый рейтинг оценивается администраторами вручную, как в сезоне 1.</p>
+        </article>
       </section>
 
+      <!-- ============================================================
+           МАГАЗИН
+           ============================================================ -->
       <section class="screen placeholder-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
-        <div class="placeholder-hero aqua"><img src="./assets/icons/nav-shop.png" alt=""><span class="system-label">EXPEDITION SUPPLY</span><h1 id="shopTitle">Магазин</h1><p>Полезные расходники и правила экономики определим отдельным этапом.</p></div>
+        <div class="screen-intro">
+          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle">Магазин</h1></div>
+          <span class="preview-chip">STRUCTURE PREVIEW</span>
+        </div>
+
         <div class="locked-window"><span>ECONOMY MODULE</span><strong>LOCKED</strong><small>★ rollover выполняется в самом конце</small></div>
+
+        <div class="tabs" role="tablist" aria-label="Раздел магазина" data-tab-group="shop">
+          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="general">Общее</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="vip">VIP</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="supplies">Расходники</button>
+        </div>
+
+        <div class="shop-grid" data-tab-panel="shop:general">
+          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+        </div>
+        <div class="shop-grid" data-tab-panel="shop:vip" hidden>
+          <article class="shop-item-card skeleton vip"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+          <article class="shop-item-card skeleton vip"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+        </div>
+        <div class="shop-grid" data-tab-panel="shop:supplies" hidden>
+          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
+        </div>
+        <p class="board-empty-note">Каталог и цены — конфигурация сезона, а не фронтенда. Наполнится вместе с экономикой.</p>
       </section>
 
+      <!-- ============================================================
+           КЕЙСЫ — коллекция (импланты/карточки, кейсы по редкости)
+           ============================================================ -->
       <section class="screen placeholder-screen" data-screen="cases" aria-labelledby="casesTitle" hidden>
-        <div class="placeholder-hero violet"><img src="./assets/icons/nav-cases.png" alt=""><span class="system-label">COLLECTION ARCHIVE</span><h1 id="casesTitle">Коллекция</h1><p>Новый сезон начнёт новую коллекцию. Утерянная база Beijing не переносится.</p></div>
-        <div class="glass-card collection-preview"><i></i><i></i><i></i><span>3 SLOTS / EMPTY</span></div>
+        <div class="screen-intro">
+          <div><span class="system-label">COLLECTION ARCHIVE / 箱子</span><h1 id="casesTitle">Коллекция</h1></div>
+          <span class="preview-chip">STRUCTURE PREVIEW</span>
+        </div>
+
+        <p class="board-empty-note top">Новый сезон начнёт новую коллекцию. Утерянная база Beijing не переносится.</p>
+
+        <article class="glass-card case-row">
+          <div class="case-orb common"><i></i></div>
+          <div class="case-copy"><strong>Обычный кейс</strong><small>Базовые карточки и мелкие расходники</small></div>
+          <span class="locked-tag">STANDBY</span>
+        </article>
+        <article class="glass-card case-row">
+          <div class="case-orb rare"><i></i></div>
+          <div class="case-copy"><strong>Редкий кейс</strong><small>Импланты и памятные карточки сезона</small></div>
+          <span class="locked-tag">STANDBY</span>
+        </article>
+        <article class="glass-card case-row">
+          <div class="case-orb legendary"><i></i></div>
+          <div class="case-copy"><strong>Легендарный кейс</strong><small>Редчайшие дропы, ограниченный пул</small></div>
+          <span class="locked-tag">STANDBY</span>
+        </article>
+
+        <div class="tabs" role="tablist" aria-label="Раздел коллекции" data-tab-group="cases">
+          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="implants">Импланты</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="cards">Карточки</button>
+        </div>
+
+        <div class="collection-grid" data-tab-panel="cases:implants">
+          <span class="collection-slot"></span><span class="collection-slot"></span><span class="collection-slot"></span>
+          <span class="collection-slot"></span><span class="collection-slot"></span><span class="collection-slot"></span>
+        </div>
+        <div class="collection-grid" data-tab-panel="cases:cards" hidden>
+          <span class="collection-slot"></span><span class="collection-slot"></span><span class="collection-slot"></span>
+        </div>
       </section>
 
+      <!-- ============================================================
+           ЗАДАНИЯ — доска миссий (рейды / поручения / ивенты)
+           ============================================================ -->
       <section class="screen placeholder-screen" data-screen="tasks" aria-labelledby="tasksTitle" hidden>
-        <div class="placeholder-hero lime"><img src="./assets/icons/nav-tasks.png" alt=""><span class="system-label">MISSION BOARD</span><h1 id="tasksTitle">Задания</h1><p>Ивенты и задания появятся после утверждения основного интерфейса.</p></div>
-        <div class="glass-card placeholder-card"><span>✓</span><div><strong>Дизайн-система</strong><p>Первый активный этап — собрать удобный личный контур.</p></div></div>
+        <div class="screen-intro">
+          <div><span class="system-label">MISSION BOARD / 任务板</span><h1 id="tasksTitle">Задания</h1></div>
+          <span class="preview-chip">STRUCTURE PREVIEW</span>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Раздел заданий" data-tab-group="tasks">
+          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="raids">Рейды</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="contracts">Поручения</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="events">Ивенты</button>
+        </div>
+
+        <div class="board-column" data-tab-panel="tasks:raids">
+          <article class="glass-card mission-row"><span class="mission-icon">⛰</span><div><strong>Рейд появится после старта</strong><small>Групповое задание с общей наградой</small></div><span class="locked-tag">STANDBY</span></article>
+        </div>
+        <div class="board-column" data-tab-panel="tasks:contracts" hidden>
+          <article class="glass-card mission-row"><span class="mission-icon">📋</span><div><strong>Поручение появится после старта</strong><small>Личная задача с проверкой оператором</small></div><span class="locked-tag">STANDBY</span></article>
+        </div>
+        <div class="board-column" data-tab-panel="tasks:events" hidden>
+          <article class="glass-card mission-row"><span class="mission-icon">⚡</span><div><strong>Ивент появится после старта</strong><small>Общий сюжетный момент сезона</small></div><span class="locked-tag">STANDBY</span></article>
+        </div>
       </section>
 
+      <!-- ============================================================
+           КАРТА КАМПУСА — не трогать, рабочая зона пользователя
+           ============================================================ -->
+      <section class="screen campus-map-screen" data-screen="campus-map" aria-labelledby="campusMapTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back" type="button" data-open-screen="more" aria-label="Назад">‹</button>
+          <div><span class="system-label">CAMPUS NAV / 校园地图</span><h1 id="campusMapTitle">Карта кампуса</h1></div>
+          <span class="map-status"><i></i> DRAFT</span>
+        </div>
+
+        <article class="campus-map" aria-label="Схема отмеченных точек кампуса">
+          <img class="campus-satellite" src="./assets/maps/campus-satellite-reference.png" alt="Спутниковый снимок центральной территории кампуса">
+          <div class="campus-boundary" aria-hidden="true"></div>
+          <button class="map-pin active" type="button" data-map-point="sports" aria-label="Спортивный центр">
+            <span>01</span><b>体育中心</b>
+          </button>
+          <button class="map-pin" type="button" data-map-point="library" aria-label="Библиотека">
+            <span>02</span><b>图书馆</b>
+          </button>
+          <button class="map-pin" type="button" data-map-point="teaching" aria-label="Общий учебный корпус">
+            <span>03</span><b>公共教学楼</b>
+          </button>
+          <button class="map-pin" type="button" data-map-point="canteen" aria-label="Столовая номер 1">
+            <span>04</span><b>1号食堂</b>
+          </button>
+          <span class="map-north">N<br>↑</span>
+          <span class="map-scale">百度地图 · SATELLITE REFERENCE</span>
+        </article>
+
+        <article class="glass-card map-point-card" aria-live="polite">
+          <div class="map-point-index" id="mapPointIndex">01</div>
+          <div class="map-point-copy"><span id="mapPointKind">SPORT / 体育</span><h2 id="mapPointTitle">海南陵水黎安国际教育创新试验区体育中心</h2><p id="mapPointDescription">Стадион и спортивный центр в северо-западной части выбранного квартала.</p></div>
+          <div class="map-provider-links">
+            <a id="mapAmapLink" href="https://www.amap.com/" target="_blank" rel="noopener noreferrer">Найти в 高德</a>
+            <a id="mapBaiduLink" href="https://map.baidu.com/" target="_blank" rel="noopener noreferrer">Найти в 百度</a>
+          </div>
+        </article>
+        <p class="map-disclaimer">Спутниковая основа теперь сохраняет реальные дороги, расстояния и ориентацию. Голубая рамка показывает оцифровываемый квартал.</p>
+      </section>
+
+      <!-- ============================================================
+           ПРОФИЛЬ — открывается по кнопке в шапке, не вкладка дока
+           ============================================================ -->
+      <section class="screen placeholder-screen" data-screen="profile" aria-labelledby="profileTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back" type="button" data-open-screen="schedule" aria-label="Назад">‹</button>
+          <div><span class="system-label">OPERATOR CARD / 操作员</span><h1 id="profileTitle">Профиль</h1></div>
+        </div>
+
+        <article class="profile-card aero">
+          <span class="profile-avatar">操</span>
+          <div class="profile-id">
+            <strong>Оператор не подключён</strong>
+            <span class="profile-path-badge">HAINAN · PATH: —</span>
+          </div>
+        </article>
+
+        <div class="stat-tiles">
+          <div class="stat-tile"><span>REP</span><strong>—</strong></div>
+          <div class="stat-tile"><span>★</span><strong>—</strong></div>
+          <div class="stat-tile"><span>РАНГ</span><strong>—</strong></div>
+        </div>
+
+        <article class="glass-card placeholder-card"><span>★</span><div><strong>Витрина</strong><p>Любимый имплант или карточка появятся здесь после первой коллекции.</p></div></article>
+        <article class="glass-card placeholder-card disabled"><span>—</span><div><strong>Beijing-архив</strong><p>Для ветеранов сезона 1 откроется отдельно, после привязки Telegram ID.</p></div></article>
+      </section>
+
+      <!-- ============================================================
+           ЕЩЁ — хаб настроек и второстепенных разделов
+           ============================================================ -->
       <section class="screen placeholder-screen" data-screen="more" aria-labelledby="moreTitle" hidden>
         <div class="placeholder-hero pearl"><img src="./assets/icons/nav-more.png" alt=""><span class="system-label">PERSONAL SETTINGS</span><h1 id="moreTitle">Ещё</h1><p>Связь, справка и настройки устройства будут собраны здесь.</p></div>
+
         <div class="settings-list glass-card">
-          <button type="button" data-toast="Профиль появится вместе с аккаунтами"><span>Профиль</span><b>›</b></button>
+          <span class="settings-group-label">НАВИГАЦИЯ</span>
+          <button type="button" data-open-screen="campus-map"><span>Карта кампуса <small>校园地图</small></span><b>›</b></button>
+          <button type="button" data-open-screen="profile"><span>Профиль</span><b>›</b></button>
+        </div>
+
+        <div class="settings-list glass-card">
+          <span class="settings-group-label">ГРУППА</span>
+          <button type="button" data-toast="Отряд появится после распределения участников по группам"><span>Отряд <small>小组</small></span><b>›</b></button>
+          <button type="button" data-toast="Достижения появятся после первых заданий"><span>Достижения</span><b>›</b></button>
+        </div>
+
+        <div class="settings-list glass-card">
+          <span class="settings-group-label">БЫТ</span>
+          <button type="button" data-toast="Запись на стирку подключим вместе с расписанием"><span>Стирка</span><b>›</b></button>
+          <button type="button" data-toast="Запись на воду подключим вместе с расписанием"><span>Вода</span><b>›</b></button>
+          <button type="button" data-toast="Погода уже видна на главном экране"><span>Погода</span><b>›</b></button>
+        </div>
+
+        <div class="settings-list glass-card">
+          <span class="settings-group-label">СИСТЕМА</span>
           <button type="button" data-toast="Уведомления пока не подключены"><span>Уведомления</span><b>›</b></button>
-          <button type="button" data-toast="Версия дизайн-превью 0.1"><span>О приложении</span><b>›</b></button>
+          <button type="button" data-toast="Версия дизайн-превью 0.2 · aero"><span>О приложении</span><b>›</b></button>
         </div>
       </section>
     </div>
@@ -121,6 +349,6 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./app.js?v=20260830a" defer></script>
+  <script src="./app.js?v=20260903-aero2" defer></script>
 </body>
 </html>

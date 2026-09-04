@@ -1,0 +1,92 @@
+/* =========================================================================
+   ZHIDAO Hainan — design tokens
+   Loaded FIRST, before app.css / aero.css / aero-grade.css.
+
+   app.css declares raw palette values (--sky, --aqua, --ink …). Those stay:
+   this file adds the layer above them — what a colour is *for*, plus the
+   scales that were previously ad-hoc numbers scattered through the CSS.
+
+   Rule of thumb when writing new components: reach for a semantic token
+   (--surface-card, --text-secondary, --space-4) rather than a raw value or
+   a magic number. Raw palette entries are the vocabulary; these are the
+   grammar.
+   ========================================================================= */
+
+:root {
+  /* --- surfaces --------------------------------------------------------- */
+  --surface-app: #8fdcf1;
+  --surface-card: rgba(242, 253, 255, 0.76);
+  --surface-card-strong: rgba(255, 255, 255, 0.9);
+  --surface-sheet: rgba(238, 253, 255, 0.9);
+  --surface-metal: linear-gradient(to bottom,
+    #dbe7ef 0%, #c2d4e0 46%, #9db3c4 47%, #b6cad8 100%);
+  --surface-lcd: linear-gradient(to bottom, #0b2a20 0%, #071b16 60%, #04120e 100%);
+
+  /* --- text ------------------------------------------------------------- */
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-soft);
+  --text-faint: #6e8fa3;
+  --text-on-dark: #dffcff;
+  --text-lcd: #7dfcb4;
+
+  /* --- borders ---------------------------------------------------------- */
+  --border-chrome: rgba(255, 255, 255, 0.95);
+  --border-edge: rgba(186, 220, 238, 0.75);
+  --border-crisp: rgba(150, 200, 226, 0.85);
+  --border-metal: #6d8598;
+
+  /* --- accents ---------------------------------------------------------- */
+  --accent-primary: var(--sky);
+  --accent-aqua: var(--aqua);
+  --accent-success: var(--leaf);
+  --accent-signal: var(--lime);
+
+  /* --- rarity ----------------------------------------------------------- */
+  --rarity-common: #bfe6f4;
+  --rarity-common-mid: #6fb9dd;
+  --rarity-common-deep: #3f86bd;
+  --rarity-rare: #d7c4f5;
+  --rarity-rare-mid: #a077e0;
+  --rarity-rare-deep: #6a3fbd;
+  --rarity-legendary: #ffe9a8;
+  --rarity-legendary-mid: #f0c14c;
+  --rarity-legendary-deep: #c98f1c;
+
+  /* --- spacing ---------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 16px;
+  --space-8: 18px;
+  --space-9: 22px;
+  --space-10: 26px;
+
+  /* --- radii ------------------------------------------------------------ */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* --- type scale ------------------------------------------------------- */
+  --text-display: clamp(32px, 9.5vw, 46px);
+  --text-headline: 23px;
+  --text-title: 16px;
+  --text-body: 13px;
+  --text-body-sm: 11px;
+  --text-label: 9px;
+  --tracking-label: 0.12em;
+  --tracking-wide: 0.2em;
+
+  /* --- the orb defaults ------------------------------------------------- */
+  /* Every sphere in the app is the same recipe with three colours swapped.
+     Components override just these; see the .brand-orb group in aero.css. */
+  --orb-light: #bfe6f4;
+  --orb-mid: #6fb9dd;
+  --orb-deep: #3f86bd;
+}
