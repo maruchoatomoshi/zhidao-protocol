@@ -13,7 +13,7 @@
    здесь, в одном месте, а не в данных.
    =========================================================================== */
 
-const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260904-boundary-sector";
+const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260904-region-mask";
 
 /* Плоская проекция в метры. Для площадки 1.2 x 1.4 км искажение
    пренебрежимо, а читается она несравнимо проще Меркатора. */
@@ -27,6 +27,7 @@ const campusState = {
   campusBounds: null,
   campusBoundary: null,
   exploredBounds: null,
+  exploredRegion: null,  // контур подготовленной области, не прямоугольник
   view: { x: 0, y: 0, scale: 1 },
   selected: null,
   watchId: null,
@@ -119,16 +120,95 @@ function coordinateInPolygon(lon, lat, feature) {
   return inside;
 }
 
-function featureIsExplored(feature, origin, exploredBounds) {
-  if (typeof feature.properties.explored === "boolean") return feature.properties.explored;
-  const c = centroidOf(feature);
-  return insideBounds(project(c.lon, c.lat, origin), exploredBounds);
+/* Подготовленная область — объединение контура кампуса и следов самих
+   построек с отступом. Прямоугольник здесь не годится: габариты кампуса
+   1.2 x 1.4 км, и в углы такого прямоугольника попадают чужие дороги —
+   в том числе деревня на северо-востоке. Ребёнок читает светлое как
+   «сюда можно». */
+function ringToRegionRing(points) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  points.forEach(([x, y]) => {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  });
+  return { points, bounds: { minX, minY, maxX, maxY } };
 }
 
-function featureTouchesExplored(feature, origin, exploredBounds) {
+function pointInRingPoints(point, points) {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i, i += 1) {
+    const [xi, yi] = points[i];
+    const [xj, yj] = points[j];
+    const crosses = (yi > point.y) !== (yj > point.y)
+      && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+function distanceToRingPoints(point, points) {
+  let best = Infinity;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i, i += 1) {
+    const [x1, y1] = points[j];
+    const [x2, y2] = points[i];
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = dx * dx + dy * dy;
+    const t = len === 0 ? 0 : Math.max(0, Math.min(1, ((point.x - x1) * dx + (point.y - y1) * dy) / len));
+    best = Math.min(best, Math.hypot(point.x - (x1 + t * dx), point.y - (y1 + t * dy)));
+    if (best === 0) return 0;
+  }
+  return best;
+}
+
+function regionContains(point, region) {
+  if (!region) return false;
+  const pad = region.padding;
+  return region.rings.some((ring) => {
+    const b = ring.bounds;
+    // Дешёвый отсев по габаритам кольца до дорогого замера расстояния.
+    if (point.x < b.minX - pad || point.x > b.maxX + pad
+      || point.y < b.minY - pad || point.y > b.maxY + pad) return false;
+    if (pointInRingPoints(point, ring.points)) return true;
+    return pad > 0 && distanceToRingPoints(point, ring.points) <= pad;
+  });
+}
+
+function boundsOfRegion(region) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  region.rings.forEach((ring) => {
+    minX = Math.min(minX, ring.bounds.minX);
+    minY = Math.min(minY, ring.bounds.minY);
+    maxX = Math.max(maxX, ring.bounds.maxX);
+    maxY = Math.max(maxY, ring.bounds.maxY);
+  });
+  return expandBounds({ minX, minY, maxX, maxY }, region.padding);
+}
+
+function featureIsExplored(feature, origin, region) {
+  if (typeof feature.properties.explored === "boolean") return feature.properties.explored;
+  const c = centroidOf(feature);
+  return regionContains(project(c.lon, c.lat, origin), region);
+}
+
+function featureTouchesExplored(feature, origin, region) {
   return ringsOf(feature).some((ring) => ring.some(([lon, lat]) => (
-    insideBounds(project(lon, lat, origin), exploredBounds)
+    regionContains(project(lon, lat, origin), region)
   )));
+}
+
+const REGION_EXCLUDED = new Set(["road"]);
+
+function rectRingPoints(b) {
+  return [[b.minX, b.minY], [b.maxX, b.minY], [b.maxX, b.maxY], [b.minX, b.maxY]];
 }
 
 function computeFrame(features, data) {
@@ -156,25 +236,56 @@ function computeFrame(features, data) {
   const coreIds = new Set(exploration?.core_feature_ids || []);
   const coreFeatures = features.filter((f) => coreIds.has(f.properties.id));
 
+  const openRegion = {
+    rings: [ringToRegionRing(rectRingPoints(campusBounds))],
+    padding: 0,
+  };
+
   if (!exploration) {
-    return { origin, bounds: campusBounds, campusBounds, exploredBounds: campusBounds, exploration: null };
+    return {
+      origin, bounds: campusBounds, campusBounds,
+      exploredBounds: campusBounds, exploredRegion: openRegion, exploration: null,
+    };
   }
 
   if (coreIds.size === 0 || coreFeatures.length !== coreIds.size) {
     console.warn("Campus exploration configuration is incomplete; using the full campus frame.");
-    return { origin, bounds: campusBounds, campusBounds, exploredBounds: campusBounds, exploration: null };
+    return {
+      origin, bounds: campusBounds, campusBounds,
+      exploredBounds: campusBounds, exploredRegion: openRegion, exploration: null,
+    };
   }
 
   const padding = Number(exploration.padding_metres) || 55;
   const unknownBand = Number(exploration.unknown_band_metres) || 125;
-  const anchoredCoreBounds = includeAnchorPoints(
-    boundsOf(coreFeatures, origin),
-    exploration.anchor_points || [],
-    origin
+  // Кольца области: контур кампуса, следы всех построек и точки-якоря.
+  // Постройки входят потому, что два объекта — актовый зал и жилая зона —
+  // лежат снаружи OSM-контура на 61 и 110 м, и без них ушли бы в туман.
+  const regionSources = coreFeatures.concat(
+    features.filter((f) => !REGION_EXCLUDED.has(f.properties.category))
   );
-  const exploredBounds = expandBounds(anchoredCoreBounds, padding);
+  const rings = [];
+  regionSources.forEach((f) => {
+    ringsOf(f).forEach((ring) => {
+      if (ring.length < 3) return;
+      rings.push(ringToRegionRing(ring.map(([lon, lat]) => {
+        const q = project(lon, lat, origin);
+        return [q.x, q.y];
+      })));
+    });
+  });
+  (exploration.anchor_points || []).forEach((anchor) => {
+    const c = Array.isArray(anchor) ? anchor : anchor?.coordinates;
+    if (!Array.isArray(c) || c.length < 2) return;
+    const q = project(c[0], c[1], origin);
+    rings.push(ringToRegionRing([
+      [q.x - 1, q.y - 1], [q.x + 1, q.y - 1], [q.x + 1, q.y + 1], [q.x - 1, q.y + 1],
+    ]));
+  });
+  const exploredRegion = { rings, padding };
+  const exploredBounds = boundsOfRegion(exploredRegion);
   const bounds = expandBounds(exploredBounds, unknownBand);
-  return { origin, bounds, campusBounds, exploredBounds, exploration };
+  return { origin, bounds, campusBounds, exploredBounds, exploredRegion, exploration };
 }
 
 /* Порядок рисования: границы под всем, дороги над ними, здания сверху.
@@ -200,7 +311,7 @@ function buildSvg(host, data) {
   const features = data.features.slice().sort(
     (a, b) => DRAW_ORDER.indexOf(a.properties.category) - DRAW_ORDER.indexOf(b.properties.category)
   );
-  const { origin, bounds, campusBounds, exploredBounds, exploration } = computeFrame(features, data);
+  const { origin, bounds, campusBounds, exploredBounds, exploredRegion, exploration } = computeFrame(features, data);
   campusState.origin = origin;
   campusState.bounds = bounds;
   campusState.campusBounds = campusBounds;
@@ -208,6 +319,7 @@ function buildSvg(host, data) {
     (f) => f.properties.category === "boundary" && f.geometry.type === "Polygon"
   ) || null;
   campusState.exploredBounds = exploredBounds;
+  campusState.exploredRegion = exploredRegion;
 
   const w = bounds.maxX - bounds.minX;
   const h = bounds.maxY - bounds.minY;
@@ -240,21 +352,32 @@ function buildSvg(host, data) {
     maskOuter.setAttribute("width", w);
     maskOuter.setAttribute("height", h);
     maskOuter.setAttribute("fill", "white");
-    const maskWindow = document.createElementNS(NS, "rect");
-    maskWindow.setAttribute("x", exploredBounds.minX);
-    maskWindow.setAttribute("y", exploredBounds.minY);
-    maskWindow.setAttribute("width", exploredBounds.maxX - exploredBounds.minX);
-    maskWindow.setAttribute("height", exploredBounds.maxY - exploredBounds.minY);
-    maskWindow.setAttribute("rx", "28");
-    maskWindow.setAttribute("fill", "black");
-    mask.append(maskOuter, maskWindow);
+    // Окно в тумане — не прямоугольник, а сами кольца области. Отступ даётся
+    // толстой обводкой: она же скругляет стыки, поэтому светлое пятно читается
+    // как территория, а не как аккуратная геометрия.
+    const regionPath = (ring) => {
+      const node = document.createElementNS(NS, "path");
+      node.setAttribute("d", `M${ring.points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join("L")}Z`);
+      return node;
+    };
+    mask.appendChild(maskOuter);
+    exploredRegion.rings.forEach((ring) => {
+      const node = regionPath(ring);
+      node.setAttribute("fill", "black");
+      node.setAttribute("stroke", "black");
+      node.setAttribute("stroke-width", String(exploredRegion.padding * 2));
+      node.setAttribute("stroke-linejoin", "round");
+      node.setAttribute("stroke-linecap", "round");
+      mask.appendChild(node);
+    });
     defs.appendChild(mask);
 
+    // clipPath игнорирует обводку, поэтому маршруты режутся по самим кольцам.
+    // Туман всё равно рисуется поверх маршрута, так что это подстраховка.
     const clip = document.createElementNS(NS, "clipPath");
     clip.setAttribute("id", explorationClipId);
     clip.setAttribute("clipPathUnits", "userSpaceOnUse");
-    const clipWindow = maskWindow.cloneNode(false);
-    clip.appendChild(clipWindow);
+    exploredRegion.rings.forEach((ring) => clip.appendChild(regionPath(ring)));
     defs.appendChild(clip);
     svg.appendChild(defs);
   }
@@ -278,7 +401,7 @@ function buildSvg(host, data) {
     } else {
       node.setAttribute("points", pts.join(" "));
     }
-    const explored = featureIsExplored(f, origin, exploredBounds);
+    const explored = featureIsExplored(f, origin, exploredRegion);
     node.setAttribute(
       "class",
       `campus-feat campus-${p.category}${explored ? "" : " is-unexplored"}`
@@ -309,8 +432,8 @@ function buildSvg(host, data) {
     if (groupedLabelFeatureIds.has(p.id)) return;
     const importantRoad = p.category === "road" && IMPORTANT_ROAD_NAMES.has(p.name_zh);
     if (!p.named || (!LABEL_CATEGORIES.has(p.category) && !importantRoad)) return;
-    if (importantRoad ? !featureTouchesExplored(f, origin, exploredBounds)
-      : !featureIsExplored(f, origin, exploredBounds)) return;
+    if (importantRoad ? !featureTouchesExplored(f, origin, exploredRegion)
+      : !featureIsExplored(f, origin, exploredRegion)) return;
     const labelKey = importantRoad ? `road:${p.name_zh}` : `${p.category}:${p.name_ru}`;
     if (seenLabels.has(labelKey)) return;
     seenLabels.add(labelKey);
@@ -319,7 +442,7 @@ function buildSvg(host, data) {
 
     const projected = ring.map(([lon, lat]) => project(lon, lat, origin));
     const labelPoints = importantRoad
-      ? projected.filter((q) => insideBounds(q, exploredBounds))
+      ? projected.filter((q) => regionContains(q, exploredRegion))
       : projected;
     let sx = 0;
     let sy = 0;
@@ -348,7 +471,7 @@ function buildSvg(host, data) {
 
   (data.landmark_groups || []).forEach((group) => {
     const members = group.feature_ids.map(featureById).filter(Boolean);
-    if (!members.length || !members.some((f) => featureIsExplored(f, origin, exploredBounds))) return;
+    if (!members.length || !members.some((f) => featureIsExplored(f, origin, exploredRegion))) return;
     let lon = 0;
     let lat = 0;
     members.forEach((f) => {
@@ -386,14 +509,16 @@ function buildSvg(host, data) {
     fog.setAttribute("mask", `url(#${explorationMaskId})`);
     layer.appendChild(fog);
 
-    const edge = document.createElementNS(NS, "rect");
-    edge.setAttribute("class", "campus-exploration-edge");
-    edge.setAttribute("x", exploredBounds.minX);
-    edge.setAttribute("y", exploredBounds.minY);
-    edge.setAttribute("width", exploredBounds.maxX - exploredBounds.minX);
-    edge.setAttribute("height", exploredBounds.maxY - exploredBounds.minY);
-    edge.setAttribute("rx", "28");
-    layer.appendChild(edge);
+    const boundaryFeature = campusState.campusBoundary;
+    if (boundaryFeature) {
+      const edge = document.createElementNS(NS, "path");
+      edge.setAttribute("class", "campus-exploration-edge");
+      edge.setAttribute("d", `M${boundaryFeature.geometry.coordinates[0].map(([lon, lat]) => {
+        const q = project(lon, lat, origin);
+        return `${q.x.toFixed(1)},${q.y.toFixed(1)}`;
+      }).join("L")}Z`);
+      layer.appendChild(edge);
+    }
 
     const unknownSize = Math.max(18, w / 58);
     const addUnknownLabel = (y, text) => {
@@ -434,7 +559,7 @@ function featureById(id) {
 
 function selectFeature(id, ui, options = {}) {
   const f = featureById(id);
-  if (!f || !featureIsExplored(f, campusState.origin, campusState.exploredBounds)) return;
+  if (!f || !featureIsExplored(f, campusState.origin, campusState.exploredRegion)) return;
   campusState.selected = id;
   const preserveRoute = options.preserveRoute === true;
   if (!preserveRoute) clearRoute(ui);
@@ -542,7 +667,7 @@ function metresBetween(a, b) {
                     (a[1] - b[1]) * METRES_PER_DEG_LAT);
 }
 
-function buildRouteGraph(features, origin, exploredBounds) {
+function buildRouteGraph(features, origin, exploredRegion) {
   const adj = new Map();
   const pos = new Map();
   const link = (a, b) => {
@@ -561,7 +686,7 @@ function buildRouteGraph(features, origin, exploredBounds) {
     for (let i = 0; i < cs.length - 1; i += 1) {
       const a = project(cs[i][0], cs[i][1], origin);
       const b = project(cs[i + 1][0], cs[i + 1][1], origin);
-      if (insideBounds(a, exploredBounds) && insideBounds(b, exploredBounds)) {
+      if (regionContains(a, exploredRegion) && regionContains(b, exploredRegion)) {
         link(cs[i], cs[i + 1]);
       }
     }
@@ -627,8 +752,8 @@ function drawRoute(ui, from, to) {
 
   const fromProjected = project(from[0], from[1], campusState.origin);
   const toProjected = project(to[0], to[1], campusState.origin);
-  if (!insideBounds(fromProjected, campusState.exploredBounds)
-    || !insideBounds(toProjected, campusState.exploredBounds)) {
+  if (!regionContains(fromProjected, campusState.exploredRegion)
+    || !regionContains(toProjected, campusState.exploredRegion)) {
     return { ok: false, reason: "одна из точек находится вне подготовленного сектора" };
   }
 
@@ -663,7 +788,7 @@ function drawRoute(ui, from, to) {
 function startingPoint() {
   if (!campusState.me) return null;
   const p = project(campusState.me.lon, campusState.me.lat, campusState.origin);
-  if (!insideBounds(p, campusState.exploredBounds)) return null;
+  if (!regionContains(p, campusState.exploredRegion)) return null;
   return { point: [campusState.me.lon, campusState.me.lat], label: "от вас" };
 }
 
@@ -797,7 +922,7 @@ function startLocating(ui, statusEl) {
       ui.me.setAttribute("cx", p.x.toFixed(1));
       ui.me.setAttribute("cy", p.y.toFixed(1));
       ui.me.removeAttribute("hidden");
-      const insideExplored = insideBounds(p, campusState.exploredBounds);
+      const insideExplored = regionContains(p, campusState.exploredRegion);
       const insideCampus = campusState.campusBoundary
         ? coordinateInPolygon(longitude, latitude, campusState.campusBoundary)
         : insideBounds(p, campusState.campusBounds);
@@ -833,7 +958,7 @@ function buildLegend(data) {
   if (!host) return;
   const present = new Set(
     data.features
-      .filter((f) => featureIsExplored(f, campusState.origin, campusState.exploredBounds))
+      .filter((f) => featureIsExplored(f, campusState.origin, campusState.exploredRegion))
       .map((f) => f.properties.category)
   );
   host.innerHTML = "";
@@ -870,7 +995,7 @@ async function initCampusMap() {
   campusState.data = data;
 
   const ui = buildSvg(host, data);
-  routeGraph = buildRouteGraph(data.features, campusState.origin, campusState.exploredBounds);
+  routeGraph = buildRouteGraph(data.features, campusState.origin, campusState.exploredRegion);
   applyView(ui);
   attachGestures(ui);
 
