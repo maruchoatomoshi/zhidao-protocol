@@ -77,6 +77,10 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertIn("Architect Console", console.text)
         self.assertIn("default-src 'self'", console.headers["content-security-policy"])
         self.assertEqual(console.headers["x-frame-options"], "DENY")
+        self.assertEqual(
+            console.headers["permissions-policy"],
+            "camera=(), microphone=(), geolocation=()",
+        )
 
         stylesheet = self.client.get("/architect/architect.css")
         self.assertEqual(stylesheet.status_code, 200)
@@ -96,6 +100,10 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertIn("Курс на", preview.text)
         self.assertIn("default-src 'self'", preview.headers["content-security-policy"])
         self.assertEqual(preview.headers["x-frame-options"], "DENY")
+        self.assertEqual(
+            preview.headers["permissions-policy"],
+            "camera=(), microphone=(), geolocation=(self)",
+        )
 
         stylesheet = self.client.get("/app/app.css")
         self.assertEqual(stylesheet.status_code, 200)

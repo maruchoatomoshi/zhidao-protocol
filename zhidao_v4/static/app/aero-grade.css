@@ -865,3 +865,105 @@
 }
 
 .campus-route-summary.is-bad { color: #8a5a00; }
+
+/* =========================================================================
+   9. Земля отдельно от построек
+   Территории институтов приходят как amenity=university — это участки земли
+   по полтора-два гектара, а не корпуса. Пока они красились как здания,
+   гектар земли выглядел одним исполинским строением. Земля уходит в фон,
+   постройки получают чёткий край и тень, чтобы читаться как объёмы.
+   ========================================================================= */
+
+.campus-grounds {
+  fill: rgba(111, 178, 224, .17);
+  stroke: rgba(111, 178, 224, .5);
+  stroke-width: 1.4;
+  stroke-dasharray: 9 6;
+}
+
+/* Постройки: плотная заливка, светлый кант и тень — так они отделяются от
+   земли под ними примерно так же, как на спутниковом снимке. */
+.campus-academic,
+.campus-library,
+.campus-dorm,
+.campus-food,
+.campus-civic,
+.campus-building {
+  stroke: rgba(255, 255, 255, .95);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 1.5px 1.5px rgba(6, 60, 100, .35));
+}
+
+/* Стадион — беговая дорожка, а не сплошное пятно: кольцо читается ближе к
+   тому, что видно со спутника. */
+.campus-sport {
+  fill: rgba(240, 193, 76, .30);
+  stroke: #f0c14c;
+  stroke-width: 4;
+}
+
+.campus-swatch-grounds { background: rgba(111, 178, 224, .45); }
+
+.campus-label-grounds { opacity: .8; }
+
+/* =========================================================================
+   10. Изученный сектор и «туман карты»
+   Светлое окно — состояние интерфейса вокруг подготовленных POI, а не новая
+   географическая граница. Геометрия вокруг остаётся слабым силуэтом.
+   ========================================================================= */
+
+#campusInfo {
+  scroll-margin-block: 88px 124px;
+}
+
+.campus-unexplored-fog {
+  fill: #082d47;
+  fill-opacity: .73;
+  pointer-events: none;
+}
+
+.campus-exploration-edge {
+  fill: none;
+  stroke: rgba(126, 235, 255, .96);
+  stroke-width: 2.5;
+  stroke-dasharray: 9 7;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 5px rgba(12, 203, 208, .65));
+  pointer-events: none;
+}
+
+.campus-unexplored-label {
+  fill: rgba(228, 249, 255, .88);
+  stroke: rgba(3, 29, 54, .55);
+  stroke-width: 1;
+  paint-order: stroke;
+  font-family: var(--font-system);
+  font-weight: 700;
+  letter-spacing: .14em;
+  pointer-events: none;
+  user-select: none;
+}
+
+.campus-label-group {
+  fill: #073e68;
+  font-weight: 800;
+}
+
+.campus-label-road {
+  fill: #2a667d;
+  font-style: italic;
+}
+
+.campus-feat.is-unexplored {
+  pointer-events: none;
+}
+
+.campus-me.is-outside-explored {
+  fill: #f0c14c;
+}
+
+.campus-swatch-unexplored {
+  background:
+    repeating-linear-gradient(135deg, rgba(228, 249, 255, .28) 0 2px, transparent 2px 5px),
+    #082d47;
+}

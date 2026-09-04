@@ -13,7 +13,7 @@
    здесь, в одном месте, а не в данных.
    =========================================================================== */
 
-const CAMPUS_SOURCE = "./assets/maps/campus.geojson";
+const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260904-exploration4";
 
 /* Плоская проекция в метры. Для площадки 1.2 x 1.4 км искажение
    пренебрежимо, а читается она несравнимо проще Меркатора. */
@@ -23,7 +23,10 @@ const METRES_PER_DEG_LON = 111320;
 const campusState = {
   data: null,
   origin: null,      // {lat, lon} — точка отсчёта проекции
-  bounds: null,      // экстент в метрах
+  bounds: null,      // показанный экстент в метрах
+  campusBounds: null,
+  campusBoundary: null,
+  exploredBounds: null,
   view: { x: 0, y: 0, scale: 1 },
   selected: null,
   watchId: null,
@@ -55,7 +58,80 @@ function ringsOf(feature) {
   return g.type === "Polygon" ? g.coordinates : [g.coordinates];
 }
 
-function computeFrame(features) {
+function boundsOf(features, origin) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  features.forEach((f) => {
+    ringsOf(f).forEach((ring) => {
+      ring.forEach(([lon, lat]) => {
+        const p = project(lon, lat, origin);
+        if (p.x < minX) minX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y > maxY) maxY = p.y;
+      });
+    });
+  });
+  return { minX, minY, maxX, maxY };
+}
+
+function expandBounds(bounds, amount) {
+  return {
+    minX: bounds.minX - amount,
+    minY: bounds.minY - amount,
+    maxX: bounds.maxX + amount,
+    maxY: bounds.maxY + amount,
+  };
+}
+
+function includeAnchorPoints(bounds, points, origin) {
+  const next = { ...bounds };
+  points.forEach((anchor) => {
+    const coordinates = Array.isArray(anchor) ? anchor : anchor?.coordinates;
+    if (!Array.isArray(coordinates) || coordinates.length < 2) return;
+    const q = project(coordinates[0], coordinates[1], origin);
+    next.minX = Math.min(next.minX, q.x);
+    next.minY = Math.min(next.minY, q.y);
+    next.maxX = Math.max(next.maxX, q.x);
+    next.maxY = Math.max(next.maxY, q.y);
+  });
+  return next;
+}
+
+function insideBounds(point, bounds) {
+  return point.x >= bounds.minX && point.x <= bounds.maxX
+    && point.y >= bounds.minY && point.y <= bounds.maxY;
+}
+
+function coordinateInPolygon(lon, lat, feature) {
+  if (!feature || feature.geometry.type !== "Polygon") return false;
+  const ring = feature.geometry.coordinates[0];
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    const crosses = (yi > lat) !== (yj > lat)
+      && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+function featureIsExplored(feature, origin, exploredBounds) {
+  if (typeof feature.properties.explored === "boolean") return feature.properties.explored;
+  const c = centroidOf(feature);
+  return insideBounds(project(c.lon, c.lat, origin), exploredBounds);
+}
+
+function featureTouchesExplored(feature, origin, exploredBounds) {
+  return ringsOf(feature).some((ring) => ring.some(([lon, lat]) => (
+    insideBounds(project(lon, lat, origin), exploredBounds)
+  )));
+}
+
+function computeFrame(features, data) {
   let sumLat = 0;
   let sumLon = 0;
   let n = 0;
@@ -70,63 +146,118 @@ function computeFrame(features) {
   });
   const origin = { lat: sumLat / n, lon: sumLon / n };
 
-  // Кадрируем по границе территории, а не по всем объектам. Иначе школа в
-  // 1.3 км и длинные проспекты растягивают экстент, и сам кампус съёживается
-  // в угол — ровно это и произошло на первом прогоне.
+  // По умолчанию кадрируем по официальной границе кампуса. Если данные задают
+  // режим исследования, светлая область строится как интерфейсный конверт
+  // ключевых объектов. Это не выдаётся за административную границу.
   const frameSource = features.filter((f) => f.properties.category === "boundary");
   const extentOf = frameSource.length ? frameSource : features;
+  const campusBounds = boundsOf(extentOf, origin);
+  const exploration = data.exploration || null;
+  const coreIds = new Set(exploration?.core_feature_ids || []);
+  const coreFeatures = features.filter((f) => coreIds.has(f.properties.id));
 
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  extentOf.forEach((f) => {
-    ringsOf(f).forEach((ring) => {
-      ring.forEach(([lon, lat]) => {
-        const p = project(lon, lat, origin);
-        if (p.x < minX) minX = p.x;
-        if (p.y < minY) minY = p.y;
-        if (p.x > maxX) maxX = p.x;
-        if (p.y > maxY) maxY = p.y;
-      });
-    });
-  });
-  return { origin, bounds: { minX, minY, maxX, maxY } };
+  if (!exploration) {
+    return { origin, bounds: campusBounds, campusBounds, exploredBounds: campusBounds, exploration: null };
+  }
+
+  if (coreIds.size === 0 || coreFeatures.length !== coreIds.size) {
+    console.warn("Campus exploration configuration is incomplete; using the full campus frame.");
+    return { origin, bounds: campusBounds, campusBounds, exploredBounds: campusBounds, exploration: null };
+  }
+
+  const padding = Number(exploration.padding_metres) || 55;
+  const unknownBand = Number(exploration.unknown_band_metres) || 125;
+  const anchoredCoreBounds = includeAnchorPoints(
+    boundsOf(coreFeatures, origin),
+    exploration.anchor_points || [],
+    origin
+  );
+  const exploredBounds = expandBounds(anchoredCoreBounds, padding);
+  const bounds = expandBounds(exploredBounds, unknownBand);
+  return { origin, bounds, campusBounds, exploredBounds, exploration };
 }
 
 /* Порядок рисования: границы под всем, дороги над ними, здания сверху.
    Иначе здание окажется под дорогой и станет некликабельным. */
 const DRAW_ORDER = [
-  "boundary", "living-zone", "park", "road",
-  "building", "sport", "civic", "academic", "library", "dorm", "food",
+  // Земля: территория, участки институтов, жилые зоны, парки — фон.
+  "boundary", "grounds", "living-zone", "park",
+  // Дороги поверх земли, но под постройками.
+  "road", "sport",
+  // Постройки — самый верхний слой, они и должны читаться как объекты.
+  "building", "civic", "academic", "library", "dorm", "food",
 ];
 
 /* Подписи только у именованных объектов и только у крупных: подписать
    четырнадцать одинаковых общежитий значит залить карту словом «Общежитие». */
 const LABEL_MIN_AREA = 1200;   // кв. метры
 const LABEL_CATEGORIES = new Set([
-  "academic", "library", "food", "sport", "civic", "living-zone", "boundary",
+  "academic", "library", "food", "sport", "civic",
 ]);
+const IMPORTANT_ROAD_NAMES = new Set(["博学大道"]);
 
 function buildSvg(host, data) {
   const features = data.features.slice().sort(
     (a, b) => DRAW_ORDER.indexOf(a.properties.category) - DRAW_ORDER.indexOf(b.properties.category)
   );
-  const { origin, bounds } = computeFrame(features);
+  const { origin, bounds, campusBounds, exploredBounds, exploration } = computeFrame(features, data);
   campusState.origin = origin;
   campusState.bounds = bounds;
+  campusState.campusBounds = campusBounds;
+  campusState.campusBoundary = features.find(
+    (f) => f.properties.category === "boundary" && f.geometry.type === "Polygon"
+  ) || null;
+  campusState.exploredBounds = exploredBounds;
 
-  const pad = 40;
-  const w = bounds.maxX - bounds.minX + pad * 2;
-  const h = bounds.maxY - bounds.minY + pad * 2;
+  const w = bounds.maxX - bounds.minX;
+  const h = bounds.maxY - bounds.minY;
 
   const NS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(NS, "svg");
   svg.setAttribute("class", "campus-svg");
-  svg.setAttribute("viewBox", `${bounds.minX - pad} ${bounds.minY - pad} ${w} ${h}`);
+  svg.setAttribute("viewBox", `${bounds.minX} ${bounds.minY} ${w} ${h}`);
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Карта кампуса");
+  svg.setAttribute("role", "group");
+  svg.setAttribute("aria-label", "Карта подготовленного сектора кампуса и неизведанных регионов");
+
+  let explorationMaskId = null;
+  let explorationClipId = null;
+  if (exploration) {
+    explorationMaskId = "campus-exploration-mask";
+    explorationClipId = "campus-exploration-clip";
+    const defs = document.createElementNS(NS, "defs");
+
+    const mask = document.createElementNS(NS, "mask");
+    mask.setAttribute("id", explorationMaskId);
+    mask.setAttribute("maskUnits", "userSpaceOnUse");
+    mask.setAttribute("x", bounds.minX);
+    mask.setAttribute("y", bounds.minY);
+    mask.setAttribute("width", w);
+    mask.setAttribute("height", h);
+    const maskOuter = document.createElementNS(NS, "rect");
+    maskOuter.setAttribute("x", bounds.minX);
+    maskOuter.setAttribute("y", bounds.minY);
+    maskOuter.setAttribute("width", w);
+    maskOuter.setAttribute("height", h);
+    maskOuter.setAttribute("fill", "white");
+    const maskWindow = document.createElementNS(NS, "rect");
+    maskWindow.setAttribute("x", exploredBounds.minX);
+    maskWindow.setAttribute("y", exploredBounds.minY);
+    maskWindow.setAttribute("width", exploredBounds.maxX - exploredBounds.minX);
+    maskWindow.setAttribute("height", exploredBounds.maxY - exploredBounds.minY);
+    maskWindow.setAttribute("rx", "28");
+    maskWindow.setAttribute("fill", "black");
+    mask.append(maskOuter, maskWindow);
+    defs.appendChild(mask);
+
+    const clip = document.createElementNS(NS, "clipPath");
+    clip.setAttribute("id", explorationClipId);
+    clip.setAttribute("clipPathUnits", "userSpaceOnUse");
+    const clipWindow = maskWindow.cloneNode(false);
+    clip.appendChild(clipWindow);
+    defs.appendChild(clip);
+    svg.appendChild(defs);
+  }
 
   const layer = document.createElementNS(NS, "g");
   layer.setAttribute("class", "campus-layer");
@@ -147,12 +278,21 @@ function buildSvg(host, data) {
     } else {
       node.setAttribute("points", pts.join(" "));
     }
-    node.setAttribute("class", `campus-feat campus-${p.category}`);
+    const explored = featureIsExplored(f, origin, exploredBounds);
+    node.setAttribute(
+      "class",
+      `campus-feat campus-${p.category}${explored ? "" : " is-unexplored"}`
+    );
     node.dataset.featureId = p.id;
-    if (p.category !== "road" && p.category !== "boundary") {
+    const isBackdrop = ["road", "boundary", "grounds", "living-zone", "park"]
+      .includes(p.category);
+    if (!isBackdrop && explored) {
+      node.dataset.interactive = "true";
       node.setAttribute("tabindex", "0");
       node.setAttribute("role", "button");
       node.setAttribute("aria-label", `${p.name_ru}. ${p.name_zh}`);
+    } else if (!explored) {
+      node.setAttribute("aria-hidden", "true");
     }
     layer.appendChild(node);
   });
@@ -160,16 +300,30 @@ function buildSvg(host, data) {
   // Подписи поверх всего. Только именованные и только достаточно крупные:
   // четырнадцать одинаковых «Общежитий» превратили бы карту в кашу, для них
   // работает легенда и тап по объекту.
+  const seenLabels = new Set();
+  const groupedLabelFeatureIds = new Set(
+    (data.landmark_groups || []).flatMap((group) => group.feature_ids || [])
+  );
   features.forEach((f) => {
     const p = f.properties;
-    if (!p.named || !LABEL_CATEGORIES.has(p.category)) return;
+    if (groupedLabelFeatureIds.has(p.id)) return;
+    const importantRoad = p.category === "road" && IMPORTANT_ROAD_NAMES.has(p.name_zh);
+    if (!p.named || (!LABEL_CATEGORIES.has(p.category) && !importantRoad)) return;
+    if (importantRoad ? !featureTouchesExplored(f, origin, exploredBounds)
+      : !featureIsExplored(f, origin, exploredBounds)) return;
+    const labelKey = importantRoad ? `road:${p.name_zh}` : `${p.category}:${p.name_ru}`;
+    if (seenLabels.has(labelKey)) return;
+    seenLabels.add(labelKey);
     const ring = f.geometry.type === "Polygon" ? f.geometry.coordinates[0] : f.geometry.coordinates;
     if (f.geometry.type === "Polygon" && polygonArea(ring, origin) < LABEL_MIN_AREA) return;
 
+    const projected = ring.map(([lon, lat]) => project(lon, lat, origin));
+    const labelPoints = importantRoad
+      ? projected.filter((q) => insideBounds(q, exploredBounds))
+      : projected;
     let sx = 0;
     let sy = 0;
-    ring.forEach(([lon, lat]) => {
-      const q = project(lon, lat, origin);
+    labelPoints.forEach((q) => {
       sx += q.x;
       sy += q.y;
     });
@@ -183,17 +337,84 @@ function buildSvg(host, data) {
       : base;
     label.setAttribute("font-size", size.toFixed(1));
     label.setAttribute("stroke-width", (size * 0.30).toFixed(1));
-    label.setAttribute("x", (sx / ring.length).toFixed(1));
-    label.setAttribute("y", (sy / ring.length).toFixed(1));
+    label.setAttribute("x", (sx / labelPoints.length).toFixed(1));
+    label.setAttribute("y", (sy / labelPoints.length).toFixed(1));
     label.setAttribute("text-anchor", "middle");
-    label.textContent = p.approximate ? `${p.name_ru} ?` : p.name_ru;
+    label.textContent = importantRoad
+      ? `${p.name_ru} / ${p.name_zh}`
+      : p.approximate ? `${p.name_ru} ?` : p.name_ru;
+    layer.appendChild(label);
+  });
+
+  (data.landmark_groups || []).forEach((group) => {
+    const members = group.feature_ids.map(featureById).filter(Boolean);
+    if (!members.length || !members.some((f) => featureIsExplored(f, origin, exploredBounds))) return;
+    let lon = 0;
+    let lat = 0;
+    members.forEach((f) => {
+      const c = centroidOf(f);
+      lon += c.lon;
+      lat += c.lat;
+    });
+    const q = project(lon / members.length, lat / members.length, origin);
+    const label = document.createElementNS(NS, "text");
+    const size = (bounds.maxX - bounds.minX) / 43;
+    label.setAttribute("class", "campus-label campus-label-group");
+    label.setAttribute("font-size", size.toFixed(1));
+    label.setAttribute("stroke-width", (size * 0.30).toFixed(1));
+    label.setAttribute("x", q.x.toFixed(1));
+    label.setAttribute("y", q.y.toFixed(1));
+    label.setAttribute("text-anchor", "middle");
+    label.textContent = `${group.name_ru} / ${group.name_zh}`
+      + (group.approximate || group.verified === false ? " ?" : "");
     layer.appendChild(label);
   });
 
   // Слой маршрута — под отметкой позиции, но над зданиями.
   const route = document.createElementNS(NS, "g");
   route.setAttribute("class", "campus-route");
+  if (explorationClipId) route.setAttribute("clip-path", `url(#${explorationClipId})`);
   layer.appendChild(route);
+
+  if (explorationMaskId) {
+    const fog = document.createElementNS(NS, "rect");
+    fog.setAttribute("class", "campus-unexplored-fog");
+    fog.setAttribute("x", bounds.minX);
+    fog.setAttribute("y", bounds.minY);
+    fog.setAttribute("width", w);
+    fog.setAttribute("height", h);
+    fog.setAttribute("mask", `url(#${explorationMaskId})`);
+    layer.appendChild(fog);
+
+    const edge = document.createElementNS(NS, "rect");
+    edge.setAttribute("class", "campus-exploration-edge");
+    edge.setAttribute("x", exploredBounds.minX);
+    edge.setAttribute("y", exploredBounds.minY);
+    edge.setAttribute("width", exploredBounds.maxX - exploredBounds.minX);
+    edge.setAttribute("height", exploredBounds.maxY - exploredBounds.minY);
+    edge.setAttribute("rx", "28");
+    layer.appendChild(edge);
+
+    const unknownSize = Math.max(18, w / 58);
+    const addUnknownLabel = (y, text) => {
+      const label = document.createElementNS(NS, "text");
+      label.setAttribute("class", "campus-unexplored-label");
+      label.setAttribute("x", ((bounds.minX + bounds.maxX) / 2).toFixed(1));
+      label.setAttribute("y", y.toFixed(1));
+      label.setAttribute("font-size", unknownSize.toFixed(1));
+      label.setAttribute("text-anchor", "middle");
+      label.textContent = text;
+      layer.appendChild(label);
+    };
+    addUnknownLabel(
+      (bounds.minY + exploredBounds.minY) / 2,
+      exploration.label_ru || "НЕИЗВЕДАННЫЕ РЕГИОНЫ"
+    );
+    addUnknownLabel(
+      (exploredBounds.maxY + bounds.maxY) / 2,
+      `${exploration.label_zh || "未探索区域"} · НЕ ПОДГОТОВЛЕНО`
+    );
+  }
 
   // Отметка «где я» — создаётся сразу, показывается после первого фикса GPS.
   const me = document.createElementNS(NS, "circle");
@@ -211,10 +432,12 @@ function featureById(id) {
   return campusState.data.features.find((f) => f.properties.id === id) || null;
 }
 
-function selectFeature(id, ui) {
+function selectFeature(id, ui, options = {}) {
   const f = featureById(id);
-  if (!f) return;
+  if (!f || !featureIsExplored(f, campusState.origin, campusState.exploredBounds)) return;
   campusState.selected = id;
+  const preserveRoute = options.preserveRoute === true;
+  if (!preserveRoute) clearRoute(ui);
 
   ui.svg.querySelectorAll(".campus-feat").forEach((n) => {
     n.classList.toggle("is-selected", n.dataset.featureId === id);
@@ -246,10 +469,16 @@ function selectFeature(id, ui) {
   const start = startingPoint();
   btn.hidden = !start;
   if (start) btn.textContent = `Маршрут ${start.label}`;
-  summary.hidden = true;
+  if (!preserveRoute) {
+    summary.hidden = true;
+    summary.className = "campus-route-summary";
+    summary.textContent = "";
+  }
   btn.onclick = () => {
+    const currentStart = startingPoint();
+    if (!currentStart) return;
     const dest = centroidOf(f);
-    const r = drawRoute(ui, start.point, [dest.lon, dest.lat]);
+    const r = drawRoute(ui, currentStart.point, [dest.lon, dest.lat]);
     summary.hidden = false;
     if (!r.ok) {
       summary.className = "campus-route-summary is-bad";
@@ -262,6 +491,10 @@ function selectFeature(id, ui) {
     summary.textContent = `${Math.round(r.total)} м, около ${mins} мин пешком. `
       + `Из них ${Math.round(r.offRoad)} м по прямой — внутренних дорожек в данных нет.`;
   };
+
+  if (!preserveRoute) {
+    requestAnimationFrame(() => card.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+  }
 }
 
 function centroidOf(feature) {
@@ -296,7 +529,6 @@ function distanceToFeature(from, feature) {
    =========================================================================== */
 
 const WALK_SPEED_MS = 1.35;        // ~4.9 км/ч, спокойный шаг
-const ROUTE_DEFAULT_START = "Жилая зона 1";
 
 let routeGraph = null;
 
@@ -310,7 +542,7 @@ function metresBetween(a, b) {
                     (a[1] - b[1]) * METRES_PER_DEG_LAT);
 }
 
-function buildRouteGraph(features) {
+function buildRouteGraph(features, origin, exploredBounds) {
   const adj = new Map();
   const pos = new Map();
   const link = (a, b) => {
@@ -326,7 +558,13 @@ function buildRouteGraph(features) {
   };
   features.filter((f) => f.properties.category === "road").forEach((f) => {
     const cs = f.geometry.coordinates;
-    for (let i = 0; i < cs.length - 1; i += 1) link(cs[i], cs[i + 1]);
+    for (let i = 0; i < cs.length - 1; i += 1) {
+      const a = project(cs[i][0], cs[i][1], origin);
+      const b = project(cs[i + 1][0], cs[i + 1][1], origin);
+      if (insideBounds(a, exploredBounds) && insideBounds(b, exploredBounds)) {
+        link(cs[i], cs[i + 1]);
+      }
+    }
   });
   return { adj, pos };
 }
@@ -387,6 +625,13 @@ function drawRoute(ui, from, to) {
   clearRoute(ui);
   const NS = "http://www.w3.org/2000/svg";
 
+  const fromProjected = project(from[0], from[1], campusState.origin);
+  const toProjected = project(to[0], to[1], campusState.origin);
+  if (!insideBounds(fromProjected, campusState.exploredBounds)
+    || !insideBounds(toProjected, campusState.exploredBounds)) {
+    return { ok: false, reason: "одна из точек находится вне подготовленного сектора" };
+  }
+
   const a = nearestNode(from);
   const b = nearestNode(to);
   if (!a.key || !b.key) return { ok: false, reason: "нет дорожной сети" };
@@ -416,11 +661,10 @@ function drawRoute(ui, from, to) {
 }
 
 function startingPoint() {
-  if (campusState.me) return { point: [campusState.me.lon, campusState.me.lat], label: "от вас" };
-  const home = campusState.data.features.find((f) => f.properties.name_ru === ROUTE_DEFAULT_START);
-  if (!home) return null;
-  const c = centroidOf(home);
-  return { point: [c.lon, c.lat], label: `от «${ROUTE_DEFAULT_START}»` };
+  if (!campusState.me) return null;
+  const p = project(campusState.me.lon, campusState.me.lat, campusState.origin);
+  if (!insideBounds(p, campusState.exploredBounds)) return null;
+  return { point: [campusState.me.lon, campusState.me.lat], label: "от вас" };
 }
 
 /* --- панорамирование и зум ------------------------------------------------ */
@@ -436,15 +680,24 @@ function attachGestures(ui) {
   let last = null;
   let pointers = new Map();
   let pinchStart = null;
+  let tapTarget = null;
+  let tapPointerId = null;
+  let travelled = 0;
+  let suppressClickUntil = 0;
 
   svg.addEventListener("pointerdown", (e) => {
     pointers.set(e.pointerId, e);
     if (pointers.size === 1) {
       dragging = true;
       last = { x: e.clientX, y: e.clientY };
+      tapTarget = e.target;
+      tapPointerId = e.pointerId;
+      travelled = 0;
       svg.setPointerCapture(e.pointerId);
     } else if (pointers.size === 2) {
       dragging = false;
+      tapTarget = null;
+      tapPointerId = null;
       const [a, b] = [...pointers.values()];
       pinchStart = {
         dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
@@ -467,22 +720,34 @@ function attachGestures(ui) {
     const rect = svg.getBoundingClientRect();
     const vb = svg.viewBox.baseVal;
     const unitsPerPx = vb.width / rect.width;
-    campusState.view.x += (e.clientX - last.x) * unitsPerPx;
-    campusState.view.y += (e.clientY - last.y) * unitsPerPx;
+    const dx = e.clientX - last.x;
+    const dy = e.clientY - last.y;
+    travelled += Math.hypot(dx, dy);
+    campusState.view.x += dx * unitsPerPx;
+    campusState.view.y += dy * unitsPerPx;
     last = { x: e.clientX, y: e.clientY };
     applyView(ui);
   });
 
-  const release = (e) => {
+  const release = (e, allowTap) => {
+    const wasTap = allowTap && pointers.size === 1 && e.pointerId === tapPointerId
+      && travelled < 7 && tapTarget;
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinchStart = null;
     if (pointers.size === 0) {
       dragging = false;
       last = null;
     }
+    if (allowTap) suppressClickUntil = performance.now() + 400;
+    if (wasTap) activate(tapTarget);
+    if (pointers.size === 0) {
+      tapTarget = null;
+      tapPointerId = null;
+      travelled = 0;
+    }
   };
-  svg.addEventListener("pointerup", release);
-  svg.addEventListener("pointercancel", release);
+  svg.addEventListener("pointerup", (e) => release(e, true));
+  svg.addEventListener("pointercancel", (e) => release(e, false));
 
   svg.addEventListener("wheel", (e) => {
     e.preventDefault();
@@ -491,10 +756,15 @@ function attachGestures(ui) {
   }, { passive: false });
 
   const activate = (target) => {
-    const node = target.closest ? target.closest(".campus-feat") : null;
+    const node = target.closest
+      ? target.closest('.campus-feat[data-interactive="true"]')
+      : null;
     if (node && node.dataset.featureId) selectFeature(node.dataset.featureId, ui);
   };
-  svg.addEventListener("click", (e) => activate(e.target));
+  svg.addEventListener("click", (e) => {
+    if (performance.now() < suppressClickUntil) return;
+    activate(e.target);
+  });
   svg.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -514,6 +784,10 @@ function startLocating(ui, statusEl) {
     statusEl.textContent = "GPS недоступен";
     return;
   }
+  if (campusState.watchId !== null) {
+    navigator.geolocation.clearWatch(campusState.watchId);
+    campusState.watchId = null;
+  }
   statusEl.textContent = "Ищем вас…";
   campusState.watchId = navigator.geolocation.watchPosition(
     (pos) => {
@@ -523,12 +797,19 @@ function startLocating(ui, statusEl) {
       ui.me.setAttribute("cx", p.x.toFixed(1));
       ui.me.setAttribute("cy", p.y.toFixed(1));
       ui.me.removeAttribute("hidden");
-      const inside = p.x >= campusState.bounds.minX && p.x <= campusState.bounds.maxX
-        && p.y >= campusState.bounds.minY && p.y <= campusState.bounds.maxY;
-      statusEl.textContent = inside
-        ? `Вы на карте · точность ${Math.round(accuracy)} м`
-        : "Вы вне кампуса";
-      if (campusState.selected) selectFeature(campusState.selected, ui);
+      const insideExplored = insideBounds(p, campusState.exploredBounds);
+      const insideCampus = campusState.campusBoundary
+        ? coordinateInPolygon(longitude, latitude, campusState.campusBoundary)
+        : insideBounds(p, campusState.campusBounds);
+      ui.me.classList.toggle("is-outside-explored", !insideExplored);
+      statusEl.textContent = insideExplored
+        ? `Вы в изученной области · точность ${Math.round(accuracy)} м`
+        : insideCampus
+          ? `Вы в неизведанном регионе кампуса · точность ${Math.round(accuracy)} м`
+          : `Вы вне области карты · точность ${Math.round(accuracy)} м`;
+      if (campusState.selected) {
+        selectFeature(campusState.selected, ui, { preserveRoute: insideExplored });
+      }
     },
     (err) => {
       // Отказ в доступе — обычное дело, это не ошибка приложения.
@@ -543,14 +824,18 @@ function startLocating(ui, statusEl) {
 
 const LEGEND_LABELS = {
   academic: "Учебные", library: "Библиотека", dorm: "Общежития",
-  food: "Еда", sport: "Спорт", "living-zone": "Жилые зоны",
-  civic: "Общественные", park: "Парк",
+  food: "Еда", sport: "Спорт", grounds: "Территории институтов",
+  "living-zone": "Жилые зоны", civic: "Общественные", park: "Парк",
 };
 
 function buildLegend(data) {
   const host = document.querySelector("#campusLegend");
   if (!host) return;
-  const present = new Set(data.features.map((f) => f.properties.category));
+  const present = new Set(
+    data.features
+      .filter((f) => featureIsExplored(f, campusState.origin, campusState.exploredBounds))
+      .map((f) => f.properties.category)
+  );
   host.innerHTML = "";
   Object.keys(LEGEND_LABELS).forEach((cat) => {
     if (!present.has(cat)) return;
@@ -559,6 +844,12 @@ function buildLegend(data) {
     item.innerHTML = `<i class="campus-swatch campus-swatch-${cat}"></i>${LEGEND_LABELS[cat]}`;
     host.appendChild(item);
   });
+  if (data.exploration) {
+    const item = document.createElement("span");
+    item.className = "campus-legend-item";
+    item.innerHTML = '<i class="campus-swatch campus-swatch-unexplored"></i>Неизведано';
+    host.appendChild(item);
+  }
 }
 
 /* --- инициализация -------------------------------------------------------- */
@@ -578,8 +869,8 @@ async function initCampusMap() {
   }
   campusState.data = data;
 
-  routeGraph = buildRouteGraph(data.features);
   const ui = buildSvg(host, data);
+  routeGraph = buildRouteGraph(data.features, campusState.origin, campusState.exploredBounds);
   applyView(ui);
   attachGestures(ui);
 
@@ -596,7 +887,9 @@ async function initCampusMap() {
   const note = document.querySelector("#campusSourceNote");
   if (note) {
     note.textContent = `${count} объектов · ${missing} не найдено · ` +
-      "геометрия © участники OpenStreetMap, ODbL · ничего не сверено на местности";
+      "светлый сектор — подготовленная часть данных, не административная граница · " +
+      "основа © участники OpenStreetMap, ODbL · приблизительные объекты отмечены «?» · " +
+      "ничего не сверено на местности";
   }
 }
 

@@ -2,13 +2,58 @@
  "type": "FeatureCollection",
  "name": "ZHIDAO Hainan campus",
  "crs_note": "WGS-84 (EPSG:4326) throughout, matching what device GPS returns. NOT GCJ-02 and NOT BD-09: never draw on an AMap or Baidu tile layer without converting first.",
- "attribution": "Geometry (c) OpenStreetMap contributors, ODbL 1.0",
+ "attribution": "Base geometry (c) OpenStreetMap contributors, ODbL 1.0. Approximate overlays are identified in their feature metadata.",
  "verified_note": "verified=false everywhere; nothing checked on the ground.",
  "missing": [
   {
    "name_zh": "立德路",
    "name_ru": "Улица Лидэ",
    "note": "Western boundary named in the handoff, not found in OSM."
+  }
+ ],
+ "exploration": {
+  "mode": "core-feature-envelope",
+  "label_ru": "НЕИЗВЕДАННЫЕ РЕГИОНЫ",
+  "label_zh": "未探索区域",
+  "padding_metres": 55,
+  "unknown_band_metres": 125,
+  "note": "Visual exploration state, not an administrative or surveyed boundary.",
+  "core_feature_ids": [
+   "osm-way-1125998153",
+   "osm-way-1125998154",
+   "osm-way-1125998155",
+   "osm-way-1125998156",
+   "osm-way-1125998157",
+   "osm-way-1125998158",
+   "osm-way-1125998165",
+   "osm-way-1223487854"
+  ],
+  "anchor_points": [
+   {
+    "id": "osm-node-sports-centre-anchor",
+    "coordinates": [
+     110.020989,
+     18.403751
+    ],
+    "note": "Original OSM point for the sports centre; the displayed footprint is only a placeholder."
+   }
+  ]
+ },
+ "landmark_groups": [
+  {
+   "id": "library-complex",
+   "name_ru": "Библиотека",
+   "name_zh": "图书馆",
+   "feature_ids": [
+    "osm-way-1125998154",
+    "osm-way-1125998155",
+    "osm-way-1125998156",
+    "osm-way-1125998157",
+    "osm-way-1125998158"
+   ],
+   "verified": false,
+   "approximate": true,
+   "note": "User-identified library complex; the five individual OSM footprints are unnamed."
   }
  ],
  "features": [
@@ -5309,7 +5354,7 @@
     "id": "osm-way-1223487861",
     "name_zh": "中央民族大学海南国际学院",
     "name_ru": "Институт Центрального университета национальностей",
-    "category": "academic",
+    "category": "grounds",
     "named": true,
     "source": "openstreetmap",
     "osm_id": "way/1223487861",
@@ -5361,7 +5406,7 @@
     "id": "osm-way-1223487862",
     "name_zh": "北京体育大学海南国际学院",
     "name_ru": "Институт Пекинского спортивного университета",
-    "category": "academic",
+    "category": "grounds",
     "named": true,
     "source": "openstreetmap",
     "osm_id": "way/1223487862",
@@ -5413,7 +5458,7 @@
     "id": "osm-way-1223487863",
     "name_zh": "中国传媒大学海南国际学院",
     "name_ru": "Институт Китайского университета коммуникаций",
-    "category": "academic",
+    "category": "grounds",
     "named": true,
     "source": "openstreetmap",
     "osm_id": "way/1223487863",

@@ -184,7 +184,15 @@ def create_app(
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "same-origin"
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        # Геолокация нужна только участнику на /app/ и запрашивается явной
+        # кнопкой «Где я». В консоли архитектора она остаётся запрещённой.
+        is_participant_app = (
+            request.url.path == "/app" or request.url.path.startswith("/app/")
+        )
+        geolocation = "(self)" if is_participant_app else "()"
+        response.headers["Permissions-Policy"] = (
+            f"camera=(), microphone=(), geolocation={geolocation}"
+        )
         if request.url.path.startswith(("/architect", "/app")):
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; style-src 'self'; script-src 'self'; "
