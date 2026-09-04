@@ -13,7 +13,7 @@
    здесь, в одном месте, а не в данных.
    =========================================================================== */
 
-const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260904-identified";
+const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260904-clip";
 
 /* Плоская проекция в метры. Для площадки 1.2 x 1.4 км искажение
    пренебрежимо, а читается она несравнимо проще Меркатора. */
@@ -438,6 +438,13 @@ function buildSvg(host, data) {
   layer.setAttribute("class", "campus-layer");
   svg.appendChild(layer);
 
+  // Объекты рисуются в отдельной обрезанной группе. Подписи, туман и кромка
+  // остаются снаружи неё: туман обрезать нельзя, он и есть всё остальное.
+  const featureLayer = document.createElementNS(NS, "g");
+  featureLayer.setAttribute("class", "campus-features");
+  if (explorationClipId) featureLayer.setAttribute("clip-path", `url(#${explorationClipId})`);
+  layer.appendChild(featureLayer);
+
   features.forEach((f) => {
     const p = f.properties;
     const isArea = f.geometry.type === "Polygon";
@@ -454,6 +461,10 @@ function buildSvg(host, data) {
       node.setAttribute("points", pts.join(" "));
     }
     const explored = featureIsExplored(f, origin, exploredRegion);
+    // Дорога за пределами кампуса не рисуется совсем. Затемнить её мало:
+    // очертания за кромкой сами по себе вопрос «а что там», а ответ на него —
+    // деревня, куда ходить нельзя.
+    if (!explored && p.category === "road" && !featureTouchesExplored(f, origin, exploredRegion)) return;
     node.setAttribute(
       "class",
       `campus-feat campus-${p.category}${explored ? "" : " is-unexplored"}`
@@ -469,7 +480,7 @@ function buildSvg(host, data) {
     } else if (!explored) {
       node.setAttribute("aria-hidden", "true");
     }
-    layer.appendChild(node);
+    featureLayer.appendChild(node);
   });
 
   // Подписи поверх всего. Только именованные и только достаточно крупные:
