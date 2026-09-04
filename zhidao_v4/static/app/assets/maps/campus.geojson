@@ -45,8 +45,9 @@
     "osm-way-1125998158"
    ],
    "verified": false,
-   "approximate": true,
-   "note": "User-identified library complex; the five individual OSM footprints are unnamed."
+   "approximate": false,
+   "note": "User-identified library complex; the five individual OSM footprints are unnamed. Опознан по снимку Esri, тайл z17 105591/58717; geometry from OSM, verified on the ground: no.",
+   "identified_from": "Esri World Imagery"
   }
  ],
  "features": [
@@ -3339,7 +3340,9 @@
     "named": false,
     "source": "openstreetmap",
     "osm_id": "way/1125998154",
-    "verified": false
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "identification_note": "Библиотечный комплекс опознан пользователем и сверен со снимком Esri, тайл z17 105591/58717. Опознание — не замер: verified остаётся false."
    }
   },
   {
@@ -3471,7 +3474,9 @@
     "named": false,
     "source": "openstreetmap",
     "osm_id": "way/1125998155",
-    "verified": false
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "identification_note": "Библиотечный комплекс опознан пользователем и сверен со снимком Esri, тайл z17 105591/58717. Опознание — не замер: verified остаётся false."
    }
   },
   {
@@ -3603,7 +3608,9 @@
     "named": false,
     "source": "openstreetmap",
     "osm_id": "way/1125998156",
-    "verified": false
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "identification_note": "Библиотечный комплекс опознан пользователем и сверен со снимком Esri, тайл z17 105591/58717. Опознание — не замер: verified остаётся false."
    }
   },
   {
@@ -3727,7 +3734,9 @@
     "named": false,
     "source": "openstreetmap",
     "osm_id": "way/1125998157",
-    "verified": false
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "identification_note": "Библиотечный комплекс опознан пользователем и сверен со снимком Esri, тайл z17 105591/58717. Опознание — не замер: verified остаётся false."
    }
   },
   {
@@ -3871,7 +3880,9 @@
     "named": false,
     "source": "openstreetmap",
     "osm_id": "way/1125998158",
-    "verified": false
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "identification_note": "Библиотечный комплекс опознан пользователем и сверен со снимком Esri, тайл z17 105591/58717. Опознание — не замер: verified остаётся false."
    }
   },
   {
@@ -4953,7 +4964,10 @@
     "named": true,
     "source": "openstreetmap",
     "osm_id": "way/1223487854",
-    "verified": false
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "primary": true,
+    "identification_note": "Основная столовая по указанию пользователя. Опознана по крыше с солнечными панелями на снимке Esri, тайл z18 211186/117435."
    }
   },
   {
@@ -5860,7 +5874,8 @@
     "verified": false,
     "approximate": true,
     "source": "offset measured from Baidu imagery against the OSM stadium anchor",
-    "accuracy_note": "Position estimated to roughly +-30 m. Needs a GPS fix on site."
+    "accuracy_note": "Отметка попадает на реальные корты на снимке Esri, тайл z18 211182/117436. Это подтверждает опознание, но не координату: нужен замер GPS на месте.",
+    "identified_from": "Esri World Imagery"
    }
   },
   {
