@@ -13,7 +13,7 @@
    здесь, в одном месте, а не в данных.
    =========================================================================== */
 
-const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260904-region-mask";
+const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260904-labels3";
 
 /* Плоская проекция в метры. Для площадки 1.2 x 1.4 км искажение
    пренебрежимо, а читается она несравнимо проще Меркатора. */
@@ -28,6 +28,7 @@ const campusState = {
   campusBoundary: null,
   exploredBounds: null,
   exploredRegion: null,  // контур подготовленной области, не прямоугольник
+  labelNodes: [],    // подписи, которым нужен пересчёт размера при зуме
   view: { x: 0, y: 0, scale: 1 },
   selected: null,
   watchId: null,
@@ -303,9 +304,60 @@ const DRAW_ORDER = [
    четырнадцать одинаковых общежитий значит залить карту словом «Общежитие». */
 const LABEL_MIN_AREA = 1200;   // кв. метры
 const LABEL_CATEGORIES = new Set([
-  "academic", "library", "food", "sport", "civic",
+  "academic", "library", "food", "sport", "civic", "dorm", "living-zone",
 ]);
+// У этих категорий нет собственных имён ни в OSM, ни где-либо ещё. Подписываем
+// их родовым словом — придумывать номера общежитиям значит сочинять данные.
+const GENERIC_LABEL_CATEGORIES = new Set(["dorm", "living-zone"]);
+// Здесь подписывается каждое здание, а не одно на категорию: четырнадцать
+// общежитий — это четырнадцать разных мест, куда человек идёт спать.
+const PER_BUILDING_LABELS = new Set(["dorm"]);
+const LABEL_MIN_AREA_BY_CATEGORY = { dorm: 300 };
+// Порог зума, ниже которого подпись прячется. Иначе четырнадцать одинаковых
+// слов «Общежитие» заливают карту на общем плане.
+const LABEL_MIN_SCALE = { dorm: 2.2 };
+// Кто уступает место при наложении. Ориентиры, по которым человек себя находит,
+// важнее родовых слов: столовую ищут, «Общежитие» просто подтверждает, что ты
+// уже пришёл. Меньше число — выше приоритет.
+const LABEL_PRIORITY = {
+  group: 0, academic: 1, food: 2, civic: 3, sport: 4,
+  library: 5, "living-zone": 6, road: 7, dorm: 8,
+};
 const IMPORTANT_ROAD_NAMES = new Set(["博学大道"]);
+
+/* Подпись в две строки: русская и китайская помельче. Базовый размер хранится
+   на узле, а на экране он держится постоянным — applyView делит его на масштаб.
+   Иначе при зуме буквы растут вместе с картой и закрывают то, что подписывают. */
+function appendLabel(layer, NS, opts) {
+  const label = document.createElementNS(NS, "text");
+  label.setAttribute("class", opts.className);
+  label.setAttribute("x", opts.x.toFixed(1));
+  label.setAttribute("y", opts.y.toFixed(1));
+  label.setAttribute("text-anchor", "middle");
+  label.dataset.baseSize = String(opts.size);
+  label.dataset.priority = String(opts.priority ?? 9);
+  if (opts.minScale) label.dataset.minScale = String(opts.minScale);
+
+  const ru = document.createElementNS(NS, "tspan");
+  ru.setAttribute("x", opts.x.toFixed(1));
+  // Две строки поднимаем на пол-строки, чтобы блок остался по центру объекта.
+  if (opts.zh) ru.setAttribute("dy", "-0.30em");
+  ru.textContent = opts.ru;
+  label.appendChild(ru);
+
+  if (opts.zh) {
+    const zh = document.createElementNS(NS, "tspan");
+    zh.setAttribute("class", "campus-label-zh");
+    zh.setAttribute("x", opts.x.toFixed(1));
+    // em здесь считается от размера самой строки, поэтому отступ переживает зум.
+    zh.setAttribute("dy", "1.45em");
+    zh.textContent = opts.zh;
+    label.appendChild(zh);
+  }
+
+  layer.appendChild(label);
+  return label;
+}
 
 function buildSvg(host, data) {
   const features = data.features.slice().sort(
@@ -431,14 +483,18 @@ function buildSvg(host, data) {
     const p = f.properties;
     if (groupedLabelFeatureIds.has(p.id)) return;
     const importantRoad = p.category === "road" && IMPORTANT_ROAD_NAMES.has(p.name_zh);
-    if (!p.named || (!LABEL_CATEGORIES.has(p.category) && !importantRoad)) return;
+    const genericName = GENERIC_LABEL_CATEGORIES.has(p.category);
+    if ((!p.named && !genericName) || (!LABEL_CATEGORIES.has(p.category) && !importantRoad)) return;
     if (importantRoad ? !featureTouchesExplored(f, origin, exploredRegion)
       : !featureIsExplored(f, origin, exploredRegion)) return;
     const labelKey = importantRoad ? `road:${p.name_zh}` : `${p.category}:${p.name_ru}`;
-    if (seenLabels.has(labelKey)) return;
-    seenLabels.add(labelKey);
+    if (!PER_BUILDING_LABELS.has(p.category)) {
+      if (seenLabels.has(labelKey)) return;
+      seenLabels.add(labelKey);
+    }
     const ring = f.geometry.type === "Polygon" ? f.geometry.coordinates[0] : f.geometry.coordinates;
-    if (f.geometry.type === "Polygon" && polygonArea(ring, origin) < LABEL_MIN_AREA) return;
+    const minArea = LABEL_MIN_AREA_BY_CATEGORY[p.category] ?? LABEL_MIN_AREA;
+    if (f.geometry.type === "Polygon" && polygonArea(ring, origin) < minArea) return;
 
     const projected = ring.map(([lon, lat]) => project(lon, lat, origin));
     const labelPoints = importantRoad
@@ -450,23 +506,22 @@ function buildSvg(host, data) {
       sx += q.x;
       sy += q.y;
     });
-    const label = document.createElementNS(NS, "text");
-    label.setAttribute("class", `campus-label campus-label-${p.category}`);
     // Размер задаётся в пользовательских единицах, а они здесь метры: 11 единиц
     // при виде на 1250 м дают три пикселя на экране. Считаем от ширины кадра.
     const base = (bounds.maxX - bounds.minX) / 46;
     const size = p.category === "boundary" ? base * 1.25
       : p.category === "living-zone" ? base * 0.82
       : base;
-    label.setAttribute("font-size", size.toFixed(1));
-    label.setAttribute("stroke-width", (size * 0.30).toFixed(1));
-    label.setAttribute("x", (sx / labelPoints.length).toFixed(1));
-    label.setAttribute("y", (sy / labelPoints.length).toFixed(1));
-    label.setAttribute("text-anchor", "middle");
-    label.textContent = importantRoad
-      ? `${p.name_ru} / ${p.name_zh}`
-      : p.approximate ? `${p.name_ru} ?` : p.name_ru;
-    layer.appendChild(label);
+    appendLabel(layer, NS, {
+      className: `campus-label campus-label-${p.category}`,
+      x: sx / labelPoints.length,
+      y: sy / labelPoints.length,
+      size,
+      minScale: LABEL_MIN_SCALE[p.category] || 0,
+      priority: LABEL_PRIORITY[p.category] ?? 9,
+      ru: p.approximate ? `${p.name_ru} ?` : p.name_ru,
+      zh: p.name_zh || "",
+    });
   });
 
   (data.landmark_groups || []).forEach((group) => {
@@ -480,17 +535,17 @@ function buildSvg(host, data) {
       lat += c.lat;
     });
     const q = project(lon / members.length, lat / members.length, origin);
-    const label = document.createElementNS(NS, "text");
-    const size = (bounds.maxX - bounds.minX) / 43;
-    label.setAttribute("class", "campus-label campus-label-group");
-    label.setAttribute("font-size", size.toFixed(1));
-    label.setAttribute("stroke-width", (size * 0.30).toFixed(1));
-    label.setAttribute("x", q.x.toFixed(1));
-    label.setAttribute("y", q.y.toFixed(1));
-    label.setAttribute("text-anchor", "middle");
-    label.textContent = `${group.name_ru} / ${group.name_zh}`
-      + (group.approximate || group.verified === false ? " ?" : "");
-    layer.appendChild(label);
+    const mark = group.approximate || group.verified === false ? " ?" : "";
+    appendLabel(layer, NS, {
+      className: "campus-label campus-label-group",
+      x: q.x,
+      y: q.y,
+      size: (bounds.maxX - bounds.minX) / 43,
+      minScale: 0,
+      priority: LABEL_PRIORITY.group,
+      ru: `${group.name_ru}${mark}`,
+      zh: group.name_zh || "",
+    });
   });
 
   // Слой маршрута — под отметкой позиции, но над зданиями.
@@ -526,7 +581,7 @@ function buildSvg(host, data) {
       label.setAttribute("class", "campus-unexplored-label");
       label.setAttribute("x", ((bounds.minX + bounds.maxX) / 2).toFixed(1));
       label.setAttribute("y", y.toFixed(1));
-      label.setAttribute("font-size", unknownSize.toFixed(1));
+      label.dataset.baseSize = String(unknownSize);
       label.setAttribute("text-anchor", "middle");
       label.textContent = text;
       layer.appendChild(label);
@@ -548,8 +603,14 @@ function buildSvg(host, data) {
   me.setAttribute("hidden", "hidden");
   layer.appendChild(me);
 
+  campusState.labelNodes = Array.from(layer.querySelectorAll("text[data-base-size]"));
+
   host.innerHTML = "";
   host.appendChild(svg);
+  // Только теперь: getBBox на неотрисованном дереве возвращает нули, и разбор
+  // наложений принял бы все подписи за точку в начале координат.
+  lastLabelScale = null;
+  applyLabelScale(campusState.view.scale);
   return { svg, layer, me, route };
 }
 
@@ -797,6 +858,65 @@ function startingPoint() {
 function applyView(ui) {
   const v = campusState.view;
   ui.layer.setAttribute("transform", `translate(${v.x} ${v.y}) scale(${v.scale})`);
+  applyLabelScale(v.scale);
+}
+
+/* Подписи держат постоянный размер на экране: слой масштабируется, поэтому
+   размер в единицах карты делится на тот же масштаб. Панорамирование масштаб
+   не меняет, и тогда обход узлов пропускается — он идёт на каждый pointermove. */
+let lastLabelScale = null;
+
+function applyLabelScale(scale) {
+  if (scale === lastLabelScale) return;
+  lastLabelScale = scale;
+  const nodes = campusState.labelNodes || [];
+  const candidates = [];
+  nodes.forEach((node) => {
+    const base = Number(node.dataset.baseSize);
+    const size = base / scale;
+    node.setAttribute("font-size", size.toFixed(2));
+    node.setAttribute("stroke-width", (size * 0.30).toFixed(2));
+    const minScale = Number(node.dataset.minScale || 0);
+    if (minScale && scale < minScale) {
+      node.style.display = "none";
+      return;
+    }
+    node.style.display = "";
+    candidates.push(node);
+  });
+  declutterLabels(candidates, scale);
+}
+
+/* Разбор наложений: жадно, по приоритету. Подпись, перекрывающая уже принятую,
+   прячется до следующего шага зума — на общем плане остаётся то, по чему
+   ориентируются, вблизи проступает остальное. Считается только при смене
+   масштаба: getBBox дёргает пересчёт вёрстки, на каждый pointermove это дорого. */
+function declutterLabels(nodes, scale) {
+  const sorted = nodes.slice().sort(
+    (a, b) => Number(a.dataset.priority) - Number(b.dataset.priority)
+  );
+  const kept = [];
+  const gap = 2 / scale;   // зазор в единицах карты, постоянный на экране
+  sorted.forEach((node) => {
+    let box;
+    try {
+      box = node.getBBox();
+    } catch (err) {
+      return;               // узел ещё не в отрисованном дереве
+    }
+    const rect = {
+      x1: box.x - gap, y1: box.y - gap,
+      x2: box.x + box.width + gap, y2: box.y + box.height + gap,
+    };
+    const clash = kept.some((r) => (
+      rect.x1 < r.x2 && rect.x2 > r.x1 && rect.y1 < r.y2 && rect.y2 > r.y1
+    ));
+    if (clash) {
+      node.style.display = "none";
+      return;
+    }
+    kept.push(rect);
+  });
 }
 
 function attachGestures(ui) {
