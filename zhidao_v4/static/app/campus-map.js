@@ -190,6 +190,11 @@ function buildSvg(host, data) {
     layer.appendChild(label);
   });
 
+  // Слой маршрута — под отметкой позиции, но над зданиями.
+  const route = document.createElementNS(NS, "g");
+  route.setAttribute("class", "campus-route");
+  layer.appendChild(route);
+
   // Отметка «где я» — создаётся сразу, показывается после первого фикса GPS.
   const me = document.createElementNS(NS, "circle");
   me.setAttribute("class", "campus-me");
@@ -199,7 +204,7 @@ function buildSvg(host, data) {
 
   host.innerHTML = "";
   host.appendChild(svg);
-  return { svg, layer, me };
+  return { svg, layer, me, route };
 }
 
 function featureById(id) {
@@ -234,6 +239,29 @@ function selectFeature(id, ui) {
   } else {
     dist.hidden = true;
   }
+
+  const btn = card.querySelector("#campusRouteBtn");
+  const summary = card.querySelector("[data-field=route]");
+  if (!btn) return;
+  const start = startingPoint();
+  btn.hidden = !start;
+  if (start) btn.textContent = `Маршрут ${start.label}`;
+  summary.hidden = true;
+  btn.onclick = () => {
+    const dest = centroidOf(f);
+    const r = drawRoute(ui, start.point, [dest.lon, dest.lat]);
+    summary.hidden = false;
+    if (!r.ok) {
+      summary.className = "campus-route-summary is-bad";
+      summary.textContent = `Маршрут не построен: ${r.reason}.`;
+      return;
+    }
+    const mins = Math.max(1, Math.round(r.total / WALK_SPEED_MS / 60));
+    summary.className = "campus-route-summary";
+    // Честно разделяем: по дорогам и по прямой, потому что тропинок в данных нет.
+    summary.textContent = `${Math.round(r.total)} м, около ${mins} мин пешком. `
+      + `Из них ${Math.round(r.offRoad)} м по прямой — внутренних дорожек в данных нет.`;
+  };
 }
 
 function centroidOf(feature) {
@@ -255,6 +283,144 @@ function distanceToFeature(from, feature) {
   const dx = (c.lon - from.lon) * METRES_PER_DEG_LON * k;
   const dy = (c.lat - from.lat) * METRES_PER_DEG_LAT;
   return Math.hypot(dx, dy);
+}
+
+
+/* ===========================================================================
+   Маршруты
+   ---------------------------------------------------------------------------
+   Граф строится из дорожной сети OSM. Внутренних дорожек кампуса в данных нет,
+   поэтому подход от дороги к зданию бывает длиной больше сотни метров. Рисуем
+   его пунктиром и называем прямой — вести человека сплошной линией там, где мы
+   не знаем тропы, было бы враньём.
+   =========================================================================== */
+
+const WALK_SPEED_MS = 1.35;        // ~4.9 км/ч, спокойный шаг
+const ROUTE_DEFAULT_START = "Жилая зона 1";
+
+let routeGraph = null;
+
+function nodeKey(c) {
+  return `${c[0].toFixed(7)},${c[1].toFixed(7)}`;
+}
+
+function metresBetween(a, b) {
+  const k = Math.cos((a[1] * Math.PI) / 180);
+  return Math.hypot((a[0] - b[0]) * METRES_PER_DEG_LON * k,
+                    (a[1] - b[1]) * METRES_PER_DEG_LAT);
+}
+
+function buildRouteGraph(features) {
+  const adj = new Map();
+  const pos = new Map();
+  const link = (a, b) => {
+    const ka = nodeKey(a);
+    const kb = nodeKey(b);
+    pos.set(ka, a);
+    pos.set(kb, b);
+    if (!adj.has(ka)) adj.set(ka, []);
+    if (!adj.has(kb)) adj.set(kb, []);
+    const w = metresBetween(a, b);
+    adj.get(ka).push([kb, w]);
+    adj.get(kb).push([ka, w]);
+  };
+  features.filter((f) => f.properties.category === "road").forEach((f) => {
+    const cs = f.geometry.coordinates;
+    for (let i = 0; i < cs.length - 1; i += 1) link(cs[i], cs[i + 1]);
+  });
+  return { adj, pos };
+}
+
+function nearestNode(point) {
+  let best = null;
+  let bestD = Infinity;
+  routeGraph.pos.forEach((c, k) => {
+    const d = metresBetween(point, c);
+    if (d < bestD) {
+      bestD = d;
+      best = k;
+    }
+  });
+  return { key: best, distance: bestD, coord: routeGraph.pos.get(best) };
+}
+
+function shortestPath(fromKey, toKey) {
+  // Дейкстра на линейной очереди: 485 узлов, куча тут ничего не выиграет.
+  const dist = new Map([[fromKey, 0]]);
+  const prev = new Map();
+  const done = new Set();
+  while (true) {
+    let cur = null;
+    let curD = Infinity;
+    dist.forEach((d, k) => {
+      if (!done.has(k) && d < curD) {
+        curD = d;
+        cur = k;
+      }
+    });
+    if (cur === null) return null;
+    if (cur === toKey) break;
+    done.add(cur);
+    (routeGraph.adj.get(cur) || []).forEach(([nb, w]) => {
+      if (done.has(nb)) return;
+      const nd = curD + w;
+      if (nd < (dist.has(nb) ? dist.get(nb) : Infinity)) {
+        dist.set(nb, nd);
+        prev.set(nb, cur);
+      }
+    });
+  }
+  const path = [toKey];
+  while (path[0] !== fromKey) {
+    const p = prev.get(path[0]);
+    if (!p) return null;
+    path.unshift(p);
+  }
+  return { path, length: dist.get(toKey) };
+}
+
+function clearRoute(ui) {
+  ui.route.innerHTML = "";
+}
+
+function drawRoute(ui, from, to) {
+  clearRoute(ui);
+  const NS = "http://www.w3.org/2000/svg";
+
+  const a = nearestNode(from);
+  const b = nearestNode(to);
+  if (!a.key || !b.key) return { ok: false, reason: "нет дорожной сети" };
+
+  const found = shortestPath(a.key, b.key);
+  if (!found) {
+    // Две компоненты связности: путь между ними по данным не существует.
+    return { ok: false, reason: "дороги между этими точками не связаны в данных" };
+  }
+
+  const line = (points, cls) => {
+    const el = document.createElementNS(NS, "polyline");
+    el.setAttribute("class", cls);
+    el.setAttribute("points", points.map(([lon, lat]) => {
+      const q = project(lon, lat, campusState.origin);
+      return `${q.x.toFixed(1)},${q.y.toFixed(1)}`;
+    }).join(" "));
+    ui.route.appendChild(el);
+  };
+
+  line([from, a.coord], "route-leg");
+  line(found.path.map((k) => routeGraph.pos.get(k)), "route-main");
+  line([b.coord, to], "route-leg");
+
+  const offRoad = a.distance + b.distance;
+  return { ok: true, road: found.length, offRoad, total: found.length + offRoad };
+}
+
+function startingPoint() {
+  if (campusState.me) return { point: [campusState.me.lon, campusState.me.lat], label: "от вас" };
+  const home = campusState.data.features.find((f) => f.properties.name_ru === ROUTE_DEFAULT_START);
+  if (!home) return null;
+  const c = centroidOf(home);
+  return { point: [c.lon, c.lat], label: `от «${ROUTE_DEFAULT_START}»` };
 }
 
 /* --- панорамирование и зум ------------------------------------------------ */
@@ -412,6 +578,7 @@ async function initCampusMap() {
   }
   campusState.data = data;
 
+  routeGraph = buildRouteGraph(data.features);
   const ui = buildSvg(host, data);
   applyView(ui);
   attachGestures(ui);
