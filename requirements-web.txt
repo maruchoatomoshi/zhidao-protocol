@@ -1,3 +1,7 @@
 fastapi==0.141.1
 uvicorn[standard]==0.52.4
 httpx==0.28.1
+# zoneinfo берёт базу часовых поясов из системы, но в Windows её нет.
+# Без этого пакета zhidao_v4.seasons падает на ZoneInfo("Asia/Shanghai"),
+# и локальные тесты не запускаются вовсе, хотя на Linux и в CI всё зелено.
+tzdata==2026.2
