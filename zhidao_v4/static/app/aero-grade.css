@@ -1045,3 +1045,79 @@
     #dfeef5;
   border-color: rgba(120, 160, 184, .8);
 }
+
+/* =========================================================================
+   Состояние ненаполненного раздела
+
+   Экраны-заглушки обрывались, и дальше шла голая фотография: текст на ней не
+   читался, а раздел выглядел сломанным, а не ждущим наполнения. Закрывающая
+   карточка даёт экрану конец и, главное, собственный фон под текстом —
+   контраст перестаёт зависеть от того, что именно на снимке под ним.
+
+   Тон нарочно спокойный, без Metalheart: тёмный слой по V4_DESIGN остаётся
+   редким, а «раздел пока пуст» — не ошибка и не тревога.
+   ========================================================================= */
+
+.module-status {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 10px 12px;
+  margin-top: 14px;
+  padding: 15px 17px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.94), rgba(240, 251, 255, 0.88));
+}
+
+.module-status-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #ffe9a8, #f0c14c 62%, #c98f1c);
+  box-shadow: 0 0 0 3px rgba(240, 193, 76, 0.22);
+}
+
+.module-status-body strong {
+  display: block;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.module-status-body p {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.module-status-tag {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(8, 126, 232, 0.28);
+  background: rgba(255, 255, 255, 0.72);
+  color: #0754ae;   /* Deep sky из палитры V4_DESIGN; токена под него нет */
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+/* На узком экране метка уезжает под текст, иначе заголовок сжимается в
+   колонку из одной буквы — это уже было на карточке точки карты. */
+@media (max-width: 400px) {
+  .module-status { grid-template-columns: auto 1fr; }
+  .module-status-tag { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 9px; }
+}
+
+/* Структурный превью-слой заметно приглушается: это макет будущего экрана,
+   а не данные, которые вот-вот приедут. */
+.placeholder-screen .board-list,
+.placeholder-screen .shop-grid {
+  opacity: .62;
+}
+
+.placeholder-screen { padding-bottom: 22px; }

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./tokens.css?v=20260903-tok1">
   <link rel="stylesheet" href="./app.css?v=20260901-map3">
   <link rel="stylesheet" href="./aero.css?v=20260903-aero2">
-  <link rel="stylesheet" href="./aero-grade.css?v=20260905-fog-light2">
+  <link rel="stylesheet" href="./aero-grade.css?v=20260905-empty2">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -113,7 +113,6 @@
             <div class="podium-slot first"><span class="podium-avatar"></span><span class="podium-rank">1</span></div>
             <div class="podium-slot third"><span class="podium-avatar"></span><span class="podium-rank">3</span></div>
           </div>
-          <p class="board-empty-note">Подиум соберётся из реальных участников после старта сезона.</p>
         </article>
 
         <article class="glass-card board-list" data-tab-panel="rating:season">
@@ -126,7 +125,18 @@
           <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">01</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
           <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">02</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
           <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">03</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
-          <p class="board-empty-note">Дневниковый рейтинг оценивается администраторами вручную, как в сезоне 1.</p>
+        </article>
+
+        <article class="glass-card module-status">
+          <span class="module-status-dot" aria-hidden="true"></span>
+          <div class="module-status-body">
+            <strong>Раздел ещё не наполнен</strong>
+            <p>Подиум и таблица соберутся из настоящих участников после старта
+              сезона. Дневниковый рейтинг оценивают администраторы вручную, как
+              в сезоне 1. Сейчас показана только структура будущего экрана —
+              это не загрузка, ждать нечего.</p>
+          </div>
+          <span class="module-status-tag">ОЖИДАНИЕ СЕЗОНА</span>
         </article>
       </section>
 
@@ -162,7 +172,14 @@
           <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
           <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
         </div>
-        <p class="board-empty-note">Каталог и цены — конфигурация сезона, а не фронтенда. Наполнится вместе с экономикой.</p>
+        <article class="glass-card module-status">
+          <span class="module-status-dot" aria-hidden="true"></span>
+          <div class="module-status-body">
+            <strong>Каталог задаёт сервер, не приложение</strong>
+            <p>Товары, цены и лимиты — конфигурация сезона. Здесь не появится ничего, пока не будет настроена экономика: приложение показывает результат, а не решает, сколько что стоит.</p>
+          </div>
+          <span class="module-status-tag">ЭКОНОМИКА НЕ НАСТРОЕНА</span>
+        </article>
       </section>
 
       <!-- ============================================================
@@ -173,8 +190,6 @@
           <div><span class="system-label">COLLECTION ARCHIVE / 箱子</span><h1 id="casesTitle">Коллекция</h1></div>
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
-
-        <p class="board-empty-note top">Новый сезон начнёт новую коллекцию. Утерянная база Beijing не переносится.</p>
 
         <article class="glass-card case-row">
           <div class="case-orb common"><i></i></div>
@@ -204,6 +219,15 @@
         <div class="collection-grid" data-tab-panel="cases:cards" hidden>
           <span class="collection-slot"></span><span class="collection-slot"></span><span class="collection-slot"></span>
         </div>
+
+        <article class="glass-card module-status">
+          <span class="module-status-dot" aria-hidden="true"></span>
+          <div class="module-status-body">
+            <strong>Коллекция начнётся с нуля</strong>
+            <p>Сезон Хайнаня открывает новую коллекцию. Карточки и импланты Пекина не переносятся: та база утеряна вместе с сервером, и восстановить её нельзя. Пустые ячейки — это форма будущей сетки, а не потерянные предметы.</p>
+          </div>
+          <span class="module-status-tag">КОЛЛЕКЦИЯ ПУСТА</span>
+        </article>
       </section>
 
       <!-- ============================================================
@@ -230,6 +254,15 @@
         <div class="board-column" data-tab-panel="tasks:events" hidden>
           <article class="glass-card mission-row"><span class="mission-icon">⚡</span><div><strong>Ивент появится после старта</strong><small>Общий сюжетный момент сезона</small></div><span class="locked-tag">STANDBY</span></article>
         </div>
+
+        <article class="glass-card module-status">
+          <span class="module-status-dot" aria-hidden="true"></span>
+          <div class="module-status-body">
+            <strong>Заданий пока нет ни одного</strong>
+            <p>Рейды, поручения и ивенты заводят операторы под расписание поездки. Одна карточка в каждой вкладке показывает, как задание будет выглядеть, и ничего не значит: это образец, а не задание.</p>
+          </div>
+          <span class="module-status-tag">ДОСКА ПУСТА</span>
+        </article>
       </section>
 
       <!-- ============================================================
@@ -293,6 +326,15 @@
 
         <article class="glass-card placeholder-card"><span>★</span><div><strong>Витрина</strong><p>Любимый имплант или карточка появятся здесь после первой коллекции.</p></div></article>
         <article class="glass-card placeholder-card disabled"><span>—</span><div><strong>Beijing-архив</strong><p>Для ветеранов сезона 1 откроется отдельно, после привязки Telegram ID.</p></div></article>
+
+        <article class="glass-card module-status">
+          <span class="module-status-dot" aria-hidden="true"></span>
+          <div class="module-status-body">
+            <strong>Прочерки — это не ноль</strong>
+            <p>REP, ★ и ранг показаны прочерком, потому что аккаунта ещё нет. Это не пустой баланс и не сброшенный рейтинг: приложение не станет показывать цифру, которой не существует.</p>
+          </div>
+          <span class="module-status-tag">НЕТ АККАУНТА</span>
+        </article>
       </section>
 
       <!-- ============================================================
@@ -351,7 +393,7 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./campus-map.js?v=20260905-fog-light2" defer></script>
+  <script src="./campus-map.js?v=20260905-empty2" defer></script>
   <script src="./app.js?v=20260904-vector1" defer></script>
   <script src="./player.js?v=20260905-player3" defer></script>
 </body>
