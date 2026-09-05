@@ -391,6 +391,29 @@ function buildSvg(host, data) {
     explorationClipId = "campus-exploration-clip";
     const defs = document.createElementNS(NS, "defs");
 
+    /* Штриховка неизведанного. На картах необследованное принято именно
+       штриховать, а не заливать чёрным: это читается как «сюда не ходили»,
+       а не как «здесь ничего нет». Шаг задан в метрах карты, поэтому
+       штриховка густеет при отдалении — как настоящая бумага. */
+    const hatch = document.createElementNS(NS, "pattern");
+    hatch.setAttribute("id", "campus-fog-hatch");
+    hatch.setAttribute("patternUnits", "userSpaceOnUse");
+    hatch.setAttribute("width", "16");
+    hatch.setAttribute("height", "16");
+    hatch.setAttribute("patternTransform", "rotate(35)");
+    const hatchBg = document.createElementNS(NS, "rect");
+    hatchBg.setAttribute("width", "16");
+    hatchBg.setAttribute("height", "16");
+    hatchBg.setAttribute("class", "campus-fog-ground");
+    const hatchLine = document.createElementNS(NS, "line");
+    hatchLine.setAttribute("x1", "0");
+    hatchLine.setAttribute("y1", "0");
+    hatchLine.setAttribute("x2", "0");
+    hatchLine.setAttribute("y2", "16");
+    hatchLine.setAttribute("class", "campus-fog-stroke");
+    hatch.append(hatchBg, hatchLine);
+    defs.appendChild(hatch);
+
     const mask = document.createElementNS(NS, "mask");
     mask.setAttribute("id", explorationMaskId);
     mask.setAttribute("maskUnits", "userSpaceOnUse");
@@ -444,6 +467,19 @@ function buildSvg(host, data) {
   featureLayer.setAttribute("class", "campus-features");
   if (explorationClipId) featureLayer.setAttribute("clip-path", `url(#${explorationClipId})`);
   layer.appendChild(featureLayer);
+
+  // Подложка подготовленной области: светлая плита под объектами. Обрезка та
+  // же, поэтому плита точно совпадает с окном в тумане, и кампус читается как
+  // освещённый участок поверх несъёмленной бумаги, а не как та же бумага.
+  if (explorationClipId) {
+    const plate = document.createElementNS(NS, "rect");
+    plate.setAttribute("class", "campus-plate");
+    plate.setAttribute("x", bounds.minX);
+    plate.setAttribute("y", bounds.minY);
+    plate.setAttribute("width", w);
+    plate.setAttribute("height", h);
+    featureLayer.appendChild(plate);
+  }
 
   features.forEach((f) => {
     const p = f.properties;

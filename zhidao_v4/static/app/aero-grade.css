@@ -966,28 +966,49 @@
   scroll-margin-block: 88px 124px;
 }
 
+/* Неизведанное — не тёмный провал, а несъёмленная территория: бледная бумага
+   с диагональной штриховкой. Тёмный слой по V4_DESIGN остаётся редким
+   акцентом и живёт только в плеере, а карта перестаёт быть дырой в
+   интерфейсе. Непрозрачность по-прежнему полная: чужие дороги за кромкой
+   не должны просвечивать. */
+.campus-fog-ground { fill: #dfeef5; }
+.campus-fog-stroke {
+  stroke: #9fc0d2;
+  stroke-width: 3.2;
+  stroke-opacity: .55;
+}
+
+/* Плита подготовленной области — почти белая, чтобы кампус отделялся от
+   штриховки яркостью, а не только пунктиром кромки. */
+.campus-plate {
+  fill: #f6fcfe;
+  pointer-events: none;
+}
+
 .campus-unexplored-fog {
-  fill: #082d47;
-  /* Непрозрачно. Сквозь прежние 73% читались чужие дороги, и было непонятно,
-     что там за место — а на северо-востоке это деревня. Гадать ребёнок не
-     должен: за кромкой нет ничего, что выглядело бы проходимым. */
+  fill: url(#campus-fog-hatch);
   fill-opacity: 1;
   pointer-events: none;
 }
 
+/* Кромка кампуса. Раньше это был светящийся циан по тёмному; по бледной
+   бумаге он растворяется, поэтому берём насыщенную аква из палитры и белый
+   ореол вместо свечения. */
 .campus-exploration-edge {
   fill: none;
-  stroke: rgba(126, 235, 255, .96);
+  stroke: #0ccbd0;
   stroke-width: 2.5;
   stroke-dasharray: 9 7;
   vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 5px rgba(12, 203, 208, .65));
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, .95));
   pointer-events: none;
 }
 
 .campus-unexplored-label {
-  fill: rgba(228, 249, 255, .88);
-  stroke: rgba(3, 29, 54, .55);
+  /* Тёмные чернила по бледной бумаге: подпись читается, но не спорит с
+     подготовленной частью карты. */
+  fill: rgba(19, 78, 112, .72);
+  stroke: rgba(255, 255, 255, .75);
   stroke-width: 1;
   paint-order: stroke;
   font-family: var(--font-system);
@@ -1015,8 +1036,12 @@
   fill: #f0c14c;
 }
 
+/* Плашка легенды повторяет штриховку самой карты — иначе легенда описывает
+   не то, что человек видит. */
 .campus-swatch-unexplored {
   background:
-    repeating-linear-gradient(135deg, rgba(228, 249, 255, .28) 0 2px, transparent 2px 5px),
-    #082d47;
+    repeating-linear-gradient(125deg,
+      rgba(159, 192, 210, .85) 0 1.5px, transparent 1.5px 5px),
+    #dfeef5;
+  border-color: rgba(120, 160, 184, .8);
 }
