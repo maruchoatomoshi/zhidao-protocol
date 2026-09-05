@@ -31,7 +31,8 @@
   let tracks = [];
   let index = 0;
   let armed = false;      // ждём первого жеста, чтобы стартовать
-  let failures = 0;       // подряд не открывшиеся файлы
+  const failed = new Set();   // индексы треков, которые не открылись
+  let dead = false;           // весь список обойдён, живых файлов нет
 
   /* Хранилище может бросать исключение: приватное окно, запрет на данные сайта,
      снятие превью. Ни одно из этих мест не повод ломать приложение. */
@@ -134,30 +135,54 @@
   }
 
   audio.addEventListener("playing", () => {
-    failures = 0;
+    failed.delete(index);
     setPlayingUi(true);
     showTrack();
   });
   audio.addEventListener("pause", () => setPlayingUi(false));
-  audio.addEventListener("ended", () => { load(index + 1); play(); });
+  audio.addEventListener("ended", () => { advance(); });
+
+  /* Битый или отсутствующий файл — переходим к следующему живому. Считать
+     неудачи подряд недостаточно: удачное воспроизведение обнуляло счётчик, и
+     список мог гоняться по кругу, засыпая сервер запросами. Поэтому каждый
+     непрочитанный трек помечается, и когда помечены все — плеер замолкает
+     насовсем, до явного нажатия play. */
   audio.addEventListener("error", () => {
-    // Битый или отсутствующий файл — переходим к следующему. Если не открылся
-    // ни один, честно говорим об этом, а не крутим пустой эквалайзер.
-    failures += 1;
     setPlayingUi(false);
-    if (failures >= tracks.length) {
+    if (dead || !tracks.length) return;
+    failed.add(index);
+    if (failed.size >= tracks.length) {
+      dead = true;
       lcd("ЗВУК НЕДОСТУПЕН", "НИ ОДИН ФАЙЛ НЕ ОТКРЫЛСЯ");
       return;
     }
-    load(index + 1);
-    if (pref.enabled) play();
+    advance();
   });
+
+  /* Следующий трек, пропуская уже провалившиеся. */
+  function advance() {
+    if (dead || !tracks.length) return;
+    for (let step = 1; step <= tracks.length; step += 1) {
+      const candidate = (index + step) % tracks.length;
+      if (!failed.has(candidate)) {
+        load(candidate);
+        if (pref.enabled) play();
+        return;
+      }
+    }
+    dead = true;
+    lcd("ЗВУК НЕДОСТУПЕН", "НИ ОДИН ФАЙЛ НЕ ОТКРЫЛСЯ");
+  }
 
   toggleBtn.addEventListener("click", () => {
     if (!tracks.length) return;
     if (audio.paused) {
       pref.enabled = true;
       writePref({ enabled: true });
+      // Нажатие play — это осознанная повторная попытка: даём файлам,
+      // не открывшимся раньше, ещё один шанс (сеть могла вернуться).
+      failed.clear();
+      dead = false;
       play();
     } else {
       stop(true);
@@ -167,8 +192,7 @@
   if (nextBtn) {
     nextBtn.addEventListener("click", () => {
       if (!tracks.length) return;
-      load(index + 1);
-      if (pref.enabled) play();
+      advance();
     });
   }
 

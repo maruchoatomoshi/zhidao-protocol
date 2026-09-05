@@ -54,8 +54,11 @@ def read_id3(path: Path) -> tuple[str, str]:
             head = fh.read(10)
             if len(head) < 10 or head[:3] != b"ID3":
                 return "", ""
-            # Размер записан синхробезопасно: по 7 бит на байт.
-            size = struct.unpack(">I", b"\x00" + bytes(b & 0x7F for b in head[6:10]))[0]
+            # Размер записан синхробезопасно: четыре байта по 7 значащих бит,
+            # старший бит всегда нулевой. Это 28 бит, а не 32 — собирать их
+            # обычной распаковкой нельзя.
+            b0, b1, b2, b3 = (b & 0x7F for b in head[6:10])
+            size = (b0 << 21) | (b1 << 14) | (b2 << 7) | b3
             body = fh.read(size)
     except OSError:
         return "", ""
@@ -176,8 +179,13 @@ def main() -> int:
         for line in warned:
             print(f"   {line}")
     if tracks:
-        print("\nНе забудьте поднять ?v= у player.js в index.html — иначе "
-              "браузер отдаст старый манифест из кеша.")
+        heavy = [t for t in tracks if t["bytes"] > 5 * 1048576]
+        if heavy:
+            print(f"\nКрупных файлов (больше 5 МБ): {len(heavy)}. Приложение "
+                  "работает на мобильном интернете в Китае — для фоновой "
+                  "музыки хватает 128 kbps.")
+        print("\nМанифест запрашивается с cache: no-cache, поэтому поднимать "
+              "?v= ради него не нужно — обновится сам.")
     return 0
 
 

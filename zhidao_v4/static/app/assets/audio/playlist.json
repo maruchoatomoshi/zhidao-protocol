@@ -1,5 +1,97 @@
 {
  "note": "Собирается скриптом tools/build_playlist.py. Пустой список — нормальное состояние: плеер молчит и показывает STANDBY.",
  "shuffle": false,
- "tracks": []
+ "tracks": [
+  {
+   "id": "amirthetrash - frutiger aero",
+   "title": "frutiger aero",
+   "artist": "amirthetrash",
+   "src": "./assets/audio/amirthetrash%20-%20frutiger%20aero.mp3",
+   "bytes": 5763839
+  },
+  {
+   "id": "Aphex Twin - Pulsewidth",
+   "title": "Pulsewidth",
+   "artist": "Aphex Twin",
+   "src": "./assets/audio/Aphex%20Twin%20-%20Pulsewidth.mp3",
+   "bytes": 9219624
+  },
+  {
+   "id": "Aphex Twin - Xtal",
+   "title": "Xtal",
+   "artist": "Aphex Twin",
+   "src": "./assets/audio/Aphex%20Twin%20-%20Xtal.mp3",
+   "bytes": 11847530
+  },
+  {
+   "id": "Makoto Iida - Sega Marine Fishing",
+   "title": "Sega Marine Fishing",
+   "artist": "Makoto Iida",
+   "src": "./assets/audio/Makoto%20Iida%20-%20Sega%20Marine%20Fishing.mp3",
+   "bytes": 4626202
+  },
+  {
+   "id": "Not Kane Pixels - Glacier",
+   "title": "Glacier",
+   "artist": "Not Kane Pixels",
+   "src": "./assets/audio/Not%20Kane%20Pixels%20-%20Glacier.mp3",
+   "bytes": 5367991
+  },
+  {
+   "id": "Scizzie - Aquatic Ambience (slowed _ Reverb)",
+   "title": "Aquatic Ambience (slowed + Reverb)",
+   "artist": "Scizzie",
+   "src": "./assets/audio/Scizzie%20-%20Aquatic%20Ambience%20%28slowed%20_%20Reverb%29.mp3",
+   "bytes": 2593695
+  },
+  {
+   "id": "Secret Potion, Lofi Beats To Chill Study Sleep - New Look (Wii U Mii Maker Lofi Mix)",
+   "title": "New Look (Wii U Mii Maker Lofi Mix)",
+   "artist": "Secret Potion/Lofi Beats To Chill Study Sleep",
+   "src": "./assets/audio/Secret%20Potion%2C%20Lofi%20Beats%20To%20Chill%20Study%20Sleep%20-%20New%20Look%20%28Wii%20U%20Mii%20Maker%20Lofi%20Mix%29.mp3",
+   "bytes": 6838049
+  },
+  {
+   "id": "SEGA SOUND TEAM,青木 千紘 - Matter Of Factly",
+   "title": "Matter Of Factly",
+   "artist": "SEGA SOUND TEAM/青木 千紘",
+   "src": "./assets/audio/SEGA%20SOUND%20TEAM%2C%E9%9D%92%E6%9C%A8%20%E5%8D%83%E7%B4%98%20-%20Matter%20Of%20Factly.mp3",
+   "bytes": 3842355
+  },
+  {
+   "id": "Yabujin - FLASH CASANOVA",
+   "title": "FLASH CASANOVA",
+   "artist": "Yabujin",
+   "src": "./assets/audio/Yabujin%20-%20FLASH%20CASANOVA.mp3",
+   "bytes": 6902080
+  },
+  {
+   "id": "Yabujin - SECRET GARDEN 8888",
+   "title": "SECRET GARDEN 8888",
+   "artist": "Yabujin",
+   "src": "./assets/audio/Yabujin%20-%20SECRET%20GARDEN%208888.mp3",
+   "bytes": 2195610
+  },
+  {
+   "id": "Yabujin - SURGEON DOGMA",
+   "title": "SURGEON DOGMA",
+   "artist": "Yabujin",
+   "src": "./assets/audio/Yabujin%20-%20SURGEON%20DOGMA.mp3",
+   "bytes": 4467243
+  },
+  {
+   "id": "Yabujin - ～Ex♁tica Deluxe～",
+   "title": "～Ex♁tica Deluxe～",
+   "artist": "Yabujin",
+   "src": "./assets/audio/Yabujin%20-%20%EF%BD%9EEx%E2%99%81tica%20Deluxe%EF%BD%9E.mp3",
+   "bytes": 1802962
+  },
+  {
+   "id": "Yakuza 0 OST - 55 interspace garden",
+   "title": "55 interspace garden",
+   "artist": "Yakuza 0 OST",
+   "src": "./assets/audio/Yakuza%200%20OST%20-%2055%20interspace%20garden.mp3",
+   "bytes": 5303094
+  }
+ ]
 }
