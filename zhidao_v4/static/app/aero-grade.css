@@ -282,6 +282,11 @@
   display: block;
   font-size: 12px;
   letter-spacing: 0.14em;
+  /* Названия песен бывают длинными, а панель не должна от них расти:
+     высота виджета — часть композиции экрана. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .media-lcd span {
@@ -300,7 +305,8 @@
   flex: none;
 }
 
-.media-keys i {
+.media-keys i,
+.media-keys .media-key {
   width: 22px;
   height: 22px;
   display: grid;
@@ -314,7 +320,35 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), 0 1px 2px rgba(4, 40, 66, 0.4);
 }
 
-/* A thin equaliser strip, purely decorative. */
+.media-keys .media-key {
+  padding: 0;
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+  transition: filter .12s ease, transform .06s ease;
+}
+
+.media-keys .media-key:hover:not(:disabled) { filter: brightness(1.06); }
+.media-keys .media-key:active:not(:disabled) {
+  transform: translateY(1px);
+  background: linear-gradient(to bottom, #c7d8e6 0%, #dce8f0 52%, #ffffff 100%);
+}
+
+/* Выключенная кнопка — когда плейлист пуст. Она не должна выглядеть нажимаемой:
+   иначе человек жмёт и не понимает, почему ничего не происходит. */
+.media-keys .media-key:disabled {
+  cursor: default;
+  opacity: .45;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7);
+}
+
+.media-keys .media-key:focus-visible {
+  outline: 2px solid var(--lcd-ink);
+  outline-offset: 2px;
+}
+
+/* Полоски эквалайзера двигаются только когда звук действительно идёт.
+   Пляшущий эквалайзер при молчащем плеере — обман. */
 .media-eq {
   display: flex;
   align-items: flex-end;
@@ -328,6 +362,13 @@
   border-radius: 1px;
   background: linear-gradient(to top, var(--grass-deep), var(--lcd-ink));
   box-shadow: 0 0 5px rgba(125, 252, 180, 0.5);
+  transform: scaleY(0.42);
+  opacity: .5;
+  transition: opacity .2s ease;
+}
+
+.media-widget.is-playing .media-eq i {
+  opacity: 1;
   animation: eq-bounce 1.5s ease-in-out infinite;
 }
 
@@ -343,7 +384,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .media-eq i { animation: none; transform: none; }
+  .media-widget.is-playing .media-eq i { animation: none; transform: none; }
 }
 
 /* =========================================================================

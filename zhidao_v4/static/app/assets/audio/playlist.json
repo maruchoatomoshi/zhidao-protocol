@@ -1,0 +1,5 @@
+{
+ "note": "Собирается скриптом tools/build_playlist.py. Пустой список — нормальное состояние: плеер молчит и показывает STANDBY.",
+ "shuffle": false,
+ "tracks": []
+}

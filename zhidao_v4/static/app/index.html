@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./tokens.css?v=20260903-tok1">
   <link rel="stylesheet" href="./app.css?v=20260901-map3">
   <link rel="stylesheet" href="./aero.css?v=20260903-aero2">
-  <link rel="stylesheet" href="./aero-grade.css?v=20260905-relations">
+  <link rel="stylesheet" href="./aero-grade.css?v=20260905-player2">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -60,15 +60,21 @@
           <article class="status-module season-module"><span>СЕЗОН</span><strong>04</strong><small>Hainan · DRAFT</small></article>
         </div>
 
-        <article class="media-widget" aria-label="Состояние узла">
+        <article class="media-widget" data-player aria-label="Музыка">
           <div class="media-widget-face">
             <div class="media-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
             <div class="media-lcd">
-              <b>NODE / HAINAN</b>
-              <span>SEASON 04 · STANDBY · NO SIGNAL YET</span>
+              <b data-player-title>NODE / HAINAN</b>
+              <span data-player-sub>SEASON 04 · STANDBY · NO SIGNAL YET</span>
             </div>
-            <div class="media-keys" aria-hidden="true"><i>&#9646;&#9646;</i><i>&#9654;</i></div>
+            <div class="media-keys">
+              <button type="button" class="media-key" data-player-toggle
+                      aria-label="Включить музыку" aria-pressed="false" disabled>&#9654;</button>
+              <button type="button" class="media-key" data-player-next
+                      aria-label="Следующий трек" disabled>&#9654;&#9654;</button>
+            </div>
           </div>
+          <audio data-player-audio preload="none"></audio>
         </article>
 
         <article class="glass-card today-card">
@@ -347,5 +353,6 @@
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
   <script src="./campus-map.js?v=20260905-relations" defer></script>
   <script src="./app.js?v=20260904-vector1" defer></script>
+  <script src="./player.js?v=20260905-player1" defer></script>
 </body>
 </html>
