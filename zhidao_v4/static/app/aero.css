@@ -787,3 +787,305 @@
     background-position: 0 0;
   }
 }
+
+
+/* =========================================================================
+   ZHIDAO AERO — игровые компоненты
+
+   Разбор восьми проектов из Frutiger Aero Archive дал четыре приёма,
+   которых здесь не хватало:
+
+     1. Наведение и нажатие меняют предмет, а не цвет.
+     2. Цветной прозрачный пластик как отдельный ярус материала.
+     3. Свет линейный — кант и полоса, а не ореол вокруг.
+     4. Прогресс выглядит прибором: жёлоб внутрь, заполнение наружу.
+
+   Всё построено на рецептуре из начала этого файла: жёсткий терминатор
+   блика на --gloss-cut, хромовый кант, цветная тень.
+   ========================================================================= */
+
+/* --- 1. Кнопки ------------------------------------------------------------
+   Четыре яруса. Разница не в цвете, а в материале: главная — цветной
+   пластик, вторичная — стекло, системная — хром, действие — лайм. */
+
+.btn {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--chrome-lit);
+  font: 700 12px/1 var(--font-ui);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out),
+    filter var(--dur-hover) var(--ease-out);
+}
+
+/* Блик вынесен в отдельный слой: при наведении он должен двигаться
+   независимо от заливки. Именно это движение читается как «предмет». */
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px auto 1px;
+  height: var(--gloss-cut);
+  border-radius: inherit;
+  background: linear-gradient(to bottom,
+    var(--gloss-hi) 0%, var(--gloss-lo) 88%, transparent 100%);
+  pointer-events: none;
+  transition:
+    opacity var(--dur-hover) var(--ease-out),
+    height var(--dur-hover) var(--ease-out);
+}
+
+.btn > * { position: relative; }
+
+.btn:hover:not(:disabled) { filter: saturate(1.08) brightness(1.03); }
+.btn:hover:not(:disabled)::before { height: calc(var(--gloss-cut) + 6%); }
+.btn:active:not(:disabled) { transform: translateY(var(--press-shift)); }
+.btn:active:not(:disabled)::before { opacity: .6; height: calc(var(--gloss-cut) - 8%); }
+.btn:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+
+.btn:disabled {
+  cursor: default;
+  filter: grayscale(.35);
+  opacity: .55;
+  box-shadow: none;
+}
+
+.btn.btn-primary {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(4, 60, 100, .55);
+  background: linear-gradient(180deg,
+    var(--plastic-sky-light) 0%,
+    var(--plastic-sky-mid) var(--gloss-cut),
+    var(--plastic-sky-deep) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), var(--lift-md);
+}
+
+.btn.btn-secondary {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, .96) 0%,
+    rgba(232, 249, 255, .86) var(--gloss-cut),
+    rgba(206, 236, 249, .9) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-sm);
+}
+
+/* Системная кнопка — хром. Это орган управления протоколом, а не действие
+   участника, поэтому и материал другой, и надпись моноширинная. */
+.btn.btn-system {
+  font-family: var(--font-system);
+  font-size: 10px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: #23425c;
+  border-color: var(--metal-3);
+  background: linear-gradient(to bottom,
+    var(--metal-1) 0%, var(--metal-2) 46%,
+    var(--metal-3) 47%, var(--metal-2) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-sm);
+}
+
+.btn.btn-action {
+  color: #14400a;
+  background: linear-gradient(180deg,
+    var(--plastic-lime-light) 0%,
+    var(--plastic-lime-mid) var(--gloss-cut),
+    var(--plastic-lime-deep) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .92), var(--lift-md), var(--glow-lime);
+}
+
+.btn.btn-icon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: var(--radius-circle);
+}
+
+/* --- 2. Цветной пластик как поверхность ----------------------------------
+   Модификатор для любого элемента: та же выпуклость, что у кнопок, но без
+   поведения. Тройка цветов подменяется, рецепт остаётся один. */
+
+.plastic {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--chrome-lit);
+  background: linear-gradient(180deg,
+    var(--plastic-aqua-light) 0%,
+    var(--plastic-aqua-mid) var(--gloss-cut),
+    var(--plastic-aqua-deep) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), var(--lift-sm);
+}
+
+.plastic-sky {
+  background: linear-gradient(180deg,
+    var(--plastic-sky-light) 0%,
+    var(--plastic-sky-mid) var(--gloss-cut),
+    var(--plastic-sky-deep) 100%);
+}
+
+.plastic-lime {
+  background: linear-gradient(180deg,
+    var(--plastic-lime-light) 0%,
+    var(--plastic-lime-mid) var(--gloss-cut),
+    var(--plastic-lime-deep) 100%);
+}
+
+/* --- 3. Световая полоса ---------------------------------------------------
+   Взято у Frutiger Aero Hub: светящийся кант проёма и полосы по потолку.
+   Ставится на выбранный элемент — свет отмечает выбор надёжнее цвета. */
+
+.light-strip { position: relative; }
+
+.light-strip::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--light-strip);
+  box-shadow: var(--light-strip-glow);
+  pointer-events: none;
+}
+
+.light-strip-top::after { bottom: auto; top: -1px; }
+
+/* --- 4. Прогресс ----------------------------------------------------------
+   Жёлоб продавлен внутрь, заполнение выпуклое и с бликом. Разница глубин
+   и делает из этого прибор, а не прямоугольник с процентами. */
+
+.gauge {
+  position: relative;
+  height: var(--track-height);
+  border-radius: var(--radius-pill);
+  background: var(--track-well);
+  box-shadow: var(--track-well-rim);
+  overflow: hidden;
+}
+
+.gauge-fill {
+  position: relative;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg,
+    var(--plastic-aqua-light) 0%,
+    var(--plastic-aqua-mid) var(--gloss-cut),
+    var(--plastic-aqua-deep) 100%);
+  box-shadow: 0 0 12px rgba(46, 194, 234, .6);
+  transition: width var(--dur-panel) var(--ease-out);
+}
+
+.gauge-fill::after {
+  content: "";
+  position: absolute;
+  inset: 1px 1px auto 1px;
+  height: 46%;
+  border-radius: inherit;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, .9), rgba(255, 255, 255, .06));
+}
+
+/* Пустой прибор не притворяется полным на нуле: он показывает насечки
+   шкалы, и сразу видно, что данных пока нет. */
+.gauge.is-empty {
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(6, 46, 80, .16) 0 1px, transparent 1px 9px),
+    var(--track-well);
+}
+
+.gauge-lime .gauge-fill {
+  background: linear-gradient(180deg,
+    var(--plastic-lime-light) 0%,
+    var(--plastic-lime-mid) var(--gloss-cut),
+    var(--plastic-lime-deep) 100%);
+  box-shadow: var(--glow-lime);
+}
+
+/* Сегментный вариант — для счётного прогресса: пройдено три из семи. */
+.gauge-segments { display: flex; gap: 3px; }
+
+.gauge-seg {
+  flex: 1;
+  height: var(--track-height);
+  border-radius: 3px;
+  background: var(--track-well);
+  box-shadow: var(--track-well-rim);
+}
+
+.gauge-seg.is-on {
+  background: linear-gradient(180deg,
+    var(--plastic-aqua-light) 0%,
+    var(--plastic-aqua-mid) var(--gloss-cut),
+    var(--plastic-aqua-deep) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), 0 0 8px rgba(46, 194, 234, .55);
+}
+
+/* --- 5. Дисплейное начертание --------------------------------------------
+   Приём с логотипов игр эпохи: вертикальная заливка плюс белый контур.
+   Только для названий экранов; в тексте такое нечитаемо. */
+
+/* Обводка рисуется самим текстом: paint-order кладёт штрих под заливку, и
+   это работает вместе с background-clip: text. Первый вариант дублировал
+   текст в ::before через attr(data-text) — сработало бы, но скринридер
+   прочитал бы заголовок дважды. Проверено в браузере: CSS.supports для
+   paint-order даёт true, обводка и градиент видны одновременно. */
+.display-title {
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: transparent;
+  background: var(--display-fill);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: var(--display-stroke-width) var(--display-stroke-color);
+  paint-order: stroke fill;
+  filter: drop-shadow(0 2px 0 rgba(255, 255, 255, .8))
+          drop-shadow(0 5px 10px rgba(6, 70, 120, .38));
+}
+
+/* --- 6. Системная лента ---------------------------------------------------
+   По образцу компасной ленты PANLINE: тонкая, без подложки, с засечками.
+   Не рамка вокруг содержимого, а линия у самой кромки устройства. */
+
+.system-rail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 5px 14px 6px;
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: var(--rail-ink);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.system-rail-ticks {
+  flex: 1;
+  height: 7px;
+  min-width: 40px;
+  border-left: 1px solid var(--rail-tick);
+  border-right: 1px solid var(--rail-tick);
+  background:
+    repeating-linear-gradient(90deg, var(--rail-tick) 0 1px, transparent 1px 14px),
+    linear-gradient(180deg, transparent 0 3px, var(--rail-tick) 3px 4px, transparent 4px);
+  opacity: .85;
+}
+
+.system-rail b { font-weight: 700; color: var(--rail-ink); }
+.system-rail span { font-weight: 700; color: var(--rail-ink-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn::before,
+  .gauge-fill { transition: none; }
+}

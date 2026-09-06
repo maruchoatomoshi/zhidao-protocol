@@ -1121,3 +1121,127 @@
 }
 
 .placeholder-screen { padding-bottom: 22px; }
+
+
+/* =========================================================================
+   ZHIDAO AERO — игровой слой поверх грейда
+
+   Здесь новые компоненты из aero.css привязываются к конкретным местам
+   приложения: лента, выбранные состояния навигации, дисплейные заголовки.
+   ========================================================================= */
+
+/* --- Системная лента ------------------------------------------------------
+   Лежит поверх снимка, у самой кромки устройства, без подложки. Тень нужна,
+   потому что фон под ней — фотография, а не заливка. */
+.system-rail {
+  margin: 0 0 2px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .8);
+}
+
+.system-rail-ticks {
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .7));
+}
+
+/* --- Выбранный раздел -----------------------------------------------------
+   Раньше выбор отличался только цветом подложки. Теперь под активной
+   кнопкой зажигается световая полоса, а сама плитка приподнята: выбор
+   читается формой и светом, а не оттенком. */
+.app-dock button {
+  position: relative;
+  transition:
+    transform var(--dur-hover) var(--ease-out),
+    filter var(--dur-hover) var(--ease-out);
+}
+
+.app-dock button::after {
+  content: "";
+  position: absolute;
+  left: 26%;
+  right: 26%;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--light-strip);
+  box-shadow: var(--light-strip-glow);
+  opacity: 0;
+  transition: opacity var(--dur-hover) var(--ease-out);
+  pointer-events: none;
+}
+
+.app-dock button.active::after { opacity: 1; }
+.app-dock button.active .dock-icon { transform: translateY(-1px) scale(1.04); }
+.app-dock button:hover:not(.active) { filter: brightness(1.05) saturate(1.06); }
+.app-dock button:active { transform: translateY(var(--press-shift)); }
+
+.dock-icon { transition: transform var(--dur-hover) var(--ease-out); }
+
+/* --- Вкладки --------------------------------------------------------------
+   Тот же приём, что у дока: свет снизу вместо смены оттенка. */
+.tab {
+  position: relative;
+  transition:
+    color var(--dur-hover) var(--ease-out),
+    filter var(--dur-hover) var(--ease-out);
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--light-strip);
+  box-shadow: var(--light-strip-glow);
+  opacity: 0;
+  transition: opacity var(--dur-hover) var(--ease-out);
+  pointer-events: none;
+}
+
+.tab.active::after { opacity: 1; }
+.tab:hover:not(.active) { filter: brightness(1.04); }
+
+/* --- Дисплейные заголовки -------------------------------------------------
+   Размер наследуется от прежних правил h1, меняется только материал буквы.
+   Контур тонкий: на маленьком кегле толстый превращает текст в кашу. */
+/* Специфичность: прежние правила h1 задают color и font-weight напрямую,
+   и класс их не перебивал — заголовок оставался сплошным, весом 300, а
+   белый контур на тонких штрихах превращал букву в кашу. Отсюда h1 в
+   селекторе и вес 700: контур требует плотной буквы, иначе он её съедает. */
+h1.display-title,
+.display-title {
+  --display-stroke-width: 2.5px;
+  font-weight: 700;
+  color: transparent;
+  line-height: 1.06;
+}
+
+/* Китайский в дисплейном начертании набирается тем же приёмом, но контур
+   ещё тоньше: у иероглифов черты плотнее латиницы, и 2px их слепляют. */
+.display-title:lang(zh) { --display-stroke-width: 1.5px; }
+
+/* --- Приборы в профиле ----------------------------------------------------
+   Плитки показателей получают шкалу. Пока данных нет, шкала стоит в
+   состоянии is-empty: видны насечки и ноль заполнения, а не выдуманный
+   уровень. */
+.stat-tile { position: relative; }
+
+.stat-gauge { margin-top: 8px; }
+
+.stat-gauge-note {
+  display: block;
+  margin-top: 6px;
+  font: 700 9px/1.3 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+/* --- Уточнение для узкого экрана -----------------------------------------
+   На телефоне лента сжимается: засечки уже, координата уходит, название
+   протокола остаётся. */
+@media (max-width: 420px) {
+  .system-rail { gap: var(--space-3); padding: 4px 12px 5px; font-size: 8px; }
+  .system-rail b:last-child { display: none; }
+}

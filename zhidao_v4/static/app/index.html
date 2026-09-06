@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light">
   <title>ZHIDAO Hainan · App Preview</title>
-  <link rel="stylesheet" href="./tokens.css?v=20260903-tok1">
-  <link rel="stylesheet" href="./app.css?v=20260901-map3">
-  <link rel="stylesheet" href="./aero.css?v=20260903-aero2">
-  <link rel="stylesheet" href="./aero-grade.css?v=20260905-empty2">
+  <link rel="stylesheet" href="./tokens.css?v=20260906-aero8">
+  <link rel="stylesheet" href="./app.css?v=20260906-aero8">
+  <link rel="stylesheet" href="./aero.css?v=20260906-aero8">
+  <link rel="stylesheet" href="./aero-grade.css?v=20260906-aero8">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -21,6 +21,14 @@
 
   <main class="app-shell">
     <div class="app-stage">
+      <div class="system-rail" aria-hidden="true">
+        <b>ZHIDAO</b>
+        <span>PROTOCOL</span>
+        <i class="system-rail-ticks"></i>
+        <span>HAINAN</span>
+        <b>18&deg;19&prime;N</b>
+      </div>
+
       <header class="app-header">
         <div class="app-brand" aria-label="ZHIDAO Hainan">
           <span class="brand-orb">知</span>
@@ -30,7 +38,7 @@
           <span id="clock">--:--</span>
           <i aria-label="Система доступна"></i>
         </div>
-        <button class="profile-fab" type="button" data-open-screen="profile" aria-label="Профиль">
+        <button class="profile-fab btn btn-icon" type="button" data-open-screen="profile" aria-label="Профиль">
           <span class="profile-fab-orb">操</span>
         </button>
       </header>
@@ -78,7 +86,7 @@
         </article>
 
         <article class="glass-card today-card">
-          <div class="section-heading"><div><span class="system-label">TODAY / 今天</span><h3>Сегодня</h3></div><button type="button" data-toast="Расписание появится после активации сезона">Все планы</button></div>
+          <div class="section-heading"><div><span class="system-label">TODAY / 今天</span><h3>Сегодня</h3></div><button type="button" class="btn btn-secondary" data-toast="Расписание появится после активации сезона">Все планы</button></div>
           <div class="timeline-empty">
             <span class="timeline-mark"><i></i></span>
             <div><strong>Маршрут ещё не активирован</strong><p>Здесь появятся встречи, выезды и важные точки дня.</p></div>
@@ -98,7 +106,7 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="rating" aria-labelledby="ratingTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">SEASON REPUTATION / 排名</span><h1 id="ratingTitle">Рейтинг REP</h1></div>
+          <div><span class="system-label">SEASON REPUTATION / 排名</span><h1 id="ratingTitle" class="display-title">Рейтинг REP</h1></div>
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
 
@@ -145,7 +153,7 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle">Магазин</h1></div>
+          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle" class="display-title">Магазин</h1></div>
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
 
@@ -187,7 +195,7 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="cases" aria-labelledby="casesTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">COLLECTION ARCHIVE / 箱子</span><h1 id="casesTitle">Коллекция</h1></div>
+          <div><span class="system-label">COLLECTION ARCHIVE / 箱子</span><h1 id="casesTitle" class="display-title">Коллекция</h1></div>
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
 
@@ -235,7 +243,7 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="tasks" aria-labelledby="tasksTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">MISSION BOARD / 任务板</span><h1 id="tasksTitle">Задания</h1></div>
+          <div><span class="system-label">MISSION BOARD / 任务板</span><h1 id="tasksTitle" class="display-title">Задания</h1></div>
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
 
@@ -270,13 +278,13 @@
            ============================================================ -->
       <section class="screen campus-map-screen" data-screen="campus-map" aria-labelledby="campusMapTitle" hidden>
         <div class="map-screen-head">
-          <button class="map-back" type="button" data-open-screen="more" aria-label="Назад">‹</button>
-          <div><span class="system-label">CAMPUS NAV / 校园地图</span><h1 id="campusMapTitle">Карта кампуса</h1></div>
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">‹</button>
+          <div><span class="system-label">CAMPUS NAV / 校园地图</span><h1 id="campusMapTitle" class="display-title">Карта кампуса</h1></div>
           <span class="map-status"><i></i> WGS-84</span>
         </div>
 
         <div class="campus-toolbar">
-          <button id="campusLocate" class="campus-locate" type="button">Где я</button>
+          <button id="campusLocate" class="campus-locate btn btn-primary" type="button">Где я</button>
           <span id="campusStatus" class="campus-status">GPS не запрошен</span>
         </div>
 
@@ -291,7 +299,7 @@
             <h2 data-field="name-ru">&mdash;</h2>
             <p data-field="name-zh">&mdash;</p>
             <p class="campus-distance" data-field="distance" hidden></p>
-            <button id="campusRouteBtn" class="campus-route-btn" type="button" hidden>Маршрут</button>
+            <button id="campusRouteBtn" class="campus-route-btn btn btn-action" type="button" hidden>Маршрут</button>
             <p class="campus-route-summary" data-field="route" hidden></p>
           </div>
         </article>
@@ -306,8 +314,8 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="profile" aria-labelledby="profileTitle" hidden>
         <div class="map-screen-head">
-          <button class="map-back" type="button" data-open-screen="schedule" aria-label="Назад">‹</button>
-          <div><span class="system-label">OPERATOR CARD / 操作员</span><h1 id="profileTitle">Профиль</h1></div>
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="schedule" aria-label="Назад">‹</button>
+          <div><span class="system-label">OPERATOR CARD / 操作员</span><h1 id="profileTitle" class="display-title">Профиль</h1></div>
         </div>
 
         <article class="profile-card aero">
@@ -319,9 +327,25 @@
         </article>
 
         <div class="stat-tiles">
-          <div class="stat-tile"><span>REP</span><strong>—</strong></div>
-          <div class="stat-tile"><span>★</span><strong>—</strong></div>
-          <div class="stat-tile"><span>РАНГ</span><strong>—</strong></div>
+          <div class="stat-tile">
+            <span>REP</span><strong>—</strong>
+            <div class="gauge is-empty stat-gauge" role="img" aria-label="Шкала REP пуста: данных нет">
+              <div class="gauge-fill"></div>
+            </div>
+          </div>
+          <div class="stat-tile">
+            <span>★</span><strong>—</strong>
+            <div class="gauge is-empty stat-gauge gauge-lime" role="img" aria-label="Шкала валюты пуста: данных нет">
+              <div class="gauge-fill"></div>
+            </div>
+          </div>
+          <div class="stat-tile">
+            <span>РАНГ</span><strong>—</strong>
+            <div class="gauge-segments stat-gauge" role="img" aria-label="Ранг не присвоен">
+              <i class="gauge-seg"></i><i class="gauge-seg"></i><i class="gauge-seg"></i>
+              <i class="gauge-seg"></i><i class="gauge-seg"></i>
+            </div>
+          </div>
         </div>
 
         <article class="glass-card placeholder-card"><span>★</span><div><strong>Витрина</strong><p>Любимый имплант или карточка появятся здесь после первой коллекции.</p></div></article>
@@ -341,7 +365,7 @@
            ЕЩЁ — хаб настроек и второстепенных разделов
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="more" aria-labelledby="moreTitle" hidden>
-        <div class="placeholder-hero pearl"><img src="./assets/icons/nav-more.png" alt=""><span class="system-label">PERSONAL SETTINGS</span><h1 id="moreTitle">Ещё</h1><p>Связь, справка и настройки устройства будут собраны здесь.</p></div>
+        <div class="placeholder-hero pearl"><img src="./assets/icons/nav-more.png" alt=""><span class="system-label">PERSONAL SETTINGS</span><h1 id="moreTitle" class="display-title">Ещё</h1><p>Связь, справка и настройки устройства будут собраны здесь.</p></div>
 
         <div class="settings-list glass-card">
           <span class="settings-group-label">НАВИГАЦИЯ</span>
@@ -393,7 +417,7 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./campus-map.js?v=20260905-empty2" defer></script>
+  <script src="./campus-map.js?v=20260906-aero8" defer></script>
   <script src="./app.js?v=20260904-vector1" defer></script>
   <script src="./player.js?v=20260905-player3" defer></script>
 </body>
