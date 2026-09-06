@@ -1245,3 +1245,293 @@ h1.display-title,
   .system-rail { gap: var(--space-3); padding: 4px 12px 5px; font-size: 8px; }
   .system-rail b:last-child { display: none; }
 }
+
+
+/* =========================================================================
+   Устройство раздела — приём сезона 1
+
+   В пекинском приложении шапка раздела состояла из трёх частей:
+
+       НОВОСТИ 新闻
+       > xīn wén // объявления от вожатых
+
+   и отделялась градиентной волосяной линией. Это отработало целый сезон на
+   живых участниках, поэтому берётся устройство, а не оформление: пекинская
+   палитра красно-золотая и киберпанковая, здесь она хайнаньская.
+
+   Главное, чего у V4 не было вовсе, — пиньинь. Поездка языковая, и
+   произношение должно стоять там же, где название, а не в отдельном
+   разделе, куда никто не зайдёт.
+   ========================================================================= */
+
+.screen-sub {
+  margin: 5px 0 0;
+  font: 700 10px/1.35 var(--font-system);
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+/* Знак приглашения и разделитель — из терминального словаря протокола.
+   Они приглушены сильнее текста: это пунктуация, а не содержание. */
+.screen-sub-mark,
+.screen-sub-sep {
+  opacity: 0.55;
+}
+
+.screen-sub-mark { color: var(--accent-aqua); opacity: 0.8; }
+
+/* Волосяная линия под шапкой. В сезоне 1 она шла из прозрачного в акцент и
+   обратно — приём сохраняется, цвета берутся из палитры Хайнаня. */
+.screen-intro {
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.screen-intro::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(12, 203, 208, 0.55) 22%,
+    rgba(156, 233, 78, 0.5) 58%,
+    transparent 100%);
+}
+
+/* Шапка карты и профиля устроена иначе (есть кнопка «назад»), но линия
+   нужна и там — иначе раздел начинается ниоткуда. */
+.map-screen-head {
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.map-screen-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(12, 203, 208, 0.55) 22%,
+    rgba(156, 233, 78, 0.5) 58%,
+    transparent 100%);
+}
+
+/* Китайская подпись в нижней навигации — тоже из сезона 1. Там под иконкой
+   стоял только иероглиф, без русского слова: короче, читается как игра и
+   заодно попадается на глаза сто раз за день. Русское название оставлено,
+   потому что участники V4 ещё не знают иероглифов на старте. */
+.app-dock .nav-cn {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  opacity: 0.62;
+}
+
+
+/* =========================================================================
+   НОЧЬ — поверхности
+
+   Токены в tokens.css переворачивают всё, что обращается к ним через var().
+   Здесь переопределяется остальное: правила, где цвет записан литералом.
+   Их в проекте много, поэтому берутся крупные поверхности — среда, шапка,
+   док, карточки, вкладки, списки, карта. Мелочи вроде отдельных подписей
+   останутся дневными до следующего прохода; это записано в журнале.
+   ========================================================================= */
+
+/* --- Среда ----------------------------------------------------------------
+   Фотография Хайнаня остаётся та же, меняется свет над ней: вместо светлой
+   лазурной заливки — глубокая синь с бирюзовой и тёплой засветкой, как на
+   ночных кадрах PANLINE. Это то же место в другое время суток. */
+:root[data-theme="dark"] body {
+  color: var(--ink);
+  background:
+    linear-gradient(160deg, rgba(4, 24, 46, 0.82), rgba(2, 14, 30, 0.92)),
+    url("../architect/assets/hainan-promised-tomorrow.png") center / cover fixed;
+}
+
+:root[data-theme="dark"] .app-shell {
+  background: linear-gradient(180deg,
+    rgba(6, 30, 54, 0.88) 0%,
+    rgba(5, 26, 48, 0.74) 26%,
+    rgba(4, 22, 42, 0.44) 52%,
+    rgba(4, 20, 38, 0.18) 74%,
+    rgba(4, 18, 34, 0.03) 100%);
+}
+
+:root[data-theme="dark"] .app-shell::before {
+  background:
+    radial-gradient(circle at 110% 22%, var(--night-spill), transparent 27%),
+    radial-gradient(circle at -8% 60%, var(--night-warm), transparent 25%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 4px);
+}
+
+/* --- Шапка и док ----------------------------------------------------------
+   Стекло остаётся стеклом: та же полупрозрачность, тонировка тёмная. */
+:root[data-theme="dark"] .app-header,
+:root[data-theme="dark"] .app-dock {
+  background: linear-gradient(180deg,
+    rgba(16, 52, 84, 0.86), rgba(8, 32, 56, 0.78));
+  border-color: var(--border-edge);
+}
+
+:root[data-theme="dark"] .app-dock button { color: var(--ink-soft); }
+:root[data-theme="dark"] .app-dock button.active { color: var(--ink); }
+
+/* --- Карточки -------------------------------------------------------------
+   Один селектор на все стеклянные поверхности: у них общий материал, и
+   расходиться они не должны. */
+:root[data-theme="dark"] .glass-card,
+:root[data-theme="dark"] .module-status,
+:root[data-theme="dark"] .settings-list,
+:root[data-theme="dark"] .stat-tile,
+:root[data-theme="dark"] .status-module,
+:root[data-theme="dark"] .profile-card,
+:root[data-theme="dark"] .case-row,
+:root[data-theme="dark"] .mission-row,
+:root[data-theme="dark"] .shop-item-card,
+:root[data-theme="dark"] .placeholder-card,
+:root[data-theme="dark"] .placeholder-hero,
+:root[data-theme="dark"] .map-point-card {
+  background: linear-gradient(180deg,
+    rgba(20, 60, 96, 0.82) 0%,
+    rgba(14, 46, 76, 0.72) var(--gloss-cut),
+    rgba(10, 36, 62, 0.78) 100%);
+  border-color: var(--border-edge);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .module-status-body strong,
+:root[data-theme="dark"] .placeholder-card strong,
+:root[data-theme="dark"] .case-copy strong,
+:root[data-theme="dark"] .map-point-copy h2 { color: var(--ink); }
+
+:root[data-theme="dark"] .module-status-body p,
+:root[data-theme="dark"] .placeholder-card p,
+:root[data-theme="dark"] .case-copy small,
+:root[data-theme="dark"] .map-point-copy p { color: var(--ink-soft); }
+
+:root[data-theme="dark"] .module-status-tag,
+:root[data-theme="dark"] .preview-chip,
+:root[data-theme="dark"] .locked-tag {
+  color: #a9dcf7;
+  border-color: rgba(140, 196, 226, 0.35);
+  background: rgba(8, 34, 58, 0.7);
+}
+
+/* --- Вкладки и списки ----------------------------------------------------- */
+:root[data-theme="dark"] .tabs {
+  background: linear-gradient(180deg, rgba(12, 44, 74, 0.8), rgba(8, 32, 56, 0.72));
+  border-color: var(--border-edge);
+}
+
+:root[data-theme="dark"] .tab { color: var(--ink-soft); }
+:root[data-theme="dark"] .tab.active {
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(34, 84, 126, 0.9), rgba(20, 58, 94, 0.85));
+}
+
+:root[data-theme="dark"] .settings-list button { color: var(--ink); }
+:root[data-theme="dark"] .settings-list button small { color: var(--text-faint); }
+:root[data-theme="dark"] .settings-group-label { color: var(--text-faint); }
+
+/* --- Заголовки и метки ---------------------------------------------------- */
+:root[data-theme="dark"] .system-label { color: #7fc3e8; }
+:root[data-theme="dark"] .screen-intro h1:not(.display-title) { color: var(--ink); }
+
+/* --- Карта ----------------------------------------------------------------
+   Ночью неизведанное — не бледная бумага, а тёмная. Штриховка сохраняется:
+   она означает «не обследовано» независимо от времени суток. Плита кампуса
+   остаётся светлее окружения, иначе пропадает главное различие карты. */
+:root[data-theme="dark"] .campus-fog-ground { fill: #07203a; }
+:root[data-theme="dark"] .campus-fog-stroke { stroke: #16456b; stroke-opacity: .85; }
+:root[data-theme="dark"] .campus-plate { fill: #12385c; }
+:root[data-theme="dark"] .campus-unexplored-label {
+  fill: rgba(150, 196, 224, 0.7);
+  stroke: rgba(4, 20, 38, 0.75);
+}
+:root[data-theme="dark"] .campus-label { fill: #dff2ff; stroke: rgba(4, 22, 42, 0.85); }
+:root[data-theme="dark"] .campus-label-zh { fill: #8fc8e8; }
+:root[data-theme="dark"] .campus-canvas { background: rgba(6, 26, 48, 0.6); }
+
+/* --- Кнопка «наверх» у прибора --------------------------------------------
+   Медиа-виджет ночью не меняется: он и днём был тёмным. Это единственное
+   место, где обе темы совпадают, и это правильно — прибор остаётся прибором. */
+
+/* Литеральные цвета текста, которые токены не достали: они записаны прямо
+   в app.css и потому не переворачиваются подменой переменных. */
+:root[data-theme="dark"] .app-brand strong { color: #cfeaff; }
+:root[data-theme="dark"] .app-brand small { color: #7fb4d4; }
+:root[data-theme="dark"] .app-dock small { color: #7fb4d4; }
+:root[data-theme="dark"] .app-dock button.active small { color: #dff2ff; }
+:root[data-theme="dark"] .header-status { color: var(--ink-soft); }
+:root[data-theme="dark"] .map-disclaimer,
+:root[data-theme="dark"] .map-point-copy span,
+:root[data-theme="dark"] .settings-list small { color: var(--text-faint); }
+:root[data-theme="dark"] .campus-legend { color: var(--ink-soft); }
+
+/* Ночью подсветка активной плитки — не белое пятно, а свечение снизу вверх.
+   Белая радиальная заливка днём читается как «плитка поймала солнце»,
+   а по тёмному она превращается в единственную яркую дыру в интерфейсе. */
+:root[data-theme="dark"] .app-dock button.active .dock-icon {
+  background: radial-gradient(circle at 50% 62%,
+    rgba(46, 194, 234, 0.42), rgba(46, 194, 234, 0.14) 58%, transparent 74%);
+}
+
+:root[data-theme="dark"] .app-dock button.active .dock-icon img {
+  filter: drop-shadow(0 6px 10px rgba(0, 12, 26, 0.7))
+          drop-shadow(0 0 10px rgba(46, 194, 234, 0.45));
+}
+
+/* Подпись под иконками ночью светлее фона, а не темнее его. */
+:root[data-theme="dark"] .app-dock button.active small { color: #dff2ff; }
+
+/* Тактильные органы управления. В aero.css это одно общее правило на строки
+   настроек, кнопки в шапках секций и ссылки провайдеров карты — ночью оно
+   оставляло белые плашки с почти невидимым текстом. Материал сохраняется:
+   выпуклая поверхность с бликом, только тонировка тёмная. */
+:root[data-theme="dark"] .section-heading button,
+:root[data-theme="dark"] .settings-list button,
+:root[data-theme="dark"] .map-provider-links a,
+:root[data-theme="dark"] .signal-card button {
+  border-color: var(--border-edge);
+  border-top-color: var(--border-chrome);
+  color: var(--ink);
+  background: linear-gradient(to bottom,
+    rgba(34, 84, 126, 0.9) 0%,
+    rgba(22, 62, 98, 0.86) 48%,
+    rgba(14, 46, 78, 0.9) 49%,
+    rgba(20, 58, 92, 0.88) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    var(--lift-sm);
+}
+
+:root[data-theme="dark"] .settings-list b { color: #8fc4e0; }
+:root[data-theme="dark"] .settings-group-label { color: #8fc4e0; }
+
+/* Заголовок карточки сезона и её метки лежат на фотографии — они и днём
+   светлые, ночью остаются такими же. Трогать их не нужно. */
+
+/* Плита активной кнопки дока. В aero.css она белая и выпуклая — днём это
+   «плитка поймала солнце», ночью получалась единственная яркая дыра.
+   Ночью плита тёмная и подсвеченная изнутри, форма и объём сохраняются. */
+:root[data-theme="dark"] .app-dock button.active {
+  background: linear-gradient(to bottom,
+    rgba(46, 120, 168, 0.92) 0%,
+    rgba(28, 86, 130, 0.88) 50%,
+    rgba(18, 62, 100, 0.92) 51%,
+    rgba(26, 80, 122, 0.9) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 18px rgba(46, 194, 234, 0.35),
+    var(--lift-sm);
+}
