@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light">
   <title>ZHIDAO Hainan · App Preview</title>
-  <link rel="stylesheet" href="./tokens.css?v=20260906-night5">
-  <link rel="stylesheet" href="./app.css?v=20260906-night5">
-  <link rel="stylesheet" href="./aero.css?v=20260906-night5">
-  <link rel="stylesheet" href="./aero-grade.css?v=20260906-night5">
+  <link rel="stylesheet" href="./tokens.css?v=20260906-hub2">
+  <link rel="stylesheet" href="./app.css?v=20260906-hub2">
+  <link rel="stylesheet" href="./aero.css?v=20260906-hub2">
+  <link rel="stylesheet" href="./aero-grade.css?v=20260906-hub2">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -375,30 +375,56 @@
           </button>
         </div>
 
-        <div class="settings-list glass-card">
-          <span class="settings-group-label">НАВИГАЦИЯ</span>
-          <button type="button" data-open-screen="campus-map"><span>Карта кампуса <small>校园地图</small></span><b>›</b></button>
-          <button type="button" data-open-screen="profile"><span>Профиль</span><b>›</b></button>
+        <div class="cn-divider"><b>功能</b><span>Разделы</span></div>
+
+        <div class="hub-grid">
+          <button type="button" class="hub-tile tone-aqua" data-open-screen="campus-map">
+            <span class="hub-orb" aria-hidden="true">图</span>
+            <span class="hub-name">Карта кампуса</span>
+            <span class="hub-cn">校园地图<i>xiào yuán dì tú</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-sky" data-open-screen="profile">
+            <span class="hub-orb" aria-hidden="true">操</span>
+            <span class="hub-name">Профиль</span>
+            <span class="hub-cn">操作员<i>cāo zuò yuán</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-lime" data-toast="Отряд появится после распределения участников по группам">
+            <span class="hub-orb" aria-hidden="true">组</span>
+            <span class="hub-name">Отряд</span>
+            <span class="hub-cn">小组<i>xiǎo zǔ</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-gold" data-toast="Достижения появятся после первых заданий">
+            <span class="hub-orb" aria-hidden="true">就</span>
+            <span class="hub-name">Достижения</span>
+            <span class="hub-cn">成就<i>chéng jiù</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-aqua" data-toast="Запись на стирку подключим вместе с расписанием">
+            <span class="hub-orb" aria-hidden="true">洗</span>
+            <span class="hub-name">Стирка</span>
+            <span class="hub-cn">洗衣<i>xǐ yī</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-sky" data-toast="Запись на воду подключим вместе с расписанием">
+            <span class="hub-orb" aria-hidden="true">水</span>
+            <span class="hub-name">Вода</span>
+            <span class="hub-cn">饮水<i>yǐn shuǐ</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-lime" data-toast="Погода уже видна на главном экране">
+            <span class="hub-orb" aria-hidden="true">气</span>
+            <span class="hub-name">Погода</span>
+            <span class="hub-cn">天气<i>tiān qì</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-violet" data-toast="Уведомления пока не подключены">
+            <span class="hub-orb" aria-hidden="true">知</span>
+            <span class="hub-name">Уведомления</span>
+            <span class="hub-cn">通知<i>tōng zhī</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-steel" data-toast="Версия дизайн-превью 0.2 · aero">
+            <span class="hub-orb" aria-hidden="true">关</span>
+            <span class="hub-name">О приложении</span>
+            <span class="hub-cn">关于<i>guān yú</i></span>
+          </button>
         </div>
 
-        <div class="settings-list glass-card">
-          <span class="settings-group-label">ГРУППА</span>
-          <button type="button" data-toast="Отряд появится после распределения участников по группам"><span>Отряд <small>小组</small></span><b>›</b></button>
-          <button type="button" data-toast="Достижения появятся после первых заданий"><span>Достижения</span><b>›</b></button>
-        </div>
-
-        <div class="settings-list glass-card">
-          <span class="settings-group-label">БЫТ</span>
-          <button type="button" data-toast="Запись на стирку подключим вместе с расписанием"><span>Стирка</span><b>›</b></button>
-          <button type="button" data-toast="Запись на воду подключим вместе с расписанием"><span>Вода</span><b>›</b></button>
-          <button type="button" data-toast="Погода уже видна на главном экране"><span>Погода</span><b>›</b></button>
-        </div>
-
-        <div class="settings-list glass-card">
-          <span class="settings-group-label">СИСТЕМА</span>
-          <button type="button" data-toast="Уведомления пока не подключены"><span>Уведомления</span><b>›</b></button>
-          <button type="button" data-toast="Версия дизайн-превью 0.2 · aero"><span>О приложении</span><b>›</b></button>
-        </div>
       </section>
     </div>
 
@@ -425,9 +451,9 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./campus-map.js?v=20260906-night5" defer></script>
+  <script src="./campus-map.js?v=20260906-hub2" defer></script>
   <script src="./app.js?v=20260904-vector1" defer></script>
   <script src="./player.js?v=20260905-player3" defer></script>
-  <script src="./theme.js?v=20260906-night5" defer></script>
+  <script src="./theme.js?v=20260906-hub2" defer></script>
 </body>
 </html>

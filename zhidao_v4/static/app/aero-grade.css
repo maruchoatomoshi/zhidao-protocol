@@ -1535,3 +1535,188 @@ h1.display-title,
     0 0 18px rgba(46, 194, 234, 0.35),
     var(--lift-sm);
 }
+
+
+/* =========================================================================
+   ХАБ РАЗДЕЛОВ И ОРНАМЕНТАЛЬНЫЕ РАЗДЕЛИТЕЛИ
+
+   Разбор пекинской версии: там «Ещё» — не список строк, а сетка плиток, у
+   каждой свой цвет, иконка и китайское слово с пиньинем под названием.
+   Плюс разделители вида «📡 点名 ПЕРЕКЛИЧКА» и ступенчатое появление.
+   Именно из этого набиралась плотность, которой у V4 не было.
+
+   Перенесено устройство, не оформление. Вместо линейных иконок — стеклянная
+   сфера с иероглифом: язык сфер в приложении уже есть (знак приложения,
+   кнопка профиля, кейсы), он даёт и цветовую идентичность, и китайский на
+   виду. Свечение сдержанное: пекинская плотность держалась на чёрном фоне,
+   по светлому столько же эффектов читалось бы грязью.
+   ========================================================================= */
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.hub-tile {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 15px 10px 13px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-chrome);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(235, 250, 255, 0.82) var(--gloss-cut),
+    rgba(212, 238, 250, 0.86) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-sm);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out),
+    filter var(--dur-hover) var(--ease-out);
+}
+
+.hub-tile:hover { filter: saturate(1.06) brightness(1.02); }
+.hub-tile:active { transform: translateY(var(--press-shift)); }
+.hub-tile:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+
+/* Сфера тайла. Рецепт тот же, что у знака приложения: белый блик сверху
+   слева, цветная подсветка снизу справа, диагональная заливка. Меняется
+   только тройка цветов — так все сферы в приложении остаются одним
+   веществом. */
+.hub-orb {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-circle);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.25) 26%, transparent 46%),
+    radial-gradient(circle at 70% 82%, rgba(255, 255, 255, 0.35), transparent 52%),
+    linear-gradient(150deg, var(--orb-light) 0%, var(--orb-mid) 52%, var(--orb-deep) 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.8),
+    inset 0 -6px 12px -6px rgba(2, 34, 62, 0.8),
+    var(--lift-sm);
+  color: #ffffff;
+  font-family: var(--font-story, Georgia, serif);
+  font-size: 20px;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(2, 40, 74, 0.75);
+}
+
+/* Цветовая идентичность разделов. В Пекине у каждой функции был свой цвет —
+   это помогало находить нужное быстрее, чем чтение подписи. */
+.tone-aqua   { --orb-light: #a9edf4; --orb-mid: #2ec2ea; --orb-deep: #0a6ea8; }
+.tone-sky    { --orb-light: #bcdcff; --orb-mid: #3a95ea; --orb-deep: #0a4f92; }
+.tone-lime   { --orb-light: #e2f9b4; --orb-mid: #9ce94e; --orb-deep: #4d8f1c; }
+.tone-gold   { --orb-light: #ffe9a8; --orb-mid: #f0c14c; --orb-deep: #c98f1c; }
+.tone-violet { --orb-light: #d7c4f5; --orb-mid: #a077e0; --orb-deep: #6a3fbd; }
+.tone-steel  { --orb-light: #dbe7ef; --orb-mid: #9db3c4; --orb-deep: #5d7787; }
+
+.hub-name {
+  font: 700 12px/1.2 var(--font-ui);
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+/* Китайское слово с пиньинем под каждой плиткой — как в Пекине. Поездка
+   языковая, и слово, попадающееся на глаза сто раз за день, запоминается
+   само. */
+.hub-cn {
+  font: 400 9px/1.35 var(--font-story, Georgia, serif);
+  letter-spacing: 0.02em;
+  color: var(--text-faint);
+}
+
+.hub-cn i {
+  display: block;
+  font-style: normal;
+  font-family: var(--font-system);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+
+/* Ступенчатое появление плиток — приём оттуда же. Задержки маленькие:
+   сетка должна собраться, а не показывать себя. */
+.screen.active .hub-tile {
+  animation: hub-enter 280ms var(--ease-out) backwards;
+}
+
+.screen.active .hub-tile:nth-child(1) { animation-delay: 0ms; }
+.screen.active .hub-tile:nth-child(2) { animation-delay: 35ms; }
+.screen.active .hub-tile:nth-child(3) { animation-delay: 70ms; }
+.screen.active .hub-tile:nth-child(4) { animation-delay: 105ms; }
+.screen.active .hub-tile:nth-child(5) { animation-delay: 140ms; }
+.screen.active .hub-tile:nth-child(6) { animation-delay: 170ms; }
+.screen.active .hub-tile:nth-child(7) { animation-delay: 195ms; }
+.screen.active .hub-tile:nth-child(8) { animation-delay: 215ms; }
+.screen.active .hub-tile:nth-child(n+9) { animation-delay: 230ms; }
+
+@keyframes hub-enter {
+  from { opacity: 0; transform: translateY(9px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- Орнаментальный разделитель ------------------------------------------
+   В Пекине это «👤 领导者 // ЛИДЕРЫ 👤» по центру строки. Приём держит
+   ритм длинного экрана и заодно ставит китайское слово там, где его
+   прочитают. Здесь вместо эмодзи — черта из палитры. */
+.cn-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 var(--space-5);
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.cn-divider::before,
+.cn-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent, rgba(12, 203, 208, 0.45), transparent);
+}
+
+.cn-divider b {
+  font-family: var(--font-story, Georgia, serif);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--accent-aqua);
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.active .hub-tile { animation: none; }
+}
+
+/* --- Ночь ----------------------------------------------------------------- */
+:root[data-theme="dark"] .hub-tile {
+  border-color: var(--border-edge);
+  background: linear-gradient(180deg,
+    rgba(20, 60, 96, 0.86) 0%,
+    rgba(14, 46, 76, 0.78) var(--gloss-cut),
+    rgba(10, 36, 62, 0.84) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), var(--lift-sm);
+}
+
+:root[data-theme="dark"] .hub-name { color: var(--ink); }
+:root[data-theme="dark"] .hub-cn { color: var(--text-faint); }
+:root[data-theme="dark"] .cn-divider::before,
+:root[data-theme="dark"] .cn-divider::after {
+  background: linear-gradient(90deg, transparent, rgba(46, 194, 234, 0.4), transparent);
+}
