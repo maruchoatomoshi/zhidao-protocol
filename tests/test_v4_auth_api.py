@@ -65,7 +65,7 @@ class V4AuthApiTests(unittest.TestCase):
 
         health = self.client.get("/api/v4/health")
         self.assertEqual(health.status_code, 200)
-        self.assertEqual(health.json()["schema_version"], 4)
+        self.assertEqual(health.json()["schema_version"], 5)
 
     def test_architect_console_is_served_with_security_headers(self):
         redirect = self.client.get("/", follow_redirects=False)
@@ -76,7 +76,12 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertEqual(console.status_code, 200)
         self.assertIn("Architect Console", console.text)
         self.assertIn("default-src 'self'", console.headers["content-security-policy"])
+        # The console is never embedded anywhere, so it keeps the blunt
+        # instrument as well as the CSP one.
         self.assertEqual(console.headers["x-frame-options"], "DENY")
+        self.assertIn(
+            "frame-ancestors 'none'", console.headers["content-security-policy"]
+        )
         self.assertEqual(
             console.headers["permissions-policy"],
             "camera=(), microphone=(), geolocation=()",
@@ -99,7 +104,15 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertIn("DESIGN PREVIEW", preview.text)
         self.assertIn("Курс на", preview.text)
         self.assertIn("default-src 'self'", preview.headers["content-security-policy"])
-        self.assertEqual(preview.headers["x-frame-options"], "DENY")
+        # The participant app is a MAX Mini App, so it must be framable — but
+        # only by MAX. X-Frame-Options has no origin-list syntax that works
+        # across browsers, so this one page drops it and relies on CSP, which
+        # does. Anything wider than these two origins is the bug to catch.
+        self.assertNotIn("x-frame-options", preview.headers)
+        self.assertIn(
+            "frame-ancestors 'self' https://max.ru https://*.max.ru",
+            preview.headers["content-security-policy"],
+        )
         self.assertEqual(
             preview.headers["permissions-policy"],
             "camera=(), microphone=(), geolocation=(self)",
@@ -332,7 +345,7 @@ class V4AuthApiTests(unittest.TestCase):
 
         overview = self.client.get("/api/v4/admin/overview")
         self.assertEqual(overview.status_code, 200)
-        self.assertEqual(overview.json()["schema_version"], 4)
+        self.assertEqual(overview.json()["schema_version"], 5)
         actions = [item["action"] for item in overview.json()["recent_activity"]]
         self.assertIn("season.updated", actions)
 

@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light">
   <title>ZHIDAO Hainan · App Preview</title>
-  <link rel="stylesheet" href="./tokens.css?v=20260906-icons1">
-  <link rel="stylesheet" href="./app.css?v=20260906-icons1">
-  <link rel="stylesheet" href="./aero.css?v=20260906-icons1">
-  <link rel="stylesheet" href="./aero-grade.css?v=20260906-icons1">
+  <link rel="stylesheet" href="./tokens.css?v=20260907-auth2">
+  <link rel="stylesheet" href="./app.css?v=20260907-auth2">
+  <link rel="stylesheet" href="./aero.css?v=20260907-auth2">
+  <link rel="stylesheet" href="./aero-grade.css?v=20260907-auth2">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -64,6 +64,54 @@
       <path d="M12 1.9a10.1 10.1 0 1 0 0 20.2 10.1 10.1 0 0 0 0-20.2zm0 3.6a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zm2 12.6h-4a.9.9 0 0 1 0-1.8h.7v-4h-.7a.9.9 0 0 1 0-1.8h2.6v5.8h1.4a.9.9 0 0 1 0 1.8z"/>
     </symbol>
   </svg>
+
+  <!-- ============================================================
+       ВХОД. Перекрывает приложение, пока не решено, кто его открыл.
+       ============================================================ -->
+  <div class="auth-gate" id="authGate" data-state="checking">
+    <div class="auth-panel">
+      <span class="auth-orb brand-orb" aria-hidden="true">知</span>
+      <span class="system-label">SIGN IN / 登录</span>
+      <h1 class="display-title auth-title">Вход</h1>
+      <p class="screen-sub"><span class="screen-sub-mark">&gt;</span> dēng lù <span class="screen-sub-sep">//</span> личный контур участника</p>
+
+      <div class="auth-step" data-step="checking">
+        <p class="auth-note">Проверяем сессию&hellip;</p>
+      </div>
+
+      <div class="auth-step" data-step="max" hidden>
+        <p class="auth-note">Входим через MAX&hellip;</p>
+      </div>
+
+      <form class="auth-step" data-step="pair" hidden>
+        <p class="auth-note">MAX вас узнал, но пока не знает, чей это аккаунт в поездке. Введите код, который выдал вожатый.</p>
+        <label class="auth-field">
+          <span>Код сопряжения <small>配对码 pèi duì mǎ</small></span>
+          <input type="text" inputmode="numeric" autocomplete="one-time-code"
+                 maxlength="8" pattern="[0-9]{8}" required data-field="code">
+        </label>
+        <button type="submit" class="btn btn-primary">Связать аккаунт</button>
+      </form>
+
+      <form class="auth-step" data-step="local" hidden>
+        <label class="auth-field">
+          <span>Логин</span>
+          <input type="text" autocomplete="username" required data-field="username">
+        </label>
+        <label class="auth-field">
+          <span>Пароль</span>
+          <input type="password" autocomplete="current-password" required data-field="password">
+        </label>
+        <button type="submit" class="btn btn-primary">Войти</button>
+      </form>
+
+      <p class="auth-error" data-auth-error hidden></p>
+
+      <button type="button" class="auth-preview-link" data-auth-preview hidden>
+        Посмотреть оформление без входа
+      </button>
+    </div>
+  </div>
 
   <main class="app-shell">
     <div class="app-stage">
@@ -367,7 +415,7 @@
         <article class="profile-card aero">
           <span class="profile-avatar">操</span>
           <div class="profile-id">
-            <strong>Оператор не подключён</strong>
+            <strong data-account-name>Оператор не подключён</strong>
             <span class="profile-path-badge">HAINAN · PATH: —</span>
           </div>
         </article>
@@ -497,9 +545,11 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./campus-map.js?v=20260906-icons1" defer></script>
+  <script src="./campus-map.js?v=20260907-auth2" defer></script>
   <script src="./app.js?v=20260904-vector1" defer></script>
   <script src="./player.js?v=20260905-player3" defer></script>
-  <script src="./theme.js?v=20260906-icons1" defer></script>
+  <script src="./theme.js?v=20260907-auth2" defer></script>
+  <script src="./vendor/max-web-app.js" defer></script>
+  <script src="./auth.js?v=20260907-auth2" defer></script>
 </body>
 </html>

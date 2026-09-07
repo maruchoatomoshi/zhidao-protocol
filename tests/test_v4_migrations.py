@@ -45,6 +45,7 @@ class V4MigrationTests(unittest.TestCase):
                 "0002_local_auth_sessions.sql",
                 "0003_architect_console.sql",
                 "0004_max_provider_link_codes.sql",
+                "0005_link_code_revocation.sql",
             ],
         )
         self.assertEqual(second, [])
@@ -147,6 +148,7 @@ print(json.dumps({
                 "0002_local_auth_sessions.sql",
                 "0003_architect_console.sql",
                 "0004_max_provider_link_codes.sql",
+                "0005_link_code_revocation.sql",
             ],
         )
         self.assertEqual(payload["health"]["status"], "ok")

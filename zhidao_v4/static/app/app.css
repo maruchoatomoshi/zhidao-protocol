@@ -16,6 +16,18 @@
   --font-ui: "Trebuchet MS", "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
   --font-system: "Courier New", "Lucida Console", monospace;
   --font-story: Georgia, "Times New Roman", serif;
+  /* Отдельная гарнитура под пиньинь, и не из вкусовщины. У Georgia нет
+     готовых гласных третьего тона (ǎ ě ǐ ǒ ǔ), зато есть комбинируемая
+     гачек-диакритика — браузер поэтому не уходит в запасной шрифт, а
+     собирает букву из двух глифов, и «xiǎo» печатается как «xia˘o» с
+     отдельно висящей крышкой. Проверено в браузере на 9 и 24 px. Третий
+     тон — это примерно каждый четвёртый слог, так что случай рядовой.
+     Cambria и Constantia (Windows) и Times New Roman / системный serif
+     на остальных платформах рисуют эти буквы одним глифом и держат тот
+     же засечный характер, что и остальной «сюжетный» текст.
+     Пиньинь, набранный шрифтом --font-system (Courier New), в починке не
+     нуждается: там глифы есть. */
+  --font-pinyin: Cambria, Constantia, "Times New Roman", serif;
 }
 
 * {

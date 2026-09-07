@@ -1742,3 +1742,181 @@ h1.display-title,
   fill: #ffffff;
   filter: drop-shadow(0 1px 1.5px rgba(2, 40, 74, 0.55));
 }
+
+
+/* =========================================================================
+   ЭКРАН ВХОДА
+
+   Перекрывает приложение целиком, пока не решено, кто его открыл. Материал
+   тот же, что у остального интерфейса: стеклянная панель с бликом поверх
+   фотографии Хайнаня — вход не должен выглядеть отдельным сервисом,
+   пришитым сбоку.
+   ========================================================================= */
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--space-8);
+  /* Фон тот же, что у приложения: за стеклом должна быть та же среда, а не
+     серая заглушка. */
+  background:
+    linear-gradient(160deg, rgba(226, 248, 255, .72), rgba(140, 205, 235, .58)),
+    url("../architect/assets/hainan-promised-tomorrow.png") center / cover fixed;
+}
+
+:root[data-theme="dark"] .auth-gate {
+  background:
+    linear-gradient(160deg, rgba(4, 24, 46, .86), rgba(2, 14, 30, .93)),
+    url("../architect/assets/hainan-promised-tomorrow.png") center / cover fixed;
+}
+
+.auth-panel {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 380px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding: var(--space-10) var(--space-8) var(--space-9);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-chrome);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, .95) 0%,
+    rgba(236, 250, 255, .86) var(--gloss-cut),
+    rgba(214, 240, 250, .9) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-lg);
+}
+
+:root[data-theme="dark"] .auth-panel {
+  border-color: var(--border-edge);
+  background: linear-gradient(180deg,
+    rgba(20, 60, 96, .9) 0%,
+    rgba(14, 46, 76, .84) var(--gloss-cut),
+    rgba(10, 36, 62, .9) 100%);
+}
+
+.auth-orb {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-circle);
+  font-family: var(--font-story, Georgia, serif);
+  font-size: 24px;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.05;
+}
+
+/* Шаги входа сменяют друг друга на месте: панель не должна прыгать в
+   размере, когда «проверяем сессию» превращается в форму. */
+.auth-step {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-3);
+}
+
+.auth-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+
+.auth-field > span {
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Здесь стоит китайское название поля вместе с пиньинем, поэтому шрифт
+   пиньиневый, а не сюжетный: у Georgia «mǎ» разваливается на «ma˘». */
+.auth-field > span small {
+  font-family: var(--font-pinyin, Cambria, serif);
+  font-size: 9px;
+  letter-spacing: .04em;
+  text-transform: none;
+  opacity: .85;
+}
+
+/* Поле продавлено внутрь — тот же приём, что у жёлоба приборов: ввод
+   выглядит углублением, а не наклейкой. */
+.auth-field input {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-crisp);
+  background: var(--track-well);
+  box-shadow: var(--track-well-rim);
+  color: var(--text-primary);
+  font: 600 14px/1.2 var(--font-ui);
+}
+
+.auth-field input:focus-visible {
+  outline: 2px solid var(--aqua);
+  outline-offset: 1px;
+}
+
+/* Код сопряжения набирают с бумажки вслух — цифры должны быть крупными,
+   моноширинными и с разрядкой, чтобы не спутать при вводе. */
+.auth-field input[data-field="code"] {
+  font-family: var(--font-system);
+  font-size: 20px;
+  letter-spacing: .32em;
+  text-align: center;
+}
+
+.auth-error {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(201, 92, 92, .4);
+  background: rgba(255, 236, 236, .8);
+  color: #8d2f2f;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+:root[data-theme="dark"] .auth-error {
+  border-color: rgba(232, 128, 128, .45);
+  background: rgba(74, 26, 26, .6);
+  color: #ffc9c9;
+}
+
+/* Выход в оформление без входа. Намеренно тихий и текстовый: это не
+   равноправный способ входа, а честно подписанная дверь для согласования
+   дизайна, пока в разделах нет настоящих данных. */
+.auth-preview-link {
+  margin-top: var(--space-2);
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font: 700 9px/1.3 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.auth-preview-link:hover { color: var(--text-secondary); }
+.auth-preview-link:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }

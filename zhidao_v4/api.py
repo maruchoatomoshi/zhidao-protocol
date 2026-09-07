@@ -209,7 +209,6 @@ def create_app(
         response = await call_next(request)
         response.headers["X-Request-ID"] = request.state.request_id
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "same-origin"
         # Геолокация нужна только участнику на /app/ и запрашивается явной
         # кнопкой «Где я». В консоли архитектора она остаётся запрещённой.
@@ -220,11 +219,23 @@ def create_app(
         response.headers["Permissions-Policy"] = (
             f"camera=(), microphone=(), geolocation={geolocation}"
         )
+        # Мини-приложение MAX открывается внутри клиента MAX: на телефоне это
+        # нативный WebView (рамочные правила там не действуют), а в веб- и
+        # десктоп-клиенте — iframe. Поэтому только для /app/ разрешаем
+        # встраивание с доменов MAX и убираем X-Frame-Options: у него нет
+        # рабочего синтаксиса со списком источников (ALLOW-FROM браузеры не
+        # поддерживают), и его присутствие всё равно запретило бы фрейм.
+        # Консоль архитектора остаётся полностью незакладываемой в рамку.
+        if is_participant_app:
+            frame_ancestors = "frame-ancestors 'self' https://max.ru https://*.max.ru"
+        else:
+            response.headers["X-Frame-Options"] = "DENY"
+            frame_ancestors = "frame-ancestors 'none'"
         if request.url.path.startswith(("/architect", "/app")):
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; style-src 'self'; script-src 'self'; "
                 "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
-                "base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+                f"base-uri 'none'; {frame_ancestors}; form-action 'self'"
             )
         if request.url.path.startswith("/api/v4/auth"):
             response.headers["Cache-Control"] = "no-store"

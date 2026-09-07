@@ -434,20 +434,22 @@ def create_link_code(
 ) -> str:
     """Issues a fresh pairing code for an operator to hand a participant.
 
-    Any earlier unconsumed code for the same account and provider is expired
-    first — the unique partial index in migration 0004 would reject a second
-    active code anyway, but doing it explicitly turns that into a normal
-    "your old code stopped working" outcome instead of a raised exception on
-    an otherwise ordinary re-issue.
+    Any earlier code for the same account and provider that is neither
+    consumed nor already revoked is revoked first. This is not merely tidy:
+    the partial unique index from migration 0005 permits exactly one such row,
+    so without the revoke a re-issue would fail outright. Pushing `expires_at`
+    into the past is not enough — an expired code is still an unconsumed row
+    and still occupies the slot (that was the bug 0005 fixes).
     """
     now = utc_now()
     now_value = utc_text(now)
     conn.execute(
         """
-        UPDATE v4_link_codes SET expires_at = ?
-        WHERE account_id = ? AND provider_code = ? AND consumed_at IS NULL
+        UPDATE v4_link_codes SET revoked_at = ?, revoked_by_account_id = ?
+        WHERE account_id = ? AND provider_code = ?
+          AND consumed_at IS NULL AND revoked_at IS NULL
         """,
-        (now_value, account_id, provider_code),
+        (now_value, actor_account_id, account_id, provider_code),
     )
     # secrets.token_hex would include 0/o/1/l-style ambiguity in spirit if we
     # ever switch to letters; digits sidestep that entirely and are what a
@@ -469,6 +471,12 @@ def create_link_code(
             actor_account_id,
         ),
     )
+    # entity_id — публичный идентификатор аккаунта, как во всех остальных
+    # записях журнала ('identity.linked', 'auth.login_succeeded'). Внутренний
+    # rowid здесь сделал бы журнал нечитаемым в одном запросе.
+    public_id_row = conn.execute(
+        "SELECT public_id FROM v4_accounts WHERE id = ?", (account_id,)
+    ).fetchone()
     conn.execute(
         """
         INSERT INTO v4_audit_log(
@@ -477,7 +485,7 @@ def create_link_code(
         """,
         (
             actor_account_id,
-            str(account_id),
+            str(public_id_row["public_id"]) if public_id_row else str(account_id),
             json.dumps(
                 {"provider_code": provider_code, "ttl_minutes": ttl_minutes},
                 separators=(",", ":"),
@@ -503,8 +511,10 @@ def authenticate_max(
 
     Two paths:
       - an existing `max` identity for this user_id -> ordinary login;
-      - no identity yet -> `link_code` must match an unexpired, unconsumed
-        code, which permanently binds this MAX id to that code's account.
+      - no identity yet -> `link_code` must match a code that is unexpired,
+        unconsumed and not revoked (an operator revokes the old one whenever
+        they issue a replacement), which permanently binds this MAX id to
+        that code's account.
         Without a valid code this raises LinkRequiredError, not
         AuthenticationError: the person is who they say they are, they just
         have not proven which roster account is theirs yet.
@@ -552,7 +562,8 @@ def authenticate_max(
                 """
                 SELECT id, account_id FROM v4_link_codes
                 WHERE provider_code = 'max' AND code_hash = ?
-                  AND consumed_at IS NULL AND expires_at > ?
+                  AND consumed_at IS NULL AND revoked_at IS NULL
+                  AND expires_at > ?
                 """,
                 (token_hash(str(link_code)), utc_text()),
             ).fetchone()
