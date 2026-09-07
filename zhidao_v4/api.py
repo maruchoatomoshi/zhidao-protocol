@@ -16,12 +16,16 @@ from pydantic import BaseModel, Field
 from .admin import architect_overview
 from .auth import (
     AuthenticationError,
+    LinkRequiredError,
     Principal,
     authenticate_local,
+    authenticate_max,
+    create_link_code,
     csrf_is_valid,
     load_principal,
     revoke_session,
 )
+from .max_auth import MaxAuthError, parse_user, verify_launch_params
 from .db import connect_database, immediate_transaction
 from .migrations import apply_migrations
 from .seasons import (
@@ -46,6 +50,13 @@ APP_STATIC_DIR = Path(__file__).resolve().parent / "static" / "app"
 class LoginPayload(BaseModel):
     username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=128)
+
+
+class MaxLoginPayload(BaseModel):
+    # window.WebApp.initData, forwarded byte-for-byte. Do not let a client
+    # send parsed fields instead — the signature covers the exact string.
+    launch_params: str = Field(min_length=1, max_length=4096)
+    link_code: str | None = Field(default=None, min_length=6, max_length=16)
 
 
 class SeasonCreatePayload(BaseModel):
@@ -135,6 +146,18 @@ def _architect_writer(
     return principal
 
 
+def _operator_writer(
+    principal: Principal = Depends(_csrf_principal),
+) -> Principal:
+    if not (
+        principal.has_global_role("operator")
+        or principal.has_global_role("architect")
+        or principal.has_global_role("system_admin")
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
+    return principal
+
+
 def create_app(
     db_path: str | Path | None = None,
     *,
@@ -160,6 +183,10 @@ def create_app(
     app.state.login_attempts_per_minute = max(1, min(configured_login_limit, 1000))
     app.state.login_attempts = defaultdict(deque)
     app.state.login_attempts_lock = threading.Lock()
+    # Unset by default: MAX sign-in is opt-in infrastructure, not core to
+    # bringing the API up. Registering the bot on business.max.ru/self is a
+    # step the user does themselves; nothing here should block on it.
+    app.state.max_bot_token = os.getenv("ZHIDAO_V4_MAX_BOT_TOKEN") or None
 
     def consume_login_slot(request: Request) -> None:
         client_host = request.client.host if request.client else "unknown"
@@ -300,6 +327,113 @@ def create_app(
             samesite="lax",
         )
         return response
+
+    @app.post("/api/v4/auth/max")
+    def login_max(payload: MaxLoginPayload, request: Request):
+        consume_login_slot(request)
+        if not app.state.max_bot_token:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="MAX sign-in is not configured on this server",
+            )
+        try:
+            fields = verify_launch_params(payload.launch_params, app.state.max_bot_token)
+            max_user = parse_user(fields)
+        except MaxAuthError:
+            # Same shape whether the signature failed or the payload was
+            # malformed: neither tells an attacker anything more useful than
+            # "no".
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not verify MAX launch data",
+            ) from None
+
+        try:
+            result = authenticate_max(
+                app.state.db_path,
+                max_user_id=max_user.user_id,
+                max_username=max_user.username,
+                link_code=payload.link_code,
+                session_hours=app.state.session_hours,
+            )
+        except LinkRequiredError:
+            # 409, not 401: MAX proved who this is, they just have not typed
+            # the code a counsellor gave them yet. The frontend shows a
+            # pairing screen for this status, not a login failure.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This MAX account needs a pairing code to sign in",
+            ) from None
+        except AuthenticationError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not sign in with this MAX account",
+            ) from None
+
+        body = {
+            "account": {
+                "id": result.principal.account_id,
+                "public_id": result.principal.public_id,
+                "display_name": result.principal.display_name,
+            },
+            "roles": [
+                {"code": role.code, "season_id": role.season_id}
+                for role in result.principal.roles
+            ],
+            "csrf_token": result.csrf_token,
+            "expires_at": result.principal.expires_at,
+        }
+        response = JSONResponse(body)
+        response.set_cookie(
+            SESSION_COOKIE,
+            result.session_token,
+            max_age=result.max_age_seconds,
+            httponly=True,
+            secure=app.state.cookie_secure,
+            samesite="lax",
+            path="/",
+        )
+        response.set_cookie(
+            CSRF_COOKIE,
+            result.csrf_token,
+            max_age=result.max_age_seconds,
+            httponly=False,
+            secure=app.state.cookie_secure,
+            samesite="lax",
+            path="/",
+        )
+        return response
+
+    @app.post("/api/v4/admin/accounts/{account_id}/link-codes")
+    def issue_max_link_code(
+        account_id: int,
+        principal: Principal = Depends(_operator_writer),
+    ):
+        # No idempotency ledger here on purpose, unlike season writes: a
+        # duplicate call just invalidates the previous code and issues a new
+        # one (create_link_code already does that), which is a harmless
+        # outcome for a counsellor double-tapping a button — nothing like
+        # the double-charge risk idempotency keys guard against elsewhere.
+        conn = connect_database(app.state.db_path)
+        try:
+            with immediate_transaction(conn):
+                account_exists = conn.execute(
+                    "SELECT 1 FROM v4_accounts WHERE id = ? AND status = 'active'",
+                    (account_id,),
+                ).fetchone()
+                if account_exists is None:
+                    raise HTTPException(status_code=404, detail="Account not found")
+                code = create_link_code(
+                    conn,
+                    account_id=account_id,
+                    provider_code="max",
+                    actor_account_id=principal.account_id,
+                )
+        finally:
+            conn.close()
+        # Plaintext leaves the server exactly once, in this response. The
+        # database only ever holds its hash from this point on.
+        return {"code": code, "provider_code": "max", "ttl_minutes": 30}
 
     @app.get("/api/v4/seasons")
     def seasons(principal: Principal = Depends(_current_principal)):

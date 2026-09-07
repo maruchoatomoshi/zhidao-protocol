@@ -44,6 +44,7 @@ class V4MigrationTests(unittest.TestCase):
                 "0001_identity_seasons_groups.sql",
                 "0002_local_auth_sessions.sql",
                 "0003_architect_console.sql",
+                "0004_max_provider_link_codes.sql",
             ],
         )
         self.assertEqual(second, [])
@@ -83,11 +84,14 @@ class V4MigrationTests(unittest.TestCase):
                 roles,
                 {"participant", "operator", "architect", "system_admin"},
             )
+            # Migration 0004 turns MAX on now that a bot is registered and
+            # 0004_max_provider_link_codes.sql exists; this test used to pin
+            # the old "not wired up yet" state at 0.
             self.assertEqual(
                 conn.execute(
                     "SELECT is_enabled FROM v4_identity_providers WHERE code = 'max'"
                 ).fetchone()[0],
-                0,
+                1,
             )
         finally:
             conn.close()
@@ -142,6 +146,7 @@ print(json.dumps({
                 "0001_identity_seasons_groups.sql",
                 "0002_local_auth_sessions.sql",
                 "0003_architect_console.sql",
+                "0004_max_provider_link_codes.sql",
             ],
         )
         self.assertEqual(payload["health"]["status"], "ok")
