@@ -1641,6 +1641,10 @@ h1.display-title,
 .tone-gold   { --orb-light: #ffe9a8; --orb-mid: #f0c14c; --orb-deep: #c98f1c; }
 .tone-violet { --orb-light: #d7c4f5; --orb-mid: #a077e0; --orb-deep: #6a3fbd; }
 .tone-steel  { --orb-light: #dbe7ef; --orb-mid: #9db3c4; --orb-deep: #5d7787; }
+/* Красный в приложении означает одно: служебное и необратимое. Тем же
+   семейством набрано легендарное в кейсах — там это верхняя ступень, а не
+   ещё один оттенок золота. Больше красного нигде нет. */
+.tone-red    { --orb-light: #ffc9c4; --orb-mid: #e0574e; --orb-deep: #8f2f29; }
 
 .hub-name {
   font: 700 12px/1.2 var(--font-ui);
@@ -2700,3 +2704,465 @@ h1.display-title,
 
 :root[data-theme="dark"] .case-tier.is-black .case-tier-share b { color: #ff9d96; }
 :root[data-theme="dark"] .case-tier.is-purple .case-tier-share b { color: #c3a9ec; }
+
+/* =========================================================================
+   АДМИНКА — служебный контур
+
+   Экран лежит внутри case-workstation: оконная рамка, строка состояния и
+   наборный шрифт берутся оттуда, чтобы служебный раздел выглядел тем же
+   прибором, что и кейсы. Здесь — только то, чего в кейсах нет.
+
+   Разница с участником сделана температурой, а не другим стилем. У
+   участника стекло и цветные сферы; здесь к ним добавлены металл, косая
+   штриховка и трафаретный набор — те самые элементы Metalheart, которые в
+   остальном приложении держатся редким акцентом (V4_DESIGN). Разделу, где
+   выдают коды и смотрят чужие аккаунты, эта серьёзность к лицу.
+
+   Красный один на весь экран и значит одно: необратимое действие. Поэтому
+   им подсвечена только взведённая кнопка выдачи кода и шильдик системного
+   администратора, но не заголовки и не рамки.
+   ========================================================================= */
+
+.admin-console {
+  --admin-alert: #a8302a;
+  --admin-alert-lit: #e0574e;
+  --admin-stencil: 700 9px/1 var(--font-system);
+}
+
+/* --- шильдик роли ------------------------------------------------------- */
+
+/* Шапка раздела — сетка «кнопка назад / заголовок / значок», и значок в
+   третьей колонке не помещался: «Админка» одним словом не переносится, а
+   роль пишется двумя. Поэтому значок уходит под заголовок, во вторую
+   колонку. */
+.admin-console .map-screen-head { grid-template-columns: 40px minmax(0, 1fr); }
+.admin-console .map-screen-head > div { min-width: 0; }
+
+.admin-badge {
+  grid-column: 2;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 5px 9px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--case-border);
+  background: var(--surface-metal);
+  font: var(--admin-stencil);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--case-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+}
+
+/* Системный администратор — единственная роль, которой видно издалека. Не
+   ради важности: у неё в руках роли и сезоны, и человек должен помнить, под
+   кем он сидит. */
+.admin-badge[data-role="system_admin"] {
+  border-color: var(--admin-alert);
+  background: linear-gradient(180deg, #e8746c, var(--admin-alert));
+  color: #fff5f4;
+  text-shadow: 0 1px 2px rgba(60, 8, 6, .8);
+}
+
+/* --- плита доступа ------------------------------------------------------ */
+
+/* Металлическая табличка с косой штриховкой по краю — из Metalheart. Она
+   отделяет служебный экран от участнического сильнее, чем любая надпись. */
+.admin-plate {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  overflow: hidden;
+  margin-top: var(--space-5);
+  padding: var(--space-5) var(--space-5) var(--space-5) calc(var(--space-5) + 12px);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--case-border);
+  background: var(--surface-metal);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), var(--lift-sm);
+}
+
+.admin-plate-hazard {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 12px;
+  background: repeating-linear-gradient(135deg,
+    var(--admin-alert) 0 6px,
+    rgba(255, 255, 255, .75) 6px 12px);
+  opacity: .8;
+  border-right: 1px solid rgba(255, 255, 255, .7);
+}
+
+.admin-plate-body { flex: 1; min-width: 0; }
+
+.admin-plate-label {
+  display: block;
+  font: var(--admin-stencil);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--case-muted);
+}
+
+.admin-plate-body strong {
+  display: block;
+  margin-top: 3px;
+  font: 700 15px/1.25 var(--font-ui);
+  color: var(--case-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Кнопка обновления служебная, а не главная на экране: у неё свой размер,
+   меньше типовой кнопки кейсов, иначе табличка доступа читается как форма с
+   одним большим действием. */
+.admin-console .admin-plate .admin-refresh {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 12px;
+  font: 600 11px/1 var(--font-ui);
+}
+
+/* --- выданные роли ------------------------------------------------------ */
+
+.admin-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.admin-role-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 3px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--case-border);
+  background: var(--case-pane);
+  font: 600 10px/1.3 var(--font-ui);
+  color: var(--case-ink);
+}
+
+/* Сезонная роль действует только внутри своего сезона. Разница между ней и
+   глобальной объясняет половину отказов на этом экране, поэтому она видна
+   до нажатия, а не после. */
+.admin-role-chip i {
+  font-style: normal;
+  font: 400 9px/1 var(--font-system);
+  letter-spacing: .04em;
+  color: var(--case-muted);
+}
+
+.admin-role-chip.is-global { border-color: var(--accent-aqua); }
+.admin-role-chip.is-empty { color: var(--case-muted); }
+
+/* --- сетка разделов ----------------------------------------------------- */
+
+/* Пекинская решётка иконок: разделы находят по цветной сфере быстрее, чем
+   по подписи. Здесь их меньше, но принцип тот же. */
+.admin-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.admin-nav-btn {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 78px;
+  padding: 10px 5px 9px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-chrome);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, .94) 0%,
+    rgba(235, 250, 255, .82) var(--gloss-cut),
+    rgba(212, 238, 250, .86) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-sm);
+  cursor: pointer;
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out),
+    filter var(--dur-hover) var(--ease-out);
+}
+
+.admin-nav-btn .hub-orb { width: 34px; height: 34px; }
+.admin-nav-btn .hub-icon { width: 17px; height: 17px; }
+
+.admin-nav-label {
+  font: 700 10px/1.2 var(--font-ui);
+  text-align: center;
+  color: var(--case-ink);
+}
+
+.admin-nav-btn:hover { filter: saturate(1.06) brightness(1.02); }
+.admin-nav-btn:active { transform: translateY(var(--press-shift)); }
+.admin-nav-btn:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+
+/* Открытый раздел подсвечен полосой света снизу — тем же приёмом, что
+   активная вкладка дока. Цвет здесь не нужен: выбран один раздел, и его
+   достаточно отличить, а не выделить. */
+.admin-nav-btn.active {
+  border-color: var(--accent-aqua);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--light-rim);
+}
+
+.admin-nav-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--light-strip);
+  box-shadow: var(--light-strip-glow);
+}
+
+/* Погашенный раздел. Он не выключен — за ним просто нет системы, и
+   нажатие честно об этом говорит. Серый вместо цвета и есть это сообщение. */
+.admin-nav-btn.is-standby { filter: grayscale(.7); opacity: .72; }
+.admin-nav-btn.is-standby:hover { filter: grayscale(.55); opacity: .85; }
+
+.admin-nav-btn.is-standby::before {
+  content: "标";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font: 400 8px/1 var(--font-story, Georgia, serif);
+  color: var(--case-muted);
+  opacity: .7;
+}
+
+/* --- панели ------------------------------------------------------------- */
+
+.admin-panel { display: block; }
+
+/* Счётчики — приборные окошки, как метры в сканере: продавленный жёлоб,
+   табличные цифры. Число здесь важнее подписи, поэтому оно крупнее. */
+.admin-gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.admin-gauge {
+  padding: 9px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--case-border);
+  background: var(--case-inset);
+  box-shadow: inset 0 1px 3px rgba(0, 31, 57, .13);
+}
+
+.admin-gauge span {
+  display: block;
+  font: var(--admin-stencil);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--case-muted);
+}
+
+.admin-gauge strong {
+  display: block;
+  margin-top: 4px;
+  font: 600 21px/1.15 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--case-ink);
+}
+
+.admin-gauges .case-message { grid-column: 1 / -1; padding: 0; }
+
+/* --- журнал ------------------------------------------------------------- */
+
+.admin-log { max-height: 320px; overflow-y: auto; overscroll-behavior: contain; }
+
+.admin-log-row {
+  padding: 9px 0;
+  border-top: 1px solid var(--case-border);
+  overflow-wrap: anywhere;
+}
+
+.admin-log-row:first-child { border-top: 0; padding-top: 0; }
+
+.admin-log-row b {
+  display: block;
+  font: 600 13px/1.3 var(--font-ui);
+  color: var(--case-ink);
+}
+
+.admin-log-row span { display: block; font-size: 12px; color: var(--case-muted); }
+
+/* Время и автор — моноширинным: их сканируют глазами по столбцу, а не
+   читают. */
+.admin-log-row small {
+  display: block;
+  margin-top: 2px;
+  font: 400 10px/1.4 var(--font-system);
+  color: var(--case-muted);
+}
+
+/* --- ростер ------------------------------------------------------------- */
+
+.admin-search {
+  display: flex;
+  align-items: end;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) 0;
+}
+
+.admin-search label { flex: 1; min-width: 0; font-size: 12px; }
+.admin-search button { flex-shrink: 0; min-height: 44px; }
+
+.admin-roster { max-height: 400px; overflow-y: auto; overscroll-behavior: contain; }
+
+.admin-roster-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 0;
+  border-top: 1px solid var(--case-border);
+}
+
+.admin-roster-row:first-child { border-top: 0; }
+
+.admin-roster-copy { flex: 1; min-width: 0; }
+
+.admin-roster-copy b {
+  display: block;
+  font: 600 14px/1.3 var(--font-ui);
+  color: var(--case-ink);
+  overflow-wrap: anywhere;
+}
+
+.admin-roster-copy small {
+  display: block;
+  margin-top: 3px;
+  font: 400 10px/1.4 var(--font-system);
+  color: var(--case-muted);
+}
+
+.admin-roster-marks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+.admin-mark {
+  font-style: normal;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--case-border);
+  background: var(--case-pane);
+  font: 500 10px/1.4 var(--font-system);
+  color: var(--case-muted);
+}
+
+/* Привязан MAX или нет — единственное, ради чего этот список открывают.
+   Отсюда цвет: зелёное «есть», нейтральное «нет». Красным «нет» не красим:
+   непривязанный аккаунт — это норма до первого входа, а не авария. */
+.admin-mark.is-on { border-color: #5aa87a; color: #2f6b4a; background: rgba(99, 201, 158, .16); }
+.admin-mark.is-warn { border-color: var(--admin-alert); color: var(--admin-alert); }
+
+.admin-code-btn { flex-shrink: 0; min-height: 40px; }
+
+/* Взведённая кнопка. Выдача аннулирует прежний код, поэтому второе нажатие
+   выглядит иначе, чем первое: красный здесь предупреждение, а не украшение. */
+.admin-code-btn.is-armed {
+  border-color: var(--admin-alert);
+  background: linear-gradient(180deg, #f5b2ac, #d8564d);
+  color: #3d0b08;
+  font-size: 11px;
+}
+
+/* --- код сопряжения ----------------------------------------------------- */
+
+.admin-code-body { padding: var(--space-5); }
+
+.admin-code-for {
+  margin: 3px 0 0;
+  font: 600 14px/1.3 var(--font-ui);
+  color: var(--case-ink);
+}
+
+/* Код диктуют вслух. Значит: крупно, моноширинно, с разрядкой и на
+   продавленном фоне, чтобы не сливался с текстом вокруг. */
+.admin-code-value {
+  display: block;
+  margin: var(--space-4) 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--case-border);
+  background: var(--track-well);
+  box-shadow: var(--track-well-rim);
+  font: 700 clamp(26px, 9vw, 34px)/1.1 var(--font-system);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .14em;
+  text-align: center;
+  color: var(--case-ink);
+}
+
+.admin-code-actions { display: flex; gap: var(--space-3); margin-top: var(--space-4); }
+.admin-code-actions .btn { flex: 1; }
+
+.admin-code-body .case-message { padding: 0; margin: var(--space-3) 0 0; }
+
+/* --- сезоны и заметки --------------------------------------------------- */
+
+.admin-season-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 10px 0;
+  border-top: 1px solid var(--case-border);
+}
+
+.admin-season-row:first-child { border-top: 0; }
+
+.admin-season-row b { font: 600 14px/1.3 var(--font-ui); color: var(--case-ink); }
+
+.admin-season-row small {
+  flex-basis: 100%;
+  font: 400 10px/1.5 var(--font-system);
+  color: var(--case-muted);
+}
+
+.admin-note { padding: var(--space-5) var(--space-5) 0; }
+.admin-jump { width: calc(100% - var(--space-5) * 2); margin: var(--space-4) var(--space-5); }
+
+/* --- ночь --------------------------------------------------------------- */
+
+:root[data-theme="dark"] .admin-nav-btn {
+  border-color: var(--border-edge);
+  background: linear-gradient(180deg,
+    rgba(20, 60, 96, .86) 0%,
+    rgba(14, 46, 76, .78) var(--gloss-cut),
+    rgba(10, 36, 62, .84) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), var(--lift-sm);
+}
+
+:root[data-theme="dark"] .admin-plate-hazard {
+  background: repeating-linear-gradient(135deg,
+    #8f2f29 0 6px,
+    rgba(206, 238, 255, .32) 6px 12px);
+}
+
+/* Ночью тот же красный на тёмном читается тускло, а предупреждение обязано
+   оставаться предупреждением. */
+:root[data-theme="dark"] .admin-console { --admin-alert: #e0574e; }
+
+:root[data-theme="dark"] .admin-badge[data-role="system_admin"] {
+  background: linear-gradient(180deg, #8f2f29, #6f1d18);
+  border-color: #b0453d;
+  color: #ffd9d6;
+}
+
+:root[data-theme="dark"] .admin-mark.is-on {
+  border-color: #4e8f6c;
+  color: #a9e6c6;
+  background: rgba(78, 143, 108, .22);
+}
+
+:root[data-theme="dark"] .admin-code-btn.is-armed {
+  background: linear-gradient(180deg, #a8443c, #7a2620);
+  color: #ffe2df;
+}
