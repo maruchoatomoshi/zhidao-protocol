@@ -13,7 +13,7 @@
       button.setAttribute("aria-pressed", String(preference !== "off" && !reduced.matches));
       button.setAttribute("aria-label", reduced.matches ? "Уменьшение движения включено в системе" :
         preference === "off" ? "Анимации выключены. Включить" : "Анимации включены. Выключить");
-      button.querySelector("[data-motion-label]").textContent = reduced.matches ? "Без движения" : preference === "off" ? "Без анимаций" : "Движение";
+      button.querySelector("[data-motion-label]").textContent = reduced.matches ? "Системное ограничение" : preference === "off" ? "Выключены" : "Включены";
     });
     if (!enabled()) activeScan?.skip();
   }

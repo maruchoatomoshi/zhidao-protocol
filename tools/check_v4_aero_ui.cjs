@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
-const BASE = 'http://127.0.0.1:8784';
+const BASE = process.env.V4_PREVIEW_URL || 'http://127.0.0.1:8784';
 const OUT = path.resolve('.codex-tmp/aero-qa');
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -14,6 +14,12 @@ const OUT = path.resolve('.codex-tmp/aero-qa');
   page.on('console', m => { if (m.type() === 'error' && /Content Security Policy|Refused to/.test(m.text())) errors.push(m.text()); });
   const screens = ['schedule','rating','shop','cases','tasks','more','profile','collection','implants','campus-map'];
   const open = async name => { await page.evaluate(name => showScreen(name), name); await page.waitForTimeout(80); };
+  async function toggleMotion() {
+    const previous = await page.locator('html').getAttribute('data-current-screen');
+    await open('more');
+    await page.locator('[data-motion-toggle]').click();
+    await open(previous || 'schedule');
+  }
   try {
     const setup = await browser.newContext(), staff = await setup.newPage();
     await staff.goto(BASE + '/app/');
@@ -58,16 +64,16 @@ const OUT = path.resolve('.codex-tmp/aero-qa');
     await page.locator('[data-tab-group="rating"] [data-tab="diary"]').click();
     assert.equal(await page.locator('[data-tab-panel="rating:diary"]').isVisible(), true);
     checks.push('tab change shows the requested panel');
-    await page.locator('[data-motion-toggle]').click();
+    await toggleMotion();
     assert.equal(await page.locator('html').getAttribute('data-motion'), 'off');
     await page.reload(); await page.locator('body.is-signed-in').waitFor();
     assert.equal(await page.locator('html').getAttribute('data-motion'), 'off');
     assert.equal(await page.evaluate(() => document.getAnimations().filter(a => a.playState === 'running').length), 0);
-    await page.locator('[data-motion-toggle]').click();
+    await toggleMotion();
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.waitForFunction(() => document.documentElement.dataset.motion === 'reduced');
     assert.equal(await page.locator('html').getAttribute('data-motion'), 'reduced');
-    await page.locator('[data-motion-toggle]').click();
+    await toggleMotion();
     assert.equal(await page.locator('html').getAttribute('data-motion'), 'reduced');
     assert.equal(await page.evaluate(() => document.getAnimations().filter(a => a.playState === 'running').length), 0);
     checks.push('motion-off survives reload; OS reduced motion cannot be overridden; zero running animations in both');
@@ -100,14 +106,14 @@ const OUT = path.resolve('.codex-tmp/aero-qa');
     // The scan wait must also stop when movement is switched off mid-flight.
     await page.route('**/cases/open', async route => { const response = await route.fetch(); await new Promise(r => setTimeout(r, 350)); await route.fulfill({ response }); });
     await page.locator('#caseOpen').click();
-    await page.locator('[data-motion-toggle]').click();
+    await toggleMotion();
     await page.locator('#caseResultDialog[open]').waitFor();
     assert.equal(await page.locator('html').getAttribute('data-motion'), 'off');
     assert.equal(await page.locator('#scanWindow').getAttribute('aria-busy'), null);
     checks.push('disabling movement during an opening completes without a stuck busy state');
     await page.locator('#caseResultDialog [data-case-close]').last().click();
     await page.unroute('**/cases/open');
-    await page.locator('[data-motion-toggle]').click();
+    await toggleMotion();
     await page.locator('#caseOpen').click();
     await page.waitForFunction(() => document.getElementById('scanWindow').dataset.scanPhase === 'reveal');
     const duringReveal = await page.request.get(BASE + '/api/v4/seasons/1/cases/state').then(r => r.json());

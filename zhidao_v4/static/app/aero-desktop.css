@@ -171,7 +171,20 @@
 .case-dialog[data-tier="black"] .case-titlebar { background: linear-gradient(#658192,#213f51 48%,#0a2434 50%,#365364); border-bottom: 2px solid #d9bc75; }
 .case-dialog[data-tier="purple"] .case-titlebar { background: linear-gradient(#ac99db,#685399 48%,#504175 50%,#8c77b2); }
 .case-result-body #caseResultBalance { font: 12px/1.6 "Trebuchet MS",sans-serif; border-top: 1px solid var(--case-border); padding-top: 12px; }
-button, a, summary { -webkit-tap-highlight-color: #66c2ef33; }
+html { -webkit-tap-highlight-color: transparent; color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: only light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+button, a, summary, input, select, label, [role="button"] { -webkit-tap-highlight-color: transparent; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible), summary:focus:not(:focus-visible) { outline: none; }
+.internet-toolbar { background: none; border: 0; padding: 0; box-shadow: none; }
+.internet-address { background: var(--desk-paper); min-height: 32px; }
+.settings-list [data-motion-toggle] { border-top: 1px solid var(--desk-edge); }
+.settings-list button { gap: 12px; min-height: 52px; }
+.settings-list button > b { text-align: right; font-size: 15px; max-width: 60%; }
+.hub-orb.aero-object { width: 64px; height: 64px; padding: 0; border: 0; border-radius: 0; background: none !important; box-shadow: none !important; }
+.hub-orb.aero-object::before, .hub-orb.aero-object::after { display: none; }
+.hub-orb.aero-object img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 3px #00314a30); }
+.profile-avatar img, .profile-fab-orb img { width: 85%; height: 85%; object-fit: contain; }
 button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--desk-accent); outline-offset: 3px; }
 .btn, .terminal-tool, .desktop-shortcuts button, .profile-collection-link, .dock-button { transition: transform 130ms ease, box-shadow 150ms ease; }
 button:not(:disabled):active { transform: translateY(1px) scale(.985); }

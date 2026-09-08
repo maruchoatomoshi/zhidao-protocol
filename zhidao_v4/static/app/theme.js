@@ -46,6 +46,10 @@
   function apply() {
     const theme = resolved();
     root.dataset.theme = theme;
+    // Advertise our own themes to Android WebView; explicitly opting out of
+    // algorithmic darkening keeps a manually chosen day theme genuinely light.
+    const scheme = document.querySelector('meta[name="color-scheme"]');
+    if (scheme) scheme.content = theme === "light" ? "only light" : "dark light";
     // Строка состояния браузера красится под фон приложения: иначе на
     // телефоне сверху остаётся светлая полоса поверх ночного вида.
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -75,4 +79,5 @@
   media.addEventListener("change", () => { if (mode === "system") apply(); });
 
   apply();
+  document.addEventListener("DOMContentLoaded", apply, { once: true });
 }());

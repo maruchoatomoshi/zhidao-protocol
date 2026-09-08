@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
-const BASE = 'http://127.0.0.1:8784';
+const BASE = process.env.V4_PREVIEW_URL || 'http://127.0.0.1:8784';
 const OUT = path.resolve('.codex-tmp/cases-qa');
 
 (async () => {

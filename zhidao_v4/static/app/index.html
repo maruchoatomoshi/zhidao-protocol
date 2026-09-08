@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#bdefff">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
+<script src="./theme.js?v=677205bb34"></script>
   <title>ZHIDAO Hainan · Personal System</title>
   <link rel="stylesheet" href="./tokens.css?v=fa77e0dcbd">
   <link rel="stylesheet" href="./app.css?v=762cb3e504">
   <link rel="stylesheet" href="./aero.css?v=9f44369511">
   <link rel="stylesheet" href="./aero-grade.css?v=29d1bae32b">
   <link rel="stylesheet" href="./case-workstation.css?v=32a11fe8e2">
-  <link rel="stylesheet" href="./aero-desktop.css?v=1131d1fa95">
+  <link rel="stylesheet" href="./aero-desktop.css?v=23ffb16626">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -159,14 +160,12 @@
           <i aria-label="Система доступна"></i>
         </div>
         <button class="profile-fab btn btn-icon" type="button" data-open-screen="profile" aria-label="Профиль">
-          <span class="profile-fab-orb">操</span>
+          <span class="profile-fab-orb"><img src="./assets/icons/desktop-person.svg" alt=""></span>
         </button>
       </header>
 
       <div class="internet-toolbar" aria-label="Личный терминал">
         <span class="internet-address"><span aria-hidden="true">◈</span> <span id="terminalAddress">zhidao://today</span></span>
-        <button type="button" class="terminal-tool" data-motion-toggle aria-pressed="true" aria-label="Анимации включены. Выключить"><span aria-hidden="true">◌</span><span data-motion-label>Движение</span></button>
-        <button type="button" class="terminal-tool" data-theme-toggle aria-label="Сменить тему"><span aria-hidden="true">◐</span><span class="terminal-tool-caption">Тема</span></button>
       </div>
 
       <!-- ============================================================
@@ -513,7 +512,7 @@
         </div>
 
         <article class="profile-card aero">
-          <span class="profile-avatar">操</span>
+          <span class="profile-avatar"><img src="./assets/icons/desktop-person.svg" alt=""></span>
           <div class="profile-id">
             <strong data-account-name>Гость · просмотр оформления</strong>
             <span class="profile-path-badge">HAINAN · PATH: —</span>
@@ -583,35 +582,35 @@
 
         <div class="admin-nav-grid" data-tab-group="admin" role="tablist" aria-label="Разделы админки">
           <button class="admin-nav-btn active" type="button" role="tab" aria-selected="true" data-tab="overview">
-            <span class="hub-orb tone-aqua" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-chart"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-chart.svg" alt=""></span>
             <span class="admin-nav-label">Сводка</span>
           </button>
           <button class="admin-nav-btn" type="button" role="tab" aria-selected="false" data-tab="roster">
-            <span class="hub-orb tone-sky" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-group"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
             <span class="admin-nav-label">Участники</span>
           </button>
           <button class="admin-nav-btn" type="button" role="tab" aria-selected="false" data-tab="grants">
-            <span class="hub-orb tone-gold" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-scan"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
             <span class="admin-nav-label">Попытки</span>
           </button>
           <button class="admin-nav-btn" type="button" role="tab" aria-selected="false" data-tab="seasons">
-            <span class="hub-orb tone-violet" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-calendar"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-schedule.png" alt=""></span>
             <span class="admin-nav-label">Сезоны</span>
           </button>
           <button class="admin-nav-btn is-standby" type="button" data-toast="Объявления появятся вместе с лентой новостей сезона">
-            <span class="hub-orb tone-steel" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-megaphone"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-megaphone.svg" alt=""></span>
             <span class="admin-nav-label">Объявления</span>
           </button>
           <button class="admin-nav-btn is-standby" type="button" data-toast="Перекличка подключится вместе с расписанием поездки">
-            <span class="hub-orb tone-steel" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-shield"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
             <span class="admin-nav-label">Перекличка</span>
           </button>
           <button class="admin-nav-btn is-standby" type="button" data-toast="Начисления REP и ★ вручную появятся после экономики сезона">
-            <span class="hub-orb tone-steel" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-medal"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-rating.png" alt=""></span>
             <span class="admin-nav-label">Экономика</span>
           </button>
           <button class="admin-nav-btn is-standby" type="button" data-toast="Запись на стирку подключим вместе с расписанием">
-            <span class="hub-orb tone-steel" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-wash"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-wash.svg" alt=""></span>
             <span class="admin-nav-label">Стирка</span>
           </button>
         </div>
@@ -696,6 +695,10 @@
             <span>Тема <small>主题</small></span>
             <b><span data-theme-value>Как в системе</span> ›</b>
           </button>
+          <button type="button" data-motion-toggle aria-pressed="true" aria-label="Анимации включены. Выключить">
+            <span>Анимации <small>动态</small></span>
+            <b><span data-motion-label>Включены</span> ›</b>
+          </button>
         </div>
 
         <div class="cn-divider"><b>功能</b><span>Разделы</span></div>
@@ -705,57 +708,57 @@
                admin.js тому, у кого есть служебная роль. Прятать кнопку — не
                способ ограничить доступ, права проверяет сервер. -->
           <button type="button" class="hub-tile tone-red" id="adminHubTile" data-open-screen="admin" hidden>
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-shield"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
             <span class="hub-name">Админка</span>
             <span class="hub-cn">管理<i>guǎn lǐ</i></span>
           </button>
           <button type="button" class="hub-tile tone-aqua" data-open-screen="campus-map">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-map"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
             <span class="hub-name">Карта кампуса</span>
             <span class="hub-cn">校园地图<i>xiào yuán dì tú</i></span>
           </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-case"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
             <span class="hub-name">Коллекция</span>
             <span class="hub-cn">收藏<i>shōu c&aacute;ng</i></span>
           </button>
           <button type="button" class="hub-tile tone-sky" data-open-screen="profile">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-person"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-person.svg" alt=""></span>
             <span class="hub-name">Профиль</span>
             <span class="hub-cn">操作员<i>cāo zuò yuán</i></span>
           </button>
           <button type="button" class="hub-tile tone-lime" data-toast="Отряд появится после распределения участников по группам">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-group"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
             <span class="hub-name">Отряд</span>
             <span class="hub-cn">小组<i>xiǎo zǔ</i></span>
           </button>
           <button type="button" class="hub-tile tone-gold" data-toast="Достижения появятся после первых заданий">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-medal"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-rating.png" alt=""></span>
             <span class="hub-name">Достижения</span>
             <span class="hub-cn">成就<i>chéng jiù</i></span>
           </button>
           <button type="button" class="hub-tile tone-aqua" data-toast="Запись на стирку подключим вместе с расписанием">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-wash"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-wash.svg" alt=""></span>
             <span class="hub-name">Стирка</span>
             <span class="hub-cn">洗衣<i>xǐ yī</i></span>
           </button>
           <button type="button" class="hub-tile tone-sky" data-toast="Запись на воду подключим вместе с расписанием">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-drop"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-drop.svg" alt=""></span>
             <span class="hub-name">Вода</span>
             <span class="hub-cn">饮水<i>yǐn shuǐ</i></span>
           </button>
           <button type="button" class="hub-tile tone-lime" data-toast="Живой прогноз погоды пока не подключён">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-weather"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-weather.svg" alt=""></span>
             <span class="hub-name">Погода</span>
             <span class="hub-cn">天气<i>tiān qì</i></span>
           </button>
           <button type="button" class="hub-tile tone-violet" data-toast="Уведомления пока не подключены">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-bell"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-bell.svg" alt=""></span>
             <span class="hub-name">Уведомления</span>
             <span class="hub-cn">通知<i>tōng zhī</i></span>
           </button>
           <button type="button" class="hub-tile tone-steel" data-toast="ZHIDAO Hainan · Aero Personal System. Кейсы и коллекция подключены после входа; остальные модули развиваются.">
-            <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-info"></use></svg></span>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-info.svg" alt=""></span>
             <span class="hub-name">О приложении</span>
             <span class="hub-cn">关于<i>guān yú</i></span>
           </button>
@@ -788,7 +791,7 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./campus-map.js?v=9d6077482f" defer></script>
+  <script src="./campus-map.js?v=d8a0ffc60a" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
     <div class="case-result-body"><div class="result-halo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="caseResultTier" class="case-result-tier"></span><div class="result-seal" id="caseResultSeal" aria-hidden="true">✦</div><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
@@ -799,13 +802,12 @@
   </dialog>
   <script src="./cases.js?v=4344700dac" defer></script>
   <script src="./case-play.js?v=c25d7c921c" defer></script>
-  <script src="./implants.js?v=c546b038d3" defer></script>
+  <script src="./implants.js?v=7d57c9778a" defer></script>
   <script src="./admin.js?v=2cf59ee550" defer></script>
   <script src="./app.js?v=19c4fa954e" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
-  <script src="./theme.js?v=79eeeb299c" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
-  <script src="./aero-motion.js?v=9cca22f558" defer></script>
+  <script src="./aero-motion.js?v=0683302880" defer></script>
 </body>
 </html>
