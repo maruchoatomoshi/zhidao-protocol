@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
 import sqlite3
 import tempfile
 import unittest
@@ -14,6 +15,7 @@ from zhidao_v4.bootstrap import bootstrap_system_admin
 from zhidao_v4.passwd import main as passwd_main
 from zhidao_v4.provision import generate_password
 from zhidao_v4.provision import main as provision_main
+from zhidao_v4.roles import main as roles_main
 
 
 ADMIN_USERNAME = "architect"
@@ -229,6 +231,156 @@ class AccountCliTests(unittest.TestCase):
             )
         changed = self.read_password(out.getvalue())
         self.assertEqual(self.login("mixedcase", changed).status_code, 200)
+
+
+
+class RoleCliTests(unittest.TestCase):
+    """Выдача и отзыв роли уже существующей учётке.
+
+    До этого роль назначалась только при заведении: повысить вожатого до
+    администратора было нечем, кроме правки базы руками.
+    """
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.db_path = Path(self.temp_dir.name) / "zhidao.db"
+        self.bootstrap = bootstrap_system_admin(
+            self.db_path,
+            username=ADMIN_USERNAME,
+            password=ADMIN_PASSWORD,
+            display_name="Архитектор",
+        )
+        with _capture() as out:
+            provision_main(
+                [
+                    "--db", str(self.db_path),
+                    "--username", "mikhail",
+                    "--display-name", "Михаил Юрьевич",
+                    "--role", "operator",
+                    "--random-password",
+                    "--actor-account-id", str(self.bootstrap["account"]["id"]),
+                ]
+            )
+        line = [ln for ln in out.getvalue().splitlines() if ln.startswith("password: ")][-1]
+        self.password = line[len("password: "):]
+        self.client = TestClient(
+            create_app(self.db_path, cookie_secure=False, session_hours=1)
+        )
+
+    def tearDown(self):
+        self.client.close()
+        self.temp_dir.cleanup()
+
+    def login(self):
+        return self.client.post(
+            "/api/v4/auth/login",
+            json={"username": "mikhail", "password": self.password},
+        )
+
+    def grant(self, role: str, *extra: str):
+        with _capture() as out:
+            code = roles_main(
+                ["--db", str(self.db_path), "--username", "mikhail", "--grant", role, *extra]
+            )
+        self.assertEqual(code, 0)
+        return json.loads(out.getvalue().splitlines()[-1])
+
+    def test_granting_a_role_adds_it_without_losing_the_old_one(self):
+        result = self.grant("system_admin")
+        self.assertEqual(result["roles_before"], ["operator"])
+        self.assertEqual(result["roles_after"], ["operator", "system_admin"])
+
+        response = self.login()
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(
+            sorted(role["code"] for role in response.json()["roles"]),
+            ["operator", "system_admin"],
+        )
+
+    def test_a_granted_role_takes_effect_on_an_open_session(self):
+        # Роли перечитываются на каждом запросе, а не запекаются в сессию:
+        # повышение не должно требовать перезахода.
+        login = self.login()
+        self.assertEqual(login.status_code, 200, login.text)
+        csrf = login.json()["csrf_token"]
+
+        denied = self.client.post(
+            "/api/v4/seasons",
+            json={"code": "before-promotion", "name": "Before"},
+            headers={"x-csrf-token": csrf, "x-idempotency-key": "roles:before"},
+        )
+        self.assertEqual(denied.status_code, 403)
+
+        self.grant("system_admin")
+
+        allowed = self.client.post(
+            "/api/v4/seasons",
+            json={"code": "after-promotion", "name": "After"},
+            headers={"x-csrf-token": csrf, "x-idempotency-key": "roles:after"},
+        )
+        self.assertEqual(allowed.status_code, 201, allowed.text)
+
+    def test_revoking_keeps_the_history(self):
+        self.grant("system_admin")
+        with _capture() as out:
+            code = roles_main(
+                [
+                    "--db", str(self.db_path),
+                    "--username", "mikhail",
+                    "--revoke", "system_admin",
+                ]
+            )
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out.getvalue().splitlines()[-1])["roles_after"], ["operator"])
+
+        conn = sqlite3.connect(self.db_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT r.role_code, r.revoked_at
+                  FROM v4_role_assignments r
+                  JOIN v4_external_identities e ON e.account_id = r.account_id
+                 WHERE r.role_code = 'system_admin'
+                   AND e.provider_code = 'local' AND e.provider_subject = 'mikhail'
+                """
+            ).fetchall()
+        finally:
+            conn.close()
+        # Строка осталась, помечена отозванной: кто и когда имел права —
+        # это история, её не стирают.
+        self.assertEqual(len(rows), 1)
+        self.assertIsNotNone(rows[0][1])
+
+    def test_granting_twice_is_refused_rather_than_duplicated(self):
+        self.grant("system_admin")
+        with self.assertRaises(SystemExit) as caught, _capture():
+            roles_main(
+                [
+                    "--db", str(self.db_path),
+                    "--username", "mikhail",
+                    "--grant", "system_admin",
+                ]
+            )
+        self.assertIn("already has", str(caught.exception))
+
+    def test_revoking_a_role_nobody_holds_says_so(self):
+        with self.assertRaises(SystemExit) as caught, _capture():
+            roles_main(
+                [
+                    "--db", str(self.db_path),
+                    "--username", "mikhail",
+                    "--revoke", "architect",
+                ]
+            )
+        self.assertIn("does not currently have", str(caught.exception))
+
+    def test_exactly_one_of_grant_or_revoke_is_required(self):
+        for extra in ([], ["--grant", "operator", "--revoke", "operator"]):
+            with self.assertRaises(SystemExit) as caught, _capture():
+                roles_main(
+                    ["--db", str(self.db_path), "--username", "mikhail", *extra]
+                )
+            self.assertIn("exactly one", str(caught.exception))
 
 
 if __name__ == "__main__":
