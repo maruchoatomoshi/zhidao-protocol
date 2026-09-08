@@ -55,7 +55,17 @@ class MaxBotApi:
         *,
         base_url: str = DEFAULT_BASE_URL,
         client: httpx.Client | None = None,
+        verify: bool | str = True,
     ) -> None:
+        """`verify` — путь к PEM с корнями, если системных не хватает.
+
+        Сертификат `*.max.ru` подписан «Russian Trusted Sub CA» (Минцифры),
+        корня которого нет ни в Ubuntu, ни в наборе certifi: без него любой
+        запрос падает с `unable to get local issuer certificate`. Ставить
+        этот корень в системное хранилище означало бы доверить ему **любой**
+        домен на машине; вместо этого путь к отдельному файлу передаётся
+        только сюда, и доверие ограничено разговором с MAX.
+        """
         if not token:
             raise ValueError("MAX bot token is empty")
         self._token = token
@@ -63,7 +73,8 @@ class MaxBotApi:
         # Клиентский таймаут заведомо больше серверного long poll'а, иначе
         # httpx оборвёт каждый пустой опрос как «сеть отвалилась».
         self._client = client or httpx.Client(
-            timeout=httpx.Timeout(POLL_TIMEOUT_SECONDS + 30.0, connect=10.0)
+            timeout=httpx.Timeout(POLL_TIMEOUT_SECONDS + 30.0, connect=10.0),
+            verify=verify,
         )
 
     def close(self) -> None:

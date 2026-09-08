@@ -48,6 +48,7 @@ class V4Backend:
             timeout=httpx.Timeout(20.0, connect=10.0), verify=verify
         )
         self._csrf_token: str | None = None
+        self._session_token: str | None = None
 
     def close(self) -> None:
         self._client.close()
@@ -73,8 +74,35 @@ class V4Backend:
             )
         payload = response.json()
         self._csrf_token = payload.get("csrf_token")
+        self._session_token = response.cookies.get(SESSION_COOKIE)
+        if not self._session_token:
+            raise BackendError("login succeeded but returned no session cookie")
         LOG.info("signed in to V4 API as %s", payload.get("account", {}).get("display_name"))
         return payload
+
+    def _cookie_header(self) -> str | None:
+        """Собирает заголовок Cookie вручную — и это не изобретение велосипеда.
+
+        API помечает сессионную куку флагом `Secure`, а бот ходит в неё на
+        `http://127.0.0.1:8770`. Банка кук httpx честно кладёт такую куку к
+        себе, но по обычному HTTP её не отдаёт — по правилам она уходит
+        только по TLS. В итоге логин отвечал 200, а следующий же запрос —
+        401, и клиент бесконечно перелогинивался.
+
+        Отправлять её явным заголовком здесь безопасно и правильно:
+        соединение идёт на петлевой интерфейс и машину не покидает — тот
+        самый случай, который и браузеры считают безопасным контекстом
+        (`http://localhost`). Альтернативы хуже: снимать `Secure` — значит
+        ослабить куку для всех настоящих пользователей, а ходить через
+        публичный HTTPS — значит гонять трафик наружу и обратно и завязать
+        бота на сертификат, который продлевается вручную.
+        """
+        parts = []
+        if self._session_token:
+            parts.append(f"{SESSION_COOKIE}={self._session_token}")
+        if self._csrf_token:
+            parts.append(f"{CSRF_COOKIE}={self._csrf_token}")
+        return "; ".join(parts) or None
 
     def _call(
         self,
@@ -86,6 +114,9 @@ class V4Backend:
         _retried: bool = False,
     ) -> Any:
         headers: dict[str, str] = {}
+        cookie_header = self._cookie_header()
+        if cookie_header:
+            headers["Cookie"] = cookie_header
         if method != "GET" and self._csrf_token:
             headers["X-CSRF-Token"] = self._csrf_token
         try:

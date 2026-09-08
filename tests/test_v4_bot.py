@@ -268,6 +268,70 @@ class BotCommandTests(unittest.TestCase):
         self.assertIn("версия 5", sent["text"])
 
 
+class SecureCookieBackendTests(unittest.TestCase):
+    """Бот обязан работать при `ZHIDAO_V4_COOKIE_SECURE=1` поверх http.
+
+    Именно так стоит боевой сервер: кука сессии помечена `Secure`, а бот
+    ходит в API на `http://127.0.0.1:8770`. Банка кук httpx такую куку
+    принимает, но по обычному HTTP не отдаёт — логин отвечал 200, а
+    следующий запрос 401, и клиент уходил в бесконечный перелогин. Тест
+    ставит ровно эту конфигурацию: TestClient работает по http, а
+    приложение создано с `cookie_secure=True`.
+    """
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.db_path = Path(self.temp_dir.name) / "zhidao.db"
+        bootstrap = bootstrap_system_admin(
+            self.db_path,
+            username=ADMIN_USERNAME,
+            password=ADMIN_PASSWORD,
+            display_name="Architect",
+        )
+        conn = connect_database(self.db_path)
+        try:
+            with immediate_transaction(conn):
+                provision_local_account(
+                    conn,
+                    username=BOT_USERNAME,
+                    password=BOT_PASSWORD,
+                    display_name="Служебная учётка бота",
+                    role_code="operator",
+                    actor_account_id=bootstrap["account"]["id"],
+                )
+        finally:
+            conn.close()
+        self.app = create_app(self.db_path, cookie_secure=True, session_hours=1)
+        self.client = TestClient(self.app)
+
+    def tearDown(self):
+        self.client.close()
+        self.temp_dir.cleanup()
+
+    def test_session_survives_a_secure_cookie_over_plain_http(self):
+        backend = V4Backend(
+            "http://testserver",
+            username=BOT_USERNAME,
+            password=BOT_PASSWORD,
+            client=self.client,
+        )
+        backend.login()
+
+        # Кука действительно помечена Secure — иначе тест ничего не проверяет.
+        stored = self.client.cookies.jar
+        session_cookie = next(c for c in stored if c.name == "zhidao_v4_session")
+        self.assertTrue(session_cookie.secure)
+
+        who = backend.whoami()
+        self.assertEqual(who["account"]["display_name"], "Служебная учётка бота")
+
+        # И запись тоже: там ещё и CSRF, который сверяется с кукой.
+        roster = backend.find_accounts("Служебная")
+        self.assertEqual(len(roster), 1)
+        issued = backend.issue_link_code(int(roster[0]["id"]))
+        self.assertRegex(issued["code"], r"^\d{8}$")
+
+
 class MaxApiClientTests(unittest.TestCase):
     def test_token_goes_in_the_authorization_header(self):
         seen: dict[str, object] = {}

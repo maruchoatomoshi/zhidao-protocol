@@ -25,6 +25,9 @@
   ZHIDAO_V4_BOT_WEBAPP        публичное имя бота для кнопки мини-аппа
   ZHIDAO_V4_APP_URL           адрес приложения, запасной вариант ссылкой
   ZHIDAO_V4_MAX_API_URL       база Bot API MAX, если она когда-нибудь сменится
+  ZHIDAO_V4_MAX_CA_BUNDLE     PEM с корнем «Russian Trusted Root CA»: им
+                              подписан сертификат MAX, а системным корням он
+                              неизвестен (см. V4_BOT.md)
 
 Токен и пароль читаются только из окружения. В репозитории их нет и быть
 не должно.
@@ -67,10 +70,23 @@ def _require(name: str) -> str:
     return value
 
 
+def _max_ca_bundle() -> bool | str:
+    """Набор корней для разговора с MAX. См. V4_BOT.md, раздел про сертификат."""
+    path = os.getenv("ZHIDAO_V4_MAX_CA_BUNDLE", "").strip()
+    if not path:
+        return True
+    if not os.path.isfile(path):
+        raise SystemExit(
+            f"ZHIDAO_V4_MAX_CA_BUNDLE points at {path}, which does not exist"
+        )
+    return path
+
+
 def build(argv_check_only: bool = False) -> tuple[MaxBotApi, V4Backend, Bot]:
     api = MaxBotApi(
         _require("ZHIDAO_V4_MAX_BOT_TOKEN"),
         base_url=os.getenv("ZHIDAO_V4_MAX_API_URL", DEFAULT_BASE_URL),
+        verify=_max_ca_bundle(),
     )
     backend = V4Backend(
         os.getenv("ZHIDAO_V4_API_URL", "http://127.0.0.1:8443"),
@@ -103,6 +119,15 @@ def run_check(api: MaxBotApi, backend: V4Backend) -> int:
         print(f"MAX: бот «{me.get('name')}», username @{me.get('username')}, id {me.get('user_id')}")
     except MaxApiError as exc:
         print(f"MAX: НЕ ОТВЕЧАЕТ — {exc}")
+        if "CERTIFICATE_VERIFY_FAILED" in str(exc):
+            # Самая вероятная и самая непрозрачная ошибка при первом запуске:
+            # без подсказки она читается как «MAX недоступен».
+            print(
+                "  Похоже, не хватает корневого сертификата. Сертификат MAX\n"
+                "  подписан «Russian Trusted Sub CA» (Минцифры), системным\n"
+                "  корням он неизвестен. См. V4_BOT.md, раздел про сертификат:\n"
+                "  нужен ZHIDAO_V4_MAX_CA_BUNDLE."
+            )
         problems += 1
 
     try:

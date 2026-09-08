@@ -118,6 +118,7 @@ ZHIDAO_V4_BOT_PASSWORD=<пароль из шага 1>
 ZHIDAO_V4_BOT_OPERATORS=<id вожатых через запятую>
 ZHIDAO_V4_BOT_WEBAPP=<публичное имя бота в MAX>
 ZHIDAO_V4_APP_URL=https://china.marucho.icu:8443/app/
+ZHIDAO_V4_MAX_CA_BUNDLE=/etc/zhidao-v4/russian_trusted_root_ca.pem
 ```
 
 `ZHIDAO_V4_BOT_WEBAPP` — публичное имя бота (то, что после `@`). Без него
@@ -128,7 +129,60 @@ ZHIDAO_V4_APP_URL=https://china.marucho.icu:8443/app/
 Файл читается и юнитом API, и юнитом бота, права на него — как были
 (`0600`, владелец `www-data`).
 
-### 3. Проверка до запуска
+### 3. Корневой сертификат для MAX
+
+Без этого шага бот до MAX не достучится вообще. Сертификат `*.max.ru`
+подписан «Russian Trusted Sub CA» (Минцифры), корень которой не входит ни в
+набор Ubuntu, ни в `certifi`. Проявляется это как
+
+```
+CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate
+```
+
+и читается обманчиво — будто MAX недоступен, хотя недоступно доверие.
+
+**Корень ставится отдельным файлом, а не в системное хранилище.** Это
+осознанное решение: в системном хранилище он давал бы этому удостоверяющему
+центру право ручаться за **любой** домен на машине — а на ней живёт ещё и
+личный VPN. Здесь же доверие ограничено ровно одним разговором: клиентом
+бота к MAX. Всё остальное на сервере продолжает проверяться как раньше.
+
+```bash
+sudo curl -sS -o /etc/zhidao-v4/russian_trusted_root_ca.pem \
+  https://gu-st.ru/content/Other/doc/russian_trusted_root_ca.cer
+sudo chmod 0644 /etc/zhidao-v4/russian_trusted_root_ca.pem
+```
+
+Обязательно сверить отпечаток — файл скачан по сети, и доверять ему на слово
+нельзя:
+
+```bash
+openssl x509 -in /etc/zhidao-v4/russian_trusted_root_ca.pem -noout -fingerprint -sha256 -subject -dates
+```
+
+Должно быть в точности:
+
+```
+sha256 Fingerprint=D2:6D:2D:02:31:B7:C3:9F:92:CC:73:85:12:BA:54:10:35:19:E4:40:5D:68:B5:BD:70:3E:97:88:CA:8E:CF:31
+subject=C=RU, O=The Ministry of Digital Development and Communications, CN=Russian Trusted Root CA
+notAfter=Feb 27 21:04:15 2032 GMT
+```
+
+Если отпечаток другой — остановиться и разбираться, а не продолжать.
+
+Проверить, что этот корень действительно замыкает цепочку MAX:
+
+```bash
+echo | openssl s_client -connect platform-api2.max.ru:443 -servername platform-api2.max.ru \
+  -CAfile /etc/zhidao-v4/russian_trusted_root_ca.pem 2>&1 | grep "Verify return code"
+```
+
+Ожидается `Verify return code: 0 (ok)`.
+
+Права `0644`, а не `0600`: это не секрет, а публичный корневой сертификат, и
+читать его должен процесс бота.
+
+### 4. Проверка до запуска
 
 ```bash
 sudo bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --check'
@@ -145,7 +199,7 @@ sudo bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.v
 `www-data` — она пишет в базу, и файлы WAL рядом с ней не должны стать
 root-овскими.
 
-### 4. Меню команд в MAX
+### 5. Меню команд в MAX
 
 ```bash
 sudo bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --set-commands'
@@ -153,7 +207,7 @@ sudo bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.v
 
 Разово, и повторять после изменения `MENU_COMMANDS`.
 
-### 5. Юнит systemd
+### 6. Юнит systemd
 
 `/etc/systemd/system/zhidao-v4-bot.service`:
 
@@ -193,7 +247,7 @@ sudo systemctl enable --now zhidao-v4-bot
 sudo journalctl -u zhidao-v4-bot -f
 ```
 
-### 6. Адрес мини-приложения
+### 7. Адрес мини-приложения
 
 В настройках бота в MAX указать `https://china.marucho.icu:8443/app/`.
 Заголовки на `/app/` уже разрешают встраивание с доменов MAX
