@@ -17,6 +17,7 @@ from .admin import architect_overview
 from .cases_api import register_cases
 from .auth import (
     AuthenticationError,
+    IdentityAlreadyLinkedError,
     LinkRequiredError,
     Principal,
     authenticate_local,
@@ -400,13 +401,29 @@ def create_app(
                 link_code=payload.link_code,
                 session_hours=app.state.session_hours,
             )
+        except IdentityAlreadyLinkedError:
+            # Тоже 409 и тоже экран сопряжения, но причина другая, и человеку
+            # надо сказать другое: новый код здесь не поможет.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "reason": "account_already_linked",
+                    "message": (
+                        "Этот аккаунт уже привязан к другому MAX. "
+                        "Новый код не поможет — нужно снять прежнюю привязку."
+                    ),
+                },
+            ) from None
         except LinkRequiredError:
             # 409, not 401: MAX proved who this is, they just have not typed
             # the code a counsellor gave them yet. The frontend shows a
             # pairing screen for this status, not a login failure.
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="This MAX account needs a pairing code to sign in",
+                detail={
+                    "reason": "link_required",
+                    "message": "Введите код сопряжения, который выдал вожатый.",
+                },
             ) from None
         except AuthenticationError:
             raise HTTPException(

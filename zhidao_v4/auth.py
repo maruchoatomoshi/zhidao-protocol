@@ -376,6 +376,20 @@ def authenticate_local(
     return result
 
 
+class IdentityAlreadyLinkedError(AuthenticationError):
+    """Код верный, но его аккаунт уже привязан к другому MAX.
+
+    Схема разрешает аккаунту ровно одну привязку на провайдера
+    (UNIQUE(account_id, provider_code) в миграции 0001). Без этой проверки
+    вставка падала в IntegrityError, ничем не пойманный: клиент получал 500
+    и сообщение про «не удалось проверить данные MAX» — то есть винил
+    мессенджер вместо того, чтобы назвать настоящую причину.
+
+    Это не ошибка человека и не повод выдавать новый код: нового кода тут
+    хватит сколько угодно, а помогает только отвязка прежнего MAX.
+    """
+
+
 class LinkRequiredError(AuthenticationError):
     """The MAX user is verified but has no linked account yet.
 
@@ -558,6 +572,11 @@ def authenticate_max(
             if not link_code:
                 raise LinkRequiredError("This MAX account is not linked yet")
 
+            # Код диктуют вслух и показывают группами по четыре, поэтому
+            # человек вправе набрать его с пробелом. Сравнение идёт по хэшу
+            # строки целиком, так что «1543 6364» без нормализации не совпало
+            # бы ни с чем — и отказ обвинил бы код, а не набор.
+            normalized = "".join(ch for ch in str(link_code) if not ch.isspace())
             code_row = conn.execute(
                 """
                 SELECT id, account_id FROM v4_link_codes
@@ -565,7 +584,7 @@ def authenticate_max(
                   AND consumed_at IS NULL AND revoked_at IS NULL
                   AND expires_at > ?
                 """,
-                (token_hash(str(link_code)), utc_text()),
+                (token_hash(normalized), utc_text()),
             ).fetchone()
             if code_row is None:
                 raise LinkRequiredError("This pairing code is invalid or expired")
@@ -576,6 +595,18 @@ def authenticate_max(
             ).fetchone()
             if account_row is None or str(account_row["status"]) != "active":
                 raise AuthenticationError("The linked account is not active")
+
+            already_linked = conn.execute(
+                """
+                SELECT 1 FROM v4_external_identities
+                WHERE account_id = ? AND provider_code = 'max'
+                """,
+                (account_id,),
+            ).fetchone()
+            if already_linked is not None:
+                raise IdentityAlreadyLinkedError(
+                    "This roster account is already linked to a different MAX account"
+                )
 
             now_value = utc_text()
             identity_cursor = conn.execute(

@@ -206,6 +206,27 @@ class MaxSignInTests(unittest.TestCase):
         accepted = self.sign_in(sign_launch_params(), second)
         self.assertEqual(accepted.status_code, 200, accepted.text)
 
+    def test_a_code_dictated_in_groups_of_four_still_works(self):
+        # Экран выдачи показывает код как «1543 6364», чтобы его можно было
+        # продиктовать. Значит, набранный с пробелом он обязан подойти:
+        # иначе человек получает «код неверный» за чужой формат показа.
+        code = self.issue_code()
+        spaced = f"{code[:4]} {code[4:]}"
+        response = self.sign_in(sign_launch_params(), spaced)
+        self.assertEqual(response.status_code, 200, response.text)
+
+    def test_an_account_already_linked_names_the_real_reason(self):
+        # Схема разрешает аккаунту одну привязку MAX. Вторая попытка раньше
+        # падала в IntegrityError и выходила наружу как 500 с сообщением
+        # «не удалось проверить данные MAX» — обвинялся мессенджер.
+        self.assertEqual(self.sign_in(sign_launch_params(), self.issue_code()).status_code, 200)
+        self.client.cookies.clear()
+
+        second = self.sign_in(sign_launch_params(user_id=880088, username="other"), self.issue_code())
+        self.assertEqual(second.status_code, 409, second.text)
+        self.assertEqual(second.json()["detail"]["reason"], "account_already_linked")
+        self.assertNotIn(SESSION_COOKIE, self.client.cookies)
+
     def test_sign_in_is_unavailable_when_no_bot_token_is_configured(self):
         app = create_app(self.db_path, cookie_secure=False, session_hours=1)
         app.state.max_bot_token = None

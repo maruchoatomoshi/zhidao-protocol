@@ -110,8 +110,11 @@
         <p class="auth-note">MAX вас узнал, но пока не знает, чей это аккаунт в поездке. Введите код, который выдал вожатый.</p>
         <label class="auth-field">
           <span>Код сопряжения <small>配对码 pèi duì mǎ</small></span>
+          <!-- Не 8 и без pattern: код диктуют группами по четыре, и набранный
+               с пробелом он обязан подойти. Лишние символы отбрасывает
+               auth.js, восемь цифр проверяет он же. -->
           <input type="text" inputmode="numeric" autocomplete="one-time-code"
-                 maxlength="8" pattern="[0-9]{8}" required data-field="code">
+                 maxlength="12" required data-field="code">
         </label>
         <button type="submit" class="btn btn-primary">Связать аккаунт</button>
       </form>
@@ -802,7 +805,7 @@
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./theme.js?v=79eeeb299c" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
-  <script src="./auth.js?v=97d57c4176" defer></script>
+  <script src="./auth.js?v=8d29d373f2" defer></script>
   <script src="./aero-motion.js?v=9cca22f558" defer></script>
 </body>
 </html>

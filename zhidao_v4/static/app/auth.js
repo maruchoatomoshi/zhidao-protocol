@@ -123,7 +123,14 @@
     if (status === 409) {
       // Личность подтверждена, аккаунт не сопоставлен — просим код.
       showStep("pair");
-      if (linkCode) showError("Код не подошёл: он неверный, уже использован или истёк.");
+      const detail = payload && payload.detail;
+      if (detail && detail.reason === "account_already_linked") {
+        // Отдельный случай: код верный, но аккаунту уже принадлежит другой
+        // MAX. Раньше это падало в 500 и выглядело как «MAX не отвечает».
+        showError(detail.message);
+      } else if (linkCode) {
+        showError("Код не подошёл: он неверный, уже использован или истёк.");
+      }
       return true;
     }
     if (status === 503) {
@@ -161,8 +168,14 @@
     pairForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const field = pairForm.querySelector("[data-field='code']");
-      const code = (field && field.value || "").trim();
-      if (!code) return;
+      // Код показывают и диктуют группами по четыре — «1543 6364». Оставляем
+      // только цифры: человек не должен угадывать, с пробелом его набирать
+      // или без.
+      const code = ((field && field.value) || "").replace(/\D/g, "");
+      if (code.length !== 8) {
+        showError("Код состоит из восьми цифр.");
+        return;
+      }
       try { await signInWithMax(code); }
       catch (_) { showStep("pair"); showError("Нет связи. Повторите вход."); }
     });
