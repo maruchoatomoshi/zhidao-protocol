@@ -241,6 +241,21 @@ class BotCommandTests(unittest.TestCase):
         self.assertIn("Иванова Мария", sent["text"])
         self.assertIn("MAX не привязан", sent["text"])
 
+    def test_who_without_a_name_lists_the_roster(self):
+        # Ровно тот случай, ради которого это и сделано: вожатый не знает,
+        # что в базе есть, и «кого искать?» ему не помогает.
+        sent = self.send("/кто")
+        self.assertIn("Кто есть в ростере", sent["text"])
+        self.assertIn("Иванов Пётр", sent["text"])
+        self.assertIn("Служебная учётка бота", sent["text"])
+
+    def test_a_search_that_finds_nothing_explains_why(self):
+        # Настоящий случай с сервера: искали «Архитектор», а учётка звалась
+        # «Architect». Ответ должен подсказывать выход, а не только отказ.
+        sent = self.send("/кто Архитектор")
+        self.assertIn("никого нет", sent["text"])
+        self.assertIn("/кто без слова", sent["text"])
+
     def test_ambiguous_name_is_not_guessed(self):
         sent = self.send("/код Иванов")
         self.assertIn("уточните", sent["text"])

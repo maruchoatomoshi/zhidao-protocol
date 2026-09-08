@@ -238,7 +238,7 @@ class Bot:
             lines += [
                 "",
                 "Для вожатых:",
-                "/кто <имя> — найти человека в ростере",
+                "/кто — весь ростер; /кто <имя> — поиск",
                 "/код <имя или номер> — выдать код сопряжения",
                 "/статус — состояние сервера",
             ]
@@ -277,26 +277,42 @@ class Bot:
         self.reply(incoming, "Эта команда для вожатых.")
         return False
 
+    # Сколько строк ростера показывать без запроса. Группа — около шестидесяти
+    # человек, и вываливать всех в чат бессмысленно; но и переспрашивать «кого
+    # искать», когда человек ещё не знает, что в базе вообще есть, — тоже.
+    ROSTER_PREVIEW = 25
+
     def cmd_who(self, incoming: Incoming, argument: str) -> None:
         if not self._require_operator(incoming):
             return
-        if not argument:
-            self.reply(incoming, "Кого искать? Например: /кто Иванов")
-            return
+        limit = 10 if argument else self.ROSTER_PREVIEW
         try:
-            items = self.backend.find_accounts(argument, limit=10)
+            items = self.backend.find_accounts(argument, limit=limit)
         except BackendError as exc:
             LOG.warning("roster lookup failed: %s", exc)
             self.reply(incoming, "Сервер не ответил. Попробуйте ещё раз через минуту.")
             return
         if not items:
-            self.reply(incoming, f"По запросу «{argument}» никого нет.")
+            if argument:
+                self.reply(
+                    incoming,
+                    f"По запросу «{argument}» никого нет.\n\n"
+                    "Имя ищется по куску подряд и с учётом языка: «Ivan» не найдёт "
+                    "«Иванова». Наберите /кто без слова — покажу, кто вообще есть.",
+                )
+            else:
+                self.reply(incoming, "В ростере пока никого нет.")
             return
-        lines = [f"Нашлось: {len(items)}", ""]
+        head = f"Нашлось: {len(items)}" if argument else "Кто есть в ростере:"
+        lines = [head, ""]
         for item in items:
             mark = "MAX привязан" if item["max_linked"] else "MAX не привязан"
             status = "" if item["status"] == "active" else f", {item['status']}"
             lines.append(f"#{item['id']} · {item['display_name']} — {mark}{status}")
+        if not argument and len(items) == self.ROSTER_PREVIEW:
+            # Ровно предел — почти наверняка список обрезан, и молчать об этом
+            # нельзя: вожатый решит, что кого-то в базе нет.
+            lines += ["", f"Показаны первые {self.ROSTER_PREVIEW}. Уточните: /кто <имя>"]
         self.reply(incoming, "\n".join(lines))
 
     def cmd_code(self, incoming: Incoming, argument: str) -> None:
