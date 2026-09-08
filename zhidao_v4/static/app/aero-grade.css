@@ -2353,3 +2353,337 @@ h1.display-title,
   .implant-art { transition: transform .25s ease; }
   .implant-card:hover .implant-art { transform: translateY(-3px); }
 }
+
+/* =========================================================================
+   КЕЙСЫ
+
+   Пульт сканирования и таблица дропа. Тот же стык, что в каталоге
+   имплантов: мокрое стекло и жёсткий блик от Frutiger Aero, хромовый рант,
+   срезанный угол и трафаретные надписи от Metalheart. Масок нет ни одной —
+   полосы вероятностей это обычные вложенные блоки с градиентом.
+
+   Числа набраны моноширинным и выровнены по правому краю: их сравнивают
+   между собой, а не читают как текст.
+   ========================================================================= */
+
+/* --- пульт ------------------------------------------------------------ */
+
+.scan-console {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: var(--space-5) var(--space-5) var(--space-5) calc(var(--space-5) + 6px);
+}
+
+/* Хромовый рант — как у карточки импланта, чтобы разделы читались как одна
+   система, а не два разных приложения. */
+.scan-console::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: linear-gradient(180deg, #f2f8fb, #9fb6c4 18%, #dbe9f1 34%,
+    #7f97a6 52%, #e8f2f7 70%, #93aab8 88%, #f2f8fb);
+  border-right: 1px solid rgba(255, 255, 255, .8);
+  pointer-events: none;
+}
+
+.scan-console-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.scan-console-lead {
+  margin: var(--space-4) 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Цена — в жёлобе прибора, тем же приёмом, что эффект импланта. */
+.scan-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-crisp);
+  background: var(--track-well);
+  box-shadow: var(--track-well-rim);
+}
+
+.scan-cost-label {
+  font: 700 8px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-faint);
+}
+
+.scan-cost strong { font: 800 16px/1 var(--font-ui); color: var(--text-primary); }
+
+.scan-cost-cap {
+  margin-left: auto;
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-faint);
+}
+
+.scan-button { width: 100%; margin-top: var(--space-4); }
+
+/* Выключенная кнопка не притворяется рабочей: приглушена и без блика. */
+.scan-button[disabled] {
+  filter: grayscale(.55) brightness(.98);
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.scan-disabled-note {
+  margin: var(--space-3) 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+/* --- правила ---------------------------------------------------------- */
+
+.case-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.case-loading,
+.case-footnote {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+.case-block-title {
+  margin: 0 0 var(--space-3);
+  font: 700 10px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.case-rules > .case-block-title { margin-bottom: 0; }
+
+.case-attempts,
+.case-modifiers,
+.case-missing { padding: var(--space-5); }
+
+.case-attempt-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.case-attempts .case-footnote { margin-top: var(--space-4); }
+
+.case-modifier {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 0;
+  border-top: 1px solid var(--border-edge);
+}
+
+.case-modifier:first-of-type { border-top: 0; padding-top: 0; }
+
+.case-modifier strong {
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.case-modifier span {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* --- таблица дропа ---------------------------------------------------- */
+
+.case-tier {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: var(--space-4) var(--space-5) var(--space-5) calc(var(--space-5) + 5px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-chrome);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, .94) 0%,
+    rgba(233, 247, 253, .86) var(--gloss-cut),
+    rgba(207, 234, 246, .9) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-md);
+}
+
+/* Рант красит класс кейса: сталь, фиалка, медь. Тот же язык, что у
+   имплантов, — легендарное всегда тёплое. */
+.case-tier::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  pointer-events: none;
+  background: linear-gradient(180deg, #f2f8fb, #9fb6c4 30%, #7f97a6 60%, #f2f8fb);
+}
+
+.case-tier.is-purple::before {
+  background: linear-gradient(180deg, #f6f0fd, #a487d0 30%, #7c5da8 60%, #f6f0fd);
+}
+
+.case-tier.is-black::before {
+  background: linear-gradient(180deg, #fdf3ec, #c98a63 30%, #a8663f 60%, #fdf3ec);
+}
+
+.case-tier.is-black { border-color: rgba(196, 108, 74, .5); }
+.case-tier.is-purple { border-color: rgba(140, 106, 190, .4); }
+
+.case-tier-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.case-tier-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.case-tier-title strong { font: 800 17px/1.1 var(--font-ui); color: var(--text-primary); }
+
+.case-tier-zh { font: 600 12px/1 var(--font-ui); color: var(--text-faint); }
+
+/* Шанс самого кейса — крупным моноширинным: это первое число, ради
+   которого сюда пришли. */
+.case-tier-share {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.case-tier-share b {
+  font: 800 17px/1 var(--font-system);
+  color: var(--accent-aqua);
+}
+
+.case-tier-share small {
+  font: 700 8px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.case-tier.is-black .case-tier-share b { color: #b56a3c; }
+.case-tier.is-purple .case-tier-share b { color: #7c5da8; }
+
+.case-tier-note {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.case-drops {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.case-drop {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "name numbers" "bar bar";
+  align-items: center;
+  gap: 5px var(--space-3);
+}
+
+.case-drop-name { grid-area: name; display: flex; flex-direction: column; gap: 1px; }
+.case-drop-name span { font: 600 13px/1.25 var(--font-ui); color: var(--text-primary); }
+.case-drop-name small { font-size: 11px; color: var(--text-faint); }
+
+.case-drop-numbers {
+  grid-area: numbers;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.case-drop-numbers b { font: 700 13px/1 var(--font-system); color: var(--text-primary); }
+.case-drop-numbers small { font: 400 9.5px/1 var(--font-system); color: var(--text-faint); }
+
+/* Полоса — продавленный жёлоб с наполнением. Никаких масок: наполнение это
+   вложенный блок с шириной в процентах. */
+.case-drop-bar {
+  grid-area: bar;
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border-crisp);
+  background: var(--track-well);
+  box-shadow: var(--track-well-rim);
+  overflow: hidden;
+}
+
+.case-drop-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #9fe6ff 0%, #35b6e8 52%, #1f8fc4 53%, #6fd2f2 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .85);
+}
+
+.case-tier.is-purple .case-drop-bar i {
+  background: linear-gradient(180deg, #d9c6f5 0%, #9a7ad0 52%, #7a58b0 53%, #c3a9ec 100%);
+}
+
+.case-tier.is-black .case-drop-bar i {
+  background: linear-gradient(180deg, #f7d3ba 0%, #d18b58 52%, #b06f3e 53%, #eebd9b 100%);
+}
+
+/* --- ночь ------------------------------------------------------------- */
+
+:root[data-theme="dark"] .case-tier {
+  border-color: var(--border-edge);
+  background: linear-gradient(180deg,
+    rgba(20, 60, 96, .9) 0%,
+    rgba(14, 46, 76, .84) var(--gloss-cut),
+    rgba(10, 36, 62, .9) 100%);
+}
+
+:root[data-theme="dark"] .case-tier::before,
+:root[data-theme="dark"] .scan-console::before {
+  background: linear-gradient(180deg, #cfe2ee, #4d6d82 30%, #35536a 60%, #cfe2ee);
+}
+
+:root[data-theme="dark"] .case-tier.is-purple::before {
+  background: linear-gradient(180deg, #e2d4f6, #6f56a0 30%, #4d3a72 60%, #e2d4f6);
+}
+
+:root[data-theme="dark"] .case-tier.is-black::before {
+  background: linear-gradient(180deg, #f3d9c6, #8a4f2c 30%, #6d3a1d 60%, #f3d9c6);
+}
+
+:root[data-theme="dark"] .case-tier.is-black .case-tier-share b { color: #f0b18a; }
+:root[data-theme="dark"] .case-tier.is-purple .case-tier-share b { color: #c3a9ec; }

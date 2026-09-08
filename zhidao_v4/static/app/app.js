@@ -44,6 +44,9 @@ function showScreen(target) {
   if (target === "implants" && typeof window.initImplantCatalogue === "function") {
     window.initImplantCatalogue();
   }
+  if (target === "cases" && typeof window.initCaseRules === "function") {
+    window.initCaseRules();
+  }
 }
 
 function showToast(message) {

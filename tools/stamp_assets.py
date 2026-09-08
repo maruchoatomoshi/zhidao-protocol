@@ -43,6 +43,10 @@ IN_CODE = {
         re.compile(r'(?P<prefix>SOURCE = "\./)(?P<path>[^"?]+)\?v=(?P<version>[^"]*)"'),
         None,
     ),
+    APP_DIR / "cases.js": (
+        re.compile(r'(?P<prefix>SOURCE = "\./)(?P<path>[^"?]+)\?v=(?P<version>[^"]*)"'),
+        None,
+    ),
 }
 
 
