@@ -128,6 +128,38 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertIn("image/png", icon.headers["content-type"])
         self.assertGreater(len(icon.content), 20_000)
 
+    def test_the_page_revalidates_while_versioned_assets_do_not(self):
+        """Без этого правила обновление на сервере не доходит до человека.
+
+        Теги `?v=` записаны в index.html, поэтому именно эта страница не
+        должна отдаваться из кэша: браузер без Cache-Control выбирает срок
+        хранения сам, и обновлённая карта неделю выглядит как старая. Адрес
+        с версией, наоборот, неизменен по построению.
+        """
+        page = self.client.get("/app/")
+        self.assertEqual(page.headers["cache-control"], "no-cache")
+
+        unversioned = self.client.get("/app/campus-map.js")
+        self.assertEqual(unversioned.headers["cache-control"], "no-cache")
+
+        versioned = self.client.get("/app/campus-map.js", params={"v": "20260908-map3"})
+        self.assertEqual(versioned.status_code, 200)
+        self.assertIn("immutable", versioned.headers["cache-control"])
+        self.assertIn("max-age=31536000", versioned.headers["cache-control"])
+
+        console = self.client.get("/architect/")
+        self.assertEqual(console.headers["cache-control"], "no-cache")
+
+    def test_auth_responses_are_never_stored(self):
+        # no-store, а не no-cache: тело ответа содержит csrf_token и имя
+        # аккаунта, и на диск прокси оно попадать не должно вовсе.
+        response = self.client.post(
+            "/api/v4/auth/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.headers["cache-control"], "no-store")
+
     def test_login_stores_only_token_hashes_and_exposes_roles(self):
         wrong = self.client.post(
             "/api/v4/auth/login",

@@ -250,6 +250,25 @@ def create_app(
                 "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
                 f"base-uri 'none'; {frame_ancestors}; form-action 'self'"
             )
+        if request.url.path.startswith(("/architect", "/app")):
+            # Заголовка Cache-Control здесь не было вовсе, и это ломало ровно
+            # ту схему, ради которой существуют теги `?v=`: без него браузер
+            # выбирает срок хранения сам (обычно доля времени с
+            # last-modified), и index.html — единственный файл, где эти теги
+            # записаны, — может отдаваться устаревшим. Тогда обновление на
+            # сервере просто не доходит до человека, и выглядит это как
+            # «ничего не изменилось».
+            #
+            # Правило: адрес с версией неизменен по построению, его можно
+            # держать сколько угодно. Всё остальное, и прежде всего сама
+            # страница, обязано спрашивать сервер — с ETag это стоит одного
+            # 304 и почти ничего не весит даже на плохой связи.
+            if "v" in request.query_params:
+                response.headers.setdefault(
+                    "Cache-Control", "public, max-age=31536000, immutable"
+                )
+            else:
+                response.headers.setdefault("Cache-Control", "no-cache")
         if request.url.path.startswith("/api/v4/auth"):
             response.headers["Cache-Control"] = "no-store"
         return response
