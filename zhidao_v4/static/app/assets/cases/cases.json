@@ -1,7 +1,9 @@
 {
   "catalogue": "ZHIDAO cases",
   "season": "hainan-v4",
-  "status_note": "Правила перенесены из пекинского сезона без изменений. Экономики (★ и попыток) в этой версии ещё нет — сканирование не работает, здесь только правила.",
+  "scan_cap": 7,
+  "scan_cost": 1,
+  "status_note": "Пекинские веса и награды сохранены. ★, попытки и Гарант судьбы работают; остальные эффекты пока не подключены.",
   "source_note": "Веса взяты из zhidao_api_ready.py, обработчик open_case. Проценты считаются из весов на месте, а не записаны руками: так они не разойдутся с правилами.",
   "action": {
     "name_ru": "Сканирование",
@@ -9,8 +11,7 @@
     "pinyin": "sǎo miáo",
     "cost_ru": "1 попытка сканирования",
     "how_to_get_ru": [
-      "За отметки на перекличке — утром и вечером",
-      "От некоторых карточек коллекции, раз в день",
+      "Организатор выдаёт попытки участнику или группе",
       "Иногда выпадает из самого кейса"
     ],
     "cap_ru": "Больше 7 попыток не накапливается",
@@ -23,7 +24,7 @@
     },
     {
       "name_ru": "Двойной сигнал",
-      "effect_ru": "Удваивает очки первого открытия кейса. Покупался в магазине за 130★, после использования сгорал."
+      "effect_ru": "В Пекине удваивал следующий денежный выигрыш и сгорал при этом. Магазин ещё не подключён; сейчас не выдаётся и не действует."
     }
   ],
   "tiers": [
@@ -34,13 +35,13 @@
       "weight": 848,
       "note_ru": "Баллы, время и мелкие расходники",
       "prizes": [
-        { "code": "empty", "name_ru": "Пустая миска риса", "weight": 40, "note_ru": "Ничего не выпало" },
-        { "code": "small", "name_ru": "+30★", "weight": 24 },
-        { "code": "medium", "name_ru": "+60★", "weight": 12 },
-        { "code": "fate_guard", "name_ru": "Гарант судьбы", "weight": 10, "note_ru": "Перебросит следующую пустышку" },
-        { "code": "walk", "name_ru": "+30 минут свободы", "weight": 8, "note_ru": "Показать вожатому" },
-        { "code": "scan", "name_ru": "+1 попытка", "weight": 5 },
-        { "code": "jackpot", "name_ru": "Джекпот, +100★", "weight": 1 }
+        { "code": "empty", "name_ru": "Пустая миска риса", "weight": 40, "note_ru": "Ничего не выпало", "reward": {"kind": "none"} },
+        { "code": "small", "name_ru": "+30★", "weight": 24, "reward": {"kind": "stars", "amount": 30} },
+        { "code": "medium", "name_ru": "+60★", "weight": 12, "reward": {"kind": "stars", "amount": 60} },
+        { "code": "fate_guard", "name_ru": "Гарант судьбы", "weight": 10, "note_ru": "Перебросит следующую пустышку", "reward": {"kind": "item", "effect_state": "active"} },
+        { "code": "walk", "name_ru": "+30 минут свободы", "weight": 8, "note_ru": "Сохраняется в коллекции. Использование ещё не подключено", "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "scan", "name_ru": "+1 попытка", "weight": 5, "reward": {"kind": "scan", "amount": 1} },
+        { "code": "jackpot", "name_ru": "Джекпот, +100★", "weight": 1, "reward": {"kind": "stars", "amount": 100} }
       ]
     },
     {
@@ -50,12 +51,12 @@
       "weight": 150,
       "note_ru": "Импланты. Каждый — из каталога сезона",
       "prizes": [
-        { "code": "implant_qilin", "name_ru": "Цилинь 麒麟", "weight": 85 },
-        { "code": "implant_caishen", "name_ru": "Цайшэнь 财神", "weight": 75 },
-        { "code": "implant_guanxi", "name_ru": "Гуаньси 关系", "weight": 68 },
-        { "code": "implant_panda", "name_ru": "Панда 熊猫", "weight": 64 },
-        { "code": "implant_shaolin", "name_ru": "Шаолинь 少林", "weight": 62 },
-        { "code": "implant_linguasoft", "name_ru": "Linguasoft 口才", "weight": 60 }
+        { "code": "implant_qilin", "name_ru": "Цилинь 麒麟", "weight": 85, "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "implant_caishen", "name_ru": "Цайшэнь 财神", "weight": 75, "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "implant_guanxi", "name_ru": "Гуаньси 关系", "weight": 68, "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "implant_panda", "name_ru": "Панда 熊猫", "weight": 64, "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "implant_shaolin", "name_ru": "Шаолинь 少林", "weight": 62, "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "implant_linguasoft", "name_ru": "Linguasoft 口才", "weight": 60, "reward": {"kind": "item", "effect_state": "pending"} }
       ]
     },
     {
@@ -63,10 +64,10 @@
       "name_ru": "Легендарный",
       "name_zh": "传说",
       "weight": 2,
-      "note_ru": "Протоколы. Два на весь сезон",
+      "note_ru": "Два вида протоколов. Общего ограничения на число выпадений нет",
       "prizes": [
-        { "code": "implant_red_dragon", "name_ru": "Красный Дракон 红龙", "weight": 1 },
-        { "code": "implant_terracota", "name_ru": "Терракота 兵马俑", "weight": 1 }
+        { "code": "implant_red_dragon", "name_ru": "Красный Дракон 红龙", "weight": 1, "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "implant_terracota", "name_ru": "Терракота 兵马俑", "weight": 1, "reward": {"kind": "item", "effect_state": "pending"} }
       ]
     }
   ],

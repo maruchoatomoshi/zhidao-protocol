@@ -24,13 +24,19 @@ baseline. It is not the foundation of the Hainan V4 interface.
 
 ## Current state — read this before planning anything
 
+**Update 2026-09-08:** Hainan V4 now has a test server (`china.marucho.icu`)
+and MAX integration, confirmed working by the user. The dead-server statements
+below refer to **Beijing**, not this new deployment. Current local direction:
+cases, collection and 2000s-style interface; implementation and validation are
+documented in `V4_CASES.md`. No deployment permission follows from this update.
+
 **The Beijing production server is dead.** `hk.marucho.icu` (API on 8443, media
 on 8444) is gone, and so is the production database. Confirmed by the user
 2026-09-03.
 
 Consequences that override every older instruction in this repository:
 
-- There is **no live backend to compare against, diff, restart or deploy to**.
+- There is **no live Beijing backend to compare against, diff, restart or deploy to**.
   Any instruction of the form `diff /root/zhidao_api.py …`, `systemctl restart
   zhidao_api.service`, or "check current server state first" is historical.
   Do not follow it and do not ask the user to run it.
@@ -70,6 +76,7 @@ Do not start work from this file alone. Read the document that owns the area:
 | Hainan app + campus map, in detail | `CLAUDE_HANDOFF_HAINAN_V4_2026-09-03.md` |
 | Blender characters, Unity game | `CLAUDE_HANDOFF_GAME_BLENDER_2026-09-03.md` |
 | Rewards, prices, limits, currency | `ECONOMY_PASSPORT.md` |
+| V4 cases, inventory, scan grants and local preview | `V4_CASES.md` |
 | Season-1 mechanics, history, МЮ backlog, lore | `SEASON1_BEIJING_ARCHIVE.md` |
 | Learning MVP experiment | `WEB_MVP.md`, `COURSE_CONTENT.md` |
 | Running legacy code locally | `TRAVEL_LOCAL.md` |

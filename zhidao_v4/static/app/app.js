@@ -47,6 +47,12 @@ function showScreen(target) {
   if (target === "cases" && typeof window.initCaseRules === "function") {
     window.initCaseRules();
   }
+  window.dispatchEvent(new CustomEvent("zhidao:screen", { detail: target }));
+  const back = window.WebApp && window.WebApp.initData && window.WebApp.BackButton;
+  if (back) {
+    if (["collection", "implants", "campus-map", "profile"].includes(target)) back.show();
+    else back.hide();
+  }
 }
 
 function showToast(message) {
@@ -104,3 +110,13 @@ document.querySelectorAll("[data-tab-group] [data-tab]").forEach((button) => {
 updateClock();
 window.setInterval(updateClock, 30_000);
 showScreen("schedule");
+window.addEventListener("DOMContentLoaded", () => {
+  const bridge = window.WebApp;
+  if (!bridge || !bridge.initData) return;
+  bridge.ready();
+  bridge.BackButton.onClick(() => {
+    const dialog = document.querySelector("dialog[open]");
+    if (dialog) { dialog.close(); return; }
+    showScreen(document.documentElement.dataset.currentScreen === "implants" ? "collection" : "more");
+  });
+});

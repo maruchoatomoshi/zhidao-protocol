@@ -13,7 +13,7 @@
    и путать их нечестно. */
 
 (function () {
-  const SOURCE = "./assets/cases/cases.json?v=2ea0f2a8ec";
+  const SOURCE = "/api/v4/cases/rules";
 
   let built = false;
 
@@ -27,9 +27,7 @@
   /* Проценты округляются по-разному в зависимости от величины: 0,2% нельзя
      показать как 0%, а 33,92% незачем показывать с сотыми. */
   function percent(value) {
-    if (value >= 10) return `${value.toFixed(0)}%`;
-    if (value >= 1) return `${value.toFixed(1).replace(".", ",")}%`;
-    return `${value.toFixed(2).replace(".", ",")}%`;
+    return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value)}%`;
   }
 
   function buildTier(tier, tierShare) {

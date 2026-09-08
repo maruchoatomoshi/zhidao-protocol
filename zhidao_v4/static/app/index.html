@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="./app.css?v=762cb3e504">
   <link rel="stylesheet" href="./aero.css?v=9f44369511">
   <link rel="stylesheet" href="./aero-grade.css?v=013e606385">
+  <link rel="stylesheet" href="./case-workstation.css?v=32a11fe8e2">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -290,30 +291,50 @@
       <!-- ============================================================
            КЕЙСЫ — коллекция (импланты/карточки, кейсы по редкости)
            ============================================================ -->
-      <section class="screen placeholder-screen" data-screen="cases" aria-labelledby="casesTitle" hidden>
+      <section class="screen case-workstation" data-screen="cases" aria-labelledby="casesTitle" hidden>
         <div class="screen-intro">
           <div><span class="system-label">CASE PROTOCOL / 箱子</span><h1 id="casesTitle" class="display-title">Кейсы</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng zi <span class="screen-sub-sep">//</span> сканирование и дроп</p></div>
-          <span class="preview-chip">STRUCTURE PREVIEW</span>
+          <span class="preview-chip" data-case-mode>OFFLINE PREVIEW</span>
         </div>
 
-        <article class="glass-card scan-console">
-          <div class="scan-console-head">
-            <span class="system-label">SCAN / 扫描</span>
-            <span class="locked-tag">STANDBY</span>
+        <div class="case-toolbar"><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
+        <article class="case-window" id="scanWindow">
+          <div class="case-titlebar"><span>✦ signal_scanner.exe</span><span aria-hidden="true">▰ ▣</span></div>
+          <div class="scanner-body">
+            <div class="scanner-visual" aria-hidden="true"><div class="scanner-orbit"></div><img src="./assets/icons/nav-cases.png" alt=""><span>SCAN / 扫描</span></div>
+            <p class="scanner-kicker">ВАШ СЛЕДУЮЩИЙ СИГНАЛ</p>
+            <h2>Что по ту сторону?</h2>
+            <p>Одна попытка. Случайный кейс.<br>Результат останется с вами.</p>
+            <div class="case-meters"><div><span>Попытки</span><strong data-case-scans>— / 7</strong></div><div><span>Баланс</span><strong data-case-stars>— ★</strong></div></div>
+            <div class="scanner-progress" role="progressbar" aria-label="Ожидание ответа сервера" hidden><span></span></div>
+            <button class="btn btn-primary scan-button" id="caseOpen" type="button" disabled aria-describedby="caseStatus">Сканировать · 1 попытка</button>
+            <p id="caseStatus" class="case-message" role="status">Войдите, чтобы увидеть свои попытки. В предпросмотре доступны только правила.</p>
           </div>
-          <p class="scan-console-lead">Кейс не выбирают. Тратится одна попытка сканирования, и система сама бросает, какой кейс достанется.</p>
-          <div class="scan-cost">
-            <span class="scan-cost-label">ЦЕНА</span>
-            <strong>1 попытка</strong>
-            <span class="scan-cost-cap">не больше 7 в запасе</span>
-          </div>
-          <button class="btn btn-primary scan-button" type="button" disabled aria-describedby="scanDisabledNote">Сканировать</button>
-          <p class="scan-disabled-note" id="scanDisabledNote">Экономики в этой версии ещё нет — кнопка не работает. Ниже правила, по которым это работало в Пекине.</p>
+          <div class="case-statusbar"><span>ZHIDAO / PERSONAL SIGNAL</span><span>SERVER SAVED</span></div>
         </article>
-
-        <div class="case-rules" id="caseRules" aria-live="polite">
-          <p class="case-loading">Загрузка правил&hellip;</p>
-        </div>
+        <button type="button" class="btn btn-secondary case-collection-link" data-open-screen="collection">Открыть мою коллекцию →</button>
+        <section class="case-window case-history-panel" aria-labelledby="caseHistoryTitle">
+          <div class="case-titlebar"><h2 id="caseHistoryTitle">Журнал сигналов</h2><span aria-hidden="true">.log</span></div>
+          <div id="caseHistory" class="case-list"><p>После входа здесь появятся ваши открытия.</p></div>
+          <button type="button" class="btn btn-secondary" id="caseHistoryMore" hidden>Ещё открытия</button>
+        </section>
+        <details class="case-window case-rules-panel"><summary>Справка: вероятности и награды</summary><div class="case-rules" id="caseRules"><p class="case-loading">Загрузка правил&hellip;</p></div></details>
+        <section class="case-window" id="caseAdmin" hidden aria-labelledby="caseAdminTitle">
+          <div class="case-titlebar"><h2 id="caseAdminTitle">Выдача попыток</h2><span>OPERATOR</span></div>
+          <form id="caseGrantForm" class="case-admin-form">
+            <fieldset id="caseGrantFields">
+              <label>Кому <select id="caseGrantTarget"><option value="members">Выбранным участникам</option><option value="group">Одной группе</option></select></label>
+              <div id="caseGrantMembers" class="case-member-list"></div>
+              <label id="caseGrantGroupLabel" hidden>Группа <select id="caseGrantGroup"></select></label>
+              <label>Попыток <input id="caseGrantAmount" type="number" min="1" max="7" value="1" required></label>
+              <label>Причина <input id="caseGrantReason" type="text" maxlength="300" required placeholder="Например: участие во встрече"></label>
+            </fieldset>
+            <button class="btn btn-primary" id="caseGrantSubmit" type="submit">Проверить выдачу</button>
+            <p id="caseGrantStatus" class="case-message" role="status"></p>
+          </form>
+          <div id="caseGrantLog" class="case-list"></div>
+          <button type="button" class="btn btn-secondary" id="caseGrantMore" hidden>Ещё записи выдачи</button>
+        </section>
       </section>
 
       <!-- ============================================================
@@ -395,24 +416,20 @@
            КОЛЛЕКЦИЯ — то, что накопилось. Живёт в «Ещё», отдельно от
            кейсов: кейс это действие, коллекция это результат.
            ============================================================ -->
-      <section class="screen placeholder-screen" data-screen="collection" aria-labelledby="collectionTitle" hidden>
+      <section class="screen case-workstation" data-screen="collection" aria-labelledby="collectionTitle" hidden>
         <div class="screen-intro">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
           <div><span class="system-label">COLLECTION / 收藏</span><h1 id="collectionTitle" class="display-title">Коллекция</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shōu c&aacute;ng <span class="screen-sub-sep">//</span> импланты и карточки</p></div>
         </div>
 
-        <div class="tabs" role="tablist" aria-label="Раздел коллекции" data-tab-group="collection">
-          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="implants">Импланты</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="cards">Карточки</button>
-        </div>
-
-        <div class="collection-grid" data-tab-panel="collection:implants">
-          <span class="collection-slot"></span><span class="collection-slot"></span><span class="collection-slot"></span>
-          <span class="collection-slot"></span><span class="collection-slot"></span><span class="collection-slot"></span>
-        </div>
-        <div class="collection-grid" data-tab-panel="collection:cards" hidden>
-          <span class="collection-slot"></span><span class="collection-slot"></span><span class="collection-slot"></span>
-        </div>
+        <div class="case-toolbar"><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
+        <article class="case-window">
+          <div class="case-titlebar"><span>Мои документы / Коллекция</span><span aria-hidden="true">▣</span></div>
+          <div class="case-folder-path">Участник / <span data-collection-season>—</span> / Предметы</div>
+          <p id="collectionStatus" class="case-message" role="status">Войдите, чтобы открыть личную коллекцию.</p>
+          <div id="caseInventory" class="case-inventory"></div>
+          <div class="case-statusbar"><span id="caseItemCount">0 предметов</span><span>СЕЗОННЫЙ АРХИВ</span></div>
+        </article>
 
         <button type="button" class="btn btn-action implant-catalogue-link" data-open-screen="implants">
           Каталог имплантов сезона
@@ -421,10 +438,10 @@
         <article class="glass-card module-status">
           <span class="module-status-dot" aria-hidden="true"></span>
           <div class="module-status-body">
-            <strong>Коллекция начнётся с нуля</strong>
-            <p>Сезон Хайнаня открывает новую коллекцию. Карточки и импланты Пекина не переносятся: та база утеряна вместе с сервером, и восстановить её нельзя. Пустые ячейки — это форма будущей сетки, а не потерянные предметы.</p>
+            <strong>Новая поездка — новая коллекция</strong>
+            <p>Гарант судьбы работает сразу. Импланты и другие призы сохраняются, но их эффекты пока не подключены. Карточки появятся позже. Прогресс Пекина не переносится.</p>
           </div>
-          <span class="module-status-tag">КОЛЛЕКЦИЯ ПУСТА</span>
+          <span class="module-status-tag">HAINAN</span>
         </article>
       </section>
 
@@ -583,7 +600,7 @@
       <button type="button" data-target="shop" aria-label="Магазин">
         <span class="dock-icon"><img src="./assets/icons/nav-shop.png" alt=""></span><small>Магазин<span class="nav-cn">商店</span></small>
       </button>
-      <button type="button" data-target="cases" aria-label="Коллекция">
+      <button type="button" data-target="cases" aria-label="Кейсы">
         <span class="dock-icon"><img src="./assets/icons/nav-cases.png" alt=""></span><small>Кейсы<span class="nav-cn">箱子</span></small>
       </button>
       <button type="button" data-target="tasks" aria-label="Задания">
@@ -597,12 +614,21 @@
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
   <script src="./campus-map.js?v=9d6077482f" defer></script>
-  <script src="./cases.js?v=7ba3abe7a9" defer></script>
-  <script src="./implants.js?v=055ac49c8e" defer></script>
-  <script src="./app.js?v=bc6279f0d0" defer></script>
+  <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
+    <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
+    <div class="case-result-body"><span id="caseResultTier" class="case-result-tier"></span><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
+  </dialog>
+  <dialog id="caseGrantDialog" class="case-dialog" aria-labelledby="caseGrantTitle">
+    <div class="case-titlebar"><h2 id="caseGrantTitle">Подтвердить выдачу</h2></div>
+    <div class="case-result-body"><p id="caseGrantSummary"></p><p>Запас каждого участника ограничен семью попытками. Фактическая выдача будет записана в журнал.</p><button type="button" class="btn btn-primary" id="caseGrantConfirm">Выдать</button><button type="button" class="btn btn-secondary" id="caseGrantCancel">Отмена</button></div>
+  </dialog>
+  <script src="./cases.js?v=4344700dac" defer></script>
+  <script src="./case-play.js?v=4508f6fb66" defer></script>
+  <script src="./implants.js?v=c546b038d3" defer></script>
+  <script src="./app.js?v=b7a796952d" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./theme.js?v=79eeeb299c" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
-  <script src="./auth.js?v=113270dc1d" defer></script>
+  <script src="./auth.js?v=97d57c4176" defer></script>
 </body>
 </html>

@@ -25,7 +25,7 @@ class AppAssetVersionTests(unittest.TestCase):
 
     def test_versions_match_file_contents(self):
         result = subprocess.run(
-            [sys.executable, str(ROOT / "tools" / "stamp_assets.py"), "--check"],
+            [sys.executable, "-X", "utf8", str(ROOT / "tools" / "stamp_assets.py"), "--check"],
             capture_output=True,
             text=True,
             encoding="utf-8",

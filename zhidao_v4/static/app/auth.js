@@ -11,10 +11,8 @@
    3. Открыто в обычном браузере -> логин и пароль (провайдер `local`,
       он остаётся источником истины по V4_AUTH.md).
 
-   Почему экран не запирает приложение наглухо: во всех разделах сейчас
-   только заглушки без единого настоящего балла, участника или события —
-   запирать нечего. Поэтому есть честно подписанный выход в оформление без
-   входа. Как только появятся настоящие данные, эту дверь нужно закрыть. */
+   Предпросмотр публикует только mode=preview: личные модули очищают данные
+   и не обращаются к защищённым API. Сервер независимо проверяет сессию. */
 
 (function () {
   const API = {
@@ -63,7 +61,8 @@
     errorBox.hidden = !text;
   }
 
-  function openApp(account) {
+  function openApp(payload) {
+    const account = payload && payload.account;
     gate.hidden = true;
     setShellInert(false);
     document.body.classList.add("is-signed-in");
@@ -73,6 +72,8 @@
     document.querySelectorAll("[data-account-name]").forEach((el) => {
       el.textContent = account.display_name;
     });
+    window.ZhidaoSession = { mode: "authenticated", account, roles: payload.roles || [] };
+    window.dispatchEvent(new CustomEvent("zhidao:auth", { detail: window.ZhidaoSession }));
   }
 
   async function call(url, body) {
@@ -116,7 +117,7 @@
     const { status, payload } = await call(API.max, body);
 
     if (status === 200) {
-      openApp(payload && payload.account);
+      openApp(payload);
       return true;
     }
     if (status === 409) {
@@ -140,7 +141,7 @@
 
     const session = await call(API.me);
     if (session.status === 200) {
-      openApp(session.payload && session.payload.account);
+      openApp(session.payload);
       return;
     }
 
@@ -162,7 +163,8 @@
       const field = pairForm.querySelector("[data-field='code']");
       const code = (field && field.value || "").trim();
       if (!code) return;
-      await signInWithMax(code);
+      try { await signInWithMax(code); }
+      catch (_) { showStep("pair"); showError("Нет связи. Повторите вход."); }
     });
   }
 
@@ -175,9 +177,12 @@
       const password = localForm.querySelector("[data-field='password']").value || "";
       if (!username || !password) return;
 
-      const { status, payload } = await call(API.local, { username, password });
+      let result;
+      try { result = await call(API.local, { username, password }); }
+      catch (_) { showError("Нет связи. Повторите вход."); return; }
+      const { status, payload } = result;
       if (status === 200) {
-        openApp(payload && payload.account);
+        openApp(payload);
         return;
       }
       if (status === 429) {
@@ -192,8 +197,21 @@
     previewBtn.addEventListener("click", () => {
       gate.hidden = true;
       setShellInert(false);
+      document.body.classList.remove("is-signed-in");
+      window.ZhidaoSession = { mode: "preview" };
+      window.dispatchEvent(new CustomEvent("zhidao:auth", { detail: window.ZhidaoSession }));
     });
   }
+
+  window.addEventListener("zhidao:session-expired", () => {
+    window.ZhidaoSession = { mode: "preview" };
+    window.dispatchEvent(new CustomEvent("zhidao:auth", { detail: window.ZhidaoSession }));
+    document.body.classList.remove("is-signed-in");
+    gate.hidden = false;
+    setShellInert(true);
+    showStep(maxLaunchParams() ? "pair" : "local");
+    showError("Сессия завершилась. Войдите снова; результат сохранён на сервере.");
+  });
 
   boot().catch(() => {
     // Сеть недоступна или сервер молчит. Показываем форму, а не пустой экран:

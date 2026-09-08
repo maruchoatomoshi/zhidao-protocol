@@ -1,0 +1,105 @@
+/* An Aero window, not an OS replica. Body copy stays readable on small screens. */
+.case-workstation, .case-dialog {
+  --case-ink: #103a52; --case-muted: #43677b; --case-paper: #edf7fb;
+  --case-pane: #ffffffc9; --case-border: #91c4dc; --case-inset: #dbeaf2;
+  --case-title: linear-gradient(#8ed2ef, #378ec2 48%, #247ba9 51%, #65b6dc);
+  color: var(--case-ink);
+}
+[data-theme="dark"] .case-workstation, [data-theme="dark"] .case-dialog {
+  --case-ink: #e5f5ff; --case-muted: #accbdc; --case-paper: #0b2c44;
+  --case-pane: #103751ef; --case-border: #42718e; --case-inset: #071f32;
+  --case-title: linear-gradient(#437d9f, #174d70 48%, #103e5e 51%, #285c7c);
+}
+.case-workstation .case-window, .case-dialog {
+  border: 1px solid var(--case-border); border-radius: 12px; overflow: hidden;
+  background: var(--case-paper); box-shadow: inset 0 1px #fff8, 0 8px 22px #001c3c25;
+  margin: 18px 0; text-transform: none; letter-spacing: normal;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5;
+}
+.case-titlebar { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 38px; padding: 7px 13px; color: white; background: var(--case-title);
+  font: 600 13px/1.3 "Trebuchet MS", sans-serif; text-shadow: 0 1px 2px #003657;
+  border-bottom: 1px solid var(--case-border); }
+.case-titlebar h2 { font: inherit; margin: 0; color: inherit; }
+.case-titlebar button { width: 32px; height: 30px; border-radius: 5px; border: 1px solid #fff9;
+  color: white; background: linear-gradient(#e2a088, #a33c34); font: 24px/1 sans-serif; cursor: pointer; }
+.scanner-body { padding: 14px 18px 10px; text-align: center;
+  background: radial-gradient(ellipse at 50% 20%, #40c7f130, transparent 65%); }
+.scanner-body h2 { font: 500 clamp(24px, 6vw, 32px)/1.15 "Trebuchet MS", sans-serif; margin: 4px 0 10px; color: var(--case-ink); }
+.scanner-body p { color: var(--case-muted); margin: 8px 0 14px; }
+.scanner-body .scanner-kicker { font: 11px/1.5 "Courier New", monospace; letter-spacing: .12em; margin: 4px 0; }
+.scanner-visual { position: relative; height: 108px; display: grid; place-items: center; }
+.scanner-visual img { width: 104px; height: 90px; object-fit: contain; z-index: 1; filter: drop-shadow(0 12px 8px #08265b30); }
+.scanner-visual > span { position: absolute; right: 5%; bottom: 15px; color: var(--case-muted); font: 10px monospace; }
+.scanner-orbit { position: absolute; width: 200px; height: 90px; border: 1px solid #72bcdb; border-radius: 50%; transform: rotate(-12deg);
+  box-shadow: 0 0 0 12px #57bbe511, 0 0 0 25px #57bbe508, inset 0 0 20px #64c9eb30; }
+.case-meters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 12px; }
+.case-meters > div { background: var(--case-inset); border: 1px solid var(--case-border); border-radius: 6px; padding: 9px; box-shadow: inset 0 1px 3px #001f3920; }
+.case-meters span { display: block; font-size: 12px; color: var(--case-muted); }
+.case-meters strong { display: block; font: 600 24px/1.4 "Trebuchet MS", sans-serif; font-variant-numeric: tabular-nums; color: var(--case-ink); }
+.case-workstation .btn, .case-dialog .btn { min-height: 44px; font: 600 14px/1.3 "Trebuchet MS", sans-serif; text-transform: none; letter-spacing: normal; cursor: pointer; }
+.case-workstation .btn:disabled { cursor: not-allowed; opacity: .55; }
+.case-workstation .btn-secondary, .case-dialog .btn-secondary { color: var(--case-ink); background: linear-gradient(var(--case-pane),var(--case-inset)); border: 1px solid var(--case-border); text-shadow: none; }
+.case-workstation .map-back { color: var(--case-ink); }
+.case-workstation .scan-button { width: 100%; margin: 0; }
+.case-message { font: 13px/1.55 "Trebuchet MS", sans-serif; color: var(--case-muted); padding: 0 14px; overflow-wrap: anywhere; }
+.scanner-body .case-message { min-height: 40px; padding: 0; margin-bottom: 4px; }
+.case-statusbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px; border-top: 1px solid var(--case-border); background: var(--case-inset); padding: 6px 10px; font: 10px/1.5 "Courier New", monospace; color: var(--case-muted); }
+.case-statusbar span + span { border-left: 1px solid var(--case-border); padding-left: 10px; }
+.scanner-progress { height: 18px; padding: 3px; background: var(--case-inset); border: 1px solid var(--case-border); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.scanner-progress span { display: block; height: 100%; width: 40%; background: repeating-linear-gradient(90deg,#37b7dc 0 9px,transparent 9px 12px); animation: case-transfer 1.1s linear infinite; }
+.is-scanning .scanner-visual img { animation: case-float 1.4s ease-in-out infinite alternate; }
+@keyframes case-transfer { from { transform: translateX(-100%); } to { transform: translateX(350%); } }
+@keyframes case-float { to { transform: translateY(-8px); } }
+.case-toolbar { display: flex; align-items: end; gap: 9px; }
+.case-toolbar label { flex: 1; min-width: 0; font: 12px/1.4 "Trebuchet MS", sans-serif; }
+.case-workstation select, .case-workstation input:not([type="checkbox"]) { display: block; width: 100%; min-height: 44px; padding: 9px; border-radius: 5px;
+  border: 1px solid var(--case-border); background: var(--case-paper); color: var(--case-ink); font: 14px/1.3 "Trebuchet MS", sans-serif; }
+.case-workstation :focus-visible, .case-dialog :focus-visible { outline: 3px solid #28add9; outline-offset: 3px; }
+.case-collection-link { width: 100%; }
+.case-list { padding: 12px; }
+.case-history-panel .case-list, #caseGrantLog { max-height: 340px; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: #429bc4 var(--case-inset); }
+.case-history-row { display: flex; align-items: start; flex-direction: column; width: 100%; padding: 12px; text-align: left;
+  border: 0; border-bottom: 1px solid var(--case-border); background: transparent; color: var(--case-ink); cursor: pointer; font: 14px/1.4 "Trebuchet MS", sans-serif; }
+.case-history-row:hover { background: var(--case-pane); }
+.case-history-row span { font-size: 12px; color: var(--case-muted); margin-top: 3px; }
+.case-rules-panel summary { padding: 15px; cursor: pointer; font-weight: bold; }
+.case-rules-panel .case-rules { padding: 0 12px 12px; }
+.case-folder-path { background: var(--case-inset); border-bottom: 1px solid var(--case-border); padding: 8px 13px; font-size: 12px; }
+.case-inventory { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; padding: 14px; }
+.case-owned-item { display: flex; flex-direction: column; align-items: center; text-align: center; border: 1px solid var(--case-border); background: var(--case-pane); padding: 12px 8px; border-radius: 6px; }
+.case-owned-item img { width: 100%; height: 116px; object-fit: contain; }
+.case-owned-item h3 { font: 600 14px/1.3 "Trebuchet MS", sans-serif; margin: 8px 0; color: var(--case-ink); }
+.case-item-glyph { display: grid; place-items: center; width: 100%; height: 116px; font-size: 66px; color: #3799bf; text-shadow: 0 2px #fff7; }
+.case-item-quantity { font-variant-numeric: tabular-nums; }
+.case-effect { font-size: 11px; padding: 4px 6px; margin-top: 8px; border: 1px solid var(--case-border); border-radius: 4px; color: var(--case-muted); }
+.case-effect.active { background: #63c99e22; color: var(--case-ink); }
+.case-admin-form { padding: 15px; }
+.case-admin-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 12px; }
+.case-admin-form label { display: block; font-size: 13px; }
+.case-member-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--case-border); border-radius: 5px; background: var(--case-pane); padding: 6px; }
+.case-member-list label { display: flex; gap: 9px; min-height: 44px; align-items: center; padding: 5px; }
+.case-member-list input { width: 20px; height: 20px; flex-shrink: 0; accent-color: #218dbb; }
+.case-admin-form > button { margin-top: 14px; width: 100%; }
+.case-grant-record { border-top: 1px solid var(--case-border); padding: 10px 0; overflow-wrap: anywhere; }
+.case-grant-record span { display: block; color: var(--case-muted); font-size: 12px; }
+.case-grant-record p { margin: 5px 0; }
+.case-dialog { width: min(420px,calc(100vw - 28px)); max-height: calc(100dvh - 40px); overflow-y: auto; margin: auto; padding: 0; color: var(--case-ink); }
+.case-dialog::backdrop { background: #03182eb3; backdrop-filter: blur(5px); }
+.case-result-body { padding: 22px; text-align: center; }
+.case-result-body h2 { color: var(--case-ink); font: 600 26px/1.2 "Trebuchet MS", sans-serif; margin: 15px 0; }
+.case-result-body p { color: var(--case-muted); overflow-wrap: anywhere; }
+.case-result-body img { display: block; height: 150px; width: 100%; object-fit: contain; }
+.case-result-tier { display: inline-block; background: #509ac522; border: 1px solid var(--case-border); border-radius: 20px; padding: 4px 12px; font-size: 12px; }
+[data-tier="purple"] .case-result-tier { background: #bd84ff35; }
+[data-tier="black"] .case-result-tier { background: #ffc85335; }
+.case-result-body .btn { width: 100%; margin-top: 10px; }
+.case-workstation [hidden], .case-dialog [hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .is-scanning .scanner-visual img, .scanner-progress span { animation: none; }
+}
+@media (max-width: 360px) {
+  .scanner-body { padding: 14px; }
+  .case-toolbar { flex-wrap: wrap; }
+  .case-inventory { gap: 8px; padding: 10px; }
+}

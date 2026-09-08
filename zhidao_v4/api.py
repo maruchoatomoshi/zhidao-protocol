@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .admin import architect_overview
+from .cases_api import register_cases
 from .auth import (
     AuthenticationError,
     LinkRequiredError,
@@ -269,7 +270,7 @@ def create_app(
                 )
             else:
                 response.headers.setdefault("Cache-Control", "no-cache")
-        if request.url.path.startswith("/api/v4/auth"):
+        if request.url.path.startswith("/api/v4/"):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -643,4 +644,5 @@ def create_app(
         name="participant-app-preview",
     )
 
+    register_cases(app, _current_principal, _csrf_principal)
     return app
