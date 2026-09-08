@@ -26,6 +26,7 @@ import string
 
 from .auth import ProvisioningError, provision_local_account
 from .db import connect_database, immediate_transaction
+from .security import normalize_local_username
 
 
 ROLE_CODES = ("system_admin", "architect", "operator", "participant")
@@ -40,15 +41,48 @@ def generate_password(length: int = 32) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
+def _list_accounts(db_path: str) -> int:
+    """Кто уже заведён. Нужно ровно затем, чтобы не гадать после «логин занят»."""
+    conn = connect_database(db_path)
+    try:
+        rows = conn.execute(
+            """
+            SELECT a.id, a.display_name, a.status,
+                   e.provider_subject AS login,
+                   (SELECT GROUP_CONCAT(r.role_code, ', ')
+                      FROM v4_role_assignments r
+                     WHERE r.account_id = a.id) AS roles
+              FROM v4_accounts a
+              LEFT JOIN v4_external_identities e
+                     ON e.account_id = a.id AND e.provider_code = 'local'
+             ORDER BY a.id
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+    if not rows:
+        print("Локальных учётных записей пока нет.")
+        return 0
+    for row in rows:
+        status = "" if row["status"] == "active" else f" [{row['status']}]"
+        print(
+            f"#{row['id']} {row['login'] or '(без локального логина)'} — "
+            f"{row['display_name']}{status} — роли: {row['roles'] or 'нет'}"
+        )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m zhidao_v4.provision",
         description="Create a local V4 account with a role",
     )
     parser.add_argument("--db", required=True, help="SQLite database path")
-    parser.add_argument("--username", required=True, help="Lowercase local login")
-    parser.add_argument("--display-name", required=True, help="Name shown in the app")
-    parser.add_argument("--role", required=True, choices=ROLE_CODES)
+    # Не required: с --list они бессмысленны, а argparse иначе не даст даже
+    # посмотреть список. Проверяются ниже, когда действительно нужны.
+    parser.add_argument("--username", help="Lowercase local login")
+    parser.add_argument("--display-name", help="Name shown in the app")
+    parser.add_argument("--role", choices=ROLE_CODES)
     parser.add_argument(
         "--actor-account-id",
         type=int,
@@ -65,7 +99,27 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Force a password change on first sign-in",
     )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="Show existing local accounts and exit",
+    )
     args = parser.parse_args(argv)
+
+    if args.list:
+        return _list_accounts(args.db)
+
+    missing = [
+        name
+        for name, value in (
+            ("--username", args.username),
+            ("--display-name", args.display_name),
+            ("--role", args.role),
+        )
+        if not value
+    ]
+    if missing:
+        raise SystemExit(f"Required for creating an account: {', '.join(missing)}")
 
     if args.random_password:
         password = generate_password()
@@ -87,6 +141,17 @@ def main(argv: list[str] | None = None) -> int:
                 must_change_password=args.must_change_password,
             )
     except ProvisioningError as exc:
+        # Самая частая ошибка здесь — повторный запуск с тем же логином, и
+        # сырое «UNIQUE constraint failed: v4_external_identities...» об этом
+        # не говорит ничего. Учётка при этом уже существует и цела: подсказать
+        # надо, как её найти, а не как создать заново.
+        if "v4_external_identities" in str(exc):
+            raise SystemExit(
+                f"Логин {normalize_local_username(args.username)!r} уже занят — "
+                "учётная запись с ним существует.\n"
+                "Посмотреть её: python -m zhidao_v4.provision --db … --list, "
+                "сменить пароль: python -m zhidao_v4.passwd."
+            ) from None
         raise SystemExit(str(exc)) from None
     finally:
         conn.close()

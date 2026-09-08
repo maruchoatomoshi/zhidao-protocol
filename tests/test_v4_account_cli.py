@@ -92,6 +92,42 @@ class AccountCliTests(unittest.TestCase):
             [role["code"] for role in response.json()["roles"]], ["operator"]
         )
 
+    def test_a_taken_login_says_so_in_words(self):
+        # Сырое «UNIQUE constraint failed: v4_external_identities...» человеку
+        # не говорит ничего — а повторный запуск с тем же логином здесь самая
+        # частая ошибка.
+        with self.assertRaises(SystemExit) as caught, _capture():
+            provision_main(
+                [
+                    "--db", str(self.db_path),
+                    "--username", ADMIN_USERNAME,
+                    "--display-name", "Второй Архитектор",
+                    "--role", "operator",
+                    "--random-password",
+                ]
+            )
+        message = str(caught.exception)
+        self.assertIn("уже занят", message)
+        self.assertNotIn("UNIQUE constraint", message)
+
+        # И главное: первая учётка цела, пароль у неё прежний.
+        self.assertEqual(self.login(ADMIN_USERNAME, ADMIN_PASSWORD).status_code, 200)
+
+    def test_list_shows_logins_names_and_roles(self):
+        with _capture() as out:
+            code = provision_main(["--db", str(self.db_path), "--list"])
+        self.assertEqual(code, 0)
+        listing = out.getvalue()
+        self.assertIn(ADMIN_USERNAME, listing)
+        self.assertIn("Архитектор", listing)
+        self.assertIn("system_admin", listing)
+
+    def test_creating_without_the_required_arguments_names_them(self):
+        with self.assertRaises(SystemExit) as caught, _capture():
+            provision_main(["--db", str(self.db_path), "--username", "someone"])
+        self.assertIn("--display-name", str(caught.exception))
+        self.assertIn("--role", str(caught.exception))
+
     def test_password_change_replaces_the_old_one_and_keeps_the_account(self):
         before = self.login(ADMIN_USERNAME, ADMIN_PASSWORD)
         self.assertEqual(before.status_code, 200, before.text)
