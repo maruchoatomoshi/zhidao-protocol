@@ -131,17 +131,24 @@ ZHIDAO_V4_APP_URL=https://china.marucho.icu:8443/app/
 ### 3. Проверка до запуска
 
 ```bash
-sudo -u www-data bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --check'
+sudo bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --check'
 ```
 
 Выводит, кто бот по мнению MAX, отвечает ли API, под какой учёткой и с
 какими ролями бот вошёл. Возвращает 1, если что-то не так — в том числе если
 у учётки нет роли оператора и коды сопряжения выдать не выйдет.
 
+От root, а не от `www-data`: `v4.env` доступен на чтение только root'у
+(systemd читает его до сброса привилегий), а `--check` и `--set-commands`
+только ходят по HTTP и ничего не пишут, так что root-овских файлов после
+себя не оставляют. Учётку из шага 1 заводить надо, наоборот, именно от
+`www-data` — она пишет в базу, и файлы WAL рядом с ней не должны стать
+root-овскими.
+
 ### 4. Меню команд в MAX
 
 ```bash
-sudo -u www-data bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --set-commands'
+sudo bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --set-commands'
 ```
 
 Разово, и повторять после изменения `MENU_COMMANDS`.
