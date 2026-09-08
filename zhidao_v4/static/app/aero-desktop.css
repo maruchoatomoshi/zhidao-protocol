@@ -185,6 +185,21 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible), summary:focus:not
 .hub-orb.aero-object::before, .hub-orb.aero-object::after { display: none; }
 .hub-orb.aero-object img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 3px #00314a30); }
 .profile-avatar img, .profile-fab-orb img { width: 85%; height: 85%; object-fit: contain; }
+
+/* Supplied identity artwork stays intact; the landscape remains the hero. */
+.brand-logo { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; }
+.app-header .profile-fab { top: 2px; }
+.journey-card .journey-index { justify-content: flex-end; }
+.journey-card .journey-copy { position: absolute; top: 38px; bottom: auto; left: 18px; right: 18px; }
+.journey-copy > p { margin: 8px 0 10px; }
+.journey-copy h2 { max-width: 62%; font-size: clamp(32px, 10vw, 56px); }
+.journey-card .journey-logo { position: absolute; right: 12px; top: 58px; width: 34%; max-width: 158px; height: auto; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,35,68,.3)); }
+.journey-card .journey-bubbles { position: absolute; inset: 48% 0 0; pointer-events: none; }
+.journey-bubbles i { position: absolute; width: 42px; height: 42px; border: 1px solid rgba(230,253,255,.65); border-radius: 50%; background: radial-gradient(ellipse at 28% 23%,rgba(255,255,255,.85),rgba(255,255,255,.08) 20%,transparent 52%); box-shadow: inset -3px -3px 7px rgba(176,240,255,.4), inset 2px 2px 5px rgba(255,255,255,.45); left: 9%; bottom: 22%; }
+.journey-bubbles i:nth-child(2) { width: 24px; height: 24px; left: 22%; bottom: 55%; animation-delay: -3s; }
+.journey-bubbles i:nth-child(3) { width: 32px; height: 32px; left: 80%; bottom: 30%; animation-delay: -5s; }
+:root[data-motion="full"] .journey-bubbles i { animation-name: journey-bubble-float; animation-duration: 8s; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+@keyframes journey-bubble-float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(7px,-24px); } }
 button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--desk-accent); outline-offset: 3px; }
 .btn, .terminal-tool, .desktop-shortcuts button, .profile-collection-link, .dock-button { transition: transform 130ms ease, box-shadow 150ms ease; }
 button:not(:disabled):active { transform: translateY(1px) scale(.985); }

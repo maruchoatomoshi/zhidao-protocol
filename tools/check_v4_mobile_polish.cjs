@@ -20,6 +20,19 @@ const path = require('node:path');
     assert.equal(await page.locator('[data-theme-toggle]').count(),1);
     assert.equal(await page.locator('[data-screen="more"] [data-motion-toggle]').count(),1);
     await page.waitForTimeout(300);
+    assert.equal(await page.locator('.journey-card .online-pill, .journey-card .weather-orb, .journey-card .journey-meta').count(),0);
+    assert.equal((await page.locator('#scheduleTitle').innerText()).endsWith('.'),false);
+    assert.equal(await page.locator('.journey-bubbles i').count(),3);
+    for (const width of [320,390,430]) {
+      await page.setViewportSize({width,height:844});
+      for (const selector of ['.brand-logo','.journey-logo']) {
+        assert.ok(await page.locator(selector).evaluate(img=>img.complete && img.naturalWidth>0));
+      }
+      const title=await page.locator('.journey-copy h2').boundingBox();
+      const logo=await page.locator('.journey-logo').boundingBox();
+      assert.ok(title.x+title.width<=logo.x,'Hero logo must not overlap the title');
+    }
+    await page.setViewportSize({width:390,height:844});
     await page.screenshot({path:path.join(out,'day-normal.png')});
     const cdp=await context.newCDPSession(page);
     await cdp.send('Emulation.setAutoDarkModeOverride',{enabled:true});
