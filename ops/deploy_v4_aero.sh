@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # One approved Hainan release. Does not touch nginx, VPN, credentials or roster.
 set -Eeuo pipefail
-umask 077
+# Git checkout must produce code readable by the service account. Backups live
+# in an explicitly private directory; a global 077 breaks root-owned checkout.
+umask 022
 
 repo=/opt/zhidao-v4
 db=/var/lib/zhidao-v4/zhidao.db
@@ -40,6 +42,10 @@ printf 'Release: %s\nPrevious: %s\nBackup: %s\n' "$target" "$old" "$backup"
 
 stopped=0
 changed=0
+readable_code() {
+  git ls-files -z -- zhidao_v4 migrations/v4 | xargs -0 -r chmod a+r
+  find "$repo/zhidao_v4" "$repo/migrations/v4" -type d -exec chmod a+rx {} +
+}
 rollback() {
   local code=$1
   trap - ERR INT TERM
@@ -51,11 +57,21 @@ rollback() {
       echo "Automatic code rollback failed. Services remain stopped. Backup: $backup"
       exit "$code"
     fi
+    readable_code
   fi
   if [[ $stopped == 1 ]]; then
     systemctl start zhidao-v4
     systemctl start zhidao-v4-bot
     systemctl is-active zhidao-v4 zhidao-v4-bot
+    # systemd 'active' immediately after start does not establish app readiness.
+    recovered=0
+    for attempt in {1..15}; do
+      if curl --fail --silent --show-error --max-time 2 http://127.0.0.1:8770/api/v4/health; then
+        recovered=1; break
+      fi
+      sleep 1
+    done
+    [[ $recovered == 1 ]] || echo 'WARNING: old API health still fails; recovery needs attention.'
   fi
   echo "Database was NOT replaced. Additive migration may remain. Backup: $backup"
   exit "$code"
@@ -81,10 +97,12 @@ finally:
     dest.close()
     source.close()
 PY
+chmod 600 "$backup/database.sqlite"
 sha256sum "$backup/database.sqlite" > "$backup/database.sha256"
 
 changed=1
 git merge --ff-only "$target"
+readable_code
 sudo -u www-data "$repo/.venv/bin/python" -c 'import zhidao_v4.api, zhidao_v4.cases'
 sudo -u www-data "$repo/.venv/bin/python" -m zhidao_v4.migrations --db "$db"
 # Check while both services are stopped, before legitimate user activity resumes.
