@@ -7,7 +7,7 @@ umask 022
 
 repo=/opt/zhidao-v4
 db=/var/lib/zhidao-v4/zhidao.db
-target=ffc93c76b35e78d03edde2bda98f14155f2b1597
+target=ed4c593fc7c05706a5b6cf446ba69a46b1739046
 
 [[ $(id -u) == 0 ]] || { echo 'Run from the root Termius session.'; exit 1; }
 cd "$repo"
@@ -145,7 +145,8 @@ with urlopen(base + '/api/v4/cases/rules', timeout=5) as r:
 with urlopen(base + '/app/', timeout=5) as r:
     page = r.read().decode('utf-8')
     assert 'aero-desktop.css?v=' in page and 'aero-motion.js?v=' in page
-for asset in ('aero-desktop.css', 'aero-motion.js', 'case-play.js'):
+assert 'journey-logo' in page and 'WELCOME TO HAINAN' not in page
+for asset in ('aero-desktop.css', 'aero-motion.js', 'case-play.js', 'assets/zhidao-dragon-logo.png'):
     with urlopen(base + '/app/' + asset, timeout=5) as r:
         assert r.status == 200 and len(r.read()) > 100
 try:
