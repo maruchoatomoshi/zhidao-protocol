@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light">
-  <title>ZHIDAO Hainan · App Preview</title>
+  <title>ZHIDAO Hainan · Personal System</title>
   <link rel="stylesheet" href="./tokens.css?v=fa77e0dcbd">
   <link rel="stylesheet" href="./app.css?v=762cb3e504">
   <link rel="stylesheet" href="./aero.css?v=9f44369511">
   <link rel="stylesheet" href="./aero-grade.css?v=013e606385">
   <link rel="stylesheet" href="./case-workstation.css?v=32a11fe8e2">
+  <link rel="stylesheet" href="./aero-desktop.css?v=1131d1fa95">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -141,29 +142,40 @@
         </button>
       </header>
 
+      <div class="internet-toolbar" aria-label="Личный терминал">
+        <span class="internet-address"><span aria-hidden="true">◈</span> <span id="terminalAddress">zhidao://today</span></span>
+        <button type="button" class="terminal-tool" data-motion-toggle aria-pressed="true" aria-label="Анимации включены. Выключить"><span aria-hidden="true">◌</span><span data-motion-label>Движение</span></button>
+        <button type="button" class="terminal-tool" data-theme-toggle aria-label="Сменить тему"><span aria-hidden="true">◐</span><span class="terminal-tool-caption">Тема</span></button>
+      </div>
+
       <!-- ============================================================
            СЕГОДНЯ — главный экран
            ============================================================ -->
       <section class="screen active" data-screen="schedule" aria-labelledby="scheduleTitle">
         <div class="screen-intro">
-          <div><span class="system-label">PERSONAL NODE / PREVIEW</span><h1 id="scheduleTitle">Привет,<br>путешественник.</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jīn tiān <span class="screen-sub-sep">//</span> личный узел, предпросмотр</p></div>
+          <div><span class="system-label">PERSONAL SYSTEM / 个人系统</span><h1 id="scheduleTitle">Привет,<br>путешественник.</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jīn tiān <span class="screen-sub-sep">//</span> твоя точка подключения</p></div>
           <span class="preview-chip">DESIGN PREVIEW</span>
         </div>
 
         <article class="journey-card">
           <div class="journey-index"><span>TRAVEL SEASON / 04</span><span>18°19′N</span></div>
           <div class="journey-copy">
-            <span class="online-pill"><i></i> HAINAN NODE ONLINE</span>
+            <span class="online-pill"><i></i> WELCOME TO HAINAN</span>
             <p>ОБЕЩАННОЕ ЗАВТРА</p>
             <h2>Курс на<br>Хайнань</h2>
             <div class="journey-meta"><span>SYX</span><i></i><b>海</b></div>
           </div>
-          <div class="weather-orb"><strong>28°</strong><span>ЯСНО</span></div>
+          <div class="weather-orb" aria-label="Островной сезон, не прогноз погоды"><strong>海</strong><span>ОСТРОВ</span></div>
         </article>
 
-        <div class="status-grid" aria-label="Предпросмотр показателей">
+        <div class="status-grid" aria-label="Показатели участника">
           <article class="status-module rep-module"><span>REP</span><strong>—</strong><small>Рейтинг подключим позже</small></article>
-          <article class="status-module season-module"><span>СЕЗОН</span><strong>04</strong><small>Hainan · DRAFT</small></article>
+          <article class="status-module season-module"><span>СИГНАЛЫ</span><strong data-case-scans>— / 7</strong><small>Попытки сканирования</small></article>
+        </div>
+
+        <div class="desktop-shortcuts" aria-label="Быстрый доступ">
+          <button type="button" data-open-screen="cases"><img src="./assets/icons/nav-cases.png" alt=""><span>Сканер<small>Открыть кейс</small></span><b aria-hidden="true">↗</b></button>
+          <button type="button" data-open-screen="campus-map"><span class="shortcut-map-orb" aria-hidden="true">⌖</span><span>Кампус<small>Твои ориентиры</small></span><b aria-hidden="true">↗</b></button>
         </div>
 
         <article class="media-widget" data-player aria-label="Музыка">
@@ -194,8 +206,8 @@
 
         <article class="signal-card">
           <span class="signal-orb">✦</span>
-          <div><span class="system-label">WELCOME SIGNAL</span><h3>Будущее на связи</h3><p>Личный контур будет готов, когда мы подключим участников.</p></div>
-          <button type="button" aria-label="Подробнее" data-toast="Это дизайн-превью будущего личного контура">›</button>
+          <div><span class="system-label">COLLECTION / 收藏</span><h3>Собирай свою историю</h3><p>Предметы и сигналы этой поездки — в твоей коллекции.</p></div>
+          <button type="button" aria-label="Открыть коллекцию" data-open-screen="collection">›</button>
         </article>
       </section>
 
@@ -208,6 +220,7 @@
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
 
+        <article class="desktop-banner reputation-banner"><img src="./assets/icons/nav-rating.png" alt=""><div><span class="desktop-eyebrow">REPUTATION / НЕ ПРОДАЁТСЯ</span><h2>Важен твой вклад.</h2><p>REP — репутация сезона.<br>Её нельзя купить за ★.</p></div><span class="banner-serial" aria-hidden="true">01 / REP</span></article>
         <div class="tabs" role="tablist" aria-label="Раздел рейтинга" data-tab-group="rating">
           <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="season">Сезон</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-tab="diary">Дневник</button>
@@ -255,7 +268,8 @@
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
 
-        <div class="locked-window"><span>ECONOMY MODULE</span><strong>LOCKED</strong><small>★ rollover выполняется в самом конце</small></div>
+        <article class="desktop-banner supply-banner"><img src="./assets/icons/nav-shop.png" alt=""><div><span class="desktop-eyebrow">SUPPLY DESK / 商店</span><h2>Всё для экспедиции.</h2><p>Витрина готовится.<br>Покупки ещё не подключены.</p></div><span class="banner-serial" aria-hidden="true">02 / SHOP</span></article>
+        <div class="locked-window metal-panel"><span>SUPPLY MODULE</span><strong>ВИТРИНА ЗАКРЫТА</strong><small>Каталог и покупки появятся следующим этапом</small></div>
 
         <div class="tabs" role="tablist" aria-label="Раздел магазина" data-tab-group="shop">
           <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="general">Общее</button>
@@ -282,9 +296,9 @@
           <span class="module-status-dot" aria-hidden="true"></span>
           <div class="module-status-body">
             <strong>Каталог задаёт сервер, не приложение</strong>
-            <p>Товары, цены и лимиты — конфигурация сезона. Здесь не появится ничего, пока не будет настроена экономика: приложение показывает результат, а не решает, сколько что стоит.</p>
+            <p>Товары, цены и лимиты задаёт сервер. Баланс ★ уже работает в кейсах; покупки и расходники магазина подключим отдельно.</p>
           </div>
-          <span class="module-status-tag">ЭКОНОМИКА НЕ НАСТРОЕНА</span>
+          <span class="module-status-tag">ПОКУПКИ НЕ ПОДКЛЮЧЕНЫ</span>
         </article>
       </section>
 
@@ -301,10 +315,10 @@
         <article class="case-window" id="scanWindow">
           <div class="case-titlebar"><span>✦ signal_scanner.exe</span><span aria-hidden="true">▰ ▣</span></div>
           <div class="scanner-body">
-            <div class="scanner-visual" aria-hidden="true"><div class="scanner-orbit"></div><img src="./assets/icons/nav-cases.png" alt=""><span>SCAN / 扫描</span></div>
-            <p class="scanner-kicker">ВАШ СЛЕДУЮЩИЙ СИГНАЛ</p>
+            <div class="scanner-visual" aria-hidden="true"><div class="scanner-orbit"></div><div class="scanner-orbit orbit-cross"></div><div class="scanner-grid"></div><div class="scanner-sweep"></div><div class="scanner-bloom"></div><img src="./assets/icons/nav-cases.png" alt=""><span>SCAN / 扫描</span><b class="scanner-coordinate">SIGNAL : 000</b></div>
+            <div class="scan-sequence" aria-label="Этапы сканирования"><span data-scan-step="contact">01 · Связь</span><span data-scan-step="scan">02 · Скан</span><span data-scan-step="reveal">03 · Сигнал</span></div>
             <h2>Что по ту сторону?</h2>
-            <p>Одна попытка. Случайный кейс.<br>Результат останется с вами.</p>
+            <p>Одна попытка — один сохранённый результат.</p>
             <div class="case-meters"><div><span>Попытки</span><strong data-case-scans>— / 7</strong></div><div><span>Баланс</span><strong data-case-stars>— ★</strong></div></div>
             <div class="scanner-progress" role="progressbar" aria-label="Ожидание ответа сервера" hidden><span></span></div>
             <button class="btn btn-primary scan-button" id="caseOpen" type="button" disabled aria-describedby="caseStatus">Сканировать · 1 попытка</button>
@@ -346,6 +360,8 @@
           <span class="preview-chip">STRUCTURE PREVIEW</span>
         </div>
 
+        <article class="desktop-banner mission-banner"><img src="./assets/icons/nav-tasks.png" alt=""><div><span class="desktop-eyebrow">MISSION CONTROL / 任务</span><h2>Вместе — дальше.</h2><p>Рейды, события и поручения.<br>Доска пока не подключена.</p></div><span class="banner-serial" aria-hidden="true">04 / LOG</span></article>
+        <div class="protocol-divider" aria-hidden="true"><span>◈</span><i></i><span>MISSION CHANNEL / STANDBY</span><i></i><span>✧</span></div>
         <div class="tabs" role="tablist" aria-label="Раздел заданий" data-tab-group="tasks">
           <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="raids">Рейды</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-tab="contracts">Поручения</button>
@@ -459,7 +475,7 @@
           <span class="module-status-dot" aria-hidden="true"></span>
           <div class="module-status-body">
             <strong>Это каталог, а не инвентарь</strong>
-            <p>Здесь то, что бывает в сезоне. Эффекты записаны так, как они работали в Пекине; экономики в этой версии ещё нет, и ни один из них пока не включён.</p>
+            <p>Здесь то, что бывает в сезоне. Импланты уже можно выиграть в кейсах; их эффекты описаны по правилам Пекина, но пока не включены.</p>
           </div>
           <span class="module-status-tag">СПРАВОЧНИК</span>
         </article>
@@ -472,13 +488,13 @@
       <section class="screen placeholder-screen" data-screen="profile" aria-labelledby="profileTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="schedule" aria-label="Назад">‹</button>
-          <div><span class="system-label">OPERATOR CARD / 操作员</span><h1 id="profileTitle" class="display-title">Профиль</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> cāo zuò yuán <span class="screen-sub-sep">//</span> карточка оператора</p></div>
+          <div><span class="system-label">PERSONAL CARD / 个人资料</span><h1 id="profileTitle" class="display-title">Профиль</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gè rén zī liào <span class="screen-sub-sep">//</span> твой личный контур</p></div>
         </div>
 
         <article class="profile-card aero">
           <span class="profile-avatar">操</span>
           <div class="profile-id">
-            <strong data-account-name>Оператор не подключён</strong>
+            <strong data-account-name>Гость · просмотр оформления</strong>
             <span class="profile-path-badge">HAINAN · PATH: —</span>
           </div>
         </article>
@@ -491,10 +507,7 @@
             </div>
           </div>
           <div class="stat-tile">
-            <span>★</span><strong>—</strong>
-            <div class="gauge is-empty stat-gauge gauge-lime" role="img" aria-label="Шкала валюты пуста: данных нет">
-              <div class="gauge-fill"></div>
-            </div>
+            <span>БАЛАНС</span><strong data-case-stars>— ★</strong><small>Из кейсов сезона</small>
           </div>
           <div class="stat-tile">
             <span>РАНГ</span><strong>—</strong>
@@ -505,16 +518,16 @@
           </div>
         </div>
 
-        <article class="glass-card placeholder-card"><span>★</span><div><strong>Витрина</strong><p>Любимый имплант или карточка появятся здесь после первой коллекции.</p></div></article>
+        <button type="button" class="profile-collection-link" data-open-screen="collection"><img src="./assets/icons/nav-cases.png" alt=""><span><strong>Моя коллекция</strong><small>Открыть папку предметов →</small></span></button>
         <article class="glass-card placeholder-card disabled"><span>—</span><div><strong>Beijing-архив</strong><p>Для ветеранов сезона 1 откроется отдельно, после привязки Telegram ID.</p></div></article>
 
         <article class="glass-card module-status">
           <span class="module-status-dot" aria-hidden="true"></span>
           <div class="module-status-body">
-            <strong>Прочерки — это не ноль</strong>
-            <p>REP, ★ и ранг показаны прочерком, потому что аккаунта ещё нет. Это не пустой баланс и не сброшенный рейтинг: приложение не станет показывать цифру, которой не существует.</p>
+            <strong>Свой прогресс, свой сезон</strong>
+            <p>После входа ★ и предметы приходят из выбранного сезона. REP и ранг подключим отдельно. Прочерк означает, что данных пока нет, а не нулевой результат.</p>
           </div>
-          <span class="module-status-tag">НЕТ АККАУНТА</span>
+          <span class="module-status-tag">ЛИЧНЫЙ КОНТУР</span>
         </article>
       </section>
 
@@ -570,7 +583,7 @@
             <span class="hub-name">Вода</span>
             <span class="hub-cn">饮水<i>yǐn shuǐ</i></span>
           </button>
-          <button type="button" class="hub-tile tone-lime" data-toast="Погода уже видна на главном экране">
+          <button type="button" class="hub-tile tone-lime" data-toast="Живой прогноз погоды пока не подключён">
             <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-weather"></use></svg></span>
             <span class="hub-name">Погода</span>
             <span class="hub-cn">天气<i>tiān qì</i></span>
@@ -580,7 +593,7 @@
             <span class="hub-name">Уведомления</span>
             <span class="hub-cn">通知<i>tōng zhī</i></span>
           </button>
-          <button type="button" class="hub-tile tone-steel" data-toast="Версия дизайн-превью 0.2 · aero">
+          <button type="button" class="hub-tile tone-steel" data-toast="ZHIDAO Hainan · Aero Personal System. Кейсы и коллекция подключены после входа; остальные модули развиваются.">
             <span class="hub-orb" aria-hidden="true"><svg class="hub-icon" viewBox="0 0 24 24"><use href="#ic-info"></use></svg></span>
             <span class="hub-name">О приложении</span>
             <span class="hub-cn">关于<i>guān yú</i></span>
@@ -590,6 +603,7 @@
       </section>
     </div>
 
+    <div class="terminal-footer"><span class="terminal-led" aria-hidden="true"></span><span id="terminalSession">Просмотр оформления</span><span class="terminal-footer-build">ZHIDAO / AERO SYSTEM</span></div>
     <nav class="app-dock" aria-label="Разделы приложения">
       <button class="active" type="button" data-target="schedule" aria-label="Сегодня">
         <span class="dock-icon"><img src="./assets/icons/nav-schedule.png" alt=""></span><small>Сегодня<span class="nav-cn">今天</span></small>
@@ -616,19 +630,20 @@
   <script src="./campus-map.js?v=9d6077482f" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
-    <div class="case-result-body"><span id="caseResultTier" class="case-result-tier"></span><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
+    <div class="case-result-body"><div class="result-halo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="caseResultTier" class="case-result-tier"></span><div class="result-seal" id="caseResultSeal" aria-hidden="true">✦</div><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
   </dialog>
   <dialog id="caseGrantDialog" class="case-dialog" aria-labelledby="caseGrantTitle">
     <div class="case-titlebar"><h2 id="caseGrantTitle">Подтвердить выдачу</h2></div>
     <div class="case-result-body"><p id="caseGrantSummary"></p><p>Запас каждого участника ограничен семью попытками. Фактическая выдача будет записана в журнал.</p><button type="button" class="btn btn-primary" id="caseGrantConfirm">Выдать</button><button type="button" class="btn btn-secondary" id="caseGrantCancel">Отмена</button></div>
   </dialog>
   <script src="./cases.js?v=4344700dac" defer></script>
-  <script src="./case-play.js?v=4508f6fb66" defer></script>
+  <script src="./case-play.js?v=c25d7c921c" defer></script>
   <script src="./implants.js?v=c546b038d3" defer></script>
-  <script src="./app.js?v=b7a796952d" defer></script>
+  <script src="./app.js?v=ee956745ad" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./theme.js?v=79eeeb299c" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=97d57c4176" defer></script>
+  <script src="./aero-motion.js?v=9cca22f558" defer></script>
 </body>
 </html>

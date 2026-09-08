@@ -25,6 +25,19 @@ const OUT = path.resolve('.codex-tmp/cases-qa');
     await target.locator('#caseOpen:not([disabled])').waitFor();
   }
   try {
+    // The disposable preview may also be used manually. Refill through its UI,
+    // without assuming a fresh database or reaching into persistence directly.
+    const setup = await browser.newContext();
+    const setupPage = await setup.newPage();
+    await login(setupPage, 'case.operator');
+    await setupPage.locator('[data-target="cases"]').click();
+    await setupPage.locator('#caseGrantMembers input').first().check();
+    await setupPage.locator('#caseGrantAmount').fill('7');
+    await setupPage.locator('#caseGrantReason').fill('Prepare disposable UI regression');
+    await setupPage.locator('#caseGrantSubmit').click();
+    await setupPage.locator('#caseGrantConfirm').click();
+    await setupPage.locator('#caseGrantStatus').filter({ hasText: 'запас 7/7' }).waitFor();
+    await setup.close();
     const previewRequests = [];
     page.on('request', r => { if (r.url().includes('/api/v4/') && !r.url().endsWith('/auth/me') && !r.url().endsWith('/cases/rules')) previewRequests.push(r.url()); });
     await page.goto(BASE + '/app/');
@@ -44,7 +57,8 @@ const OUT = path.resolve('.codex-tmp/cases-qa');
     await page.screenshot({ path: path.join(OUT, 'case-result-mobile.png') });
     await page.locator('#caseResultDialog [data-case-close]').last().click();
     const after = await page.request.get(BASE + '/api/v4/seasons/1/cases/state').then(r => r.json());
-    assert.equal(after.history.items.length, before.history.items.length + 1);
+    assert(after.history.items[0].id > before.history.items[0].id);
+    assert.equal(after.history.items[1].id, before.history.items[0].id);
     assert.equal(await page.locator('[data-case-scans]').first().innerText(), `${after.scans} / 7`);
     checks.push('UI scan persists once and refreshes server balance');
 
@@ -66,7 +80,7 @@ const OUT = path.resolve('.codex-tmp/cases-qa');
     await page.locator('#caseResultDialog [data-case-close]').last().click();
     checks.push('response lost after commit + full reload recovers same result without charge');
 
-    await page.locator('[data-open-screen="collection"]').first().click();
+    await page.locator('.case-collection-link').click();
     await page.locator('.case-owned-item').first().waitFor();
     const owned = await page.request.get(BASE + '/api/v4/seasons/1/cases/inventory').then(r => r.json());
     assert.equal(await page.locator('.case-owned-item').count(), owned.items.length);

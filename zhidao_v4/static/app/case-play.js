@@ -102,6 +102,10 @@
     $("caseResultTitle").textContent = result.prize.name_ru;
     const image = $("caseResultArt"), filename = art[result.prize.code];
     image.hidden = !filename;
+    $("caseResultSeal").hidden = Boolean(filename);
+    $("caseResultSeal").textContent = result.prize.code === "empty" ? "○" :
+      result.prize.code === "fate_guard" ? "↻" : result.prize.reward.kind === "item" ? "◷" :
+        result.prize.reward.kind === "scan" ? "⌖" : "★";
     if (filename) image.src = `./assets/implants/${filename}.webp`;
     else image.removeAttribute("src");
     const deferred = result.prize.reward.kind === "item" && result.prize.reward.effect_state === "pending";
@@ -230,32 +234,42 @@
 
   async function scan() {
     if (busy || !signedIn() || !selected) return;
-    const version = epoch, path = base(); let request;
+    const version = epoch, path = base(), recovery = Boolean(pending("open")); let request;
     try { request = remember("open", {}); }
     catch (_) { status("Хранилище браузера недоступно. Разрешите данные сайта для безопасного восстановления открытия."); return; }
     busy = true; controls(); $("scanWindow").classList.add("is-scanning");
     $("scanWindow").setAttribute("aria-busy", "true");
     document.querySelector(".scanner-progress").hidden = false;
     status("Сканирование… результат сохраняется на сервере.");
+    const motion = window.ZhidaoMotion?.beginScan(recovery);
     let savedResult = null;
     try {
-      const [result] = await Promise.all([api(`${path}/open`, request),
-        new Promise(resolve => setTimeout(resolve, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 850))]);
+      const result = await api(`${path}/open`, request);
       if (version !== epoch) return;
-      forget("open"); savedResult = result;
+      savedResult = result;
+      // Visual polish must never turn a committed reward into a failed operation.
+      if (motion) { try { await motion.resolve(); } catch (_) { /* result is already saved */ } }
     } catch (error) {
       if (version !== epoch) return;
       // Only definitive rejection permits a new request key. Network/5xx keep it.
       if ([400, 403, 404, 409, 422].includes(error.status)) forget("open");
       status(error.status ? error.message : "Связь прервалась. Нажмите «Восстановить результат»: повтор безопасен.");
     } finally {
+      motion?.finish();
       $("scanWindow").classList.remove("is-scanning"); $("scanWindow").removeAttribute("aria-busy");
       document.querySelector(".scanner-progress").hidden = true;
       if (version === epoch) { busy = false; controls(); }
     }
     if (savedResult) {
       await loadSelected();
-      if (version + 1 === epoch) showResult(savedResult);
+      if (version + 1 === epoch && !document.hidden) {
+        // Retain the key until the saved result is actually presented. A hidden
+        // WebView cancels animation waits before navigation finishes unloading.
+        showResult(savedResult);
+        try { forget("open"); } catch (_) { /* an extra replay is safe */ }
+        controls();
+        status("Результат сохранён. Открытия доступны в журнале сигналов.");
+      }
     }
   }
 

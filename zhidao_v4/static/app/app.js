@@ -32,7 +32,7 @@ function showScreen(target) {
   });
 
   document.documentElement.dataset.currentScreen = target;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: window.ZhidaoMotion?.enabled() ? "smooth" : "auto" });
 
   // Карта строится при первом открытии, а не на старте: данные и SVG нужны
   // только тем, кто до неё дошёл.
@@ -99,6 +99,7 @@ function selectTab(groupName, tabId) {
   });
   group.panels.forEach((panel) => {
     panel.hidden = panel.dataset.tabPanel !== `${groupName}:${tabId}`;
+    if (!panel.hidden) window.dispatchEvent(new CustomEvent("zhidao:tab", { detail: panel }));
   });
 }
 
