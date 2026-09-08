@@ -13,7 +13,7 @@
    здесь, в одном месте, а не в данных.
    =========================================================================== */
 
-const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260905-relations";
+const CAMPUS_SOURCE = "./assets/maps/campus.geojson?v=20260908-sport2";
 
 /* Плоская проекция в метры. Для площадки 1.2 x 1.4 км искажение
    пренебрежимо, а читается она несравнимо проще Меркатора. */
@@ -308,11 +308,18 @@ const LABEL_CATEGORIES = new Set([
 ]);
 // У этих категорий нет собственных имён ни в OSM, ни где-либо ещё. Подписываем
 // их родовым словом — придумывать номера общежитиям значит сочинять данные.
-const GENERIC_LABEL_CATEGORIES = new Set(["dorm", "living-zone"]);
+// Спорт сюда добавлен вместе со спортзалом и площадками: собственных имён у
+// них нет ни в OSM, ни на снимке, но «Баскетбольные площадки» — это ровно то,
+// что человек ищет глазами. Придумывать им номера было бы сочинением данных,
+// а родовое слово — нет.
+const GENERIC_LABEL_CATEGORIES = new Set(["dorm", "living-zone", "sport"]);
 // Здесь подписывается каждое здание, а не одно на категорию: четырнадцать
 // общежитий — это четырнадцать разных мест, куда человек идёт спать.
 const PER_BUILDING_LABELS = new Set(["dorm"]);
-const LABEL_MIN_AREA_BY_CATEGORY = { dorm: 300 };
+// Площадки мельче общего порога в 1200 м²: группа баскетбольных — около
+// 1000 м², пара с синим покрытием — 350 м². Порог для них снижен, а от
+// мельтешения на общем плане их держит label_min_scale в самих данных.
+const LABEL_MIN_AREA_BY_CATEGORY = { dorm: 300, sport: 300 };
 // Порог зума, ниже которого подпись прячется. Иначе четырнадцать одинаковых
 // слов «Общежитие» заливают карту на общем плане.
 const LABEL_MIN_SCALE = { dorm: 2.2 };
@@ -564,7 +571,9 @@ function buildSvg(host, data) {
       x: sx / labelPoints.length,
       y: sy / labelPoints.length,
       size,
-      minScale: LABEL_MIN_SCALE[p.category] || 0,
+      // Объект может попросить показывать себя только с определённого зума:
+      // стадион нужен на общем плане, а площадка 20 x 50 м там — точка.
+      minScale: p.label_min_scale || LABEL_MIN_SCALE[p.category] || 0,
       priority: LABEL_PRIORITY[p.category] ?? 9,
       ru: p.approximate ? `${p.name_ru} ?` : p.name_ru,
       zh: p.name_zh || "",
@@ -687,6 +696,20 @@ function selectFeature(id, ui, options = {}) {
   const badge = card.querySelector("[data-field=verified]");
   badge.textContent = p.verified ? "СВЕРЕНО" : "НЕ СВЕРЕНО";
   badge.classList.toggle("is-unverified", !p.verified);
+
+  // Оговорка про объект. Без неё «НЕ СВЕРЕНО» — единственное предупреждение,
+  // а оно одинаковое для всех и потому не читается. Здесь же лежит то, что
+  // относится именно к этому месту: что вид спорта не определён, что в OSM
+  // объект числится стройкой, что контур обведён по снимку.
+  const caveat = card.querySelector("[data-field=caveat]");
+  if (caveat) {
+    // caveat_ru написана для человека в поездке. identification_note и
+    // accuracy_note писались для того, кто правит данные, и в карточке
+    // читаются как технический шум — они запасной вариант, не первый.
+    const text = p.caveat_ru || p.identification_note || p.accuracy_note || "";
+    caveat.textContent = text;
+    caveat.hidden = !text;
+  }
 
   const dist = card.querySelector("[data-field=distance]");
   if (campusState.me) {

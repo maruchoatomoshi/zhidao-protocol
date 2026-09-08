@@ -2,7 +2,7 @@
  "type": "FeatureCollection",
  "name": "ZHIDAO Hainan campus",
  "crs_note": "WGS-84 (EPSG:4326) throughout, matching what device GPS returns. NOT GCJ-02 and NOT BD-09: never draw on an AMap or Baidu tile layer without converting first.",
- "attribution": "Base geometry (c) OpenStreetMap contributors, ODbL 1.0. Approximate overlays are identified in their feature metadata.",
+ "attribution": "Base geometry (c) OpenStreetMap contributors, ODbL 1.0. Features marked \"traced from Esri World Imagery\" were drawn against Esri World Imagery, the same source OSM permits tracing from; they are not OSM data. Approximate overlays are identified in their feature metadata.",
  "verified_note": "verified=false everywhere; nothing checked on the ground.",
  "missing": [
   {
@@ -5190,12 +5190,14 @@
    "properties": {
     "id": "osm-way-1223487859",
     "name_zh": "",
-    "name_ru": "Здание",
-    "category": "building",
+    "name_ru": "Спортзал",
+    "category": "sport",
     "named": false,
     "source": "openstreetmap",
     "osm_id": "way/1223487859",
-    "verified": false
+    "verified": false,
+    "label_min_scale": 1.6,
+    "identification_note": "В OSM это building=yes + leisure=sports_hall. Прежний импорт взял только building и записал объект как безымянное «Здание». Контур совпадает со зданием на снимке Esri. Прежняя отметка «Теннисные корты» стояла на крыше именно этого здания: панели крыши на z18 читаются как разметка."
    }
   },
   {
@@ -5843,80 +5845,39 @@
     "coordinates": [
      [
       [
-       110.0149102,
-       18.4002219
+       110.019411,
+       18.4029586
       ],
       [
-       110.0158948,
-       18.4002219
+       110.0207108,
+       18.4020776
       ],
       [
-       110.0158948,
-       18.4007647
+       110.0225671,
+       18.404543
       ],
       [
-       110.0149102,
-       18.4007647
+       110.0212668,
+       18.4054243
       ],
       [
-       110.0149102,
-       18.4002219
+       110.019411,
+       18.4029586
       ]
      ]
     ]
    },
    "properties": {
-    "id": "approx-tennis-courts",
-    "name_zh": "网球场",
-    "name_ru": "Теннисные корты",
-    "category": "sport",
-    "named": true,
-    "verified": false,
-    "approximate": true,
-    "source": "offset measured from Baidu imagery against the OSM stadium anchor",
-    "accuracy_note": "Отметка попадает на реальные корты на снимке Esri, тайл z18 211182/117436. Это подтверждает опознание, но не координату: нужен замер GPS на месте.",
-    "identified_from": "Esri World Imagery"
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "Polygon",
-    "coordinates": [
-     [
-      [
-       110.020563,
-       18.4034344
-      ],
-      [
-       110.021415,
-       18.4034344
-      ],
-      [
-       110.021415,
-       18.4040676
-      ],
-      [
-       110.020563,
-       18.4040676
-      ],
-      [
-       110.020563,
-       18.4034344
-      ]
-     ]
-    ]
-   },
-   "properties": {
-    "id": "osm-node-sports-centre",
+    "id": "osm-way-1223487855",
     "name_zh": "综合体育中心",
     "name_ru": "Спорткомплекс",
     "category": "sport",
     "named": true,
+    "source": "openstreetmap",
+    "osm_id": "way/1223487855",
     "verified": false,
-    "approximate": true,
-    "source": "openstreetmap point, footprint sketched",
-    "accuracy_note": "Centre from OSM; outline is a placeholder box, not a traced footprint."
+    "identification_note": "В OSM объект помечен landuse=construction, то есть стройплощадкой. На снимке Esri внутри контура видны достроенные арены, беговая дорожка с полем и открытый бассейн — тег устарел. Что там на самом деле сейчас, проверять на месте.",
+    "caveat_ru": "На картах числится стройкой, но на снимке достроен: арены, дорожка и бассейн. Что открыто на самом деле — проверьте на месте."
    }
   },
   {
@@ -6511,6 +6472,93 @@
       [
        110.018134,
        18.3976597
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "esri-basketball-east",
+    "name_zh": "篮球场",
+    "name_ru": "Баскетбольные площадки",
+    "category": "sport",
+    "named": false,
+    "source": "traced from Esri World Imagery z18",
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "identification_note": "Три площадки в ряд, обведены одним контуром: карта рисует только Polygon, а три отдельных объекта дали бы три одинаковые подписи. Вид спорта опознан по разметке — трапеция штрафной и центральный круг. Группа примерно 49 x 21 м. В OSM этих площадок нет.",
+    "label_min_scale": 2.0,
+    "caveat_ru": "Три площадки. Контур обведён по спутниковому снимку, на местности не сверялся."
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       110.0205548,
+       18.3978826
+      ],
+      [
+       110.0210215,
+       18.3978735
+      ],
+      [
+       110.0210174,
+       18.3976833
+      ],
+      [
+       110.0205507,
+       18.3976924
+      ],
+      [
+       110.0205548,
+       18.3978826
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "esri-hardcourts-dorms",
+    "name_zh": "球场",
+    "name_ru": "Спортивные площадки",
+    "category": "sport",
+    "named": false,
+    "source": "traced from Esri World Imagery z18",
+    "verified": false,
+    "identified_from": "Esri World Imagery",
+    "sport_unconfirmed": true,
+    "identification_note": "Две площадки с синим покрытием у общежитий, каждая примерно 16 x 8 м, с белой линией поперёк. ВИД СПОРТА НЕ ОПРЕДЕЛЁН: для тенниса мало (игровое поле 23,8 x 11 м), размер ближе к волейбольному (18 x 9 м), но на 0,55 м/пиксель волейбол от бадминтона не отличить. Подписывать конкретным видом спорта только после проверки на месте. В OSM их нет.",
+    "label_min_scale": 2.6,
+    "caveat_ru": "Две площадки у общежитий. Каким видом спорта они заняты — не проверено."
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       110.0153542,
+       18.3958709
+      ],
+      [
+       110.0156221,
+       18.3955999
+      ],
+      [
+       110.0155637,
+       18.3955479
+      ],
+      [
+       110.0152959,
+       18.395819
+      ],
+      [
+       110.0153542,
+       18.3958709
       ]
      ]
     ]

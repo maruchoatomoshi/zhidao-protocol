@@ -1920,3 +1920,13 @@ h1.display-title,
 
 .auth-preview-link:hover { color: var(--text-secondary); }
 .auth-preview-link:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+
+/* Оговорка в карточке объекта карты: откуда взялся контур и чего мы про это
+   место не знаем. Набрана мельче имени и приглушена — это сноска, а не
+   заголовок, но она должна быть читаемой, а не декоративной. */
+.campus-caveat {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
