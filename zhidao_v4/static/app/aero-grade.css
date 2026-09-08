@@ -1397,6 +1397,19 @@ h1.display-title,
 /* --- Карточки -------------------------------------------------------------
    Один селектор на все стеклянные поверхности: у них общий материал, и
    расходиться они не должны. */
+/* Блик стеклянной карточки. Днём он почти белый — это и есть мокрое
+   стекло; ночью тот же белый превращает верх карточки в светлую плашку, на
+   которой светлый текст пропадает. Переопределения не было вовсе, и первым
+   страдал любой заголовок, стоящий сверху. */
+:root[data-theme="dark"] .glass-card::after,
+:root[data-theme="dark"] .status-module::after,
+:root[data-theme="dark"] .signal-card::after {
+  background: linear-gradient(to bottom,
+    rgba(150, 210, 240, 0.15),
+    rgba(150, 210, 240, 0.05) 92%,
+    rgba(150, 210, 240, 0));
+}
+
 :root[data-theme="dark"] .glass-card,
 :root[data-theme="dark"] .module-status,
 :root[data-theme="dark"] .settings-list,
@@ -2043,10 +2056,10 @@ h1.display-title,
   pointer-events: none;
 }
 
-.implant-card.is-legendary { border-color: rgba(196, 108, 74, .55); }
+.implant-card.is-legendary { border-color: rgba(198, 68, 62, .55); }
 .implant-card.is-legendary::before {
-  background: linear-gradient(180deg, #fdf3ec, #c98a63 18%, #f6ddcc 34%,
-    #a8663f 52%, #fbe9dc 70%, #bf7f57 88%, #fdf3ec);
+  background: linear-gradient(180deg, #fdeceb, #d0665f 18%, #f6d2cf 34%,
+    #a83a34 52%, #fbe0dd 70%, #c25049 88%, #fdeceb);
 }
 
 .implant-head {
@@ -2083,10 +2096,10 @@ h1.display-title,
 }
 
 .is-legendary .implant-rarity {
-  border-color: rgba(196, 108, 74, .5);
-  background: linear-gradient(180deg, rgba(255, 250, 246, .96), rgba(246, 219, 203, .85));
+  border-color: rgba(198, 68, 62, .5);
+  background: linear-gradient(180deg, rgba(255, 247, 246, .96), rgba(246, 208, 205, .85));
 }
-.is-legendary .implant-rarity i { color: #9a4f27; }
+.is-legendary .implant-rarity i { color: #962b25; }
 
 /* Глиф — крупный и почти прозрачный: опознавательный знак, а не заголовок. */
 .implant-glyph {
@@ -2098,7 +2111,7 @@ h1.display-title,
   user-select: none;
 }
 
-.is-legendary .implant-glyph { color: rgba(154, 79, 39, .22); }
+.is-legendary .implant-glyph { color: rgba(150, 43, 37, .24); }
 
 /* --- витрина --------------------------------------------------------- */
 
@@ -2123,8 +2136,8 @@ h1.display-title,
 .is-legendary .implant-stage {
   background:
     radial-gradient(120% 78% at 50% 34%, rgba(255, 255, 255, .95), transparent 62%),
-    radial-gradient(78% 58% at 50% 46%, rgba(233, 138, 92, .34), transparent 70%),
-    linear-gradient(180deg, #fbe6d8 0%, #f0cbb2 52%, #f9e2d3 100%);
+    radial-gradient(78% 58% at 50% 46%, rgba(228, 96, 88, .32), transparent 70%),
+    linear-gradient(180deg, #fbe0de 0%, #f0bcb8 52%, #f9dcda 100%);
 }
 
 /* Тень под предметом вместо отражения: отражение потребовало бы маски. */
@@ -2190,7 +2203,7 @@ h1.display-title,
   margin: var(--space-3) 0 0;
   font: 700 9px/1 var(--font-system);
   letter-spacing: var(--tracking-label);
-  color: #9a4f27;
+  color: #962b25;
 }
 
 /* Эффект — в жёлобе прибора: продавленная строка с трафаретной меткой. */
@@ -2208,7 +2221,7 @@ h1.display-title,
 }
 
 .implant-effect-label {
-  font: 700 8px/1 var(--font-system);
+  font: 700 9px/1 var(--font-system);
   letter-spacing: var(--tracking-label);
   color: var(--text-faint);
 }
@@ -2241,14 +2254,14 @@ h1.display-title,
   gap: var(--space-3);
   padding: 7px 10px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(196, 108, 74, .35);
-  background: linear-gradient(180deg, rgba(255, 248, 243, .9), rgba(248, 226, 212, .7));
+  border: 1px solid rgba(198, 68, 62, .35);
+  background: linear-gradient(180deg, rgba(255, 246, 245, .9), rgba(248, 218, 215, .7));
 }
 
 .implant-actions strong {
   font: 700 9px/1 var(--font-system);
   letter-spacing: var(--tracking-label);
-  color: #9a4f27;
+  color: #962b25;
 }
 
 .implant-actions span {
@@ -2298,8 +2311,8 @@ h1.display-title,
 }
 
 :root[data-theme="dark"] .implant-card.is-legendary::before {
-  background: linear-gradient(180deg, #f3d9c6, #8a4f2c 18%, #d8a983 34%,
-    #6d3a1d 52%, #e2b795 70%, #7d4525 88%, #f3d9c6);
+  background: linear-gradient(180deg, #f5cfcc, #8f2f29 18%, #dc9e99 34%,
+    #6f1d18 52%, #e6a49e 70%, #832923 88%, #f5cfcc);
 }
 
 :root[data-theme="dark"] .implant-stage {
@@ -2314,9 +2327,9 @@ h1.display-title,
 
 :root[data-theme="dark"] .implant-card.is-legendary .implant-stage {
   background:
-    radial-gradient(120% 78% at 50% 34%, rgba(255, 190, 150, .2), transparent 62%),
-    radial-gradient(78% 58% at 50% 46%, rgba(220, 120, 70, .26), transparent 70%),
-    linear-gradient(180deg, #3a1d10 0%, #24110a 52%, #35190e 100%);
+    radial-gradient(120% 78% at 50% 34%, rgba(255, 168, 162, .2), transparent 62%),
+    radial-gradient(78% 58% at 50% 46%, rgba(214, 74, 66, .28), transparent 70%),
+    linear-gradient(180deg, #3c1412 0%, #250b0a 52%, #37100e 100%);
 }
 
 :root[data-theme="dark"] .implant-stage::after {
@@ -2329,15 +2342,15 @@ h1.display-title,
 }
 
 :root[data-theme="dark"] .implant-card.is-legendary .implant-rarity {
-  background: linear-gradient(180deg, rgba(90, 46, 26, .9), rgba(58, 28, 15, .8));
+  background: linear-gradient(180deg, rgba(96, 32, 28, .9), rgba(62, 19, 17, .8));
 }
-:root[data-theme="dark"] .is-legendary .implant-rarity i { color: #f0b18a; }
-:root[data-theme="dark"] .implant-protocol { color: #f0b18a; }
-:root[data-theme="dark"] .implant-actions strong { color: #f0b18a; }
+:root[data-theme="dark"] .is-legendary .implant-rarity i { color: #ff9d96; }
+:root[data-theme="dark"] .implant-protocol { color: #ff9d96; }
+:root[data-theme="dark"] .implant-actions strong { color: #ff9d96; }
 
 :root[data-theme="dark"] .implant-actions li {
-  border-color: rgba(220, 140, 90, .3);
-  background: linear-gradient(180deg, rgba(74, 38, 20, .55), rgba(48, 24, 13, .45));
+  border-color: rgba(224, 96, 90, .32);
+  background: linear-gradient(180deg, rgba(78, 26, 24, .55), rgba(50, 16, 15, .45));
 }
 
 :root[data-theme="dark"] .implant-glyph {
@@ -2417,7 +2430,7 @@ h1.display-title,
 }
 
 .scan-cost-label {
-  font: 700 8px/1 var(--font-system);
+  font: 700 9px/1 var(--font-system);
   letter-spacing: var(--tracking-label);
   color: var(--text-faint);
 }
@@ -2546,10 +2559,10 @@ h1.display-title,
 }
 
 .case-tier.is-black::before {
-  background: linear-gradient(180deg, #fdf3ec, #c98a63 30%, #a8663f 60%, #fdf3ec);
+  background: linear-gradient(180deg, #fdeceb, #d0665f 30%, #a83a34 60%, #fdeceb);
 }
 
-.case-tier.is-black { border-color: rgba(196, 108, 74, .5); }
+.case-tier.is-black { border-color: rgba(198, 68, 62, .5); }
 .case-tier.is-purple { border-color: rgba(140, 106, 190, .4); }
 
 .case-tier-head {
@@ -2585,13 +2598,13 @@ h1.display-title,
 }
 
 .case-tier-share small {
-  font: 700 8px/1 var(--font-system);
+  font: 700 9px/1 var(--font-system);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-faint);
 }
 
-.case-tier.is-black .case-tier-share b { color: #b56a3c; }
+.case-tier.is-black .case-tier-share b { color: #b0322b; }
 .case-tier.is-purple .case-tier-share b { color: #7c5da8; }
 
 .case-tier-note {
@@ -2631,7 +2644,7 @@ h1.display-title,
 }
 
 .case-drop-numbers b { font: 700 13px/1 var(--font-system); color: var(--text-primary); }
-.case-drop-numbers small { font: 400 9.5px/1 var(--font-system); color: var(--text-faint); }
+.case-drop-numbers small { font: 500 10px/1 var(--font-system); color: var(--text-faint); }
 
 /* Полоса — продавленный жёлоб с наполнением. Никаких масок: наполнение это
    вложенный блок с шириной в процентах. */
@@ -2659,7 +2672,7 @@ h1.display-title,
 }
 
 .case-tier.is-black .case-drop-bar i {
-  background: linear-gradient(180deg, #f7d3ba 0%, #d18b58 52%, #b06f3e 53%, #eebd9b 100%);
+  background: linear-gradient(180deg, #f7c3bd 0%, #d1564d 52%, #b03a32 53%, #ee9d96 100%);
 }
 
 /* --- ночь ------------------------------------------------------------- */
@@ -2682,8 +2695,8 @@ h1.display-title,
 }
 
 :root[data-theme="dark"] .case-tier.is-black::before {
-  background: linear-gradient(180deg, #f3d9c6, #8a4f2c 30%, #6d3a1d 60%, #f3d9c6);
+  background: linear-gradient(180deg, #f5cfcc, #8f2f29 30%, #6f1d18 60%, #f5cfcc);
 }
 
-:root[data-theme="dark"] .case-tier.is-black .case-tier-share b { color: #f0b18a; }
+:root[data-theme="dark"] .case-tier.is-black .case-tier-share b { color: #ff9d96; }
 :root[data-theme="dark"] .case-tier.is-purple .case-tier-share b { color: #c3a9ec; }
