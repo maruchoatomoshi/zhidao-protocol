@@ -39,6 +39,11 @@ function showScreen(target) {
   if (target === "campus-map" && typeof window.initCampusMap === "function") {
     window.initCampusMap();
   }
+  // Каталог имплантов — по той же причине: девять картинок грузить на старте
+  // незачем, они нужны только тому, кто открыл каталог.
+  if (target === "implants" && typeof window.initImplantCatalogue === "function") {
+    window.initImplantCatalogue();
+  }
 }
 
 function showToast(message) {

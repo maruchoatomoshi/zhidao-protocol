@@ -309,6 +309,10 @@
           <span class="locked-tag">STANDBY</span>
         </article>
 
+        <button type="button" class="btn btn-action implant-catalogue-link" data-open-screen="implants">
+          Каталог имплантов сезона
+        </button>
+
         <div class="tabs" role="tablist" aria-label="Раздел коллекции" data-tab-group="cases">
           <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="implants">Импланты</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-tab="cards">Карточки</button>
@@ -407,6 +411,30 @@
       <!-- ============================================================
            ПРОФИЛЬ — открывается по кнопке в шапке, не вкладка дока
            ============================================================ -->
+      <!-- ============================================================
+           КАТАЛОГ ИМПЛАНТОВ — что бывает в сезоне.
+           Это не инвентарь: чем человек владеет, показывает «Коллекция».
+           ============================================================ -->
+      <section class="screen implants-screen" data-screen="implants" aria-labelledby="implantsTitle" hidden>
+        <div class="screen-intro">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="cases" aria-label="Назад">&lsaquo;</button>
+          <div><span class="system-label">IMPLANT CATALOGUE / 义体目录</span><h1 id="implantsTitle" class="display-title">Импланты</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> y&igrave; t&#301; m&ugrave; l&ugrave; <span class="screen-sub-sep">//</span> каталог сезона</p></div>
+        </div>
+
+        <article class="glass-card module-status">
+          <span class="module-status-dot" aria-hidden="true"></span>
+          <div class="module-status-body">
+            <strong>Это каталог, а не инвентарь</strong>
+            <p>Здесь то, что бывает в сезоне. Эффекты записаны так, как они работали в Пекине; экономики в этой версии ещё нет, и ни один из них пока не включён.</p>
+          </div>
+          <span class="module-status-tag">СПРАВОЧНИК</span>
+        </article>
+
+        <div class="implant-list" id="implantList" aria-live="polite">
+          <p class="implant-loading">Загрузка каталога&hellip;</p>
+        </div>
+      </section>
+
       <section class="screen placeholder-screen" data-screen="profile" aria-labelledby="profileTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="schedule" aria-label="Назад">‹</button>
@@ -547,6 +575,7 @@
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
   <script src="./campus-map.js?v=20260908-map4" defer></script>
+  <script src="./implants.js?v=20260908-map4" defer></script>
   <script src="./app.js?v=20260904-vector1" defer></script>
   <script src="./player.js?v=20260905-player3" defer></script>
   <script src="./theme.js?v=20260908-map4" defer></script>

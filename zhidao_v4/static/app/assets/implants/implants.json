@@ -1,0 +1,132 @@
+{
+  "catalogue": "ZHIDAO implants",
+  "season": "hainan-v4",
+  "status_note": "Каталог, а не инвентарь. Показывает, что бывает в сезоне; чем человек владеет — в разделе «Коллекция». Эффекты записаны так, как они работали в пекинском сезоне: экономики (★ и REP) в V4 ещё нет, ни один эффект пока не включён.",
+  "art_note": "Хайнаньский арт нарисован для семи имплантов из девяти. У Linguasoft и Цайшэня пока пекинские картинки — это помечено на карточке, чтобы пробел был виден.",
+  "rarities": {
+    "rare": { "label_ru": "Редкий", "label_zh": "稀有", "case_ru": "Редкий кейс" },
+    "legendary": { "label_ru": "Легендарный", "label_zh": "传说", "case_ru": "Легендарный кейс" }
+  },
+  "implants": [
+    {
+      "code": "implant_guanxi",
+      "name_ru": "Гуаньси",
+      "name_zh": "关系",
+      "pinyin": "guān xi",
+      "rarity": "rare",
+      "glyph": "关",
+      "effect_ru": "Скидка 10% в магазине",
+      "lore_ru": "Связи решают больше, чем прайс-лист. Модуль держит открытым канал к тем, кто помнит вас по имени.",
+      "art": "guanxi.webp",
+      "art_season": "hainan"
+    },
+    {
+      "code": "implant_panda",
+      "name_ru": "Панда",
+      "name_zh": "熊猫",
+      "pinyin": "xióng māo",
+      "rarity": "rare",
+      "glyph": "猫",
+      "effect_ru": "Кэшбек +10★ с покупки · продажа за 60%",
+      "lore_ru": "Медлительный снаружи, расчётливый внутри. Возвращает часть потраченного и не даёт продешевить при сбыте.",
+      "art": "panda.webp",
+      "art_season": "hainan"
+    },
+    {
+      "code": "implant_shaolin",
+      "name_ru": "Шаолинь",
+      "name_zh": "少林",
+      "pinyin": "shào lín",
+      "rarity": "rare",
+      "glyph": "林",
+      "effect_ru": "+20★ за перекличку · идеальный день ещё +10★",
+      "lore_ru": "Дисциплина как ресурс. Модуль платит за то, что вы на месте вовремя, и добавляет за день без единого пропуска.",
+      "art": "shaolin.webp",
+      "art_season": "hainan"
+    },
+    {
+      "code": "implant_linguasoft",
+      "name_ru": "Linguasoft",
+      "name_zh": "口才",
+      "pinyin": "kǒu cái",
+      "rarity": "rare",
+      "glyph": "口",
+      "effect_ru": "+30★ за 3★ в дневнике · стрик ×3 ещё +20★",
+      "lore_ru": "Речевой сопроцессор. Награждает не за объём написанного, а за то, что написано так, что это читают.",
+      "art": "linguasoft.webp",
+      "art_season": "beijing"
+    },
+    {
+      "code": "implant_caishen",
+      "name_ru": "Цайшэнь",
+      "name_zh": "财神",
+      "pinyin": "cái shén",
+      "rarity": "rare",
+      "glyph": "财",
+      "effect_ru": "+15★ каждые 24 часа",
+      "lore_ru": "Бог богатства на подписке. Ничего не требует и капает сам — единственный модуль, работающий, пока вы спите.",
+      "art": "caishen.webp",
+      "art_season": "beijing"
+    },
+    {
+      "code": "implant_qilin",
+      "name_ru": "Цилинь",
+      "name_zh": "麒麟",
+      "pinyin": "qí lín",
+      "rarity": "rare",
+      "glyph": "麟",
+      "effect_ru": "+10★ за каждого владельца Цилиня",
+      "lore_ru": "Кооперативный модуль: чем больше носителей в группе, тем выгоднее каждому. Единственный имплант, который невыгодно иметь одному.",
+      "art": "qilin.webp",
+      "art_season": "hainan"
+    },
+    {
+      "code": "implant_terracota",
+      "name_ru": "Терракота",
+      "name_zh": "兵马俑",
+      "pinyin": "bīng mǎ yǒng",
+      "rarity": "legendary",
+      "glyph": "兵",
+      "effect_ru": "Блок 1 штрафа в день · после блока следующий −5★",
+      "lore_ru": "Глиняный панцирь. Нейроблок перехватывает один штрафной импульс в сутки, а следующий денежный штраф в тот же день бьёт слабее.",
+      "protocol_ru": "ПРОТОКОЛ ТЕРРАКОТА",
+      "actions": [],
+      "art": "terracota.webp",
+      "art_season": "hainan"
+    },
+    {
+      "code": "implant_red_dragon",
+      "name_ru": "Красный Дракон",
+      "name_zh": "红龙",
+      "pinyin": "hóng lóng",
+      "rarity": "legendary",
+      "glyph": "龍",
+      "effect_ru": "+20% наградных · воскресная выплата вдвое",
+      "lore_ru": "Воскресная зарплата удваивается сама. Наградные начисления и урон в ивентах растут на пятую часть.",
+      "protocol_ru": "ПРОТОКОЛ КРАСНЫЙ ДРАКОН",
+      "actions": [
+        { "label_ru": "ПЕРЕХВАТ", "hint_ru": "Забрать 10★ у цели" },
+        { "label_ru": "СБРОСИТЬ ИМПУЛЬС", "hint_ru": "Отменить игровой штраф до 20★" }
+      ],
+      "art": "honglong.webp",
+      "art_season": "hainan"
+    },
+    {
+      "code": "implant_netwatch",
+      "name_ru": "Сетевой Дозор",
+      "name_zh": "网络守卫",
+      "pinyin": "wǎng luò shǒu wèi",
+      "rarity": "legendary",
+      "glyph": "衛",
+      "effect_ru": "+25★ каждое утро · удар и контроль сети",
+      "lore_ru": "Узел получает восполнение памяти каждое утро. В обмен даёт инструменты, которыми пользуются против других — и за которые отвечают перед вожатым.",
+      "protocol_ru": "ПРОТОКОЛ NETWATCH",
+      "actions": [
+        { "label_ru": "ФОРМАТИРОВАНИЕ", "hint_ru": "Цель −15★, рядом стоящему −5★" },
+        { "label_ru": "ВЗЛОМ ЗАСЛОНА", "hint_ru": "Блок магазина и кейсов на 12 часов" }
+      ],
+      "art": "wangluoshouwei.webp",
+      "art_season": "hainan"
+    }
+  ]
+}

@@ -1938,3 +1938,418 @@ h1.display-title,
   line-height: 1.45;
   color: var(--text-secondary);
 }
+
+/* =========================================================================
+   КАТАЛОГ ИМПЛАНТОВ
+
+   Две эстетики держатся вместе намеренно. От Frutiger Aero — мокрое стекло,
+   блик с жёсткой границей, аква и воздух, скруглённые формы. От Metalheart —
+   хромированный рант, срезанный угол, трафаретные надписи моноширинным и
+   тонкие технические линейки. Картинки имплантов уже сделаны в этом стыке:
+   полированный металл с синим свечением, — поэтому оправа не спорит с ними,
+   а продолжает.
+
+   Масок здесь нет ни одной. Вебвью MAX не понимает SVG-маску (см. журнал за
+   2026-09-08), и полагаться на CSS-маску после этого не стоит: отражения и
+   затухания сделаны градиентами и тенями.
+   ========================================================================= */
+
+.implants-screen .screen-intro { align-items: flex-start; }
+
+.implant-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+}
+
+.implant-loading,
+.implant-footnote {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+.implant-footnote {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-edge);
+}
+
+/* Заголовок группы — трафаретная строка с линейкой до счётчика. */
+.implant-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  font: 700 10px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.implant-group::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-edge), transparent);
+}
+
+.implant-group small {
+  font-size: 10px;
+  color: var(--accent-aqua);
+}
+
+/* --- карточка -------------------------------------------------------- */
+
+.implant-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-chrome);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, .94) 0%,
+    rgba(233, 247, 253, .86) var(--gloss-cut),
+    rgba(207, 234, 246, .9) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1), var(--lift-md);
+}
+
+/* Срезанный угол — из Metalheart. Делается треугольной тенью, а не
+   clip-path: обрезка съела бы блик по краю, ради которого всё и затевалось. */
+.implant-card::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(225deg, var(--surface-app) 0 50%, transparent 50%);
+  border-left: 1px solid var(--border-chrome);
+  border-bottom: 1px solid var(--border-chrome);
+  transform: rotate(0deg);
+  pointer-events: none;
+}
+
+/* Хромированный рант слева: полоса шлифованного металла во всю высоту. */
+.implant-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: linear-gradient(180deg, #f2f8fb, #9fb6c4 18%, #dbe9f1 34%,
+    #7f97a6 52%, #e8f2f7 70%, #93aab8 88%, #f2f8fb);
+  border-right: 1px solid rgba(255, 255, 255, .8);
+  pointer-events: none;
+}
+
+.implant-card.is-legendary { border-color: rgba(196, 108, 74, .55); }
+.implant-card.is-legendary::before {
+  background: linear-gradient(180deg, #fdf3ec, #c98a63 18%, #f6ddcc 34%,
+    #a8663f 52%, #fbe9dc 70%, #bf7f57 88%, #fdf3ec);
+}
+
+.implant-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) 0 calc(var(--space-5) + 6px);
+}
+
+.implant-rarity {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-crisp);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(214, 236, 246, .8));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+.implant-rarity i {
+  font: 700 9px/1 var(--font-system);
+  font-style: normal;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.implant-rarity small {
+  font-family: var(--font-pinyin, Cambria, serif);
+  font-size: 9px;
+  color: var(--text-faint);
+}
+
+.is-legendary .implant-rarity {
+  border-color: rgba(196, 108, 74, .5);
+  background: linear-gradient(180deg, rgba(255, 250, 246, .96), rgba(246, 219, 203, .85));
+}
+.is-legendary .implant-rarity i { color: #9a4f27; }
+
+/* Глиф — крупный и почти прозрачный: опознавательный знак, а не заголовок. */
+.implant-glyph {
+  font-family: var(--font-story, Georgia, serif);
+  font-size: 30px;
+  line-height: 1;
+  color: rgba(21, 92, 138, .18);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .9);
+  user-select: none;
+}
+
+.is-legendary .implant-glyph { color: rgba(154, 79, 39, .22); }
+
+/* --- витрина --------------------------------------------------------- */
+
+.implant-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 168px;
+  margin: var(--space-3) var(--space-4) 0;
+  padding: var(--space-4) var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  /* Подсвеченная плита: холодное свечение из центра по мокрому стеклу. */
+  background:
+    radial-gradient(120% 78% at 50% 34%, rgba(255, 255, 255, .95), transparent 62%),
+    radial-gradient(78% 58% at 50% 46%, rgba(96, 200, 240, .38), transparent 70%),
+    linear-gradient(180deg, #d8eef8 0%, #bcdff1 52%, #cfe9f5 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -18px 28px -22px rgba(6, 60, 100, .55);
+}
+
+.is-legendary .implant-stage {
+  background:
+    radial-gradient(120% 78% at 50% 34%, rgba(255, 255, 255, .95), transparent 62%),
+    radial-gradient(78% 58% at 50% 46%, rgba(233, 138, 92, .34), transparent 70%),
+    linear-gradient(180deg, #fbe6d8 0%, #f0cbb2 52%, #f9e2d3 100%);
+}
+
+/* Тень под предметом вместо отражения: отражение потребовало бы маски. */
+.implant-stage::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 62%;
+  height: 14px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(9, 58, 92, .32), transparent 70%);
+  pointer-events: none;
+}
+
+.implant-art {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(6, 48, 80, .3));
+}
+
+/* --- текст ----------------------------------------------------------- */
+
+.implant-body {
+  padding: var(--space-4) var(--space-5) var(--space-5) calc(var(--space-5) + 6px);
+}
+
+.implant-name {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.implant-name-ru {
+  font: 800 20px/1.15 var(--font-ui);
+  color: var(--text-primary);
+}
+
+.implant-name-zh {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  color: var(--text-secondary);
+}
+
+.implant-name-zh b { font: 600 14px/1 var(--font-ui); }
+
+.implant-name-zh i {
+  font-family: var(--font-pinyin, Cambria, serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.implant-protocol {
+  margin: var(--space-3) 0 0;
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: #9a4f27;
+}
+
+/* Эффект — в жёлобе прибора: продавленная строка с трафаретной меткой. */
+.implant-effect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-crisp);
+  background: var(--track-well);
+  box-shadow: var(--track-well-rim);
+}
+
+.implant-effect-label {
+  font: 700 8px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-faint);
+}
+
+.implant-effect-text {
+  font: 700 13px/1.35 var(--font-ui);
+  color: var(--text-primary);
+}
+
+.implant-lore {
+  margin: var(--space-3) 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.implant-actions {
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.implant-actions li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(196, 108, 74, .35);
+  background: linear-gradient(180deg, rgba(255, 248, 243, .9), rgba(248, 226, 212, .7));
+}
+
+.implant-actions strong {
+  font: 700 9px/1 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  color: #9a4f27;
+}
+
+.implant-actions span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.implant-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-edge);
+  font: 700 9px/1.3 var(--font-system);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Пометка о пекинском арте — не украшение, а список дел. */
+.implant-art-note {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-crisp);
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: .04em;
+}
+
+.implant-catalogue-link { width: 100%; margin-top: var(--space-4); }
+
+/* --- ночь ------------------------------------------------------------ */
+
+:root[data-theme="dark"] .implant-card {
+  border-color: var(--border-edge);
+  background: linear-gradient(180deg,
+    rgba(20, 60, 96, .9) 0%,
+    rgba(14, 46, 76, .84) var(--gloss-cut),
+    rgba(10, 36, 62, .9) 100%);
+}
+
+:root[data-theme="dark"] .implant-card::before {
+  background: linear-gradient(180deg, #cfe2ee, #4d6d82 18%, #a8c3d4 34%,
+    #35536a 52%, #b7d0de 70%, #446478 88%, #cfe2ee);
+}
+
+:root[data-theme="dark"] .implant-card.is-legendary::before {
+  background: linear-gradient(180deg, #f3d9c6, #8a4f2c 18%, #d8a983 34%,
+    #6d3a1d 52%, #e2b795 70%, #7d4525 88%, #f3d9c6);
+}
+
+:root[data-theme="dark"] .implant-stage {
+  background:
+    radial-gradient(120% 78% at 50% 34%, rgba(120, 205, 240, .22), transparent 62%),
+    radial-gradient(78% 58% at 50% 46%, rgba(46, 194, 234, .26), transparent 70%),
+    linear-gradient(180deg, #0d2f4e 0%, #071f37 52%, #0b2a46 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(140, 205, 235, .28),
+    inset 0 -18px 28px -22px rgba(0, 0, 0, .7);
+}
+
+:root[data-theme="dark"] .implant-card.is-legendary .implant-stage {
+  background:
+    radial-gradient(120% 78% at 50% 34%, rgba(255, 190, 150, .2), transparent 62%),
+    radial-gradient(78% 58% at 50% 46%, rgba(220, 120, 70, .26), transparent 70%),
+    linear-gradient(180deg, #3a1d10 0%, #24110a 52%, #35190e 100%);
+}
+
+:root[data-theme="dark"] .implant-stage::after {
+  background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .55), transparent 70%);
+}
+
+:root[data-theme="dark"] .implant-rarity {
+  border-color: var(--border-edge);
+  background: linear-gradient(180deg, rgba(30, 76, 116, .9), rgba(16, 48, 78, .8));
+}
+
+:root[data-theme="dark"] .implant-card.is-legendary .implant-rarity {
+  background: linear-gradient(180deg, rgba(90, 46, 26, .9), rgba(58, 28, 15, .8));
+}
+:root[data-theme="dark"] .is-legendary .implant-rarity i { color: #f0b18a; }
+:root[data-theme="dark"] .implant-protocol { color: #f0b18a; }
+:root[data-theme="dark"] .implant-actions strong { color: #f0b18a; }
+
+:root[data-theme="dark"] .implant-actions li {
+  border-color: rgba(220, 140, 90, .3);
+  background: linear-gradient(180deg, rgba(74, 38, 20, .55), rgba(48, 24, 13, .45));
+}
+
+:root[data-theme="dark"] .implant-glyph {
+  color: rgba(140, 205, 235, .2);
+  text-shadow: none;
+}
+
+:root[data-theme="dark"] .implant-card::after {
+  background: linear-gradient(225deg, var(--surface-app) 0 50%, transparent 50%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .implant-art { transition: transform .25s ease; }
+  .implant-card:hover .implant-art { transform: translateY(-3px); }
+}
