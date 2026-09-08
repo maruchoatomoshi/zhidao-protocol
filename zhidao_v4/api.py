@@ -95,6 +95,34 @@ def _resolve_db_path(db_path: str | Path | None) -> str:
     return configured
 
 
+def _cookie_samesite(secure: bool) -> str:
+    """Значение SameSite для сессионной и CSRF-куки.
+
+    Мини-приложение MAX на телефоне живёт в нативном WebView — первая
+    сторона, и `Lax` там работает. В веб- и десктоп-клиенте то же
+    приложение открывается **в iframe на max.ru**, а `Lax`-кука в
+    кросс-сайтовом фрейме не отправляется. Выглядело это как «вход не
+    работает»: сервер отвечал 200 и ставил куку, браузер её выбрасывал, и
+    следующий запрос приходил без сессии — приложение возвращало на экран
+    входа. В журнале при этом пять `auth.login_succeeded` подряд за две
+    секунды.
+
+    `None` требует `Secure`, иначе браузер отвергает куку целиком. Поэтому
+    по http (локальная разработка) остаётся `Lax`: там никакого чужого
+    фрейма и нет.
+
+    Защита от CSRF на этом не держалась и не ослабевает: `_csrf_principal`
+    сверяет заголовок `X-CSRF-Token` с кукой на каждом изменяющем запросе, а
+    заголовок чужой сайт подставить не может.
+
+    Не сделано намеренно: атрибут `Partitioned` (CHIPS). Он понадобится,
+    если клиент начнёт блокировать сторонние куки целиком, но у него своя
+    цена — `delete_cookie` в Starlette его не умеет, и выход из аккаунта
+    пришлось бы собирать руками.
+    """
+    return "none" if secure else "lax"
+
+
 def _current_principal(request: Request) -> Principal:
     principal = load_principal(
         request.app.state.db_path,
@@ -322,7 +350,7 @@ def create_app(
             max_age=result.max_age_seconds,
             httponly=True,
             secure=app.state.cookie_secure,
-            samesite="lax",
+            samesite=_cookie_samesite(app.state.cookie_secure),
             path="/",
         )
         response.set_cookie(
@@ -331,7 +359,7 @@ def create_app(
             max_age=result.max_age_seconds,
             httponly=False,
             secure=app.state.cookie_secure,
-            samesite="lax",
+            samesite=_cookie_samesite(app.state.cookie_secure),
             path="/",
         )
         return response
@@ -362,14 +390,14 @@ def create_app(
             path="/",
             secure=app.state.cookie_secure,
             httponly=True,
-            samesite="lax",
+            samesite=_cookie_samesite(app.state.cookie_secure),
         )
         response.delete_cookie(
             CSRF_COOKIE,
             path="/",
             secure=app.state.cookie_secure,
             httponly=False,
-            samesite="lax",
+            samesite=_cookie_samesite(app.state.cookie_secure),
         )
         return response
 
@@ -451,7 +479,7 @@ def create_app(
             max_age=result.max_age_seconds,
             httponly=True,
             secure=app.state.cookie_secure,
-            samesite="lax",
+            samesite=_cookie_samesite(app.state.cookie_secure),
             path="/",
         )
         response.set_cookie(
@@ -460,7 +488,7 @@ def create_app(
             max_age=result.max_age_seconds,
             httponly=False,
             secure=app.state.cookie_secure,
-            samesite="lax",
+            samesite=_cookie_samesite(app.state.cookie_secure),
             path="/",
         )
         return response

@@ -227,6 +227,57 @@ class MaxSignInTests(unittest.TestCase):
         self.assertEqual(second.json()["detail"]["reason"], "account_already_linked")
         self.assertNotIn(SESSION_COOKIE, self.client.cookies)
 
+    def cookie_header(self, response, name: str) -> str:
+        for raw in response.headers.get_list("set-cookie"):
+            if raw.startswith(f"{name}="):
+                return raw.lower()
+        self.fail(f"ответ не выставил куку {name}")
+
+    def test_cookies_survive_the_max_iframe(self):
+        # Подтверждено логом сервера 2026-09-08: с десктопа шло
+        # `POST /auth/max 200` и следом `cases/context 401`, пять раз за две
+        # секунды. На телефоне мини-приложение — нативный WebView, первая
+        # сторона; в веб- и десктоп-клиенте это iframe на max.ru, а Lax-кука
+        # в чужом фрейме не отправляется вовсе. Вход при этом «успешен», и
+        # понять это по коду ответа нельзя — видно только по тому, что
+        # следующий запрос приходит без сессии.
+        #
+        # Проверяется на приложении с Secure-куками, то есть в той
+        # конфигурации, в какой оно работает на сервере.
+        app = create_app(self.db_path, cookie_secure=True, session_hours=1)
+        app.state.max_bot_token = BOT_TOKEN
+        with TestClient(app) as client:
+            response = client.post(
+                "/api/v4/auth/login",
+                json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD},
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            for name in (SESSION_COOKIE, CSRF_COOKIE):
+                raw = self.cookie_header(response, name)
+                self.assertIn("samesite=none", raw)
+                # SameSite=None без Secure браузер отвергает целиком — эти
+                # два атрибута обязаны ходить парой.
+                self.assertIn("secure", raw)
+
+    def test_plain_http_keeps_lax(self):
+        # Локальная разработка идёт по http, где Secure-куку браузер не
+        # примет, а значит и None невозможен. Чужого фрейма там тоже нет.
+        app = create_app(self.db_path, cookie_secure=False, session_hours=1)
+        app.state.max_bot_token = BOT_TOKEN
+        with TestClient(app) as client:
+            response = client.post(
+                "/api/v4/auth/login",
+                json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD},
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            raw = [
+                value.lower()
+                for value in response.headers.get_list("set-cookie")
+                if value.startswith(f"{SESSION_COOKIE}=")
+            ][0]
+            self.assertIn("samesite=lax", raw)
+            self.assertNotIn("secure", raw)
+
     def test_sign_in_is_unavailable_when_no_bot_token_is_configured(self):
         app = create_app(self.db_path, cookie_secure=False, session_hours=1)
         app.state.max_bot_token = None
