@@ -251,7 +251,15 @@ V4 frontend:
 
 ```powershell
 node --check zhidao_v4\static\app\app.js
+.\.venv-web\Scripts\python.exe tools\stamp_assets.py
 ```
+
+`stamp_assets.py` пересчитывает `?v=` в `index.html` из содержимого самих
+файлов. Это не косметика: версионные адреса отдаются с `immutable` на год,
+и файл, изменённый без смены тега, застревает в браузере — один раз так уже
+уехал каталог имплантов без единого стиля. Запускать после любой правки CSS,
+JS или данных приложения; `--check` проверяет то же самое и стоит в
+`tests/test_app_asset_versions.py`.
 
 V4 backend, locally, on a temporary database:
 
