@@ -158,6 +158,19 @@ def _operator_writer(
     return principal
 
 
+def _operator_reader(
+    principal: Principal = Depends(_current_principal),
+) -> Principal:
+    """Как _operator_writer, но без CSRF: чтение ростера ничего не меняет."""
+    if not (
+        principal.has_global_role("operator")
+        or principal.has_global_role("architect")
+        or principal.has_global_role("system_admin")
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
+    return principal
+
+
 def create_app(
     db_path: str | Path | None = None,
     *,
@@ -414,6 +427,66 @@ def create_app(
             path="/",
         )
         return response
+
+    @app.get("/api/v4/admin/accounts")
+    def list_accounts(
+        query: str | None = None,
+        limit: int = 25,
+        principal: Principal = Depends(_operator_reader),
+    ):
+        """Ростер для вожатого: по кому выдавать код сопряжения.
+
+        Существует потому, что без него единственный способ выдать код —
+        знать числовой `account_id`, которого никто наизусть не помнит.
+        Отдаёт ровно то, что нужно для этого решения: как человека зовут,
+        активен ли он и привязан ли уже его MAX. Ни паролей, ни хэшей, ни
+        внешних идентификаторов мессенджера здесь нет: знать, что привязка
+        есть, вожатому нужно, а знать чужой MAX-идентификатор — нет.
+        """
+        del principal
+        clean_query = (query or "").strip()
+        limit = max(1, min(limit, 200))
+        conn = connect_database(app.state.db_path)
+        try:
+            sql = """
+                SELECT a.id, a.public_id, a.display_name, a.status,
+                       (SELECT COUNT(*) FROM v4_external_identities e
+                         WHERE e.account_id = a.id AND e.provider_code = 'max')
+                           AS max_linked,
+                       (SELECT e.provider_subject FROM v4_external_identities e
+                         WHERE e.account_id = a.id AND e.provider_code = 'local')
+                           AS login
+                  FROM v4_accounts a
+            """
+            params: list[object] = []
+            if clean_query:
+                # LIKE с экранированием: иначе введённый вожатым процент или
+                # подчёркивание молча превратятся в шаблон.
+                escaped = (
+                    clean_query.replace("\\", "\\\\")
+                    .replace("%", "\\%")
+                    .replace("_", "\\_")
+                )
+                sql += " WHERE a.display_name LIKE ? ESCAPE '\\'"
+                params.append(f"%{escaped}%")
+            sql += " ORDER BY a.display_name COLLATE NOCASE LIMIT ?"
+            params.append(limit)
+            rows = conn.execute(sql, params).fetchall()
+        finally:
+            conn.close()
+        return {
+            "items": [
+                {
+                    "id": int(row["id"]),
+                    "public_id": str(row["public_id"]),
+                    "display_name": str(row["display_name"]),
+                    "status": str(row["status"]),
+                    "login": row["login"],
+                    "max_linked": bool(row["max_linked"]),
+                }
+                for row in rows
+            ]
+        }
 
     @app.post("/api/v4/admin/accounts/{account_id}/link-codes")
     def issue_max_link_code(

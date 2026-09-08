@@ -232,6 +232,72 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertEqual(rehearsal_count, 1)
         self.assertEqual(audit_count, 2)
 
+    def test_roster_and_link_codes_are_closed_to_participants(self):
+        """Ростер и коды сопряжения — инструмент вожатого, не участника.
+
+        Скрыть кнопку — не защита (CLAUDE.md); проверяется именно отказ
+        сервера. Оба эндпоинта появились ради бота в MAX, который спрашивает
+        их от имени служебной учётки, так что цена ошибки здесь — чужой
+        аккаунт в чужих руках.
+        """
+        conn = connect_database(self.db_path)
+        try:
+            with immediate_transaction(conn):
+                provision_local_account(
+                    conn,
+                    username="kid.one",
+                    password="participant secure passphrase",
+                    display_name="Участник Один",
+                    role_code="participant",
+                    actor_account_id=self.bootstrap["account"]["id"],
+                )
+        finally:
+            conn.close()
+
+        participant = TestClient(
+            create_app(self.db_path, cookie_secure=False, session_hours=1)
+        )
+        try:
+            login = participant.post(
+                "/api/v4/auth/login",
+                json={"username": "kid.one", "password": "participant secure passphrase"},
+            )
+            self.assertEqual(login.status_code, 200, login.text)
+            csrf_token = login.json()["csrf_token"]
+            account_id = login.json()["account"]["id"]
+
+            roster = participant.get("/api/v4/admin/accounts")
+            self.assertEqual(roster.status_code, 403)
+
+            issued = participant.post(
+                f"/api/v4/admin/accounts/{account_id}/link-codes",
+                headers={"x-csrf-token": csrf_token},
+            )
+            self.assertEqual(issued.status_code, 403)
+        finally:
+            participant.close()
+
+        # А архитектор ростер видит, и в нём нет ничего секретного сверх
+        # того, что нужно для решения «кому выдать код».
+        csrf_token = self.login_admin()
+        roster = self.client.get("/api/v4/admin/accounts", params={"query": "Участник"})
+        self.assertEqual(roster.status_code, 200, roster.text)
+        items = roster.json()["items"]
+        self.assertEqual([item["display_name"] for item in items], ["Участник Один"])
+        self.assertFalse(items[0]["max_linked"])
+        self.assertNotIn("password", roster.text.lower())
+
+    def test_roster_query_treats_wildcards_as_plain_text(self):
+        # Без экранирования "%" превратился бы в «покажи всех».
+        self.login_admin()
+        everyone = self.client.get("/api/v4/admin/accounts")
+        self.assertEqual(everyone.status_code, 200, everyone.text)
+        self.assertGreaterEqual(len(everyone.json()["items"]), 1)
+
+        wildcard = self.client.get("/api/v4/admin/accounts", params={"query": "%"})
+        self.assertEqual(wildcard.status_code, 200, wildcard.text)
+        self.assertEqual(wildcard.json()["items"], [])
+
     def test_operator_is_denied_system_admin_action(self):
         conn = connect_database(self.db_path)
         try:
