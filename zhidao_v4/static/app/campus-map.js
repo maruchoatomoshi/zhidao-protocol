@@ -391,10 +391,16 @@ function buildSvg(host, data) {
   svg.setAttribute("role", "group");
   svg.setAttribute("aria-label", "Карта подготовленного сектора кампуса и неизведанных регионов");
 
-  let explorationMaskId = null;
+  // Кольцо области как путь. Нужно и обрезке, и плите поверх тумана, поэтому
+  // живёт снаружи блока defs.
+  const regionPath = (ring) => {
+    const node = document.createElementNS(NS, "path");
+    node.setAttribute("d", `M${ring.points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join("L")}Z`);
+    return node;
+  };
+
   let explorationClipId = null;
   if (exploration) {
-    explorationMaskId = "campus-exploration-mask";
     explorationClipId = "campus-exploration-clip";
     const defs = document.createElementNS(NS, "defs");
 
@@ -421,39 +427,6 @@ function buildSvg(host, data) {
     hatch.append(hatchBg, hatchLine);
     defs.appendChild(hatch);
 
-    const mask = document.createElementNS(NS, "mask");
-    mask.setAttribute("id", explorationMaskId);
-    mask.setAttribute("maskUnits", "userSpaceOnUse");
-    mask.setAttribute("x", bounds.minX);
-    mask.setAttribute("y", bounds.minY);
-    mask.setAttribute("width", w);
-    mask.setAttribute("height", h);
-    const maskOuter = document.createElementNS(NS, "rect");
-    maskOuter.setAttribute("x", bounds.minX);
-    maskOuter.setAttribute("y", bounds.minY);
-    maskOuter.setAttribute("width", w);
-    maskOuter.setAttribute("height", h);
-    maskOuter.setAttribute("fill", "white");
-    // Окно в тумане — не прямоугольник, а сами кольца области. Отступ даётся
-    // толстой обводкой: она же скругляет стыки, поэтому светлое пятно читается
-    // как территория, а не как аккуратная геометрия.
-    const regionPath = (ring) => {
-      const node = document.createElementNS(NS, "path");
-      node.setAttribute("d", `M${ring.points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join("L")}Z`);
-      return node;
-    };
-    mask.appendChild(maskOuter);
-    exploredRegion.rings.forEach((ring) => {
-      const node = regionPath(ring);
-      node.setAttribute("fill", "black");
-      node.setAttribute("stroke", "black");
-      node.setAttribute("stroke-width", String(exploredRegion.padding * 2));
-      node.setAttribute("stroke-linejoin", "round");
-      node.setAttribute("stroke-linecap", "round");
-      mask.appendChild(node);
-    });
-    defs.appendChild(mask);
-
     // clipPath игнорирует обводку, поэтому маршруты режутся по самим кольцам.
     // Туман всё равно рисуется поверх маршрута, так что это подстраховка.
     const clip = document.createElementNS(NS, "clipPath");
@@ -468,25 +441,38 @@ function buildSvg(host, data) {
   layer.setAttribute("class", "campus-layer");
   svg.appendChild(layer);
 
-  // Объекты рисуются в отдельной обрезанной группе. Подписи, туман и кромка
-  // остаются снаружи неё: туман обрезать нельзя, он и есть всё остальное.
+  // Туман — самый нижний слой и просто прямоугольник во весь кадр. Раньше он
+  // лежал сверху и прорезался маской; маска на вебвью MAX не работает, а
+  // порядок слоёв работает везде.
+  if (exploration) {
+    const fog = document.createElementNS(NS, "rect");
+    fog.setAttribute("class", "campus-unexplored-fog");
+    fog.setAttribute("x", bounds.minX);
+    fog.setAttribute("y", bounds.minY);
+    fog.setAttribute("width", w);
+    fog.setAttribute("height", h);
+    layer.appendChild(fog);
+
+    // Плита подготовленной области поверх тумана: те же кольца с той же
+    // толстой скруглённой обводкой, которой прежде прорезалось окно. Обводка
+    // и даёт отступ, и скругляет стыки, поэтому пятно читается как
+    // территория, а не как аккуратная геометрия.
+    const plate = document.createElementNS(NS, "g");
+    plate.setAttribute("class", "campus-plate");
+    exploredRegion.rings.forEach((ring) => {
+      const node = regionPath(ring);
+      node.setAttribute("stroke-width", String(exploredRegion.padding * 2));
+      plate.appendChild(node);
+    });
+    layer.appendChild(plate);
+  }
+
+  // Объекты рисуются в отдельной обрезанной группе. Подписи и кромка остаются
+  // снаружи неё.
   const featureLayer = document.createElementNS(NS, "g");
   featureLayer.setAttribute("class", "campus-features");
   if (explorationClipId) featureLayer.setAttribute("clip-path", `url(#${explorationClipId})`);
   layer.appendChild(featureLayer);
-
-  // Подложка подготовленной области: светлая плита под объектами. Обрезка та
-  // же, поэтому плита точно совпадает с окном в тумане, и кампус читается как
-  // освещённый участок поверх несъёмленной бумаги, а не как та же бумага.
-  if (explorationClipId) {
-    const plate = document.createElementNS(NS, "rect");
-    plate.setAttribute("class", "campus-plate");
-    plate.setAttribute("x", bounds.minX);
-    plate.setAttribute("y", bounds.minY);
-    plate.setAttribute("width", w);
-    plate.setAttribute("height", h);
-    featureLayer.appendChild(plate);
-  }
 
   features.forEach((f) => {
     const p = f.properties;
@@ -610,16 +596,7 @@ function buildSvg(host, data) {
   if (explorationClipId) route.setAttribute("clip-path", `url(#${explorationClipId})`);
   layer.appendChild(route);
 
-  if (explorationMaskId) {
-    const fog = document.createElementNS(NS, "rect");
-    fog.setAttribute("class", "campus-unexplored-fog");
-    fog.setAttribute("x", bounds.minX);
-    fog.setAttribute("y", bounds.minY);
-    fog.setAttribute("width", w);
-    fog.setAttribute("height", h);
-    fog.setAttribute("mask", `url(#${explorationMaskId})`);
-    layer.appendChild(fog);
-
+  if (exploration) {
     const boundaryFeature = campusState.campusBoundary;
     if (boundaryFeature) {
       const edge = document.createElementNS(NS, "path");
