@@ -12,7 +12,7 @@
    иначе человек прочитает «+20★ за перекличку» как обещание. */
 
 (function () {
-  const SOURCE = "./assets/implants/implants.json?v=7656367a04";
+  const SOURCE = "./assets/implants/implants.json?v=906406ee25";
   const ART_BASE = "./assets/implants/";
 
   let built = false;
