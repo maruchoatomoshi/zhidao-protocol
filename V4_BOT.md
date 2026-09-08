@@ -91,11 +91,15 @@ zhidao_v4/bot/
 ### 1. Служебная учётка с ролью оператора
 
 ```bash
-sudo -u www-data /opt/zhidao-v4/.venv/bin/python -m zhidao_v4.provision \
+sudo -u www-data bash -c 'cd /opt/zhidao-v4 && ./.venv/bin/python -m zhidao_v4.provision \
   --db /var/lib/zhidao-v4/zhidao.db \
   --username bot.max --display-name "Бот MAX" \
-  --role operator --random-password
+  --role operator --random-password'
 ```
+
+`cd` здесь обязателен: `python -m` ищет пакет относительно текущего
+каталога, а из домашнего каталога `zhidao_v4` не виден. Юнит systemd
+обходится без него только потому, что у него есть `WorkingDirectory`.
 
 Пароль печатается **один раз** — в базе с этого момента только его
 scrypt-хэш. Сразу перенести его в файл окружения, в историю оболочки он не
@@ -127,7 +131,7 @@ ZHIDAO_V4_APP_URL=https://china.marucho.icu:8443/app/
 ### 3. Проверка до запуска
 
 ```bash
-sudo -u www-data bash -c 'set -a; . /etc/zhidao-v4/v4.env; set +a; /opt/zhidao-v4/.venv/bin/python -m zhidao_v4.bot --check'
+sudo -u www-data bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --check'
 ```
 
 Выводит, кто бот по мнению MAX, отвечает ли API, под какой учёткой и с
@@ -137,7 +141,7 @@ sudo -u www-data bash -c 'set -a; . /etc/zhidao-v4/v4.env; set +a; /opt/zhidao-v
 ### 4. Меню команд в MAX
 
 ```bash
-sudo -u www-data bash -c 'set -a; . /etc/zhidao-v4/v4.env; set +a; /opt/zhidao-v4/.venv/bin/python -m zhidao_v4.bot --set-commands'
+sudo -u www-data bash -c 'cd /opt/zhidao-v4 && set -a; . /etc/zhidao-v4/v4.env; set +a; ./.venv/bin/python -m zhidao_v4.bot --set-commands'
 ```
 
 Разово, и повторять после изменения `MENU_COMMANDS`.
