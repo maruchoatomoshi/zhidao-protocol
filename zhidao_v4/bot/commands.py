@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import logging
 import re
+import uuid
 from dataclasses import dataclass
 from typing import Callable
 
@@ -53,6 +54,10 @@ class Incoming:
     text: str
     first_name: str
     update_type: str
+    # Идентификатор сообщения MAX. Нужен там, где команда что-то меняет:
+    # из него строится ключ идемпотентности, и повторно прочитанное
+    # обновление не выдаёт вторую порцию попыток.
+    message_id: str | None = None
 
 
 def parse_update(update: dict) -> Incoming | None:
@@ -91,6 +96,7 @@ def parse_update(update: dict) -> Incoming | None:
             text=str(body.get("text") or "").strip(),
             first_name=str(sender.get("first_name") or "").strip(),
             update_type=kind,
+            message_id=(str(body.get("mid")) if body.get("mid") else None),
         )
 
     return None
@@ -140,6 +146,8 @@ MENU_COMMANDS: list[tuple[str, str]] = [
     ("app", "Открыть приложение"),
     ("help", "Что умеет бот"),
     ("myid", "Показать мой идентификатор MAX"),
+    ("сезон", "Состояние сезона"),
+    ("шансы", "Что и с какой вероятностью выпадает"),
 ]
 
 
@@ -232,6 +240,8 @@ class Bot:
             "",
             "/app — открыть приложение",
             "/myid — показать ваш идентификатор MAX",
+            "/сезон — состояние сезона",
+            "/шансы — что и с какой вероятностью выпадает",
             "/help — этот список",
         ]
         if self.is_operator(incoming.user_id):
@@ -240,6 +250,8 @@ class Bot:
                 "Для вожатых:",
                 "/кто — весь ростер; /кто <имя> — поиск",
                 "/код <имя или номер> — выдать код сопряжения",
+                "/ростер — состав сезона и остаток попыток",
+                "/выдать <кому> <сколько> <причина> — выдать попытки",
                 "/статус — состояние сервера",
             ]
         lines += [
@@ -361,6 +373,261 @@ class Bot:
             "Если выдать новый — этот перестанет работать.",
         )
 
+
+    # --- команды, доступные всем ------------------------------------------
+
+    def cmd_season(self, incoming: Incoming, argument: str) -> None:
+        del argument
+        try:
+            items = self.backend.seasons()
+        except BackendError as exc:
+            LOG.warning("seasons lookup failed: %s", exc)
+            self.reply(incoming, "Сервер не ответил. Попробуйте ещё раз через минуту.")
+            return
+        if not items:
+            self.reply(incoming, "Сезонов пока нет.")
+            return
+        lines = ["Сезоны:", ""]
+        for season in items:
+            dates = " → ".join(
+                str(season.get(key) or "—") for key in ("starts_on", "ends_on")
+            )
+            lines.append(
+                f"{season.get('name')} — {season.get('status')}\n"
+                f"даты: {dates}"
+            )
+        # Состояние draft — не поломка, а «ещё не начали». Говорим прямо,
+        # иначе человек будет думать, что у него что-то сломалось.
+        if all(season.get("status") == "draft" for season in items):
+            lines += ["", "Черновик значит, что сезон ещё не запущен: "
+                          "попытки не выдаются и кейсы не открываются."]
+        self.reply(incoming, "\n\n".join(lines) if len(lines) > 2 else "\n".join(lines))
+
+    def cmd_chances(self, incoming: Incoming, argument: str) -> None:
+        del argument
+        try:
+            rules = self.backend.case_rules()
+        except BackendError as exc:
+            LOG.warning("case rules failed: %s", exc)
+            self.reply(incoming, "Правила не загрузились. Попробуйте ещё раз.")
+            return
+        tiers = rules.get("tiers") or []
+        if not tiers:
+            self.reply(incoming, "Правила кейсов пока не заданы.")
+            return
+        # Проценты считаются из весов здесь же, а не берутся готовыми: ровно
+        # по той причине, по которой их считает приложение — записанное число
+        # однажды разойдётся с правилами, и заметить это будет нечем.
+        total = sum(int(tier.get("weight") or 0) for tier in tiers) or 1
+        lines = ["Что выпадает за одно сканирование:", ""]
+        for tier in tiers:
+            share = int(tier.get("weight") or 0) / total
+            lines.append(f"{tier.get('name_ru')} — {self.percent(share)}")
+        black = next((t for t in tiers if t.get("code") == "black"), None)
+        if black and black.get("prizes"):
+            inner = sum(int(p.get("weight") or 0) for p in black["prizes"]) or 1
+            share = int(black.get("weight") or 0) / total
+            lines += ["", f"Внутри «{black.get('name_ru')}» (и шанс за попытку):"]
+            for prize in black["prizes"]:
+                part = int(prize.get("weight") or 0) / inner
+                lines.append(
+                    f"· {prize.get('name_ru')} — {self.percent(part)} "
+                    f"({self.percent(part * share)} за попытку)"
+                )
+        lines += ["", "Полная таблица — в приложении, раздел «Кейсы»."]
+        self.reply(incoming, "\n".join(lines), with_app_button=True)
+
+    @staticmethod
+    def percent(value: float) -> str:
+        """Округление по величине: 0,2% нельзя показать как 0%."""
+        share = value * 100
+        digits = 0 if share >= 10 else 1 if share >= 1 else 2
+        return f"{share:.{digits}f}".replace(".", ",") + "%"
+
+    # --- команды оператора, связанные с сезоном ---------------------------
+
+    def manageable_season(self, incoming: Incoming) -> dict | None:
+        """Сезон, в котором бот вправе распоряжаться. Молчать не даёт."""
+        try:
+            seasons = self.backend.case_context()
+        except BackendError as exc:
+            LOG.warning("case context failed: %s", exc)
+            self.reply(incoming, "Сервер не ответил. Попробуйте ещё раз через минуту.")
+            return None
+        manageable = [s for s in seasons if s.get("can_manage")]
+        active = [s for s in manageable if s.get("status") == "active"]
+        if active:
+            return active[0]
+        if manageable:
+            names = ", ".join(f"{s.get('name')} ({s.get('status')})" for s in manageable)
+            self.reply(
+                incoming,
+                f"Активного сезона нет: {names}.\n\n"
+                "Пока сезон не запущен, попытки не выдаются и состава ещё нет.",
+            )
+            return None
+        self.reply(
+            incoming,
+            "У служебной учётки бота нет сезона, которым она распоряжается. "
+            "Это настраивает Архитектор.",
+        )
+        return None
+
+    def cmd_roster(self, incoming: Incoming, argument: str) -> None:
+        del argument
+        if not self._require_operator(incoming):
+            return
+        season = self.manageable_season(incoming)
+        if season is None:
+            return
+        try:
+            roster = self.backend.case_roster(int(season["id"]))
+        except BackendError as exc:
+            LOG.warning("season roster failed: %s", exc)
+            self.reply(incoming, "Сервер не ответил. Попробуйте ещё раз через минуту.")
+            return
+        members = roster.get("members") or []
+        if not members:
+            self.reply(
+                incoming,
+                f"В сезоне «{season.get('name')}» пока нет участников. "
+                "Состав задаёт Архитектор.",
+            )
+            return
+        lines = [f"Состав «{season.get('name')}» — {len(members)}:", ""]
+        for member in members[: self.ROSTER_PREVIEW]:
+            lines.append(
+                f"#{member['id']} · {member['display_name']} — "
+                f"{member.get('scans', 0)}/7 попыток"
+            )
+        if len(members) > self.ROSTER_PREVIEW:
+            lines += ["", f"Показаны первые {self.ROSTER_PREVIEW} из {len(members)}."]
+        self.reply(incoming, "\n".join(lines))
+
+    def cmd_grant(self, incoming: Incoming, argument: str) -> None:
+        if not self._require_operator(incoming):
+            return
+        parsed = self.parse_grant(argument)
+        if parsed is None:
+            self.reply(
+                incoming,
+                "Формат: /выдать <кому> <сколько> <причина>\n\n"
+                "Например:\n"
+                "/выдать 17 2 участие во встрече\n"
+                "/выдать Иванов Пётр 2 участие во встрече\n\n"
+                "«Кому» — номер из /кто или имя целиком, можно из нескольких "
+                "слов. Причина обязательна: она попадает в журнал и объясняет "
+                "выдачу через месяц, когда никто уже не помнит.",
+            )
+            return
+        target, amount, reason = parsed
+        if not 1 <= amount <= 7:
+            self.reply(incoming, "Сколько попыток? Число от 1 до 7.")
+            return
+
+        account = self.resolve_account(incoming, target)
+        if account is None:
+            return
+        season = self.manageable_season(incoming)
+        if season is None:
+            return
+
+        # Ключ из идентификатора сообщения: то же сообщение, прочитанное
+        # дважды, даёт ту же выдачу, а не двойную.
+        key = f"bot-grant-{incoming.message_id or uuid.uuid4().hex}"
+        try:
+            result = self.backend.grant_scans(
+                int(season["id"]),
+                account_ids=[int(account["id"])],
+                amount=amount,
+                reason=reason,
+                idempotency_key=key,
+            )
+        except BackendError as exc:
+            if exc.status_code in (400, 403, 404, 409, 422):
+                LOG.info("grant rejected: %s", exc)
+                self.reply(
+                    incoming,
+                    "Сервер отклонил выдачу. Чаще всего это значит, что человек "
+                    "не входит в состав сезона или сезон уже не активен.",
+                )
+                return
+            LOG.warning("grant failed: %s", exc)
+            self.reply(
+                incoming,
+                "Нет подтверждения от сервера. Повторите ту же команду: "
+                "выдача защищена от удвоения.",
+            )
+            return
+
+        rows = result.get("results") or []
+        if not rows:
+            self.reply(incoming, "Сервер ответил, но ничего не выдал. Позовите Архитектора.")
+            return
+        lines = [f"Выдано. Причина: {reason}", ""]
+        for row in rows:
+            granted, requested = row.get("granted", 0), row.get("requested", amount)
+            tail = "" if granted == requested else f" (просили {requested}, упёрлись в предел)"
+            lines.append(
+                f"#{row.get('account_id')} · {account['display_name']}: "
+                f"+{granted}{tail}, запас {row.get('scans')}/7"
+            )
+        self.reply(incoming, "\n".join(lines))
+
+    @staticmethod
+    def parse_grant(argument: str) -> tuple[str, int, str] | None:
+        """Разбирает «кому сколько причина», где имя бывает из нескольких слов.
+
+        Правило объяснимое: если команда начинается с числа, это номер из
+        /кто, и следующее число — количество. Иначе количество — первое
+        число после имени, а всё до него имя. «Иванов Пётр 2 встреча»
+        разбирается так же надёжно, как «17 2 встреча».
+
+        Первый вариант разбора требовал одного слова в имени, и это выяснил
+        тест: вожатый пишет имя целиком, а не одно слово из него.
+        """
+        words = argument.split()
+        if len(words) < 3:
+            return None
+        first = words[0].lstrip("#")
+        if first.isdigit():
+            if not words[1].isdigit():
+                return None
+            return first, int(words[1]), " ".join(words[2:]).strip()
+        for index in range(1, len(words) - 1):
+            if words[index].isdigit():
+                name = " ".join(words[:index]).strip()
+                reason = " ".join(words[index + 1:]).strip()
+                if not name or not reason:
+                    return None
+                return name, int(words[index]), reason
+        return None
+
+    def resolve_account(self, incoming: Incoming, target: str) -> dict | None:
+        """Один человек по номеру или куску имени. Не угадывает при неоднозначности."""
+        clean = target.lstrip("#")
+        try:
+            items = self.backend.find_accounts("" if clean.isdigit() else target, limit=25)
+        except BackendError as exc:
+            LOG.warning("roster lookup failed: %s", exc)
+            self.reply(incoming, "Сервер не ответил. Попробуйте ещё раз через минуту.")
+            return None
+        if clean.isdigit():
+            found = [i for i in items if int(i["id"]) == int(clean)]
+            if not found:
+                self.reply(incoming, f"Аккаунта #{clean} нет или он отключён.")
+                return None
+            return found[0]
+        if not items:
+            self.reply(incoming, f"По запросу «{target}» никого нет.")
+            return None
+        if len(items) > 1:
+            lines = ["Подходит несколько человек, уточните номером:", ""]
+            lines += [f"#{i['id']} · {i['display_name']}" for i in items[:10]]
+            self.reply(incoming, "\n".join(lines))
+            return None
+        return items[0]
+
     def cmd_status(self, incoming: Incoming, argument: str) -> None:
         if not self._require_operator(incoming):
             return
@@ -395,4 +662,12 @@ Bot.HANDLERS = {
     "code": Bot.cmd_code,
     "статус": Bot.cmd_status,
     "status": Bot.cmd_status,
+    "сезон": Bot.cmd_season,
+    "season": Bot.cmd_season,
+    "шансы": Bot.cmd_chances,
+    "chances": Bot.cmd_chances,
+    "ростер": Bot.cmd_roster,
+    "roster": Bot.cmd_roster,
+    "выдать": Bot.cmd_grant,
+    "grant": Bot.cmd_grant,
 }

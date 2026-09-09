@@ -25,7 +25,8 @@ OPERATOR_MAX_ID = 500500
 PARTICIPANT_MAX_ID = 770077
 
 
-def message_update(text: str, *, user_id: int, chat_type: str = "dialog") -> dict:
+def message_update(text: str, *, user_id: int, chat_type: str = "dialog",
+                   mid: str = "mid.1") -> dict:
     """Событие MAX той формы, что описана в его схеме Bot API."""
     return {
         "update_type": "message_created",
@@ -41,7 +42,7 @@ def message_update(text: str, *, user_id: int, chat_type: str = "dialog") -> dic
             },
             "recipient": {"chat_id": 900 + user_id, "chat_type": chat_type, "user_id": user_id},
             "timestamp": 1788800000000,
-            "body": {"mid": "mid.1", "seq": 1, "text": text, "attachments": None},
+            "body": {"mid": mid, "seq": 1, "text": text, "attachments": None},
         },
     }
 
@@ -182,8 +183,11 @@ class BotCommandTests(unittest.TestCase):
         self.client.close()
         self.temp_dir.cleanup()
 
-    def send(self, text: str, *, user_id: int = OPERATOR_MAX_ID, chat_type: str = "dialog"):
-        incoming = parse_update(message_update(text, user_id=user_id, chat_type=chat_type))
+    def send(self, text: str, *, user_id: int = OPERATOR_MAX_ID, chat_type: str = "dialog",
+             mid: str = "mid.1"):
+        incoming = parse_update(
+            message_update(text, user_id=user_id, chat_type=chat_type, mid=mid)
+        )
         assert incoming is not None
         self.bot.handle(incoming)
         return self.max.sent[-1] if self.max.sent else None
@@ -276,6 +280,98 @@ class BotCommandTests(unittest.TestCase):
     def test_code_for_a_missing_account_says_so(self):
         sent = self.send("/код 9999")
         self.assertIn("нет или он отключён", sent["text"])
+
+    # --- сезон, шансы, выдача --------------------------------------------
+
+    def open_season(self):
+        """Запускает сезон и вводит в него участника — как это сделает Архитектор."""
+        conn = connect_database(self.db_path)
+        try:
+            with immediate_transaction(conn):
+                conn.execute("UPDATE v4_seasons SET status='active' WHERE id=1")
+                conn.execute(
+                    "INSERT INTO v4_season_memberships(season_id, account_id, status)"
+                    " VALUES (1, ?, 'active')",
+                    (self.participant["id"],),
+                )
+        finally:
+            conn.close()
+
+    def scans(self) -> int:
+        conn = connect_database(self.db_path)
+        try:
+            row = conn.execute(
+                "SELECT scans FROM v4_case_wallets WHERE season_id=1 AND account_id=?",
+                (self.participant["id"],),
+            ).fetchone()
+        finally:
+            conn.close()
+        return int(row["scans"]) if row else 0
+
+    def test_season_says_plainly_that_a_draft_has_not_started(self):
+        # Чаще всего человек пишет /сезон именно потому, что ничего не
+        # работает. Ответ должен объяснять, а не сообщать слово «draft».
+        sent = self.send("/сезон", user_id=PARTICIPANT_MAX_ID)
+        self.assertIn("draft", sent["text"])
+        self.assertIn("ещё не запущен", sent["text"])
+
+    def test_chances_are_computed_from_the_weights_the_server_serves(self):
+        sent = self.send("/шансы", user_id=PARTICIPANT_MAX_ID)
+        text = sent["text"]
+        self.assertIn("%", text)
+        # Шанс за попытку и шанс внутри кейса — разные числа, и путать их
+        # нечестно: об этом же говорит таблица в приложении.
+        self.assertIn("за попытку", text)
+
+    def test_grant_refuses_while_no_season_is_active(self):
+        sent = self.send("/выдать 3 2 участие во встрече")
+        self.assertIn("Активного сезона нет", sent["text"])
+        self.assertEqual(self.scans(), 0)
+
+    def test_grant_checks_its_arguments_before_touching_the_server(self):
+        self.assertIn("Формат", self.send("/выдать")["text"])
+        self.assertIn("Формат", self.send("/выдать 3 2")["text"])
+        self.assertIn("от 1 до 7", self.send("/выдать 3 9 причина")["text"])
+        self.assertEqual(self.scans(), 0)
+
+    def test_participants_cannot_grant_or_read_the_season_roster(self):
+        for command in ("/выдать 3 1 просто так", "/ростер"):
+            sent = self.send(command, user_id=PARTICIPANT_MAX_ID)
+            self.assertNotIn("Выдано", sent["text"])
+            self.assertNotIn("Состав", sent["text"])
+        self.assertEqual(self.scans(), 0)
+
+    def test_grant_gives_attempts_and_the_same_message_never_gives_twice(self):
+        # Длинный опрос перечитывает обновления после перезапуска — это не
+        # теоретический случай. Ключ идемпотентности берётся из mid, поэтому
+        # то же сообщение обязано вернуть тот же результат, а не вторую порцию.
+        self.open_season()
+        first = self.send("/выдать Иванов Пётр 2 встреча", mid="mid.grant")
+        self.assertIn("Выдано", first["text"])
+        self.assertEqual(self.scans(), 2)
+
+        again = self.send("/выдать Иванов Пётр 2 встреча", mid="mid.grant")
+        self.assertIn("Выдано", again["text"])
+        self.assertEqual(self.scans(), 2)
+
+        # Другое сообщение — другое намерение, и оно выдаёт по-настоящему.
+        self.send("/выдать Иванов Пётр 1 ещё одна встреча", mid="mid.grant.2")
+        self.assertEqual(self.scans(), 3)
+
+    def test_grant_says_who_got_it_and_names_the_reason(self):
+        self.open_season()
+        sent = self.send("/выдать Пётр 3 дневник", mid="mid.grant.3")
+        self.assertIn("дневник", sent["text"])
+        self.assertIn("Иванов Пётр", sent["text"])
+        self.assertIn("3/7", sent["text"])
+
+    def test_roster_shows_who_is_in_the_season_and_what_is_left(self):
+        self.open_season()
+        sent = self.send("/ростер")
+        self.assertIn("Иванов Пётр", sent["text"])
+        self.assertIn("0/7", sent["text"])
+        # Мария в сезон не введена — её здесь быть не должно.
+        self.assertNotIn("Иванова Мария", sent["text"])
 
     def test_status_reports_the_live_schema_version(self):
         sent = self.send("/статус")

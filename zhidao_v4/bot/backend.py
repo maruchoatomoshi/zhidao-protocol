@@ -111,9 +111,10 @@ class V4Backend:
         *,
         params: dict[str, Any] | None = None,
         json_body: Any | None = None,
+        extra_headers: dict[str, str] | None = None,
         _retried: bool = False,
     ) -> Any:
-        headers: dict[str, str] = {}
+        headers: dict[str, str] = dict(extra_headers or {})
         cookie_header = self._cookie_header()
         if cookie_header:
             headers["Cookie"] = cookie_header
@@ -136,7 +137,12 @@ class V4Backend:
             LOG.info("session rejected (%s), signing in again", response.status_code)
             self.login()
             return self._call(
-                method, path, params=params, json_body=json_body, _retried=True
+                method,
+                path,
+                params=params,
+                json_body=json_body,
+                extra_headers=extra_headers,
+                _retried=True,
             )
 
         if response.status_code >= 300:
@@ -165,4 +171,50 @@ class V4Backend:
     def issue_link_code(self, account_id: int) -> dict:
         return self._call(
             "POST", f"/api/v4/admin/accounts/{account_id}/link-codes"
+        ) or {}
+
+    def case_rules(self) -> dict:
+        """Правила кейсов. Единственный публичный запрос: он ничей и без сессии."""
+        return self._call("GET", "/api/v4/cases/rules") or {}
+
+    def seasons(self) -> list[dict]:
+        payload = self._call("GET", "/api/v4/seasons") or {}
+        return list(payload.get("items") or [])
+
+    def case_context(self) -> list[dict]:
+        """Сезоны, доступные служебной учётке бота, с признаком can_manage."""
+        payload = self._call("GET", "/api/v4/cases/context") or {}
+        return list(payload.get("seasons") or [])
+
+    def case_roster(self, season_id: int) -> dict:
+        return self._call(
+            "GET", f"/api/v4/seasons/{season_id}/cases/admin/roster"
+        ) or {}
+
+    def grant_scans(
+        self,
+        season_id: int,
+        *,
+        account_ids: list[int],
+        amount: int,
+        reason: str,
+        idempotency_key: str,
+    ) -> dict:
+        """Выдаёт попытки сканирования.
+
+        Ключ идемпотентности обязателен и берётся из идентификатора сообщения
+        MAX. Если бот перезапустится и перечитает то же обновление, сервер
+        вернёт прежний результат вместо второй выдачи: у длинного опроса это
+        не теоретический случай, а обычный.
+        """
+        return self._call(
+            "POST",
+            f"/api/v4/seasons/{season_id}/cases/admin/grants",
+            json_body={
+                "account_ids": account_ids,
+                "group_id": None,
+                "amount": amount,
+                "reason": reason,
+            },
+            extra_headers={"X-Idempotency-Key": idempotency_key},
         ) or {}
