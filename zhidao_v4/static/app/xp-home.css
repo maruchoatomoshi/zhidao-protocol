@@ -1,15 +1,23 @@
-/* Review 01: tropical XP home. Opt-in ?design=xp; Aero remains the default.
-   Original landscape, supplied dragon and existing icons; no simulated OS controls. */
+/* Тропический XP-дом. Включается через ?design=xp; по умолчанию остаётся Aero.
+   Свой пейзаж, свой дракон и уже существующие значки; никаких поддельных
+   органов управления системой.
+
+   Цвет — вариант «Луна-Аква»: форма градиента взята у Luna, тона у неба
+   приложения. Излом на 49% совпадает с --gloss-cut Aero (52%) не случайно:
+   скос кнопки XP и срез блика Aero — один и тот же оптический приём, и
+   если свести их к одной высоте, рама и стекло читаются одним веществом. */
 html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"] {
-  --xp-paper: #f4f5ef;
+  --xp-paper: #eef7fc;
   --xp-pane: #fff;
-  --xp-soft: #e7f2fc;
-  --xp-ink: #103477;
-  --xp-muted: #405775;
-  --xp-edge: #799cc8;
-  --xp-button: linear-gradient(#fff 0%,#eff7ff 45%,#cfdef4 49%,#f6fbff 100%);
-  --xp-title: linear-gradient(#76b8ff 0%,#1875f5 9%,#0057dd 48%,#0665ed 85%,#003bac 100%);
+  --xp-soft: #e6f4fc;
+  --xp-ink: #06304f;
+  --xp-muted: #35647d;
+  --xp-edge: #8fbcd6;
+  --xp-button: linear-gradient(#fff 0%,#eaf8ff 45%,#c2e6f6 49%,#f4fcff 100%);
+  /* Ступень 85% темнее, чем просилась бы по образцу: подписи дока лежат
+     именно на ней, и на исходной светлой полосе белый давал 2,9:1. */
+  --xp-title: linear-gradient(#7fd8f4 0%,#1ba7e0 9%,#0a7cc2 48%,#0a6fb4 49%,#0d6fae 85%,#054780 100%);
   --xp-note: #fff9d6;
   --xp-note-edge: #c9b86d;
 }
@@ -19,9 +27,9 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
   --xp-soft: #244466;
   --xp-ink: #e9f5ff;
   --xp-muted: #b9cfe5;
-  --xp-edge: #6686af;
-  --xp-button: linear-gradient(#416994,#244b79 45%,#183957 49%,#315780);
-  --xp-title: linear-gradient(#5d9dde,#205da8 9%,#123e89 48%,#174f9b 85%,#09285b);
+  --xp-edge: #5f89a6;
+  --xp-button: linear-gradient(#3f6d92,#22506f 45%,#173c55 49%,#2f5c7c);
+  --xp-title: linear-gradient(#4e9cc4,#1b6d9c 9%,#0f5074 48%,#0d4767 49%,#136894 85%,#07293e);
   --xp-note: #343e43;
   --xp-note-edge: #96895e;
 }
@@ -33,16 +41,16 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"] .app-header {
   position: relative;
   padding: 2px 52px 2px 5px; min-height: 48px; margin: 0; gap: 6px;
-  border: 1px solid #004aaa; border-top-color: #a3d3ff; border-radius: 9px 9px 0 0;
-  background: var(--xp-title); box-shadow: inset 1px 0 #b3d6ff80,inset -1px 0 #072578;
+  border: 1px solid #075a97; border-top-color: #a3e2ff; border-radius: 9px 9px 0 0;
+  background: var(--xp-title); box-shadow: inset 1px 0 #b3deff80,inset -1px 0 #063f70;
 }
 :root[data-design="xp"] .app-brand { gap: 5px; min-width: 0; }
-:root[data-design="xp"] .app-brand strong { font: bold 17px/1.1 Tahoma,"Segoe UI",sans-serif; letter-spacing: -.35px; color: #fff; text-shadow: 1px 1px #003172; white-space: nowrap; }
+:root[data-design="xp"] .app-brand strong { font: bold 17px/1.1 Tahoma,"Segoe UI",sans-serif; letter-spacing: -.35px; color: #fff; text-shadow: 1px 1px #063f70; white-space: nowrap; }
 :root[data-design="xp"] .app-brand small { display: none; }
 :root[data-design="xp"] .brand-logo { width: 34px; height: 34px; flex-basis: 34px; filter: drop-shadow(0 1px 1px #002664); }
 :root[data-design="xp"] .header-status { border: 0; border-radius: 0; background: none; box-shadow: none; padding: 0; color: #fff; font: 11px/1.2 Tahoma,sans-serif; letter-spacing: 0; min-width: 0; }
 :root[data-design="xp"] .header-status i { display: none; }
-:root[data-design="xp"] .app-header .profile-fab { position: absolute; top: 1px; right: 1px; height: 44px; width: 44px; min-width: 44px; padding: 5px; border-radius: 5px; border-color: #d7edff; background: var(--xp-title); box-shadow: inset 1px 1px #ffffff80,inset -1px -1px #002c7b; }
+:root[data-design="xp"] .app-header .profile-fab { position: absolute; top: 1px; right: 1px; height: 44px; width: 44px; min-width: 44px; padding: 5px; border-radius: 5px; border-color: #d7edff; background: var(--xp-title); box-shadow: inset 1px 1px #ffffff80,inset -1px -1px #06375f; }
 :root[data-design="xp"] .profile-fab-orb { display: grid; place-items: center; }
 :root[data-design="xp"] .profile-fab-orb img { width: 29px; height: 29px; }
 :root[data-design="xp"] .internet-toolbar { margin: 0 0 10px; padding: 6px; border-radius: 0; border-color: var(--xp-edge); background: var(--xp-paper); box-shadow: inset 0 1px #fff9; }
@@ -59,30 +67,29 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"] #scheduleTitle { margin: 0; font: bold clamp(23px,6.5vw,32px)/1.08 Tahoma,"Segoe UI",sans-serif; letter-spacing: -.8px; color: var(--xp-ink); text-shadow: none; }
 :root[data-design="xp"] .xp-welcome-note { flex: 0 0 106px; padding: 10px 8px; margin: 0; border: 1px solid var(--xp-note-edge); background: var(--xp-note); color: var(--xp-ink); box-shadow: inset 1px 1px #fff8,2px 2px 0 #102c6b10; font: 12px/1.3 Tahoma,sans-serif; transform: rotate(1deg); }
 :root[data-design="xp"] .xp-welcome-note span { display: block; margin-top: 8px; font: 10px/1.2 "Courier New",monospace; color: var(--xp-muted); }
-:root[data-design="xp"] .xp-titlebar { display: flex; align-items: center; gap: 6px; min-height: 31px; padding: 3px 7px; background: var(--xp-title); color: #fff; border-bottom: 1px solid #003aa6; box-shadow: inset 0 1px #acd7ff; }
+:root[data-design="xp"] .xp-titlebar { display: flex; align-items: center; gap: 6px; min-height: 31px; padding: 3px 7px; background: var(--xp-title); color: #fff; border-bottom: 1px solid #063f70; box-shadow: inset 0 1px #acdfff; }
 :root[data-design="xp"] .xp-titlebar img { width: 23px; height: 23px; object-fit: contain; }
-:root[data-design="xp"] .xp-titlebar h2 { margin: 0; color: #fff; font: bold 14px/1.2 Tahoma,sans-serif; letter-spacing: 0; text-shadow: 1px 1px #003475; }
+:root[data-design="xp"] .xp-titlebar h2 { margin: 0; color: #fff; font: bold 14px/1.2 Tahoma,sans-serif; letter-spacing: 0; text-shadow: 1px 1px #063f70; }
 :root[data-design="xp"] .xp-titlebar > span { margin-left: auto; font: 11px/1.2 Tahoma,sans-serif; }
-:root[data-design="xp"] .journey-card { order: 1; height: 255px; min-height: 255px; border: 1px solid #3b7ccd; border-radius: 5px; box-shadow: inset 0 0 0 2px #eff7ff,1px 2px 2px #0b316321; background: linear-gradient(90deg,#004c926b,transparent 85%),url("../architect/assets/hainan-promised-tomorrow.png") center 45% / cover; }
+:root[data-design="xp"] .journey-card { order: 1; height: 296px; min-height: 296px; border: 1px solid #3b7ccd; border-radius: 5px; box-shadow: inset 0 0 0 2px #eff7ff,1px 2px 2px #0b316321; background: linear-gradient(90deg,#004c926b,transparent 85%),url("../architect/assets/hainan-promised-tomorrow.png") center 45% / cover; }
 :root[data-design="xp"] .journey-card::before,:root[data-design="xp"] .journey-card::after { display: none; }
 :root[data-design="xp"] .journey-card .xp-titlebar { position: relative; z-index: 2; }
 :root[data-design="xp"] .journey-card .journey-index { display: none; }
 :root[data-design="xp"] .journey-card .journey-copy { top: 51px; left: 17px; right: 17px; }
 :root[data-design="xp"] .journey-copy > p { margin: 0 0 9px; color: #fff; font: 10px/1.2 Tahoma,sans-serif; letter-spacing: 1.2px; }
 :root[data-design="xp"] .journey-copy h2 { max-width: 64%; font: bold clamp(30px,8vw,42px)/.98 Tahoma,sans-serif; letter-spacing: -1px; color: #fff; text-shadow: 1px 2px 3px #003869; }
-:root[data-design="xp"] .journey-card .journey-logo { top: 53px; width: 32%; max-width: 130px; right: 10px; }
+:root[data-design="xp"] .journey-card .journey-logo { top: 58px; width: 33%; max-width: 138px; right: 10px; }
 :root[data-design="xp"] .journey-card .journey-bubbles { inset: 53% 0 40px; }
-:root[data-design="xp"] .xp-journey-caption { position: absolute; display: flex; align-items: center; justify-content: space-between; gap: 8px; left: 3px; right: 3px; bottom: 3px; padding: 6px 8px; background: #f1faffeb; color: #103477; font: bold 13px/1.2 Tahoma,sans-serif; }
-:root[data-design="xp"] .xp-journey-caption button { min-height: 44px; padding: 6px 10px; border: 1px solid #4176ad; border-radius: 3px; background: linear-gradient(#fff,#dceefe 48%,#a3d2fb 50%,#e5f4ff); box-shadow: inset 0 0 0 1px #fff; font: bold 12px/1.2 Tahoma,sans-serif; color: #123b81; cursor: pointer; }
-:root[data-design="xp"] .xp-journey-caption b { font-size: 20px; margin-left: 4px; }
+:root[data-design="xp"] .xp-journey-caption { position: absolute; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; left: 3px; right: 3px; bottom: 3px; padding: 8px 10px; background: #f1faffeb; color: #0a5c8f; font: bold 13px/1.2 Tahoma,sans-serif; }
+/* Кнопки здесь больше нет: она вела на карту кампуса, то есть туда же, куда
+   плитка в «Ещё». На её месте — отметка сезона, которая ничего не обещает. */
+:root[data-design="xp"] .xp-journey-serial { font: 10px/1.2 "Courier New",monospace; font-style: normal; letter-spacing: .12em; color: var(--xp-muted); }
 :root[data-design="xp"][data-theme="dark"] .xp-journey-caption { background: #0d294beF; color: #edf7ff; }
 
-:root[data-design="xp"] .desktop-shortcuts { order: 2; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
-:root[data-design="xp"] .desktop-shortcuts button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 80px; padding: 7px 2px; border: 1px solid var(--xp-edge); border-radius: 4px; background: var(--xp-button); box-shadow: inset 1px 1px #fff9,inset -1px -1px #4a709326; color: var(--xp-ink); }
-:root[data-design="xp"] .desktop-shortcuts img { width: 39px; height: 39px; object-fit: contain; }
-:root[data-design="xp"] .desktop-shortcuts button > span { font: 12px/1.2 Tahoma,sans-serif; }
-:root[data-design="xp"] .desktop-shortcuts small,:root[data-design="xp"] .desktop-shortcuts button > b { display: none; }
-:root[data-design="xp"] .shortcut-map-orb { width: 39px; height: 39px; font-size: 0 !important; border: 0; background: url("./assets/icons/desktop-map.svg") center / contain no-repeat; box-shadow: none; }
+/* Ярлыки убраны: «Сканер» дублировал вкладку «Кейсы», «Кампус» — плитку в
+   «Ещё». Вторая навигация поверх первой не ускоряет, а заставляет гадать,
+   какой из двух путей главный. В обычном виде Aero ярлыки остаются. */
+:root[data-design="xp"] .desktop-shortcuts { display: none; }
 :root[data-design="xp"] .status-grid { order: 3; gap: 7px; }
 :root[data-design="xp"] .status-module { min-height: 90px; padding: 10px 12px; border: 1px solid var(--xp-edge); border-radius: 4px; background: var(--xp-pane); box-shadow: inset 1px 1px #fff6; }
 :root[data-design="xp"] .status-module::before,:root[data-design="xp"] .status-module::after { display: none; }
@@ -100,7 +107,10 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"] .signal-card h3 { color: var(--xp-ink); font: bold 14px/1.3 Tahoma,sans-serif; }
 :root[data-design="xp"] .signal-card p { color: var(--xp-muted); font: 12px/1.4 Tahoma,sans-serif; }
 :root[data-design="xp"] .signal-orb { width: 42px; height: 42px; flex-basis: 42px; font-size: 0; background: url("./assets/icons/nav-cases.png") center / contain no-repeat; box-shadow: none; border: 0; }
-:root[data-design="xp"] .signal-card > button { min-width: 44px; min-height: 44px; border: 1px solid var(--xp-edge); border-radius: 3px; background: var(--xp-button); color: var(--xp-ink); }
+/* Стрелка отсюда вела в «Коллекцию» — то есть туда же, куда плитка в «Ещё».
+   Карточка остаётся: она рассказывает, что коллекция вообще есть. Кнопка
+   уходит вслед за ярлыками. */
+:root[data-design="xp"] .signal-card > button { display: none; }
 :root[data-design="xp"] .media-widget { order: 6; border-radius: 4px; }
 :root[data-design="xp"] .xp-review-note { order: 7; display: flex; align-items: center; gap: 12px; padding: 11px; background: var(--xp-note); border: 1px solid var(--xp-note-edge); color: var(--xp-muted); font: 11px/1.5 Tahoma,sans-serif; }
 :root[data-design="xp"] .xp-review-note > span { flex: 1; }
@@ -130,4 +140,72 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
   :root[data-design="xp"] .app-shell { margin: 24px auto; border-radius: 12px 12px 0 0; }
   :root[data-design="xp"] .app-stage { padding-top: 8px; }
   :root[data-design="xp"] .journey-card { height: 285px; }
+}
+
+/* =========================================================================
+   ДВИЖЕНИЕ
+
+   Две анимации эпохи, у каждой настоящий повод. Обе висят на
+   [data-motion="full"] — том признаке, который ставит aero-motion.js и
+   которым управляет кнопка «Движение»; системное «уменьшить движение»
+   гасит их вместе со всем остальным правилом из aero-desktop.css.
+
+   Чего здесь нет намеренно: мигания кнопки в панели задач. Приём верный —
+   XP мигал ровно три раза и замолкал, — но повода для него пока не
+   существует: событие «выдали попытку, пока ты в другом разделе» до
+   приложения не доходит. Анимация без причины была бы враньём.
+   ========================================================================= */
+
+/* Блик по стеклу. Один проход света, когда экран приезжает: приборное
+   окошко будто протёрли. Приём с кнопки «Пуск» и со стекла Vista. */
+@keyframes xp-sweep {
+  from { transform: translateX(-140%) skewX(-18deg); }
+  to   { transform: translateX(320%) skewX(-18deg); }
+}
+:root[data-design="xp"] .status-module { position: relative; isolation: isolate; overflow: hidden; }
+:root[data-design="xp"][data-motion="full"] .status-grid.motion-enter .status-module::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 38%;
+  background: linear-gradient(90deg,transparent,#ffffffee,transparent);
+  animation: xp-sweep 700ms ease-in-out 260ms both;
+  pointer-events: none;
+}
+:root[data-design="xp"][data-theme="dark"][data-motion="full"] .status-grid.motion-enter .status-module::after {
+  background: linear-gradient(90deg,transparent,#bfe6ff59,transparent);
+}
+
+/* Подсказка выезжает снизу балуном, как из системного трея. Хвостик
+   смотрит на панель задач, из-под которой она и появляется. */
+:root[data-design="xp"] .app-toast {
+  border-radius: 4px;
+  border-color: var(--xp-note-edge);
+  background: var(--xp-note);
+  color: var(--xp-ink);
+  font: 12px/1.4 Tahoma,sans-serif;
+  text-align: left;
+  box-shadow: 2px 2px 0 #102c6b1f;
+}
+:root[data-design="xp"] .app-toast::after {
+  content: "";
+  position: absolute;
+  left: 28px;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid var(--xp-note-edge);
+  border-bottom: 1px solid var(--xp-note-edge);
+  background: var(--xp-note);
+  transform: rotate(45deg);
+}
+@keyframes xp-balloon {
+  from { opacity: 0; transform: translate(-50%,14px); }
+  to   { opacity: 1; transform: translate(-50%,0); }
+}
+:root[data-design="xp"][data-motion="full"] .app-toast:not([hidden]) {
+  animation: xp-balloon 220ms ease-out both;
 }
