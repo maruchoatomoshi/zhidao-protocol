@@ -296,7 +296,35 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"] .module-status-body p,
 :root[data-design="xp"] .mission-row small { color: var(--xp-muted); font-family: Tahoma,sans-serif; }
 :root[data-design="xp"] .desktop-eyebrow { color: var(--xp-muted); font: bold 10px/1.3 Tahoma,sans-serif; letter-spacing: .08em; }
-:root[data-design="xp"] .placeholder-hero { border-radius: 4px; }
+/* --- Заставки ------------------------------------------------------------
+   Большая иллюстрация с названием раздела — приём Aero: экран открывается
+   плакатом, а содержание идёт под ним. Под XP раздел открывается заголовком
+   и сразу содержанием, поэтому плакат снимается.
+
+   Целиком блок не прячется: в «Ещё» внутри него лежит <h1>, на который
+   ссылается aria-labelledby секции. Убрать его — значит оставить раздел без
+   имени для скринридера. Поэтому уходит оформление, а слова остаются. */
+:root[data-design="xp"] .placeholder-hero {
+  padding: 6px 7px 9px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+  min-height: 0;
+}
+:root[data-design="xp"] .placeholder-hero::before,
+:root[data-design="xp"] .placeholder-hero::after,
+:root[data-design="xp"] .placeholder-hero img { display: none; }
+:root[data-design="xp"] .placeholder-hero p { color: var(--xp-muted); font-family: Tahoma,sans-serif; }
+
+/* Баннер раздела остаётся, но перестаёт быть плакатом: картинка и порядковый
+   номер уходят, текст нет. В нём сказано, например, что REP нельзя купить за
+   ★ — это правило игры, и больше оно на экране нигде не написано. */
+:root[data-design="xp"] .desktop-banner img,
+:root[data-design="xp"] .desktop-banner::before,
+:root[data-design="xp"] .banner-serial { display: none; }
+:root[data-design="xp"] .desktop-banner { padding: 12px 14px; }
 
 /* --- Кнопки -------------------------------------------------------------
    Скос XP: белый кант внутри сверху, тень внутри снизу, излом на 49%.
