@@ -115,7 +115,6 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"] .xp-review-note { order: 7; display: flex; align-items: center; gap: 12px; padding: 11px; background: var(--xp-note); border: 1px solid var(--xp-note-edge); color: var(--xp-muted); font: 11px/1.5 Tahoma,sans-serif; }
 :root[data-design="xp"] .xp-review-note > span { flex: 1; }
 :root[data-design="xp"] .xp-review-note b { display: block; color: var(--xp-ink); }
-:root[data-design="xp"] .xp-review-note a { display: flex; align-items: center; gap: 4px; min-height: 44px; color: var(--xp-ink); text-decoration: underline; }
 
 /* One real navigation bar, not a mock desktop with inert window buttons. */
 :root[data-design="xp"] .app-dock { min-height: calc(66px + env(safe-area-inset-bottom)); border-radius: 0; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); gap: 2px; background: var(--xp-title); border: 1px solid #0545a6; border-top-color: #9ad0ff; box-shadow: inset 0 2px #4fa2fc,0 -3px 10px #09295d25; backdrop-filter: none; }
