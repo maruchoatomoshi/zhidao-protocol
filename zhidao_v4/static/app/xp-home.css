@@ -1,0 +1,133 @@
+/* Review 01: tropical XP home. Opt-in ?design=xp; Aero remains the default.
+   Original landscape, supplied dragon and existing icons; no simulated OS controls. */
+html:not([data-design="xp"]) .xp-only { display: none !important; }
+:root[data-design="xp"] {
+  --xp-paper: #f4f5ef;
+  --xp-pane: #fff;
+  --xp-soft: #e7f2fc;
+  --xp-ink: #103477;
+  --xp-muted: #405775;
+  --xp-edge: #799cc8;
+  --xp-button: linear-gradient(#fff 0%,#eff7ff 45%,#cfdef4 49%,#f6fbff 100%);
+  --xp-title: linear-gradient(#76b8ff 0%,#1875f5 9%,#0057dd 48%,#0665ed 85%,#003bac 100%);
+  --xp-note: #fff9d6;
+  --xp-note-edge: #c9b86d;
+}
+:root[data-design="xp"][data-theme="dark"] {
+  --xp-paper: #162b46;
+  --xp-pane: #1c3654;
+  --xp-soft: #244466;
+  --xp-ink: #e9f5ff;
+  --xp-muted: #b9cfe5;
+  --xp-edge: #6686af;
+  --xp-button: linear-gradient(#416994,#244b79 45%,#183957 49%,#315780);
+  --xp-title: linear-gradient(#5d9dde,#205da8 9%,#123e89 48%,#174f9b 85%,#09285b);
+  --xp-note: #343e43;
+  --xp-note-edge: #96895e;
+}
+:root[data-design="xp"] body { font-family: Tahoma,"Segoe UI",sans-serif; }
+:root[data-design="xp"] .app-shell { background: var(--xp-paper); box-shadow: 0 0 0 1px #2158ad,0 16px 70px #00193b70; }
+:root[data-design="xp"] .app-shell::before { display: none; }
+:root[data-design="xp"] .app-stage { padding: calc(10px + env(safe-area-inset-top)) 8px calc(104px + env(safe-area-inset-bottom)); }
+:root[data-design="xp"] .system-rail { display: none; }
+:root[data-design="xp"] .app-header {
+  position: relative;
+  padding: 2px 52px 2px 5px; min-height: 48px; margin: 0; gap: 6px;
+  border: 1px solid #004aaa; border-top-color: #a3d3ff; border-radius: 9px 9px 0 0;
+  background: var(--xp-title); box-shadow: inset 1px 0 #b3d6ff80,inset -1px 0 #072578;
+}
+:root[data-design="xp"] .app-brand { gap: 5px; min-width: 0; }
+:root[data-design="xp"] .app-brand strong { font: bold 17px/1.1 Tahoma,"Segoe UI",sans-serif; letter-spacing: -.35px; color: #fff; text-shadow: 1px 1px #003172; white-space: nowrap; }
+:root[data-design="xp"] .app-brand small { display: none; }
+:root[data-design="xp"] .brand-logo { width: 34px; height: 34px; flex-basis: 34px; filter: drop-shadow(0 1px 1px #002664); }
+:root[data-design="xp"] .header-status { border: 0; border-radius: 0; background: none; box-shadow: none; padding: 0; color: #fff; font: 11px/1.2 Tahoma,sans-serif; letter-spacing: 0; min-width: 0; }
+:root[data-design="xp"] .header-status i { display: none; }
+:root[data-design="xp"] .app-header .profile-fab { position: absolute; top: 1px; right: 1px; height: 44px; width: 44px; min-width: 44px; padding: 5px; border-radius: 5px; border-color: #d7edff; background: var(--xp-title); box-shadow: inset 1px 1px #ffffff80,inset -1px -1px #002c7b; }
+:root[data-design="xp"] .profile-fab-orb { display: grid; place-items: center; }
+:root[data-design="xp"] .profile-fab-orb img { width: 29px; height: 29px; }
+:root[data-design="xp"] .internet-toolbar { margin: 0 0 10px; padding: 6px; border-radius: 0; border-color: var(--xp-edge); background: var(--xp-paper); box-shadow: inset 0 1px #fff9; }
+:root[data-design="xp"] .internet-address { min-height: 30px; padding: 5px 7px; color: var(--xp-ink); background: var(--xp-pane); border-radius: 0; border-color: var(--xp-edge); font: 12px/1.3 "Courier New",monospace; }
+
+/* Existing content/bindings, new visual order. No invented event or progress data. */
+:root[data-design="xp"] [data-screen="schedule"].active { display: flex; flex-direction: column; gap: 10px; color: var(--xp-ink); }
+:root[data-design="xp"] [data-screen="schedule"] > * { margin: 0; }
+:root[data-design="xp"] [data-screen="schedule"] .screen-intro { order: 0; align-items: center; gap: 8px; padding: 6px 7px 9px; border: 0; }
+:root[data-design="xp"] [data-screen="schedule"] .screen-intro::after { display: none; }
+:root[data-design="xp"] [data-screen="schedule"] .screen-intro .system-label,
+:root[data-design="xp"] [data-screen="schedule"] .screen-sub,
+:root[data-design="xp"] [data-screen="schedule"] .preview-chip { display: none; }
+:root[data-design="xp"] #scheduleTitle { margin: 0; font: bold clamp(23px,6.5vw,32px)/1.08 Tahoma,"Segoe UI",sans-serif; letter-spacing: -.8px; color: var(--xp-ink); text-shadow: none; }
+:root[data-design="xp"] .xp-welcome-note { flex: 0 0 106px; padding: 10px 8px; margin: 0; border: 1px solid var(--xp-note-edge); background: var(--xp-note); color: var(--xp-ink); box-shadow: inset 1px 1px #fff8,2px 2px 0 #102c6b10; font: 12px/1.3 Tahoma,sans-serif; transform: rotate(1deg); }
+:root[data-design="xp"] .xp-welcome-note span { display: block; margin-top: 8px; font: 10px/1.2 "Courier New",monospace; color: var(--xp-muted); }
+:root[data-design="xp"] .xp-titlebar { display: flex; align-items: center; gap: 6px; min-height: 31px; padding: 3px 7px; background: var(--xp-title); color: #fff; border-bottom: 1px solid #003aa6; box-shadow: inset 0 1px #acd7ff; }
+:root[data-design="xp"] .xp-titlebar img { width: 23px; height: 23px; object-fit: contain; }
+:root[data-design="xp"] .xp-titlebar h2 { margin: 0; color: #fff; font: bold 14px/1.2 Tahoma,sans-serif; letter-spacing: 0; text-shadow: 1px 1px #003475; }
+:root[data-design="xp"] .xp-titlebar > span { margin-left: auto; font: 11px/1.2 Tahoma,sans-serif; }
+:root[data-design="xp"] .journey-card { order: 1; height: 255px; min-height: 255px; border: 1px solid #3b7ccd; border-radius: 5px; box-shadow: inset 0 0 0 2px #eff7ff,1px 2px 2px #0b316321; background: linear-gradient(90deg,#004c926b,transparent 85%),url("../architect/assets/hainan-promised-tomorrow.png") center 45% / cover; }
+:root[data-design="xp"] .journey-card::before,:root[data-design="xp"] .journey-card::after { display: none; }
+:root[data-design="xp"] .journey-card .xp-titlebar { position: relative; z-index: 2; }
+:root[data-design="xp"] .journey-card .journey-index { display: none; }
+:root[data-design="xp"] .journey-card .journey-copy { top: 51px; left: 17px; right: 17px; }
+:root[data-design="xp"] .journey-copy > p { margin: 0 0 9px; color: #fff; font: 10px/1.2 Tahoma,sans-serif; letter-spacing: 1.2px; }
+:root[data-design="xp"] .journey-copy h2 { max-width: 64%; font: bold clamp(30px,8vw,42px)/.98 Tahoma,sans-serif; letter-spacing: -1px; color: #fff; text-shadow: 1px 2px 3px #003869; }
+:root[data-design="xp"] .journey-card .journey-logo { top: 53px; width: 32%; max-width: 130px; right: 10px; }
+:root[data-design="xp"] .journey-card .journey-bubbles { inset: 53% 0 40px; }
+:root[data-design="xp"] .xp-journey-caption { position: absolute; display: flex; align-items: center; justify-content: space-between; gap: 8px; left: 3px; right: 3px; bottom: 3px; padding: 6px 8px; background: #f1faffeb; color: #103477; font: bold 13px/1.2 Tahoma,sans-serif; }
+:root[data-design="xp"] .xp-journey-caption button { min-height: 44px; padding: 6px 10px; border: 1px solid #4176ad; border-radius: 3px; background: linear-gradient(#fff,#dceefe 48%,#a3d2fb 50%,#e5f4ff); box-shadow: inset 0 0 0 1px #fff; font: bold 12px/1.2 Tahoma,sans-serif; color: #123b81; cursor: pointer; }
+:root[data-design="xp"] .xp-journey-caption b { font-size: 20px; margin-left: 4px; }
+:root[data-design="xp"][data-theme="dark"] .xp-journey-caption { background: #0d294beF; color: #edf7ff; }
+
+:root[data-design="xp"] .desktop-shortcuts { order: 2; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+:root[data-design="xp"] .desktop-shortcuts button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 80px; padding: 7px 2px; border: 1px solid var(--xp-edge); border-radius: 4px; background: var(--xp-button); box-shadow: inset 1px 1px #fff9,inset -1px -1px #4a709326; color: var(--xp-ink); }
+:root[data-design="xp"] .desktop-shortcuts img { width: 39px; height: 39px; object-fit: contain; }
+:root[data-design="xp"] .desktop-shortcuts button > span { font: 12px/1.2 Tahoma,sans-serif; }
+:root[data-design="xp"] .desktop-shortcuts small,:root[data-design="xp"] .desktop-shortcuts button > b { display: none; }
+:root[data-design="xp"] .shortcut-map-orb { width: 39px; height: 39px; font-size: 0 !important; border: 0; background: url("./assets/icons/desktop-map.svg") center / contain no-repeat; box-shadow: none; }
+:root[data-design="xp"] .status-grid { order: 3; gap: 7px; }
+:root[data-design="xp"] .status-module { min-height: 90px; padding: 10px 12px; border: 1px solid var(--xp-edge); border-radius: 4px; background: var(--xp-pane); box-shadow: inset 1px 1px #fff6; }
+:root[data-design="xp"] .status-module::before,:root[data-design="xp"] .status-module::after { display: none; }
+:root[data-design="xp"] .status-module > span { font: bold 11px/1.3 Tahoma,sans-serif; color: var(--xp-muted); letter-spacing: .3px; }
+:root[data-design="xp"] .status-module strong { display: block; margin: 3px 0; font: bold 26px/1 Tahoma,sans-serif; color: var(--xp-ink); text-shadow: none; }
+:root[data-design="xp"] .status-module small { font: 11px/1.3 Tahoma,sans-serif; color: var(--xp-muted); }
+:root[data-design="xp"] .today-card { order: 4; padding: 0; border: 1px solid var(--xp-edge); border-radius: 4px; background: var(--xp-pane); box-shadow: inset 0 1px #fff; overflow: hidden; }
+:root[data-design="xp"] .today-card::before,:root[data-design="xp"] .today-card::after,:root[data-design="xp"] .today-card .section-heading { display: none; }
+:root[data-design="xp"] .timeline-empty { margin: 0; padding: 14px 12px; gap: 9px; }
+:root[data-design="xp"] .timeline-empty strong { color: var(--xp-ink); font: bold 13px/1.4 Tahoma,sans-serif; }
+:root[data-design="xp"] .timeline-empty p { color: var(--xp-muted); font: 12px/1.5 Tahoma,sans-serif; margin: 4px 0 0; }
+:root[data-design="xp"] .timeline-empty .locked-tag { display: none; }
+:root[data-design="xp"] .signal-card { order: 5; padding: 12px; border: 1px solid var(--xp-edge); border-radius: 4px; background: var(--xp-soft); box-shadow: inset 1px 1px #fff8; gap: 10px; }
+:root[data-design="xp"] .signal-card .system-label { display: none; }
+:root[data-design="xp"] .signal-card h3 { color: var(--xp-ink); font: bold 14px/1.3 Tahoma,sans-serif; }
+:root[data-design="xp"] .signal-card p { color: var(--xp-muted); font: 12px/1.4 Tahoma,sans-serif; }
+:root[data-design="xp"] .signal-orb { width: 42px; height: 42px; flex-basis: 42px; font-size: 0; background: url("./assets/icons/nav-cases.png") center / contain no-repeat; box-shadow: none; border: 0; }
+:root[data-design="xp"] .signal-card > button { min-width: 44px; min-height: 44px; border: 1px solid var(--xp-edge); border-radius: 3px; background: var(--xp-button); color: var(--xp-ink); }
+:root[data-design="xp"] .media-widget { order: 6; border-radius: 4px; }
+:root[data-design="xp"] .xp-review-note { order: 7; display: flex; align-items: center; gap: 12px; padding: 11px; background: var(--xp-note); border: 1px solid var(--xp-note-edge); color: var(--xp-muted); font: 11px/1.5 Tahoma,sans-serif; }
+:root[data-design="xp"] .xp-review-note > span { flex: 1; }
+:root[data-design="xp"] .xp-review-note b { display: block; color: var(--xp-ink); }
+:root[data-design="xp"] .xp-review-note a { display: flex; align-items: center; gap: 4px; min-height: 44px; color: var(--xp-ink); text-decoration: underline; }
+
+/* One real navigation bar, not a mock desktop with inert window buttons. */
+:root[data-design="xp"] .app-dock { min-height: calc(66px + env(safe-area-inset-bottom)); border-radius: 0; padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); gap: 2px; background: var(--xp-title); border: 1px solid #0545a6; border-top-color: #9ad0ff; box-shadow: inset 0 2px #4fa2fc,0 -3px 10px #09295d25; backdrop-filter: none; }
+:root[data-design="xp"] .app-dock button { min-height: 56px; border-radius: 3px; padding: 3px 1px; gap: 1px; color: #fff; background: none; box-shadow: none; }
+:root[data-design="xp"] .app-dock button.active { background: linear-gradient(#235dba,#124999); box-shadow: inset 1px 1px #073472,inset -1px -1px #9eceff; }
+:root[data-design="xp"] .app-dock button.active::after { display: none; }
+:root[data-design="xp"] .app-dock .dock-icon { width: 31px; height: 31px; background: none; box-shadow: none; transform: none; }
+:root[data-design="xp"] .app-dock .dock-icon img { width: 100%; height: 100%; filter: drop-shadow(0 1px 1px #002263); }
+:root[data-design="xp"] .app-dock small { font: 10px/1.2 Tahoma,sans-serif; color: #fff; text-shadow: 0 1px #003782; }
+:root[data-design="xp"] .app-dock .nav-cn { display: none; }
+:root[data-design="xp"] .terminal-footer { position: fixed; z-index: 10; left: 50%; transform: translateX(-50%); width: min(100%,560px); margin: 0; bottom: calc(66px + env(safe-area-inset-bottom)); padding: 4px 8px; border: 1px solid var(--xp-edge); background: var(--xp-paper); color: var(--xp-muted); font: 10px/1.3 Tahoma,sans-serif; }
+:root[data-design="xp"] .terminal-footer-build { display: none; }
+:root[data-design="xp"] .app-toast { color: var(--xp-ink); background: var(--xp-note); border: 1px solid var(--xp-note-edge); border-radius: 4px; }
+:root[data-design="xp"] button:focus-visible,:root[data-design="xp"] a:focus-visible { outline: 2px dashed var(--xp-ink); outline-offset: 2px; }
+@media (max-width: 359px) {
+  :root[data-design="xp"] .xp-welcome-note { display: none; }
+  :root[data-design="xp"] .app-brand strong { font-size: 15px; }
+  :root[data-design="xp"] .header-status { display: none; }
+  :root[data-design="xp"] .xp-journey-caption { font-size: 11px; }
+}
+@media (min-width: 600px) {
+  :root[data-design="xp"] .app-shell { margin: 24px auto; border-radius: 12px 12px 0 0; }
+  :root[data-design="xp"] .app-stage { padding-top: 8px; }
+  :root[data-design="xp"] .journey-card { height: 285px; }
+}
