@@ -1102,6 +1102,16 @@ function startLocating(ui, statusEl) {
       if (campusState.selected) {
         selectFeature(campusState.selected, ui, { preserveRoute: insideExplored });
       }
+      if (insideCampus) {
+        reportVisit(longitude, latitude, accuracy).then(async (result) => {
+          if (!result || !result.opened) return;
+          mergeExploration(campusState.data, await fetchExploration());
+          const next = campusState.reopen ? campusState.reopen() : null;
+          if (next) ui = next;
+          statusEl.textContent = "Открыт новый участок карты — его видят все";
+          window.showToast?.("Вы открыли новый участок карты кампуса.");
+        });
+      }
     },
     (err) => {
       // Отказ в доступе — обычное дело, это не ошибка приложения.
@@ -1146,6 +1156,72 @@ function buildLegend(data) {
 
 /* --- инициализация -------------------------------------------------------- */
 
+/* Туман, который снимает группа.
+
+   Карта и так умеет опорные точки: каждая раздвигает исследованную область
+   на радиус подложки. Здесь этот список перестаёт быть записанным в данных и
+   пополняется тем, где участники действительно побывали. Открытая клетка
+   видна всем в сезоне — потому и «снимает группа», а не каждый себе.
+
+   Шаг сетки повторяет серверный намеренно: клиент должен уметь сказать «эту
+   клетку я уже отправлял», не спрашивая сервер на каждый тик watchPosition. */
+const VISIT_GRID = 0.0004;
+const VISIT_MAX_ACCURACY = 100;
+const reportedCells = new Set();
+
+function visitCell(lon, lat) {
+  return `${Math.round(lon / VISIT_GRID)}:${Math.round(lat / VISIT_GRID)}`;
+}
+
+async function fetchExploration() {
+  try {
+    const res = await fetch("/api/v4/campus/exploration", {
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    if (!res.ok) return [];   // Не вошли или сезон не запущен — карта прежняя.
+    const data = await res.json();
+    campusState.openedCells = Number(data.opened) || 0;
+    return Array.isArray(data.anchor_points) ? data.anchor_points : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function mergeExploration(data, anchors) {
+  if (!anchors.length) return data;
+  const exploration = data.exploration || (data.exploration = {});
+  const existing = exploration.anchor_points || [];
+  exploration.anchor_points = existing.concat(anchors);
+  return data;
+}
+
+async function reportVisit(lon, lat, accuracy) {
+  if (!Number.isFinite(accuracy) || accuracy > VISIT_MAX_ACCURACY) return null;
+  const cell = visitCell(lon, lat);
+  if (reportedCells.has(cell)) return null;
+  reportedCells.add(cell);
+  const token = document.cookie.split("; ").find((v) => v.startsWith("zhidao_v4_csrf="));
+  try {
+    const res = await fetch("/api/v4/campus/visits", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": token ? decodeURIComponent(token.slice(token.indexOf("=") + 1)) : "",
+      },
+      body: JSON.stringify({ lat, lon, accuracy_m: accuracy }),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    // Связь пропала — клетка не потеряна: при следующем заходе на это место
+    // отправка повторится, потому что множество живёт только в этой вкладке.
+    reportedCells.delete(cell);
+    return null;
+  }
+}
+
 async function initCampusMap() {
   const host = document.querySelector("#campusCanvas");
   if (!host || campusState.data) return;
@@ -1159,9 +1235,10 @@ async function initCampusMap() {
     host.innerHTML = '<p class="campus-error">Не удалось загрузить данные карты.</p>';
     return;
   }
+  mergeExploration(data, await fetchExploration());
   campusState.data = data;
 
-  const ui = buildSvg(host, data);
+  let ui = buildSvg(host, data);
   routeGraph = buildRouteGraph(data.features, campusState.origin, campusState.exploredRegion);
   applyView(ui);
   attachGestures(ui);
@@ -1172,13 +1249,31 @@ async function initCampusMap() {
     locate.addEventListener("click", () => startLocating(ui, status));
   }
 
+  /* Новая клетка открывается редко, поэтому карта пересобирается целиком:
+     области, туман, маршруты и легенда считаются из одних и тех же данных, и
+     обновлять их по кусочкам значило бы завести второй путь вычисления. */
+  campusState.reopen = () => {
+    ui = buildSvg(host, campusState.data);
+    routeGraph = buildRouteGraph(
+      campusState.data.features, campusState.origin, campusState.exploredRegion
+    );
+    applyView(ui);
+    attachGestures(ui);
+    buildLegend(campusState.data);
+    return ui;
+  };
+
   buildLegend(data);
 
   const count = data.features.length;
   const missing = (data.missing || []).length;
   const note = document.querySelector("#campusSourceNote");
   if (note) {
-    note.textContent = `${count} объектов · ${missing} не найдено · ` +
+    // Число открытых участков стоит первым: оно про то, что группа сделала
+    // сама, а остальная строка — про происхождение данных.
+    const opened = campusState.openedCells
+      ? `открыто участков: ${campusState.openedCells} · ` : "";
+    note.textContent = `${opened}${count} объектов · ${missing} не найдено · ` +
       "светлый сектор — подготовленная часть данных, не административная граница · " +
       "основа © участники OpenStreetMap, ODbL · приблизительные объекты отмечены «?» · " +
       "ничего не сверено на местности";

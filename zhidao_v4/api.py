@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from . import campus
 from .admin import architect_overview
 from .cases_api import register_cases
 from .auth import (
@@ -59,6 +60,14 @@ class MaxLoginPayload(BaseModel):
     # send parsed fields instead — the signature covers the exact string.
     launch_params: str = Field(min_length=1, max_length=4096)
     link_code: str | None = Field(default=None, min_length=6, max_length=16)
+
+
+class CampusVisitPayload(BaseModel):
+    # Границы — земные, а не кампусные: они отсекают мусор и опечатки, а
+    # принадлежность к кампусу проверяет campus.inside_campus.
+    lat: float = Field(ge=-90.0, le=90.0)
+    lon: float = Field(ge=-180.0, le=180.0)
+    accuracy_m: float | None = Field(default=None, ge=0.0, le=100000.0)
 
 
 class SeasonCreatePayload(BaseModel):
@@ -226,6 +235,11 @@ def create_app(
     app.state.login_attempts_per_minute = max(1, min(configured_login_limit, 1000))
     app.state.login_attempts = defaultdict(deque)
     app.state.login_attempts_lock = threading.Lock()
+    # Отметки на карте считаются по аккаунту и только в памяти: в базе у
+    # клетки нет владельца, и заводить его ради ограничения частоты значило
+    # бы завести историю перемещений — ровно то, чего мы не храним.
+    app.state.campus_visits = defaultdict(deque)
+    app.state.campus_visits_lock = threading.Lock()
     # Unset by default: MAX sign-in is opt-in infrastructure, not core to
     # bringing the API up. Registering the bot on business.max.ru/self is a
     # step the user does themselves; nothing here should block on it.
@@ -671,6 +685,66 @@ def create_app(
         conn = connect_database(app.state.db_path)
         try:
             return architect_overview(conn)
+        finally:
+            conn.close()
+
+    def consume_campus_slot(account_id: int) -> None:
+        now = time.monotonic()
+        with app.state.campus_visits_lock:
+            marks = app.state.campus_visits[account_id]
+            while marks and now - marks[0] >= 60:
+                marks.popleft()
+            if len(marks) >= 12:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Слишком часто. Карта никуда не денется.",
+                    headers={"Retry-After": "60"},
+                )
+            marks.append(now)
+
+    @app.get("/api/v4/campus/exploration")
+    def campus_exploration(principal: Principal = Depends(_current_principal)):
+        """Открытые клетки текущего сезона — в формате опорных точек карты."""
+        conn = connect_database(app.state.db_path)
+        try:
+            season_id = campus.active_season_id(conn, principal.account_id)
+            if season_id is None:
+                # Не ошибка: сезон ещё не запущен или человек в него не введён.
+                # Карта в этом случае показывает подготовленную область, как и
+                # раньше, а не пустоту.
+                return {"season_id": None, "opened": 0, "anchor_points": []}
+            return campus.exploration(conn, season_id)
+        finally:
+            conn.close()
+
+    @app.post("/api/v4/campus/visits")
+    def campus_visit(
+        payload: CampusVisitPayload,
+        principal: Principal = Depends(_csrf_principal),
+    ):
+        """Отмечает, что здесь были. Открытая клетка видна всем в сезоне."""
+        consume_campus_slot(principal.account_id)
+        conn = connect_database(app.state.db_path)
+        try:
+            season_id = campus.active_season_id(conn, principal.account_id)
+            if season_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Нет активного сезона: открывать карту пока некому.",
+                )
+            with immediate_transaction(conn):
+                try:
+                    return campus.record_visit(
+                        conn,
+                        season_id,
+                        lon=payload.lon,
+                        lat=payload.lat,
+                        accuracy_m=payload.accuracy_m,
+                    )
+                except campus.CampusError as exc:
+                    raise HTTPException(
+                        status_code=exc.status_code, detail=str(exc)
+                    ) from exc
         finally:
             conn.close()
 
