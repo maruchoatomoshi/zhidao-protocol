@@ -208,3 +208,303 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"][data-motion="full"] .app-toast:not([hidden]) {
   animation: xp-balloon 220ms ease-out both;
 }
+
+/* =========================================================================
+   ОСТАЛЬНЫЕ ЭКРАНЫ
+
+   Оформление ведётся по деталям, а не по экранам: одна и та же карточка,
+   вкладка и кнопка ходят по всем разделам, и перекрасить их один раз
+   надёжнее, чем одиннадцать. Отсюда порядок ниже — от общего к частному.
+
+   Правило перекраски одно: убрать блик и полупрозрачность, поставить
+   честный однопиксельный кант и белую бумагу. Структуру не трогаем — она
+   уже верная, и на ней держатся все размеры нажатия.
+   ========================================================================= */
+
+/* --- Заголовки экранов --------------------------------------------------
+   Дисплейное начертание Aero (заливка градиентом плюс белый контур) под XP
+   не живёт: там заголовок набирался жирной Tahoma и всё. Гасим заливку явно
+   — иначе -webkit-text-fill-color оставит букву прозрачной. */
+:root[data-design="xp"] .display-title,
+:root[data-design="xp"] .screen-intro h1,
+:root[data-design="xp"] .map-screen-head h1 {
+  background: none;
+  color: var(--xp-ink);
+  -webkit-text-fill-color: var(--xp-ink);
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+  font: bold clamp(23px,6.5vw,32px)/1.08 Tahoma,"Segoe UI",sans-serif;
+  letter-spacing: -.8px;
+}
+:root[data-design="xp"] .system-label { font: bold 10px/1.3 Tahoma,sans-serif; letter-spacing: .08em; color: var(--xp-muted); }
+:root[data-design="xp"] .screen-sub { font: 11px/1.4 "Courier New",monospace; color: var(--xp-muted); }
+:root[data-design="xp"] .screen-sub-mark,
+:root[data-design="xp"] .screen-sub-sep { color: var(--xp-edge); }
+:root[data-design="xp"] .screen-intro::after,
+:root[data-design="xp"] .map-screen-head::after { display: none; }
+:root[data-design="xp"] .preview-chip,
+:root[data-design="xp"] .locked-tag,
+:root[data-design="xp"] .module-status-tag,
+:root[data-design="xp"] .banner-serial {
+  border: 1px solid var(--xp-note-edge);
+  border-radius: 2px;
+  background: var(--xp-note);
+  color: #7b6a2e;
+  font: bold 9px/1.3 "Courier New",monospace;
+  letter-spacing: .1em;
+  box-shadow: none;
+}
+:root[data-design="xp"] .map-back {
+  width: 40px; height: 40px; border-radius: 4px;
+  border: 1px solid var(--xp-edge); background: var(--xp-button); color: var(--xp-ink);
+  box-shadow: inset 1px 1px #fff9,inset -1px -1px #4a709326;
+}
+
+/* --- Бумага -------------------------------------------------------------
+   Стекло становится бумагой: непрозрачная заливка, кант в один пиксель,
+   блик-псевдоэлемент выключен. Он и был главным признаком Aero. */
+:root[data-design="xp"] .glass-card,
+:root[data-design="xp"] .module-status,
+:root[data-design="xp"] .placeholder-card,
+:root[data-design="xp"] .desktop-banner,
+:root[data-design="xp"] .stat-tile,
+:root[data-design="xp"] .signal-card,
+:root[data-design="xp"] .mission-row,
+:root[data-design="xp"] .shop-item-card,
+:root[data-design="xp"] .profile-card,
+:root[data-design="xp"] .settings-list,
+:root[data-design="xp"] .auth-panel {
+  border: 1px solid var(--xp-edge);
+  border-radius: 4px;
+  background: var(--xp-pane);
+  box-shadow: inset 1px 1px #fff8;
+  backdrop-filter: none;
+}
+:root[data-design="xp"] .glass-card::before,
+:root[data-design="xp"] .glass-card::after,
+:root[data-design="xp"] .placeholder-card::after,
+:root[data-design="xp"] .desktop-banner::after,
+:root[data-design="xp"] .stat-tile::after,
+:root[data-design="xp"] .signal-card::after,
+:root[data-design="xp"] .profile-card::after,
+:root[data-design="xp"] .auth-panel::after { display: none; }
+:root[data-design="xp"] .placeholder-screen h2,
+:root[data-design="xp"] .placeholder-screen h3,
+:root[data-design="xp"] .module-status-body strong,
+:root[data-design="xp"] .mission-row strong { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .placeholder-screen p,
+:root[data-design="xp"] .module-status-body p,
+:root[data-design="xp"] .mission-row small { color: var(--xp-muted); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .desktop-eyebrow { color: var(--xp-muted); font: bold 10px/1.3 Tahoma,sans-serif; letter-spacing: .08em; }
+:root[data-design="xp"] .placeholder-hero { border-radius: 4px; }
+
+/* --- Кнопки -------------------------------------------------------------
+   Скос XP: белый кант внутри сверху, тень внутри снизу, излом на 49%.
+   Синяя кнопка остаётся главной, серая — обычной. */
+:root[data-design="xp"] .btn {
+  border-radius: 3px;
+  border: 1px solid var(--xp-edge);
+  font-family: Tahoma,sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: inset 1px 1px #fff9,inset -1px -1px #4a709326;
+}
+:root[data-design="xp"] .btn::before { display: none; }
+:root[data-design="xp"] .btn-secondary,
+:root[data-design="xp"] .btn-icon { background: var(--xp-button); color: var(--xp-ink); text-shadow: none; }
+:root[data-design="xp"] .btn-primary,
+:root[data-design="xp"] .btn-action {
+  border-color: #075a97;
+  background: linear-gradient(#7fd8f4 0%,#1ba7e0 9%,#0a7cc2 48%,#0a6fb4 49%,#1290d4 85%,#064e8c 100%);
+  color: #fff;
+  text-shadow: 1px 1px #063f70;
+  box-shadow: inset 1px 1px #ffffff70,inset -1px -1px #06375f;
+}
+:root[data-design="xp"] .btn:active { box-shadow: inset 1px 1px #4a7093aa,inset -1px -1px #fff9; }
+
+/* --- Вкладки ------------------------------------------------------------
+   Полоска вкладок XP: активная приподнята и срослась с панелью под ней,
+   остальные утоплены. Цветной подсветки снизу здесь нет — она из Aero. */
+:root[data-design="xp"] .tabs {
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--xp-edge);
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+:root[data-design="xp"] .tab {
+  border: 1px solid var(--xp-edge);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(#f2f9fd,#dceaf4);
+  color: var(--xp-muted);
+  font: bold 12px/1.2 Tahoma,sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+  margin-bottom: -1px;
+}
+/* Цветной кант сверху у активной вкладки — не украшение: он у каждого
+   раздела свой (aero-desktop.css красит рейтинг лаймом, задания фиалкой) и
+   работает как метка места. Под XP он оставлен, но получил толщину: в один
+   пиксель он читался как случайная линия. */
+:root[data-design="xp"] .tab.active {
+  background: var(--xp-pane);
+  color: var(--xp-ink);
+  border-top-width: 3px;
+  padding-bottom: 9px;
+}
+:root[data-design="xp"] .tab::after { display: none; }
+
+/* --- «Ещё»: плитки, настройки, разделитель ------------------------------
+   Плитка становится значком рабочего стола: выпуклая сфера остаётся (это
+   язык эпохи и он общий у Aero и XP), рамка выпрямляется. */
+:root[data-design="xp"] .hub-tile {
+  border-radius: 4px;
+  border: 1px solid var(--xp-edge);
+  background: var(--xp-button);
+  box-shadow: inset 1px 1px #fff9,inset -1px -1px #4a709326;
+}
+:root[data-design="xp"] .hub-name { color: var(--xp-ink); font: bold 12px/1.2 Tahoma,sans-serif; }
+:root[data-design="xp"] .hub-cn { color: var(--xp-muted); }
+:root[data-design="xp"] .settings-list button { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .settings-list button + button { border-top: 1px solid var(--xp-edge); }
+:root[data-design="xp"] .settings-list b { color: var(--xp-muted); font-weight: normal; }
+:root[data-design="xp"] .settings-group-label { color: var(--xp-muted); font: bold 10px/1.3 Tahoma,sans-serif; letter-spacing: .08em; }
+:root[data-design="xp"] .cn-divider { color: var(--xp-muted); }
+:root[data-design="xp"] .cn-divider::before,
+:root[data-design="xp"] .cn-divider::after { background: var(--xp-edge); }
+
+/* --- Окна: кейсы, коллекция, админка, диалоги ---------------------------
+   Здесь работы почти нет, и это не совпадение: экран кейсов с самого начала
+   был окном 2000-х — заголовок, строка состояния, наборный Trebuchet.
+   Меняется семь переменных, и вместе с ними одеваются четыре раздела. */
+:root[data-design="xp"] .case-workstation,
+:root[data-design="xp"] .case-dialog {
+  --case-ink: #06304f;
+  --case-muted: #35647d;
+  --case-paper: #eef7fc;
+  --case-pane: #ffffff;
+  --case-border: #8fbcd6;
+  --case-inset: #e6f4fc;
+  --case-title: linear-gradient(#7fd8f4 0%,#1ba7e0 9%,#0a7cc2 48%,#0a6fb4 49%,#0d6fae 85%,#054780 100%);
+}
+:root[data-design="xp"][data-theme="dark"] .case-workstation,
+:root[data-design="xp"][data-theme="dark"] .case-dialog {
+  --case-ink: #e9f5ff;
+  --case-muted: #b9cfe5;
+  --case-paper: #16294a;
+  --case-pane: #1d3757;
+  --case-border: #5f89a6;
+  --case-inset: #0f2540;
+  --case-title: linear-gradient(#4e9cc4,#1b6d9c 9%,#0f5074 48%,#0d4767 49%,#136894 85%,#07293e);
+}
+:root[data-design="xp"] .case-workstation .case-window,
+:root[data-design="xp"] .case-dialog { border-radius: 5px; font-family: Tahoma,"Segoe UI",sans-serif; }
+:root[data-design="xp"] .case-titlebar { border-radius: 0; font-family: Tahoma,sans-serif; text-shadow: 1px 1px #063f70; }
+:root[data-design="xp"] .case-workstation .btn,
+:root[data-design="xp"] .case-dialog .btn { font-family: Tahoma,sans-serif; }
+
+/* Служебная плита админки: под XP металл уступает бумаге, но красная
+   штриховка остаётся — она и означает «служебное». */
+:root[data-design="xp"] .admin-plate { border-radius: 4px; background: linear-gradient(#f6fbfe,#e2eff8); }
+:root[data-design="xp"] .admin-nav-btn { border-radius: 4px; border-color: var(--xp-edge); background: var(--xp-button); box-shadow: inset 1px 1px #fff9,inset -1px -1px #4a709326; }
+:root[data-design="xp"] .admin-nav-btn.active { background: linear-gradient(#dceefe,#b9dcf6); box-shadow: inset 1px 1px #4a709355,inset -1px -1px #fff9; }
+:root[data-design="xp"] .admin-nav-btn.active::after { display: none; }
+:root[data-design="xp"] .admin-nav-label,
+:root[data-design="xp"] .admin-gauge strong { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+/* Шильдик роли: бумагу получают все, кроме системного администратора —
+   у него красный, и он единственный, который видно издалека. Перекрасив его
+   заодно со всеми, я убрал ровно ту разницу, ради которой он существует. */
+:root[data-design="xp"] .admin-badge { border-radius: 2px; }
+:root[data-design="xp"] .admin-badge:not([data-role="system_admin"]) { background: var(--xp-button); }
+
+/* --- Каталог имплантов --------------------------------------------------
+   Карточки остаются как есть: цветной кант несёт редкость, а это данные, не
+   украшение. Выпрямляется только рамка и набор. */
+:root[data-design="xp"] .implant-card { border-radius: 4px; }
+:root[data-design="xp"] .implant-card::after { display: none; }
+:root[data-design="xp"] .implant-name { font-family: Tahoma,sans-serif; }
+
+/* --- Карта кампуса ------------------------------------------------------
+   Саму карту не трогаем: там география, а не оформление. Одевается только
+   обвязка — панель, легенда, карточка точки. */
+:root[data-design="xp"] .campus-canvas,
+:root[data-design="xp"] .campus-map { border-radius: 4px; border: 1px solid var(--xp-edge); box-shadow: inset 0 1px 3px #001f3920; }
+:root[data-design="xp"] .campus-status,
+:root[data-design="xp"] .campus-badge { border-radius: 2px; border: 1px solid var(--xp-edge); background: var(--xp-soft); color: var(--xp-ink); font-family: Tahoma,sans-serif; box-shadow: none; }
+:root[data-design="xp"] .campus-legend { color: var(--xp-muted); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .map-point-card { border-radius: 4px; }
+:root[data-design="xp"] .map-point-copy h2 { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .map-point-copy p,
+:root[data-design="xp"] .map-disclaimer { color: var(--xp-muted); font-family: Tahoma,sans-serif; }
+
+/* --- Рейтинг и магазин --------------------------------------------------
+   Строки рейтинга и товары — тот же список в окне. Заглушки-скелетоны
+   становятся продавленными жёлобами: пустое место видно, но оно не мигает
+   и не притворяется содержимым. */
+:root[data-design="xp"] .board-row { border-radius: 3px; border: 1px solid var(--xp-edge); background: var(--xp-pane); }
+:root[data-design="xp"] .board-rank,
+:root[data-design="xp"] .board-value { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .podium-slot { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .shop-item-price { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .skeleton .line-lg,
+:root[data-design="xp"] .skeleton .line-sm,
+:root[data-design="xp"] .skeleton .board-avatar,
+:root[data-design="xp"] .skeleton .board-value,
+:root[data-design="xp"] .shop-item-icon {
+  background: var(--xp-inset, #e0edf6);
+  border: 1px solid #cfe0ec;
+  box-shadow: inset 0 1px 2px #001f3915;
+  animation: none;
+}
+:root[data-design="xp"] .gauge,
+:root[data-design="xp"] .gauge-segments .gauge-seg { border-radius: 2px; border: 1px solid var(--xp-edge); background: #e0edf6; box-shadow: inset 0 1px 2px #001f3922; }
+:root[data-design="xp"] .stat-tile span { color: var(--xp-muted); font: bold 11px/1.3 Tahoma,sans-serif; }
+:root[data-design="xp"] .stat-tile strong { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+
+/* --- Профиль ------------------------------------------------------------ */
+:root[data-design="xp"] .profile-id strong { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .profile-path-badge { border-radius: 2px; border: 1px solid var(--xp-edge); background: var(--xp-soft); color: var(--xp-muted); font-family: "Courier New",monospace; }
+:root[data-design="xp"] .profile-collection-link { border-radius: 4px; border: 1px solid var(--xp-edge); background: var(--xp-button); color: var(--xp-ink); box-shadow: inset 1px 1px #fff9; }
+
+/* --- Вход ---------------------------------------------------------------
+   Диалог входа: белая бумага и жёсткий кант вместо стекла поверх
+   фотографии. Фотография остаётся за ним — она и есть обещание поездки. */
+:root[data-design="xp"] .auth-panel { border-radius: 6px; box-shadow: inset 0 1px #fff,0 14px 40px #00193b55; }
+:root[data-design="xp"] .auth-title { font: bold 30px/1.05 Tahoma,"Segoe UI",sans-serif; }
+:root[data-design="xp"] .auth-note,
+:root[data-design="xp"] .auth-field span { color: var(--xp-muted); font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .auth-field input {
+  border-radius: 2px;
+  border: 1px solid var(--xp-edge);
+  background: var(--xp-pane);
+  color: var(--xp-ink);
+  box-shadow: inset 0 1px 2px #001f3922;
+  font-family: Tahoma,sans-serif;
+}
+:root[data-design="xp"] .auth-error { color: #a8302a; font-family: Tahoma,sans-serif; }
+:root[data-design="xp"] .auth-preview-link { color: var(--xp-ink); font-family: Tahoma,sans-serif; }
+
+/* --- Ночь ---------------------------------------------------------------
+   Бумага ночью остаётся бумагой, только тёмной: те же переменные, никаких
+   отдельных правил. Здесь только то, что переменными не покрывается. */
+/* Жёлтая бумага ночью темнеет, а чернила на ней оставались дневными:
+   #7b6a2e на #343e43 давало около 2:1 — метка была, а прочесть её было
+   нельзя. Переменной здесь нет намеренно: цвет нужен только этим меткам. */
+:root[data-design="xp"][data-theme="dark"] .preview-chip,
+:root[data-design="xp"][data-theme="dark"] .locked-tag,
+:root[data-design="xp"][data-theme="dark"] .module-status-tag,
+:root[data-design="xp"][data-theme="dark"] .banner-serial { color: #d8c88a; }
+:root[data-design="xp"][data-theme="dark"] .tab { background: linear-gradient(#22405f,#1a3350); }
+:root[data-design="xp"][data-theme="dark"] .tab.active { background: var(--xp-pane); }
+:root[data-design="xp"][data-theme="dark"] .skeleton .line-lg,
+:root[data-design="xp"][data-theme="dark"] .skeleton .line-sm,
+:root[data-design="xp"][data-theme="dark"] .skeleton .board-avatar,
+:root[data-design="xp"][data-theme="dark"] .skeleton .board-value,
+:root[data-design="xp"][data-theme="dark"] .shop-item-icon,
+:root[data-design="xp"][data-theme="dark"] .gauge,
+:root[data-design="xp"][data-theme="dark"] .gauge-segments .gauge-seg { background: #11294a; border-color: #2c4c6b; }
+:root[data-design="xp"][data-theme="dark"] .admin-plate { background: linear-gradient(#22405f,#1a3350); }
