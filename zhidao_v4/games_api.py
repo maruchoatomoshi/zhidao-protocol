@@ -1,12 +1,16 @@
-"""Маршруты вечерних игр. Права и CSRF — те же зависимости, что у кейсов.
+"""Маршруты игр за столом. Права и CSRF — те же зависимости, что у кейсов.
+
+Маршруты не знают правил: каждая игра — модуль (`spy`, `cipher`) с одним и
+тем же набором функций (`act`, `tick`, `view`, `settings_from`, `joinable`,
+`in_round`). Здесь только общий путь: найти комнату, проверить, что человек за
+столом, довести партию до «сейчас», выполнить ход, отдать каждому его экран.
 
 Комнатам не нужен активный сезон: вечерние игры должны работать и тогда,
 когда сезон ещё черновик, и у организаторов, у которых нет участия.
 
 Присутствие («кто сейчас смотрит на экран») держится в памяти процесса:
-его отметки идут на каждый опрос, и писать их в SQLite незачем. После
-перезапуска сервера оно восстанавливается за пару секунд само — телефоны
-продолжают опрашивать. Состояние партии при этом лежит в базе и не теряется.
+отметки идут на каждый опрос, и писать их в SQLite незачем. Решений оно не
+принимает — только подсвечивает, кто на связи.
 """
 
 from __future__ import annotations
@@ -16,48 +20,29 @@ import threading
 import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
-from typing import Literal
+from typing import Any, Literal
 
-from fastapi import Depends, HTTPException
+from fastapi import Body, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import rooms, spy
+from . import cipher, rooms, spy
 from .db import connect_database, immediate_transaction
 
 
 PRESENCE_SECONDS = 20
 JOINS_PER_MINUTE = 20
+MODULES = {spy.GAME: spy, cipher.GAME: cipher}
+assert tuple(MODULES) == rooms.GAMES, "Список игр в rooms.GAMES и в маршрутах разошёлся"
 
 
 class RoomCreatePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    game: Literal["spy"]
+    game: Literal["spy", "cipher"]
 
 
 class RoomJoinPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
     code: str = Field(pattern=r"^\d{4}$")
-
-
-class SettingsPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    mode: Literal["translated", "hanzi"]
-    minutes: int = Field(ge=spy.MINUTES[0], le=spy.MINUTES[1], strict=True)
-
-
-class TargetPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    target_account_id: int = Field(gt=0, strict=True)
-
-
-class VotePayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    yes: bool = Field(strict=True)
-
-
-class GuessPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    location_id: str = Field(min_length=1, max_length=40)
 
 
 class SwitchPayload(BaseModel):
@@ -66,7 +51,8 @@ class SwitchPayload(BaseModel):
 
 
 def register_games(app, current_principal, csrf_principal, architect_writer):
-    spy.content()  # Битые данные мест — ошибка старта, а не посреди вечера.
+    for module in MODULES.values():
+        module.content()  # Битые данные игры — ошибка старта, а не посреди вечера.
 
     app.state.game_presence = {}
     app.state.game_presence_lock = threading.Lock()
@@ -108,8 +94,8 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
         finally:
             conn.close()
 
-    def seated_ids(conn, room_id: int) -> list[int]:
-        return [int(p["account_id"]) for p in rooms.players(conn, room_id)]
+    def seated_ids(conn, room_id: int) -> set[int]:
+        return {int(p["account_id"]) for p in rooms.players(conn, room_id)}
 
     def settle(conn, room) -> None:
         """Доводит партию до «сейчас» и пишет, только если что-то сдвинулось.
@@ -119,12 +105,10 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
         смотрим без блокировки и лишь при настоящем переходе перечитываем
         комнату уже внутри BEGIN IMMEDIATE.
         """
+        module = MODULES[room["game"]]
         state = json.loads(room["state_json"])
-        seated = set(seated_ids(conn, int(room["id"])))
         probe = json.loads(room["state_json"])
-        if not spy.in_round(state):
-            return
-        spy.tick(probe, seated, rooms.utcnow())
+        module.tick(probe, seated_ids(conn, int(room["id"])), rooms.utcnow())
         if probe == state:
             return
         with immediate_transaction(conn):
@@ -132,13 +116,13 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
             if fresh is None:
                 return
             state = json.loads(fresh["state_json"])
-            seated = set(seated_ids(conn, int(fresh["id"])))
             now = rooms.utcnow()
-            points = spy.tick(state, seated, now)
+            points = module.tick(state, seated_ids(conn, int(fresh["id"])), now)
             rooms.add_points(conn, int(fresh["id"]), points)
             rooms.save(conn, int(fresh["id"]), status=fresh["status"], state=state, now=now)
 
     def room_view(conn, room, viewer: int) -> dict:
+        module = MODULES[room["game"]]
         seats = rooms.players(conn, int(room["id"]))
         seated = {int(p["account_id"]) for p in seats}
         present = present_among(seated)
@@ -153,8 +137,8 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
                 "host_account_id": int(room["host_account_id"]),
                 "is_host": int(room["host_account_id"]) == viewer,
                 "settings": settings,
-                "joinable": spy.joinable(room["status"], state),
-                "min_players": spy.MIN_PLAYERS,
+                "joinable": module.joinable(room["status"], state),
+                "min_players": module.MIN_PLAYERS,
                 "max_players": rooms.MAX_PLAYERS,
             },
             "you": viewer,
@@ -168,7 +152,7 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
                 }
                 for p in seats
             ],
-            "spy": spy.view(state, viewer, settings, seated, rooms.utcnow()),
+            "game": module.view(state, viewer, settings, seated, rooms.utcnow()),
         }
 
     def member_room(conn, code: str, account_id: int):
@@ -179,24 +163,25 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
             raise rooms.GameError("Комната не найдена.", 404)
         return room
 
-    def act(code: str, account_id: int, action):
-        """Общий путь действия игрока: блокировка, доводка до «сейчас», ход."""
+    def act(code: str, account_id: int, handler):
+        """Общий путь хода: блокировка, доводка до «сейчас», ход, запись."""
         mark_present(account_id)
         with database() as conn:
             with immediate_transaction(conn):
                 room = member_room(conn, code, account_id)
+                module = MODULES[room["game"]]
                 rooms.require_enabled(conn, room["game"])
                 state = json.loads(room["state_json"])
                 settings = json.loads(room["settings_json"])
-                seated = set(seated_ids(conn, int(room["id"])))
+                seated = seated_ids(conn, int(room["id"]))
                 now = rooms.utcnow()
-                points = spy.tick(state, seated, now)
-                status, new_settings, more = action(room, state, settings, seated, now)
+                points = module.tick(state, seated, now)
+                status, new_settings, more = handler(module, room, state, settings, seated, now)
                 for pid, amount in (more or {}).items():
                     points[pid] = points.get(pid, 0) + amount
                 rooms.add_points(conn, int(room["id"]), points)
-                rooms.save(conn, int(room["id"]), status=status, state=state, now=now,
-                           settings=new_settings)
+                rooms.save(conn, int(room["id"]), status=status or room["status"], state=state,
+                           now=now, settings=new_settings)
             return room_view(conn, rooms.load_room(conn, code), account_id)
 
     # --- комнаты --------------------------------------------------------------
@@ -206,10 +191,9 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
         mark_present(principal.account_id)
         with database() as conn:
             room = rooms.room_for_account(conn, principal.account_id)
-            if room is None:
-                return {"room": None, "switches": rooms.switches(conn)}
-            settle(conn, room)
-            room = rooms.room_for_account(conn, principal.account_id)
+            if room is not None:
+                settle(conn, room)
+                room = rooms.room_for_account(conn, principal.account_id)
             if room is None:
                 return {"room": None, "switches": rooms.switches(conn)}
             return room_view(conn, room, principal.account_id)
@@ -217,10 +201,11 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
     @app.post("/api/v4/games/rooms")
     def create_room(payload: RoomCreatePayload, principal=Depends(csrf_principal)):
         mark_present(principal.account_id)
+        module = MODULES[payload.game]
         with database() as conn:
             with immediate_transaction(conn):
                 room = rooms.create_room(conn, principal.account_id, payload.game,
-                                         dict(spy.DEFAULT_SETTINGS), rooms.utcnow())
+                                         dict(module.DEFAULT_SETTINGS), rooms.utcnow())
             return room_view(conn, room, principal.account_id)
 
     @app.post("/api/v4/games/rooms/join")
@@ -231,7 +216,7 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
             with immediate_transaction(conn):
                 room = rooms.join_room(
                     conn, principal.account_id, payload.code, rooms.utcnow(),
-                    joinable=lambda r: spy.joinable(r["status"], json.loads(r["state_json"])),
+                    joinable=lambda r: MODULES[r["game"]].joinable(r["status"], json.loads(r["state_json"])),
                 )
             return room_view(conn, room, principal.account_id)
 
@@ -239,8 +224,7 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
     def get_room(code: str, principal=Depends(current_principal)):
         mark_present(principal.account_id)
         with database() as conn:
-            room = member_room(conn, code, principal.account_id)
-            settle(conn, room)
+            settle(conn, member_room(conn, code, principal.account_id))
             return room_view(conn, member_room(conn, code, principal.account_id), principal.account_id)
 
     @app.post("/api/v4/games/rooms/{code}/leave")
@@ -252,59 +236,29 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
             return {"room": None, "switches": rooms.switches(conn)}
 
     @app.post("/api/v4/games/rooms/{code}/settings")
-    def room_settings(code: str, payload: SettingsPayload, principal=Depends(csrf_principal)):
-        def action(room, state, settings, seated, now):
+    def room_settings(code: str, body: dict[str, Any] | None = Body(default=None),
+                      principal=Depends(csrf_principal)):
+        def handler(module, room, state, settings, seated, now):
             if int(room["host_account_id"]) != principal.account_id:
                 raise rooms.GameError("Настройки меняет ведущий.", 403)
-            if spy.in_round(state):
-                raise rooms.GameError("Настройки меняются между раундами.", 409)
-            return room["status"], spy.clean_settings(payload.mode, payload.minutes), None
-        return act(code, principal.account_id, action)
+            if module.in_round(state):
+                raise rooms.GameError("Настройки меняются между партиями.", 409)
+            return None, module.settings_from(body), None
+        return act(code, principal.account_id, handler)
 
-    # --- Шпион ---------------------------------------------------------------
-
-    @app.post("/api/v4/games/rooms/{code}/spy/start")
-    def spy_start(code: str, principal=Depends(csrf_principal)):
-        def action(room, state, settings, seated, now):
-            if int(room["host_account_id"]) != principal.account_id:
-                raise rooms.GameError("Раунд запускает ведущий.", 403)
-            # Порядок не важен: шпиона и роли всё равно выбирает жребий.
-            fresh = spy.start_round(state, sorted(seated), settings, now)
-            state.clear()
-            state.update(fresh)
-            return "playing", None, None
-        return act(code, principal.account_id, action)
-
-    @app.post("/api/v4/games/rooms/{code}/spy/accuse")
-    def spy_accuse(code: str, payload: TargetPayload, principal=Depends(csrf_principal)):
-        def action(room, state, settings, seated, now):
-            spy.accuse(state, principal.account_id, payload.target_account_id, seated, now)
-            return room["status"], None, None
-        return act(code, principal.account_id, action)
-
-    @app.post("/api/v4/games/rooms/{code}/spy/vote")
-    def spy_vote(code: str, payload: VotePayload, principal=Depends(csrf_principal)):
-        def action(room, state, settings, seated, now):
-            spy.vote(state, principal.account_id, payload.yes, seated)
-            # Голос мог оказаться решающим — доводим сразу, а не при следующем опросе.
-            points = spy.tick(state, seated, now)
-            return room["status"], None, points
-        return act(code, principal.account_id, action)
-
-    @app.post("/api/v4/games/rooms/{code}/spy/guess")
-    def spy_guess(code: str, payload: GuessPayload, principal=Depends(csrf_principal)):
-        def action(room, state, settings, seated, now):
-            points = spy.guess(state, principal.account_id, payload.location_id, seated)
-            return room["status"], None, points
-        return act(code, principal.account_id, action)
-
-    @app.post("/api/v4/games/rooms/{code}/spy/final-vote")
-    def spy_final_vote(code: str, payload: TargetPayload, principal=Depends(csrf_principal)):
-        def action(room, state, settings, seated, now):
-            spy.final_vote(state, principal.account_id, payload.target_account_id, seated)
-            points = spy.tick(state, seated, now)
-            return room["status"], None, points
-        return act(code, principal.account_id, action)
+    @app.post("/api/v4/games/rooms/{code}/{game}/{action}")
+    def game_action(code: str, game: str, action: str,
+                    body: dict[str, Any] | None = Body(default=None),
+                    principal=Depends(csrf_principal)):
+        def handler(module, room, state, settings, seated, now):
+            if room["game"] != game:
+                raise rooms.GameError("В этой комнате другая игра.", 404)
+            status, points = module.act(
+                action, state, principal.account_id, body,
+                seated=seated, host=int(room["host_account_id"]), now=now, settings=settings,
+            )
+            return status, None, points
+        return act(code, principal.account_id, handler)
 
     # --- выключатели ------------------------------------------------------------
 

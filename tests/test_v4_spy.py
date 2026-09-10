@@ -122,7 +122,7 @@ class SpyGameTests(unittest.TestCase):
         state, spy_name, agents = self.roles(code)
         place = spy.locations_by_id()[state["location"]]
 
-        spy_round = self.ok(self.get(spy_name, f"/api/v4/games/rooms/{code}"))["spy"]["round"]
+        spy_round = self.ok(self.get(spy_name, f"/api/v4/games/rooms/{code}"))["game"]["round"]
         self.assertEqual(spy_round["you"], {"spy": True})
         # Весь экран шпиона, кроме общего списка мест, не содержит ни следа
         # места: ни id, ни иероглифов, ни перевода, ни ролей.
@@ -131,7 +131,7 @@ class SpyGameTests(unittest.TestCase):
             self.assertNotIn(secret, leaked)
 
         for agent in agents:
-            agent_round = self.ok(self.get(agent, f"/api/v4/games/rooms/{code}"))["spy"]["round"]
+            agent_round = self.ok(self.get(agent, f"/api/v4/games/rooms/{code}"))["game"]["round"]
             self.assertEqual(agent_round["you"]["location"]["id"], place["id"])
             self.assertEqual(agent_round["you"]["role"], state["roles"][str(self.ids[agent])])
             # И никто за столом не получает имени шпиона до раскрытия.
@@ -143,7 +143,7 @@ class SpyGameTests(unittest.TestCase):
         self.ok(self.post("kid1", f"/api/v4/games/rooms/{code}/settings", {"mode": "hanzi", "minutes": 6}))
         self.ok(self.post("kid1", f"/api/v4/games/rooms/{code}/spy/start"))
         _, _, agents = self.roles(code)
-        body = self.ok(self.get(agents[0], f"/api/v4/games/rooms/{code}"))["spy"]
+        body = self.ok(self.get(agents[0], f"/api/v4/games/rooms/{code}"))["game"]
         self.assertEqual(set(body["round"]["you"]["location"]), {"id", "zh"})
         self.assertTrue(all(set(item) == {"id", "zh"} for item in body["locations"]))
 
@@ -193,7 +193,7 @@ class SpyGameTests(unittest.TestCase):
         code = self.start()
         state, spy_name, _ = self.roles(code)
         body = self.ok(self.post(spy_name, f"/api/v4/games/rooms/{code}/spy/guess", {"location_id": state["location"]}))
-        result = body["spy"]["round"]["result"]
+        result = body["game"]["round"]["result"]
         self.assertEqual((result["winner"], result["reason"]), ("spy", "guessed"))
         self.assertEqual(result["location"]["id"], state["location"])
         scores, _ = self.scores(code)
@@ -225,7 +225,7 @@ class SpyGameTests(unittest.TestCase):
         self.assertEqual(self.post(spy_name, f"/api/v4/games/rooms/{code}/spy/vote", {"yes": False}).status_code, 403)
         for voter in others:
             body = self.ok(self.post(voter, f"/api/v4/games/rooms/{code}/spy/vote", {"yes": True}))
-        result = body["spy"]["round"]["result"]
+        result = body["game"]["round"]["result"]
         self.assertEqual((result["winner"], result["reason"]), ("agents", "accused"))
         scores, _ = self.scores(code)
         self.assertEqual(scores[accuser], spy.ACCUSER_WIN)
@@ -240,7 +240,7 @@ class SpyGameTests(unittest.TestCase):
         self.ok(self.post(spy_name, f"/api/v4/games/rooms/{code}/spy/vote", {"yes": True}))
         self.ok(self.post(bystander, f"/api/v4/games/rooms/{code}/spy/vote", {"yes": True}))
         scores, view = self.scores(code)
-        self.assertEqual(view["spy"]["round"]["result"]["reason"], "framed")
+        self.assertEqual(view["game"]["round"]["result"]["reason"], "framed")
         self.assertEqual(scores[spy_name], spy.SPY_FRAMED)
 
     def test_a_lone_accuser_cannot_convict_while_the_table_is_away(self):
@@ -252,10 +252,10 @@ class SpyGameTests(unittest.TestCase):
         accuser = agents[0]
         body = self.ok(self.post(accuser, f"/api/v4/games/rooms/{code}/spy/accuse",
                                  {"target_account_id": self.ids[spy_name]}))
-        self.assertEqual(body["spy"]["round"]["phase"], "vote")
+        self.assertEqual(body["game"]["round"]["phase"], "vote")
         later = rooms.utcnow() + timedelta(seconds=spy.VOTE_SECONDS + 1)
         with mock.patch("zhidao_v4.rooms.utcnow", return_value=later):
-            phase = self.ok(self.get(accuser, f"/api/v4/games/rooms/{code}"))["spy"]["round"]["phase"]
+            phase = self.ok(self.get(accuser, f"/api/v4/games/rooms/{code}"))["game"]["round"]["phase"]
         self.assertEqual(phase, "discussion")
 
     def test_a_clear_majority_without_objections_convicts_when_the_vote_times_out(self):
@@ -265,10 +265,10 @@ class SpyGameTests(unittest.TestCase):
         self.ok(self.post(accuser, f"/api/v4/games/rooms/{code}/spy/accuse",
                           {"target_account_id": self.ids[spy_name]}))
         body = self.ok(self.post(second, f"/api/v4/games/rooms/{code}/spy/vote", {"yes": True}))
-        self.assertEqual(body["spy"]["round"]["phase"], "vote")
+        self.assertEqual(body["game"]["round"]["phase"], "vote")
         later = rooms.utcnow() + timedelta(seconds=spy.VOTE_SECONDS + 1)
         with mock.patch("zhidao_v4.rooms.utcnow", return_value=later):
-            result = self.ok(self.get(accuser, f"/api/v4/games/rooms/{code}"))["spy"]["round"]["result"]
+            result = self.ok(self.get(accuser, f"/api/v4/games/rooms/{code}"))["game"]["round"]["result"]
         self.assertEqual((result["winner"], result["reason"]), ("agents", "accused"))
 
     def test_one_no_vote_fails_the_accusation_and_spends_it(self):
@@ -278,7 +278,7 @@ class SpyGameTests(unittest.TestCase):
         before = self.state(code)["ends_at"]
         self.ok(self.post(accuser, f"/api/v4/games/rooms/{code}/spy/accuse", {"target_account_id": self.ids[target]}))
         body = self.ok(self.post(doubter, f"/api/v4/games/rooms/{code}/spy/vote", {"yes": False}))
-        self.assertEqual(body["spy"]["round"]["phase"], "discussion")
+        self.assertEqual(body["game"]["round"]["phase"], "discussion")
         # Таймер стоял, пока голосовали, а не тикал дальше.
         after = rooms.parse(self.state(code)["ends_at"])
         self.assertGreaterEqual(after, rooms.parse(before) - timedelta(seconds=2))
@@ -290,7 +290,7 @@ class SpyGameTests(unittest.TestCase):
         _, spy_name, agents = self.roles(code)
         later = rooms.utcnow() + timedelta(minutes=9)
         with mock.patch("zhidao_v4.rooms.utcnow", return_value=later):
-            phase = self.ok(self.get("kid1", f"/api/v4/games/rooms/{code}"))["spy"]["round"]["phase"]
+            phase = self.ok(self.get("kid1", f"/api/v4/games/rooms/{code}"))["game"]["round"]["phase"]
             self.assertEqual(phase, "final_vote")
             # Шпиону нельзя назвать место, когда время вышло.
             state = self.state(code)
@@ -301,7 +301,7 @@ class SpyGameTests(unittest.TestCase):
                                   {"target_account_id": self.ids[spy_name]}))
             body = self.ok(self.post(spy_name, f"/api/v4/games/rooms/{code}/spy/final-vote",
                                      {"target_account_id": self.ids[agents[0]]}))
-        result = body["spy"]["round"]["result"]
+        result = body["game"]["round"]["result"]
         self.assertEqual((result["winner"], result["reason"]), ("agents", "final_vote"))
 
     def test_a_spy_who_walks_away_voids_the_round(self):
@@ -309,7 +309,7 @@ class SpyGameTests(unittest.TestCase):
         _, spy_name, agents = self.roles(code)
         self.ok(self.post(spy_name, f"/api/v4/games/rooms/{code}/leave"))
         scores, view = self.scores(code, who=agents[0])
-        result = view["spy"]["round"]["result"]
+        result = view["game"]["round"]["result"]
         self.assertEqual((result["winner"], result["reason"]), ("void", "spy_left"))
         self.assertEqual(sum(scores.values()), 0)
 
@@ -321,7 +321,7 @@ class SpyGameTests(unittest.TestCase):
         restarted = create_app(self.db_path, cookie_secure=False, session_hours=1)
         view = self.ok(self.get("kid2", "/api/v4/games/rooms/current", app=restarted))
         self.assertEqual(view["room"]["code"], code)
-        self.assertEqual(view["spy"]["round"]["number"], before["round"])
+        self.assertEqual(view["game"]["round"]["number"], before["round"])
         self.assertEqual(self.state(code)["location"], before["location"])
 
     def test_idle_rooms_disappear_with_who_sat_in_them(self):

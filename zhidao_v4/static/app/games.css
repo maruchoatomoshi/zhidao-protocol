@@ -92,3 +92,64 @@ html[data-motion="off"] .spy-reveal, html[data-motion="reduced"] .spy-reveal { a
 @media (prefers-reduced-motion: reduce) { .spy-reveal { animation: none; } }
 
 [data-theme="dark"] .spy-timer.is-low, [data-theme="dark"] .spy-reveal.is-spy h3, [data-theme="dark"] .spy-verdict { color: #ff8f78; }
+
+/* Классы spy-* названы по первой игре, но это общие детали стола: код
+   комнаты, список игроков, баннеры, итог. Шифровальщики пользуются ими же. */
+
+/* --- вход в игры ------------------------------------------------------------ */
+.game-card { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--case-border); border-radius: 10px; background: var(--case-pane); }
+.game-card h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;
+  font: 700 17px/1.3 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.game-card h3 span { font: 14px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-muted); }
+.game-card p { margin: 0; color: var(--case-ink); font: 14px/1.5 "Trebuchet MS", sans-serif; }
+
+/* --- Шифровальщики ------------------------------------------------------------ */
+.cipher-teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cipher-team { display: grid; align-content: start; gap: 8px; padding: 10px; border: 1px solid var(--case-border); border-radius: 10px;
+  border-top-width: 4px; background: var(--case-pane); }
+.cipher-team.is-blue { border-top-color: #1b8fd6; }
+.cipher-team.is-red { border-top-color: #d9483b; }
+.cipher-team-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font: 700 15px/1.2 "Trebuchet MS", sans-serif; }
+.cipher-team-head span { font: 14px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-muted); }
+.cipher-team-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font: 14px/1.3 "Trebuchet MS", sans-serif; overflow-wrap: anywhere; }
+.cipher-team-list small { display: block; font-size: 11px; color: var(--case-muted); }
+.cipher-team-list .is-empty { color: var(--case-muted); font-size: 13px; }
+.games-screen .cipher-team .btn { padding: 8px 6px; }
+
+.cipher-score { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cipher-chip { display: flex; justify-content: space-between; align-items: center; min-height: 46px; padding: 6px 12px; border-radius: 10px;
+  color: #fff; font: 600 14px/1.2 "Trebuchet MS", sans-serif; text-shadow: 0 1px 1px #0005; opacity: .72; }
+.cipher-chip b { font: 700 24px/1 "Courier New", monospace; }
+.cipher-chip.is-blue { background: linear-gradient(#5fc2f5, #1b7fc4); }
+.cipher-chip.is-red { background: linear-gradient(#f08a7a, #c23b2e); }
+.cipher-chip.is-turn { opacity: 1; box-shadow: 0 0 0 3px #fff9, 0 4px 14px #0003; }
+
+.cipher-count { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.games-screen .cipher-count .btn { padding: 0; font: 700 18px/1 "Courier New", monospace; }
+.games-screen .cipher-count .btn[aria-pressed="true"] { border-color: #28add9; box-shadow: inset 0 0 0 2px #28add966; }
+
+.cipher-board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.cipher-card { display: grid; align-content: center; justify-items: center; gap: 1px; min-width: 0; min-height: 62px; padding: 5px 2px;
+  border: 1px solid var(--case-border); border-radius: 7px; background: var(--case-paper); color: var(--case-ink); text-align: center; }
+button.cipher-card { cursor: pointer; }
+button.cipher-card:hover { border-color: #28add9; }
+.cipher-card b { font: 600 17px/1.15 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; overflow-wrap: anywhere; }
+.cipher-card small { max-width: 100%; font: 9.5px/1.15 "Trebuchet MS", sans-serif; color: var(--case-muted); overflow-wrap: anywhere; }
+.cipher-card.is-armed { border-color: #d9822b; background: #ffb65a2e; box-shadow: inset 0 0 0 2px #d9822b; }
+
+/* Капитанская раскладка — полоса снизу, а не заливка: так закрытая карточка
+   капитана не путается с уже открытой. */
+.cipher-card.is-hint.is-blue { box-shadow: inset 0 -5px 0 #1b8fd6; }
+.cipher-card.is-hint.is-red { box-shadow: inset 0 -5px 0 #d9483b; }
+.cipher-card.is-hint.is-neutral { box-shadow: inset 0 -5px 0 #bfae8a; }
+.cipher-card.is-hint.is-virus { box-shadow: inset 0 -5px 0 #2b1d3a; outline: 2px dashed #6c4f8c; outline-offset: -4px; }
+
+.cipher-card.is-revealed small { color: inherit; opacity: .85; }
+.cipher-card.is-revealed.is-blue { border-color: #1b7fc4; background: linear-gradient(#5fc2f5, #1b7fc4); color: #fff; }
+.cipher-card.is-revealed.is-red { border-color: #c23b2e; background: linear-gradient(#f08a7a, #c23b2e); color: #fff; }
+.cipher-card.is-revealed.is-neutral { border-color: #bfae8a; background: linear-gradient(#f1e8d2, #cdbd98); color: #3b3222; }
+.cipher-card.is-revealed.is-virus { border-color: #1c1326; background: linear-gradient(#5a4670, #1c1326); color: #f3e9ff; }
+.cipher-win.is-blue h3 { color: #1b7fc4; }
+.cipher-win.is-red h3 { color: #c23b2e; }
+[data-theme="dark"] .cipher-win.is-blue h3 { color: #7fd0ff; }
+[data-theme="dark"] .cipher-win.is-red h3 { color: #ff9a8a; }

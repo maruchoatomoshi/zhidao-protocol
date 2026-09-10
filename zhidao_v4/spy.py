@@ -27,6 +27,7 @@ from . import rooms
 from .rooms import GameError
 
 
+GAME = "spy"
 CONTENT = Path(__file__).resolve().parent / "static" / "app" / "assets" / "games" / "spy.json"
 
 MIN_PLAYERS = 4
@@ -80,6 +81,36 @@ def clean_settings(mode: str, minutes: int) -> dict:
     if not MINUTES[0] <= int(minutes) <= MINUTES[1]:
         raise GameError(f"Раунд длится от {MINUTES[0]} до {MINUTES[1]} минут.")
     return {"mode": mode, "minutes": int(minutes)}
+
+
+def settings_from(body: dict | None) -> dict:
+    return clean_settings(rooms.text_field(body, "mode", 16), rooms.int_field(body, "minutes"))
+
+
+def act(action: str, state: dict, actor: int, body: dict | None, *,
+        seated: set[int], host: int, now: datetime, settings: dict) -> tuple[str | None, dict[int, int]]:
+    """Единая точка входа для маршрутов: действие → (новый статус комнаты, очки)."""
+    if action == "start":
+        if actor != host:
+            raise GameError("Раунд запускает ведущий.", 403)
+        # Порядок не важен: шпиона и роли всё равно выбирает жребий.
+        fresh = start_round(state, sorted(seated), settings, now)
+        state.clear()
+        state.update(fresh)
+        return "playing", {}
+    if action == "accuse":
+        accuse(state, actor, rooms.int_field(body, "target_account_id", 1), seated, now)
+        return None, {}
+    if action == "vote":
+        vote(state, actor, rooms.bool_field(body, "yes"), seated)
+        # Голос мог оказаться решающим — доводим сразу, а не при следующем опросе.
+        return None, tick(state, seated, now)
+    if action == "guess":
+        return None, guess(state, actor, rooms.text_field(body, "location_id"), seated)
+    if action == "final-vote":
+        final_vote(state, actor, rooms.int_field(body, "target_account_id", 1), seated)
+        return None, tick(state, seated, now)
+    raise GameError("Такого действия в игре нет.", 404)
 
 
 def joinable(status: str, state: dict) -> bool:

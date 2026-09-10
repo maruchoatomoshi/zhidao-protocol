@@ -21,7 +21,7 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 
 
-GAMES = ("spy",)
+GAMES = ("spy", "cipher")
 MAX_PLAYERS = 8
 ROOM_IDLE_MINUTES = 30
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -31,6 +31,33 @@ class GameError(RuntimeError):
     def __init__(self, message: str, status_code: int = 400) -> None:
         super().__init__(message)
         self.status_code = status_code
+
+
+# Тело действия приходит свободным JSON: у каждой игры свои поля. Проверяем
+# их здесь, строго по типу — `True` не должен сойти за единицу, а строка за
+# номер карточки.
+
+def int_field(body: dict | None, key: str, low: int | None = None, high: int | None = None) -> int:
+    value = (body or {}).get(key)
+    if type(value) is not int:
+        raise GameError(f"Поле {key} должно быть целым числом.")
+    if (low is not None and value < low) or (high is not None and value > high):
+        raise GameError(f"Поле {key} вне допустимого диапазона.")
+    return value
+
+
+def bool_field(body: dict | None, key: str) -> bool:
+    value = (body or {}).get(key)
+    if type(value) is not bool:
+        raise GameError(f"Поле {key} должно быть true или false.")
+    return value
+
+
+def text_field(body: dict | None, key: str, max_length: int = 40) -> str:
+    value = (body or {}).get(key)
+    if not isinstance(value, str) or not value or len(value) > max_length:
+        raise GameError(f"Поле {key} заполнено неверно.")
+    return value
 
 
 def utcnow() -> datetime:

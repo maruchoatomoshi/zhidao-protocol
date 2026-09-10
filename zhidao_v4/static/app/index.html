@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./aero.css?v=3442dfeba3">
   <link rel="stylesheet" href="./aero-grade.css?v=b5da25899c">
   <link rel="stylesheet" href="./case-workstation.css?v=1cab944c2a">
-  <link rel="stylesheet" href="./games.css?v=221fae0ccd">
+  <link rel="stylesheet" href="./games.css?v=d77b3b3561">
   <link rel="stylesheet" href="./aero-desktop.css?v=b5a5d3d717">
   <link rel="stylesheet" href="./xp-home.css?v=d667055f1b">
 </head>
@@ -703,30 +703,36 @@
           <div><span class="system-label">PROTOCOL GAMES / 游戏</span><h1 id="gamesTitle" class="display-title">Игры</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> yóu xì <span class="screen-sub-sep">//</span> вечерние игры</p></div>
         </div>
 
-        <article class="case-window" id="spyIntro">
-          <div class="case-titlebar"><h2>Шпион Протокола</h2><span aria-hidden="true">间谍</span></div>
+        <article class="case-window" id="gameIntro">
+          <div class="case-titlebar"><h2>Игры за столом</h2><span aria-hidden="true">游戏</span></div>
           <div class="spy-body">
-            <p class="spy-lead">Всем за столом приходит одно место и роль. Одному — «вы шпион». Играете голосом: задаёте друг другу вопросы и ищете того, кто не знает, где вы.</p>
-            <ul class="spy-facts">
-              <li>4–8 игроков</li>
-              <li>раунд 5–12 минут</li>
-              <li>места на китайском</li>
-            </ul>
-            <button type="button" class="btn btn-primary" id="spyCreate">Создать комнату</button>
-            <form class="spy-join" id="spyJoinForm">
-              <label>Код комнаты <input id="spyJoinCode" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="0000"></label>
-              <button type="submit" class="btn btn-secondary" id="spyJoinSubmit">Войти</button>
+            <p class="spy-lead">Собирайтесь компанией: один создаёт комнату, остальные вводят её код. Телефон держит тайны и счёт, а играете вы голосом.</p>
+            <form class="spy-join" id="gameJoinForm">
+              <label>Код комнаты <input id="gameJoinCode" type="text" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="0000"></label>
+              <button type="submit" class="btn btn-secondary" id="gameJoinSubmit">Войти</button>
             </form>
-            <p class="case-message spy-note" id="spyIntroStatus" role="status"></p>
+            <p class="case-message spy-note" id="gameIntroStatus" role="status"></p>
+            <section class="game-card" aria-labelledby="gameSpyTitle">
+              <h3 id="gameSpyTitle">Шпион Протокола <span aria-hidden="true">间谍</span></h3>
+              <p>Всем за столом приходит одно место и роль. Одному — «вы шпион». Задаёте друг другу вопросы и ищете того, кто не знает, где вы.</p>
+              <ul class="spy-facts"><li>4–8 игроков</li><li>раунд 5–12 минут</li><li>места на китайском</li></ul>
+              <button type="button" class="btn btn-primary" data-create-game="spy">Создать комнату</button>
+            </section>
+            <section class="game-card" aria-labelledby="gameCipherTitle">
+              <h3 id="gameCipherTitle">Шифровальщики <span aria-hidden="true">密码</span></h3>
+              <p>Две команды и поле из 25 китайских слов. Капитан вслух даёт подсказку — одно слово и число, — а команда ищет свои слова и обходит вирус.</p>
+              <ul class="spy-facts"><li>4–8 игроков</li><li>две команды</li><li>слова на китайском</li></ul>
+              <button type="button" class="btn btn-primary" data-create-game="cipher">Создать комнату</button>
+            </section>
           </div>
-          <div class="case-statusbar"><span>ОЧКИ ТОЛЬКО НА ВЕЧЕР</span><span>SPY.EXE</span></div>
+          <div class="case-statusbar"><span>ОЧКИ ТОЛЬКО НА ВЕЧЕР</span><span>GAMES</span></div>
         </article>
 
-        <article class="case-window" id="spyRoom" hidden>
-          <div class="case-titlebar"><h2 id="spyRoomTitle">Комната</h2><button type="button" id="spyLeave" aria-label="Выйти из комнаты">×</button></div>
-          <div class="spy-body" id="spyRoomBody"></div>
-          <p class="case-message spy-note" id="spyNote" role="status"></p>
-          <div class="case-statusbar"><span id="spyRoomPhase">ЛОББИ</span><span>SPY.EXE</span></div>
+        <article class="case-window" id="gameRoom" hidden>
+          <div class="case-titlebar"><h2 id="gameRoomTitle">Комната</h2><button type="button" id="gameLeave" aria-label="Выйти из комнаты">×</button></div>
+          <div class="spy-body" id="gameRoomBody"></div>
+          <p class="case-message spy-note" id="gameNote" role="status"></p>
+          <div class="case-statusbar"><span id="gameRoomPhase">ЛОББИ</span><span id="gameRoomExe">GAME.EXE</span></div>
         </article>
       </section>
 
@@ -860,7 +866,9 @@
   <script src="./case-play.js?v=632b06c067" defer></script>
   <script src="./implants.js?v=0241e27762" defer></script>
   <script src="./admin.js?v=2a4b359e7e" defer></script>
-  <script src="./games.js?v=df25cf3c6d" defer></script>
+  <script src="./games.js?v=443c1a6b50" defer></script>
+  <script src="./game-spy.js?v=cb66879263" defer></script>
+  <script src="./game-cipher.js?v=0b7c733ddc" defer></script>
   <script src="./app.js?v=275b4c740b" defer></script>
   <script src="./player.js?v=1fa90de1e1" defer></script>
   <script src="./vendor/max-web-app.js?v=4c99341798" defer></script>
