@@ -77,6 +77,7 @@ Do not start work from this file alone. Read the document that owns the area:
 | Blender characters, Unity game | `CLAUDE_HANDOFF_GAME_BLENDER_2026-09-03.md` |
 | Rewards, prices, limits, currency | `ECONOMY_PASSPORT.md` |
 | V4 cases, inventory, scan grants and local preview | `V4_CASES.md` |
+| V4 games: fog, rooms, handshake, portals, hidden files | `V4_GAMES.md` |
 | Season-1 mechanics, history, МЮ backlog, lore | `SEASON1_BEIJING_ARCHIVE.md` |
 | Learning MVP experiment | `WEB_MVP.md`, `COURSE_CONTENT.md` |
 | Running legacy code locally | `TRAVEL_LOCAL.md` |
