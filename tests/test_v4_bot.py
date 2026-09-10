@@ -376,7 +376,7 @@ class BotCommandTests(unittest.TestCase):
     def test_status_reports_the_live_schema_version(self):
         sent = self.send("/статус")
         self.assertIn("ok", sent["text"])
-        self.assertIn("версия 7", sent["text"])
+        self.assertIn("версия 8", sent["text"])
 
 
 class SecureCookieBackendTests(unittest.TestCase):

@@ -1,0 +1,94 @@
+/* Вечерние игры: Шпион Протокола.
+
+   Окно из того же набора, что кейсы и админка (case-workstation.css): рамка,
+   строка заголовка, строка состояния и цвета --case-* уже умеют и светлую,
+   и тёмную тему, и оформление Луна-Аква. Здесь только детали самой игры. */
+
+.games-screen .spy-body { display: grid; gap: 12px; padding: 14px; }
+.spy-lead { margin: 0; color: var(--case-ink); font: 15px/1.5 "Trebuchet MS", "Segoe UI", sans-serif; }
+.spy-label { display: block; font: 11px/1.4 "Courier New", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--case-muted); }
+.spy-hint { display: block; font: 12px/1.4 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.spy-note { min-height: 20px; margin: 0; padding: 0 14px 12px; }
+.spy-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.spy-facts li { padding: 4px 9px; border: 1px solid var(--case-border); border-radius: 999px; background: var(--case-pane);
+  color: var(--case-muted); font: 12px/1.3 "Trebuchet MS", sans-serif; }
+
+.spy-join { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 9px; }
+.spy-join label { min-width: 0; font: 12px/1.4 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.games-screen .spy-join input { text-align: center; letter-spacing: .35em; font: 700 20px/1.2 "Courier New", monospace; }
+
+.spy-code-plate { display: grid; gap: 2px; justify-items: center; padding: 10px; border: 1px dashed var(--case-border);
+  border-radius: 8px; background: var(--case-inset); }
+.spy-code { font: 700 42px/1.1 "Courier New", monospace; letter-spacing: .18em; font-variant-numeric: tabular-nums; color: var(--case-ink); }
+
+.spy-settings { display: grid; gap: 8px; }
+.spy-segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.games-screen .spy-segmented .btn { padding: 8px 6px; }
+.games-screen .spy-segmented .btn[aria-pressed="true"] { border-color: #28add9; box-shadow: inset 0 0 0 2px #28add966; }
+.spy-minutes { display: grid; gap: 4px; font: 12px/1.4 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+
+.spy-players { display: grid; gap: 6px; }
+.spy-player { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%;
+  min-height: 46px; padding: 6px 12px; border: 1px solid var(--case-border); border-radius: 7px; background: var(--case-pane);
+  color: var(--case-ink); font: 14px/1.3 "Trebuchet MS", sans-serif; text-align: left; }
+button.spy-player { cursor: pointer; }
+button.spy-player:hover { border-color: #28add9; }
+.spy-player.is-armed, .spy-place.is-armed { border-color: #d9822b; background: #ffb65a2e; box-shadow: inset 0 0 0 1px #d9822b; }
+.spy-player.is-away { opacity: .62; }
+.spy-dot { width: 10px; height: 10px; border-radius: 50%; background: #9fb3bf; box-shadow: inset 0 1px 1px #0003; }
+.spy-dot.is-on { background: radial-gradient(circle at 35% 30%, #e9ffc2, #5fbf3a 60%, #2f7d24); }
+.spy-player-name { min-width: 0; overflow-wrap: anywhere; }
+.spy-player-name small { display: block; color: var(--case-muted); font-size: 11px; }
+.spy-score { font: 700 16px/1 "Courier New", monospace; font-variant-numeric: tabular-nums; }
+
+.spy-timer { text-align: center; font: 700 46px/1 "Courier New", monospace; font-variant-numeric: tabular-nums; color: var(--case-ink); padding: 4px 0; }
+.spy-timer.is-low { color: #b8321f; }
+.spy-timer.is-paused { opacity: .6; }
+.spy-timer small { display: block; margin-top: 4px; font: 11px/1.3 "Courier New", monospace; letter-spacing: .1em; color: var(--case-muted); }
+
+/* Карточка роли видна, только пока держишь палец. Выделение текста и
+   системное меню долгого нажатия выключены: иначе вместо карточки телефон
+   предлагает «Копировать», а сосед успевает прочитать. */
+.spy-card { display: grid; place-items: center; width: 100%; min-height: 176px; padding: 16px; border: 2px solid var(--case-border);
+  border-radius: 12px; color: var(--case-ink); cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  touch-action: manipulation; font: 14px/1.45 "Trebuchet MS", sans-serif;
+  background: repeating-linear-gradient(45deg, var(--case-inset) 0 10px, var(--case-pane) 10px 20px); }
+.spy-card.is-open { border-color: #28add9; background: var(--case-paper); }
+.spy-card-cover { max-width: 22ch; color: var(--case-muted); }
+.spy-card-cover::before { content: "✦"; display: block; margin-bottom: 6px; font-size: 26px; color: #3799bf; }
+.spy-card-face { display: grid; gap: 4px; justify-items: center; text-align: center; }
+.spy-zh { font: 700 46px/1.15 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
+.spy-pinyin { font: 15px/1.3 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.spy-ru { font: 600 17px/1.3 "Trebuchet MS", sans-serif; }
+.spy-role { margin-top: 6px; max-width: 30ch; font-size: 14px; }
+.spy-verdict { font: 700 30px/1.15 "Trebuchet MS", sans-serif; letter-spacing: .06em; color: #b8321f; }
+
+.spy-actions { display: grid; gap: 8px; }
+.spy-banner { margin: 0; padding: 10px 12px; border: 1px solid #d9822b; border-radius: 8px; background: #ffb65a24;
+  color: var(--case-ink); font: 14px/1.45 "Trebuchet MS", sans-serif; }
+.spy-banner-inset { margin: 0 10px 10px; }
+.spy-progress { margin: 0; text-align: center; font: 12px/1.45 "Courier New", monospace; color: var(--case-muted); }
+.spy-vote-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.spy-places { border: 1px solid var(--case-border); border-radius: 8px; background: var(--case-pane); }
+.spy-places summary { display: flex; align-items: center; min-height: 46px; padding: 0 12px; cursor: pointer;
+  font: 600 14px/1.3 "Trebuchet MS", sans-serif; }
+.spy-place-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; padding: 0 10px 10px; }
+.spy-place { display: grid; gap: 2px; justify-items: center; min-height: 46px; padding: 6px 4px; border: 1px solid var(--case-border);
+  border-radius: 6px; background: var(--case-paper); color: var(--case-ink); font: 12px/1.25 "Trebuchet MS", sans-serif; text-align: center; }
+button.spy-place { cursor: pointer; }
+.spy-place b { font: 600 19px/1.2 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+.spy-reveal { display: grid; gap: 4px; justify-items: center; padding: 16px 14px; text-align: center; border: 1px solid var(--case-border);
+  border-radius: 12px; background: radial-gradient(ellipse at 50% 0%, #40c7f133, transparent 70%), var(--case-paper);
+  animation: spy-reveal .45s cubic-bezier(.2, .8, .3, 1.2) both; }
+.spy-reveal h3 { margin: 2px 0 6px; font: 700 19px/1.3 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.spy-reveal.is-spy h3 { color: #b8321f; }
+.spy-points { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.spy-points li { padding: 3px 9px; border: 1px solid #4fb487; border-radius: 999px; background: #63c99e2e; font: 600 12px/1.35 "Trebuchet MS", sans-serif; }
+
+@keyframes spy-reveal { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+html[data-motion="off"] .spy-reveal, html[data-motion="reduced"] .spy-reveal { animation: none; }
+@media (prefers-reduced-motion: reduce) { .spy-reveal { animation: none; } }
+
+[data-theme="dark"] .spy-timer.is-low, [data-theme="dark"] .spy-reveal.is-spy h3, [data-theme="dark"] .spy-verdict { color: #ff8f78; }

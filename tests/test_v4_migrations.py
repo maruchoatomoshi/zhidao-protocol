@@ -48,6 +48,7 @@ class V4MigrationTests(unittest.TestCase):
                 "0005_link_code_revocation.sql",
                 "0006_cases.sql",
                 "0007_campus_exploration.sql",
+                "0008_game_rooms.sql",
             ],
         )
         self.assertEqual(second, [])
@@ -153,6 +154,7 @@ print(json.dumps({
                 "0005_link_code_revocation.sql",
                 "0006_cases.sql",
                 "0007_campus_exploration.sql",
+                "0008_game_rooms.sql",
             ],
         )
         self.assertEqual(payload["health"]["status"], "ok")

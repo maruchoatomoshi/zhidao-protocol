@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from . import campus
 from .admin import architect_overview
 from .cases_api import register_cases
+from .games_api import register_games
 from .auth import (
     AuthenticationError,
     IdentityAlreadyLinkedError,
@@ -764,4 +765,5 @@ def create_app(
     )
 
     register_cases(app, _current_principal, _csrf_principal)
+    register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app
