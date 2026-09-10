@@ -165,10 +165,15 @@ def ensure_wallet(conn, account_id, season_id):
 
 
 def record(conn, actor, account_id, season_id, operation, before, after, details):
+    # Кейсы REP не меняют, но журнал хранит REP после операции: иначе строка
+    # кейса после первой оценки дневника показывала бы в rep_after ложный ноль.
+    rep = conn.execute('SELECT rep FROM v4_case_wallets WHERE season_id=? AND account_id=?',
+                       (season_id, account_id)).fetchone()
     cursor = conn.execute('''INSERT INTO v4_economy_operations(season_id,account_id,actor_account_id,
-        operation,stars_delta,scans_delta,stars_after,scans_after,details_json) VALUES (?,?,?,?,?,?,?,?,?)''',
+        operation,stars_delta,scans_delta,rep_delta,stars_after,scans_after,rep_after,details_json)
+        VALUES (?,?,?,?,?,?,0,?,?,?,?)''',
         (season_id, account_id, actor, operation, after['stars']-before['stars'], after['scans']-before['scans'],
-         after['stars'], after['scans'], encoded(details)))
+         after['stars'], after['scans'], rep['rep'] if rep else 0, encoded(details)))
     return cursor.lastrowid
 
 
