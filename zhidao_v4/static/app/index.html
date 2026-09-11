@@ -107,7 +107,7 @@
   <div class="auth-gate" id="authGate" data-state="checking">
     <div class="auth-panel">
       <span class="auth-orb brand-orb" aria-hidden="true">知</span>
-      <span class="system-label">SIGN IN / 登录</span>
+      
       <h1 class="display-title auth-title">Вход</h1>
       <p class="screen-sub"><span class="screen-sub-mark">&gt;</span> dēng lù <span class="screen-sub-sep">//</span> личный контур участника</p>
 
@@ -185,25 +185,11 @@
            ============================================================ -->
       <section class="screen active" data-screen="schedule" aria-labelledby="scheduleTitle">
         <div class="screen-intro">
-          <div><span class="system-label">PERSONAL SYSTEM / 个人系统</span><h1 id="scheduleTitle">Привет,<br>путешественник</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jīn tiān <span class="screen-sub-sep">//</span> твоя точка подключения</p></div>
-          <span class="preview-chip">DESIGN PREVIEW</span>
-          <p class="xp-only xp-welcome-note">Твой Китай<br>начинается здесь.<span>海南 · HAINAN</span></p>
+          <div><h1 id="scheduleTitle">Привет,<br>путешественник</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jīn tiān <span class="screen-sub-sep">//</span> твоя точка подключения</p></div>
         </div>
 
-        <article class="journey-card">
-          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-map.svg" alt=""><h2>Окно в Хайнань</h2><span aria-hidden="true">海南</span></div>
-          <div class="journey-index"><span>18°19′N</span></div>
-          <div class="journey-copy">
-            <p>ОБЕЩАННОЕ ЗАВТРА</p>
-            <h2>Курс на<br>Хайнань</h2>
-          </div>
-          <img class="journey-logo" src="./assets/zhidao-dragon-logo.png" width="128" height="128" alt="ZHIDAO Protocol">
-          <div class="journey-bubbles" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="xp-only xp-journey-caption"><span>Больше, чем поездка.</span><i class="xp-journey-serial">TRAVEL SEASON / 04</i></div>
-        </article>
-
         <div class="status-grid" aria-label="Показатели участника">
-          <article class="status-module rep-module"><span>REP</span><strong>—</strong><small>Рейтинг подключим позже</small></article>
+          <article class="status-module rep-module"><span>БАЛАНС</span><strong data-case-stars>— ★</strong><small>Звёзды сезона</small></article>
           <article class="status-module season-module"><span>СИГНАЛЫ</span><strong data-case-scans>— / 7</strong><small>Попытки сканирования</small></article>
         </div>
 
@@ -212,39 +198,14 @@
           <button type="button" data-open-screen="campus-map"><span class="shortcut-map-orb" aria-hidden="true">⌖</span><span>Кампус<small>Твои ориентиры</small></span><b aria-hidden="true">↗</b></button>
         </div>
 
-        <article class="media-widget" data-player aria-label="Музыка">
-          <div class="media-widget-face">
-            <div class="media-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-            <div class="media-lcd">
-              <b data-player-title>NODE / HAINAN</b>
-              <span data-player-sub>SEASON 04 · STANDBY · NO SIGNAL YET</span>
-            </div>
-            <div class="media-keys">
-              <button type="button" class="media-key" data-player-toggle
-                      aria-label="Включить музыку" aria-pressed="false" disabled>&#9654;</button>
-              <button type="button" class="media-key" data-player-next
-                      aria-label="Следующий трек" disabled>&#9654;&#9654;</button>
-            </div>
-          </div>
-          <audio data-player-audio preload="none"></audio>
-        </article>
-
         <article class="glass-card today-card">
           <div class="xp-only xp-titlebar"><img src="./assets/icons/nav-schedule.png" alt=""><h2>Мой день</h2><span>Расписание</span></div>
-          <div class="section-heading"><div><span class="system-label">TODAY / 今天</span><h3>Сегодня</h3></div><button type="button" class="btn btn-secondary" data-toast="Расписание появится после активации сезона">Все планы</button></div>
+          <div class="section-heading"><div><h3>Сегодня</h3></div><button type="button" class="btn btn-secondary" data-toast="Расписание появится после активации сезона">Все планы</button></div>
           <div class="timeline-empty">
             <span class="timeline-mark"><i></i></span>
             <div><strong>Маршрут ещё не активирован</strong><p>Здесь появятся встречи, выезды и важные точки дня.</p></div>
-            <span class="locked-tag">STANDBY</span>
           </div>
         </article>
-
-        <article class="signal-card">
-          <span class="signal-orb"><img src="./assets/icons/desktop-collection.svg" alt=""></span>
-          <div><span class="system-label">COLLECTION / 收藏</span><h3>Собирай свою историю</h3><p>Предметы и сигналы этой поездки — в твоей коллекции.</p></div>
-          <button type="button" aria-label="Открыть коллекцию" data-open-screen="collection">›</button>
-        </article>
-        <aside class="xp-only xp-review-note" aria-label="О варианте оформления"><span><b>Луна-Аква</b>Пока оформлен только этот экран. Остальные разделы в прежнем виде; переключить оформление можно в «Ещё».</span></aside>
       </section>
 
       <!-- ============================================================
@@ -252,11 +213,10 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="rating" aria-labelledby="ratingTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">SEASON REPUTATION / 排名</span><h1 id="ratingTitle" class="display-title">Рейтинг REP</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> pái míng <span class="screen-sub-sep">//</span> репутация сезона</p></div>
-          <span class="preview-chip">STRUCTURE PREVIEW</span>
+          <div><h1 id="ratingTitle" class="display-title">Рейтинг REP</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> pái míng <span class="screen-sub-sep">//</span> репутация сезона</p></div>
         </div>
 
-        <article class="desktop-banner reputation-banner"><img src="./assets/icons/nav-rating.png" alt=""><div><span class="desktop-eyebrow">REPUTATION / НЕ ПРОДАЁТСЯ</span><h2>Важен твой вклад.</h2><p>REP — репутация сезона.<br>Её нельзя купить за ★.</p></div><span class="banner-serial" aria-hidden="true">01 / REP</span></article>
+        <article class="desktop-banner reputation-banner"><img src="./assets/icons/nav-rating.png" alt=""><div><h2>Важен твой вклад.</h2><p>REP — репутация сезона.<br>Её нельзя купить за ★.</p></div></article>
         <div class="tabs" role="tablist" aria-label="Раздел рейтинга" data-tab-group="rating">
           <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="season">Сезон</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-tab="diary">Дневник</button>
@@ -283,17 +243,7 @@
           <div class="board-list" id="diaryBoard"></div>
         </article>
 
-        <article class="glass-card module-status">
-          <span class="module-status-dot" aria-hidden="true"></span>
-          <div class="module-status-body">
-            <strong>Подиум сезона ещё не наполнен</strong>
-            <p>Подиум и общая таблица REP соберутся из настоящих участников после
-              старта сезона — сейчас это только структура экрана. Вкладка
-              «Дневник» уже работает: оценки ставят вожатые по бумажному
-              дневнику.</p>
-          </div>
-          <span class="module-status-tag">ОЖИДАНИЕ СЕЗОНА</span>
-        </article>
+        <p class="diary-note" data-tab-panel="rating:season">Подиум и таблица появятся после старта сезона.</p>
       </section>
 
       <!-- ============================================================
@@ -301,7 +251,7 @@
            ============================================================ -->
       <section class="screen case-workstation shop-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle" class="display-title">Магазин</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> витрина дня</p></div>
+          <div><h1 id="shopTitle" class="display-title">Магазин</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> витрина дня</p></div>
           <span class="preview-chip" id="shopStars">&mdash; ★</span>
         </div>
 
@@ -309,13 +259,13 @@
           <div class="case-titlebar"><h2>Витрина дня</h2><span id="shopDay">&mdash;</span></div>
           <p class="case-message" id="shopStatus" role="status">Войдите, чтобы увидеть витрину дня.</p>
           <div class="shop-vitrine" id="shopVitrine"></div>
-          <div class="case-statusbar"><span id="shopRefresh">ОБНОВЛЕНИЕ В 07:00</span><span>SUPPLY.EXE</span></div>
+          <div class="case-statusbar"><span id="shopRefresh">ОБНОВЛЕНИЕ В 07:00</span></div>
         </article>
 
         <article class="case-window">
           <div class="case-titlebar"><h2>Моё</h2><span aria-hidden="true">我的</span></div>
           <div class="shop-mine" id="shopMine"><p class="case-message">Покупки появятся здесь после входа.</p></div>
-          <div class="case-statusbar"><span id="shopCoupons">КУПОНОВ «+30 МИНУТ»: &mdash;</span><span>INVENTORY</span></div>
+          <div class="case-statusbar"><span id="shopCoupons">КУПОНОВ «+30 МИНУТ»: &mdash;</span></div>
         </article>
       </section>
 
@@ -324,8 +274,7 @@
            ============================================================ -->
       <section class="screen case-workstation" data-screen="cases" aria-labelledby="casesTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">CASE PROTOCOL / 箱子</span><h1 id="casesTitle" class="display-title">Кейсы</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng zi <span class="screen-sub-sep">//</span> сканирование и дроп</p></div>
-          <span class="preview-chip" data-case-mode>OFFLINE PREVIEW</span>
+          <div><h1 id="casesTitle" class="display-title">Кейсы</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng zi <span class="screen-sub-sep">//</span> сканирование и дроп</p></div>
         </div>
 
         <div class="case-toolbar"><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
@@ -341,7 +290,6 @@
             <button class="btn btn-primary scan-button" id="caseOpen" type="button" disabled aria-describedby="caseStatus">Сканировать · 1 попытка</button>
             <p id="caseStatus" class="case-message" role="status">Войдите, чтобы увидеть свои попытки. В предпросмотре доступны только правила.</p>
           </div>
-          <div class="case-statusbar"><span>ZHIDAO / PERSONAL SIGNAL</span><span>SERVER SAVED</span></div>
         </article>
         <button type="button" class="btn btn-secondary case-collection-link" data-open-screen="collection">Открыть мою коллекцию →</button>
         <section class="case-window case-history-panel" aria-labelledby="caseHistoryTitle">
@@ -373,12 +321,10 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="tasks" aria-labelledby="tasksTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">MISSION BOARD / 任务板</span><h1 id="tasksTitle" class="display-title">Задания</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> rèn wù bǎn <span class="screen-sub-sep">//</span> доска заданий</p></div>
-          <span class="preview-chip">STRUCTURE PREVIEW</span>
+          <div><h1 id="tasksTitle" class="display-title">Задания</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> rèn wù bǎn <span class="screen-sub-sep">//</span> доска заданий</p></div>
         </div>
 
-        <article class="desktop-banner mission-banner"><img src="./assets/icons/nav-tasks.png" alt=""><div><span class="desktop-eyebrow">MISSION CONTROL / 任务</span><h2>Вместе — дальше.</h2><p>Рейды, события и поручения.<br>Доска пока не подключена.</p></div><span class="banner-serial" aria-hidden="true">04 / LOG</span></article>
-        <div class="protocol-divider" aria-hidden="true"><span>◈</span><i></i><span>MISSION CHANNEL / STANDBY</span><i></i><span>✧</span></div>
+        <article class="desktop-banner mission-banner"><img src="./assets/icons/nav-tasks.png" alt=""><div><h2>Вместе — дальше.</h2><p>Рейды, события и поручения.</p></div></article>
         <div class="tabs" role="tablist" aria-label="Раздел заданий" data-tab-group="tasks">
           <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="raids">Рейды</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-tab="contracts">Поручения</button>
@@ -386,23 +332,14 @@
         </div>
 
         <div class="board-column" data-tab-panel="tasks:raids">
-          <article class="glass-card mission-row"><span class="mission-icon">⛰</span><div><strong>Рейд появится после старта</strong><small>Групповое задание с общей наградой</small></div><span class="locked-tag">STANDBY</span></article>
+          <p class="diary-note">Рейды появятся после старта сезона.</p>
         </div>
         <div class="board-column" data-tab-panel="tasks:contracts" hidden>
-          <article class="glass-card mission-row"><span class="mission-icon">📋</span><div><strong>Поручение появится после старта</strong><small>Личная задача с проверкой оператором</small></div><span class="locked-tag">STANDBY</span></article>
+          <p class="diary-note">Поручения появятся после старта сезона.</p>
         </div>
         <div class="board-column" data-tab-panel="tasks:events" hidden>
-          <article class="glass-card mission-row"><span class="mission-icon">⚡</span><div><strong>Ивент появится после старта</strong><small>Общий сюжетный момент сезона</small></div><span class="locked-tag">STANDBY</span></article>
+          <p class="diary-note">Ивенты появятся после старта сезона.</p>
         </div>
-
-        <article class="glass-card module-status">
-          <span class="module-status-dot" aria-hidden="true"></span>
-          <div class="module-status-body">
-            <strong>Заданий пока нет ни одного</strong>
-            <p>Рейды, поручения и ивенты заводят операторы под расписание поездки. Одна карточка в каждой вкладке показывает, как задание будет выглядеть, и ничего не значит: это образец, а не задание.</p>
-          </div>
-          <span class="module-status-tag">ДОСКА ПУСТА</span>
-        </article>
       </section>
 
       <!-- ============================================================
@@ -411,7 +348,7 @@
       <section class="screen campus-map-screen" data-screen="campus-map" aria-labelledby="campusMapTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">‹</button>
-          <div><span class="system-label">CAMPUS NAV / 校园地图</span><h1 id="campusMapTitle" class="display-title">Карта кампуса</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiào yuán dì tú <span class="screen-sub-sep">//</span> навигация по кампусу</p></div>
+          <div><h1 id="campusMapTitle" class="display-title">Карта кампуса</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiào yuán dì tú <span class="screen-sub-sep">//</span> навигация по кампусу</p></div>
           <span class="map-status"><i></i> WGS-84</span>
         </div>
 
@@ -452,7 +389,7 @@
       <section class="screen case-workstation" data-screen="collection" aria-labelledby="collectionTitle" hidden>
         <div class="screen-intro">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">COLLECTION / 收藏</span><h1 id="collectionTitle" class="display-title">Коллекция</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shōu c&aacute;ng <span class="screen-sub-sep">//</span> импланты и карточки</p></div>
+          <div><h1 id="collectionTitle" class="display-title">Коллекция</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shōu c&aacute;ng <span class="screen-sub-sep">//</span> импланты и карточки</p></div>
         </div>
 
         <div class="case-toolbar"><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
@@ -461,21 +398,12 @@
           <div class="case-folder-path">Участник / <span data-collection-season>—</span> / Предметы</div>
           <p id="collectionStatus" class="case-message" role="status">Войдите, чтобы открыть личную коллекцию.</p>
           <div id="caseInventory" class="case-inventory"></div>
-          <div class="case-statusbar"><span id="caseItemCount">0 предметов</span><span>СЕЗОННЫЙ АРХИВ</span></div>
+          <div class="case-statusbar"><span id="caseItemCount">0 предметов</span></div>
         </article>
 
         <button type="button" class="btn btn-action implant-catalogue-link" data-open-screen="implants">
           Каталог имплантов сезона
         </button>
-
-        <article class="glass-card module-status">
-          <span class="module-status-dot" aria-hidden="true"></span>
-          <div class="module-status-body">
-            <strong>Новая поездка — новая коллекция</strong>
-            <p>Гарант судьбы работает сразу. Импланты и другие призы сохраняются, но их эффекты пока не подключены. Карточки появятся позже. Прогресс Пекина не переносится.</p>
-          </div>
-          <span class="module-status-tag">HAINAN</span>
-        </article>
       </section>
 
       <!-- ============================================================
@@ -485,17 +413,8 @@
       <section class="screen implants-screen" data-screen="implants" aria-labelledby="implantsTitle" hidden>
         <div class="screen-intro">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="collection" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">IMPLANT CATALOGUE / 义体目录</span><h1 id="implantsTitle" class="display-title">Импланты</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> y&igrave; t&#301; m&ugrave; l&ugrave; <span class="screen-sub-sep">//</span> каталог сезона</p></div>
+          <div><h1 id="implantsTitle" class="display-title">Импланты</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> y&igrave; t&#301; m&ugrave; l&ugrave; <span class="screen-sub-sep">//</span> каталог сезона</p></div>
         </div>
-
-        <article class="glass-card module-status">
-          <span class="module-status-dot" aria-hidden="true"></span>
-          <div class="module-status-body">
-            <strong>Это каталог, а не инвентарь</strong>
-            <p>Здесь то, что бывает в сезоне. Импланты уже можно выиграть в кейсах; их эффекты описаны по правилам Пекина, но пока не включены.</p>
-          </div>
-          <span class="module-status-tag">СПРАВОЧНИК</span>
-        </article>
 
         <div class="implant-list" id="implantList" aria-live="polite">
           <p class="implant-loading">Загрузка каталога&hellip;</p>
@@ -505,7 +424,7 @@
       <section class="screen placeholder-screen" data-screen="profile" aria-labelledby="profileTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="schedule" aria-label="Назад">‹</button>
-          <div><span class="system-label">PERSONAL CARD / 个人资料</span><h1 id="profileTitle" class="display-title">Профиль</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gè rén zī liào <span class="screen-sub-sep">//</span> твой личный контур</p></div>
+          <div><h1 id="profileTitle" class="display-title">Профиль</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gè rén zī liào <span class="screen-sub-sep">//</span> твой личный контур</p></div>
         </div>
 
         <button type="button" class="btn btn-secondary" data-app-guide>Инструкция · помощь Юлии Витальевны</button>
@@ -537,16 +456,6 @@
         </div>
 
         <button type="button" class="profile-collection-link" data-open-screen="collection"><img src="./assets/icons/nav-cases.png" alt=""><span><strong>Моя коллекция</strong><small>Открыть папку предметов →</small></span></button>
-        <article class="glass-card placeholder-card disabled"><span>—</span><div><strong>Beijing-архив</strong><p>Для ветеранов сезона 1 откроется отдельно, после привязки Telegram ID.</p></div></article>
-
-        <article class="glass-card module-status">
-          <span class="module-status-dot" aria-hidden="true"></span>
-          <div class="module-status-body">
-            <strong>Свой прогресс, свой сезон</strong>
-            <p>После входа ★ и предметы приходят из выбранного сезона. REP и ранг подключим отдельно. Прочерк означает, что данных пока нет, а не нулевой результат.</p>
-          </div>
-          <span class="module-status-tag">ЛИЧНЫЙ КОНТУР</span>
-        </article>
       </section>
 
       <!-- ============================================================
@@ -564,7 +473,7 @@
       <section class="screen case-workstation admin-console" data-screen="admin" aria-labelledby="adminTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">NETWATCH PROTOCOL / 管理</span><h1 id="adminTitle" class="display-title">Админка</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> guǎn lǐ <span class="screen-sub-sep">//</span> служебный контур</p></div>
+          <div><h1 id="adminTitle" class="display-title">Админка</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> guǎn lǐ <span class="screen-sub-sep">//</span> служебный контур</p></div>
           <span class="admin-badge" id="adminBadge">&mdash;</span>
         </div>
 
@@ -621,12 +530,11 @@
           <article class="case-window">
             <div class="case-titlebar"><h2>Состояние системы</h2><span aria-hidden="true">▰ ▣</span></div>
             <div class="admin-gauges" id="adminCounts"><p class="case-message">Данные появятся после входа.</p></div>
-            <div class="case-statusbar"><span id="adminSchema">SCHEMA &mdash;</span><span>ARCHITECT SCOPE</span></div>
+            <div class="case-statusbar"><span id="adminSchema">SCHEMA &mdash;</span></div>
           </article>
           <article class="case-window">
             <div class="case-titlebar"><h2>Журнал действий</h2><span aria-hidden="true">.log</span></div>
             <div class="case-list admin-log" id="adminActivity"></div>
-            <div class="case-statusbar"><span>ПОСЛЕДНИЕ ЗАПИСИ</span><span>AUDIT</span></div>
           </article>
         </div>
 
@@ -639,7 +547,7 @@
             </form>
             <p class="case-message" id="adminRosterStatus" role="status"></p>
             <div class="case-list admin-roster" id="adminRoster"><p class="case-message">Список появится после входа.</p></div>
-            <div class="case-statusbar"><span id="adminRosterCount">&mdash; записей</span><span>ROSTER</span></div>
+            <div class="case-statusbar"><span id="adminRosterCount">&mdash; записей</span></div>
           </article>
 
           <article class="case-window admin-code-card" id="adminCodeCard" hidden>
@@ -655,7 +563,6 @@
                 <button type="button" class="btn btn-secondary" id="adminCodeHide">Скрыть</button>
               </div>
             </div>
-            <div class="case-statusbar"><span>ПОКАЗАН ОДИН РАЗ</span><span>MAX LINK</span></div>
           </article>
         </div>
 
@@ -664,7 +571,6 @@
             <div class="case-titlebar"><h2>Выдача попыток</h2><span>SCAN</span></div>
             <p class="case-message admin-note">Выдача живёт на экране «Кейсы»: там рядом видно запас участника и журнал прошлых выдач. Второй такой же формы здесь нет намеренно — две формы для одной операции однажды разойдутся, и разойдутся молча.</p>
             <button type="button" class="btn btn-action admin-jump" data-open-screen="cases">Открыть выдачу в кейсах →</button>
-            <div class="case-statusbar"><span>НЕ БОЛЕЕ 7 ПОПЫТОК НА УЧАСТНИКА</span><span>JOURNALLED</span></div>
           </article>
         </div>
 
@@ -679,7 +585,7 @@
             <p class="case-message" id="diaryRules"></p>
             <p class="case-message" id="diarySheetStatus" role="status"></p>
             <div class="case-list diary-sheet" id="diarySheet"><p class="case-message">Список появится после входа.</p></div>
-            <div class="case-statusbar"><span id="diarySheetCount">&mdash; оценено</span><span>PAPER DIARY</span></div>
+            <div class="case-statusbar"><span id="diarySheetCount">&mdash; оценено</span></div>
           </article>
         </div>
 
@@ -690,19 +596,18 @@
             <div class="admin-gauges" id="economyGauges"><p class="case-message">Данные появятся после входа.</p></div>
             <div class="economy-legend"><span class="is-minted">выпущено ★</span><span class="is-burned">потрачено ★</span></div>
             <div class="case-list economy-days" id="economyDays"></div>
-            <div class="case-statusbar"><span id="economySeason">СЕЗОН &mdash;</span><span>ПО ДНЯМ СЕЗОНА</span></div>
+            <div class="case-statusbar"><span id="economySeason">СЕЗОН &mdash;</span></div>
           </article>
           <article class="case-window">
             <div class="case-titlebar"><h2>Купоны «+30 минут»</h2><span aria-hidden="true">券</span></div>
             <p class="case-message admin-note">Участник пришёл отпроситься — найдите его здесь и погасите купон. Погашение пишется в журнал и не повторяется при обрыве связи.</p>
             <p class="case-message" id="economyCouponStatus" role="status"></p>
             <div class="case-list admin-roster" id="economyCoupons"></div>
-            <div class="case-statusbar"><span id="economyCouponCount">&mdash; купонов</span><span>COUPONS</span></div>
+            <div class="case-statusbar"><span id="economyCouponCount">&mdash; купонов</span></div>
           </article>
           <article class="case-window">
             <div class="case-titlebar"><h2>Откуда и куда</h2><span aria-hidden="true">.log</span></div>
             <div class="case-list" id="economySources"></div>
-            <div class="case-statusbar"><span>ВЕСЬ СЕЗОН</span><span>LEDGER</span></div>
           </article>
           <article class="case-window" id="virusAdmin" hidden>
             <div class="case-titlebar"><h2>Вирус Протокола</h2><span aria-hidden="true">爱你.vbs</span></div>
@@ -712,7 +617,6 @@
               <button class="btn btn-secondary" type="submit" id="virusReleaseButton">Выпустить</button>
             </form>
             <p class="case-message" id="virusReleaseStatus" role="status"></p>
-            <div class="case-statusbar"><span>ТОЛЬКО АРХИТЕКТОР</span><span>RELEASE</span></div>
           </article>
         </div>
 
@@ -720,15 +624,6 @@
           <article class="case-window">
             <div class="case-titlebar"><h2>Сезоны</h2><span aria-hidden="true">▣</span></div>
             <div class="case-list admin-seasons" id="adminSeasons"><p class="case-message">Список появится после входа.</p></div>
-            <div class="case-statusbar"><span>ТОЛЬКО ПРОСМОТР</span><span>SEASONS</span></div>
-          </article>
-          <article class="glass-card module-status">
-            <span class="module-status-dot" aria-hidden="true"></span>
-            <div class="module-status-body">
-              <strong>Сезон заводят из консоли архитектора</strong>
-              <p>Создание и правка сезона меняют всё, что от него зависит, и делаются не с телефона на бегу. Здесь только просмотр: что есть, в каком состоянии и на какие даты.</p>
-            </div>
-            <span class="module-status-tag">ЧТЕНИЕ</span>
           </article>
         </div>
       </section>
@@ -740,7 +635,7 @@
       <section class="screen case-workstation antivirus-screen" data-screen="antivirus" aria-labelledby="antivirusTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">PROTOCOL DEFENDER / 杀毒</span><h1 id="antivirusTitle" class="display-title">Антивирус</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shā dú <span class="screen-sub-sep">//</span> лечение и защита</p></div>
+          <div><h1 id="antivirusTitle" class="display-title">Антивирус</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shā dú <span class="screen-sub-sep">//</span> лечение и защита</p></div>
         </div>
 
         <article class="case-window">
@@ -756,7 +651,7 @@
             </div>
             <p class="spy-hint">Вирус передаётся при встречах и обменах: если заражён один из двоих, второй заражается с вероятностью 50%. Без лечения проходит через 6 часов.</p>
           </div>
-          <div class="case-statusbar"><span id="virusStars">&mdash;</span><span>DEFENDER.EXE</span></div>
+          <div class="case-statusbar"><span id="virusStars">&mdash;</span></div>
         </article>
       </section>
 
@@ -767,7 +662,7 @@
       <section class="screen case-workstation trade-screen" data-screen="trade" aria-labelledby="tradeTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">SWAP DESK / 交换</span><h1 id="tradeTitle" class="display-title">Обмен</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jiāo huàn <span class="screen-sub-sep">//</span> дубликаты из рук в руки</p></div>
+          <div><h1 id="tradeTitle" class="display-title">Обмен</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jiāo huàn <span class="screen-sub-sep">//</span> дубликаты из рук в руки</p></div>
         </div>
 
         <article class="case-window" id="tradeStart">
@@ -784,13 +679,13 @@
             </div>
             <p class="spy-hint">Сбор 5★ с каждого, не больше трёх обменов в день. Отдать можно только дубликат — один экземпляр останется у вас.</p>
           </div>
-          <div class="case-statusbar"><span id="tradeToday">&mdash;</span><span>SWAP.EXE</span></div>
+          <div class="case-statusbar"><span id="tradeToday">&mdash;</span></div>
         </article>
 
         <article class="case-window" id="tradeRoom" hidden>
           <div class="case-titlebar"><h2>Обмен</h2><button type="button" id="tradeCancel" aria-label="Отменить обмен">×</button></div>
           <div class="trade-body" id="tradeRoomBody"></div>
-          <div class="case-statusbar"><span id="tradeRoomState">&mdash;</span><span>SWAP.EXE</span></div>
+          <div class="case-statusbar"><span id="tradeRoomState">&mdash;</span></div>
         </article>
       </section>
 
@@ -802,7 +697,7 @@
       <section class="screen case-workstation meet-screen" data-screen="meet" aria-labelledby="meetTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">STREET PASS / 相遇</span><h1 id="meetTitle" class="display-title">Встречи</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng yù <span class="screen-sub-sep">//</span> пазл из встреч</p></div>
+          <div><h1 id="meetTitle" class="display-title">Встречи</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng yù <span class="screen-sub-sep">//</span> пазл из встреч</p></div>
         </div>
 
         <article class="case-window">
@@ -825,7 +720,7 @@
             </div>
             <p class="spy-hint">Кусок получают оба. С одним и тем же человеком — один кусок в день.</p>
           </div>
-          <div class="case-statusbar"><span id="meetToday">СЕГОДНЯ ВСТРЕЧ: &mdash;</span><span>MEET.EXE</span></div>
+          <div class="case-statusbar"><span id="meetToday">СЕГОДНЯ ВСТРЕЧ: &mdash;</span></div>
         </article>
 
         <article class="case-window">
@@ -844,7 +739,7 @@
       <section class="screen case-workstation games-screen" data-screen="games" aria-labelledby="gamesTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">PROTOCOL EVENTS</span><h1 id="gamesTitle" class="display-title">Ивенты</h1><p class="screen-sub">Игры вместе · общение прежде всего</p></div>
+          <div><h1 id="gamesTitle" class="display-title">Ивенты</h1><p class="screen-sub">Игры вместе · общение прежде всего</p></div>
         </div>
 
         <details class="case-window game-help-panel">
@@ -887,14 +782,14 @@
               <button type="button" class="btn btn-primary" data-create-game="outage">Создать комнату</button>
             </section>
           </div>
-          <div class="case-statusbar"><span>ОЧКИ ТОЛЬКО НА ВЕЧЕР</span><span>GAMES</span></div>
+          <div class="case-statusbar"><span>ОЧКИ ТОЛЬКО НА ВЕЧЕР</span></div>
         </article>
 
         <article class="case-window" id="gameRoom" hidden>
           <div class="case-titlebar"><h2 id="gameRoomTitle">Комната</h2><button type="button" id="gameLeave" aria-label="Выйти из комнаты">×</button></div>
           <div class="spy-body" id="gameRoomBody"></div>
           <p class="case-message spy-note" id="gameNote" role="status"></p>
-          <div class="case-statusbar"><span id="gameRoomPhase">ЛОББИ</span><span id="gameRoomExe">GAME.EXE</span></div>
+          <div class="case-statusbar"><span id="gameRoomPhase">ЛОББИ</span></div>
         </article>
       </section>
 
@@ -902,7 +797,7 @@
            ЕЩЁ — хаб настроек и второстепенных разделов
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="more" aria-labelledby="moreTitle" hidden>
-        <div class="placeholder-hero pearl"><img src="./assets/icons/nav-more.png" alt=""><span class="system-label">PERSONAL SETTINGS</span><h1 id="moreTitle" class="display-title">Ещё</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gèng duō <span class="screen-sub-sep">//</span> настройки и связь</p><p>Связь, справка и настройки устройства будут собраны здесь.</p></div>
+        <div class="placeholder-hero pearl"><img src="./assets/icons/nav-more.png" alt=""><h1 id="moreTitle" class="display-title">Ещё</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gèng duō <span class="screen-sub-sep">//</span> настройки и связь</p></div>
 
         <div class="settings-list glass-card">
           <span class="settings-group-label">ВИД</span>
@@ -1068,7 +963,7 @@
   <script src="./case-play.js?v=9afa5704f9" defer></script>
   <script src="./implants.js?v=7d57c9778a" defer></script>
   <script src="./admin.js?v=2cf59ee550" defer></script>
-  <script src="./games.js?v=0c8d40ef78" defer></script>
+  <script src="./games.js?v=34b3945e14" defer></script>
   <script src="./game-spy.js?v=1f1256a995" defer></script>
   <script src="./game-cipher.js?v=7ab39c3626" defer></script>
   <script src="./game-outage.js?v=776b998494" defer></script>

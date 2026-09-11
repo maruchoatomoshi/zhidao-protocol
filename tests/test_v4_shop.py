@@ -184,6 +184,15 @@ class ShopTests(unittest.TestCase):
         self.assertEqual(self.equip(wrong_slot, item["code"]).status_code, 400)
         self.assertIsNone(self.equip(item["slot"], None).json()["equipped"][item["slot"]])
 
+    def test_bought_cosmetics_do_not_break_the_collection(self):
+        # Косметика лежит в той же таблице, что и призы кейсов. Коллекция её не
+        # знает и падала с KeyError на первом же купленном предмете.
+        self.sql("""INSERT INTO v4_case_inventory(season_id, account_id, item_code, quantity, effect_state)
+                    VALUES (1, ?, 'fr_gold', 1, 'active')""", (self.ids["alice"],))
+        response = self.clients["alice"].get("/api/v4/seasons/1/cases/state")
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertNotIn("fr_gold", [item["item_code"] for item in response.json()["inventory"]])
+
     def test_frames_are_visible_to_others(self):
         frame = "fr_gold"
         self.sql("""INSERT INTO v4_case_inventory(season_id, account_id, item_code, quantity, effect_state)

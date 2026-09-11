@@ -132,7 +132,6 @@
   const $ = (id) => document.getElementById(id);
   const POLL_MS = 2000;
   const TITLES = { spy: "Шпион Протокола", cipher: "Шифровальщики", outage: "Сбой системы" };
-  const EXE = { spy: "SPY.EXE", cipher: "CIPHER.EXE", outage: "OUTAGE.EXE" };
   const renderers = {};
 
   let session = window.ZhidaoSession || null;
@@ -511,7 +510,6 @@
     $("gameRoom").hidden = false;
     $("gameRoomTitle").textContent = `${TITLES[view.room.game] || "Игра"} · ${view.room.code}`;
     $("gameRoomPhase").textContent = renderer.phaseName(c.game, c.room);
-    $("gameRoomExe").textContent = EXE[view.room.game] || "GAME.EXE";
     const oldCards = Array.from($("gameRoomBody").querySelectorAll(".cipher-card"), el => el.classList.contains("is-revealed"));
     const oldModules = Array.from($("gameRoomBody").querySelectorAll(".outage-module"), el => el.classList.contains("is-solved"));
     $("gameRoomBody").replaceChildren(...renderer.draw(c).filter(Boolean));

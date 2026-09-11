@@ -101,8 +101,9 @@ class V4AuthApiTests(unittest.TestCase):
     def test_participant_design_preview_is_served_without_account_data(self):
         preview = self.client.get("/app/")
         self.assertEqual(preview.status_code, 200)
-        self.assertIn("DESIGN PREVIEW", preview.text)
-        self.assertIn("Курс на", preview.text)
+        # Главный экран оформления: приветствие и показатели, без данных аккаунта.
+        self.assertIn('id="scheduleTitle"', preview.text)
+        self.assertIn("data-case-scans", preview.text)
         self.assertIn("default-src 'self'", preview.headers["content-security-policy"])
         # The participant app is a MAX Mini App, so it must be framable — but
         # only by MAX. X-Frame-Options has no origin-list syntax that works

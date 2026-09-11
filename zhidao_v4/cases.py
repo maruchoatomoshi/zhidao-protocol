@@ -112,10 +112,13 @@ def wallet(conn, account_id, season_id):
 
 
 def inventory(conn, account_id, season_id):
+    # В той же таблице лежат покупки витрины (косметика, купоны) — их показывает
+    # экран магазина, а коллекции нужны только призы кейсов.
     catalogue = items_by_code()
     return [{**dict(row), 'name_ru': catalogue[row['item_code']]['name_ru']}
             for row in conn.execute('''SELECT item_code, quantity, effect_state FROM v4_case_inventory
-                WHERE season_id=? AND account_id=? AND quantity>0 ORDER BY item_code''', (season_id, account_id))]
+                WHERE season_id=? AND account_id=? AND quantity>0 ORDER BY item_code''', (season_id, account_id))
+            if row['item_code'] in catalogue]
 
 
 def history(conn, account_id, season_id, before=None):
