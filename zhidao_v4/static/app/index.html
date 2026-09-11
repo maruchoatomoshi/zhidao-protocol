@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="./shop.css?v=4ef8ad57ea">
   <link rel="stylesheet" href="./cosmetics.css?v=f44466e3ea">
   <link rel="stylesheet" href="./meet.css?v=e396112639">
+  <link rel="stylesheet" href="./trade.css?v=dbe9d9aca3">
   <link rel="stylesheet" href="./aero-desktop.css?v=b5a5d3d717">
   <link rel="stylesheet" href="./xp-home.css?v=d667055f1b">
 </head>
@@ -719,6 +720,40 @@
       </section>
 
       <!-- ============================================================
+           ОБМЕН — дубликаты из рук в руки (V4_GAMES.md §4.5).
+           Что можно отдать и состоялся ли обмен, решает сервер.
+           ============================================================ -->
+      <section class="screen case-workstation trade-screen" data-screen="trade" aria-labelledby="tradeTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
+          <div><span class="system-label">SWAP DESK / 交换</span><h1 id="tradeTitle" class="display-title">Обмен</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jiāo huàn <span class="screen-sub-sep">//</span> дубликаты из рук в руки</p></div>
+        </div>
+
+        <article class="case-window" id="tradeStart">
+          <div class="case-titlebar"><h2>Мои дубликаты</h2><span id="tradeLimit">&mdash;</span></div>
+          <div class="trade-body">
+            <p class="case-message" id="tradeStatus" role="status">Войдите, чтобы меняться дубликатами.</p>
+            <div class="trade-items" id="tradeItems"></div>
+            <div class="trade-actions">
+              <button type="button" class="btn btn-primary" id="tradeOffer" disabled>Предложить обмен</button>
+              <form class="spy-join" id="tradeJoinForm">
+                <label>Код обмена собеседника <input id="tradeCode" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="000000"></label>
+                <button type="submit" class="btn btn-secondary" id="tradeJoinSubmit" disabled>Ввести</button>
+              </form>
+            </div>
+            <p class="spy-hint">Сбор 5★ с каждого, не больше трёх обменов в день. Отдать можно только дубликат — один экземпляр останется у вас.</p>
+          </div>
+          <div class="case-statusbar"><span id="tradeToday">&mdash;</span><span>SWAP.EXE</span></div>
+        </article>
+
+        <article class="case-window" id="tradeRoom" hidden>
+          <div class="case-titlebar"><h2>Обмен</h2><button type="button" id="tradeCancel" aria-label="Отменить обмен">×</button></div>
+          <div class="trade-body" id="tradeRoomBody"></div>
+          <div class="case-statusbar"><span id="tradeRoomState">&mdash;</span><span>SWAP.EXE</span></div>
+        </article>
+      </section>
+
+      <!-- ============================================================
            ВСТРЕЧИ — пазл из встреч (V4_GAMES.md §3.2, §4.6).
            Кусок картинки получают только от другого человека: один
            показывает код, второй вводит.
@@ -862,6 +897,11 @@
             <span class="hub-name">Встречи</span>
             <span class="hub-cn">相遇<i>xiāng yù</i></span>
           </button>
+          <button type="button" class="hub-tile tone-aqua" data-open-screen="trade">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
+            <span class="hub-name">Обмен</span>
+            <span class="hub-cn">交换<i>jiāo huàn</i></span>
+          </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
             <span class="hub-name">Коллекция</span>
@@ -958,7 +998,8 @@
   <script src="./cosmetics.js?v=6502f523b1" defer></script>
   <script src="./shop.js?v=9ef796e7ab" defer></script>
   <script src="./meet.js?v=27cef7b70e" defer></script>
-  <script src="./app.js?v=ca202f6292" defer></script>
+  <script src="./trade.js?v=2e3ebb7120" defer></script>
+  <script src="./app.js?v=75ab986a65" defer></script>
   <script src="./player.js?v=1fa90de1e1" defer></script>
   <script src="./vendor/max-web-app.js?v=4c99341798" defer></script>
   <script src="./auth.js?v=13c2280d52" defer></script>
