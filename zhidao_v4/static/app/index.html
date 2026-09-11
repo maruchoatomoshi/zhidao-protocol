@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="./economy.css?v=a4d218897e">
   <link rel="stylesheet" href="./shop.css?v=4ef8ad57ea">
   <link rel="stylesheet" href="./cosmetics.css?v=f44466e3ea">
+  <link rel="stylesheet" href="./meet.css?v=e396112639">
   <link rel="stylesheet" href="./aero-desktop.css?v=b5a5d3d717">
   <link rel="stylesheet" href="./xp-home.css?v=d667055f1b">
 </head>
@@ -718,6 +719,46 @@
       </section>
 
       <!-- ============================================================
+           ВСТРЕЧИ — пазл из встреч (V4_GAMES.md §3.2, §4.6).
+           Кусок картинки получают только от другого человека: один
+           показывает код, второй вводит.
+           ============================================================ -->
+      <section class="screen case-workstation meet-screen" data-screen="meet" aria-labelledby="meetTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
+          <div><span class="system-label">STREET PASS / 相遇</span><h1 id="meetTitle" class="display-title">Встречи</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng yù <span class="screen-sub-sep">//</span> пазл из встреч</p></div>
+        </div>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2 id="meetPuzzleTitle">Пазл</h2><span id="meetProgress">&mdash; / 9</span></div>
+          <div class="meet-body">
+            <div class="meet-grid" id="meetGrid"></div>
+            <p class="case-message" id="meetStatus" role="status">Войдите, чтобы собирать пазл из встреч.</p>
+            <div class="meet-actions">
+              <button type="button" class="btn btn-primary" id="meetShow">Показать мой код</button>
+              <form class="spy-join" id="meetForm">
+                <label>Код собеседника <input id="meetCode" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="000000"></label>
+                <button type="submit" class="btn btn-secondary" id="meetSubmit">Ввести</button>
+              </form>
+            </div>
+            <div class="meet-offer" id="meetOffer" hidden>
+              <span class="spy-label">Покажите этот код собеседнику</span>
+              <b class="meet-code" id="meetOfferCode">&mdash;</b>
+              <span class="spy-hint" id="meetOfferLeft">Код действует 60 с</span>
+              <button type="button" class="btn btn-secondary" id="meetOfferCancel">Скрыть код</button>
+            </div>
+            <p class="spy-hint">Кусок получают оба. С одним и тем же человеком — один кусок в день.</p>
+          </div>
+          <div class="case-statusbar"><span id="meetToday">СЕГОДНЯ ВСТРЕЧ: &mdash;</span><span>MEET.EXE</span></div>
+        </article>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Собранные</h2><span aria-hidden="true">收藏</span></div>
+          <div class="meet-gallery" id="meetGallery"><p class="case-message">Собранные картинки появятся здесь.</p></div>
+        </article>
+      </section>
+
+      <!-- ============================================================
            ИГРЫ — вечерние игры в комнатах (V4_GAMES.md §3.1, §4.9).
 
            Тело комнаты рисует games.js по ответу сервера: что видит
@@ -816,6 +857,11 @@
             <span class="hub-name">Игры</span>
             <span class="hub-cn">游戏<i>yóu xì</i></span>
           </button>
+          <button type="button" class="hub-tile tone-violet" data-open-screen="meet">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
+            <span class="hub-name">Встречи</span>
+            <span class="hub-cn">相遇<i>xiāng yù</i></span>
+          </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
             <span class="hub-name">Коллекция</span>
@@ -911,7 +957,8 @@
   <script src="./economy.js?v=e2532e9054" defer></script>
   <script src="./cosmetics.js?v=6502f523b1" defer></script>
   <script src="./shop.js?v=9ef796e7ab" defer></script>
-  <script src="./app.js?v=275b4c740b" defer></script>
+  <script src="./meet.js?v=27cef7b70e" defer></script>
+  <script src="./app.js?v=ca202f6292" defer></script>
   <script src="./player.js?v=1fa90de1e1" defer></script>
   <script src="./vendor/max-web-app.js?v=4c99341798" defer></script>
   <script src="./auth.js?v=13c2280d52" defer></script>

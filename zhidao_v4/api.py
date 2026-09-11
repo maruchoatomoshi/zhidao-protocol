@@ -19,6 +19,7 @@ from .cases_api import register_cases
 from .diary_api import register_diary
 from .economy_api import register_economy
 from .shop_api import register_shop
+from .meet_api import register_meet
 from .games_api import register_games
 from .auth import (
     AuthenticationError,
@@ -771,5 +772,6 @@ def create_app(
     register_diary(app, _current_principal, _csrf_principal)
     register_economy(app, _current_principal, _csrf_principal)
     register_shop(app, _current_principal, _csrf_principal)
+    register_meet(app, _current_principal, _csrf_principal)
     register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app

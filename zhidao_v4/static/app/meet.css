@@ -1,0 +1,18 @@
+/* Встречи: пазл из кусков, код рукопожатия, собранные картинки. */
+
+.meet-body { display: grid; gap: 12px; padding: 14px; }
+.meet-grid { display: grid; grid-template-columns: repeat(var(--grid, 3), minmax(0, 1fr)); gap: 3px; width: 100%;
+  overflow: hidden; border: 1px solid var(--case-border); border-radius: 10px; background: var(--case-inset); }
+.meet-tile { min-height: 0; background-repeat: no-repeat; }
+.meet-tile.is-missing { display: grid; place-items: center; color: var(--case-muted); font: 700 20px/1 "Courier New", monospace;
+  background: repeating-linear-gradient(45deg, var(--case-inset) 0 8px, var(--case-pane) 8px 16px); }
+.meet-tile.is-new { box-shadow: inset 0 0 0 3px #f0b430; animation: meet-new 1.2s ease-out; }
+@keyframes meet-new { from { filter: brightness(1.8); transform: scale(.88); } to { filter: none; transform: none; } }
+html[data-motion="off"] .meet-tile.is-new, html[data-motion="reduced"] .meet-tile.is-new { animation: none; }
+@media (prefers-reduced-motion: reduce) { .meet-tile.is-new { animation: none; } }
+.meet-actions { display: grid; gap: 10px; }
+.meet-offer { display: grid; justify-items: center; gap: 6px; padding: 14px; border: 1px dashed var(--case-border); border-radius: 10px; background: var(--case-inset); }
+.meet-code { font: 700 46px/1.1 "Courier New", monospace; letter-spacing: .12em; font-variant-numeric: tabular-nums; color: var(--case-ink); }
+.meet-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding: 12px; }
+.meet-thumb { display: grid; gap: 6px; color: var(--case-ink); font: 12px/1.3 "Trebuchet MS", sans-serif; }
+.meet-thumb span { display: block; width: 100%; border: 1px solid var(--case-border); border-radius: 8px; background-size: cover; background-position: center; }
