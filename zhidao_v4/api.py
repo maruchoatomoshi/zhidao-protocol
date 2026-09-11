@@ -17,6 +17,7 @@ from . import campus
 from .admin import architect_overview
 from .cases_api import register_cases
 from .diary_api import register_diary
+from .economy_api import register_economy
 from .games_api import register_games
 from .auth import (
     AuthenticationError,
@@ -767,5 +768,6 @@ def create_app(
 
     register_cases(app, _current_principal, _csrf_principal)
     register_diary(app, _current_principal, _csrf_principal)
+    register_economy(app, _current_principal, _csrf_principal)
     register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app

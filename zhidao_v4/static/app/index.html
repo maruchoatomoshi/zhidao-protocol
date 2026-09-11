@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./case-workstation.css?v=1cab944c2a">
   <link rel="stylesheet" href="./games.css?v=8cd9d2d579">
   <link rel="stylesheet" href="./diary.css?v=d01fa4acfe">
+  <link rel="stylesheet" href="./economy.css?v=a4d218897e">
   <link rel="stylesheet" href="./aero-desktop.css?v=b5a5d3d717">
   <link rel="stylesheet" href="./xp-home.css?v=d667055f1b">
 </head>
@@ -618,8 +619,8 @@
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
             <span class="admin-nav-label">Перекличка</span>
           </button>
-          <button class="admin-nav-btn is-standby" type="button" data-toast="Начисления REP и ★ вручную появятся после экономики сезона">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-rating.png" alt=""></span>
+          <button class="admin-nav-btn" type="button" role="tab" aria-selected="false" data-tab="economy">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
             <span class="admin-nav-label">Экономика</span>
           </button>
           <button class="admin-nav-btn is-standby" type="button" data-toast="Запись на стирку подключим вместе с расписанием">
@@ -691,6 +692,29 @@
             <p class="case-message" id="diarySheetStatus" role="status"></p>
             <div class="case-list diary-sheet" id="diarySheet"><p class="case-message">Список появится после входа.</p></div>
             <div class="case-statusbar"><span id="diarySheetCount">&mdash; оценено</span><span>PAPER DIARY</span></div>
+          </article>
+        </div>
+
+        <div class="admin-panel" data-tab-panel="admin:economy" hidden>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Экономика сезона</h2><span aria-hidden="true">经济</span></div>
+            <p class="economy-warning" id="economyWarning" role="status" hidden></p>
+            <div class="admin-gauges" id="economyGauges"><p class="case-message">Данные появятся после входа.</p></div>
+            <div class="economy-legend"><span class="is-minted">выпущено ★</span><span class="is-burned">потрачено ★</span></div>
+            <div class="case-list economy-days" id="economyDays"></div>
+            <div class="case-statusbar"><span id="economySeason">СЕЗОН &mdash;</span><span>ПО ДНЯМ СЕЗОНА</span></div>
+          </article>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Купоны «+30 минут»</h2><span aria-hidden="true">券</span></div>
+            <p class="case-message admin-note">Участник пришёл отпроситься — найдите его здесь и погасите купон. Погашение пишется в журнал и не повторяется при обрыве связи.</p>
+            <p class="case-message" id="economyCouponStatus" role="status"></p>
+            <div class="case-list admin-roster" id="economyCoupons"></div>
+            <div class="case-statusbar"><span id="economyCouponCount">&mdash; купонов</span><span>COUPONS</span></div>
+          </article>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Откуда и куда</h2><span aria-hidden="true">.log</span></div>
+            <div class="case-list" id="economySources"></div>
+            <div class="case-statusbar"><span>ВЕСЬ СЕЗОН</span><span>LEDGER</span></div>
           </article>
         </div>
 
@@ -898,6 +922,7 @@
   <script src="./game-cipher.js?v=fe78d1a2d4" defer></script>
   <script src="./game-outage.js?v=e14b649ff8" defer></script>
   <script src="./diary.js?v=359d405060" defer></script>
+  <script src="./economy.js?v=e2532e9054" defer></script>
   <script src="./app.js?v=275b4c740b" defer></script>
   <script src="./player.js?v=1fa90de1e1" defer></script>
   <script src="./vendor/max-web-app.js?v=4c99341798" defer></script>
