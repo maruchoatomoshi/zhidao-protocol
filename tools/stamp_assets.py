@@ -51,7 +51,11 @@ IN_CODE = {
 
 
 def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:10]
+    # Хешируем содержимое так, как оно лежит в git и уезжает на сервер: с LF.
+    # На Windows с core.autocrlf=true рабочая копия отдаёт CRLF, и без этой
+    # нормализации метки зависели от того, в чьей копии их проставили —
+    # 2026-09-11 так в main ушла 21 метка, не совпадающая с файлами.
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()[:10]
 
 
 def stamp_text(text: str, pattern: re.Pattern, base: Path, problems: list[str]) -> str:
