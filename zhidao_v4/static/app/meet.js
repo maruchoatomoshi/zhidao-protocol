@@ -175,7 +175,11 @@
     highlight = result.piece ? { puzzle: result.piece.puzzle, piece: result.piece.piece } : null;
     if (window.ZhidaoSounds) window.ZhidaoSounds.play(result.piece && result.piece.complete ? "win" : "buy");
     await load();
-    setStatus(describe(result));
+    let text = describe(result);
+    if (result.virus === "caught") text += " Кажется, вы подхватили вирус Протокола…";
+    if (result.virus === "blocked") text += " Фаервол отбил вирус собеседника.";
+    setStatus(text);
+    if (result.virus) window.dispatchEvent(new Event("zhidao:virus-check"));
   }
 
   // --- показать код ----------------------------------------------------------------------

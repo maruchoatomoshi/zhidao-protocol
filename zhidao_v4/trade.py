@@ -26,6 +26,7 @@ from . import cases, meet
 from .cases import CaseError, authorize, encoded, ensure_wallet
 from .diary import full_wallet
 from .shop import shop_day
+from .virus import spread
 
 FEE = 5
 DAILY_LIMIT = 3
@@ -134,6 +135,9 @@ def execute(conn, season_id: int, trade: dict) -> dict[int, dict]:
         )
         results[side["account"]] = {"gave": known[side["item"]]["name_ru"], "got": known[other["item"]]["name_ru"],
                                     "fee": FEE, "stars": after["stars"]}
+    # Вирус Протокола передаётся и при обмене (V4_GAMES.md §4.7).
+    for account, outcome in spread(conn, season_id, a["account"], b["account"]).items():
+        results[account]["virus"] = outcome
     conn.execute(
         """INSERT INTO v4_audit_log(actor_account_id, season_id, action, entity_type, entity_id, after_json)
            VALUES (?,?,?,'trade',?,?)""",

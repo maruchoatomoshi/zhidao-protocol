@@ -23,6 +23,7 @@ from pathlib import Path
 
 from .cases import CaseError, authorize
 from .shop import shop_day
+from .virus import spread
 
 STATIC_ROOT = Path(__file__).parent / "static"
 PUZZLES_PATH = STATIC_ROOT / "app/assets/puzzles/puzzles.json"
@@ -194,7 +195,11 @@ def meet(conn, season_id: int, offerer: int, acceptor: int) -> dict:
                  (season_id, today, low, high))
     names = {row["id"]: row["display_name"] for row in conn.execute(
         "SELECT id, display_name FROM v4_accounts WHERE id IN (?, ?)", (offerer, acceptor))}
+    # Вирус Протокола передаётся и при встрече (V4_GAMES.md §4.7).
+    caught = spread(conn, season_id, offerer, acceptor)
     return {
-        offerer: {"state": "met", "partner": names[acceptor], "piece": _grant_piece(conn, season_id, offerer)},
-        acceptor: {"state": "met", "partner": names[offerer], "piece": _grant_piece(conn, season_id, acceptor)},
+        offerer: {"state": "met", "partner": names[acceptor], "piece": _grant_piece(conn, season_id, offerer),
+                  "virus": caught.get(offerer)},
+        acceptor: {"state": "met", "partner": names[offerer], "piece": _grant_piece(conn, season_id, acceptor),
+                   "virus": caught.get(acceptor)},
     }

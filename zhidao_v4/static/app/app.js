@@ -50,7 +50,7 @@ function showScreen(target) {
   window.dispatchEvent(new CustomEvent("zhidao:screen", { detail: target }));
   const back = window.WebApp && window.WebApp.initData && window.WebApp.BackButton;
   if (back) {
-    if (["collection", "implants", "campus-map", "profile", "admin", "games", "meet", "trade"].includes(target)) back.show();
+    if (["collection", "implants", "campus-map", "profile", "admin", "games", "meet", "trade", "antivirus"].includes(target)) back.show();
     else back.hide();
   }
 }

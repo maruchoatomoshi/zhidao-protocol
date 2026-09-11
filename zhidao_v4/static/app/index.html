@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="./cosmetics.css?v=f44466e3ea">
   <link rel="stylesheet" href="./meet.css?v=e396112639">
   <link rel="stylesheet" href="./trade.css?v=dbe9d9aca3">
+  <link rel="stylesheet" href="./virus.css?v=1198560e6f">
   <link rel="stylesheet" href="./aero-desktop.css?v=b5a5d3d717">
   <link rel="stylesheet" href="./xp-home.css?v=d667055f1b">
 </head>
@@ -700,6 +701,16 @@
             <div class="case-list" id="economySources"></div>
             <div class="case-statusbar"><span>ВЕСЬ СЕЗОН</span><span>LEDGER</span></div>
           </article>
+          <article class="case-window" id="virusAdmin" hidden>
+            <div class="case-titlebar"><h2>Вирус Протокола</h2><span aria-hidden="true">爱你.vbs</span></div>
+            <p class="case-message admin-note">Первого заражённого выбирает Архитектор. Дальше вирус расходится сам — при встречах и обменах. Фаервол участника защищает и от выпуска.</p>
+            <form class="admin-search" id="virusReleaseForm">
+              <label>Участник <select id="virusReleaseTarget"></select></label>
+              <button class="btn btn-secondary" type="submit" id="virusReleaseButton">Выпустить</button>
+            </form>
+            <p class="case-message" id="virusReleaseStatus" role="status"></p>
+            <div class="case-statusbar"><span>ТОЛЬКО АРХИТЕКТОР</span><span>RELEASE</span></div>
+          </article>
         </div>
 
         <div class="admin-panel" data-tab-panel="admin:seasons" hidden>
@@ -717,6 +728,33 @@
             <span class="module-status-tag">ЧТЕНИЕ</span>
           </article>
         </div>
+      </section>
+
+      <!-- ============================================================
+           АНТИВИРУС — вирус Протокола (V4_GAMES.md §4.7).
+           Заражён ли человек, решает сервер; эффекты только смешные.
+           ============================================================ -->
+      <section class="screen case-workstation antivirus-screen" data-screen="antivirus" aria-labelledby="antivirusTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
+          <div><span class="system-label">PROTOCOL DEFENDER / 杀毒</span><h1 id="antivirusTitle" class="display-title">Антивирус</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shā dú <span class="screen-sub-sep">//</span> лечение и защита</p></div>
+        </div>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Состояние системы</h2><span id="virusBadge">&mdash;</span></div>
+          <div class="virus-body">
+            <div class="virus-status" id="virusStatus"><span>Войдите, чтобы проверить систему.</span></div>
+            <p class="case-message" id="virusNote" role="status"></p>
+            <div class="virus-test" id="virusTest" hidden></div>
+            <div class="virus-actions">
+              <button type="button" class="btn btn-primary" id="virusTestStart" hidden>Пройти тест из 5 слов — бесплатно</button>
+              <button type="button" class="btn btn-secondary" id="virusAntivirus" hidden>Антивирус без теста · 15★</button>
+              <button type="button" class="btn btn-secondary" id="virusFirewall" hidden>Фаервол до 07:00 · 20★</button>
+            </div>
+            <p class="spy-hint">Вирус передаётся при встречах и обменах: если заражён один из двоих, второй заражается с вероятностью 50%. Без лечения проходит через 6 часов.</p>
+          </div>
+          <div class="case-statusbar"><span id="virusStars">&mdash;</span><span>DEFENDER.EXE</span></div>
+        </article>
       </section>
 
       <!-- ============================================================
@@ -902,6 +940,11 @@
             <span class="hub-name">Обмен</span>
             <span class="hub-cn">交换<i>jiāo huàn</i></span>
           </button>
+          <button type="button" class="hub-tile tone-red" data-open-screen="antivirus">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
+            <span class="hub-name">Антивирус</span>
+            <span class="hub-cn">杀毒<i>shā dú</i></span>
+          </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
             <span class="hub-name">Коллекция</span>
@@ -976,6 +1019,11 @@
   </main>
 
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
+  <div class="virus-popup" id="virusPopup" role="alertdialog" aria-labelledby="virusPopupTitle" aria-describedby="virusPopupText" hidden>
+    <div class="virus-popup-bar"><b id="virusPopupTitle">爱你.vbs — Протокол</b><button type="button" id="virusPopupClose" aria-label="Закрыть">×</button></div>
+    <div class="virus-popup-body"><span class="virus-popup-icon" aria-hidden="true">!</span><p id="virusPopupText"></p></div>
+    <div class="virus-popup-actions"><button type="button" class="btn btn-primary" id="virusPopupCure">Лечиться</button><button type="button" class="btn btn-secondary" id="virusPopupOk">ОК</button></div>
+  </div>
   <script src="./campus-map.js?v=a36009e142" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
@@ -997,9 +1045,10 @@
   <script src="./economy.js?v=e2532e9054" defer></script>
   <script src="./cosmetics.js?v=6502f523b1" defer></script>
   <script src="./shop.js?v=9ef796e7ab" defer></script>
-  <script src="./meet.js?v=27cef7b70e" defer></script>
-  <script src="./trade.js?v=2e3ebb7120" defer></script>
-  <script src="./app.js?v=75ab986a65" defer></script>
+  <script src="./meet.js?v=44e02e65d4" defer></script>
+  <script src="./trade.js?v=10789a0a08" defer></script>
+  <script src="./virus.js?v=e1285fcef3" defer></script>
+  <script src="./app.js?v=f4146ee15d" defer></script>
   <script src="./player.js?v=1fa90de1e1" defer></script>
   <script src="./vendor/max-web-app.js?v=4c99341798" defer></script>
   <script src="./auth.js?v=13c2280d52" defer></script>

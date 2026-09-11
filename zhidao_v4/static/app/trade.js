@@ -237,6 +237,9 @@
       done.append(node("h3", null, "Обмен состоялся"),
         node("p", "spy-lead", `Вы получили «${view.result.got}», отдали «${view.result.gave}».`),
         node("p", "spy-hint", `Сбор −${view.result.fee}★, у вас ${view.result.stars}★.`));
+      if (view.result.virus === "caught") done.append(node("p", "spy-banner", "Вместе с предметом пришёл вирус Протокола…"));
+      if (view.result.virus === "blocked") done.append(node("p", "spy-banner", "Фаервол отбил вирус собеседника."));
+      if (view.result.virus) window.dispatchEvent(new Event("zhidao:virus-check"));
       parts.push(done);
     }
     if (["cancelled", "failed"].includes(view.state) && view.message) {
