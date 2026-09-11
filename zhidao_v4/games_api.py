@@ -25,19 +25,19 @@ from typing import Any, Literal
 from fastapi import Body, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import cipher, rooms, spy
+from . import cipher, outage, rooms, spy
 from .db import connect_database, immediate_transaction
 
 
 PRESENCE_SECONDS = 20
 JOINS_PER_MINUTE = 20
-MODULES = {spy.GAME: spy, cipher.GAME: cipher}
+MODULES = {spy.GAME: spy, cipher.GAME: cipher, outage.GAME: outage}
 assert tuple(MODULES) == rooms.GAMES, "Список игр в rooms.GAMES и в маршрутах разошёлся"
 
 
 class RoomCreatePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    game: Literal["spy", "cipher"]
+    game: Literal["spy", "cipher", "outage"]
 
 
 class RoomJoinPayload(BaseModel):

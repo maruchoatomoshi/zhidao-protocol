@@ -153,3 +153,58 @@ button.cipher-card:hover { border-color: #28add9; }
 .cipher-win.is-red h3 { color: #c23b2e; }
 [data-theme="dark"] .cipher-win.is-blue h3 { color: #7fd0ff; }
 [data-theme="dark"] .cipher-win.is-red h3 { color: #ff9a8a; }
+
+/* --- Сбой системы ------------------------------------------------------------ */
+.outage-strikes { display: flex; justify-content: center; gap: 10px; }
+.outage-lamp { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--case-border);
+  background: radial-gradient(circle at 35% 30%, #fff, var(--case-inset) 70%); color: transparent; font: 700 16px/1 sans-serif; }
+.outage-lamp.is-on { color: #fff; border-color: #8f1d12; background: radial-gradient(circle at 35% 30%, #ffb3a6, #d9483b 55%, #8f1d12); box-shadow: 0 0 10px #d9483b88; }
+.outage-modules { display: grid; gap: 10px; }
+.outage-module { display: grid; gap: 10px; padding: 10px; border: 1px solid var(--case-border); border-left: 4px solid #d9822b; border-radius: 10px; background: var(--case-pane); }
+.outage-module.is-solved { border-left-color: #3b9b6b; }
+.outage-module-head { display: flex; justify-content: space-between; gap: 8px; font: 700 13px/1.3 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.outage-module-head span { font: 700 11px/1.3 "Courier New", monospace; letter-spacing: .1em; color: #c2410c; }
+.outage-module.is-solved .outage-module-head span { color: #2f8a5c; }
+.outage-wires { display: grid; gap: 6px; }
+.outage-wire { display: grid; grid-template-columns: 22px minmax(0, 1fr) 44px; align-items: center; gap: 8px; width: 100%; min-height: 46px; padding: 4px 10px;
+  border: 1px solid var(--case-border); border-radius: 8px; background: var(--case-paper); color: var(--case-ink); text-align: left; }
+button.outage-wire { cursor: pointer; }
+.outage-wire-no { font: 700 12px/1 "Courier New", monospace; color: var(--case-muted); }
+.outage-wire-line { height: 6px; border-radius: 3px; background: repeating-linear-gradient(90deg, #7d8f9b 0 14px, #aab8c1 14px 18px); }
+.outage-wire b { font: 700 24px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; text-align: center; }
+.outage-wire.is-cut .outage-wire-line { background: linear-gradient(90deg, #7d8f9b 0 42%, transparent 42% 58%, #7d8f9b 58%); }
+.outage-wire.is-cut { opacity: .6; }
+.outage-wire.is-armed { border-color: #d9822b; background: #ffb65a2e; box-shadow: inset 0 0 0 2px #d9822b; }
+.outage-wire.is-answer { box-shadow: inset 0 0 0 2px #3b9b6b; }
+.outage-keypad { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.outage-key { min-height: 72px; border: 1px solid var(--case-border); border-radius: 10px; background: linear-gradient(var(--case-pane), var(--case-inset));
+  color: var(--case-ink); font: 700 36px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; cursor: pointer; }
+.outage-key:disabled { cursor: default; }
+.outage-key.is-pressed { border-color: #3b9b6b; background: linear-gradient(#e8fff2, #b9f0d2); color: #0f4a2c; }
+.outage-sequence { display: flex; justify-content: center; gap: 8px; }
+.outage-sequence b { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--case-border); border-radius: 8px; background: var(--case-paper);
+  font: 700 28px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
+.outage-sequence b.is-done { border-color: #3b9b6b; background: #63c99e33; }
+.outage-arrows { display: grid; grid-template-columns: repeat(3, 60px); grid-template-areas: ". up ." "left . right" ". down ."; justify-content: center; gap: 6px; }
+.outage-arrow { min-height: 52px; border: 1px solid var(--case-border); border-radius: 10px; background: linear-gradient(var(--case-pane), var(--case-inset)); color: var(--case-ink); font: 700 24px/1 sans-serif; cursor: pointer; }
+.outage-arrow.is-up { grid-area: up; } .outage-arrow.is-down { grid-area: down; } .outage-arrow.is-left { grid-area: left; } .outage-arrow.is-right { grid-area: right; }
+.outage-number { display: block; text-align: center; font: 700 44px/1.15 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
+.outage-number-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.games-screen .outage-number-form input { text-align: center; font: 700 22px/1.2 "Courier New", monospace; }
+.outage-summary { display: flex; flex-wrap: wrap; gap: 6px; }
+.outage-chip { padding: 4px 9px; border: 1px solid #d9822b; border-radius: 999px; background: #ffb65a24; font: 600 12px/1.3 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.outage-chip.is-solved { border-color: #3b9b6b; background: #63c99e2e; }
+.outage-manual { padding-bottom: 10px; }
+.outage-manual-intro { margin: 0 12px 8px; font: 13px/1.5 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.outage-glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; padding: 0 10px 8px; }
+.outage-gloss { display: grid; justify-items: center; gap: 1px; padding: 6px 4px; border: 1px solid var(--case-border); border-radius: 6px; background: var(--case-paper); text-align: center; }
+.outage-gloss b { font: 700 22px/1.1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
+.outage-gloss small { font: 11px/1.2 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.outage-gloss span { font: 12px/1.2 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.outage-rule-head { display: block; margin: 6px 12px 2px; font: 700 13px/1.3 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.outage-rules { margin: 0 12px 6px 30px; padding: 0; font: 13px/1.5 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.outage-columns { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 0 10px; }
+.outage-column { display: grid; gap: 4px; justify-items: stretch; text-align: center; }
+.outage-column-cell { display: grid; gap: 1px; padding: 4px 0; border: 1px solid var(--case-border); border-radius: 6px; background: var(--case-paper); }
+.outage-column-cell b { font: 700 20px/1.1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
+.outage-column-cell small { font: 9.5px/1.2 "Trebuchet MS", sans-serif; color: var(--case-muted); }

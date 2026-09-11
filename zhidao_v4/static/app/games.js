@@ -19,8 +19,8 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const POLL_MS = 2000;
-  const TITLES = { spy: "Шпион Протокола", cipher: "Шифровальщики" };
-  const EXE = { spy: "SPY.EXE", cipher: "CIPHER.EXE" };
+  const TITLES = { spy: "Шпион Протокола", cipher: "Шифровальщики", outage: "Сбой системы" };
+  const EXE = { spy: "SPY.EXE", cipher: "CIPHER.EXE", outage: "OUTAGE.EXE" };
   const renderers = {};
 
   let session = window.ZhidaoSession || null;
