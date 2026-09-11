@@ -40,10 +40,17 @@
     clear(); dialog.classList.add("is-tour");
     const [screen, title, text] = chapters[index];
     if (typeof showScreen === "function") showScreen(screen);
-    const portrait = document.createElement("img"); portrait.src = "./assets/guide/julia-explaining.png"; portrait.alt = "Юлия Витальевна, помощник Протокола";
+    const pose = index === chapters.length - 1 ? "goodbyeing" : [3, 5, 10, 11, 13].includes(index) ? "thinking" : [0, 1, 6, 9].includes(index) ? "based" : "explaining";
+    const portrait = document.createElement("img"); portrait.src = `./assets/guide/julia-${pose}.png`; portrait.alt = "Юлия Витальевна, помощник Протокола";
     portrait.className = "app-guide-portrait";
     const count = node("p", `Шаг ${index + 1} из ${chapters.length}`); count.setAttribute("role", "status");
-    body.append(portrait, count, node("h3", title), node("p", text));
+    const stage = node("div", ""); stage.className = "app-guide-scene";
+    const frame = node("div", ""); frame.className = "app-guide-frame"; frame.append(portrait);
+    const heading = node("div", ""); heading.className = "app-guide-heading";
+    const name = node("span", "Юлия Витальевна · помощник Протокола"); name.className = "app-guide-name";
+    heading.append(name, count, node("h3", title));
+    const speech = node("p", text); speech.className = "app-guide-speech";
+    stage.append(frame, heading, speech); body.append(stage);
     const controls = document.createElement("div"); controls.className = "app-guide-controls";
     const prev = button("Назад", () => { index--; tour(); }); prev.disabled = index === 0;
     controls.append(prev, button(index === chapters.length - 1 ? "Готово" : "Далее", () => {
