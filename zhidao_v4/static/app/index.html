@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="./aero-desktop.css?v=2bedca366a">
   <link rel="stylesheet" href="./xp-home.css?v=a897df8684">
   <link rel="stylesheet" href="./readability.css?v=ab957914b5">
+  <link rel="stylesheet" href="./guide.css?v=41c3bf372d">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -507,6 +508,7 @@
           <div><span class="system-label">PERSONAL CARD / 个人资料</span><h1 id="profileTitle" class="display-title">Профиль</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gè rén zī liào <span class="screen-sub-sep">//</span> твой личный контур</p></div>
         </div>
 
+        <button type="button" class="btn btn-secondary" data-app-guide>Инструкция · помощь Юлии Витальевны</button>
         <article class="profile-card aero">
           <span class="profile-avatar"><img src="./assets/icons/desktop-person.svg" alt=""></span>
           <div class="profile-id">
@@ -933,6 +935,10 @@
             <span class="hub-name">Админка</span>
             <span class="hub-cn">管理<i>guǎn lǐ</i></span>
           </button>
+          <button type="button" class="hub-tile tone-sky" data-app-guide>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-info.svg" alt=""></span>
+            <span class="hub-name">Инструкция</span><span class="hub-cn">Помощь по приложению</span>
+          </button>
           <button type="button" class="hub-tile tone-aqua" data-open-screen="campus-map">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
             <span class="hub-name">Карта кампуса</span>
@@ -1039,6 +1045,10 @@
       <button type="button" class="btn btn-secondary" data-guide-close>Вернуться</button>
     </div>
   </dialog>
+  <dialog id="appGuide" class="case-dialog app-guide" aria-labelledby="appGuideTitle">
+    <div class="case-titlebar"><h2 id="appGuideTitle">Помощь · ZHIDAO</h2><button type="button" id="appGuideClose" aria-label="Закрыть инструкцию">×</button></div>
+    <div id="appGuideBody" class="app-guide-body"></div>
+  </dialog>
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
   <div class="virus-popup" id="virusPopup" role="alertdialog" aria-labelledby="virusPopupTitle" aria-describedby="virusPopupText" hidden>
     <div class="virus-popup-bar"><b id="virusPopupTitle">爱你.vbs — Протокол</b><button type="button" id="virusPopupClose" aria-label="Закрыть">×</button></div>
@@ -1074,5 +1084,6 @@
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
   <script src="./aero-motion.js?v=f6b6e7c361" defer></script>
+  <script src="./guide.js?v=404aa157f5" defer></script>
 </body>
 </html>

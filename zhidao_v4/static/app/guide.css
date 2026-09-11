@@ -1,0 +1,12 @@
+.app-guide { width: min(620px, calc(100vw - 24px)); max-height: 86dvh; overflow-y: auto; color: var(--case-ink); background: var(--case-paper); }
+.app-guide-body { padding: 16px; font: 15px/1.6 "ZHIDAO Sans", Tahoma, sans-serif; }
+.app-guide-body > .btn { display: block; width: 100%; margin: 12px 0; white-space: normal; }
+.app-guide-body h3 { font: 400 22px/1.3 Tahoma, sans-serif; color: var(--case-ink); }
+.app-guide-body details { border-bottom: 1px solid var(--case-border); }
+.app-guide-body summary { cursor: pointer; padding: 14px 0; font-weight: 600; }
+.app-guide-portrait { float: left; width: 90px; height: 125px; object-fit: contain; margin: 0 14px 8px 0; }
+.app-guide-controls { display: flex; flex-wrap: wrap; gap: 8px; clear: both; }
+.app-guide-controls .btn { flex: 1 1 90px; }
+.app-guide.is-tour { margin: auto auto 12px; max-height: 70dvh; }
+.app-guide.is-tour::backdrop { background: #00172e30; }
+.app-guide-body button:focus-visible, .app-guide summary:focus-visible { outline: 3px solid #d89534; outline-offset: 2px; }
