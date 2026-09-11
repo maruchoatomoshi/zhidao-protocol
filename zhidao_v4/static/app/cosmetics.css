@@ -1,0 +1,61 @@
+/* Косметика: обои рабочего стола и рамки профиля (V4_GAMES.md §5).
+
+   Всё нарисовано градиентами — ни одного чужого ассета. Обои перебивают фон
+   тела и в светлой, и в тёмной теме, и в оформлении Луна-Аква: человек купил
+   именно эту картинку. Рамка — тень вокруг круглого аватара с data-frame. */
+
+/* --- обои ------------------------------------------------------------------ */
+html[data-wallpaper] body { background-attachment: fixed !important; background-size: auto !important; }
+
+html[data-wallpaper="wp_bubbles"] body, [data-wallpaper-preview="wp_bubbles"] {
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255, 255, 255, .55) 0 5%, rgba(255, 255, 255, .15) 5.4%, transparent 6%),
+    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, .5) 0 3.5%, transparent 4%),
+    radial-gradient(circle at 62% 68%, rgba(255, 255, 255, .35) 0 8%, rgba(255, 255, 255, .1) 8.6%, transparent 9.2%),
+    radial-gradient(circle at 30% 82%, rgba(255, 255, 255, .4) 0 3%, transparent 3.5%),
+    linear-gradient(170deg, #6adbec, #1497bf 55%, #075a86) !important;
+}
+html[data-wallpaper="wp_grid"] body, [data-wallpaper-preview="wp_grid"] {
+  background:
+    linear-gradient(90deg, rgba(90, 220, 255, .2) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(0deg, rgba(90, 220, 255, .2) 1px, transparent 1px) 0 0 / 28px 28px,
+    radial-gradient(ellipse at 50% 0%, #2280c4, #071a3a 72%) !important;
+}
+html[data-wallpaper="wp_luna"] body, [data-wallpaper-preview="wp_luna"] {
+  background:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, .08) 0 18px, transparent 18px 36px),
+    radial-gradient(ellipse 90% 40% at 30% 72%, #7cc84a, transparent 70%),
+    linear-gradient(180deg, #8fdcf6 0%, #1ba7e0 46%, #3f9d2c 46.5%, #6fbb3f 68%, #2f7d24 100%) !important;
+}
+html[data-wallpaper="wp_bamboo"] body, [data-wallpaper-preview="wp_bamboo"] {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 58px, rgba(20, 70, 40, .35) 58px 61px),
+    repeating-linear-gradient(90deg, transparent 0 22px, #3f8f55 22px 34px, #7cc27f 34px 38px, transparent 38px 76px),
+    linear-gradient(180deg, #f1fae8, #a8dba0) !important;
+}
+html[data-wallpaper="wp_pixel_sea"] body, [data-wallpaper-preview="wp_pixel_sea"] {
+  background:
+    radial-gradient(circle at 50% 41%, #ffe38f 0 6%, transparent 6.2%),
+    linear-gradient(180deg, #ffb35c 0 12%, #ff8f5c 12% 21%, #e3657a 21% 30%, #7a52a4 30% 40%,
+      #2c64b0 40% 55%, #1b4a8c 55% 70%, #12396f 70% 84%, #0b2750 84%) !important;
+}
+html[data-wallpaper="wp_night_market"] body, [data-wallpaper-preview="wp_night_market"] {
+  background:
+    radial-gradient(circle at 12% 22%, #ff5a3c 0 1.4%, rgba(255, 90, 60, .35) 1.6% 3%, transparent 3.2%),
+    radial-gradient(circle at 34% 16%, #ffb13c 0 1.2%, rgba(255, 177, 60, .3) 1.4% 2.6%, transparent 2.8%),
+    radial-gradient(circle at 58% 24%, #ff5a3c 0 1.5%, rgba(255, 90, 60, .35) 1.7% 3.2%, transparent 3.4%),
+    radial-gradient(circle at 82% 14%, #ffb13c 0 1.3%, rgba(255, 177, 60, .3) 1.5% 2.8%, transparent 3%),
+    radial-gradient(circle at 72% 40%, #ff5a3c 0 1.1%, rgba(255, 90, 60, .3) 1.3% 2.4%, transparent 2.6%),
+    radial-gradient(ellipse at 50% 110%, #5a2a52, transparent 60%),
+    linear-gradient(180deg, #0b1030, #1a1446 60%, #2a1a3a) !important;
+}
+
+/* --- рамки ------------------------------------------------------------------ */
+.cosmetic-avatar { display: inline-block; flex: none; width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #bfe3f2 60%, #7fb8d4); }
+[data-frame="fr_chrome"] { box-shadow: 0 0 0 3px #e4ebef, 0 0 0 5px #7d8f9b, 0 0 0 6px #ffffff !important; }
+[data-frame="fr_aqua"] { box-shadow: 0 0 0 3px #8fdcf6, 0 0 0 6px rgba(27, 167, 224, .65), 0 0 12px rgba(27, 167, 224, .7) !important; }
+[data-frame="fr_pixel"] { box-shadow: none !important; outline: 3px dashed #1b7fc4; outline-offset: 2px; }
+[data-frame="fr_neon"] { box-shadow: 0 0 0 2px #e14bff, 0 0 10px 3px rgba(214, 70, 255, .75) !important; }
+[data-frame="fr_jade"] { box-shadow: 0 0 0 4px #3b9b6b, 0 0 0 6px #b9f0d2 !important; }
+[data-frame="fr_gold"] { box-shadow: 0 0 0 3px #f5c542, 0 0 0 5px #c2410c, 0 0 10px rgba(240, 180, 48, .8) !important; }

@@ -30,7 +30,7 @@
   document.addEventListener("visibilitychange", applyPreference);
 
   const addresses = { schedule: "today", rating: "rep", shop: "supplies", cases: "scanner", tasks: "missions",
-    more: "desktop", profile: "identity", collection: "collection", implants: "catalogue", "campus-map": "campus" };
+    more: "desktop", games: "events", profile: "identity", collection: "collection", implants: "catalogue", "campus-map": "campus" };
   function enter(container) {
     if (!container || !enabled()) return;
     const panels = Array.from(container.children).filter(n => !n.hidden && !n.classList.contains("screen-intro"));

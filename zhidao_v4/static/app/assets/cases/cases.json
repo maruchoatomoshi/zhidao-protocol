@@ -39,7 +39,7 @@
         { "code": "small", "name_ru": "+30★", "weight": 24, "reward": {"kind": "stars", "amount": 30} },
         { "code": "medium", "name_ru": "+60★", "weight": 12, "reward": {"kind": "stars", "amount": 60} },
         { "code": "fate_guard", "name_ru": "Гарант судьбы", "weight": 10, "note_ru": "Перебросит следующую пустышку", "reward": {"kind": "item", "effect_state": "active"} },
-        { "code": "walk", "name_ru": "+30 минут свободы", "weight": 8, "note_ru": "Сохраняется в коллекции. Использование ещё не подключено", "reward": {"kind": "item", "effect_state": "pending"} },
+        { "code": "walk", "name_ru": "+30 минут свободы", "weight": 8, "note_ru": "Сохраняется в коллекции. Купон гасит вожатый, когда вы отпрашиваетесь", "reward": {"kind": "item", "effect_state": "pending"} },
         { "code": "scan", "name_ru": "+1 попытка", "weight": 5, "reward": {"kind": "scan", "amount": 1} },
         { "code": "jackpot", "name_ru": "Джекпот, +100★", "weight": 1, "reward": {"kind": "stars", "amount": 100} }
       ]

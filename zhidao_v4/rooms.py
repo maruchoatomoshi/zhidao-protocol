@@ -21,7 +21,7 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 
 
-GAMES = ("spy", "cipher")
+GAMES = ("spy", "cipher", "outage")
 MAX_PLAYERS = 8
 ROOM_IDLE_MINUTES = 30
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"

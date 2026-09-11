@@ -6,6 +6,42 @@
   const body = document.getElementById("gameGuideBody");
   if (!dialog || !body) return;
   const lessons = {
+    outage: {
+      title: "Сбой системы",
+      rules: ["От 2 игроков: один техник видит модули, остальные эксперты видят инструкцию. Общайтесь голосом, не показывайте экраны друг другу.", "Техник описывает надписи и детали. Эксперты находят правило и объясняют действие. Ответы наугад опасны: третья ошибка завершает раунд.", "Лёгкий режим: 2 модуля за 5 минут; обычный: 3 за 5 минут; сложный: 4 за 4 минуты. Нужно исправить все модули до конца времени.", "Тренировка ниже без таймера. Это отдельные вымышленные ситуации, не инструкция к модулям текущей партии. За успешный раунд каждый получает одно очко вечера, без ★ и REP."],
+      steps: [
+        { text: "Вы техник. Эксперт спрашивает, что вы видите. Как помочь?", options: ["Точно описать надписи и расположение", "Нажимать кнопки по очереди"], correct: 0, why: "Эксперт не видит модуль: точное описание позволяет выбрать правило." },
+        { text: "Учебная инструкция: выберите левую кнопку. На учебной панели две кнопки. Какую нажать?", options: ["Левую", "Правую"], correct: 0, why: "Сначала описание и инструкция, затем действие. Это пример общения, не правило настоящего модуля." },
+        { text: "В настоящей партии уже две ошибки. Вы не поняли ответ эксперта.", options: ["Угадать", "Уточнить и повторить команду вслух"], correct: 1, why: "Третья ошибка завершит раунд. Короткое уточнение безопаснее догадки." }
+      ]
+    },
+    meet: {
+      title: "Пазл встреч",
+      rules: ["Встречайтесь с другим участником: один показывает шестизначный код, второй вводит его. Код действует 60 секунд; QR пока нет.", "Оба получают недостающий кусочек пазла 3×3. Ничего отдавать или платить не нужно. Одна пара получает кусочки один раз за сезон-день; новый день начинается в 07:00.", "После девяти кусочков картинка собрана. При встрече может передаться игровой вирус, если один участник заражён и нет защиты."],
+      steps: [
+        { text: "Друг получил кусочек от вас. Вы свой потеряли?", options: ["Нет, кусочки получают оба", "Да"], correct: 0, why: "Встреча создаёт прогресс обоим, а не отнимает его." },
+        { text: "Код просрочился. Что делать?", options: ["Создать новый код", "Продолжать вводить старый"], correct: 0, why: "Код действует только 60 секунд." },
+        { text: "Сегодня вы уже встречались с этим участником. Как получить новый кусочек?", options: ["Повторять тот же код", "Познакомиться с другим участником"], correct: 1, why: "Для одной пары действует лимит один раз за сезон-день." }
+      ]
+    },
+    trade: {
+      title: "Обмен дубликатами",
+      rules: ["Обмениваются только дубликаты из кейсов: один экземпляр остаётся у владельца. Косметика и купоны не участвуют.", "Первый выбирает предмет и показывает код на 3 минуты; второй вводит код и выбирает свой предмет. Оба проверяют предложение и подтверждают.", "Сбор — 5★ с каждого, максимум 3 обмена за сезон-день. Более редкий предмет можно отдать после отдельного предупреждения.", "До двух подтверждений предметы не перемещаются. Если перед завершением не хватает денег или дубликата, обмен целиком отменяется. Возможна передача игрового вируса."],
+      steps: [
+        { text: "У вас один экземпляр предмета. Можно обменять его?", options: ["Нет, нужен дубликат", "Да"], correct: 0, why: "Последний экземпляр остаётся у владельца." },
+        { text: "Кто платит сбор 5★?", options: ["Только создатель", "Каждый участник"], correct: 1, why: "Перед подтверждением убедитесь, что оба согласны со сбором." },
+        { text: "Вы отдаёте более редкий предмет. Что требуется?", options: ["Отдельно подтвердить неравный обмен", "Ничего"], correct: 0, why: "Сервер требует явного подтверждения от владельца более редкого предмета." }
+      ]
+    },
+    virus: {
+      title: "Вирус Протокола",
+      rules: ["Это игровой эффект, не настоящий вирус устройства. При встрече или обмене с заражённым шанс передачи 50%, если нет фаервола.", "Без лечения эффект проходит через 6 часов. Бесплатное лечение: правильно ответить минимум на 4 из 5 вопросов по словам.", "Антивирус без теста стоит 15★, фаервол — 20★ до конца сезон-дня в 07:00. Перед покупкой прочитайте подтверждение. Эта тренировка ничего не списывает."],
+      steps: [
+        { text: "Игровой вирус повредил телефон?", options: ["Нет, это эффект внутри приложения", "Да"], correct: 0, why: "Он меняет оформление, а не файлы устройства." },
+        { text: "Можно вылечиться бесплатно?", options: ["Нет", "Да, пройти тест"], correct: 1, why: "Нужно 4 верных ответа из 5. Также эффект проходит сам через 6 часов." },
+        { text: "Фаервол действует навсегда?", options: ["Нет, до 07:00 нового сезон-дня", "Да"], correct: 0, why: "Это временная защита, а не постоянная покупка." }
+      ]
+    },
     spy: {
       title: "Шпион Протокола",
       rules: [
@@ -95,8 +131,8 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const POLL_MS = 2000;
-  const TITLES = { spy: "Шпион Протокола", cipher: "Шифровальщики" };
-  const EXE = { spy: "SPY.EXE", cipher: "CIPHER.EXE" };
+  const TITLES = { spy: "Шпион Протокола", cipher: "Шифровальщики", outage: "Сбой системы" };
+  const EXE = { spy: "SPY.EXE", cipher: "CIPHER.EXE", outage: "OUTAGE.EXE" };
   const renderers = {};
 
   let session = window.ZhidaoSession || null;
@@ -108,6 +144,14 @@
   let refreshing = false;
   let inFlight = false;
   let phaseKey = null;
+  let phaseEntrance = false;
+  let phaseAnimation = null;
+  const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+  function stopRestrictedMotion() {
+    if (motionQuery.matches || document.documentElement.dataset.motion !== "full") phaseAnimation?.cancel();
+  }
+  motionQuery.addEventListener("change", stopRestrictedMotion);
+  new MutationObserver(stopRestrictedMotion).observe(document.documentElement, { attributes: true, attributeFilter: ["data-motion"] });
   let local = {};           // состояние экрана игры; обнуляется при смене фазы
   let armed = null;         // выбор, ждущий второго касания
   let armedLabel = "";
@@ -272,8 +316,13 @@
     }
     const key = `${data.room.code}|${data.room.game}|${renderer.phaseKey(data.game)}`;
     if (key !== phaseKey) {
+      phaseEntrance = phaseKey !== null;
       // Подсказка прошлой фазы («нажмите ещё раз…») к новой не относится.
       if (phaseKey !== null) $("gameNote").textContent = "";
+      // Партия только что закончилась у меня на глазах — звук, если есть набор.
+      if (phaseKey !== null && renderer.finished && renderer.finished(data.game) && window.ZhidaoSounds) {
+        window.ZhidaoSounds.play("win");
+      }
       phaseKey = key;
       local = {};
       armed = null;
@@ -385,8 +434,12 @@
         row.addEventListener("click", () => opts.onPick(player));
       }
       if (!player.present) row.classList.add("is-away");
+      // Аватар с рамкой, купленной на витрине; точка присутствия — в углу.
+      const avatar = node("span", "spy-avatar cosmetic-avatar");
+      if (player.frame) avatar.dataset.frame = player.frame;
+      avatar.setAttribute("aria-hidden", "true");
       const dot = node("span", `spy-dot${player.present ? " is-on" : ""}`);
-      dot.setAttribute("aria-hidden", "true");
+      avatar.append(dot);
       const name = node("span", "spy-player-name", player.display_name);
       const tags = [];
       if (player.account_id === view.room.host_account_id) tags.push("ведущий");
@@ -394,7 +447,7 @@
       if (opts.tags) tags.push(...opts.tags(player));
       if (!player.present) tags.push("нет на связи");
       if (tags.length) name.append(node("small", null, tags.join(" · ")));
-      row.append(dot, name, node("span", "spy-score", String(player.score)));
+      row.append(avatar, name, node("span", "spy-score", String(player.score)));
       list.append(row);
     }
     wrap.append(list);
@@ -457,6 +510,12 @@
     $("gameRoomPhase").textContent = renderer.phaseName(c.game, c.room);
     $("gameRoomExe").textContent = EXE[view.room.game] || "GAME.EXE";
     $("gameRoomBody").replaceChildren(...renderer.draw(c).filter(Boolean));
+    $("gameRoom").dataset.game = view.room.game;
+    if (phaseEntrance && document.documentElement.dataset.motion === "full" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      phaseAnimation?.cancel();
+      phaseAnimation = $("gameRoomBody").animate([{ opacity: .55, transform: "translateY(6px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 220, easing: "ease-out" });
+    }
+    phaseEntrance = false;
     tickClocks();
   }
 

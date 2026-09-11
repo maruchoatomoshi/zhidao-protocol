@@ -16,6 +16,12 @@ from pydantic import BaseModel, Field
 from . import campus
 from .admin import architect_overview
 from .cases_api import register_cases
+from .diary_api import register_diary
+from .economy_api import register_economy
+from .shop_api import register_shop
+from .meet_api import register_meet
+from .trade_api import register_trade
+from .virus_api import register_virus
 from .games_api import register_games
 from .auth import (
     AuthenticationError,
@@ -765,5 +771,11 @@ def create_app(
     )
 
     register_cases(app, _current_principal, _csrf_principal)
+    register_diary(app, _current_principal, _csrf_principal)
+    register_economy(app, _current_principal, _csrf_principal)
+    register_shop(app, _current_principal, _csrf_principal)
+    register_meet(app, _current_principal, _csrf_principal)
+    register_trade(app, _current_principal, _csrf_principal)
+    register_virus(app, _current_principal, _csrf_principal)
     register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app

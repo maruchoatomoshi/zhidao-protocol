@@ -13,7 +13,14 @@
   <link rel="stylesheet" href="./aero.css?v=9f44369511">
   <link rel="stylesheet" href="./aero-grade.css?v=29d1bae32b">
   <link rel="stylesheet" href="./case-workstation.css?v=32a11fe8e2">
-  <link rel="stylesheet" href="./games.css?v=cec40a1edf">
+  <link rel="stylesheet" href="./games.css?v=30005d5871">
+  <link rel="stylesheet" href="./diary.css?v=05b8512dfe">
+  <link rel="stylesheet" href="./economy.css?v=7456ee287b">
+  <link rel="stylesheet" href="./shop.css?v=81e8a821ab">
+  <link rel="stylesheet" href="./cosmetics.css?v=5cca021571">
+  <link rel="stylesheet" href="./meet.css?v=d640b0df5d">
+  <link rel="stylesheet" href="./trade.css?v=cf4791f8fe">
+  <link rel="stylesheet" href="./virus.css?v=6e44bf818f">
   <link rel="stylesheet" href="./aero-desktop.css?v=2bedca366a">
   <link rel="stylesheet" href="./xp-home.css?v=a897df8684">
 </head>
@@ -267,20 +274,21 @@
           <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">06</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value"></span></div>
         </article>
 
-        <article class="glass-card board-list" data-tab-panel="rating:diary" hidden>
-          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">01</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
-          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">02</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
-          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">03</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value star"></span></div>
+        <!-- Дневник уже настоящий: оценки ставят вожатые по бумажному дневнику,
+             список рисует diary.js по ответу сервера. -->
+        <article class="glass-card board-list diary-board" data-tab-panel="rating:diary" hidden>
+          <div class="diary-mine" id="diaryMine"><p class="diary-note">Войдите, чтобы увидеть свои оценки и рейтинг дневников.</p></div>
+          <div class="board-list" id="diaryBoard"></div>
         </article>
 
         <article class="glass-card module-status">
           <span class="module-status-dot" aria-hidden="true"></span>
           <div class="module-status-body">
-            <strong>Раздел ещё не наполнен</strong>
-            <p>Подиум и таблица соберутся из настоящих участников после старта
-              сезона. Дневниковый рейтинг оценивают администраторы вручную, как
-              в сезоне 1. Сейчас показана только структура будущего экрана —
-              это не загрузка, ждать нечего.</p>
+            <strong>Подиум сезона ещё не наполнен</strong>
+            <p>Подиум и общая таблица REP соберутся из настоящих участников после
+              старта сезона — сейчас это только структура экрана. Вкладка
+              «Дневник» уже работает: оценки ставят вожатые по бумажному
+              дневнику.</p>
           </div>
           <span class="module-status-tag">ОЖИДАНИЕ СЕЗОНА</span>
         </article>
@@ -289,43 +297,23 @@
       <!-- ============================================================
            МАГАЗИН
            ============================================================ -->
-      <section class="screen placeholder-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
+      <section class="screen case-workstation shop-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle" class="display-title">Магазин</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> снабжение экспедиции</p></div>
-          <span class="preview-chip">STRUCTURE PREVIEW</span>
+          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle" class="display-title">Магазин</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> витрина дня</p></div>
+          <span class="preview-chip" id="shopStars">&mdash; ★</span>
         </div>
 
-        <article class="desktop-banner supply-banner"><img src="./assets/icons/nav-shop.png" alt=""><div><span class="desktop-eyebrow">SUPPLY DESK / 商店</span><h2>Всё для экспедиции.</h2><p>Витрина готовится.<br>Покупки ещё не подключены.</p></div><span class="banner-serial" aria-hidden="true">02 / SHOP</span></article>
-        <div class="locked-window metal-panel"><span>SUPPLY MODULE</span><strong>ВИТРИНА ЗАКРЫТА</strong><small>Каталог и покупки появятся следующим этапом</small></div>
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Витрина дня</h2><span id="shopDay">&mdash;</span></div>
+          <p class="case-message" id="shopStatus" role="status">Войдите, чтобы увидеть витрину дня.</p>
+          <div class="shop-vitrine" id="shopVitrine"></div>
+          <div class="case-statusbar"><span id="shopRefresh">ОБНОВЛЕНИЕ В 07:00</span><span>SUPPLY.EXE</span></div>
+        </article>
 
-        <div class="tabs" role="tablist" aria-label="Раздел магазина" data-tab-group="shop">
-          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="general">Общее</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="vip">VIP</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="supplies">Расходники</button>
-        </div>
-
-        <div class="shop-grid" data-tab-panel="shop:general">
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-        </div>
-        <div class="shop-grid" data-tab-panel="shop:vip" hidden>
-          <article class="shop-item-card skeleton vip"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton vip"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-        </div>
-        <div class="shop-grid" data-tab-panel="shop:supplies" hidden>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-        </div>
-        <article class="glass-card module-status">
-          <span class="module-status-dot" aria-hidden="true"></span>
-          <div class="module-status-body">
-            <strong>Каталог задаёт сервер, не приложение</strong>
-            <p>Товары, цены и лимиты задаёт сервер. Баланс ★ уже работает в кейсах; покупки и расходники магазина подключим отдельно.</p>
-          </div>
-          <span class="module-status-tag">ПОКУПКИ НЕ ПОДКЛЮЧЕНЫ</span>
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Моё</h2><span aria-hidden="true">我的</span></div>
+          <div class="shop-mine" id="shopMine"><p class="case-message">Покупки появятся здесь после входа.</p></div>
+          <div class="case-statusbar"><span id="shopCoupons">КУПОНОВ «+30 МИНУТ»: &mdash;</span><span>INVENTORY</span></div>
         </article>
       </section>
 
@@ -604,6 +592,10 @@
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-schedule.png" alt=""></span>
             <span class="admin-nav-label">Сезоны</span>
           </button>
+          <button class="admin-nav-btn" type="button" role="tab" aria-selected="false" data-tab="diary">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-rating.png" alt=""></span>
+            <span class="admin-nav-label">Дневник</span>
+          </button>
           <button class="admin-nav-btn is-standby" type="button" data-toast="Объявления появятся вместе с лентой новостей сезона">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-megaphone.svg" alt=""></span>
             <span class="admin-nav-label">Объявления</span>
@@ -612,8 +604,8 @@
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
             <span class="admin-nav-label">Перекличка</span>
           </button>
-          <button class="admin-nav-btn is-standby" type="button" data-toast="Начисления REP и ★ вручную появятся после экономики сезона">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-rating.png" alt=""></span>
+          <button class="admin-nav-btn" type="button" role="tab" aria-selected="false" data-tab="economy">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
             <span class="admin-nav-label">Экономика</span>
           </button>
           <button class="admin-nav-btn is-standby" type="button" data-toast="Запись на стирку подключим вместе с расписанием">
@@ -673,6 +665,54 @@
           </article>
         </div>
 
+        <div class="admin-panel" data-tab-panel="admin:diary" hidden>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Оценка дневников</h2><span aria-hidden="true">日记</span></div>
+            <div class="diary-sheet-tools">
+              <button type="button" class="btn btn-secondary" id="diaryPrev" aria-label="Предыдущий день">&lsaquo;</button>
+              <label>Дата дневника <input type="date" id="diaryDate"></label>
+              <button type="button" class="btn btn-secondary" id="diaryNext" aria-label="Следующий день">&rsaquo;</button>
+            </div>
+            <p class="case-message" id="diaryRules"></p>
+            <p class="case-message" id="diarySheetStatus" role="status"></p>
+            <div class="case-list diary-sheet" id="diarySheet"><p class="case-message">Список появится после входа.</p></div>
+            <div class="case-statusbar"><span id="diarySheetCount">&mdash; оценено</span><span>PAPER DIARY</span></div>
+          </article>
+        </div>
+
+        <div class="admin-panel" data-tab-panel="admin:economy" hidden>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Экономика сезона</h2><span aria-hidden="true">经济</span></div>
+            <p class="economy-warning" id="economyWarning" role="status" hidden></p>
+            <div class="admin-gauges" id="economyGauges"><p class="case-message">Данные появятся после входа.</p></div>
+            <div class="economy-legend"><span class="is-minted">выпущено ★</span><span class="is-burned">потрачено ★</span></div>
+            <div class="case-list economy-days" id="economyDays"></div>
+            <div class="case-statusbar"><span id="economySeason">СЕЗОН &mdash;</span><span>ПО ДНЯМ СЕЗОНА</span></div>
+          </article>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Купоны «+30 минут»</h2><span aria-hidden="true">券</span></div>
+            <p class="case-message admin-note">Участник пришёл отпроситься — найдите его здесь и погасите купон. Погашение пишется в журнал и не повторяется при обрыве связи.</p>
+            <p class="case-message" id="economyCouponStatus" role="status"></p>
+            <div class="case-list admin-roster" id="economyCoupons"></div>
+            <div class="case-statusbar"><span id="economyCouponCount">&mdash; купонов</span><span>COUPONS</span></div>
+          </article>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Откуда и куда</h2><span aria-hidden="true">.log</span></div>
+            <div class="case-list" id="economySources"></div>
+            <div class="case-statusbar"><span>ВЕСЬ СЕЗОН</span><span>LEDGER</span></div>
+          </article>
+          <article class="case-window" id="virusAdmin" hidden>
+            <div class="case-titlebar"><h2>Вирус Протокола</h2><span aria-hidden="true">爱你.vbs</span></div>
+            <p class="case-message admin-note">Первого заражённого выбирает Архитектор. Дальше вирус расходится сам — при встречах и обменах. Фаервол участника защищает и от выпуска.</p>
+            <form class="admin-search" id="virusReleaseForm">
+              <label>Участник <select id="virusReleaseTarget"></select></label>
+              <button class="btn btn-secondary" type="submit" id="virusReleaseButton">Выпустить</button>
+            </form>
+            <p class="case-message" id="virusReleaseStatus" role="status"></p>
+            <div class="case-statusbar"><span>ТОЛЬКО АРХИТЕКТОР</span><span>RELEASE</span></div>
+          </article>
+        </div>
+
         <div class="admin-panel" data-tab-panel="admin:seasons" hidden>
           <article class="case-window">
             <div class="case-titlebar"><h2>Сезоны</h2><span aria-hidden="true">▣</span></div>
@@ -691,6 +731,107 @@
       </section>
 
       <!-- ============================================================
+           АНТИВИРУС — вирус Протокола (V4_GAMES.md §4.7).
+           Заражён ли человек, решает сервер; эффекты только смешные.
+           ============================================================ -->
+      <section class="screen case-workstation antivirus-screen" data-screen="antivirus" aria-labelledby="antivirusTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
+          <div><span class="system-label">PROTOCOL DEFENDER / 杀毒</span><h1 id="antivirusTitle" class="display-title">Антивирус</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shā dú <span class="screen-sub-sep">//</span> лечение и защита</p></div>
+        </div>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Состояние системы</h2><span id="virusBadge">&mdash;</span></div>
+          <div class="virus-body">
+            <div class="virus-status" id="virusStatus"><span>Войдите, чтобы проверить систему.</span></div>
+            <p class="case-message" id="virusNote" role="status"></p>
+            <div class="virus-test" id="virusTest" hidden></div>
+            <div class="virus-actions">
+              <button type="button" class="btn btn-primary" id="virusTestStart" hidden>Пройти тест из 5 слов — бесплатно</button>
+              <button type="button" class="btn btn-secondary" id="virusAntivirus" hidden>Антивирус без теста · 15★</button>
+              <button type="button" class="btn btn-secondary" id="virusFirewall" hidden>Фаервол до 07:00 · 20★</button>
+            </div>
+            <p class="spy-hint">Вирус передаётся при встречах и обменах: если заражён один из двоих, второй заражается с вероятностью 50%. Без лечения проходит через 6 часов.</p>
+          </div>
+          <div class="case-statusbar"><span id="virusStars">&mdash;</span><span>DEFENDER.EXE</span></div>
+        </article>
+      </section>
+
+      <!-- ============================================================
+           ОБМЕН — дубликаты из рук в руки (V4_GAMES.md §4.5).
+           Что можно отдать и состоялся ли обмен, решает сервер.
+           ============================================================ -->
+      <section class="screen case-workstation trade-screen" data-screen="trade" aria-labelledby="tradeTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
+          <div><span class="system-label">SWAP DESK / 交换</span><h1 id="tradeTitle" class="display-title">Обмен</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jiāo huàn <span class="screen-sub-sep">//</span> дубликаты из рук в руки</p></div>
+        </div>
+
+        <article class="case-window" id="tradeStart">
+          <div class="case-titlebar"><h2>Мои дубликаты</h2><span id="tradeLimit">&mdash;</span></div>
+          <div class="trade-body">
+            <p class="case-message" id="tradeStatus" role="status">Войдите, чтобы меняться дубликатами.</p>
+            <div class="trade-items" id="tradeItems"></div>
+            <div class="trade-actions">
+              <button type="button" class="btn btn-primary" id="tradeOffer" disabled>Предложить обмен</button>
+              <form class="spy-join" id="tradeJoinForm">
+                <label>Код обмена собеседника <input id="tradeCode" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="000000"></label>
+                <button type="submit" class="btn btn-secondary" id="tradeJoinSubmit" disabled>Ввести</button>
+              </form>
+            </div>
+            <p class="spy-hint">Сбор 5★ с каждого, не больше трёх обменов в день. Отдать можно только дубликат — один экземпляр останется у вас.</p>
+          </div>
+          <div class="case-statusbar"><span id="tradeToday">&mdash;</span><span>SWAP.EXE</span></div>
+        </article>
+
+        <article class="case-window" id="tradeRoom" hidden>
+          <div class="case-titlebar"><h2>Обмен</h2><button type="button" id="tradeCancel" aria-label="Отменить обмен">×</button></div>
+          <div class="trade-body" id="tradeRoomBody"></div>
+          <div class="case-statusbar"><span id="tradeRoomState">&mdash;</span><span>SWAP.EXE</span></div>
+        </article>
+      </section>
+
+      <!-- ============================================================
+           ВСТРЕЧИ — пазл из встреч (V4_GAMES.md §3.2, §4.6).
+           Кусок картинки получают только от другого человека: один
+           показывает код, второй вводит.
+           ============================================================ -->
+      <section class="screen case-workstation meet-screen" data-screen="meet" aria-labelledby="meetTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
+          <div><span class="system-label">STREET PASS / 相遇</span><h1 id="meetTitle" class="display-title">Встречи</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng yù <span class="screen-sub-sep">//</span> пазл из встреч</p></div>
+        </div>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2 id="meetPuzzleTitle">Пазл</h2><span id="meetProgress">&mdash; / 9</span></div>
+          <div class="meet-body">
+            <div class="meet-grid" id="meetGrid"></div>
+            <p class="case-message" id="meetStatus" role="status">Войдите, чтобы собирать пазл из встреч.</p>
+            <div class="meet-actions">
+              <button type="button" class="btn btn-primary" id="meetShow">Показать мой код</button>
+              <form class="spy-join" id="meetForm">
+                <label>Код собеседника <input id="meetCode" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="000000"></label>
+                <button type="submit" class="btn btn-secondary" id="meetSubmit">Ввести</button>
+              </form>
+            </div>
+            <div class="meet-offer" id="meetOffer" hidden>
+              <span class="spy-label">Покажите этот код собеседнику</span>
+              <b class="meet-code" id="meetOfferCode">&mdash;</b>
+              <span class="spy-hint" id="meetOfferLeft">Код действует 60 с</span>
+              <button type="button" class="btn btn-secondary" id="meetOfferCancel">Скрыть код</button>
+            </div>
+            <p class="spy-hint">Кусок получают оба. С одним и тем же человеком — один кусок в день.</p>
+          </div>
+          <div class="case-statusbar"><span id="meetToday">СЕГОДНЯ ВСТРЕЧ: &mdash;</span><span>MEET.EXE</span></div>
+        </article>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Собранные</h2><span aria-hidden="true">收藏</span></div>
+          <div class="meet-gallery" id="meetGallery"><p class="case-message">Собранные картинки появятся здесь.</p></div>
+        </article>
+      </section>
+
+      <!-- ============================================================
            ИГРЫ — вечерние игры в комнатах (V4_GAMES.md §3.1, §4.9).
 
            Тело комнаты рисует games.js по ответу сервера: что видит
@@ -703,10 +844,17 @@
           <div><span class="system-label">PROTOCOL EVENTS</span><h1 id="gamesTitle" class="display-title">Ивенты</h1><p class="screen-sub">Игры вместе · общение прежде всего</p></div>
         </div>
 
-        <div class="game-learning-links" aria-label="Помощь по играм">
+        <details class="case-window game-help-panel">
+          <summary>Как играть? · Правила и тренировки</summary>
+          <div class="game-learning-links" aria-label="Помощь по играм">
           <button type="button" class="btn btn-secondary" data-game-guide="spy">Шпион: правила и обучение</button>
           <button type="button" class="btn btn-secondary" data-game-guide="cipher">Шифровальщики: правила и обучение</button>
-        </div>
+          <button type="button" class="btn btn-secondary" data-game-guide="outage">Сбой системы: попробовать</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="meet">Пазл встреч: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="trade">Обмен: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="virus">Вирус: обучение</button>
+          </div>
+        </details>
 
         <article class="case-window" id="gameIntro">
           <div class="case-titlebar"><h2>Игры за столом</h2><span aria-hidden="true">游戏</span></div>
@@ -728,6 +876,12 @@
               <p>Две команды и поле из 25 китайских слов. Капитан вслух даёт подсказку — одно слово и число, — а команда ищет свои слова и обходит вирус.</p>
               <ul class="spy-facts"><li>4–8 игроков</li><li>две команды</li><li>слова на китайском</li></ul>
               <button type="button" class="btn btn-primary" data-create-game="cipher">Создать комнату</button>
+            </section>
+            <section class="game-card" aria-labelledby="gameOutageTitle">
+              <h3 id="gameOutageTitle">Сбой системы <span aria-hidden="true">故障</span></h3>
+              <p>Техник видит сломанные модули с китайскими знаками, эксперты — инструкцию. Починить систему можно, только договорившись вслух.</p>
+              <ul class="spy-facts"><li>2–8 игроков</li><li>раунд 4–5 минут</li><li>знаки и числа</li></ul>
+              <button type="button" class="btn btn-primary" data-create-game="outage">Создать комнату</button>
             </section>
           </div>
           <div class="case-statusbar"><span>ОЧКИ ТОЛЬКО НА ВЕЧЕР</span><span>GAMES</span></div>
@@ -761,6 +915,10 @@
             <span>Оформление <small>外观</small></span>
             <b><span data-design-value>Аква</span> ›</b>
           </button>
+          <button type="button" data-sound-toggle aria-pressed="false">
+            <span>Звуки <small>声音</small></span>
+            <b><span data-sound-value>Нет набора</span> ›</b>
+          </button>
         </div>
 
         <div class="cn-divider"><b>功能</b><span>Разделы</span></div>
@@ -783,6 +941,21 @@
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
             <span class="hub-name">Магазин</span>
             <span class="hub-cn">商店</span>
+          </button>
+          <button type="button" class="hub-tile tone-violet" data-open-screen="meet">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
+            <span class="hub-name">Встречи</span>
+            <span class="hub-cn">相遇<i>xiāng yù</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-aqua" data-open-screen="trade">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
+            <span class="hub-name">Обмен</span>
+            <span class="hub-cn">交换<i>jiāo huàn</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-red" data-open-screen="antivirus">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
+            <span class="hub-name">Антивирус</span>
+            <span class="hub-cn">杀毒<i>shā dú</i></span>
           </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
@@ -866,6 +1039,11 @@
     </div>
   </dialog>
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
+  <div class="virus-popup" id="virusPopup" role="alertdialog" aria-labelledby="virusPopupTitle" aria-describedby="virusPopupText" hidden>
+    <div class="virus-popup-bar"><b id="virusPopupTitle">爱你.vbs — Протокол</b><button type="button" id="virusPopupClose" aria-label="Закрыть">×</button></div>
+    <div class="virus-popup-body"><span class="virus-popup-icon" aria-hidden="true">!</span><p id="virusPopupText"></p></div>
+    <div class="virus-popup-actions"><button type="button" class="btn btn-primary" id="virusPopupCure">Лечиться</button><button type="button" class="btn btn-secondary" id="virusPopupOk">ОК</button></div>
+  </div>
   <script src="./campus-map.js?v=f0c55e4d52" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
@@ -876,16 +1054,24 @@
     <div class="case-result-body"><p id="caseGrantSummary"></p><p>Запас каждого участника ограничен семью попытками. Фактическая выдача будет записана в журнал.</p><button type="button" class="btn btn-primary" id="caseGrantConfirm">Выдать</button><button type="button" class="btn btn-secondary" id="caseGrantCancel">Отмена</button></div>
   </dialog>
   <script src="./cases.js?v=4344700dac" defer></script>
-  <script src="./case-play.js?v=c25d7c921c" defer></script>
+  <script src="./case-play.js?v=b1e1d96d24" defer></script>
   <script src="./implants.js?v=7d57c9778a" defer></script>
   <script src="./admin.js?v=2cf59ee550" defer></script>
-  <script src="./games.js?v=76082bbc7d" defer></script>
-  <script src="./game-spy.js?v=cb66879263" defer></script>
-  <script src="./game-cipher.js?v=0b7c733ddc" defer></script>
-  <script src="./app.js?v=6f38f7757e" defer></script>
+  <script src="./games.js?v=8dfaa94162" defer></script>
+  <script src="./game-spy.js?v=9d0df411a8" defer></script>
+  <script src="./game-cipher.js?v=bf6175ea9a" defer></script>
+  <script src="./game-outage.js?v=8472d12426" defer></script>
+  <script src="./diary.js?v=091390284b" defer></script>
+  <script src="./economy.js?v=ce18cd72e4" defer></script>
+  <script src="./cosmetics.js?v=73563cf79c" defer></script>
+  <script src="./shop.js?v=d1632feac7" defer></script>
+  <script src="./meet.js?v=d30c70a969" defer></script>
+  <script src="./trade.js?v=adac68c5d7" defer></script>
+  <script src="./virus.js?v=def9b93130" defer></script>
+  <script src="./app.js?v=93baa45756" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
-  <script src="./aero-motion.js?v=0683302880" defer></script>
+  <script src="./aero-motion.js?v=f6b6e7c361" defer></script>
 </body>
 </html>

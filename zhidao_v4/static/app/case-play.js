@@ -114,6 +114,7 @@
         result.prize.code === "empty" ? "В этот раз пусто. Попытка использована." : "Награда сохранена на сервере.");
     $("caseResultBalance").textContent = `После открытия: ${result.stars} ★ · ${result.scans}/7 попыток · запись №${result.opening_id}`;
     if (!$("caseResultDialog").open) $("caseResultDialog").showModal();
+    if (window.ZhidaoSounds) window.ZhidaoSounds.play(result.tier === "gold" ? "open" : "rare");
   }
 
   function drawHistory(data, append = false) {

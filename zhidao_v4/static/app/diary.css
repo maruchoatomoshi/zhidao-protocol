@@ -1,0 +1,45 @@
+/* Дневник: вкладка «Дневник» на экране REP и лист оценок в админке.
+
+   Строки рейтинга — те же board-row, что у заготовки экрана REP, поэтому
+   оформление Луна-Аква их уже знает. Лист вожатого живёт внутри
+   case-workstation и берёт цвета --case-*. */
+
+/* --- участник ---------------------------------------------------------------- */
+.diary-board { gap: 14px; }
+.diary-label { font: 700 11px/1.3 var(--font-system, "Trebuchet MS", sans-serif); letter-spacing: .12em; color: var(--ink-soft, #4f6f82); }
+.diary-note { margin: 0; font: 14px/1.5 var(--font-system, "Trebuchet MS", sans-serif); color: var(--ink-soft, #4f6f82); }
+.diary-mine { display: grid; gap: 10px; }
+.diary-mine-head { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.diary-stat, .diary-day { border: 1px solid rgba(120, 180, 210, .5); border-radius: 10px; background: rgba(255, 255, 255, .6); }
+.diary-stat { display: grid; justify-items: center; gap: 2px; padding: 8px 4px; }
+.diary-stat span { font: 600 11px/1.2 var(--font-system, sans-serif); color: var(--ink-soft, #4f6f82); }
+.diary-stat b { font: 800 20px/1.1 var(--font-system, sans-serif); color: var(--ink, #103a52); font-variant-numeric: tabular-nums; }
+.diary-days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.diary-day { flex: none; display: grid; justify-items: center; gap: 2px; min-width: 84px; padding: 6px 8px; }
+.diary-day span { font: 600 11px/1.2 var(--font-system, sans-serif); color: var(--ink-soft, #4f6f82); }
+.diary-day b { font-size: 15px; letter-spacing: 1px; color: #b87800; }
+.diary-day i { font: normal 700 10px/1.2 var(--font-system, sans-serif); color: #2f8a5c; }
+.diary-day small { font: 10px/1.2 var(--font-system, sans-serif); color: var(--ink-soft, #4f6f82); white-space: nowrap; }
+.diary-row .board-lines { gap: 2px; min-width: 0; }
+.diary-name { font: 700 14px/1.25 var(--font-system, sans-serif); color: var(--ink, #103a52); overflow-wrap: anywhere; }
+.diary-sub { font: 11px/1.3 var(--font-system, sans-serif); color: var(--ink-soft, #4f6f82); }
+.diary-value { flex: none; font: 800 16px/1 var(--font-system, sans-serif); color: #b87800; font-variant-numeric: tabular-nums; }
+.diary-row.is-you { margin: 0 -6px; padding: 6px; border-radius: 10px; background: rgba(90, 200, 240, .18); box-shadow: inset 0 0 0 1px rgba(40, 173, 217, .5); }
+[data-theme="dark"] .diary-stat, [data-theme="dark"] .diary-day { border-color: rgba(80, 140, 180, .55); background: rgba(10, 40, 64, .6); }
+[data-theme="dark"] .diary-value, [data-theme="dark"] .diary-day b { color: #ffd166; }
+[data-theme="dark"] .diary-day i { color: #7fe0ad; }
+
+/* --- вожатый ------------------------------------------------------------------ */
+.diary-sheet-tools { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: end; gap: 8px; padding: 12px 14px 4px; }
+.diary-sheet-tools label { font: 12px/1.4 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.case-workstation .diary-sheet-tools .btn { min-height: 44px; padding: 0; font-size: 22px; }
+.diary-sheet { display: grid; gap: 8px; }
+.diary-group { margin-top: 6px; font: 700 11px/1.3 "Courier New", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--case-muted); }
+.diary-sheet-row { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--case-border); border-radius: 8px; background: var(--case-pane); }
+.diary-sheet-row.is-busy { opacity: .7; }
+.diary-sheet-copy b { display: block; font: 700 14px/1.3 "Trebuchet MS", sans-serif; color: var(--case-ink); overflow-wrap: anywhere; }
+.diary-sheet-copy small, .diary-row-note { font: 11px/1.4 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.diary-sheet-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.4fr); gap: 5px; }
+.case-workstation .diary-sheet-controls .btn { min-height: 44px; padding: 4px 2px; font-size: 13px; }
+.case-workstation .diary-sheet-controls .btn[aria-pressed="true"] { border-color: #d99a12; background: linear-gradient(#fff6d8, #ffe29a); color: #5a3d00; box-shadow: inset 0 0 0 2px #f0b43088; }
+.case-workstation .diary-sheet-controls .diary-bonus[aria-pressed="true"] { border-color: #3b9b6b; background: linear-gradient(#e8fff2, #b9f0d2); color: #0f4a2c; box-shadow: inset 0 0 0 2px #63c99e88; }
