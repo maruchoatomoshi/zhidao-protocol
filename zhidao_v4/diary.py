@@ -293,7 +293,12 @@ def leaderboard(conn, actor: int, season_id: int) -> dict:
            ORDER BY total_stars DESC, days_rated DESC, bonus_count DESC, a.display_name, a.id""",
         (season_id,),
     ).fetchall()
+    # Импорт здесь, а не наверху: витрина сама пользуется кошельком из этого модуля.
+    from .shop import frames_for
+
+    frames = frames_for(conn, [row["account_id"] for row in rows])
     return {
         "season_id": season_id,
-        "items": [{**dict(row), "is_you": row["account_id"] == actor} for row in rows],
+        "items": [{**dict(row), "is_you": row["account_id"] == actor, "frame": frames.get(row["account_id"])}
+                  for row in rows],
     }

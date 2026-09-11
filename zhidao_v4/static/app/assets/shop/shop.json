@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "note_ru": "Витрина дня. Решения пользователя 2026-09-11: косметика 20–60★, «+30 минут» 120★; у товара 3–5 штук на день; обновление в 07:00 по поясу сезона. Косметика своя (CSS/SVG, синтез звука), без чужих ассетов.",
+  "refresh_hour": 7,
+  "cosmetics_per_day": 5,
+  "stock_min": 3,
+  "stock_max": 5,
+  "cosmetic_price_min": 20,
+  "cosmetic_price_max": 60,
+  "items": [
+    {"code": "walk", "kind": "coupon", "slot": null, "price": 120, "name_ru": "+30 минут свободы", "note_ru": "Купон. Гасит вожатый, когда вы отпрашиваетесь."},
+
+    {"code": "wp_bubbles", "kind": "cosmetic", "slot": "wallpaper", "price": 30, "name_ru": "Пузыри Хайнаня", "note_ru": "Обои: стеклянные пузыри над бирюзовой водой."},
+    {"code": "wp_grid", "kind": "cosmetic", "slot": "wallpaper", "price": 30, "name_ru": "Сетка Протокола", "note_ru": "Обои: светящаяся сетка на глубоком синем."},
+    {"code": "wp_luna", "kind": "cosmetic", "slot": "wallpaper", "price": 40, "name_ru": "Луна-полосы", "note_ru": "Обои: полосы в духе старого рабочего стола."},
+    {"code": "wp_bamboo", "kind": "cosmetic", "slot": "wallpaper", "price": 40, "name_ru": "Бамбуковый шум", "note_ru": "Обои: зелёные стебли и мягкий свет."},
+    {"code": "wp_pixel_sea", "kind": "cosmetic", "slot": "wallpaper", "price": 50, "name_ru": "Пиксельное море", "note_ru": "Обои: закат над морем крупными пикселями."},
+    {"code": "wp_night_market", "kind": "cosmetic", "slot": "wallpaper", "price": 60, "name_ru": "Ночной рынок", "note_ru": "Обои: фонарики 夜市 на тёмном небе."},
+
+    {"code": "fr_chrome", "kind": "cosmetic", "slot": "frame", "price": 20, "name_ru": "Хромированная рамка", "note_ru": "Рамка профиля: холодный металл."},
+    {"code": "fr_aqua", "kind": "cosmetic", "slot": "frame", "price": 30, "name_ru": "Аква-стекло", "note_ru": "Рамка профиля: голубое стекло с бликом."},
+    {"code": "fr_pixel", "kind": "cosmetic", "slot": "frame", "price": 30, "name_ru": "Пиксельная рамка", "note_ru": "Рамка профиля: ступенчатый край."},
+    {"code": "fr_neon", "kind": "cosmetic", "slot": "frame", "price": 40, "name_ru": "Неон NetWatch", "note_ru": "Рамка профиля: пурпурное свечение."},
+    {"code": "fr_jade", "kind": "cosmetic", "slot": "frame", "price": 50, "name_ru": "Нефрит", "note_ru": "Рамка профиля: зелёный камень 玉."},
+    {"code": "fr_gold", "kind": "cosmetic", "slot": "frame", "price": 60, "name_ru": "Золото Цайшэня", "note_ru": "Рамка профиля: золото с красным шнуром."},
+
+    {"code": "snd_modem", "kind": "cosmetic", "slot": "sounds", "price": 40, "name_ru": "Звуки «Модем»", "note_ru": "Писк и трель соединения на события приложения."},
+    {"code": "snd_arcade", "kind": "cosmetic", "slot": "sounds", "price": 40, "name_ru": "Звуки «Аркада»", "note_ru": "Восьмибитные сигналы на события приложения."},
+    {"code": "snd_crystal", "kind": "cosmetic", "slot": "sounds", "price": 50, "name_ru": "Звуки «Кристалл»", "note_ru": "Стеклянные колокольчики на события приложения."}
+  ]
+}

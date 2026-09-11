@@ -297,5 +297,6 @@
     return parts;
   }
 
-  window.ZhidaoGames.register("outage", { phaseKey, phaseName, sync, draw });
+  const finished = (game) => Boolean(game.result);
+  window.ZhidaoGames.register("outage", { phaseKey, phaseName, sync, draw, finished });
 }());

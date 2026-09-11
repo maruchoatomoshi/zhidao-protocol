@@ -1,0 +1,35 @@
+/* Магазин: витрина дня и мои вещи. Окно из набора case-workstation. */
+
+.shop-vitrine { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 12px; }
+.shop-card { display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px; padding: 10px; border: 1px solid var(--case-border);
+  border-radius: 10px; background: var(--case-pane); color: var(--case-ink); }
+.shop-card.is-coupon { border-color: #d99a12; background: linear-gradient(160deg, #fff6d8, var(--case-pane) 55%); }
+.shop-card.is-sold-out { opacity: .6; }
+.shop-preview { position: relative; display: grid; place-items: center; height: 84px; overflow: hidden; border-radius: 8px;
+  border: 1px solid var(--case-border); background: var(--case-inset); }
+.shop-preview .cosmetic-avatar { width: 44px; height: 44px; }
+.shop-ticket { display: grid; place-items: center; width: 100%; height: 100%; font: 800 26px/1 "Trebuchet MS", sans-serif; color: #7a4a00;
+  background: repeating-linear-gradient(90deg, #ffe29a 0 12px, #ffd36b 12px 14px); }
+.shop-card b { font: 700 14px/1.3 "Trebuchet MS", sans-serif; overflow-wrap: anywhere; }
+.shop-card p { margin: 0; font: 12px/1.4 "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.shop-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 6px; }
+.shop-meta .shop-left { white-space: nowrap; }
+.shop-price { font: 800 17px/1 "Trebuchet MS", sans-serif; color: #b87800; font-variant-numeric: tabular-nums; }
+.shop-left { font: 11px/1.3 "Courier New", monospace; color: var(--case-muted); }
+.shop-left.is-low { color: #c2410c; font-weight: 700; }
+.case-workstation .shop-card .btn { min-height: 44px; }
+.shop-card .btn.is-armed { border-color: #d9822b; box-shadow: inset 0 0 0 2px #d9822b; }
+.shop-listen { position: absolute; right: 6px; bottom: 6px; min-height: 30px; padding: 2px 10px; border: 1px solid var(--case-border); border-radius: 999px;
+  background: var(--case-paper); color: var(--case-ink); font: 12px/1 "Trebuchet MS", sans-serif; cursor: pointer; }
+.shop-wave { font: 700 22px/1 "Courier New", monospace; letter-spacing: .1em; color: #1b7fc4; }
+
+.shop-mine { display: grid; gap: 10px; padding: 12px; }
+.shop-slot { display: grid; gap: 6px; }
+.shop-slot-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.shop-owned { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--case-border);
+  border-radius: 10px; background: var(--case-pane); color: var(--case-ink); font: 13px/1.2 "Trebuchet MS", sans-serif; cursor: pointer; }
+.shop-owned[aria-pressed="true"] { border-color: #28add9; box-shadow: inset 0 0 0 2px #28add966; }
+.shop-owned .swatch { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--case-border); }
+.shop-owned .cosmetic-avatar { width: 22px; height: 22px; }
+[data-theme="dark"] .shop-card.is-coupon { background: linear-gradient(160deg, #3a2c08, var(--case-pane) 55%); }
+[data-theme="dark"] .shop-price { color: #ffd166; }

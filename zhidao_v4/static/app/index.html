@@ -13,9 +13,11 @@
   <link rel="stylesheet" href="./aero.css?v=3442dfeba3">
   <link rel="stylesheet" href="./aero-grade.css?v=b5da25899c">
   <link rel="stylesheet" href="./case-workstation.css?v=1cab944c2a">
-  <link rel="stylesheet" href="./games.css?v=8cd9d2d579">
+  <link rel="stylesheet" href="./games.css?v=cf71f31a1c">
   <link rel="stylesheet" href="./diary.css?v=d01fa4acfe">
   <link rel="stylesheet" href="./economy.css?v=a4d218897e">
+  <link rel="stylesheet" href="./shop.css?v=4ef8ad57ea">
+  <link rel="stylesheet" href="./cosmetics.css?v=f44466e3ea">
   <link rel="stylesheet" href="./aero-desktop.css?v=b5a5d3d717">
   <link rel="stylesheet" href="./xp-home.css?v=d667055f1b">
 </head>
@@ -292,43 +294,23 @@
       <!-- ============================================================
            МАГАЗИН
            ============================================================ -->
-      <section class="screen placeholder-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
+      <section class="screen case-workstation shop-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
         <div class="screen-intro">
-          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle" class="display-title">Магазин</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> снабжение экспедиции</p></div>
-          <span class="preview-chip">STRUCTURE PREVIEW</span>
+          <div><span class="system-label">EXPEDITION SUPPLY / 商店</span><h1 id="shopTitle" class="display-title">Магазин</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> витрина дня</p></div>
+          <span class="preview-chip" id="shopStars">&mdash; ★</span>
         </div>
 
-        <article class="desktop-banner supply-banner"><img src="./assets/icons/nav-shop.png" alt=""><div><span class="desktop-eyebrow">SUPPLY DESK / 商店</span><h2>Всё для экспедиции.</h2><p>Витрина готовится.<br>Покупки ещё не подключены.</p></div><span class="banner-serial" aria-hidden="true">02 / SHOP</span></article>
-        <div class="locked-window metal-panel"><span>SUPPLY MODULE</span><strong>ВИТРИНА ЗАКРЫТА</strong><small>Каталог и покупки появятся следующим этапом</small></div>
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Витрина дня</h2><span id="shopDay">&mdash;</span></div>
+          <p class="case-message" id="shopStatus" role="status">Войдите, чтобы увидеть витрину дня.</p>
+          <div class="shop-vitrine" id="shopVitrine"></div>
+          <div class="case-statusbar"><span id="shopRefresh">ОБНОВЛЕНИЕ В 07:00</span><span>SUPPLY.EXE</span></div>
+        </article>
 
-        <div class="tabs" role="tablist" aria-label="Раздел магазина" data-tab-group="shop">
-          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="general">Общее</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="vip">VIP</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="supplies">Расходники</button>
-        </div>
-
-        <div class="shop-grid" data-tab-panel="shop:general">
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-        </div>
-        <div class="shop-grid" data-tab-panel="shop:vip" hidden>
-          <article class="shop-item-card skeleton vip"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton vip"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-        </div>
-        <div class="shop-grid" data-tab-panel="shop:supplies" hidden>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-          <article class="shop-item-card skeleton"><span class="shop-item-icon"></span><i class="line-lg"></i><i class="line-sm"></i><span class="shop-item-price"></span></article>
-        </div>
-        <article class="glass-card module-status">
-          <span class="module-status-dot" aria-hidden="true"></span>
-          <div class="module-status-body">
-            <strong>Каталог задаёт сервер, не приложение</strong>
-            <p>Товары, цены и лимиты задаёт сервер. Баланс ★ уже работает в кейсах; покупки и расходники магазина подключим отдельно.</p>
-          </div>
-          <span class="module-status-tag">ПОКУПКИ НЕ ПОДКЛЮЧЕНЫ</span>
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Моё</h2><span aria-hidden="true">我的</span></div>
+          <div class="shop-mine" id="shopMine"><p class="case-message">Покупки появятся здесь после входа.</p></div>
+          <div class="case-statusbar"><span id="shopCoupons">КУПОНОВ «+30 МИНУТ»: &mdash;</span><span>INVENTORY</span></div>
         </article>
       </section>
 
@@ -807,6 +789,10 @@
             <span>Оформление <small>外观</small></span>
             <b><span data-design-value>Аква</span> ›</b>
           </button>
+          <button type="button" data-sound-toggle aria-pressed="false">
+            <span>Звуки <small>声音</small></span>
+            <b><span data-sound-value>Нет набора</span> ›</b>
+          </button>
         </div>
 
         <div class="cn-divider"><b>功能</b><span>Разделы</span></div>
@@ -914,15 +900,17 @@
     <div class="case-result-body"><p id="caseGrantSummary"></p><p>Запас каждого участника ограничен семью попытками. Фактическая выдача будет записана в журнал.</p><button type="button" class="btn btn-primary" id="caseGrantConfirm">Выдать</button><button type="button" class="btn btn-secondary" id="caseGrantCancel">Отмена</button></div>
   </dialog>
   <script src="./cases.js?v=14b397ed90" defer></script>
-  <script src="./case-play.js?v=632b06c067" defer></script>
+  <script src="./case-play.js?v=9afa5704f9" defer></script>
   <script src="./implants.js?v=0241e27762" defer></script>
   <script src="./admin.js?v=2a4b359e7e" defer></script>
-  <script src="./games.js?v=88a66b381d" defer></script>
-  <script src="./game-spy.js?v=d5fed92a72" defer></script>
-  <script src="./game-cipher.js?v=fe78d1a2d4" defer></script>
-  <script src="./game-outage.js?v=e14b649ff8" defer></script>
-  <script src="./diary.js?v=359d405060" defer></script>
+  <script src="./games.js?v=b1f9574ecb" defer></script>
+  <script src="./game-spy.js?v=1f1256a995" defer></script>
+  <script src="./game-cipher.js?v=7ab39c3626" defer></script>
+  <script src="./game-outage.js?v=776b998494" defer></script>
+  <script src="./diary.js?v=fb3ac8d621" defer></script>
   <script src="./economy.js?v=e2532e9054" defer></script>
+  <script src="./cosmetics.js?v=6502f523b1" defer></script>
+  <script src="./shop.js?v=9ef796e7ab" defer></script>
   <script src="./app.js?v=275b4c740b" defer></script>
   <script src="./player.js?v=1fa90de1e1" defer></script>
   <script src="./vendor/max-web-app.js?v=4c99341798" defer></script>

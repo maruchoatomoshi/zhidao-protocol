@@ -137,6 +137,10 @@
     items.forEach((item, index) => {
       const row = node("div", `board-row diary-row${item.is_you ? " is-you" : ""}`);
       row.append(node("span", "board-rank", String(index + 1).padStart(2, "0")));
+      const avatar = node("span", "board-avatar cosmetic-avatar");
+      if (item.frame) avatar.dataset.frame = item.frame;
+      avatar.setAttribute("aria-hidden", "true");
+      row.append(avatar);
       const lines = node("span", "board-lines");
       lines.append(node("b", "diary-name", item.display_name),
         node("small", "diary-sub", `${item.days_rated} дн. · бонусов ${item.bonus_count} · +${item.diary_rep} REP`));

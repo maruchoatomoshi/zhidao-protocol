@@ -65,7 +65,7 @@ class V4AuthApiTests(unittest.TestCase):
 
         health = self.client.get("/api/v4/health")
         self.assertEqual(health.status_code, 200)
-        self.assertEqual(health.json()["schema_version"], 10)
+        self.assertEqual(health.json()["schema_version"], 11)
 
     def test_architect_console_is_served_with_security_headers(self):
         redirect = self.client.get("/", follow_redirects=False)
@@ -443,7 +443,7 @@ class V4AuthApiTests(unittest.TestCase):
 
         overview = self.client.get("/api/v4/admin/overview")
         self.assertEqual(overview.status_code, 200)
-        self.assertEqual(overview.json()["schema_version"], 10)
+        self.assertEqual(overview.json()["schema_version"], 11)
         actions = [item["action"] for item in overview.json()["recent_activity"]]
         self.assertIn("season.updated", actions)
 

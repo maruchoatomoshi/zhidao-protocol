@@ -198,6 +198,10 @@
     if (key !== phaseKey) {
       // Подсказка прошлой фазы («нажмите ещё раз…») к новой не относится.
       if (phaseKey !== null) $("gameNote").textContent = "";
+      // Партия только что закончилась у меня на глазах — звук, если есть набор.
+      if (phaseKey !== null && renderer.finished && renderer.finished(data.game) && window.ZhidaoSounds) {
+        window.ZhidaoSounds.play("win");
+      }
       phaseKey = key;
       local = {};
       armed = null;
@@ -309,8 +313,12 @@
         row.addEventListener("click", () => opts.onPick(player));
       }
       if (!player.present) row.classList.add("is-away");
+      // Аватар с рамкой, купленной на витрине; точка присутствия — в углу.
+      const avatar = node("span", "spy-avatar cosmetic-avatar");
+      if (player.frame) avatar.dataset.frame = player.frame;
+      avatar.setAttribute("aria-hidden", "true");
       const dot = node("span", `spy-dot${player.present ? " is-on" : ""}`);
-      dot.setAttribute("aria-hidden", "true");
+      avatar.append(dot);
       const name = node("span", "spy-player-name", player.display_name);
       const tags = [];
       if (player.account_id === view.room.host_account_id) tags.push("ведущий");
@@ -318,7 +326,7 @@
       if (opts.tags) tags.push(...opts.tags(player));
       if (!player.present) tags.push("нет на связи");
       if (tags.length) name.append(node("small", null, tags.join(" · ")));
-      row.append(dot, name, node("span", "spy-score", String(player.score)));
+      row.append(avatar, name, node("span", "spy-score", String(player.score)));
       list.append(row);
     }
     wrap.append(list);

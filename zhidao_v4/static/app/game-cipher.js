@@ -213,5 +213,6 @@
     return parts;
   }
 
-  window.ZhidaoGames.register("cipher", { phaseKey, phaseName, draw });
+  const finished = (game) => Boolean(game.result);
+  window.ZhidaoGames.register("cipher", { phaseKey, phaseName, draw, finished });
 }());

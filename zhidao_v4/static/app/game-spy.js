@@ -308,5 +308,6 @@
     return parts;
   }
 
-  window.ZhidaoGames.register("spy", { phaseKey, phaseName, sync, draw });
+  const finished = (game) => Boolean(game.round && game.round.result);
+  window.ZhidaoGames.register("spy", { phaseKey, phaseName, sync, draw, finished });
 }());

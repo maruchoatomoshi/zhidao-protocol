@@ -243,7 +243,8 @@ class DiaryMigrationTests(unittest.TestCase):
                     VALUES (1,?,?,'case.open',30,-1,30,2,'{"prize":"small"}')""", (account, account))
             conn.close()
 
-            self.assertEqual(apply_migrations(db), ["0010_diary_ratings.sql"])
+            # Первой применяется пересборка журнала; следом могут идти более новые миграции.
+            self.assertEqual(apply_migrations(db)[0], "0010_diary_ratings.sql")
             conn = connect_database(db)
             try:
                 row = conn.execute("SELECT operation, stars_delta, scans_delta, rep_delta, rep_after, details_json "
