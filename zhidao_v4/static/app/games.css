@@ -4,6 +4,50 @@
    строка заголовка, строка состояния и цвета --case-* уже умеют и светлую,
    и тёмную тему, и оформление Луна-Аква. Здесь только детали самой игры. */
 
+/* Windows game-room palette: colour lives in frames, not behind long text. */
+.games-screen .game-card { --arcade-top: #277be3; --arcade-bottom: #084493; }
+.games-screen .game-card:nth-of-type(2) { --arcade-top: #a06be0; --arcade-bottom: #592c98; }
+.games-screen .game-card:nth-of-type(3) { --arcade-top: #d98c22; --arcade-bottom: #89500b; }
+html .games-screen .game-card h3 {
+  padding: 12px; margin: -16px -16px 4px; min-height: 48px;
+  background: linear-gradient(var(--arcade-top), var(--arcade-bottom));
+  color: white; text-shadow: 0 1px 2px #0008;
+  border-bottom: 2px solid #ffffff80;
+}
+html .games-screen .game-card h3 span { color: #fff; opacity: .9; }
+html .games-screen .game-card .btn-primary {
+  background: linear-gradient(#c4f691 0%, #77ba38 45%, #438017 48%, #559724 100%);
+  color: #fff; border: 1px solid #376411; text-shadow: 0 1px 2px #173900;
+  box-shadow: inset 0 1px #efffd5, inset 0 -2px #2b580c, 0 2px 3px #18334a30;
+}
+html .games-screen .game-card .btn-primary:disabled { background: var(--case-inset); color: var(--case-muted); text-shadow: none; box-shadow: none; border-color: var(--case-border); }
+html .games-screen .spy-code-plate { border: 2px ridge #7caac9; background: linear-gradient(#092d51, #061a35); }
+html .games-screen .spy-code { color: #b9f1ff; text-shadow: 0 0 12px #48bcfa70; }
+html .games-screen .spy-code-plate > :not(.spy-code) { color: #b9d9f1; }
+html .games-screen .spy-card:not(.is-open) {
+  background: repeating-linear-gradient(45deg, #122e5a 0 8px, #193b69 8px 16px);
+  border: 3px ridge #77b4dc; box-shadow: inset 0 0 0 5px #071e3b, 0 4px 9px #001a3b40;
+}
+html .games-screen .spy-card-cover { color: #e0f4ff; }
+html .games-screen .spy-card-cover::before { color: #ffe177; text-shadow: 0 0 15px #ffba4950; }
+html .games-screen .cipher-card.is-closed { background: linear-gradient(#fff8e6, #e5d4af); color: #302818; border: 1px solid #aa8c54; }
+html .games-screen .cipher-card.is-closed small { color: #5b4d35; }
+html[data-theme="dark"] .games-screen .cipher-card.is-closed { background: linear-gradient(#514833, #302b20); color: #fff1d2; }
+html[data-theme="dark"] .games-screen .cipher-card.is-closed small { color: #dfcead; }
+html .games-screen .cipher-chip.is-turn { outline: 2px solid #e8b13c; outline-offset: 2px; }
+html .games-screen .outage-module-head { border-bottom: 1px solid var(--case-border); padding-bottom: 9px; }
+html .games-screen .spy-segmented .btn[aria-pressed="true"] { border-color: #307934; box-shadow: inset 0 0 0 2px #8bce64; }
+@keyframes arcade-glint { 0%, 65%, 100% { transform: translateX(-130%) skewX(-20deg); } 85% { transform: translateX(180%) skewX(-20deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion="full"] .games-screen .game-card h3 { position: relative; overflow: hidden; }
+  [data-motion="full"] .games-screen .game-card h3::after { content: ""; position: absolute; pointer-events: none; inset: 0; background: linear-gradient(90deg, transparent, #ffffff20, transparent); animation: arcade-glint 7s ease-in-out infinite; }
+  [data-motion="full"] .games-screen .game-card:nth-of-type(2) h3::after { animation-delay: -2s; }
+  [data-motion="full"] .games-screen .game-card:nth-of-type(3) h3::after { animation-delay: -4s; }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  [data-motion="full"] .games-screen .cipher-card:not(:disabled):hover { transform: translateY(-2px); }
+}
+
 .games-screen .spy-body { display: grid; gap: 12px; padding: 14px; }
 .spy-lead { margin: 0; color: var(--case-ink); font: 15px/1.5 "Trebuchet MS", "Segoe UI", sans-serif; }
 .spy-label { display: block; font: 11px/1.4 "Courier New", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--case-muted); }

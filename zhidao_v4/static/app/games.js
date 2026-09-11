@@ -148,7 +148,10 @@
   let phaseAnimation = null;
   const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
   function stopRestrictedMotion() {
-    if (motionQuery.matches || document.documentElement.dataset.motion !== "full") phaseAnimation?.cancel();
+    if (motionQuery.matches || document.documentElement.dataset.motion !== "full") {
+      phaseAnimation?.cancel();
+      $("gameRoomBody")?.getAnimations({ subtree: true }).forEach(animation => animation.cancel());
+    }
   }
   motionQuery.addEventListener("change", stopRestrictedMotion);
   new MutationObserver(stopRestrictedMotion).observe(document.documentElement, { attributes: true, attributeFilter: ["data-motion"] });
@@ -509,7 +512,18 @@
     $("gameRoomTitle").textContent = `${TITLES[view.room.game] || "Игра"} · ${view.room.code}`;
     $("gameRoomPhase").textContent = renderer.phaseName(c.game, c.room);
     $("gameRoomExe").textContent = EXE[view.room.game] || "GAME.EXE";
+    const oldCards = Array.from($("gameRoomBody").querySelectorAll(".cipher-card"), el => el.classList.contains("is-revealed"));
+    const oldModules = Array.from($("gameRoomBody").querySelectorAll(".outage-module"), el => el.classList.contains("is-solved"));
     $("gameRoomBody").replaceChildren(...renderer.draw(c).filter(Boolean));
+    if (!phaseEntrance && document.documentElement.dataset.motion === "full" && !motionQuery.matches) {
+      [[".cipher-card", oldCards, "is-revealed"], [".outage-module", oldModules, "is-solved"]].forEach(([selector, previous, state]) => {
+        $("gameRoomBody").querySelectorAll(selector).forEach((el, index) => {
+          if (previous[index] === false && el.classList.contains(state)) {
+            el.animate([{ transform: "scale(.94)", opacity: .6 }, { transform: "scale(1)", opacity: 1 }], { duration: 260, easing: "ease-out" });
+          }
+        });
+      });
+    }
     $("gameRoom").dataset.game = view.room.game;
     if (phaseEntrance && document.documentElement.dataset.motion === "full" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
       phaseAnimation?.cancel();
