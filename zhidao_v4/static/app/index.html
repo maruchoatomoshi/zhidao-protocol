@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light dark">
-<script src="./theme.js?v=bab7b07038"></script>
+<script src="./theme.js?v=677205bb34"></script>
   <script src="./xp-home.js?v=792c47b09e"></script>
   <title>ZHIDAO Hainan · Personal System</title>
-  <link rel="stylesheet" href="./tokens.css?v=e03925b667">
-  <link rel="stylesheet" href="./app.css?v=ee5bbca403">
-  <link rel="stylesheet" href="./aero.css?v=3442dfeba3">
-  <link rel="stylesheet" href="./aero-grade.css?v=b5da25899c">
-  <link rel="stylesheet" href="./case-workstation.css?v=1cab944c2a">
-  <link rel="stylesheet" href="./games.css?v=d77b3b3561">
-  <link rel="stylesheet" href="./aero-desktop.css?v=b5a5d3d717">
-  <link rel="stylesheet" href="./xp-home.css?v=d667055f1b">
+  <link rel="stylesheet" href="./tokens.css?v=fa77e0dcbd">
+  <link rel="stylesheet" href="./app.css?v=762cb3e504">
+  <link rel="stylesheet" href="./aero.css?v=9f44369511">
+  <link rel="stylesheet" href="./aero-grade.css?v=29d1bae32b">
+  <link rel="stylesheet" href="./case-workstation.css?v=32a11fe8e2">
+  <link rel="stylesheet" href="./games.css?v=cec40a1edf">
+  <link rel="stylesheet" href="./aero-desktop.css?v=2bedca366a">
+  <link rel="stylesheet" href="./xp-home.css?v=a897df8684">
 </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -700,7 +700,12 @@
       <section class="screen case-workstation games-screen" data-screen="games" aria-labelledby="gamesTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><span class="system-label">PROTOCOL GAMES / 游戏</span><h1 id="gamesTitle" class="display-title">Игры</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> yóu xì <span class="screen-sub-sep">//</span> вечерние игры</p></div>
+          <div><span class="system-label">PROTOCOL EVENTS</span><h1 id="gamesTitle" class="display-title">Ивенты</h1><p class="screen-sub">Игры вместе · общение прежде всего</p></div>
+        </div>
+
+        <div class="game-learning-links" aria-label="Помощь по играм">
+          <button type="button" class="btn btn-secondary" data-game-guide="spy">Шпион: правила и обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="cipher">Шифровальщики: правила и обучение</button>
         </div>
 
         <article class="case-window" id="gameIntro">
@@ -774,10 +779,10 @@
             <span class="hub-name">Карта кампуса</span>
             <span class="hub-cn">校园地图<i>xiào yuán dì tú</i></span>
           </button>
-          <button type="button" class="hub-tile tone-gold" data-open-screen="games">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-spy.svg" alt=""></span>
-            <span class="hub-name">Игры</span>
-            <span class="hub-cn">游戏<i>yóu xì</i></span>
+          <button type="button" class="hub-tile tone-gold" data-open-screen="shop">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
+            <span class="hub-name">Магазин</span>
+            <span class="hub-cn">商店</span>
           </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
@@ -837,8 +842,8 @@
       <button type="button" data-target="rating" aria-label="Рейтинг">
         <span class="dock-icon"><img src="./assets/icons/nav-rating.png" alt=""></span><small>REP<span class="nav-cn">排名</span></small>
       </button>
-      <button type="button" data-target="shop" aria-label="Магазин">
-        <span class="dock-icon"><img src="./assets/icons/nav-shop.png" alt=""></span><small>Магазин<span class="nav-cn">商店</span></small>
+      <button type="button" data-target="games" aria-label="Ивенты">
+        <span class="dock-icon"><img src="./assets/icons/desktop-spy.svg" alt=""></span><small>Ивенты<span class="nav-cn">EVENTS</span></small>
       </button>
       <button type="button" data-target="cases" aria-label="Кейсы">
         <span class="dock-icon"><img src="./assets/icons/nav-cases.png" alt=""></span><small>Кейсы<span class="nav-cn">箱子</span></small>
@@ -852,8 +857,16 @@
     </nav>
   </main>
 
+  <dialog id="gameGuide" class="case-dialog game-guide" aria-labelledby="gameGuideTitle">
+    <div class="case-titlebar"><h2 id="gameGuideTitle">Правила</h2><button type="button" data-guide-close aria-label="Закрыть обучение">×</button></div>
+    <div class="spy-body">
+      <p>Можно пройти одному. Это учебный пример: он не создаёт комнату, не меняет счёт и не показывает секреты вашей партии.</p>
+      <div id="gameGuideBody"></div>
+      <button type="button" class="btn btn-secondary" data-guide-close>Вернуться</button>
+    </div>
+  </dialog>
   <div id="toast" class="app-toast" role="status" aria-live="polite" hidden></div>
-  <script src="./campus-map.js?v=a36009e142" defer></script>
+  <script src="./campus-map.js?v=f0c55e4d52" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
     <div class="case-result-body"><div class="result-halo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="caseResultTier" class="case-result-tier"></span><div class="result-seal" id="caseResultSeal" aria-hidden="true">✦</div><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
@@ -862,17 +875,17 @@
     <div class="case-titlebar"><h2 id="caseGrantTitle">Подтвердить выдачу</h2></div>
     <div class="case-result-body"><p id="caseGrantSummary"></p><p>Запас каждого участника ограничен семью попытками. Фактическая выдача будет записана в журнал.</p><button type="button" class="btn btn-primary" id="caseGrantConfirm">Выдать</button><button type="button" class="btn btn-secondary" id="caseGrantCancel">Отмена</button></div>
   </dialog>
-  <script src="./cases.js?v=14b397ed90" defer></script>
-  <script src="./case-play.js?v=632b06c067" defer></script>
-  <script src="./implants.js?v=0241e27762" defer></script>
-  <script src="./admin.js?v=2a4b359e7e" defer></script>
-  <script src="./games.js?v=443c1a6b50" defer></script>
+  <script src="./cases.js?v=4344700dac" defer></script>
+  <script src="./case-play.js?v=c25d7c921c" defer></script>
+  <script src="./implants.js?v=7d57c9778a" defer></script>
+  <script src="./admin.js?v=2cf59ee550" defer></script>
+  <script src="./games.js?v=76082bbc7d" defer></script>
   <script src="./game-spy.js?v=cb66879263" defer></script>
   <script src="./game-cipher.js?v=0b7c733ddc" defer></script>
-  <script src="./app.js?v=275b4c740b" defer></script>
-  <script src="./player.js?v=1fa90de1e1" defer></script>
-  <script src="./vendor/max-web-app.js?v=4c99341798" defer></script>
-  <script src="./auth.js?v=13c2280d52" defer></script>
-  <script src="./aero-motion.js?v=8a56b5ce0d" defer></script>
+  <script src="./app.js?v=6f38f7757e" defer></script>
+  <script src="./player.js?v=5c43c36467" defer></script>
+  <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
+  <script src="./auth.js?v=8d29d373f2" defer></script>
+  <script src="./aero-motion.js?v=0683302880" defer></script>
 </body>
 </html>

@@ -153,3 +153,10 @@ button.cipher-card:hover { border-color: #28add9; }
 .cipher-win.is-red h3 { color: #c23b2e; }
 [data-theme="dark"] .cipher-win.is-blue h3 { color: #7fd0ff; }
 [data-theme="dark"] .cipher-win.is-red h3 { color: #ff9a8a; }
+/* Public learning stays available outside the polled room body. */
+.game-learning-links { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.game-learning-links .btn { flex: 1 1 150px; white-space: normal; }
+.game-guide { max-height: 85dvh; overflow-y: auto; }
+.game-guide .spy-body { padding: 16px; }
+.game-guide li { margin-bottom: 12px; }
+.game-guide .btn { white-space: normal; margin: 4px 4px 4px 0; }
