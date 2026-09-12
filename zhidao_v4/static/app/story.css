@@ -1,0 +1,91 @@
+/* Скрытые файлы: окна фрагментов в духе нулевых, архив и сигналы (V4_GAMES.md §4.4). */
+
+/* --- плитки и ссылки ------------------------------------------------------------------ */
+.story-tile .hub-orb img { filter: saturate(.3); }
+#storyLinkTile .hub-name { font-family: "Courier New", monospace; text-decoration: line-through; text-decoration-color: #c0392b; }
+#storyLinkTile .hub-orb::after { content: "↗"; position: absolute; left: 4px; bottom: 2px; padding: 0 3px; border: 1px solid #555; background: #fff; color: #111; font: bold 13px/1 Arial, sans-serif; }
+:root[data-motion="full"] #storyLinkTile .hub-orb img { animation: story-glitch 3.2s steps(1) infinite; }
+@keyframes story-glitch { 0%, 92%, 100% { transform: none; } 93% { transform: translate(2px, -1px) skewX(8deg); } 96% { transform: translate(-2px, 1px); } }
+.story-properties { width: 100%; min-height: 44px; }
+.story-message-link {
+  margin-left: auto; padding: 2px 8px; border: 1px solid #2e8b57; border-radius: 10px; background: #eaffea;
+  color: #1d6b3d; font: bold 11px/1.3 Tahoma, sans-serif; cursor: pointer; white-space: nowrap;
+}
+:root[data-motion="full"] .story-message-link { animation: story-blink 1.2s steps(1) infinite; }
+@keyframes story-blink { 50% { background: #2e8b57; color: #fff; } }
+
+/* --- окно ошибки на главной --------------------------------------------------------------- */
+.story-error {
+  position: fixed; z-index: 70; left: 50%; top: 32%; width: min(320px, calc(100vw - 32px)); transform: translate(-50%, -50%);
+  overflow: hidden; border: 1px solid #2158ad; border-radius: 8px; background: #ece9d8; color: #1b1b1b;
+  box-shadow: 0 16px 40px #001c3c66; font: 13px/1.45 Tahoma, "Segoe UI", sans-serif;
+}
+.story-error-bar { padding: 6px 9px; color: #fff; background: linear-gradient(#3a8cf0, #1554c7 60%, #0d3fa6); }
+.story-error-body { display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center; padding: 14px; }
+.story-error-body p { margin: 0; }
+.story-error-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #d9342b; color: #fff; font: bold 22px/1 Arial, sans-serif; }
+.story-error-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 0 14px 14px; }
+.story-error-actions .btn { min-height: 40px; }
+
+/* --- окно фрагмента ------------------------------------------------------------------------ */
+dialog.story-dialog {
+  width: min(380px, calc(100vw - 24px)); max-height: calc(100dvh - 40px); padding: 0; overflow: auto;
+  border: 1px solid #2158ad; border-radius: 8px; background: #fbfbf6; color: #1b1b1b;
+  box-shadow: 0 20px 50px #001c3c80; font: 14px/1.5 Tahoma, "Segoe UI", sans-serif;
+}
+dialog.story-dialog::backdrop { background: rgba(3, 20, 40, .55); }
+.story-titlebar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px; color: #fff; background: linear-gradient(#3a8cf0, #1554c7 60%, #0d3fa6); }
+.story-titlebar h2 { margin: 0; font: bold 13px/1.3 Tahoma, sans-serif; }
+.story-titlebar button { width: 28px; height: 26px; border: 1px solid #fff9; border-radius: 4px; color: #fff; background: linear-gradient(#e2a088, #b0392f); cursor: pointer; }
+.story-dialog-body { display: grid; gap: 8px; padding: 14px; }
+.story-dialog-body p { margin: 0; }
+.story-sender { color: #2e8b57; font-weight: bold; }
+.story-question { margin-top: 4px !important; font-weight: bold; }
+.story-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.story-form input { min-height: 44px; padding: 0 10px; border: 1px solid #7f9db9; border-radius: 3px; background: #fff; font: 16px/1 Tahoma, sans-serif; }
+.story-form .btn { min-height: 44px; }
+:root[data-motion="full"] .story-form.is-wrong { animation: story-shake .4s steps(4); }
+@keyframes story-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.story-wrong { color: #b3261e; }
+.story-found { padding: 8px 10px; border: 1px dashed #2e8b57; border-radius: 6px; background: #eaffea; color: #1d6b3d; font-weight: bold; }
+.story-hint summary { cursor: pointer; color: #1554c7; }
+
+/* Свои рамки у каждой поверхности. */
+.story-dialog[data-surface="icq"] .story-titlebar { background: linear-gradient(#5fcf7f, #2e8b57); }
+.story-dialog[data-surface="icq"] .story-line { padding: 6px 10px; border-radius: 10px 10px 10px 2px; background: #eaffea; }
+.story-dialog[data-surface="recycle_bin"] .story-titlebar { background: linear-gradient(#7aa7d8, #3d6ea8); }
+.story-dialog[data-surface="recycle_bin"] .story-line { font-family: "Courier New", monospace; }
+.story-dialog[data-surface="broken_shortcut"] .story-titlebar { background: linear-gradient(#9aa3ad, #5d6670); }
+.story-dialog[data-surface="properties"] { background: #ece9d8; }
+.story-dialog[data-surface="properties"] .story-line { padding: 2px 0; border-bottom: 1px solid #d4d0c8; }
+.story-dialog[data-surface="place"], .story-dialog[data-surface="error_window"] { background: #06140c; color: #b6f5c4; }
+.story-dialog[data-surface="place"] .story-titlebar { background: linear-gradient(#1e3a2a, #0b1d13); }
+.story-dialog[data-surface="error_window"] .story-titlebar { background: linear-gradient(#c0392b, #7b1d14); }
+.story-dialog[data-surface="place"] .story-line, .story-dialog[data-surface="error_window"] .story-line { font-family: "Lucida Console", "Courier New", monospace; font-size: 13px; }
+.story-dialog[data-surface="place"] .story-hint summary, .story-dialog[data-surface="error_window"] .story-hint summary { color: #7cc4ff; }
+
+/* --- архив ----------------------------------------------------------------------------------- */
+.story-body { display: grid; gap: 10px; padding: 14px; }
+.story-message { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.story-word { padding: 3px 8px; border: 1px dashed var(--case-border, #8fbcd6); border-radius: 4px; color: var(--case-muted, #6a8597); font: 15px/1.3 "Courier New", monospace; }
+.story-word.is-found { border-style: solid; background: #fffaf0; color: var(--case-ink, #062e50); font: bold 16px/1.3 Georgia, serif; }
+.story-list { display: grid; gap: 6px; padding: 10px; }
+.story-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid var(--case-border, #8fbcd6); border-radius: 6px; background: var(--case-pane, #fff); }
+.story-row-info { display: grid; min-width: 0; }
+.story-row-info small { color: var(--case-muted, #6a8597); }
+.story-row.is-locked_previous, .story-row.is-locked_place { opacity: .7; }
+.story-row .btn { min-height: 40px; }
+#storyFinale { display: grid; justify-items: center; gap: 8px; text-align: center; }
+#storyFinale[hidden] { display: none; }
+.story-architect { width: 150px; height: auto; filter: drop-shadow(0 6px 14px #0004); }
+.story-epilogue { margin: 0; font: italic 15px/1.5 Georgia, serif; color: var(--case-ink, #062e50); }
+.story-signature { margin: 0; font: bold 15px/1.3 "Noto Sans SC", "Microsoft YaHei", sans-serif; color: #b86a00; }
+
+/* --- сигнал на карте --------------------------------------------------------------------- */
+.story-place-card { display: grid; gap: 6px; padding: 14px; border-left: 4px solid #2e8b57; }
+.story-place-card p { margin: 0; color: var(--case-muted, #4f6f82); }
+.story-place-label { font: 700 10px/1.2 "Courier New", monospace; letter-spacing: .12em; text-transform: uppercase; color: #2e8b57; }
+.story-place-card .btn { min-height: 44px; }
+
+:root[data-theme="dark"] .story-word.is-found { background: #1f1a10; color: #ffe6b8; }
+:root[data-theme="dark"] .story-message-link { background: #0d2a18; color: #9ff0b8; }

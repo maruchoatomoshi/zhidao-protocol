@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="./guide.css?v=bfcb9b167f">
   <link rel="stylesheet" href="./retro.css?v=0fbb488da9">
   <link rel="stylesheet" href="./campus-marks.css?v=6bf51bb428">
+  <link rel="stylesheet" href="./story.css?v=b9735a6e21">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -399,6 +400,7 @@
 
         <article class="glass-card campus-mark-card" id="campusMarkCard" aria-live="polite" hidden></article>
         <section class="glass-card campus-mark-composer" id="campusMarkComposer" aria-label="Новая метка" hidden></section>
+        <article class="glass-card story-place-card" id="storyPlaceCard" aria-live="polite" hidden></article>
 
         <div id="campusLegend" class="campus-legend" aria-label="Условные обозначения"></div>
 
@@ -482,6 +484,7 @@
         </div>
 
         <button type="button" class="profile-collection-link" data-open-screen="collection"><img src="./assets/icons/nav-cases.png" alt=""><span><strong>Моя коллекция</strong><small>Открыть папку предметов →</small></span></button>
+        <button type="button" class="btn btn-secondary story-properties" id="storyProperties" hidden>Свойства…</button>
       </section>
 
       <!-- ============================================================
@@ -652,6 +655,30 @@
             <div class="case-list admin-seasons" id="adminSeasons"><p class="case-message">Список появится после входа.</p></div>
           </article>
         </div>
+      </section>
+
+      <!-- ============================================================
+           АРХИВ — скрытые файлы (V4_GAMES.md §4.4).
+           Какой фрагмент открыт и какие слова найдены, решает сервер.
+           ============================================================ -->
+      <section class="screen case-workstation story-screen" data-screen="story" aria-labelledby="storyTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
+          <div><h1 id="storyTitle" class="display-title">Архив</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> dàng àn <span class="screen-sub-sep">//</span> скрытые файлы</p></div>
+        </div>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Сообщение</h2><span aria-hidden="true">档案</span></div>
+          <div class="story-body">
+            <p class="story-message" id="storyMessage"></p>
+            <div id="storyFinale" hidden></div>
+          </div>
+        </article>
+
+        <article class="case-window">
+          <div class="case-titlebar"><h2>Файлы</h2><span id="storyProgress">&mdash;</span></div>
+          <div class="story-list" id="storyList"></div>
+        </article>
       </section>
 
       <!-- ============================================================
@@ -916,6 +943,21 @@
             <span class="hub-name">Мастерская</span>
             <span class="hub-cn">工坊<i>gōng fáng</i></span>
           </button>
+          <button type="button" class="hub-tile tone-steel story-tile" id="storyBinTile" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-bin.svg" alt=""></span>
+            <span class="hub-name">Корзина</span>
+            <span class="hub-cn">回收站<i>huí shōu zhàn</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-steel story-tile" id="storyLinkTile" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
+            <span class="hub-name">legacy_pek.lnk</span>
+            <span class="hub-cn">快捷方式<i>kuài jié fāng shì</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-lime" id="storyArchiveTile" data-open-screen="story" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-archive.svg" alt=""></span>
+            <span class="hub-name">Архив</span>
+            <span class="hub-cn">档案<i>dàng àn</i></span>
+          </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-collection.svg" alt=""></span>
             <span class="hub-name">Коллекция</span>
@@ -1032,13 +1074,14 @@
   <script src="./trade.js?v=f1748536b7" defer></script>
   <script src="./virus.js?v=e1285fcef3" defer></script>
   <script src="./workshop.js?v=7eadb0c69f" defer></script>
-  <script src="./app.js?v=dbd91e547e" defer></script>
+  <script src="./app.js?v=5f514feeef" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
-  <script src="./aero-motion.js?v=fe5bada268" defer></script>
+  <script src="./aero-motion.js?v=ff241b0b3e" defer></script>
   <script src="./guide.js?v=e24a015b1b" defer></script>
   <script src="./retro.js?v=30022b2992" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>
+  <script src="./story.js?v=3298727327" defer></script>
 </body>
 </html>
