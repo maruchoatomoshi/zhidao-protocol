@@ -21,18 +21,21 @@
       rare: [[880, 0.06, "square"], [1320, 0.06, "square"], [1760, 0.06, "square"], [2640, 0.14, "sawtooth"]],
       buy: [[2100, 0.04, "square"], [0, 0.03], [2100, 0.04, "square"]],
       win: [[660, 0.08, "sawtooth"], [990, 0.08, "sawtooth"], [1320, 0.16, "square"]],
+      join: [[440, 0.05, "square"], [0, 0.05], [440, 0.05, "square"]],
     },
     snd_arcade: {
       open: [[523, 0.06, "square"], [659, 0.06, "square"], [784, 0.1, "square"]],
       rare: [[523, 0.05, "square"], [659, 0.05, "square"], [784, 0.05, "square"], [1047, 0.18, "square"]],
       buy: [[988, 0.05, "square"], [1319, 0.1, "square"]],
       win: [[784, 0.08, "square"], [784, 0.08, "square"], [1047, 0.2, "square"]],
+      join: [[392, 0.05, "square"], [523, 0.08, "square"]],
     },
     snd_crystal: {
       open: [[1568, 0.12, "sine"], [2093, 0.2, "sine"]],
       rare: [[1319, 0.1, "sine"], [1760, 0.1, "sine"], [2349, 0.1, "sine"], [3136, 0.3, "sine"]],
       buy: [[2637, 0.14, "sine"]],
       win: [[1047, 0.12, "triangle"], [1568, 0.12, "triangle"], [2093, 0.28, "sine"]],
+      join: [[1760, 0.08, "sine"], [2349, 0.12, "sine"]],
     },
   };
 

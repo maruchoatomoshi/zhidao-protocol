@@ -162,6 +162,7 @@
   let pendingDraw = false;
   let timers = {};          // ключ → момент конца по performance.now()
   const zeroRefreshed = new Set();
+  let chatLog = [];         // системные строки комнаты: кто зашёл, вышел, пропал
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -249,6 +250,7 @@
       const left = (timers[key] - now) / 1000;
       el.firstChild.textContent = format(left);
       el.classList.toggle("is-low", left <= 30);
+      el.classList.toggle("is-critical", left > 0 && left <= 10);
       // Время вышло на экране — спрашиваем сервер сразу, не дожидаясь опроса.
       if (left <= 0 && !zeroRefreshed.has(key)) {
         zeroRefreshed.add(key);
@@ -301,6 +303,7 @@
     armed = null;
     timers = {};
     zeroRefreshed.clear();
+    chatLog = [];
   }
 
   function apply(data) {
@@ -321,15 +324,31 @@
       phaseEntrance = phaseKey !== null;
       // Подсказка прошлой фазы («нажмите ещё раз…») к новой не относится.
       if (phaseKey !== null) $("gameNote").textContent = "";
-      // Партия только что закончилась у меня на глазах — звук, если есть набор.
-      if (phaseKey !== null && renderer.finished && renderer.finished(data.game) && window.ZhidaoSounds) {
-        window.ZhidaoSounds.play("win");
+      // Партия только что закончилась у меня на глазах — звук и финал (retro.js).
+      if (phaseKey !== null && renderer.finished && renderer.finished(data.game)) {
+        if (window.ZhidaoSounds) window.ZhidaoSounds.play("win");
+        if (window.ZhidaoRetro) window.ZhidaoRetro.finale(finaleFor(data));
       }
       phaseKey = key;
       local = {};
       armed = null;
       timers = {};
       zeroRefreshed.clear();
+    }
+    // Системные строки комнаты — из разницы списков игроков между опросами.
+    if (window.ZhidaoRetro) {
+      const sameRoom = Boolean(view && view.room.code === data.room.code);
+      if (!sameRoom) chatLog = [];
+      const events = sameRoom ? window.ZhidaoRetro.roomEvents(view.players, data.players, data.you)
+        : [{ kind: "join", you: true }];
+      if (events.length) {
+        const time = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+        for (const event of events) {
+          chatLog.push({ kind: event.kind, text: window.ZhidaoRetro.eventText(event), time, at: Date.now() });
+        }
+        chatLog = chatLog.slice(-6);
+        if (sameRoom && events.some((event) => event.kind === "join") && window.ZhidaoSounds) window.ZhidaoSounds.play("join");
+      }
     }
     view = data;
     if (renderer.sync) renderer.sync(context());
@@ -342,6 +361,18 @@
       draw();
     }
     startPolling();
+  }
+
+  /* Какой финал показать этому игроку (retro.js). Исход и очки уже посчитал
+     сервер — здесь только выбор картинки. */
+  function finaleFor(data) {
+    const game = data.game || {};
+    const result = (game.round && game.round.result) || game.result || {};
+    if (data.room.game === "outage" && ["strikes", "time"].includes(result.reason)) {
+      return { kind: "bsod", reason: result.reason === "time" ? "TIME_IS_UP" : "TOO_MANY_STRIKES" };
+    }
+    const points = Number((result.points || {})[data.you] || 0);
+    return points > 0 ? { kind: "win", points } : { kind: "over" };
   }
 
   // --- действия -------------------------------------------------------------------
@@ -453,6 +484,16 @@
       list.append(row);
     }
     wrap.append(list);
+    if (chatLog.length) {
+      const log = node("div", "zd-chatlog");
+      log.setAttribute("aria-label", "События комнаты");
+      for (const entry of chatLog) {
+        const line = node("p", `zd-chatline is-${entry.kind}${Date.now() - entry.at < 2500 ? " is-fresh" : ""}`);
+        line.append(node("time", null, entry.time), document.createTextNode(`*** ${entry.text}`));
+        log.append(line);
+      }
+      wrap.append(log);
+    }
     return wrap;
   }
 

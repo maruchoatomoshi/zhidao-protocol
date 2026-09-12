@@ -230,6 +230,117 @@
 
   // --- подключение -----------------------------------------------------------------------------
 
+  // --- игры: журнал комнаты, финалы, копирование ---------------------------------------------
+
+  /* Кто зашёл, вышел, пропал со связи и вернулся — из разницы двух списков
+     игроков между опросами. Это системные строки, не чат: свободного текста
+     между детьми нет. Глаголы в настоящем времени — без угадывания рода. */
+  function roomEvents(previous, next, you) {
+    const before = new Map(previous.map((player) => [player.account_id, player]));
+    const after = new Set(next.map((player) => player.account_id));
+    const events = [];
+    for (const player of next) {
+      const old = before.get(player.account_id);
+      if (!old) events.push({ kind: "join", name: player.display_name, you: player.account_id === you });
+      else if (old.present && !player.present) events.push({ kind: "away", name: player.display_name });
+      else if (!old.present && player.present) events.push({ kind: "back", name: player.display_name });
+    }
+    for (const player of previous) {
+      if (!after.has(player.account_id)) events.push({ kind: "leave", name: player.display_name });
+    }
+    return events;
+  }
+
+  function eventText(event) {
+    if (event.kind === "join") return event.you ? "Вы заходите в комнату" : `${event.name} заходит в комнату`;
+    if (event.kind === "leave") return `${event.name} покидает комнату`;
+    if (event.kind === "away") return `${event.name} пропадает со связи`;
+    return `${event.name} снова на связи`;
+  }
+
+  function el(tag, className, text) {
+    const n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function dismissible(overlay, ms) {
+    const onKey = (event) => { if (event.key === "Escape") close(); };
+    const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); };
+    overlay.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    setTimeout(close, ms);
+  }
+
+  /* Финал партии: WordArt и пиксельный фейерверк у тех, кто получил очки;
+     «синий экран», если Сбой системы проигран; остальным — «Раунд окончен».
+     Карточка с итогом остаётся в комнате — оверлей её только предваряет. */
+  function finale(options) {
+    document.querySelector(".zd-finale")?.remove();
+    const overlay = el("div", `zd-finale is-${options.kind}`);
+    overlay.setAttribute("role", "status");
+    if (options.kind === "bsod") {
+      const screen = el("div", "zd-bsod");
+      const hint = el("p", null, "Коснитесь экрана, чтобы продолжить ");
+      hint.append(el("span", "zd-bsod-cursor", "_"));
+      screen.append(
+        el("b", "zd-bsod-head", "ZHIDAO PROTOCOL"),
+        el("p", null, "Обнаружена неустранимая ошибка. Система остановлена, чтобы не повредить Хайнань."),
+        el("p", null, `*** STOP: 0x0000DEAD (${options.reason})`),
+        el("p", null, "Совет: техник описывает, эксперты читают инструкцию вслух. Попробуйте ещё раунд."),
+        hint);
+      overlay.append(screen);
+      document.body.append(overlay);
+      dismissible(overlay, 6000);
+      return;
+    }
+    const win = options.kind === "win";
+    overlay.append(el("div", `zd-wordart${win ? "" : " is-muted"}`, win ? "ПОБЕДА!" : "РАУНД ОКОНЧЕН"));
+    if (win) overlay.append(el("p", "zd-finale-sub", `+${options.points} ${plural(options.points, "очко", "очка", "очков")} вечера`));
+    if (win && motion()) {
+      [48, 200, 330].forEach((hue, burst) => {
+        const firework = el("span", "zd-firework");
+        firework.setAttribute("aria-hidden", "true");
+        firework.style.left = `${20 + burst * 30}%`;
+        firework.style.top = `${22 + (burst % 2) * 16}%`;
+        for (let i = 0; i < 12; i += 1) {
+          const spark = el("i");
+          const angle = (Math.PI * 2 * i) / 12;
+          spark.style.setProperty("--dx", `${Math.round(Math.cos(angle) * 70)}px`);
+          spark.style.setProperty("--dy", `${Math.round(Math.sin(angle) * 70)}px`);
+          spark.style.setProperty("--hue", String(hue + (i % 3) * 20));
+          spark.style.setProperty("--delay", `${burst * 0.35}s`);
+          firework.append(spark);
+        }
+        overlay.append(firework);
+      });
+    }
+    document.body.append(overlay);
+    dismissible(overlay, win ? 3600 : 2400);
+  }
+
+  /* Окно «Копирование» перед итогом обмена — чистая декорация: предметы уже
+     перенёс сервер. Без анимаций окна нет вовсе. */
+  function copyFile(options) {
+    if (!motion()) return;
+    document.querySelector(".zd-copy")?.remove();
+    const win = el("div", "zd-copy");
+    win.setAttribute("aria-hidden", "true");
+    const scene = el("div", "zd-copy-scene");
+    scene.append(el("span", "zd-folder is-from"), el("span", "zd-paper"), el("span", "zd-folder is-to"));
+    const bar = el("span", "zd-copy-bar");
+    bar.append(el("i"));
+    const body = el("div", "zd-copy-body");
+    body.append(scene, el("b", null, `«${options.name}»`), el("span", null, "Из: собеседник → в: мои предметы"), bar,
+      el("small", null, "Осталось примерно 2 секунды"));
+    win.append(el("div", "zd-copy-title", "Копирование…"), body);
+    document.body.append(win);
+    dismissible(win, 2300);
+  }
+
+  window.ZhidaoRetro = Object.freeze({ roomEvents, eventText, finale, copyFile });
+
   window.addEventListener("zhidao:auth", (event) => {
     session = event.detail;
     refreshTicker();

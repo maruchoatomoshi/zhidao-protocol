@@ -19,6 +19,7 @@
   const STATES = { open: "ЖДЁМ СОБЕСЕДНИКА", ready: "ПОДТВЕРЖДЕНИЕ", done: "ОБМЕН СОСТОЯЛСЯ", cancelled: "ОТМЕНЁН", failed: "НЕ СОСТОЯЛСЯ" };
 
   let session = window.ZhidaoSession || null;
+  const copied = new Set();   // окно «Копирование» (retro.js) — один раз на обмен
   let contextPromise = null;
   let season = null;
   let overview = null;
@@ -240,6 +241,10 @@
       if (view.result.virus === "caught") done.append(node("p", "spy-banner", "Вместе с предметом пришёл вирус Протокола…"));
       if (view.result.virus === "blocked") done.append(node("p", "spy-banner", "Фаервол отбил вирус собеседника."));
       if (view.result.virus) window.dispatchEvent(new Event("zhidao:virus-check"));
+      if (!copied.has(view.code) && window.ZhidaoRetro) {
+        copied.add(view.code);
+        window.ZhidaoRetro.copyFile({ name: view.result.got });
+      }
       parts.push(done);
     }
     if (["cancelled", "failed"].includes(view.state) && view.message) {
