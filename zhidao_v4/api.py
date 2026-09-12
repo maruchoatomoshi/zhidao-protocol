@@ -23,6 +23,7 @@ from .meet_api import register_meet
 from .trade_api import register_trade
 from .virus_api import register_virus
 from .workshop_api import register_workshop
+from .marks_api import register_marks
 from .games_api import register_games
 from .auth import (
     AuthenticationError,
@@ -779,5 +780,6 @@ def create_app(
     register_trade(app, _current_principal, _csrf_principal)
     register_virus(app, _current_principal, _csrf_principal)
     register_workshop(app, _current_principal, _csrf_principal)
+    register_marks(app, _current_principal, _csrf_principal)
     register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app

@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="./readability.css?v=ab957914b5">
   <link rel="stylesheet" href="./guide.css?v=bfcb9b167f">
   <link rel="stylesheet" href="./retro.css?v=0fbb488da9">
+  <link rel="stylesheet" href="./campus-marks.css?v=6bf51bb428">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -376,6 +377,7 @@
         <div class="campus-toolbar">
           <button id="campusLocate" class="campus-locate btn btn-primary" type="button">Где я</button>
           <span id="campusStatus" class="campus-status">GPS не запрошен</span>
+          <button id="campusMarkOpen" class="btn btn-secondary campus-mark-open" type="button" hidden>✦ Оставить метку</button>
         </div>
 
         <article class="campus-map" aria-label="Векторная карта кампуса">
@@ -394,6 +396,9 @@
             <p class="campus-route-summary" data-field="route" hidden></p>
           </div>
         </article>
+
+        <article class="glass-card campus-mark-card" id="campusMarkCard" aria-live="polite" hidden></article>
+        <section class="glass-card campus-mark-composer" id="campusMarkComposer" aria-label="Новая метка" hidden></section>
 
         <div id="campusLegend" class="campus-legend" aria-label="Условные обозначения"></div>
 
@@ -1002,7 +1007,7 @@
     <div class="virus-popup-body"><span class="virus-popup-icon" aria-hidden="true">!</span><p id="virusPopupText"></p></div>
     <div class="virus-popup-actions"><button type="button" class="btn btn-primary" id="virusPopupCure">Лечиться</button><button type="button" class="btn btn-secondary" id="virusPopupOk">ОК</button></div>
   </div>
-  <script src="./campus-map.js?v=f0c55e4d52" defer></script>
+  <script src="./campus-map.js?v=98e0620338" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
     <div class="case-result-body"><div class="result-halo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="caseResultTier" class="case-result-tier"></span><div class="result-seal" id="caseResultSeal" aria-hidden="true">✦</div><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
@@ -1034,5 +1039,6 @@
   <script src="./aero-motion.js?v=fe5bada268" defer></script>
   <script src="./guide.js?v=e24a015b1b" defer></script>
   <script src="./retro.js?v=30022b2992" defer></script>
+  <script src="./campus-marks.js?v=0cb06daa30" defer></script>
 </body>
 </html>

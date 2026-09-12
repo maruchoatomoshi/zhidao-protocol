@@ -1,0 +1,44 @@
+/* Метки на карте: светящиеся послания поверх открытого тумана (V4_GAMES.md §4.2). */
+
+.campus-mark { cursor: pointer; outline: none; }
+.campus-mark-glow { fill: rgba(255, 170, 40, .3); }
+.campus-mark-core { fill: #ffb341; stroke: #fff4d6; filter: drop-shadow(0 0 4px rgba(255, 150, 20, .9)); }
+.campus-mark.is-selected .campus-mark-core { fill: #ff7a00; }
+.campus-mark:focus-visible .campus-mark-core { stroke: #0a86f0; }
+.campus-mark.is-hidden .campus-mark-glow { fill: rgba(120, 140, 155, .25); }
+.campus-mark.is-hidden .campus-mark-core { fill: #9aa7b2; filter: none; }
+:root[data-motion="full"] .campus-mark:not(.is-hidden) .campus-mark-glow {
+  transform-box: fill-box; transform-origin: center; animation: campus-mark-pulse 2.4s ease-in-out infinite;
+}
+@keyframes campus-mark-pulse { 50% { opacity: .35; transform: scale(1.3); } }
+
+.campus-mark-open { min-height: 44px; }
+
+.campus-mark-card, .campus-mark-composer { display: grid; gap: 8px; padding: 14px; border-left: 4px solid #ffb341; }
+.campus-mark-card p, .campus-mark-composer p { margin: 0; }
+.campus-mark-label { font: 700 10px/1.2 "Courier New", monospace; letter-spacing: .12em; text-transform: uppercase; color: #b86a00; }
+.campus-mark-text { font: 700 19px/1.3 Georgia, "Trebuchet MS", serif; color: var(--case-ink, #062e50); }
+.campus-mark-zh { font: 15px/1.4 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-muted, #4f6f82); }
+.campus-mark-meta { font: 12px/1.4 Tahoma, "Trebuchet MS", sans-serif; color: var(--case-muted, #4f6f82); }
+.campus-mark-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.campus-mark-actions .btn { min-height: 44px; }
+
+.campus-mark-group { font: 700 11px/1.2 Tahoma, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #6a8597; }
+.campus-mark-words { display: grid; gap: 6px; }
+.campus-mark-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.campus-mark-chip {
+  min-height: 40px; padding: 6px 11px; border: 1px solid #b9cfdc; border-radius: 18px; background: #fff;
+  color: #062e50; font: 13px/1.2 "Trebuchet MS", sans-serif; cursor: pointer;
+}
+.campus-mark-chip small { margin-left: 5px; color: #6a8597; font: 13px/1 "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+.campus-mark-chip[aria-pressed="true"] { border-color: #ff9a1f; background: #fff1dc; box-shadow: inset 0 0 0 1px #ff9a1f; }
+.campus-mark-preview { display: grid; gap: 2px; padding: 10px; border: 1px dashed #ffb341; border-radius: 8px; background: #fffaf0; }
+.campus-mark-preview b { font: 700 17px/1.3 Georgia, serif; color: #062e50; }
+.campus-mark-preview small { color: #6a8597; font: 13px/1.4 "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+
+:root[data-theme="dark"] .campus-mark-chip { background: #0d2438; border-color: #2d5a7c; color: #dcefff; }
+:root[data-theme="dark"] .campus-mark-chip small, :root[data-theme="dark"] .campus-mark-preview small { color: #9fc3dc; }
+:root[data-theme="dark"] .campus-mark-chip[aria-pressed="true"] { background: #3a2a10; border-color: #ff9a1f; }
+:root[data-theme="dark"] .campus-mark-preview { background: #1f1a10; }
+:root[data-theme="dark"] .campus-mark-preview b { color: #ffe6b8; }
+:root[data-theme="dark"] .campus-mark-label { color: #ffb341; }

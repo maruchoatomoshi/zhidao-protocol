@@ -906,6 +906,8 @@ function applyView(ui) {
   const v = campusState.view;
   ui.layer.setAttribute("transform", `translate(${v.x} ${v.y}) scale(${v.scale})`);
   applyLabelScale(v.scale);
+  // Слой меток (campus-marks.js) держит размер знаков на экране постоянным.
+  window.dispatchEvent(new CustomEvent("zhidao:campus-view", { detail: v.scale }));
 }
 
 /* Подписи держат постоянный размер на экране: слой масштабируется, поэтому
@@ -1048,6 +1050,12 @@ function attachGestures(ui) {
   }, { passive: false });
 
   const activate = (target) => {
+    // Метка поверх карты (campus-marks.js) важнее объекта под ней.
+    const mark = target.closest ? target.closest(".campus-mark[data-mark-id]") : null;
+    if (mark) {
+      window.dispatchEvent(new CustomEvent("zhidao:campus-mark", { detail: Number(mark.dataset.markId) }));
+      return;
+    }
     const node = target.closest
       ? target.closest('.campus-feat[data-interactive="true"]')
       : null;
@@ -1192,7 +1200,10 @@ function mergeExploration(data, anchors) {
   if (!anchors.length) return data;
   const exploration = data.exploration || (data.exploration = {});
   const existing = exploration.anchor_points || [];
-  exploration.anchor_points = existing.concat(anchors);
+  // Сервер отдаёт весь список открытых клеток; без проверки повторная загрузка
+  // удваивала бы опорные точки.
+  const seen = new Set(existing.map((anchor) => anchor.id));
+  exploration.anchor_points = existing.concat(anchors.filter((anchor) => !seen.has(anchor.id)));
   return data;
 }
 
@@ -1242,6 +1253,7 @@ async function initCampusMap() {
   routeGraph = buildRouteGraph(data.features, campusState.origin, campusState.exploredRegion);
   applyView(ui);
   attachGestures(ui);
+  window.dispatchEvent(new CustomEvent("zhidao:campus-drawn", { detail: ui }));
 
   const status = document.querySelector("#campusStatus");
   const locate = document.querySelector("#campusLocate");
@@ -1260,6 +1272,7 @@ async function initCampusMap() {
     applyView(ui);
     attachGestures(ui);
     buildLegend(campusState.data);
+    window.dispatchEvent(new CustomEvent("zhidao:campus-drawn", { detail: ui }));
     return ui;
   };
 
@@ -1279,5 +1292,16 @@ async function initCampusMap() {
       "ничего не сверено на местности";
   }
 }
+
+/* Для слоя меток (campus-marks.js): проекция координат и перерисовка тумана
+   после того, как метка открыла клетку. Геометрию карты слой не трогает. */
+window.ZhidaoCampus = {
+  project: (lon, lat) => (campusState.origin ? project(lon, lat, campusState.origin) : null),
+  async reload() {
+    if (!campusState.data) return;
+    mergeExploration(campusState.data, await fetchExploration());
+    if (campusState.reopen) campusState.reopen();
+  },
+};
 
 window.initCampusMap = initCampusMap;
