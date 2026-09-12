@@ -8,8 +8,9 @@
     implant_guanxi: "guanxi", implant_panda: "panda", implant_shaolin: "shaolin",
     implant_linguasoft: "linguasoft", implant_caishen: "caishen", implant_qilin: "qilin",
     implant_terracota: "terracota", implant_red_dragon: "honglong",
+    implant_jade_warden: "jade_warden", implant_diplomat: "diplomat", implant_golden_nexus: "golden_nexus",
   };
-  const tierNames = { gold: "Обычный / 普通", purple: "Редкий / 稀有", black: "Легендарный / 传说" };
+  const tierNames = { gold: "Обычный / 普通", purple: "Редкий / 稀有", upgraded: "Улучшенный / 进阶", black: "Легендарный / 传说" };
   let session = null, seasons = [], selected = null, snapshot = null;
   let busy = false, epoch = 0, historyBefore = null, grantBefore = null, grantDraft = null;
 

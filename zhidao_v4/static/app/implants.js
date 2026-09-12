@@ -12,7 +12,7 @@
    иначе человек прочитает «+20★ за перекличку» как обещание. */
 
 (function () {
-  const SOURCE = "./assets/implants/implants.json?v=a6c05da8cf";
+  const SOURCE = "./assets/implants/implants.json?v=1413ca5131";
   const ART_BASE = "./assets/implants/";
 
   let built = false;
@@ -115,7 +115,7 @@
 
     host.innerHTML = "";
     const rarities = data.rarities || {};
-    const order = ["legendary", "rare"];
+    const order = ["legendary", "upgraded", "rare"];
     order.forEach((rarityKey) => {
       const group = (data.implants || []).filter((i) => i.rarity === rarityKey);
       if (!group.length) return;

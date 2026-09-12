@@ -14,6 +14,7 @@ from pathlib import Path
 from .seasons import normalize_idempotency_key
 
 RULES_PATH = Path(__file__).parent / 'static/app/assets/cases/cases.json'
+WORKSHOP_PATH = Path(__file__).parent / 'static/app/assets/workshop/workshop.json'
 STAFF_ROLES = ('operator', 'architect', 'system_admin')
 
 
@@ -51,8 +52,18 @@ def rules():
     return data
 
 
+@lru_cache(maxsize=1)
+def workshop_items():
+    # Улучшенные импланты из кейсов не выпадают — их собирают в мастерской
+    # (workshop.py). Правила кейсов и их rules_version от этого не меняются.
+    data = json.loads(WORKSHOP_PATH.read_text(encoding='utf-8'))
+    return {item['code']: item for item in data['items']}
+
+
 def items_by_code():
-    return {p['code']: p for t in rules()['tiers'] for p in t['prizes']}
+    items = {p['code']: p for t in rules()['tiers'] for p in t['prizes']}
+    items.update(workshop_items())
+    return items
 
 
 def weighted(values):

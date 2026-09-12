@@ -1,0 +1,64 @@
+/* Мастерская дубликатов: рецепты, переплавка и результат (V4_GAMES.md §4.8).
+   Цвет ступени — через data-tier, чтобы не зависеть от классов кейсов. */
+
+[data-tier="gold"] { --tier: #c9a227; }
+[data-tier="purple"] { --tier: #8b5cd6; }
+[data-tier="upgraded"] { --tier: #1fae8b; }
+[data-tier="black"] { --tier: #262638; }
+
+.workshop-body { display: grid; gap: 10px; padding: 14px; }
+.workshop-recipes { display: grid; gap: 8px; }
+.workshop-recipe {
+  display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px 10px; align-items: center; padding: 10px;
+  border: 1px solid var(--case-border); border-left: 4px solid var(--tier, #9aa7b2); border-radius: 8px; background: var(--case-pane);
+}
+.workshop-recipe .btn { grid-column: 1 / -1; min-height: 44px; }
+.workshop-art {
+  display: grid; place-items: center; width: 58px; height: 58px; overflow: hidden; border-radius: 8px;
+  background: radial-gradient(circle at 50% 40%, #ffffff, #dbe9f3); color: var(--case-ink); font: 26px/1 "Trebuchet MS", sans-serif;
+}
+.workshop-art img { width: 100%; height: 100%; object-fit: contain; }
+.workshop-info { display: grid; gap: 2px; min-width: 0; }
+.workshop-info b { color: var(--case-ink); font: 700 15px/1.3 "Trebuchet MS", sans-serif; }
+.workshop-info small { color: var(--case-muted); }
+.workshop-info p { margin: 0; }
+.workshop-route { color: var(--tier, var(--case-ink)); font: bold 12px/1.4 "Courier New", monospace; }
+
+/* --- переплавка ------------------------------------------------------------------ */
+.workshop-forge {
+  display: grid; justify-items: center; gap: 8px; padding: 14px; border: 1px solid #6a3a10; border-radius: 8px;
+  background: linear-gradient(#2a1606, #120903); color: #ffcf7a; font: 12px/1.3 "Courier New", monospace;
+}
+.workshop-forge-items { position: relative; width: 124px; height: 44px; }
+.workshop-forge-items i {
+  position: absolute; top: 8px; width: 28px; height: 28px; border-radius: 6px;
+  background: radial-gradient(circle at 40% 35%, #fff6c8, #ffb000 55%, #b35a00); box-shadow: 0 0 10px #ff9a00aa;
+}
+.workshop-forge-items i:nth-child(1) { left: 0; }
+.workshop-forge-items i:nth-child(2) { left: 48px; }
+.workshop-forge-items i:nth-child(3) { right: 0; }
+.workshop-forge-items i:nth-child(1) { animation: workshop-merge-left 1.4s steps(7) both; }
+.workshop-forge-items i:nth-child(3) { animation: workshop-merge-right 1.4s steps(7) both; }
+.workshop-forge-items i:nth-child(2) { animation: workshop-pulse .7s steps(4) infinite; }
+@keyframes workshop-merge-left { to { left: 48px; opacity: 0; } }
+@keyframes workshop-merge-right { to { right: 48px; opacity: 0; } }
+@keyframes workshop-pulse { 50% { transform: scale(1.3); box-shadow: 0 0 24px #ffd24a; } }
+.workshop-forge-bar { display: block; width: 100%; height: 14px; padding: 2px; border: 1px solid #6a3a10; background: #000; }
+.workshop-forge-bar i { display: block; height: 100%; background: repeating-linear-gradient(90deg, #ff9a00 0 8px, transparent 8px 10px); animation: workshop-fill 1.4s steps(12) both; }
+@keyframes workshop-fill { from { width: 0; } to { width: 100%; } }
+
+/* --- результат -------------------------------------------------------------------- */
+.workshop-result {
+  display: grid; justify-items: center; gap: 4px; padding: 16px; text-align: center;
+  border: 1px solid var(--case-border); border-top: 4px solid var(--tier, #1fae8b); border-radius: 10px;
+  background: radial-gradient(circle at 50% 30%, #ffffff, var(--case-pane) 70%);
+}
+.workshop-result h3 { margin: 0; color: var(--case-ink); font: 700 20px/1.3 "Trebuchet MS", sans-serif; }
+.workshop-result p { margin: 0; }
+.workshop-result-art { display: grid; place-items: center; width: 150px; height: 150px; font: 64px/1 "Trebuchet MS", sans-serif; color: var(--case-ink); }
+.workshop-result-art img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px #0003); }
+:root[data-motion="full"] .workshop-result-art { animation: workshop-reveal .8s steps(8) both; }
+@keyframes workshop-reveal { from { transform: scale(.3) rotate(-20deg); filter: brightness(3) blur(3px); } to { transform: none; filter: none; } }
+
+:root[data-theme="dark"] .workshop-art { background: radial-gradient(circle at 50% 40%, #2c4a63, #0f2233); }
+:root[data-theme="dark"] .workshop-result { background: radial-gradient(circle at 50% 30%, #1d3a52, var(--case-pane) 70%); }
