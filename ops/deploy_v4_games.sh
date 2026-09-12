@@ -7,7 +7,7 @@ umask 022
 
 repo=/opt/zhidao-v4
 db=/var/lib/zhidao-v4/zhidao.db
-target=67f81d09f129ae01ba937985d048ceb21917217e
+target=1ff3a452207bffa6048c6cccc4b0e72a1c8e1533
 
 [[ $(id -u) == 0 ]] || { echo 'Run from the root Termius session.'; exit 1; }
 cd "$repo"
