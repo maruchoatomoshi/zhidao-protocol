@@ -7,7 +7,7 @@ umask 022
 
 repo=/opt/zhidao-v4
 db=/var/lib/zhidao-v4/zhidao.db
-target=e75920b0dd70831052387c1ce309a01d82a0452c
+target=265120ee17aaa408fd5872e9254f3ba9f4e00822
 
 [[ $(id -u) == 0 ]] || { echo 'Run from the root Termius session.'; exit 1; }
 cd "$repo"
@@ -134,7 +134,7 @@ for attempt in range(20):
     try:
         with urlopen(base + '/api/v4/health', timeout=2) as r:
             health = json.load(r)
-        assert health['status'] == 'ok' and health['schema_version'] == 14
+        assert health['status'] == 'ok' and health['schema_version'] == 15
         break
     except Exception:
         if attempt == 19:
@@ -158,7 +158,7 @@ except HTTPError as error:
     assert error.code == 401
 else:
     raise AssertionError('Personal case context unexpectedly public')
-print('Local smoke: schema 14; cases rules and release assets 200; personal API 401')
+print('Local smoke: schema 15; cases rules and release assets 200; personal API 401')
 PY
 
 systemctl start zhidao-v4-bot
