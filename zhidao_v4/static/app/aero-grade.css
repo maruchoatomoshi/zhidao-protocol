@@ -161,7 +161,7 @@
       rgba(6, 46, 80, 0.34) 38%,
       rgba(8, 90, 150, 0.12) 62%,
       rgba(10, 120, 180, 0.05) 100%),
-    url("../architect/assets/hainan-promised-tomorrow.png") center 38% / cover;
+    url("./assets/home/hainan-window.jpg") center 38% / cover;
 }
 
 /* Keep the convex highlight, but let it sit on the photograph rather than
@@ -1363,7 +1363,7 @@ h1.display-title,
   color: var(--ink);
   background:
     linear-gradient(160deg, rgba(4, 24, 46, 0.82), rgba(2, 14, 30, 0.92)),
-    url("../architect/assets/hainan-promised-tomorrow.png") center / cover fixed;
+    url("./assets/home/hainan-window.jpg") center / cover fixed;
 }
 
 :root[data-theme="dark"] .app-shell {
@@ -1789,13 +1789,13 @@ h1.display-title,
      серая заглушка. */
   background:
     linear-gradient(160deg, rgba(226, 248, 255, .72), rgba(140, 205, 235, .58)),
-    url("../architect/assets/hainan-promised-tomorrow.png") center / cover fixed;
+    url("./assets/home/hainan-window.jpg") center / cover fixed;
 }
 
 :root[data-theme="dark"] .auth-gate {
   background:
     linear-gradient(160deg, rgba(4, 24, 46, .86), rgba(2, 14, 30, .93)),
-    url("../architect/assets/hainan-promised-tomorrow.png") center / cover fixed;
+    url("./assets/home/hainan-window.jpg") center / cover fixed;
 }
 
 .auth-panel {

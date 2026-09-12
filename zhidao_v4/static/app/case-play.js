@@ -140,6 +140,7 @@
     for (const item of items) {
       quantity += item.quantity;
       const card = node("article", "case-owned-item");
+      card.dataset.itemCode = item.item_code;
       if (art[item.item_code]) {
         const image = node("img"); image.src = `./assets/implants/${art[item.item_code]}.webp`; image.alt = ""; image.loading = "lazy";
         card.append(image);

@@ -72,7 +72,7 @@ html:not([data-design="xp"]) .xp-only { display: none !important; }
 :root[data-design="xp"] .xp-titlebar img { width: 23px; height: 23px; object-fit: contain; }
 :root[data-design="xp"] .xp-titlebar h2 { margin: 0; color: #fff; font: bold 14px/1.2 Tahoma,sans-serif; letter-spacing: 0; text-shadow: 1px 1px #063f70; }
 :root[data-design="xp"] .xp-titlebar > span { margin-left: auto; font: 11px/1.2 Tahoma,sans-serif; }
-:root[data-design="xp"] .journey-card { order: 1; height: 296px; min-height: 296px; border: 1px solid #3b7ccd; border-radius: 5px; box-shadow: inset 0 0 0 2px #eff7ff,1px 2px 2px #0b316321; background: linear-gradient(90deg,#004c926b,transparent 85%),url("../architect/assets/hainan-promised-tomorrow.png") center 45% / cover; }
+:root[data-design="xp"] .journey-card { order: 1; height: 296px; min-height: 296px; border: 1px solid #3b7ccd; border-radius: 5px; box-shadow: inset 0 0 0 2px #eff7ff,1px 2px 2px #0b316321; background: linear-gradient(90deg,#004c926b,transparent 85%),url("./assets/home/hainan-window.jpg") center 45% / cover; }
 :root[data-design="xp"] .journey-card::before,:root[data-design="xp"] .journey-card::after { display: none; }
 :root[data-design="xp"] .journey-card .xp-titlebar { position: relative; z-index: 2; }
 :root[data-design="xp"] .journey-card .journey-index { display: none; }

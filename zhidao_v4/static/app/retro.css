@@ -1,0 +1,130 @@
+/* Интернет нулевых поверх приложения: бегущая строка, счётчик посещений,
+   NEW!, живые иконки, блёстки и dial-up на входе (V4_DESIGN.md).
+
+   Всё движение — только при :root[data-motion="full"]. Без него строка
+   листается пальцем, цифры стоят, блёсток нет, модем горит ровно. */
+
+/* --- бегущая строка ------------------------------------------------------------- */
+.zd-ticker {
+  display: flex; align-items: stretch; min-height: 32px; margin: 2px 0;
+  border: 1px solid #7aa7c7; border-radius: 4px; overflow: hidden;
+  background: linear-gradient(#fdfefe, #e3f0f8); box-shadow: inset 0 1px #fff;
+  color: #0a3b5c; font: 12px/1.2 Tahoma, "Trebuchet MS", sans-serif;
+}
+:root[data-design="xp"] .zd-ticker { order: 2; }
+.zd-ticker-tag {
+  display: grid; place-items: center; padding: 0 9px; flex: 0 0 auto;
+  background: linear-gradient(#ff6b5a, #c8201a); color: #fff;
+  font: bold 13px/1 "Microsoft YaHei", "PingFang SC", Tahoma, sans-serif; text-shadow: 0 1px #7a0000;
+}
+.zd-ticker-window { position: relative; flex: 1; min-width: 0; overflow: hidden; display: flex; align-items: center; }
+.zd-ticker-track { display: inline-flex; white-space: nowrap; will-change: transform; }
+.zd-ticker-run { display: inline-flex; gap: 14px; padding: 0 14px 0 10px; }
+.zd-ticker-run span::after { content: "★"; margin-left: 14px; color: #e0a100; }
+:root[data-motion="full"] .zd-ticker-track { animation: zd-marquee var(--ticker-duration, 20s) linear infinite; }
+:root[data-motion="full"] .zd-ticker:hover .zd-ticker-track,
+:root[data-motion="full"] .zd-ticker:active .zd-ticker-track { animation-play-state: paused; }
+:root:not([data-motion="full"]) .zd-ticker-window { overflow-x: auto; }
+:root:not([data-motion="full"]) .zd-ticker-run[aria-hidden] { display: none; }
+@keyframes zd-marquee { to { transform: translateX(-50%); } }
+:root[data-theme="dark"] .zd-ticker { background: linear-gradient(#123553, #0b2338); border-color: #2d5a7c; color: #dcefff; box-shadow: inset 0 1px #ffffff1a; }
+
+/* --- счётчик посещений -------------------------------------------------------- */
+.status-module.has-counter strong {
+  position: absolute !important; width: 1px; height: 1px; margin: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.hit-counter { display: flex; align-items: center; gap: 2px; margin: 6px 0 5px; padding: 1px; overflow: hidden; }
+.hit-counter:empty { display: none; }
+.hit-counter b {
+  position: relative; display: grid; place-items: center; width: 21px; height: 30px; overflow: hidden;
+  border-radius: 2px; background: linear-gradient(#262626 0 49%, #0d0d0d 51%);
+  box-shadow: inset 0 0 0 1px #000, 0 1px 0 rgba(255, 255, 255, .55);
+  color: #8dff72; font: 700 20px/1 "Courier New", "Lucida Console", monospace;
+  text-shadow: 0 0 6px rgba(110, 255, 90, .7);
+}
+.hit-counter b::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, .75); }
+.hit-counter i { padding: 0 3px; font: 700 20px/1 "Courier New", monospace; font-style: normal; color: #5b7a90; }
+.hit-counter[data-counter-for="stars"]::after { content: "★"; margin-left: 6px; font-size: 22px; line-height: 1; color: #f5b400; text-shadow: 0 1px #8a5a00; }
+:root[data-motion="full"] .hit-counter b.is-rolling { animation: zd-roll .45s steps(4); }
+@keyframes zd-roll { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+:root[data-theme="dark"] .hit-counter i { color: #9fc3dc; }
+
+/* --- NEW! ------------------------------------------------------------------------ */
+[data-new], .case-owned-item { position: relative; }
+.new-badge {
+  position: absolute; z-index: 3; top: 4px; right: 4px; padding: 2px 5px 1px;
+  border: 1px solid #7a0000; border-radius: 3px; background: linear-gradient(#ffe45c, #ff9d00);
+  color: #b10000; font: bold 10px/1 Verdana, Tahoma, sans-serif; transform: rotate(8deg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35); pointer-events: none;
+}
+.app-dock [data-new] .new-badge { top: -3px; right: 0; padding: 1px 3px; font-size: 8px; }
+.case-owned-item .new-badge { top: 6px; left: 6px; right: auto; transform: rotate(-8deg); }
+:root[data-motion="full"] .new-badge { animation: zd-blink 1.1s steps(1) infinite; }
+@keyframes zd-blink { 50% { color: #fff; background: linear-gradient(#ff4a3d, #c40000); } }
+
+/* --- живые иконки --------------------------------------------------------------- */
+.hub-orb { position: relative; }
+:root[data-motion="full"] .is-poked .hub-orb img,
+:root[data-motion="full"] .is-poked .dock-icon img,
+:root[data-motion="full"] .desktop-shortcuts .is-poked > img,
+:root[data-motion="full"] .is-poked .shortcut-map-orb { animation: zd-bounce .6s steps(6); }
+:root[data-motion="full"] .is-wiggle .hub-orb img { animation: zd-wiggle .9s steps(6); }
+:root[data-motion="full"] .is-poked .hub-orb::after {
+  content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .9) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat;
+  animation: zd-glint .6s ease-out forwards;
+}
+@keyframes zd-bounce {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-9px) scale(1.08, .94); }
+  55% { transform: translateY(0) scale(.94, 1.06); }
+  75% { transform: translateY(-3px) scale(1); }
+  100% { transform: none; }
+}
+@keyframes zd-wiggle { 20% { transform: rotate(-9deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 80% { transform: rotate(3deg); } }
+@keyframes zd-glint { to { background-position: 150% 0; } }
+
+/* --- блёстки ----------------------------------------------------------------------- */
+.zd-sparkles { position: fixed; inset: 0; z-index: 80; pointer-events: none; overflow: hidden; }
+.zd-sparkles i {
+  position: absolute; font: bold 15px/1 Arial, sans-serif; font-style: normal;
+  color: hsl(var(--hue) 95% 58%); text-shadow: 0 0 3px #fff, 0 0 8px hsl(var(--hue) 95% 60%);
+  transform: translate(-50%, -50%); animation: zd-sparkle .7s steps(7) forwards;
+}
+:root:not([data-motion="full"]) .zd-sparkles { display: none; }
+@keyframes zd-sparkle {
+  from { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
+  to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(90deg); opacity: 0; }
+}
+
+/* --- dial-up на входе ----------------------------------------------------------- */
+.dialup {
+  display: grid; gap: 8px; width: min(270px, 100%); margin: 6px auto 10px; padding: 10px;
+  border: 1px solid #7aa7c7; border-radius: 4px; background: linear-gradient(#fdfefe, #e7f1f8);
+  color: #0a3b5c; font: 12px/1.3 Tahoma, "Trebuchet MS", sans-serif; text-align: left;
+}
+.dialup-head { display: flex; align-items: center; gap: 9px; }
+.dialup-modem { display: inline-flex; gap: 4px; padding: 5px 6px; border-radius: 3px; background: #1d2a33; box-shadow: inset 0 1px 2px #000; }
+.dialup-modem i { width: 6px; height: 6px; border-radius: 50%; background: #2f5d2a; }
+.dialup-modem i:first-child { background: #7dff4f; box-shadow: 0 0 5px #7dff4f; }
+:root[data-motion="full"] .dialup-modem i { animation: zd-led .5s steps(1) infinite; }
+.dialup-modem i:nth-child(2) { animation-delay: .17s; }
+.dialup-modem i:nth-child(3) { animation-delay: .33s; }
+@keyframes zd-led { 50% { background: #7dff4f; box-shadow: 0 0 5px #7dff4f; } }
+.dialup-lines { position: relative; flex: 1; height: 16px; overflow: hidden; }
+.dialup-lines em { position: absolute; inset: 0; font-style: normal; white-space: nowrap; opacity: 0; }
+.dialup-lines em:first-child { opacity: 1; }
+:root[data-motion="full"] .dialup-lines em { animation: zd-dial-line 4.5s steps(1) infinite; }
+:root[data-motion="full"] .dialup-lines em:first-child { opacity: 0; }
+/* Отрицательные задержки: у всех трёх строк нет фазы ожидания, и в любой
+   момент видна ровно одна, даже если анимации идут рывками. */
+.dialup-lines em:nth-child(2) { animation-delay: -3s; }
+.dialup-lines em:nth-child(3) { animation-delay: -1.5s; }
+@keyframes zd-dial-line { 0% { opacity: 1; } 33.3% { opacity: 0; } 100% { opacity: 0; } }
+.dialup-bar { display: block; height: 16px; padding: 2px; border: 1px solid #8aa9bf; border-radius: 2px; background: #fff; box-shadow: inset 1px 1px 2px rgba(0, 0, 0, .2); }
+.dialup-bar i { display: block; width: 55%; height: 100%; background: repeating-linear-gradient(90deg, #27a52f 0 9px, transparent 9px 11px); }
+:root[data-motion="full"] .dialup-bar i { animation: zd-dial-fill 2.6s steps(13) infinite; }
+@keyframes zd-dial-fill { from { width: 0; } to { width: 100%; } }
+:root[data-theme="dark"] .dialup { background: linear-gradient(#123553, #0b2338); border-color: #2d5a7c; color: #dcefff; }
+:root[data-theme="dark"] .dialup-bar { background: #06121d; border-color: #2d5a7c; }

@@ -9,9 +9,9 @@
   <script src="./xp-home.js?v=792c47b09e"></script>
   <title>ZHIDAO Hainan · Personal System</title>
   <link rel="stylesheet" href="./tokens.css?v=fa77e0dcbd">
-  <link rel="stylesheet" href="./app.css?v=762cb3e504">
+  <link rel="stylesheet" href="./app.css?v=38f972c510">
   <link rel="stylesheet" href="./aero.css?v=9f44369511">
-  <link rel="stylesheet" href="./aero-grade.css?v=29d1bae32b">
+  <link rel="stylesheet" href="./aero-grade.css?v=57fba7a9cf">
   <link rel="stylesheet" href="./case-workstation.css?v=32a11fe8e2">
   <link rel="stylesheet" href="./games.css?v=2e3faa249d">
   <link rel="stylesheet" href="./diary.css?v=d01fa4acfe">
@@ -22,9 +22,10 @@
   <link rel="stylesheet" href="./trade.css?v=dbe9d9aca3">
   <link rel="stylesheet" href="./virus.css?v=1198560e6f">
   <link rel="stylesheet" href="./aero-desktop.css?v=2bedca366a">
-  <link rel="stylesheet" href="./xp-home.css?v=a897df8684">
+  <link rel="stylesheet" href="./xp-home.css?v=27e799f306">
   <link rel="stylesheet" href="./readability.css?v=ab957914b5">
   <link rel="stylesheet" href="./guide.css?v=bfcb9b167f">
+  <link rel="stylesheet" href="./retro.css?v=8629950ffa">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -112,10 +113,12 @@
       <p class="screen-sub"><span class="screen-sub-mark">&gt;</span> dēng lù <span class="screen-sub-sep">//</span> личный контур участника</p>
 
       <div class="auth-step" data-step="checking">
+        <div class="dialup" aria-hidden="true"><div class="dialup-head"><span class="dialup-modem"><i></i><i></i><i></i></span><span class="dialup-lines"><em>Набор номера…</em><em>Проверка связи…</em><em>Вход в сеть ZHIDAO…</em></span></div><span class="dialup-bar"><i></i></span></div>
         <p class="auth-note">Проверяем сессию&hellip;</p>
       </div>
 
       <div class="auth-step" data-step="max" hidden>
+        <div class="dialup" aria-hidden="true"><div class="dialup-head"><span class="dialup-modem"><i></i><i></i><i></i></span><span class="dialup-lines"><em>Набор номера…</em><em>Рукопожатие с MAX…</em><em>Вход в сеть ZHIDAO…</em></span></div><span class="dialup-bar"><i></i></span></div>
         <p class="auth-note">Входим через MAX&hellip;</p>
       </div>
 
@@ -164,7 +167,7 @@
 
       <header class="app-header">
         <div class="app-brand" aria-label="ZHIDAO Hainan">
-          <img class="brand-logo" src="./assets/zhidao-dragon-logo.png" width="48" height="48" alt="">
+          <img class="brand-logo" src="./assets/zhidao-dragon-logo-256.png" width="48" height="48" alt="">
           <span><strong>ZHIDAO<span class="xp-only xp-brand-suffix"> Protocol</span></strong><small>HAINAN PERSONAL SYSTEM</small></span>
         </div>
         <div class="header-status">
@@ -188,9 +191,26 @@
           <div><h1 id="scheduleTitle">Привет,<br>путешественник</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jīn tiān <span class="screen-sub-sep">//</span> твоя точка подключения</p></div>
         </div>
 
+        <article class="journey-card">
+          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-map.svg" alt=""><h2>Окно в Хайнань</h2><span aria-hidden="true">海南</span></div>
+          <div class="journey-index"><span>18°19′N</span></div>
+          <div class="journey-copy">
+            <p>ОБЕЩАННОЕ ЗАВТРА</p>
+            <h2>Курс на<br>Хайнань</h2>
+          </div>
+          <img class="journey-logo" src="./assets/zhidao-dragon-logo-256.png" width="128" height="128" alt="ZHIDAO Protocol">
+          <div class="journey-bubbles" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="xp-only xp-journey-caption"><span>Больше, чем поездка.</span></div>
+        </article>
+
+        <div class="zd-ticker" aria-label="Новости сезона">
+          <b class="zd-ticker-tag" aria-hidden="true">新闻</b>
+          <div class="zd-ticker-window"><div class="zd-ticker-track" id="homeTicker"><span class="zd-ticker-run"><span>ZHIDAO Hainan на связи</span></span></div></div>
+        </div>
+
         <div class="status-grid" aria-label="Показатели участника">
-          <article class="status-module rep-module"><span>БАЛАНС</span><strong data-case-stars>— ★</strong><small>Звёзды сезона</small></article>
-          <article class="status-module season-module"><span>СИГНАЛЫ</span><strong data-case-scans>— / 7</strong><small>Попытки сканирования</small></article>
+          <article class="status-module rep-module"><span>БАЛАНС</span><strong data-case-stars>— ★</strong><span class="hit-counter" data-counter-for="stars" aria-hidden="true"></span><small>Звёзды сезона</small></article>
+          <article class="status-module season-module"><span>СИГНАЛЫ</span><strong data-case-scans>— / 7</strong><span class="hit-counter" data-counter-for="scans" aria-hidden="true"></span><small>Попытки сканирования</small></article>
         </div>
 
         <div class="desktop-shortcuts" aria-label="Быстрый доступ">
@@ -844,17 +864,17 @@
             <span class="hub-name">Магазин</span>
             <span class="hub-cn">商店</span>
           </button>
-          <button type="button" class="hub-tile tone-violet" data-open-screen="meet">
+          <button type="button" class="hub-tile tone-violet" data-open-screen="meet" data-new="meet">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
             <span class="hub-name">Встречи</span>
             <span class="hub-cn">相遇<i>xiāng yù</i></span>
           </button>
-          <button type="button" class="hub-tile tone-aqua" data-open-screen="trade">
+          <button type="button" class="hub-tile tone-aqua" data-open-screen="trade" data-new="trade">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
             <span class="hub-name">Обмен</span>
             <span class="hub-cn">交换<i>jiāo huàn</i></span>
           </button>
-          <button type="button" class="hub-tile tone-red" data-open-screen="antivirus">
+          <button type="button" class="hub-tile tone-red" data-open-screen="antivirus" data-new="antivirus">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
             <span class="hub-name">Антивирус</span>
             <span class="hub-cn">杀毒<i>shā dú</i></span>
@@ -917,7 +937,7 @@
       <button type="button" data-target="rating" aria-label="Рейтинг">
         <span class="dock-icon"><img src="./assets/icons/nav-rating.png" alt=""></span><small>REP<span class="nav-cn">排名</span></small>
       </button>
-      <button type="button" data-target="games" aria-label="Ивенты">
+      <button type="button" data-target="games" aria-label="Ивенты" data-new="games">
         <span class="dock-icon"><img src="./assets/icons/desktop-spy.svg" alt=""></span><small>Ивенты<span class="nav-cn">EVENTS</span></small>
       </button>
       <button type="button" data-target="cases" aria-label="Кейсы">
@@ -960,7 +980,7 @@
     <div class="case-result-body"><p id="caseGrantSummary"></p><p>Запас каждого участника ограничен семью попытками. Фактическая выдача будет записана в журнал.</p><button type="button" class="btn btn-primary" id="caseGrantConfirm">Выдать</button><button type="button" class="btn btn-secondary" id="caseGrantCancel">Отмена</button></div>
   </dialog>
   <script src="./cases.js?v=4344700dac" defer></script>
-  <script src="./case-play.js?v=9afa5704f9" defer></script>
+  <script src="./case-play.js?v=03ccfae0f0" defer></script>
   <script src="./implants.js?v=7d57c9778a" defer></script>
   <script src="./admin.js?v=2cf59ee550" defer></script>
   <script src="./games.js?v=34b3945e14" defer></script>
@@ -980,5 +1000,6 @@
   <script src="./auth.js?v=8d29d373f2" defer></script>
   <script src="./aero-motion.js?v=f6b6e7c361" defer></script>
   <script src="./guide.js?v=e24a015b1b" defer></script>
+  <script src="./retro.js?v=c723bab11b" defer></script>
 </body>
 </html>
