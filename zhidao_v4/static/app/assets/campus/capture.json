@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "reviewed": false,
+  "review_note_ru": "Черновик Claude 2026-09-13: названия фракций по-китайски не проверены человеком, знающим язык. Точки — объекты campus.geojson; играть на точке можно только после подтверждения вожатым на месте.",
+  "factions": [
+    {"code": "azure", "ru": "Лазурные", "zh": "蓝队", "pinyin": "lán duì", "color": "#2b8cff"},
+    {"code": "crimson", "ru": "Алые", "zh": "红队", "pinyin": "hóng duì", "color": "#ff4a5a"},
+    {"code": "gold", "ru": "Золотые", "zh": "金队", "pinyin": "jīn duì", "color": "#f0a800"}
+  ],
+  "points": [
+    {"code": "stadium", "feature": "osm-way-1125998153"},
+    {"code": "canteen", "feature": "osm-way-1125998179"},
+    {"code": "canteen1", "feature": "osm-way-1223487854"},
+    {"code": "hall", "feature": "osm-way-1223487864"},
+    {"code": "sports", "feature": "osm-way-1223487855"},
+    {"code": "teaching", "feature": "osm-way-1125998165"},
+    {"code": "labs", "feature": "osm-way-1125998166"},
+    {"code": "basketball", "feature": "esri-basketball-east"},
+    {"code": "muc", "feature": "osm-way-1223487861"},
+    {"code": "cuc", "feature": "osm-way-1223487863"}
+  ],
+  "windows": [["10:00", "12:00"], ["15:00", "18:00"]],
+  "radius_m": 70,
+  "confirm_accuracy_m": 30,
+  "confirm_max_offset_m": 250,
+  "max_level": 3,
+  "cooldown_seconds": 180,
+  "question_seconds": 60,
+  "score_minutes": 10
+}

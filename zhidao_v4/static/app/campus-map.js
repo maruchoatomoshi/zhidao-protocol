@@ -1056,6 +1056,12 @@ function attachGestures(ui) {
       window.dispatchEvent(new CustomEvent("zhidao:campus-mark", { detail: Number(mark.dataset.markId) }));
       return;
     }
+    // Точка Захвата кампуса (capture.js) — тоже поверх объекта.
+    const point = target.closest ? target.closest(".capture-point[data-point]") : null;
+    if (point) {
+      window.dispatchEvent(new CustomEvent("zhidao:capture-point", { detail: point.dataset.point }));
+      return;
+    }
     const node = target.closest
       ? target.closest('.campus-feat[data-interactive="true"]')
       : null;

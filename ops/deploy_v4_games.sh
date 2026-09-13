@@ -134,7 +134,7 @@ for attempt in range(20):
     try:
         with urlopen(base + '/api/v4/health', timeout=2) as r:
             health = json.load(r)
-        assert health['status'] == 'ok' and health['schema_version'] == 15
+        assert health['status'] == 'ok' and health['schema_version'] == 16
         break
     except Exception:
         if attempt == 19:
@@ -158,7 +158,7 @@ except HTTPError as error:
     assert error.code == 401
 else:
     raise AssertionError('Personal case context unexpectedly public')
-print('Local smoke: schema 15; cases rules and release assets 200; personal API 401')
+print('Local smoke: schema 16; cases rules and release assets 200; personal API 401')
 PY
 
 systemctl start zhidao-v4-bot

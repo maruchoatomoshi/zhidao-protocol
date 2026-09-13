@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="./retro.css?v=8179cf4369">
   <link rel="stylesheet" href="./campus-marks.css?v=6bf51bb428">
   <link rel="stylesheet" href="./story.css?v=b9735a6e21">
+  <link rel="stylesheet" href="./capture.css?v=0b93e30702">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -381,6 +382,8 @@
           <button id="campusMarkOpen" class="btn btn-secondary campus-mark-open" type="button" hidden>✦ Оставить метку</button>
         </div>
 
+        <section class="glass-card capture-hud" id="captureHud" aria-label="Захват кампуса" aria-live="polite" hidden></section>
+
         <article class="campus-map" aria-label="Векторная карта кампуса">
           <div id="campusCanvas" class="campus-canvas"></div>
           <span class="map-north">N<br>&uarr;</span>
@@ -401,6 +404,7 @@
         <article class="glass-card campus-mark-card" id="campusMarkCard" aria-live="polite" hidden></article>
         <section class="glass-card campus-mark-composer" id="campusMarkComposer" aria-label="Новая метка" hidden></section>
         <article class="glass-card story-place-card" id="storyPlaceCard" aria-live="polite" hidden></article>
+        <article class="glass-card capture-card" id="capturePointCard" aria-live="polite" hidden></article>
 
         <div id="campusLegend" class="campus-legend" aria-label="Условные обозначения"></div>
 
@@ -830,6 +834,19 @@
           </div>
         </details>
 
+        <article class="case-window" id="captureIntro">
+          <div class="case-titlebar"><h2>Игры на кампусе</h2><span aria-hidden="true">校园</span></div>
+          <div class="spy-body">
+            <section class="game-card" aria-labelledby="gameCaptureTitle">
+              <h3 id="gameCaptureTitle">Захват кампуса <span aria-hidden="true">占领</span></h3>
+              <p>Три фракции всю смену воюют за настоящие места кампуса. Придите к точке и ответьте на китайский вопрос: ничью точку захватите, свою укрепите, чужую пробьёте. Очки идут за удержание.</p>
+              <ul class="spy-facts"><li>вся смена</li><li>окна 10–12 и 15–18</li><li>нужен GPS</li></ul>
+              <button type="button" class="btn btn-primary" data-open-screen="campus-map">Открыть карту</button>
+            </section>
+          </div>
+          <div class="case-statusbar"><span>ФРАКЦИЯ ВЫДАЁТСЯ АВТОМАТИЧЕСКИ</span></div>
+        </article>
+
         <article class="case-window" id="gameIntro">
           <div class="case-titlebar"><h2>Игры за столом</h2><span aria-hidden="true">游戏</span></div>
           <div class="spy-body">
@@ -1049,7 +1066,7 @@
     <div class="virus-popup-body"><span class="virus-popup-icon" aria-hidden="true">!</span><p id="virusPopupText"></p></div>
     <div class="virus-popup-actions"><button type="button" class="btn btn-primary" id="virusPopupCure">Лечиться</button><button type="button" class="btn btn-secondary" id="virusPopupOk">ОК</button></div>
   </div>
-  <script src="./campus-map.js?v=98e0620338" defer></script>
+  <script src="./campus-map.js?v=4aa8add615" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
     <div class="case-result-body"><div class="result-halo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="caseResultTier" class="case-result-tier"></span><div class="result-seal" id="caseResultSeal" aria-hidden="true">✦</div><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
@@ -1083,5 +1100,6 @@
   <script src="./retro.js?v=30022b2992" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>
   <script src="./story.js?v=a3a1bfb3a5" defer></script>
+  <script src="./capture.js?v=50f27a464a" defer></script>
 </body>
 </html>
