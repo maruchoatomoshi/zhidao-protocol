@@ -132,8 +132,8 @@
     const parts = [
       node("span", "story-place-label", open ? "Сигнал найден" : "Слабый сигнал"),
       node("b", null, placeName(fragment)),
-      node("p", null, open ? "Файл на этом месте открыт — его можно прочитать."
-        : "Когда группа откроет это место на карте, файл станет доступен."),
+      node("p", null, open ? "Файл на этом месте открыт — его можно прочитать"
+        : "Когда группа откроет это место на карте, файл станет доступен"),
     ];
     if (open) {
       const button = node("button", "btn btn-primary", "Открыть файл");
@@ -220,7 +220,7 @@
       const hint = node("details", "story-hint");
       hint.append(node("summary", null, "Подсказка"), node("p", null, fragment.hint || "Подсказки нет."));
       body.append(hint);
-      if (wrong) body.append(node("p", "story-wrong", "Не то. Проверьте и попробуйте ещё раз."));
+      if (wrong) body.append(node("p", "story-wrong", "Ошибка. Проверьте и попробуйте ещё раз"));
     }
     body.append(node("p", "case-message story-note"));
     dialog.replaceChildren(bar, body);
@@ -267,7 +267,7 @@
     const list = $("storyList");
     const finale = $("storyFinale");
     if (!data) {
-      message.textContent = signedIn() ? "Архив пуст." : "Войдите, чтобы открыть архив.";
+      message.textContent = signedIn() ? "Архив пуст" : "Войдите, чтобы открыть архив";
       list.replaceChildren();
       finale.hidden = true;
       $("storyProgress").textContent = "—";
