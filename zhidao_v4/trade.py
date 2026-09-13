@@ -22,7 +22,7 @@ from __future__ import annotations
 import secrets
 import threading
 
-from . import cases, meet
+from . import agent, cases, meet
 from .cases import CaseError, authorize, encoded, ensure_wallet
 from .diary import full_wallet
 from .shop import shop_day
@@ -141,6 +141,8 @@ def execute(conn, season_id: int, trade: dict) -> dict[int, dict]:
     # Вирус Протокола передаётся и при обмене (V4_GAMES.md §4.7).
     for account, outcome in spread(conn, season_id, a["account"], b["account"]).items():
         results[account]["virus"] = outcome
+    # Миссия Тайного агента «обменяйтесь с целью дубликатом» (§4.12).
+    agent.note(conn, season_id, a["account"], b["account"], "trade")
     conn.execute(
         """INSERT INTO v4_audit_log(actor_account_id, season_id, action, entity_type, entity_id, after_json)
            VALUES (?,?,?,'trade',?,?)""",

@@ -21,6 +21,7 @@ import time
 from functools import lru_cache
 from pathlib import Path
 
+from . import agent
 from .cases import CaseError, authorize
 from .shop import shop_day
 from .virus import spread
@@ -197,6 +198,8 @@ def meet(conn, season_id: int, offerer: int, acceptor: int) -> dict:
         "SELECT id, display_name FROM v4_accounts WHERE id IN (?, ?)", (offerer, acceptor))}
     # Вирус Протокола передаётся и при встрече (V4_GAMES.md §4.7).
     caught = spread(conn, season_id, offerer, acceptor)
+    # Миссия Тайного агента «пожмите руки с целью» засчитывается здесь (§4.12).
+    agent.note(conn, season_id, offerer, acceptor, "handshake")
     return {
         offerer: {"state": "met", "partner": names[acceptor], "piece": _grant_piece(conn, season_id, offerer),
                   "virus": caught.get(offerer)},

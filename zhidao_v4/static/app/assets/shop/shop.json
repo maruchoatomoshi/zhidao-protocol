@@ -24,6 +24,7 @@
     {"code": "fr_jade", "kind": "cosmetic", "slot": "frame", "price": 50, "name_ru": "Нефрит", "note_ru": "Рамка профиля: зелёный камень 玉."},
     {"code": "fr_gold", "kind": "cosmetic", "slot": "frame", "price": 60, "name_ru": "Золото Цайшэня", "note_ru": "Рамка профиля: золото с красным шнуром."},
     {"code": "fr_cup", "kind": "award", "slot": "frame", "name_ru": "Кубок фракции", "note_ru": "Рамка победителей войны фракций в Захвате кампуса. Не продаётся."},
+    {"code": "fr_agent", "kind": "award", "slot": "frame", "name_ru": "Тайный агент", "note_ru": "Рамка лучшего агента смены в «Тайном агенте». Не продаётся."},
 
     {"code": "snd_modem", "kind": "cosmetic", "slot": "sounds", "price": 40, "name_ru": "Звуки «Модем»", "note_ru": "Писк и трель соединения на события приложения."},
     {"code": "snd_arcade", "kind": "cosmetic", "slot": "sounds", "price": 40, "name_ru": "Звуки «Аркада»", "note_ru": "Восьмибитные сигналы на события приложения."},

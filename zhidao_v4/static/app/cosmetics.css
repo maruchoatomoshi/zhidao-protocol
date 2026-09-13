@@ -59,4 +59,5 @@ html[data-wallpaper="wp_night_market"] body, [data-wallpaper-preview="wp_night_m
 [data-frame="fr_neon"] { box-shadow: 0 0 0 2px #e14bff, 0 0 10px 3px rgba(214, 70, 255, .75) !important; }
 [data-frame="fr_jade"] { box-shadow: 0 0 0 4px #3b9b6b, 0 0 0 6px #b9f0d2 !important; }
 [data-frame="fr_cup"] { box-shadow: 0 0 0 3px #ffd54a, 0 0 0 5px #1f6fd6, 0 0 0 6px #ffffff, 0 0 14px rgba(255, 213, 74, .9) !important; }
+[data-frame="fr_agent"] { box-shadow: 0 0 0 3px #111418, 0 0 0 5px #c9a227, 0 0 0 6px #111418, 0 0 12px rgba(201, 162, 39, .7) !important; }
 [data-frame="fr_gold"] { box-shadow: 0 0 0 3px #f5c542, 0 0 0 5px #c2410c, 0 0 10px rgba(240, 180, 48, .8) !important; }

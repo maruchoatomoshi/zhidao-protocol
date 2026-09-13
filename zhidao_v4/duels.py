@@ -35,7 +35,7 @@ import random
 import threading
 from datetime import datetime, timedelta
 
-from . import capture, cipher, rooms, shop, story
+from . import agent, capture, cipher, rooms, shop, story
 from .cases import CaseError, authorize
 from .meet import Offers
 
@@ -266,6 +266,8 @@ def _finish(conn, row, state: dict, now: datetime) -> None:
         capture.record_activity(conn, season, int(player), now)
     if row["point_code"]:
         capture.count_move(conn, season, row["point_code"], now)
+    # Миссия Тайного агента «сразитесь с целью в дуэли» — чем бы дуэль ни кончилась.
+    agent.note(conn, season["id"], int(state["players"][0]), int(state["players"][1]), "duel")
     if winner:
         faction = state["factions"][winner]
         if row["point_code"]:

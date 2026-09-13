@@ -25,7 +25,7 @@ from typing import Any, Literal
 from fastapi import Body, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import cipher, outage, rooms, shop, smuggle, spy
+from . import agent, cipher, outage, rooms, shop, smuggle, spy
 from .db import connect_database, immediate_transaction
 
 
@@ -184,6 +184,9 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
                 if room["game"] == smuggle.GAME:
                     # Приз Контрабанды — настоящие ★: пишется в той же транзакции, что последний ход.
                     smuggle.award(conn, state, now)
+                if module.in_round(state):
+                    # Миссия Тайного агента «сыграйте с целью за одним столом».
+                    agent.note_room(conn, seated)
                 rooms.add_points(conn, int(room["id"]), points)
                 rooms.save(conn, int(room["id"]), status=status or room["status"], state=state,
                            now=now, settings=new_settings)

@@ -1,0 +1,30 @@
+/* Тайный агент: карточка цели, вопрос от агента, рейтинг (V4_GAMES.md §4.12). */
+
+.agent-window .spy-body { display: grid; gap: 10px; }
+.agent-meta { margin: 0; font: 13px/1.4 Tahoma, sans-serif; color: #4f6f82; }
+.agent-meta.is-ok { color: #0b7a3b; }
+.agent-stats { margin: 0; font: 700 13px/1.4 "Courier New", monospace; color: #1b2f3d; }
+.agent-news { margin: 0; padding: 6px 10px; border-left: 3px solid #c9a227; background: #fff8e1; font: 13px/1.4 Tahoma, sans-serif; color: #5a4300; }
+
+.agent-card { display: grid; gap: 6px; padding: 12px; border: 2px solid #111418; border-radius: 10px; background: linear-gradient(180deg, #f5f7f9, #e3e9ee); }
+.agent-card p { margin: 0; }
+.agent-card.is-incoming { border-color: #c9a227; background: #fffbea; box-shadow: 0 0 0 3px rgba(201, 162, 39, .25); }
+.agent-card.is-guess { border-style: dashed; border-color: #6a7d8c; }
+.agent-target { font: 700 20px/1.2 Tahoma, sans-serif; color: #111418; }
+.agent-mission { font: 15px/1.4 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; color: #1b2f3d; }
+.agent-select { min-height: 44px; padding: 0 10px; border: 1px solid #9fb3c2; border-radius: 8px; background: #fff; color: #062e50; font: 15px Tahoma, sans-serif; }
+.agent-leave { justify-self: start; }
+
+.agent-rating, .agent-staff { margin: 0; display: grid; gap: 4px; font: 13px/1.4 Tahoma, sans-serif; }
+.agent-rating { padding-left: 22px; }
+.agent-staff { padding: 0; list-style: none; }
+.agent-rating li, .agent-staff li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; justify-content: space-between; }
+.agent-staff li { padding: 6px 0; border-bottom: 1px solid #d5e1ea; }
+
+:root[data-theme="dark"] .agent-card { background: linear-gradient(180deg, #16202a, #0d151d); border-color: #c9a227; color: #dcefff; }
+:root[data-theme="dark"] .agent-card.is-incoming { background: #2e250e; }
+:root[data-theme="dark"] .agent-target, :root[data-theme="dark"] .agent-mission, :root[data-theme="dark"] .agent-stats { color: #e8f2fa; }
+:root[data-theme="dark"] .agent-meta { color: #9fc3dc; }
+:root[data-theme="dark"] .agent-news { background: #2e250e; color: #ffe29a; }
+:root[data-theme="dark"] .agent-select { background: #0d2438; border-color: #2d5a7c; color: #dcefff; }
+:root[data-theme="dark"] .agent-staff li { border-color: #2d5a7c; }
