@@ -75,6 +75,99 @@
 .royale-podium-place.is-place-2 { order: 1; min-height: 170px; }
 .royale-podium-place.is-place-3 { order: 3; min-height: 130px; }
 
+/* --- шоу (доработка 2026-09-13): логотип, бегущая строка, заставка, эффекты ------------------ */
+.royale-logo {
+  display: inline-grid; grid-auto-flow: column; align-items: baseline; gap: 6px; justify-self: center; padding: 4px 12px;
+  border: 2px solid #8a4bd6; border-radius: 6px; background: linear-gradient(180deg, #2b0d57, #120626);
+  box-shadow: inset 0 1px 0 #ffffff55, 0 2px 0 #00000055;
+}
+.royale-logo b {
+  font: italic 900 18px/1 "Arial Black", Impact, sans-serif; letter-spacing: .04em;
+  background: linear-gradient(180deg, #fff 0%, #d9c8ff 45%, #8f5cff 55%, #fff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.royale-logo span { font: 900 26px/1 "Arial Black", Impact, sans-serif; color: #ffd54a; text-shadow: 0 0 8px #ffb300, 2px 2px 0 #b02a1a; }
+.royale-logo i { font: normal 700 13px/1 "Noto Sans SC", "Microsoft YaHei", sans-serif; color: #ff7ab8; }
+.royale-logo.is-big { padding: 10px 28px; border-width: 3px; }
+.royale-logo.is-big b { font-size: clamp(32px, 6vw, 84px); }
+.royale-logo.is-big span { font-size: clamp(48px, 9vw, 130px); }
+.royale-logo.is-big i { font-size: clamp(18px, 2.6vw, 36px); }
+.royale-stage-bar .royale-logo { justify-self: start; }
+
+.royale-marquee { overflow-x: auto; border-block: 1px solid #ffd54a88; background: #120626; }
+.royale-marquee-track { display: flex; width: max-content; }
+.royale-marquee-track span { padding: 6px 0; white-space: nowrap; font: 700 13px/1.2 "Courier New", monospace; letter-spacing: .12em; color: #ffd54a; }
+.royale-marquee-track span + span { display: none; }
+.royale-stage .royale-marquee-track span { font-size: clamp(16px, 2vw, 28px); padding: 10px 0; }
+:root[data-motion="full"] .royale-marquee { overflow: hidden; }
+:root[data-motion="full"] .royale-marquee-track { animation: royale-marquee 22s linear infinite; }
+:root[data-motion="full"] .royale-marquee-track span + span { display: inline; }
+@keyframes royale-marquee { to { transform: translateX(-50%); } }
+
+.royale-intro { display: grid; justify-items: center; gap: 4px; padding: 10px; }
+.royale-intro-label { margin: 0; font: 700 14px/1.2 "Courier New", monospace; letter-spacing: .2em; text-transform: uppercase; color: #8a4bd6; }
+.royale-intro-count { font: 900 72px/1 "Arial Black", Impact, sans-serif; color: #ffd54a; text-shadow: 3px 3px 0 #b02a1a, 0 0 18px #ffb300; }
+.royale-intro.is-big .royale-intro-count { font-size: clamp(140px, 28vw, 360px); }
+.royale-intro.is-big .royale-intro-label { font-size: clamp(20px, 3vw, 40px); color: #d9c8ff; }
+:root[data-motion="full"] .royale-intro-count { animation: royale-beat 1s steps(4) infinite; }
+@keyframes royale-beat { 0% { transform: scale(1.35); opacity: .4; } 40% { transform: scale(1); opacity: 1; } 100% { transform: scale(.92); } }
+
+:root[data-motion="full"] .royale-question.is-new { animation: royale-pop .45s steps(5) both; }
+:root[data-motion="full"] .royale-options.is-new > * { animation: royale-rise .35s steps(4) both; }
+:root[data-motion="full"] .royale-options.is-new > :nth-child(2) { animation-delay: .07s; }
+:root[data-motion="full"] .royale-options.is-new > :nth-child(3) { animation-delay: .14s; }
+:root[data-motion="full"] .royale-options.is-new > :nth-child(n+4) { animation-delay: .21s; }
+@keyframes royale-pop { from { transform: scale(.4) rotate(-4deg); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } to { transform: none; } }
+@keyframes royale-rise { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.royale-left.is-hot { color: #ff2d55; }
+:root[data-motion="full"] .royale-left.is-hot { display: inline-block; animation: royale-pulse .5s steps(2) infinite; }
+@keyframes royale-pulse { 50% { transform: scale(1.35); } }
+
+:root[data-motion="full"] .royale-option.is-flash { animation: royale-flash .9s steps(6) 1; }
+@keyframes royale-flash { 0%, 40%, 80% { box-shadow: 0 0 0 4px #7dffb0, 0 0 24px #7dffb0; } 20%, 60%, 100% { box-shadow: none; } }
+.royale-roll { font: 900 1.3em/1 "Courier New", monospace; color: #ff2d55; }
+
+.royale-avatar { border: 3px solid var(--faction, transparent); }
+:root[data-motion="full"] .royale-avatar.is-joining { animation: royale-pop .4s steps(4) both; }
+:root[data-motion="full"] .royale-avatar.is-falling { animation: royale-fall .8s steps(8) both; }
+:root[data-motion="full"] .royale-avatar.is-revived { animation: royale-glow 1.2s steps(6) infinite alternate; }
+@keyframes royale-fall {
+  0% { transform: none; opacity: 1; }
+  30% { transform: translateY(-6px) rotate(-8deg); background: #ff2d55; }
+  100% { transform: translateY(18px) scale(.82) rotate(12deg); opacity: .35; }
+}
+@keyframes royale-glow { from { box-shadow: 0 0 0 3px #ffd54a, 0 0 6px #ffd54a; } to { box-shadow: 0 0 0 5px #ffd54a, 0 0 24px #ffd54a; } }
+:root[data-motion="full"] .royale-stage.is-shake { animation: royale-shake .6s steps(6); }
+@keyframes royale-shake { 20% { transform: translate(-12px, 4px); } 40% { transform: translate(10px, -6px); } 60% { transform: translate(-8px, 6px); } 80% { transform: translate(6px, -2px); } }
+
+.royale-fx { position: fixed; inset: 0; z-index: 9001; pointer-events: none; overflow: hidden; }
+.royale-fx i { position: absolute; top: -20px; width: 10px; height: 16px; animation: royale-confetti 3.4s steps(24) forwards; }
+@keyframes royale-confetti { to { transform: translate(var(--drift, 0), 110vh) rotate(720deg); } }
+:root[data-motion="full"] .royale-podium-place { animation: royale-podium .9s steps(9) both; }
+:root[data-motion="full"] .royale-podium-place.is-place-2 { animation-delay: .4s; }
+:root[data-motion="full"] .royale-podium-place.is-place-1 { animation-delay: .8s; }
+@keyframes royale-podium { from { transform: translateY(60%); opacity: 0; } }
+.royale-stage-rest { margin: 0 auto; padding-left: 28px; columns: 2; font: 700 clamp(16px, 1.8vw, 24px)/1.6 Tahoma, sans-serif; color: #d9c8ff; }
+
+.royale-out {
+  display: grid; gap: 4px; justify-items: center; padding: 14px; border-radius: 10px; text-align: center; color: #f4ecff;
+  background: repeating-linear-gradient(45deg, #1a0f24 0 10px, #241634 10px 20px);
+}
+.royale-out b { font: 900 28px/1.1 "Arial Black", Impact, sans-serif; letter-spacing: .06em; color: #ff2d55; }
+.royale-out p { margin: 0; font: 13px/1.4 Tahoma, sans-serif; color: #d9c8ff; }
+:root[data-motion="full"] .royale-out.is-just-out { animation: royale-flash-red .45s steps(2) 3; }
+@keyframes royale-flash-red { 50% { background: #b02a1a; } }
+.royale-win { display: grid; gap: 4px; justify-items: center; padding: 14px; border: 2px solid #f0a800; border-radius: 10px; background: linear-gradient(180deg, #fff6c8, #ffd54a); text-align: center; }
+.royale-win b { font: 900 32px/1.1 "Arial Black", Impact, sans-serif; color: #8a4b00; text-shadow: 1px 1px 0 #fff; }
+.royale-win p { margin: 0; font: 700 14px/1.4 Tahoma, sans-serif; color: #5a3d00; }
+
+/* Крупные варианты на телефоне: в спешке попасть пальцем. */
+.royale-options .btn { min-height: 56px; font-size: 18px; }
+@media (max-width: 520px) {
+  .royale-options:not(.is-hanzi):not(.is-big) { grid-template-columns: 1fr; }
+  .royale-options .btn { min-height: 60px; }
+}
+
 :root[data-theme="dark"] .royale-question { background: #1c1030; border-color: #8a5cd6; }
 :root[data-theme="dark"] .royale-hanzi, :root[data-theme="dark"] .royale-word, :root[data-theme="dark"] .royale-count { color: #efe4ff; }
 :root[data-theme="dark"] .royale-pinyin { color: #c4b0e8; }

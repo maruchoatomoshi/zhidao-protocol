@@ -5,6 +5,7 @@
   "max_players": 80,
   "prize_min_players": 10,
   "grace_ms": 1200,
+  "intro_seconds": 4,
   "reveal_seconds": 8,
   "max_rounds": 30,
   "revive_price": 15,

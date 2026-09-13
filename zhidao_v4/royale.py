@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 
-from . import cases, cipher, rooms, shop
+from . import capture, cases, cipher, rooms, shop
 from .cases import CaseError, authorize, encoded, ensure_wallet, replay
 from .diary import full_wallet
 
@@ -53,8 +53,8 @@ def utcnow() -> datetime:
 @lru_cache(maxsize=1)
 def config() -> dict:
     data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    for key in ("min_players", "max_players", "prize_min_players", "grace_ms", "reveal_seconds", "max_rounds",
-                "revive_price", "keep_minutes"):
+    for key in ("min_players", "max_players", "prize_min_players", "grace_ms", "intro_seconds", "reveal_seconds",
+                "max_rounds", "revive_price", "keep_minutes"):
         if type(data.get(key)) is not int or data[key] <= 0:
             raise ValueError(f"royale.json: {key} должно быть положительным целым")
     if data["min_players"] < 2:
@@ -292,11 +292,13 @@ def advance(conn, game_id: int, now: datetime) -> bool:
 def _public_question(state: dict) -> dict:
     q = state["question"]
     return {"prompt": q["prompt"], "options": q["options"], "seconds": q["seconds"], "surprise": q["surprise"],
-            "direction": q["direction"], "deadline": state["deadline"]}
+            "direction": q["direction"], "deadline": state["deadline"], "opens_at": state["started_at"]}
 
 
-def _view(conn, game, viewer: int, staff: bool) -> dict:
+def _view(conn, game, viewer: int, staff: bool, now: datetime) -> dict:
     state = json.loads(game["state_json"])
+    # Заставка 3-2-1 перед первым вопросом: слово не уходит на телефон, пока идёт отсчёт.
+    intro = game["status"] == "question" and now < rooms.parse(state["started_at"])
     players = _players(conn, game["id"])
     alive = sum(1 for p in players if p["alive"])
     starters = int(state.get("starters") or len(players))
@@ -305,7 +307,10 @@ def _view(conn, game, viewer: int, staff: bool) -> dict:
     view = {"id": int(game["id"]), "status": game["status"], "round": int(game["round"]), "starters": starters,
             "players": len(players), "alive": alive, "revive_price": config()["revive_price"],
             "cancelled": bool(state.get("cancelled")), "history": state.get("history", [])}
-    if game["status"] == "question":
+    if intro:
+        view["intro_until"] = state["started_at"]
+        view["answered"] = 0
+    elif game["status"] == "question":
         view["question"] = _public_question(state)
         view["answered"] = sum(1 for pid in answers if any(int(p["account_id"]) == pid and p["alive"] for p in players))
     elif game["status"] == "reveal":
@@ -333,9 +338,12 @@ def _view(conn, game, viewer: int, staff: bool) -> dict:
             view.setdefault("me", {})["place"] = mine["place"] if mine else None
     if staff:
         frames = shop.frames_for(conn, [p["account_id"] for p in players])
+        colors = {code: faction["color"] for code, faction in capture.factions().items()}
         view["grid"] = [{"name": p["display_name"], "alive": bool(p["alive"]), "revived": bool(p["revived"]),
                          "answered": int(p["account_id"]) in answers and game["status"] == "question",
-                         "frame": frames.get(int(p["account_id"]))} for p in players]
+                         "out_round": p["out_round"], "frame": frames.get(int(p["account_id"])),
+                         "color": colors.get(capture.faction_of(conn, game["season_id"], int(p["account_id"])))}
+                        for p in players]
     return view
 
 
@@ -356,7 +364,7 @@ def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
         """SELECT 1 FROM v4_season_memberships m JOIN v4_seasons s ON s.id = m.season_id
            WHERE m.season_id=? AND m.account_id=? AND m.status='active' AND s.status='active'""",
         (season_id, actor)).fetchone() is not None
-    return {"game": _view(conn, game, actor, staff) if game else None, "can_host": staff, "can_play": member,
+    return {"game": _view(conn, game, actor, staff, now) if game else None, "can_host": staff, "can_play": member,
             "revive_price": config()["revive_price"], "prizes": config()["prizes"],
             "prize_min_players": config()["prize_min_players"]}
 
@@ -418,6 +426,8 @@ def answer(conn, actor: int, season_id: int, choice: int) -> dict:
         raise CaseError("Ответ уже принят.", 409)
     state = json.loads(game["state_json"])
     question = state["question"]
+    if now < rooms.parse(state["started_at"]):
+        raise CaseError("Вопрос ещё не открыт: идёт отсчёт.", 409)
     if not 0 <= choice < len(question["options"]):
         raise CaseError("Такого варианта нет.")
     ms = max(0, int((now - rooms.parse(state["started_at"])).total_seconds() * 1000))
@@ -517,7 +527,8 @@ def start(conn, actor: int, season_id: int) -> dict:
     now = utcnow()
     state = json.loads(game["state_json"])
     state.update(starters=count, surprise=None)
-    _make_question(state, 1, now)
+    # Первый вопрос открывается после заставки: отсчёт не съедает время на ответ.
+    _make_question(state, 1, now + timedelta(seconds=config()["intro_seconds"]))
     _save(conn, game["id"], status="question", round_no=1, state=state, now=now)
     conn.execute(
         """INSERT INTO v4_audit_log(actor_account_id, season_id, action, entity_type, entity_id, after_json)

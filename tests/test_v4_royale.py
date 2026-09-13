@@ -103,6 +103,7 @@ class RoyaleTests(unittest.TestCase):
             self.assertEqual(self.post(name, "join").status_code, 200)
         started = self.post("architect", "start")
         self.assertEqual(started.status_code, 200, started.text)
+        self.now += timedelta(seconds=RULES["intro_seconds"])   # заставка 3-2-1 кончилась, вопрос открыт
 
     def state(self):
         return json.loads(self.sql("SELECT state_json FROM v4_royale_games ORDER BY id DESC LIMIT 1")[0]["state_json"])
@@ -146,6 +147,22 @@ class RoyaleTests(unittest.TestCase):
         self.assertEqual(self.post("kid03", "join").status_code, 409)
 
     # --- раунды ------------------------------------------------------------------------------
+
+    def test_the_intro_hides_the_first_word_and_does_not_eat_the_answer_time(self):
+        self.assertEqual(self.post("architect", "create").status_code, 200)
+        for name in ("kid01", "kid02"):
+            self.post(name, "join")
+        self.post("architect", "start")
+        game = self.view("kid01")["game"]
+        self.assertIn("intro_until", game)
+        self.assertNotIn("question", game)
+        self.assertNotIn(self.state()["question"]["options"][0], json.dumps(game, ensure_ascii=False))
+        self.assertEqual(self.post("kid01", "answer", {"choice": 0}).status_code, 409)
+        self.now += timedelta(seconds=RULES["intro_seconds"] + RULES["stages"][0]["seconds"] - 1)
+        game = self.view("kid01")["game"]
+        self.assertEqual(game["status"], "question")
+        self.assertIn("prompt", game["question"])
+        self.answer("kid01")
 
     def test_the_phone_sees_the_answer_only_at_the_reveal(self):
         self.begin()

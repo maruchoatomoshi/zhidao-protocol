@@ -22,6 +22,7 @@
       buy: [[2100, 0.04, "square"], [0, 0.03], [2100, 0.04, "square"]],
       win: [[660, 0.08, "sawtooth"], [990, 0.08, "sawtooth"], [1320, 0.16, "square"]],
       join: [[440, 0.05, "square"], [0, 0.05], [440, 0.05, "square"]],
+      tick: [[1500, 0.03, "square"]],
     },
     snd_arcade: {
       open: [[523, 0.06, "square"], [659, 0.06, "square"], [784, 0.1, "square"]],
@@ -29,6 +30,7 @@
       buy: [[988, 0.05, "square"], [1319, 0.1, "square"]],
       win: [[784, 0.08, "square"], [784, 0.08, "square"], [1047, 0.2, "square"]],
       join: [[392, 0.05, "square"], [523, 0.08, "square"]],
+      tick: [[1047, 0.03, "square"]],
     },
     snd_crystal: {
       open: [[1568, 0.12, "sine"], [2093, 0.2, "sine"]],
@@ -36,6 +38,7 @@
       buy: [[2637, 0.14, "sine"]],
       win: [[1047, 0.12, "triangle"], [1568, 0.12, "triangle"], [2093, 0.28, "sine"]],
       join: [[1760, 0.08, "sine"], [2349, 0.12, "sine"]],
+      tick: [[2637, 0.04, "sine"]],
     },
   };
 
