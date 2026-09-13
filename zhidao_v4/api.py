@@ -29,6 +29,7 @@ from .capture_api import register_capture
 from .royale_api import register_royale
 from .agent_api import register_agent
 from .zombie_api import register_zombie
+from .sabotage_api import register_sabotage
 from .games_api import register_games
 from .auth import (
     AuthenticationError,
@@ -791,5 +792,6 @@ def create_app(
     register_royale(app, _current_principal, _csrf_principal)
     register_agent(app, _current_principal, _csrf_principal)
     register_zombie(app, _current_principal, _csrf_principal)
+    register_sabotage(app, _current_principal, _csrf_principal)
     register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app

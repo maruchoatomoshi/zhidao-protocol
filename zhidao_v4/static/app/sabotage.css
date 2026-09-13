@@ -1,0 +1,48 @@
+/* Саботаж: роль и код, задания у станций, собрание (V4_GAMES.md §4.12). */
+
+.sabotage-window .spy-body { display: grid; gap: 10px; }
+.sabotage-meta { margin: 0; font: 13px/1.4 Tahoma, sans-serif; color: #4f6f82; }
+.sabotage-meta.is-ok { color: #0b7a3b; }
+.sabotage-safety { margin: 0; padding: 6px 10px; border-left: 3px solid #d93025; background: #fdecea; font: 700 12px/1.4 Tahoma, sans-serif; color: #7a1f16; }
+.sabotage-headline { margin: 0; font: 700 15px/1.3 Tahoma, sans-serif; color: #1b2f3d; }
+.sabotage-count { font: 700 18px/1.2 Tahoma, sans-serif; }
+.sabotage-left { font-family: "Courier New", monospace; }
+
+.sabotage-bar { height: 14px; border: 1px solid #7d93a3; border-radius: 7px; background: #e6edf2; overflow: hidden; }
+.sabotage-bar span { display: block; height: 100%; background: linear-gradient(90deg, #36b37e, #7be0a8); }
+:root[data-motion="full"] .sabotage-bar span { transition: width .6s steps(6); }
+
+.sabotage-card { display: grid; gap: 8px; padding: 12px; border: 2px solid #1f6fd6; border-radius: 10px; background: linear-gradient(180deg, #f2f7ff, #dfeafa); }
+.sabotage-card p { margin: 0; }
+.sabotage-card.is-saboteur { border-color: #d93025; background: linear-gradient(180deg, #fff3f1, #f9d9d4); }
+.sabotage-card.is-ghost { border-color: #8a96a3; background: linear-gradient(180deg, #f4f5f7, #e2e5e9); }
+.sabotage-card.is-meeting { border-color: #c9a227; background: #fffbea; box-shadow: 0 0 0 3px rgba(201, 162, 39, .25); }
+.sabotage-card.is-tasks { border-style: dashed; border-color: #36b37e; background: #f4fbf7; }
+.sabotage-role { font: 700 17px/1.3 Tahoma, sans-serif; color: #111418; }
+.sabotage-code { font: 700 36px/1.1 "Courier New", monospace; letter-spacing: 4px; color: #062e50; text-align: center; }
+
+.sabotage-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.sabotage-input { min-height: 48px; padding: 0 12px; border: 2px solid #d93025; border-radius: 8px; background: #fff; color: #1b2f3d; font: 700 24px/1 "Courier New", monospace; letter-spacing: 3px; }
+.sabotage-tasks, .sabotage-options, .sabotage-votes { display: grid; gap: 6px; }
+.sabotage-done { font: 13px/1.4 Tahoma, sans-serif; color: #0b7a3b; }
+.sabotage-question { display: grid; gap: 6px; padding: 10px; border: 1px dashed #36b37e; border-radius: 8px; background: #fff; }
+.sabotage-hanzi { font: 700 34px/1.1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; text-align: center; color: #1b2f3d; }
+.sabotage-votes .btn[aria-pressed="true"] { box-shadow: 0 0 0 3px #c9a227; }
+
+.sabotage-history { margin: 0; padding-left: 20px; display: grid; gap: 3px; font: 13px/1.4 Tahoma, sans-serif; }
+.sabotage-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.sabotage-chip { padding: 2px 8px; border-radius: 10px; font: 12px/1.5 Tahoma, sans-serif; background: #e3eefc; color: #0b3d7a; }
+.sabotage-chip.is-saboteur { background: #fbe1dd; color: #8a1f14; }
+.sabotage-chip.is-out { opacity: .5; text-decoration: line-through; }
+
+:root[data-theme="dark"] .sabotage-card { background: linear-gradient(180deg, #10243c, #0b1a2c); color: #dcefff; }
+:root[data-theme="dark"] .sabotage-card.is-saboteur { background: linear-gradient(180deg, #3a1a18, #2a1210); }
+:root[data-theme="dark"] .sabotage-card.is-ghost { background: linear-gradient(180deg, #1e232a, #15191e); }
+:root[data-theme="dark"] .sabotage-card.is-meeting { background: #2e250e; }
+:root[data-theme="dark"] .sabotage-card.is-tasks { background: #0f2419; }
+:root[data-theme="dark"] .sabotage-role, :root[data-theme="dark"] .sabotage-code, :root[data-theme="dark"] .sabotage-headline,
+:root[data-theme="dark"] .sabotage-hanzi { color: #e8f2fa; }
+:root[data-theme="dark"] .sabotage-meta { color: #9fc3dc; }
+:root[data-theme="dark"] .sabotage-input, :root[data-theme="dark"] .sabotage-question { background: #0d2438; color: #dcefff; }
+:root[data-theme="dark"] .sabotage-safety { background: #3a1a18; color: #ffc9c2; }
+:root[data-theme="dark"] .sabotage-bar { background: #0d2438; border-color: #2d5a7c; }
