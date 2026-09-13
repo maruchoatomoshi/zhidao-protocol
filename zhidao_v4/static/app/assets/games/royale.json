@@ -15,6 +15,11 @@
     {"from_round": 6, "seconds": 10, "options": 4, "pinyin": false, "direction": "zh"},
     {"from_round": 11, "seconds": 8, "options": 4, "pinyin": false, "direction": "ru"}
   ],
+  "specials": [
+    {"kind": "tone", "from_round": 3, "every": 4},
+    {"kind": "number", "from_round": 5, "every": 4}
+  ],
+  "final_seconds": 8,
   "surprises": {"fast_seconds": 3, "min_seconds": 5, "max_options": 6},
   "keep_minutes": 30
 }

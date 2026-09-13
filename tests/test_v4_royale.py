@@ -221,6 +221,51 @@ class RoyaleTests(unittest.TestCase):
         seconds = RULES["stages"][0]["seconds"] - RULES["surprises"]["fast_seconds"]
         self.assertEqual((game["round"], game["question"]["surprise"], game["question"]["seconds"]), (2, "fast", seconds))
 
+    def test_mirror_and_shuffle_are_new_surprises(self):
+        self.begin()
+        self.round(KIDS[:10], wrong=["kid11", "kid12"])
+        self.post("kid11", "vote", {"surprise": "mirror"})
+        self.assertEqual(self.post("kid12", "vote", {"surprise": "mirror"}).status_code, 200)
+        self.assertEqual(self.post("kid12", "vote", {"surprise": "shuffle"}).status_code, 200)
+        self.post("kid12", "vote", {"surprise": "mirror"})
+        game = self.after_reveal()["game"]
+        self.assertEqual(game["question"]["surprise"], "mirror")
+
+    # --- особые раунды (этап 2) ------------------------------------------------------------------
+
+    def test_numbers_tones_and_the_round_schedule_are_built_right(self):
+        self.assertEqual([royale._number_hanzi(n) for n in (5, 10, 11, 20, 75, 99)],
+                         ["五", "十", "十一", "二十", "七十五", "九十九"])
+        self.assertEqual(royale._retone("shuǐ"), ["shuī", "shuí", "shuǐ", "shuì"])
+        self.assertEqual(royale._retone("tàiyáng"), [])
+        options = royale._number_options(75, 4)
+        self.assertEqual((len(set(options)), "75" in options), (4, True))
+        schedule = [royale._kind_for(n) for n in range(1, 10)]
+        self.assertEqual(schedule, ["word", "word", "tone", "word", "number", "word", "tone", "word", "number"])
+
+    def test_tone_and_number_rounds_and_the_final_duel(self):
+        base = lambda text: "".join(royale.MARKED[ch][0] if ch in royale.MARKED else ch for ch in text)
+        self.begin(players=KIDS[:4])
+        self.round(KIDS[:4])
+        self.after_reveal()
+        self.round(KIDS[:4])
+        question = self.after_reveal()["game"]["question"]
+        self.assertEqual(question["kind"], "tone")
+        self.assertIsNone(question["prompt"]["pinyin"])
+        self.assertEqual(len({base(option) for option in question["options"]}), 1)
+        self.assertEqual(len(set(question["options"])), len(question["options"]))
+
+        self.round(KIDS[:2], wrong=KIDS[2:4])
+        question = self.after_reveal()["game"]["question"]
+        self.assertTrue(question["final"])
+        self.assertEqual(question["seconds"], RULES["final_seconds"])
+
+        self.round(KIDS[:2])
+        question = self.after_reveal()["game"]["question"]
+        self.assertEqual(question["kind"], "number")
+        self.assertTrue(all(option.isdigit() for option in question["options"]))
+        self.assertTrue(set(question["prompt"]["zh"]) <= set(royale.DIGITS + "十"))
+
     # --- итоги ------------------------------------------------------------------------------
 
     def test_the_last_survivor_wins_and_the_top_three_get_prizes_once_a_day(self):

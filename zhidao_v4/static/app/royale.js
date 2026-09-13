@@ -21,7 +21,7 @@
 
 (function () {
   const $ = (id) => document.getElementById(id);
-  const SURPRISE = { fast: "−3 секунды", hanzi: "Без пиньиня", more: "+1 вариант" };
+  const SURPRISE = { fast: "−3 секунды", hanzi: "Без пиньиня", more: "+1 вариант", mirror: "Зеркальный иероглиф", shuffle: "Варианты бегают" };
   const LEAD = "Вся смена одновременно отвечает на китайские слова. Ошибся или не успел — выбыл. Последний выживший забирает главный приз";
   const MARQUEE = "ЗАХОДИТЕ: ИВЕНТЫ → ПРОТОКОЛ 60 · 大逃杀 · ОДНА ОШИБКА — И ВЫ ВЫБЫЛИ · ПОСЛЕДНИЙ ВЫЖИВШИЙ ЗАБИРАЕТ ГЛАВНЫЙ ПРИЗ · ";
   const CONFETTI = ["#ffd54a", "#ff7ab8", "#7dffb0", "#6ec3ff", "#b58cff"];
@@ -46,6 +46,7 @@
   let introTimer = null;
   let justOut = 0;
   let fx = null;
+  let shuffledAt = 0;
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -191,11 +192,21 @@
 
   // --- куски панели ------------------------------------------------------------------------
 
+  // Классы вариантов по типу раунда: иероглифы, пиньинь с тонами, числа.
+  function kindClass(question) {
+    const kind = question.kind || "word";
+    return `${question.direction === "ru" ? " is-hanzi" : ""}${kind === "tone" ? " is-pinyin" : ""}${kind === "number" ? " is-number" : ""}`;
+  }
+
   function prompt(question, big, fresh) {
     const box = node("div", `royale-question${big ? " is-big" : ""}${fresh ? " is-new" : ""}`);
+    const kind = question.kind || "word";
+    if (question.final) box.append(node("span", "royale-final", "ФИНАЛЬНАЯ ДУЭЛЬ"));
     if (question.prompt.zh) {
-      box.append(node("b", "royale-hanzi", question.prompt.zh));
-      if (question.prompt.pinyin) box.append(node("p", "royale-pinyin", question.prompt.pinyin));
+      box.append(node("b", `royale-hanzi${question.surprise === "mirror" ? " is-mirror" : ""}`, question.prompt.zh));
+      if (kind === "tone") box.append(node("p", "royale-pinyin", "Как это читается? Угадайте тон"));
+      else if (kind === "number") box.append(node("p", "royale-pinyin", "Какое это число?"));
+      else if (question.prompt.pinyin) box.append(node("p", "royale-pinyin", question.prompt.pinyin));
     } else {
       box.append(node("b", "royale-word", question.prompt.ru), node("p", "royale-pinyin", "Найдите иероглиф"));
     }
@@ -204,7 +215,7 @@
   }
 
   function optionsReveal(game, fresh) {
-    const list = node("div", `royale-options is-reveal${game.question.direction === "ru" ? " is-hanzi" : ""}`);
+    const list = node("div", `royale-options is-reveal${kindClass(game.question)}`);
     game.question.options.forEach((text, index) => {
       const item = node("div", "royale-option", text);
       if (index === game.reveal.answer) item.classList.add("is-right");
@@ -262,7 +273,8 @@
     head.append(countdown(game.question.deadline, true));
     parts.push(head, prompt(game.question, false, fresh));
     if (me && me.alive && !me.answered) {
-      const options = node("div", `royale-options${game.question.direction === "ru" ? " is-hanzi" : ""}${fresh ? " is-new" : ""}`);
+      const options = node("div", `royale-options${kindClass(game.question)}${fresh ? " is-new" : ""}`);
+      if (game.question.surprise === "shuffle") options.dataset.shuffle = "1";
       game.question.options.forEach((text, index) => options.append(button("btn btn-secondary", text, () => act("answer", { choice: index }))));
       parts.push(options);
     } else if (me && me.alive) {
@@ -420,7 +432,8 @@
     } else if (game.status === "question" && game.intro_until) {
       parts.push(intro(game.intro_until, true), grid(game, "play"));
     } else if (game.status === "question" || game.status === "reveal") {
-      const head = node("p", "royale-stage-head", `Раунд ${game.round} · живых ${game.alive} из ${game.starters} · `);
+      const label = game.question.final ? "ФИНАЛ" : `Раунд ${game.round}`;
+      const head = node("p", "royale-stage-head", `${label} · живых ${game.alive} из ${game.starters} · `);
       head.append(countdown(game.status === "question" ? game.question.deadline : game.reveal.until, game.status === "question"));
       parts.push(head, prompt(game.question, true, freshRound));
       if (game.status === "reveal") {
@@ -428,7 +441,8 @@
         lost.append(roll(game.reveal.eliminated, freshReveal));
         parts.push(optionsReveal(game, freshReveal), lost);
       } else {
-        const options = node("div", `royale-options is-big${game.question.direction === "ru" ? " is-hanzi" : ""}${freshRound ? " is-new" : ""}`);
+        const options = node("div", `royale-options is-big${kindClass(game.question)}${freshRound ? " is-new" : ""}`);
+        if (game.question.surprise === "shuffle") options.dataset.shuffle = "1";
         game.question.options.forEach((text) => options.append(node("div", "royale-option", text)));
         parts.push(options);
       }
@@ -571,6 +585,14 @@
   }
 
   function tick() {
+    // Сюрприз «варианты бегают»: кнопки меняются местами, номер варианта остаётся прежним.
+    if (Date.now() - shuffledAt > 1400) {
+      shuffledAt = Date.now();
+      document.querySelectorAll(".royale-options[data-shuffle]").forEach((list) => {
+        const order = [...list.children].map((_, i) => i).sort(() => Math.random() - 0.5);
+        [...list.children].forEach((child, i) => { child.style.order = String(order[i]); });
+      });
+    }
     document.querySelectorAll(".royale-left").forEach((span) => {
       const left = secondsLeft(span.dataset.until);
       span.textContent = `${left} с`;
