@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "note_ru": "Протокол 60. Решения пользователя 2026-09-13: одна ошибка — выбыл; китайские слова; воскрешение 15★ до середины игры; топ-3 — 30/20/10★ и столько же REP. Защита экономики от Claude: призы только в играх от 10 участников и не чаще раза в день на человека.",
+  "min_players": 2,
+  "max_players": 80,
+  "prize_min_players": 10,
+  "grace_ms": 1200,
+  "reveal_seconds": 8,
+  "max_rounds": 30,
+  "revive_price": 15,
+  "prizes": [{"stars": 30, "rep": 30}, {"stars": 20, "rep": 20}, {"stars": 10, "rep": 10}],
+  "stages": [
+    {"from_round": 1, "seconds": 12, "options": 3, "pinyin": true, "direction": "zh"},
+    {"from_round": 6, "seconds": 10, "options": 4, "pinyin": false, "direction": "zh"},
+    {"from_round": 11, "seconds": 8, "options": 4, "pinyin": false, "direction": "ru"}
+  ],
+  "surprises": {"fast_seconds": 3, "min_seconds": 5, "max_options": 6},
+  "keep_minutes": 30
+}

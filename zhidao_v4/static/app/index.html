@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="./retro.css?v=8179cf4369">
   <link rel="stylesheet" href="./campus-marks.css?v=6bf51bb428">
   <link rel="stylesheet" href="./story.css?v=b9735a6e21">
+  <link rel="stylesheet" href="./royale.css?v=7b9d5ccb5c">
   <link rel="stylesheet" href="./capture.css?v=2f61d0455b">
   </head>
 <body>
@@ -835,6 +836,12 @@
           </div>
         </details>
 
+        <article class="case-window royale-window" id="royaleWindow">
+          <div class="case-titlebar"><h2>Протокол 60</h2><span aria-hidden="true">大逃杀</span></div>
+          <div class="spy-body" id="royaleBody" aria-live="polite"></div>
+          <div class="case-statusbar"><span id="royaleStatus">—</span></div>
+        </article>
+
         <article class="case-window" id="captureIntro">
           <div class="case-titlebar"><h2>Игры на кампусе</h2><span aria-hidden="true">校园</span></div>
           <div class="spy-body">
@@ -1101,6 +1108,8 @@
   <script src="./retro.js?v=30022b2992" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>
   <script src="./story.js?v=a3a1bfb3a5" defer></script>
+  <div class="royale-stage" id="royaleStage" role="dialog" aria-label="Протокол 60 — большой экран" hidden></div>
+  <script src="./royale.js?v=847cc26426" defer></script>
   <script src="./capture-duel.js?v=6afd7f08ee" defer></script>
   <script src="./capture.js?v=5ef056c0b1" defer></script>
 </body>

@@ -26,6 +26,7 @@ from .workshop_api import register_workshop
 from .marks_api import register_marks
 from .story_api import register_story
 from .capture_api import register_capture
+from .royale_api import register_royale
 from .games_api import register_games
 from .auth import (
     AuthenticationError,
@@ -785,5 +786,6 @@ def create_app(
     register_marks(app, _current_principal, _csrf_principal)
     register_story(app, _current_principal, _csrf_principal)
     register_capture(app, _current_principal, _csrf_principal)
+    register_royale(app, _current_principal, _csrf_principal)
     register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app
