@@ -298,6 +298,10 @@
         const go = button("btn btn-primary", ACTIONS[p.action] || "Ход недоступен", () => startChallenge(p));
         go.disabled = busy || Boolean(reason);
         actions.append(go);
+        if (state.enabled && state.window.open) {
+          actions.append(button("btn btn-secondary", "⚔ Дуэль за точку",
+            () => window.dispatchEvent(new CustomEvent("zhidao:duel-offer", { detail: p.code }))));
+        }
         parts.push(node("p", "capture-meta", reason || `Встаньте у точки (до ${state.radius_m} м) и ответьте на вопрос`));
       }
       if (state.can_manage) {
@@ -400,6 +404,8 @@
     draw();
     drawHud();
     if (selected) showCard(selected);
+    // Панели дуэлей (capture-duel.js) нужны фракции, окно и точки.
+    window.dispatchEvent(new CustomEvent("zhidao:capture-state", { detail: state }));
   }
 
   function tick() {
@@ -438,6 +444,7 @@
     resize();
   });
   window.addEventListener("zhidao:capture-point", (event) => showCard(event.detail));
+  window.addEventListener("zhidao:capture-refresh", () => refresh());
   window.addEventListener("zhidao:auth", (event) => {
     session = event.detail;
     state = null;

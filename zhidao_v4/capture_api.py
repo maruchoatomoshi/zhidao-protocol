@@ -6,16 +6,20 @@ import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
 
+from typing import Literal
+
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import campus, capture
+from . import campus, capture, duels
 from .cases import CaseError
 from .db import connect_database, immediate_transaction
 from .seasons import SeasonValidationError
 
 CHALLENGES_PER_MINUTE = 12
 ANSWERS_PER_MINUTE = 20
+DUEL_JOINS_PER_MINUTE = 10
+DUEL_ACTIONS_PER_MINUTE = 60
 
 
 class PositionPayload(BaseModel):
@@ -33,6 +37,24 @@ class AnswerPayload(BaseModel):
 class SwitchPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
     enabled: bool
+
+
+class DuelOfferPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    point: str | None = Field(default=None, min_length=1, max_length=40)
+    lat: float | None = Field(default=None, ge=-90.0, le=90.0)
+    lon: float | None = Field(default=None, ge=-180.0, le=180.0)
+    accuracy_m: float | None = Field(default=None, ge=0.0, le=100000.0)
+
+
+class DuelJoinPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(pattern=r"^\d{6}$")
+
+
+class DuelMovePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    move: Literal["attack", "defend", "trick"]
 
 
 def register_capture(app, current_principal, csrf_principal):
@@ -103,6 +125,66 @@ def register_capture(app, current_principal, csrf_principal):
             with immediate_transaction(conn):
                 return capture.confirm(conn, principal.account_id, season_id, code,
                                        lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m)
+
+    # --- дуэли ------------------------------------------------------------------------
+
+    @app.get("/api/v4/capture/duel")
+    def duel_view(principal=Depends(current_principal)):
+        with database() as conn:
+            season_id = campus.active_season_id(conn, principal.account_id)
+            if season_id is None:
+                return {"duel": None, "offer": None, "duels_left": None}
+            # Опросы идут от двух телефонов раз в полторы секунды: блокировку на
+            # запись берём, только если дуэль пора довести или почистить.
+            try:
+                conn.execute("BEGIN")
+                result = duels.current(conn, principal.account_id, season_id, allow_write=False)
+                conn.execute("COMMIT")
+                return result
+            except duels.NeedsWrite:
+                conn.execute("ROLLBACK")
+            with immediate_transaction(conn):
+                return duels.current(conn, principal.account_id, season_id, allow_write=True)
+
+    @app.post("/api/v4/capture/duels/offer")
+    def duel_offer(payload: DuelOfferPayload, principal=Depends(csrf_principal)):
+        throttle("duel-offer", principal.account_id, CHALLENGES_PER_MINUTE)
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                return duels.offer(conn, principal.account_id, season_id, point=payload.point,
+                                   lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m)
+
+    @app.post("/api/v4/capture/duels/join")
+    def duel_join(payload: DuelJoinPayload, principal=Depends(csrf_principal)):
+        throttle("duel-join", principal.account_id, DUEL_JOINS_PER_MINUTE)
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                return duels.join(conn, principal.account_id, season_id, payload.code)
+
+    @app.post("/api/v4/capture/duel/answer")
+    def duel_answer(payload: AnswerPayload, principal=Depends(csrf_principal)):
+        throttle("duel-action", principal.account_id, DUEL_ACTIONS_PER_MINUTE)
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                return duels.answer(conn, principal.account_id, season_id, payload.choice)
+
+    @app.post("/api/v4/capture/duel/move")
+    def duel_move(payload: DuelMovePayload, principal=Depends(csrf_principal)):
+        throttle("duel-action", principal.account_id, DUEL_ACTIONS_PER_MINUTE)
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                return duels.move(conn, principal.account_id, season_id, payload.move)
+
+    @app.post("/api/v4/capture/duel/leave")
+    def duel_leave(principal=Depends(csrf_principal)):
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                return duels.leave(conn, principal.account_id, season_id)
 
     @app.post("/api/v4/capture/switch")
     def capture_switch(payload: SwitchPayload, principal=Depends(csrf_principal)):

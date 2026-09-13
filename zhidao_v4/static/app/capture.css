@@ -49,6 +49,38 @@
 .capture-options { display: grid; gap: 6px; width: 100%; margin-top: 6px; }
 .capture-options .btn { min-height: 44px; }
 
+/* --- дуэли --------------------------------------------------------------------------- */
+.capture-duel { display: grid; gap: 8px; padding: 14px; border-left: 4px solid #c0392b; }
+.capture-duel p { margin: 0; }
+.capture-duel-code {
+  justify-self: center; padding: 6px 18px; border: 2px dashed #c0392b; border-radius: 10px; background: #fff7f5;
+  font: 700 36px/1.1 "Courier New", monospace; letter-spacing: .12em; color: #7a1d12;
+}
+.capture-duel-join { display: flex; gap: 8px; }
+.capture-duel-join input {
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid #b9cfdc; border-radius: 8px;
+  font: 700 20px/1 "Courier New", monospace; letter-spacing: .2em; text-align: center;
+}
+.capture-duel-join .btn { min-height: 44px; }
+.capture-duel-word { font: 700 26px/1.2 Georgia, "Trebuchet MS", serif; color: #062e50; }
+.capture-options.is-hanzi { grid-template-columns: repeat(3, 1fr); }
+.capture-options.is-hanzi .btn { font: 700 26px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 56px; }
+.capture-duel-moves { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.capture-duel-move { display: grid; gap: 2px; justify-items: center; min-height: 72px; }
+.capture-duel-move b { font: 700 30px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.capture-duel-move small { font: 12px/1 Tahoma, sans-serif; }
+.capture-duel-result { font: 700 26px/1.2 Georgia, serif; color: #062e50; }
+.capture-duel-result.is-win { color: #12813d; }
+.capture-duel-result.is-lose { color: #b02a1a; }
+:root[data-motion="full"] .capture-duel-result.is-win { animation: capture-win .6s steps(6) 2; }
+@keyframes capture-win { 50% { transform: scale(1.12); } }
+
+:root[data-theme="dark"] .capture-duel-code { background: #2a1210; color: #ffb4a8; }
+:root[data-theme="dark"] .capture-duel-join input { background: #0d2438; border-color: #2d5a7c; color: #dcefff; }
+:root[data-theme="dark"] .capture-duel-word, :root[data-theme="dark"] .capture-duel-result { color: #dcefff; }
+:root[data-theme="dark"] .capture-duel-result.is-win { color: #5fd88a; }
+:root[data-theme="dark"] .capture-duel-result.is-lose { color: #ff8a7a; }
+
 :root[data-theme="dark"] .capture-track { background: #16324a; }
 :root[data-theme="dark"] .capture-score b, :root[data-theme="dark"] .capture-hanzi { color: #dcefff; }
 :root[data-theme="dark"] .capture-question { background: #0d2438; }

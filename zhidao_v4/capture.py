@@ -57,6 +57,10 @@ def config() -> dict:
     for point in data["points"]:
         if point["feature"] not in story.feature_centres():
             raise ValueError(f"capture.json: объекта {point['feature']} нет в campus.geojson")
+    for key in ("daily_limit", "bonus", "questions", "sheet_seconds", "reaction_options", "round_seconds",
+                "wins_needed", "max_rounds", "keep_minutes"):
+        if type(data["duels"].get(key)) is not int or data["duels"][key] <= 0:
+            raise ValueError(f"capture.json: duels.{key} должно быть положительным целым")
     for start, end in data["windows"]:
         if time.fromisoformat(start) >= time.fromisoformat(end):
             raise ValueError("capture.json: окно должно кончаться позже, чем начинается")
@@ -165,7 +169,11 @@ def scores(conn, season, now: datetime) -> dict[str, int]:
             end = rooms.parse(row["until"]) if row["until"] else now
             minutes[row["faction"]] += scored_minutes(season, rooms.parse(row["since"]), min(end, now))
     step = config()["score_minutes"]
-    return {code: int(value // step) for code, value in minutes.items()}
+    total = {code: int(value // step) for code, value in minutes.items()}
+    for row in conn.execute("SELECT faction, points FROM v4_capture_bonus WHERE season_id=?", (season["id"],)):
+        if row["faction"] in total:
+            total[row["faction"]] += int(row["points"])
+    return total
 
 
 def _open_hold(conn, season_id: int, code: str, faction: str, now: datetime) -> None:
@@ -180,6 +188,43 @@ def _close_holds(conn, season_id: int, now: datetime, code: str | None = None) -
     else:
         conn.execute("UPDATE v4_capture_holds SET until=? WHERE season_id=? AND point_code=? AND until IS NULL",
                      (rooms.iso(now), season_id, code))
+
+
+def apply_move(conn, season_id: int, code: str, faction: str, now: datetime) -> tuple[str | None, dict | None]:
+    """Ход фракции на точке — общий для правильного ответа и выигранной дуэли."""
+    row = _point_rows(conn, season_id).get(code)
+    if row is None:
+        return None, None
+    action = action_for(row, faction)
+    owner, level = row["owner"], int(row["level"])
+    live = enabled(conn, season_id)
+    if action == "capture":
+        owner, level = faction, 1
+        if live:
+            _open_hold(conn, season_id, code, faction, now)
+    elif action == "reinforce":
+        level += 1
+    elif action == "attack":
+        if level > 1:
+            level -= 1
+        else:
+            action = "flip"
+            _close_holds(conn, season_id, now, code)
+            owner, level = faction, 1
+            if live:
+                _open_hold(conn, season_id, code, faction, now)
+    if action:
+        conn.execute("UPDATE v4_capture_points SET owner=?, level=?, changed_at=? WHERE season_id=? AND point_code=?",
+                     (owner, level, rooms.iso(now), season_id, code))
+    return action, {**row, "owner": owner, "level": level}
+
+
+def add_bonus(conn, season_id: int, faction: str, points: int) -> None:
+    """Бонусные очки фракции — за выигранные дуэли. Человек не записывается."""
+    conn.execute(
+        """INSERT INTO v4_capture_bonus(season_id, faction, points) VALUES (?,?,?)
+           ON CONFLICT(season_id, faction) DO UPDATE SET points = points + excluded.points""",
+        (season_id, faction, int(points)))
 
 
 # --- вопросы и кулдауны -------------------------------------------------------------------
@@ -339,25 +384,7 @@ def answer(conn, actor: int, season_id: int, code: str, choice: int) -> dict:
         return {"correct": False, "point": point_view(code, row, staff=False, faction=faction,
                                                       cooldown=config()["cooldown_seconds"])}
     # Ход считается от состояния точки сейчас: пока думали, её могли перехватить.
-    action = action_for(row, faction)
-    owner, level = row["owner"], int(row["level"])
-    if action == "capture":
-        owner, level = faction, 1
-        _open_hold(conn, season_id, code, faction, now)
-    elif action == "reinforce":
-        level += 1
-    elif action == "attack":
-        if level > 1:
-            level -= 1
-        else:
-            action = "flip"
-            _close_holds(conn, season_id, now, code)
-            owner, level = faction, 1
-            if enabled(conn, season_id):
-                _open_hold(conn, season_id, code, faction, now)
-    conn.execute("UPDATE v4_capture_points SET owner=?, level=?, changed_at=? WHERE season_id=? AND point_code=?",
-                 (owner, level, rooms.iso(now), season_id, code))
-    row = {**row, "owner": owner, "level": level}
+    action, row = apply_move(conn, season_id, code, faction, now)
     return {"correct": True, "action": action,
             "point": point_view(code, row, staff=False, faction=faction, cooldown=config()["cooldown_seconds"])}
 

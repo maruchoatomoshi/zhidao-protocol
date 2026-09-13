@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="./retro.css?v=8179cf4369">
   <link rel="stylesheet" href="./campus-marks.css?v=6bf51bb428">
   <link rel="stylesheet" href="./story.css?v=b9735a6e21">
-  <link rel="stylesheet" href="./capture.css?v=0b93e30702">
+  <link rel="stylesheet" href="./capture.css?v=34fedf2bdf">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -383,6 +383,7 @@
         </div>
 
         <section class="glass-card capture-hud" id="captureHud" aria-label="Захват кампуса" aria-live="polite" hidden></section>
+        <section class="glass-card capture-duel" id="captureDuel" aria-label="Дуэли" aria-live="polite" hidden></section>
 
         <article class="campus-map" aria-label="Векторная карта кампуса">
           <div id="campusCanvas" class="campus-canvas"></div>
@@ -839,8 +840,8 @@
           <div class="spy-body">
             <section class="game-card" aria-labelledby="gameCaptureTitle">
               <h3 id="gameCaptureTitle">Захват кампуса <span aria-hidden="true">占领</span></h3>
-              <p>Три фракции всю смену воюют за настоящие места кампуса. Придите к точке и ответьте на китайский вопрос: ничью точку захватите, свою укрепите, чужую пробьёте. Очки идут за удержание.</p>
-              <ul class="spy-facts"><li>вся смена</li><li>окна 10–12 и 15–18</li><li>нужен GPS</li></ul>
+              <p>Три фракции всю смену воюют за настоящие места кампуса. Придите к точке и ответьте на китайский вопрос: ничью точку захватите, свою укрепите, чужую пробьёте. Очки идут за удержание и выигранные дуэли один на один.</p>
+              <ul class="spy-facts"><li>вся смена</li><li>окна 10–12 и 15–18</li><li>дуэли 1 на 1</li><li>нужен GPS</li></ul>
               <button type="button" class="btn btn-primary" data-open-screen="campus-map">Открыть карту</button>
             </section>
           </div>
@@ -1100,6 +1101,7 @@
   <script src="./retro.js?v=30022b2992" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>
   <script src="./story.js?v=a3a1bfb3a5" defer></script>
-  <script src="./capture.js?v=50f27a464a" defer></script>
+  <script src="./capture-duel.js?v=6afd7f08ee" defer></script>
+  <script src="./capture.js?v=da3296f0f4" defer></script>
 </body>
 </html>

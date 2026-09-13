@@ -26,5 +26,16 @@
   "max_level": 3,
   "cooldown_seconds": 180,
   "question_seconds": 60,
-  "score_minutes": 10
+  "score_minutes": 10,
+  "duels": {
+    "daily_limit": 5,
+    "bonus": 3,
+    "questions": 5,
+    "sheet_seconds": 90,
+    "reaction_options": 6,
+    "round_seconds": 25,
+    "wins_needed": 2,
+    "max_rounds": 7,
+    "keep_minutes": 10
+  }
 }
