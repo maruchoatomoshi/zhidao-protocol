@@ -25,19 +25,19 @@ from typing import Any, Literal
 from fastapi import Body, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import cipher, outage, rooms, shop, spy
+from . import cipher, outage, rooms, shop, smuggle, spy
 from .db import connect_database, immediate_transaction
 
 
 PRESENCE_SECONDS = 20
 JOINS_PER_MINUTE = 20
-MODULES = {spy.GAME: spy, cipher.GAME: cipher, outage.GAME: outage}
+MODULES = {spy.GAME: spy, cipher.GAME: cipher, outage.GAME: outage, smuggle.GAME: smuggle}
 assert tuple(MODULES) == rooms.GAMES, "Список игр в rooms.GAMES и в маршрутах разошёлся"
 
 
 class RoomCreatePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    game: Literal["spy", "cipher", "outage"]
+    game: Literal["spy", "cipher", "outage", "smuggle"]
 
 
 class RoomJoinPayload(BaseModel):
@@ -181,6 +181,9 @@ def register_games(app, current_principal, csrf_principal, architect_writer):
                 status, new_settings, more = handler(module, room, state, settings, seated, now)
                 for pid, amount in (more or {}).items():
                     points[pid] = points.get(pid, 0) + amount
+                if room["game"] == smuggle.GAME:
+                    # Приз Контрабанды — настоящие ★: пишется в той же транзакции, что последний ход.
+                    smuggle.award(conn, state, now)
                 rooms.add_points(conn, int(room["id"]), points)
                 rooms.save(conn, int(room["id"]), status=status or room["status"], state=state,
                            now=now, settings=new_settings)

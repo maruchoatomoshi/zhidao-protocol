@@ -1,0 +1,57 @@
+/* Контрабанда: карты товаров, сумки, прилавки (V4_GAMES.md §4.12). */
+
+#gameRoom[data-game="smuggle"] #gameRoomBody::before { display: none; }
+
+.smuggle-hand { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.smuggle-card {
+  display: grid; gap: 2px; justify-items: center; min-height: 96px; padding: 8px 6px; border: 2px solid #c9dbe6;
+  border-radius: 10px; background: linear-gradient(180deg, #ffffff, #eef6fb); color: #062e50; text-align: center;
+  font: inherit; cursor: default;
+}
+button.smuggle-card { cursor: pointer; }
+.smuggle-card b { font: 700 26px/1.1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.smuggle-card small { font: 12px/1.2 Georgia, serif; color: #4f6f82; }
+.smuggle-card .smuggle-ru { font: 12px/1.2 Tahoma, sans-serif; }
+.smuggle-price { font: 11px/1.2 "Courier New", monospace; color: #6a8597; }
+.smuggle-card.is-legal { border-color: #7cc79a; }
+.smuggle-card.is-contraband { border-color: #e0786b; background: linear-gradient(180deg, #fff, #fdeeea); }
+.smuggle-card.is-picked { box-shadow: 0 0 0 3px #0a86f0; transform: translateY(-3px); }
+.smuggle-card.is-marked { box-shadow: 0 0 0 3px #d93025; background: #fdeaea; }
+:root[data-motion="full"] .smuggle-card { transition: transform .15s steps(3), box-shadow .15s steps(3); }
+
+.smuggle-event { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; border: 1px dashed #b98a1f; background: #fff8e1; }
+.smuggle-event b { font: 700 15px/1.3 Tahoma, sans-serif; color: #7a5200; }
+.smuggle-event span { font: 12px/1.35 Tahoma, sans-serif; color: #6b5a2e; }
+.smuggle-event.is-raid { border-color: #8a5cd6; background: #f4ecff; }
+.smuggle-event.is-typhoon { border-color: #2b8cff; background: #eaf3ff; }
+.smuggle-event.is-blackmarket { border-color: #444; background: #eee; }
+
+.smuggle-bribe { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; gap: 8px; text-align: center; }
+.smuggle-bribe .btn { min-height: 44px; font-size: 20px; }
+.smuggle-bribe b { font: 700 16px/1 Tahoma, sans-serif; color: #7a5200; }
+
+.smuggle-table { display: grid; gap: 8px; }
+.smuggle-seat, .smuggle-bag { display: grid; gap: 6px; padding: 10px; border: 1px solid #c9dbe6; border-radius: 10px; background: #f7fbfe; }
+.smuggle-seat.is-officer { border-color: #1f6fd6; background: #eef5ff; }
+.smuggle-seat p, .smuggle-bag p { margin: 0; }
+.smuggle-seat-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+.smuggle-money { font: 700 13px/1 "Courier New", monospace; color: #7a5200; }
+.smuggle-badge { padding: 2px 8px; border-radius: 10px; background: #1f6fd6; color: #fff; font: 700 11px/1.3 Tahoma, sans-serif; }
+.smuggle-stall { display: flex; flex-wrap: wrap; gap: 5px; }
+.smuggle-chip { padding: 2px 8px; border-radius: 10px; background: #e3f3e9; font: 13px/1.4 "Noto Sans SC", "Microsoft YaHei", sans-serif; color: #0b5d2a; }
+.smuggle-chip.is-hidden { background: #3a3446; color: #ffd54a; }
+.smuggle-chip.is-empty { background: transparent; color: #8aa0ae; font-family: Tahoma, sans-serif; }
+
+.smuggle-scores { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.smuggle-scores li { display: grid; gap: 1px; }
+.smuggle-scores small { font: 12px/1.3 Tahoma, sans-serif; color: #4f6f82; }
+.smuggle-prize { justify-self: start; padding: 2px 8px; border-radius: 10px; background: #ffd54a; color: #5a3d00; font: 700 12px/1.3 Tahoma, sans-serif; }
+
+:root[data-theme="dark"] .smuggle-card { background: linear-gradient(180deg, #12304a, #0d2438); border-color: #2d5a7c; color: #dcefff; }
+:root[data-theme="dark"] .smuggle-card small, :root[data-theme="dark"] .smuggle-price { color: #9fc3dc; }
+:root[data-theme="dark"] .smuggle-card.is-contraband { background: linear-gradient(180deg, #3a1a18, #2a1210); border-color: #b05a4e; }
+:root[data-theme="dark"] .smuggle-seat, :root[data-theme="dark"] .smuggle-bag { background: #0d2438; border-color: #2d5a7c; }
+:root[data-theme="dark"] .smuggle-seat.is-officer { background: #10284a; border-color: #4a8ae0; }
+:root[data-theme="dark"] .smuggle-event { background: #2e250e; border-color: #8a6a1a; }
+:root[data-theme="dark"] .smuggle-event b, :root[data-theme="dark"] .smuggle-event span { color: #ffe29a; }
+:root[data-theme="dark"] .smuggle-chip { background: #10301c; color: #9ff0bb; }

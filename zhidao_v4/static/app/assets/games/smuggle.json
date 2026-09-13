@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "reviewed": false,
+  "review_note_ru": "Черновик Claude 2026-09-13. Китайские названия товаров, ролей и событий не проверены человеком, знающим язык. Запрещённые товары — только безобидные для детей (пиратские диски, дискеты с вирусом, жемчуг, подделки).",
+  "goods": [
+    {"code": "mango", "zh": "芒果", "pinyin": "mángguǒ", "ru": "манго", "legal": true, "value": 2, "penalty": 2, "count": 16},
+    {"code": "coconut", "zh": "椰子", "pinyin": "yēzi", "ru": "кокос", "legal": true, "value": 3, "penalty": 2, "count": 14},
+    {"code": "tea", "zh": "茶叶", "pinyin": "cháyè", "ru": "чай", "legal": true, "value": 3, "penalty": 2, "count": 12},
+    {"code": "rice", "zh": "大米", "pinyin": "dàmǐ", "ru": "рис", "legal": true, "value": 2, "penalty": 2, "count": 14},
+    {"code": "disc", "zh": "盗版光盘", "pinyin": "dàobǎn guāngpán", "ru": "пиратский диск", "legal": false, "value": 6, "penalty": 4, "count": 6},
+    {"code": "floppy", "zh": "病毒软盘", "pinyin": "bìngdú ruǎnpán", "ru": "дискета с вирусом", "legal": false, "value": 7, "penalty": 4, "count": 5},
+    {"code": "pearl", "zh": "珍珠", "pinyin": "zhēnzhū", "ru": "жемчуг", "legal": false, "value": 8, "penalty": 5, "count": 4},
+    {"code": "phone", "zh": "假手机", "pinyin": "jiǎ shǒujī", "ru": "поддельный телефон", "legal": false, "value": 9, "penalty": 5, "count": 3}
+  ],
+  "roles": [
+    {"code": "informant", "zh": "眼线", "ru": "Осведомитель", "note_ru": "Раз за партию, будучи таможенником: подсмотреть одну случайную карту в чужой сумке до решения."},
+    {"code": "virtuoso", "zh": "走私大师", "ru": "Контрабандист-виртуоз", "note_ru": "Раз за партию, собирая сумку: двойное дно — одна запрещёнка выглядит как заявленный товар."},
+    {"code": "inspector", "zh": "稽查员", "ru": "Инспектор NetWatch", "note_ru": "Раз за партию, будучи таможенником: штрафы с одного купца вдвое."},
+    {"code": "hacker", "zh": "黑客", "ru": "Хакер BlueJoy", "note_ru": "Раз за партию, собирая сумку: взломать сканер — таможня обязана пропустить сумку, взятка не платится."}
+  ],
+  "events": [
+    {"code": "calm", "zh": "平静", "ru": "Спокойный день", "note_ru": "Обычные правила."},
+    {"code": "typhoon", "zh": "台风", "ru": "Тайфун", "note_ru": "В сумке не больше 3 товаров."},
+    {"code": "raid", "zh": "突击检查", "ru": "Рейд NetWatch", "note_ru": "Штрафы за пойманную запрещёнку вдвое."},
+    {"code": "lantern", "zh": "灯笼节", "ru": "Праздник фонарей", "note_ru": "Взятка не больше 5 元."},
+    {"code": "blackmarket", "zh": "黑市", "ru": "Чёрный рынок", "note_ru": "Провезённая запрещёнка приносит ещё +2 元."},
+    {"code": "dutyfree", "zh": "免税日", "ru": "День без пошлин", "note_ru": "Таможенник может вскрыть только одну сумку."}
+  ],
+  "start_money": 30,
+  "hand": 6,
+  "max_bag": 5,
+  "typhoon_bag": 3,
+  "lantern_bribe": 5,
+  "blackmarket_bonus": 2,
+  "bonuses": {"king": 8, "queen": 4, "set": 6},
+  "prize": {"stars": 10, "min_players": 4}
+}
