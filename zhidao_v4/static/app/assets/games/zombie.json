@@ -1,0 +1,14 @@
+{
+  "min_players": 4,
+  "max_players": 80,
+  "round_minutes": 20,
+  "start_share": 3,
+  "lottery_per": 10,
+  "tag_cooldown_seconds": 30,
+  "immune_seconds": 120,
+  "question_seconds": 45,
+  "wrong_cooldown_seconds": 60,
+  "keep_minutes": 30,
+  "prize_min_players": 8,
+  "prize": {"survivor_stars": 10, "zombie_stars": 10}
+}

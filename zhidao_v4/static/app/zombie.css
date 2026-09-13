@@ -1,0 +1,32 @@
+/* Зомби-протокол: код человека, форма заражения, станции-вакцины (V4_GAMES.md §4.12). */
+
+.zombie-window .spy-body { display: grid; gap: 10px; }
+.zombie-meta { margin: 0; font: 13px/1.4 Tahoma, sans-serif; color: #4f6f82; }
+.zombie-meta.is-ok { color: #0b7a3b; }
+.zombie-safety { margin: 0; padding: 6px 10px; border-left: 3px solid #d93025; background: #fdecea; font: 700 12px/1.4 Tahoma, sans-serif; color: #7a1f16; }
+.zombie-headline { margin: 0; font: 700 15px/1.3 Tahoma, sans-serif; color: #1b2f3d; }
+.zombie-count { font: 700 18px/1.2 Tahoma, sans-serif; }
+.zombie-left { font-family: "Courier New", monospace; }
+
+.zombie-card { display: grid; gap: 8px; padding: 12px; border: 2px solid #2d6b3a; border-radius: 10px; background: linear-gradient(180deg, #f2fbf4, #dff2e4); }
+.zombie-card p { margin: 0; }
+.zombie-card.is-zombie { border-color: #5b8a1f; background: linear-gradient(180deg, #eef5e0, #d4e6b5); }
+.zombie-code { font: 700 40px/1.1 "Courier New", monospace; letter-spacing: 4px; color: #062e50; text-align: center; }
+
+.zombie-tag { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.zombie-input { min-height: 48px; padding: 0 12px; border: 2px solid #5b8a1f; border-radius: 8px; background: #fff; color: #1b2f3d; font: 700 24px/1 "Courier New", monospace; letter-spacing: 3px; }
+.zombie-stations, .zombie-options { display: grid; gap: 6px; }
+.zombie-question { display: grid; gap: 6px; padding: 10px; border: 1px dashed #5b8a1f; border-radius: 8px; background: #fff; }
+.zombie-hanzi { font: 700 34px/1.1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; text-align: center; color: #1b2f3d; }
+
+.zombie-list { margin: 0; padding-left: 20px; display: grid; gap: 3px; font: 13px/1.4 Tahoma, sans-serif; }
+.zombie-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.zombie-chip { padding: 2px 8px; border-radius: 10px; font: 12px/1.5 Tahoma, sans-serif; background: #e3f3e9; color: #0b5d2a; }
+.zombie-chip.is-zombie { background: #3d4a1f; color: #d8f59a; }
+
+:root[data-theme="dark"] .zombie-card { background: linear-gradient(180deg, #10241a, #0b1a12); color: #dcefff; }
+:root[data-theme="dark"] .zombie-card.is-zombie { background: linear-gradient(180deg, #1c2410, #12180a); }
+:root[data-theme="dark"] .zombie-code, :root[data-theme="dark"] .zombie-headline, :root[data-theme="dark"] .zombie-hanzi { color: #e8f2fa; }
+:root[data-theme="dark"] .zombie-meta { color: #9fc3dc; }
+:root[data-theme="dark"] .zombie-input, :root[data-theme="dark"] .zombie-question { background: #0d2438; color: #dcefff; }
+:root[data-theme="dark"] .zombie-safety { background: #3a1a18; color: #ffc9c2; }
