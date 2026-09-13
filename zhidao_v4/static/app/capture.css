@@ -49,6 +49,30 @@
 .capture-options { display: grid; gap: 6px; width: 100%; margin-top: 6px; }
 .capture-options .btn { min-height: 44px; }
 
+/* --- способности, кубки ------------------------------------------------------------------- */
+.capture-point.is-shielded .capture-ring { fill: none; stroke: #ffd54a; stroke-width: 2.5; }
+.capture-point.is-double .capture-core { stroke: #ffd54a; stroke-width: 3; }
+.capture-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.capture-badge {
+  padding: 3px 9px; border-radius: 12px; background: #fff6d6; border: 1px solid #f0c24a;
+  font: 12px/1.3 Tahoma, sans-serif; color: #6b4a00;
+}
+.capture-abilities { display: grid; gap: 8px; }
+.capture-ability { display: grid; gap: 5px; padding: 10px; border: 1px solid #c9dbe6; border-radius: 8px; background: #f7fbfe; }
+.capture-ability.is-active { border-color: #5fc27e; background: #effaf2; }
+.capture-ability small { font: 12px/1.35 Tahoma, sans-serif; color: var(--case-muted, #4f6f82); }
+.capture-ability-title { font: 700 14px/1.3 Tahoma, "Trebuchet MS", sans-serif; color: var(--case-ink, #062e50); }
+.capture-pool { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+.capture-pool .capture-bar { --faction: #f0a800; }
+.capture-chip { min-height: 40px !important; padding: 0 12px; }
+.capture-cup { font: 700 14px/1.4 Tahoma, sans-serif; color: #8a5a00; }
+
+:root[data-theme="dark"] .capture-badge { background: #33280c; border-color: #8a6a1a; color: #ffe29a; }
+:root[data-theme="dark"] .capture-ability { background: #0d2438; border-color: #2d5a7c; }
+:root[data-theme="dark"] .capture-ability.is-active { background: #10301c; border-color: #3f9a5c; }
+:root[data-theme="dark"] .capture-ability-title { color: #dcefff; }
+:root[data-theme="dark"] .capture-cup { color: #ffd166; }
+
 /* --- дуэли --------------------------------------------------------------------------- */
 .capture-duel { display: grid; gap: 8px; padding: 14px; border-left: 4px solid #c0392b; }
 .capture-duel p { margin: 0; }

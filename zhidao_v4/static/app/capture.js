@@ -7,10 +7,13 @@
    и присылает китайское слово с тремя переводами. Правильный ответ захватывает
    ничью точку, укрепляет свою или пробивает чужую.
 
+   Этап 3: способности складчиной фракции (щит, туман, двойные очки, разведка),
+   лидер дня и итоги войны с кубком.
+
    Всё решает сервер (zhidao_v4/capture.py): чья точка, какой ход, верен ли
-   ответ, сколько очков. Правильный вариант сюда не приходит. Этот файл рисует
-   слой поверх карты, табло фракций и карточку точки; геометрию карты не
-   трогает — проекцию отдаёт window.ZhidaoCampus. */
+   ответ, сколько очков, когда включилась способность. Правильный вариант сюда
+   не приходит. Этот файл рисует слой поверх карты, табло фракций и карточку
+   точки; геометрию карты не трогает — проекцию отдаёт window.ZhidaoCampus. */
 
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -24,6 +27,13 @@
     reinforce: "Точка укреплена",
     attack: "Защита пробита — ещё немного",
     flip: "Точка перехвачена!",
+    shielded: "Щит отбил атаку",
+  };
+  const ABILITY = {
+    shield: { icon: "🛡", name: "Щит", note: "Чужие не пробьют точку" },
+    fog: { icon: "🌫", name: "Туман", note: "Соперники не видят уровни защиты ваших точек" },
+    double: { icon: "×2", name: "Двойные очки", note: "Точка приносит вдвое больше очков" },
+    scout: { icon: "🔍", name: "Разведка", note: "Видно, сколько ходов сегодня было у точки" },
   };
 
   let session = window.ZhidaoSession || null;
@@ -34,10 +44,12 @@
   let busy = false;
   let question = null;
   let noteText = "";
-  let switchArmed = false;
+  let hudNote = "";
+  let armed = null;
   let poll = null;
   let ticker = null;
   const cooldownUntil = new Map();
+  const poolKeys = new Map();
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -63,8 +75,20 @@
   const onMap = () => document.documentElement.dataset.currentScreen === "campus-map";
   const faction = (code) => (state && state.factions.find((f) => f.code === code)) || null;
   const clock = (iso) => String(iso || "").slice(11, 16);
+  const timeOf = (iso) => Date.parse(String(iso).replace(/\.(\d{3})\d*Z$/, ".$1Z"));
+  const minutesLeft = (iso) => Math.max(1, Math.ceil((timeOf(iso) - Date.now()) / 60000));
   const cooldownLeft = (code) => Math.max(0, Math.ceil(((cooldownUntil.get(code) || 0) - Date.now()) / 1000));
   const pips = (level, max) => "◆".repeat(level) + "◇".repeat(Math.max(0, max - level));
+  const newKey = () => `pool-${window.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+
+  // Живой отсчёт: меняется только цифра, кнопки рядом не пересоздаются.
+  function countdown(untilMs, suffix = " с") {
+    const span = node("span", "capture-countdown");
+    span.dataset.until = String(untilMs);
+    span.dataset.suffix = suffix;
+    span.textContent = `${Math.max(0, Math.ceil((untilMs - Date.now()) / 1000))}${suffix}`;
+    return span;
+  }
 
   async function api(path, options = {}) {
     const controller = new AbortController();
@@ -80,6 +104,7 @@
       const cookie = document.cookie.split("; ").find((v) => v.startsWith("zhidao_v4_csrf="));
       init.headers["X-CSRF-Token"] = cookie ? decodeURIComponent(cookie.slice(cookie.indexOf("=") + 1)) : "";
       init.headers["Content-Type"] = "application/json";
+      if (options.key) init.headers["X-Idempotency-Key"] = options.key;
       init.body = JSON.stringify(options.body || {});
     }
     try {
@@ -139,22 +164,28 @@
       if (!at) continue;
       const owner = faction(p.owner);
       const mine = Boolean(owner && state.you && state.you.faction === owner.code);
+      const classes = ["capture-point"];
+      if (!p.confirmed) classes.push("is-draft");
+      if (mine) classes.push("is-mine");
+      if (p.shield_until) classes.push("is-shielded");
+      if (p.double_until) classes.push("is-double");
+      if (p.code === selected) classes.push("is-selected");
       const item = svg("g", {
-        class: `capture-point${p.confirmed ? "" : " is-draft"}${mine ? " is-mine" : ""}${p.code === selected ? " is-selected" : ""}`,
+        class: classes.join(" "),
         transform: `translate(${at.x.toFixed(1)} ${at.y.toFixed(1)})`,
         tabindex: "0",
         role: "button",
-        "aria-label": `${p.name_ru || "Точка"}: ${owner ? `${owner.ru}, защита ${p.level}` : p.confirmed ? "ничья" : "не подтверждена"}`,
+        "aria-label": `${p.name_ru || "Точка"}: ${owner ? `${owner.ru}, защита ${p.hidden ? "скрыта" : p.level}` : p.confirmed ? "ничья" : "не подтверждена"}`,
       });
       item.dataset.point = p.code;
       item.style.setProperty("--faction", owner ? owner.color : NEUTRAL);
       const shape = svg("g", { class: "capture-shape" });
-      shape.append(
-        svg("path", { class: "capture-glow", d: "M0 -17 L17 0 L0 17 L-17 0Z" }),
-        svg("path", { class: "capture-core", d: "M0 -10 L10 0 L0 10 L-10 0Z" }));
-      if (p.level) {
+      shape.append(svg("path", { class: "capture-glow", d: "M0 -17 L17 0 L0 17 L-17 0Z" }));
+      if (p.shield_until) shape.append(svg("path", { class: "capture-ring", d: "M0 -14 L14 0 L0 14 L-14 0Z" }));
+      shape.append(svg("path", { class: "capture-core", d: "M0 -10 L10 0 L0 10 L-10 0Z" }));
+      if (p.owner) {
         const text = svg("text", { class: "capture-level", y: "3.6", "text-anchor": "middle" });
-        text.textContent = String(p.level);
+        text.textContent = p.hidden ? "?" : String(p.level);
         shape.append(text);
       }
       item.append(shape);
@@ -166,7 +197,87 @@
     resize();
   }
 
+  // --- способности ---------------------------------------------------------------------------
+
+  function abilityBlock(ability, target) {
+    const spec = state.abilities[ability];
+    const info = ABILITY[ability];
+    const box = node("div", "capture-ability");
+    box.append(node("b", "capture-ability-title", `${info.icon} ${info.name} · ${spec.price}★ · ${spec.minutes} мин`),
+      node("small", null, info.note));
+    const effect = state.effects.find((e) => e.ability === ability && (e.target || null) === (target || null));
+    if (effect) {
+      box.classList.add("is-active");
+      box.append(node("p", "capture-meta is-open", `Действует ещё ${minutesLeft(effect.until)} мин`));
+      return box;
+    }
+    const pool = state.pools.find((p) => p.ability === ability && (p.target || null) === (target || null));
+    const collected = pool ? pool.collected : 0;
+    const track = node("span", "capture-track");
+    const bar = node("span", "capture-bar");
+    bar.style.width = `${Math.round((collected / spec.price) * 100)}%`;
+    track.append(bar);
+    const row = node("div", "capture-pool");
+    row.append(track, node("span", "capture-score-value", `${collected}/${spec.price}★`));
+    box.append(row);
+    const remaining = spec.price - collected;
+    const open = state.enabled && state.window.open && !state.war.finished;
+    const chips = node("div", "capture-actions");
+    [...new Set([1, 5, remaining].filter((n) => n > 0 && n <= remaining))].forEach((amount) => {
+      const chip = button("btn btn-secondary capture-chip", amount === remaining ? `Весь остаток ${amount}★` : `+${amount}★`,
+        () => contribute(ability, target, amount));
+      chip.disabled = busy || !open;
+      chips.append(chip);
+    });
+    box.append(chips);
+    if (!open) box.append(node("p", "capture-meta", "Взносы принимаются, пока идёт Захват"));
+    return box;
+  }
+
+  async function contribute(ability, target, amount) {
+    if (busy) return;
+    const slot = `${ability}:${target || ""}:${amount}`;
+    const key = poolKeys.get(slot) || newKey();
+    poolKeys.set(slot, key);
+    busy = true;
+    rerender();
+    try {
+      const result = await api("/api/v4/capture/pool", { method: "POST", key, body: { ability, target: target || undefined, amount } });
+      poolKeys.delete(slot);
+      const text = result.activated
+        ? `${ABILITY[ability].icon} ${ABILITY[ability].name} включён!`
+        : `Взнос ${result.paid}★ · собрано ${result.collected}/${result.price}★`;
+      window.showToast?.(text);
+      if (result.activated && window.ZhidaoSounds) window.ZhidaoSounds.play("rare");
+      if (target) noteText = text;
+      else hudNote = text;
+      await refresh();
+    } catch (error) {
+      if (error.status) poolKeys.delete(slot);
+      const text = error.status || !poolKeys.has(slot) ? error.message : "Нет связи. Нажмите ещё раз — звёзды не спишутся дважды.";
+      if (target) noteText = text;
+      else hudNote = text;
+    } finally {
+      busy = false;
+      rerender();
+    }
+  }
+
   // --- табло -----------------------------------------------------------------------------
+
+  function staffButton(kind, label, confirmLabel, action) {
+    const b = button("btn btn-secondary", armed === kind ? confirmLabel : label, () => {
+      if (armed !== kind) {
+        armed = kind;
+        drawHud();
+        return;
+      }
+      armed = null;
+      action();
+    });
+    b.disabled = busy;
+    return b;
+  }
 
   function drawHud() {
     const hud = $("captureHud");
@@ -176,7 +287,7 @@
     }
     const parts = [];
     const head = node("div", "capture-hud-head");
-    head.append(node("span", "capture-label", "Захват кампуса · 占领"));
+    head.append(node("span", "capture-label", `Захват кампуса · 占领 · война №${state.war.number}`));
     const mine = state.you && faction(state.you.faction);
     if (mine) {
       const badge = node("b", "capture-you", `Вы — ${mine.ru} ${mine.zh}`);
@@ -199,41 +310,59 @@
     });
     parts.push(board);
 
-    let status;
-    if (!state.enabled) status = "Захват выключен вожатым";
-    else if (state.window.open) status = `Захват открыт до ${clock(state.window.closes_at)}`;
-    else status = state.window.opens_at ? `Захват откроется в ${clock(state.window.opens_at)}` : "Захват закрыт";
-    parts.push(node("p", `capture-meta${state.enabled && state.window.open ? " is-open" : ""}`, status));
+    if (state.war.finished) {
+      const last = state.wars[state.wars.length - 1];
+      const names = last && last.winners.length ? last.winners.map((c) => faction(c)?.ru || c).join(", ") : "никто";
+      parts.push(node("p", "capture-cup", `🏆 Война №${state.war.number} окончена · победили: ${names}`));
+    } else {
+      const today = state.factions.map((f) => `${f.ru} ${f.today}`).join(" · ");
+      const reward = state.daily_reward;
+      parts.push(node("p", "capture-meta", `Сегодня: ${today}. Лидер дня получит +${reward.stars}★ и +${reward.rep} REP — тем, кто сегодня играл`));
+      let status;
+      if (!state.enabled) status = "Захват выключен вожатым";
+      else if (state.window.open) status = `Захват открыт до ${clock(state.window.closes_at)}`;
+      else status = state.window.opens_at ? `Захват откроется в ${clock(state.window.opens_at)}` : "Захват закрыт";
+      parts.push(node("p", `capture-meta${state.enabled && state.window.open ? " is-open" : ""}`, status));
+    }
+    const cups = state.wars.filter((w) => !state.war.finished || w.number !== state.war.number);
+    if (cups.length) {
+      parts.push(node("p", "capture-meta", cups.map((w) => `🏆 №${w.number}: ${w.winners.map((c) => faction(c)?.ru || c).join(", ") || "ничья"}`).join(" · ")));
+    }
+
+    if (mine && !state.war.finished) parts.push(abilityBlock("fog", null));
 
     if (state.can_manage) {
-      const label = switchArmed ? (state.enabled ? "Точно выключить?" : "Точно включить?")
-        : (state.enabled ? "Выключить захват" : "Включить захват");
-      const toggle = button("btn btn-secondary", label, toggleSwitch);
-      toggle.disabled = busy;
+      const actions = node("div", "capture-actions");
+      if (state.war.finished) {
+        actions.append(staffButton("new", "Начать новую войну", "Точно начать заново?", () => staffAction("/api/v4/capture/new-war", "Новая война: карта ничья. Включите захват, когда будете готовы")));
+      } else {
+        actions.append(staffButton("switch", state.enabled ? "Выключить захват" : "Включить захват",
+          state.enabled ? "Точно выключить?" : "Точно включить?",
+          () => staffAction("/api/v4/capture/switch", state.enabled ? "Захват выключен, очки замерли" : "Захват включён", { enabled: !state.enabled })));
+        actions.append(staffButton("finish", "Подвести итоги", "Точно завершить войну?", () => staffAction("/api/v4/capture/finish", "Итоги подведены — победитель получил кубок")));
+      }
+      parts.push(actions);
       const unconfirmed = state.points.filter((p) => !p.confirmed).length;
-      parts.push(toggle, node("p", "capture-meta", unconfirmed
+      parts.push(node("p", "capture-meta", unconfirmed
         ? `Не подтверждено точек: ${unconfirmed}. Нажмите на серый ромб у объекта и подтвердите, стоя рядом`
         : "Все точки подтверждены"));
     }
+    parts.push(node("p", "case-message capture-hud-note", hudNote));
     hud.replaceChildren(...parts);
     hud.hidden = false;
   }
 
-  async function toggleSwitch() {
-    if (busy || !state) return;
-    if (!switchArmed) {
-      switchArmed = true;
-      drawHud();
-      return;
-    }
-    switchArmed = false;
+  async function staffAction(path, success, body) {
+    if (busy) return;
     busy = true;
+    drawHud();
     try {
-      const result = await api("/api/v4/capture/switch", { method: "POST", body: { enabled: !state.enabled } });
-      window.showToast?.(result.enabled ? "Захват включён" : "Захват выключен, очки замерли");
+      await api(path, { method: "POST", body });
+      hudNote = success;
+      window.showToast?.(success);
       await refresh();
     } catch (error) {
-      window.showToast?.(error.message);
+      hudNote = error.message;
     } finally {
       busy = false;
       drawHud();
@@ -244,11 +373,9 @@
 
   function drawQuestion() {
     const box = node("div", "capture-question");
-    const left = Math.max(0, Math.ceil((question.deadline - Date.now()) / 1000));
-    box.append(
-      node("span", "capture-label", `${ACTIONS[question.action] || "Ход"} · ${left} с`),
-      node("b", "capture-hanzi", question.zh),
-      node("p", "capture-pinyin", question.pinyin),
+    const label = node("span", "capture-label", `${ACTIONS[question.action] || "Ход"} · `);
+    label.append(countdown(question.deadline));
+    box.append(label, node("b", "capture-hanzi", question.zh), node("p", "capture-pinyin", question.pinyin),
       node("p", "capture-meta", "Что это значит?"));
     const options = node("div", "capture-options");
     question.options.forEach((text, index) => {
@@ -272,6 +399,7 @@
     selected = code;
     ui?.layer?.querySelectorAll(".capture-point").forEach((g) => g.classList.toggle("is-selected", g.dataset.point === code));
     const owner = faction(p.owner);
+    const mine = Boolean(owner && state.you && state.you.faction === owner.code);
     card.style.setProperty("--faction", owner ? owner.color : NEUTRAL);
     const parts = [
       node("span", "capture-label", p.confirmed ? "Точка захвата" : "Точка не подтверждена"),
@@ -279,9 +407,14 @@
     ];
     if (p.name_zh) parts.push(node("p", "capture-zh", p.name_zh));
     if (p.confirmed) {
-      parts.push(node("p", "capture-owner", owner
-        ? `${owner.ru} ${owner.zh} · защита ${pips(p.level, p.max_level)}`
-        : "Ничья — захватите первыми"));
+      let ownerText = "Ничья — захватите первыми";
+      if (owner) ownerText = `${owner.ru} ${owner.zh} · ${p.hidden ? "защита скрыта туманом" : `защита ${pips(p.level, p.max_level)}`}`;
+      parts.push(node("p", "capture-owner", ownerText));
+      const badges = node("div", "capture-badges");
+      if (p.shield_until) badges.append(node("span", "capture-badge", `🛡 щит ещё ${minutesLeft(p.shield_until)} мин`));
+      if (p.double_until) badges.append(node("span", "capture-badge", `×2 ещё ${minutesLeft(p.double_until)} мин`));
+      if (p.scouted) badges.append(node("span", "capture-badge", `🔍 ходов сегодня: ${p.scouted.moves_today}`));
+      if (badges.childElementCount) parts.push(badges);
     }
 
     if (question && question.code === code) {
@@ -290,28 +423,45 @@
       const actions = node("div", "capture-actions");
       if (p.confirmed && state.you) {
         const wait = cooldownLeft(code);
-        let reason = "";
-        if (!state.enabled) reason = "Захват выключен вожатым";
+        let reason = null;
+        if (state.war.finished) reason = "Война окончена — ждём новую";
+        else if (!state.enabled) reason = "Захват выключен вожатым";
         else if (!state.window.open) reason = state.window.opens_at ? `Захват откроется в ${clock(state.window.opens_at)}` : "Захват закрыт";
         else if (!p.action) reason = "Точка вашей фракции укреплена до предела";
-        else if (wait) reason = `Точка ждёт вас через ${wait} с`;
+        else if (p.action === "attack" && p.shield_until) reason = "Точка под щитом";
+        else if (wait) {
+          reason = node("p", "capture-meta", "Точка ждёт вас через ");
+          reason.append(countdown(cooldownUntil.get(code)));
+        }
         const go = button("btn btn-primary", ACTIONS[p.action] || "Ход недоступен", () => startChallenge(p));
         go.disabled = busy || Boolean(reason);
         actions.append(go);
-        if (state.enabled && state.window.open) {
+        if (!state.war.finished && state.enabled && state.window.open) {
           actions.append(button("btn btn-secondary", "⚔ Дуэль за точку",
             () => window.dispatchEvent(new CustomEvent("zhidao:duel-offer", { detail: p.code }))));
         }
-        parts.push(node("p", "capture-meta", reason || `Встаньте у точки (до ${state.radius_m} м) и ответьте на вопрос`));
+        if (reason instanceof Node) parts.push(reason);
+        else parts.push(node("p", "capture-meta", reason || `Встаньте у точки (до ${state.radius_m} м) и ответьте на вопрос`));
       }
       if (state.can_manage) {
         actions.append(button("btn btn-secondary", p.confirmed ? "Уточнить точку здесь" : "Подтвердить точку здесь", () => confirmPoint(p)));
       }
       if (actions.childElementCount) parts.push(actions);
+      if (p.confirmed && state.you && !state.war.finished) {
+        const abilities = node("div", "capture-abilities");
+        if (mine) abilities.append(abilityBlock("shield", code), abilityBlock("double", code));
+        else if (p.owner) abilities.append(abilityBlock("scout", code));
+        if (abilities.childElementCount) parts.push(node("span", "capture-label", "Способности фракции · складчина"), abilities);
+      }
     }
     parts.push(node("p", "case-message capture-note", noteText));
     card.replaceChildren(...parts);
     card.hidden = false;
+  }
+
+  function rerender() {
+    drawHud();
+    if (selected) showCard(selected);
   }
 
   function setNote(text) {
@@ -353,7 +503,7 @@
       if (result.correct) {
         noteText = RESULTS[result.action] || "Ход засчитан";
         window.showToast?.(noteText);
-        if (window.ZhidaoSounds) window.ZhidaoSounds.play("rare");
+        if (window.ZhidaoSounds && result.action !== "shielded") window.ZhidaoSounds.play("rare");
       } else {
         noteText = "Неверно. Точка подождёт вас пару минут";
       }
@@ -398,7 +548,7 @@
         /* табло подождёт следующего опроса */
       }
     }
-    (state ? state.points : []).forEach((p) => {
+    (state && state.points ? state.points : []).forEach((p) => {
       if (p.cooldown_seconds) cooldownUntil.set(p.code, Date.now() + p.cooldown_seconds * 1000);
     });
     draw();
@@ -409,14 +559,19 @@
   }
 
   function tick() {
-    if (!selected) return;
     if (question && Date.now() >= question.deadline) {
       question = null;
       noteText = "Время на ответ вышло";
-      showCard(selected);
-    } else if (question || cooldownLeft(selected) > 0) {
-      showCard(selected);
+      if (selected) showCard(selected);
+      return;
     }
+    let expired = false;
+    document.querySelectorAll("#capturePointCard .capture-countdown").forEach((span) => {
+      const left = Math.ceil((Number(span.dataset.until) - Date.now()) / 1000);
+      span.textContent = `${Math.max(0, left)}${span.dataset.suffix}`;
+      if (left <= 0) expired = true;
+    });
+    if (expired && !question && !busy && selected) showCard(selected);
   }
 
   function start() {
@@ -450,7 +605,10 @@
     state = null;
     selected = null;
     question = null;
+    armed = null;
+    hudNote = "";
     cooldownUntil.clear();
+    poolKeys.clear();
     $("capturePointCard").hidden = true;
     if (onMap()) start();
     else drawHud();

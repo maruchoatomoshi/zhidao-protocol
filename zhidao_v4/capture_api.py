@@ -8,7 +8,8 @@ from contextlib import contextmanager
 
 from typing import Literal
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import campus, capture, duels
@@ -55,6 +56,13 @@ class DuelJoinPayload(BaseModel):
 class DuelMovePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
     move: Literal["attack", "defend", "trick"]
+
+
+class PoolPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    ability: Literal["shield", "fog", "double", "scout"]
+    target: str | None = Field(default=None, min_length=1, max_length=40)
+    amount: int = Field(strict=True, ge=1, le=1000)
 
 
 def register_capture(app, current_principal, csrf_principal):
@@ -185,6 +193,34 @@ def register_capture(app, current_principal, csrf_principal):
             season_id = season_of(conn, principal.account_id)
             with immediate_transaction(conn):
                 return duels.leave(conn, principal.account_id, season_id)
+
+    # --- способности и война ----------------------------------------------------------
+
+    @app.post("/api/v4/capture/pool")
+    def capture_pool(payload: PoolPayload, request: Request, principal=Depends(csrf_principal)):
+        throttle("pool", principal.account_id, ANSWERS_PER_MINUTE)
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                result, replayed = capture.contribute(
+                    conn, principal.account_id, season_id, ability=payload.ability, target=payload.target,
+                    amount=payload.amount, key=request.headers.get("x-idempotency-key", ""),
+                    request_id=request.state.request_id)
+        return JSONResponse(result, headers={"X-Idempotent-Replayed": str(replayed).lower()})
+
+    @app.post("/api/v4/capture/finish")
+    def capture_finish(principal=Depends(csrf_principal)):
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                return capture.finish_war(conn, principal.account_id, season_id)
+
+    @app.post("/api/v4/capture/new-war")
+    def capture_new_war(principal=Depends(csrf_principal)):
+        with database() as conn:
+            season_id = season_of(conn, principal.account_id)
+            with immediate_transaction(conn):
+                return capture.new_war(conn, principal.account_id, season_id)
 
     @app.post("/api/v4/capture/switch")
     def capture_switch(payload: SwitchPayload, principal=Depends(csrf_principal)):

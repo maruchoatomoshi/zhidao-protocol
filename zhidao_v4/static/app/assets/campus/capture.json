@@ -27,6 +27,14 @@
   "cooldown_seconds": 180,
   "question_seconds": 60,
   "score_minutes": 10,
+  "abilities": {
+    "shield": {"price": 15, "minutes": 30},
+    "fog": {"price": 10, "minutes": 60},
+    "double": {"price": 20, "minutes": 60},
+    "scout": {"price": 5, "minutes": 60}
+  },
+  "daily_reward": {"stars": 8, "rep": 10},
+  "award_frame": "fr_cup",
   "duels": {
     "daily_limit": 5,
     "bonus": 3,

@@ -260,13 +260,19 @@ def _winner(state: dict) -> str | None:
 def _finish(conn, row, state: dict, now: datetime) -> None:
     winner = _winner(state)
     effect = None
+    season = conn.execute("SELECT * FROM v4_seasons WHERE id=?", (row["season_id"],)).fetchone()
+    # Сыгранная дуэль — это «сегодня играл» для награды лидера дня.
+    for player in state["players"]:
+        capture.record_activity(conn, season, int(player), now)
+    if row["point_code"]:
+        capture.count_move(conn, season, row["point_code"], now)
     if winner:
         faction = state["factions"][winner]
         if row["point_code"]:
-            action, _ = capture.apply_move(conn, row["season_id"], row["point_code"], faction, now)
+            action, _ = capture.apply_move(conn, season, row["point_code"], faction, now)
             effect = {"kind": "point", "code": row["point_code"], "action": action}
         else:
-            capture.add_bonus(conn, row["season_id"], faction, rules()["bonus"])
+            capture.add_bonus(conn, season, faction, rules()["bonus"], now)
             effect = {"kind": "bonus", "points": rules()["bonus"], "faction": faction}
     state["over"] = True
     state["outcome"] = {"winner": winner, "effect": effect}

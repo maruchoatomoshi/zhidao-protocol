@@ -49,6 +49,11 @@ def catalogue() -> dict:
         if item["code"] in codes:
             raise ValueError(f"shop.json: повтор товара {item['code']}")
         codes.add(item["code"])
+        if item["kind"] == "award":
+            # Награда не продаётся: её выдаёт игра (кубок Захвата кампуса), на витрину она не попадает.
+            if item["slot"] not in SLOTS:
+                raise ValueError(f"shop.json: у {item['code']} неизвестный слот")
+            continue
         if type(item["price"]) is not int or item["price"] <= 0:
             raise ValueError(f"shop.json: цена {item['code']} — положительное целое")
         if item["kind"] == "cosmetic":
@@ -155,7 +160,7 @@ def state(conn, account_id: int, season_id: int) -> dict:
         "vitrine": vitrine,
         "cosmetics": [
             {**{k: catalogue_items[code][k] for k in ("code", "slot", "name_ru", "note_ru")}}
-            for code in sorted(owned) if code in catalogue_items and catalogue_items[code]["kind"] == "cosmetic"
+            for code in sorted(owned) if code in catalogue_items and catalogue_items[code]["kind"] in ("cosmetic", "award")
         ],
         "walk_coupons": owned.get(WALK_CODE, 0),
         "equipped": _equipped(conn, account_id, season_id),
@@ -244,7 +249,7 @@ def equip(conn, actor: int, season_id: int, slot: str, item_code: str | None) ->
                      (season_id, actor, slot))
     else:
         item = items_by_code().get(item_code)
-        if item is None or item["kind"] != "cosmetic" or item["slot"] != slot:
+        if item is None or item["kind"] not in ("cosmetic", "award") or item["slot"] != slot:
             raise CaseError("Этот предмет сюда не надевается.")
         if not _owned(conn, actor, season_id).get(item_code):
             raise CaseError("Сначала купите этот предмет.", 409)
