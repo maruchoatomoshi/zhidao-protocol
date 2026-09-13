@@ -123,10 +123,16 @@
         wrap.append(send);
       } else {
         wrap.append(c.banner(`Ход: ${TEAM[turn.team]}. Капитан придумывает подсказку.`));
+        if (mine) {
+          wrap.append(node("p", "spy-hint",
+            "Слушайте капитана: он скажет вслух одно слово и число. Слово связывает ваши карточки, число — сколько их"));
+        }
       }
     } else {
       wrap.append(c.banner(`Ход: ${TEAM[turn.team]} · подсказка на ${turn.clue} · попыток осталось ${turn.guesses_left}`));
       if (mine && !game.you.captain) {
+        wrap.append(node("p", "spy-hint",
+          `Найдите ${turn.clue} карточ${turn.clue === 1 ? "ку" : turn.clue < 5 ? "ки" : "ек"} к слову капитана. Своя — открывайте дальше, чужая или нейтральная — ход переходит, вирус — поражение`));
         wrap.append(node("p", "spy-hint", "Коснитесь карточки дважды, чтобы открыть её."));
         if (turn.guesses_made >= 1) wrap.append(button("btn btn-secondary", "Закончить ход", () => c.act("end-turn")));
       } else if (mine) {
