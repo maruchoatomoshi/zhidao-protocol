@@ -80,6 +80,7 @@ dialog.story-dialog::backdrop { background: rgba(3, 20, 40, .55); }
 .story-architect { width: 150px; height: auto; filter: drop-shadow(0 6px 14px #0004); }
 .story-epilogue { margin: 0; font: italic 15px/1.5 Georgia, serif; color: var(--case-ink, #062e50); }
 .story-signature { margin: 0; font: bold 15px/1.3 "Noto Sans SC", "Microsoft YaHei", sans-serif; color: #b86a00; }
+.story-reward { margin: 4px 0 0; padding: 8px 12px; border: 1px solid #b86a00; border-radius: 6px; background: #fff3d6; font-weight: bold; color: #6b3d00; }
 
 /* --- сигнал на карте --------------------------------------------------------------------- */
 .story-place-card { display: grid; gap: 6px; padding: 14px; border-left: 4px solid #2e8b57; }
