@@ -523,11 +523,24 @@ def unlink_max_identity(
     wrong child blocks the right one until that row is gone; before migration
     0023 it could not be removed at all.
 
-    Live sessions of the account are revoked in the same transaction.
-    Otherwise whoever signed in through the mistaken pairing keeps a working
-    session for its full lifetime — up to `ZHIDAO_V4_SESSION_HOURS` — and
-    unlinking would only stop the *next* sign-in, which is not what anybody
-    asking for it means. `passwd` revokes sessions for the same reason.
+    Live sessions of the account are revoked in the same transaction, and so
+    is any pairing code still outstanding for it. Otherwise whoever signed in
+    through the mistaken pairing keeps a working session for its full
+    lifetime — up to `ZHIDAO_V4_SESSION_HOURS` — and unlinking would only
+    stop the *next* sign-in, which is not what anybody asking for it means.
+    An unconsumed code is the same hole with a longer handle: it could not be
+    spent while the account was linked (`IdentityAlreadyLinkedError` blocked
+    it), and unlinking would arm it — whoever was told that code could link
+    straight back in. A code is a credential; closing the door and leaving a
+    key out is not closing the door. `passwd` revokes sessions for the same
+    reason. The operator issues a fresh code afterwards, which is what the
+    roster screen already tells them to do.
+
+    The MAX subject goes into the audit entry because this is the moment it
+    stops existing anywhere else: `identity.linked` records only the provider
+    name, and the identity row is about to be deleted. Without it the
+    append-only log cannot answer "whose MAX had access to this account",
+    which is the one question a mistaken pairing raises.
 
     Deliberately MAX-only rather than taking a provider code: the `local`
     identity carries the password credential, and deleting it would destroy
@@ -536,7 +549,8 @@ def unlink_max_identity(
     """
     row = conn.execute(
         """
-        SELECT e.id AS identity_id, e.provider_username, a.public_id
+        SELECT e.id AS identity_id, e.provider_subject, e.provider_username,
+               a.public_id
         FROM v4_external_identities e
         JOIN v4_accounts a ON a.id = e.account_id
         WHERE e.account_id = ? AND e.provider_code = 'max'
@@ -546,6 +560,7 @@ def unlink_max_identity(
     if row is None:
         return None
 
+    now_value = utc_text()
     conn.execute(
         "DELETE FROM v4_external_identities WHERE id = ?", (int(row["identity_id"]),)
     )
@@ -554,7 +569,15 @@ def unlink_max_identity(
         UPDATE v4_sessions SET revoked_at = ?
         WHERE account_id = ? AND revoked_at IS NULL
         """,
-        (utc_text(), account_id),
+        (now_value, account_id),
+    ).rowcount
+    codes_revoked = conn.execute(
+        """
+        UPDATE v4_link_codes SET revoked_at = ?, revoked_by_account_id = ?
+        WHERE account_id = ? AND provider_code = 'max'
+          AND consumed_at IS NULL AND revoked_at IS NULL
+        """,
+        (now_value, actor_account_id, account_id),
     ).rowcount
     conn.execute(
         """
@@ -566,12 +589,23 @@ def unlink_max_identity(
             actor_account_id,
             str(row["public_id"]),
             json.dumps(
-                {"provider_code": "max", "sessions_revoked": int(sessions_revoked)},
+                {
+                    "provider_code": "max",
+                    "provider_subject": str(row["provider_subject"]),
+                    "provider_username": row["provider_username"],
+                    "sessions_revoked": int(sessions_revoked),
+                    "codes_revoked": int(codes_revoked),
+                },
+                ensure_ascii=False,
                 separators=(",", ":"),
             ),
         ),
     )
-    return {"provider_code": "max", "sessions_revoked": int(sessions_revoked)}
+    return {
+        "provider_code": "max",
+        "sessions_revoked": int(sessions_revoked),
+        "codes_revoked": int(codes_revoked),
+    }
 
 
 def authenticate_max(

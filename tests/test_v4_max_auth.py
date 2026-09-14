@@ -309,6 +309,44 @@ class MaxSignInTests(unittest.TestCase):
         self.assertIsNone(row["consumed_identity_id"])
         self.assertIn("identity.unlinked", actions)
 
+    def test_unlinking_revokes_a_code_still_outstanding(self):
+        # Невыданная обратно связка: пока аккаунт привязан, свежий код нельзя
+        # потратить (мешает account_already_linked), а отвязка его бы взвела.
+        # Тот, кому этот код продиктовали, привязался бы обратно сразу после
+        # исправления — и отвязка не исправила бы ничего.
+        self.assertEqual(self.sign_in(sign_launch_params(), self.issue_code()).status_code, 200)
+        self.client.cookies.clear()
+        outstanding = self.issue_code()
+
+        self.assertEqual(self.unlink().status_code, 200)
+
+        refused = self.sign_in(sign_launch_params(user_id=880088, username="holder"), outstanding)
+        self.assertEqual(refused.status_code, 409, refused.text)
+        self.assertEqual(refused.json()["detail"]["reason"], "link_required")
+        self.assertNotIn(SESSION_COOKIE, self.client.cookies)
+
+    def test_unlinking_records_which_max_had_access(self):
+        # Единственный момент, когда этот факт ещё существует: строка личности
+        # удаляется, а identity.linked хранит только имя провайдера. Без записи
+        # здесь журнал не отвечает на вопрос «чей MAX имел доступ».
+        self.assertEqual(
+            self.sign_in(sign_launch_params(user_id=770077), self.issue_code()).status_code, 200
+        )
+        self.client.cookies.clear()
+        self.assertEqual(self.unlink().status_code, 200)
+
+        conn = connect_database(self.db_path)
+        try:
+            entry = conn.execute(
+                "SELECT metadata_json FROM v4_audit_log WHERE action = 'identity.unlinked'"
+            ).fetchone()
+        finally:
+            conn.close()
+        self.assertIsNotNone(entry)
+        recorded = json.loads(entry["metadata_json"])
+        self.assertEqual(recorded["provider_subject"], "770077")
+        self.assertEqual(recorded["provider_username"], "max_tester")
+
     def test_unlinking_an_account_without_max_is_not_silently_successful(self):
         removed = self.unlink()
         self.assertEqual(removed.status_code, 404, removed.text)

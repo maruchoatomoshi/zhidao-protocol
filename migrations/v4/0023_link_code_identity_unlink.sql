@@ -11,9 +11,13 @@
 --
 -- The foreign key's reading is the one that survives: a consumed code points
 -- at the identity it created while that identity exists, and at nothing once
--- it is unlinked. When a code was consumed stays on the row. Which MAX
--- account consumed it is in v4_audit_log ('identity.linked'), which is
--- append-only and outlives both the code and the identity.
+-- it is unlinked. When a code was consumed stays on the row.
+--
+-- Which MAX account consumed it is deliberately written into the
+-- 'identity.unlinked' audit entry at the moment of unlinking, because that is
+-- the moment it stops existing anywhere else: 'identity.linked' records only
+-- the provider name, not the subject. Do not read that entry's absence as
+-- proof no MAX was attached — read the unlink entry.
 --
 -- SQLite cannot drop a CHECK in place, so the table is rebuilt. Nothing
 -- references v4_link_codes, so there are no incoming keys to repoint; the old
