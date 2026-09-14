@@ -152,6 +152,9 @@
 #gameRoom[data-game="spy"] #gameRoomBody::before { background-image: url("./assets/games/cover-spy.webp"); }
 #gameRoom[data-game="cipher"] #gameRoomBody::before { background-image: url("./assets/games/cover-cipher.webp"); }
 #gameRoom[data-game="outage"] #gameRoomBody::before { background-image: url("./assets/games/cover-outage.webp"); }
+#gameRoom[data-game="smuggle"] #gameRoomBody::before { background-image: url("./assets/games/cover-smuggle.webp"); }
+/* Обложка окна игры стоит вне тела: тело перерисовывает скрипт панели. */
+.case-window > .game-cover { margin: 8px 10px 0; }
 
 /* --- LCD-табло ----------------------------------------------------------------------- */
 .games-screen .spy-timer {
