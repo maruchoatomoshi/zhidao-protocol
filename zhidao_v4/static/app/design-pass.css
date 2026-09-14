@@ -95,3 +95,32 @@
 /* --- «Ещё» по группам ------------------------------------------------------ */
 
 [data-screen="more"] .hub-grid + .cn-divider { margin-top: 20px; }
+
+/* --- остальные экраны Аквы на телефоне -------------------------------------- */
+
+/* Решение пользователя 2026-09-14 «Другие экраны»: тот же приём, что на главной.
+   Заголовок раздела одного умеренного размера, баннеры REP и заданий без
+   пустой высоты: в Акве у них нет подложки, и 160 px стояли пустыми. */
+@media (max-width: 560px) {
+  :root:not([data-design="xp"]) .screen-intro h1.display-title,
+  :root:not([data-design="xp"]) .map-screen-head h1.display-title,
+  :root:not([data-design="xp"]) .case-workstation .screen-intro h1 { font-size: clamp(28px, 8vw, 32px); }
+  :root:not([data-design="xp"]) .screen-intro,
+  :root:not([data-design="xp"]) .map-screen-head { margin-bottom: 12px; padding-bottom: 8px; }
+  :root:not([data-design="xp"]) .desktop-banner { min-height: 0; margin: 0 0 12px; padding: 2px 0 8px; gap: 10px; }
+  :root:not([data-design="xp"]) .desktop-banner::after { display: none; }
+  :root:not([data-design="xp"]) .desktop-banner > img { width: 48px; height: 52px; }
+  :root:not([data-design="xp"]) .desktop-banner h2 { margin: 0 0 2px; font-size: 20px; }
+  :root:not([data-design="xp"]) .desktop-banner p { margin: 0; font-size: 13px; line-height: 1.4; }
+}
+
+/* В Луне-Акве у баннеров есть рамка и фон — они остаются, уходит только пустая
+   высота: заголовок и строка стояли посреди коробки в 160 px. */
+@media (max-width: 560px) {
+  :root[data-design="xp"] .desktop-banner { min-height: 0; margin: 0 0 12px; padding: 12px 14px; gap: 10px; }
+  :root[data-design="xp"] .desktop-banner h2 { margin: 0 0 4px; font-size: 20px; }
+  :root[data-design="xp"] .desktop-banner p { margin: 0; font-size: 13px; line-height: 1.4; }
+}
+
+/* Заглушки «появятся после старта сезона» — шрифтом интерфейса, не разрядкой. */
+:root:not([data-design="xp"]) .diary-note { font-family: var(--font-ui); letter-spacing: 0; }
