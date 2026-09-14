@@ -8,7 +8,7 @@ on:
 
 jobs:
   syntax:
-    name: Syntax checks (py_compile + node --check)
+    name: Syntax checks and test suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,17 +33,12 @@ jobs:
       - name: Install legacy Travel dependencies
         run: python -m pip install -r requirements-travel.txt
 
-      - name: Standalone learning web tests
-        run: python -m unittest tests.test_web_learning_flow -v
-
-      - name: Legacy Travel startup tests
-        run: python -m unittest tests.test_travel_startup -v
-
-      - name: V4 schema migration tests
-        run: python -m unittest tests.test_v4_migrations -v
-
-      - name: V4 authentication and role tests
-        run: python -m unittest tests.test_v4_auth_api -v
+      # Named modules used to be listed here one by one, and the list stopped
+      # growing after auth: games, economy, cases, shop, capture and duels all
+      # arrived with tests that CI never ran. Discovering the directory means a
+      # new test file is covered the day it is written, without touching CI.
+      - name: Test suite
+        run: python -m pytest tests -q
 
       - uses: actions/setup-node@v4
         with:
@@ -52,7 +47,7 @@ jobs:
       - name: JavaScript syntax — all frontend modules
         run: |
           status=0
-          for f in js/*.js web/js/*.js zhidao_v4/static/architect/*.js; do
+          for f in js/*.js web/js/*.js zhidao_v4/static/architect/*.js zhidao_v4/static/app/*.js; do
             if ! node --check "$f"; then
               status=1
             fi
