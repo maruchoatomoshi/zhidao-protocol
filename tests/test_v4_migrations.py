@@ -65,6 +65,7 @@ class V4MigrationTests(unittest.TestCase):
                 "0022_zombie.sql",
                 "0023_sabotage.sql",
                 "0024_royale_surprises.sql",
+                "0025_smuggle_market.sql",
             ],
         )
         self.assertEqual(second, [])
@@ -187,6 +188,7 @@ print(json.dumps({
                 "0022_zombie.sql",
                 "0023_sabotage.sql",
                 "0024_royale_surprises.sql",
+                "0025_smuggle_market.sql",
             ],
         )
         self.assertEqual(payload["health"]["status"], "ok")
