@@ -101,5 +101,12 @@
     render();
   });
 
+  // Главная («Сейчас в сезоне») открывает игру сразу: showScreen уже сбросил каталог.
+  window.ZhidaoCatalog = Object.freeze({
+    open(key) {
+      if (GAMES.some((game) => game.key === key)) show(key);
+    },
+  });
+
   render();
 }());
