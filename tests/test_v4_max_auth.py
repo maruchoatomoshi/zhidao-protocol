@@ -129,9 +129,9 @@ class MaxSignInTests(unittest.TestCase):
                 )
         finally:
             conn.close()
-        app = create_app(self.db_path, cookie_secure=False, session_hours=1)
-        app.state.max_bot_token = BOT_TOKEN
-        self.client = TestClient(app)
+        self.app = create_app(self.db_path, cookie_secure=False, session_hours=1)
+        self.app.state.max_bot_token = BOT_TOKEN
+        self.client = TestClient(self.app)
 
     def tearDown(self):
         self.client.close()
@@ -226,6 +226,108 @@ class MaxSignInTests(unittest.TestCase):
         self.assertEqual(second.status_code, 409, second.text)
         self.assertEqual(second.json()["detail"]["reason"], "account_already_linked")
         self.assertNotIn(SESSION_COOKIE, self.client.cookies)
+
+    def unlink(self, account_id: int | None = None):
+        """Снимает привязку MAX от имени администратора и выходит обратно."""
+        response = self.client.post(
+            "/api/v4/auth/login",
+            json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        csrf = response.json()["csrf_token"]
+        removed = self.client.request(
+            "DELETE",
+            f"/api/v4/admin/accounts/{account_id or self.account_id()}/identities/max",
+            headers={"X-CSRF-Token": csrf},
+        )
+        self.client.post("/api/v4/auth/logout", headers={"X-CSRF-Token": csrf})
+        self.client.cookies.clear()
+        return removed
+
+    def test_unlinking_frees_the_account_for_a_new_pairing(self):
+        # Выход из account_already_linked. До миграции 0023 строку привязки
+        # нельзя было удалить вовсе: CHECK из 0004 запрещал ровно ту строку
+        # кода, которая остаётся после ON DELETE SET NULL.
+        self.assertEqual(self.sign_in(sign_launch_params(), self.issue_code()).status_code, 200)
+        self.client.cookies.clear()
+
+        removed = self.unlink()
+        self.assertEqual(removed.status_code, 200, removed.text)
+
+        # Прежний MAX больше не узнаётся и снова просит код.
+        orphaned = self.sign_in(sign_launch_params())
+        self.assertEqual(orphaned.status_code, 409, orphaned.text)
+        self.assertEqual(orphaned.json()["detail"]["reason"], "link_required")
+        self.client.cookies.clear()
+
+        # А правильный MAX теперь привязывается к тому же участнику.
+        relinked = self.sign_in(
+            sign_launch_params(user_id=880088, username="right"), self.issue_code()
+        )
+        self.assertEqual(relinked.status_code, 200, relinked.text)
+        self.assertEqual(relinked.json()["account"]["display_name"], "Тестовый Участник")
+
+    def test_unlinking_ends_the_session_opened_by_the_wrong_pairing(self):
+        # Смысл отвязки — прекратить чужой доступ. Если сессию не отозвать,
+        # тот, кто вошёл по ошибочной привязке, остаётся в аккаунте до конца
+        # её срока, и отвязка запретила бы только следующий вход.
+        intruder = TestClient(self.app)
+        try:
+            self.assertEqual(
+                self.sign_in(sign_launch_params(), self.issue_code()).status_code, 200
+            )
+            intruder.cookies.update(self.client.cookies)
+            self.client.cookies.clear()
+            self.assertEqual(intruder.get("/api/v4/auth/me").status_code, 200)
+
+            self.assertEqual(self.unlink().status_code, 200)
+
+            self.assertEqual(intruder.get("/api/v4/auth/me").status_code, 401)
+        finally:
+            intruder.close()
+
+    def test_unlinking_keeps_the_spent_code_in_the_ledger(self):
+        # «Код выдали и по нему вошли» — то, что нужно уметь прочитать, когда
+        # разбираются, как ребёнок попал не в свою учётку. Сама строка кода
+        # остаётся, теряя только указатель на удалённую личность.
+        self.assertEqual(self.sign_in(sign_launch_params(), self.issue_code()).status_code, 200)
+        self.client.cookies.clear()
+        self.assertEqual(self.unlink().status_code, 200)
+
+        conn = connect_database(self.db_path)
+        try:
+            row = conn.execute(
+                "SELECT consumed_at, consumed_identity_id FROM v4_link_codes"
+            ).fetchone()
+            actions = [
+                str(entry["action"])
+                for entry in conn.execute("SELECT action FROM v4_audit_log")
+            ]
+        finally:
+            conn.close()
+        self.assertIsNotNone(row["consumed_at"])
+        self.assertIsNone(row["consumed_identity_id"])
+        self.assertIn("identity.unlinked", actions)
+
+    def test_unlinking_an_account_without_max_is_not_silently_successful(self):
+        removed = self.unlink()
+        self.assertEqual(removed.status_code, 404, removed.text)
+
+    def test_a_participant_cannot_unlink_anybody(self):
+        # Прятать кнопку — не контроль доступа: отказ обязан приходить с
+        # сервера тому, кто дошёл до эндпоинта запросом.
+        response = self.client.post(
+            "/api/v4/auth/login",
+            json={"username": "kid1", "password": "participant secure passphrase"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        csrf = response.json()["csrf_token"]
+        refused = self.client.request(
+            "DELETE",
+            f"/api/v4/admin/accounts/{self.account_id()}/identities/max",
+            headers={"X-CSRF-Token": csrf},
+        )
+        self.assertEqual(refused.status_code, 403, refused.text)
 
     def cookie_header(self, response, name: str) -> str:
         for raw in response.headers.get_list("set-cookie"):

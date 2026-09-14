@@ -509,6 +509,71 @@ def create_link_code(
     return code
 
 
+def unlink_max_identity(
+    conn: sqlite3.Connection,
+    *,
+    account_id: int,
+    actor_account_id: int,
+) -> dict | None:
+    """Detaches an account's MAX identity. Returns None if it had none.
+
+    This is the remedy `account_already_linked` tells the operator to apply.
+    The schema allows an account exactly one identity per provider
+    (`UNIQUE(account_id, provider_code)`), so a MAX account paired to the
+    wrong child blocks the right one until that row is gone; before migration
+    0023 it could not be removed at all.
+
+    Live sessions of the account are revoked in the same transaction.
+    Otherwise whoever signed in through the mistaken pairing keeps a working
+    session for its full lifetime — up to `ZHIDAO_V4_SESSION_HOURS` — and
+    unlinking would only stop the *next* sign-in, which is not what anybody
+    asking for it means. `passwd` revokes sessions for the same reason.
+
+    Deliberately MAX-only rather than taking a provider code: the `local`
+    identity carries the password credential, and deleting it would destroy
+    the account's own way in. A parameter that must never be given one of its
+    two values is better not offered.
+    """
+    row = conn.execute(
+        """
+        SELECT e.id AS identity_id, e.provider_username, a.public_id
+        FROM v4_external_identities e
+        JOIN v4_accounts a ON a.id = e.account_id
+        WHERE e.account_id = ? AND e.provider_code = 'max'
+        """,
+        (account_id,),
+    ).fetchone()
+    if row is None:
+        return None
+
+    conn.execute(
+        "DELETE FROM v4_external_identities WHERE id = ?", (int(row["identity_id"]),)
+    )
+    sessions_revoked = conn.execute(
+        """
+        UPDATE v4_sessions SET revoked_at = ?
+        WHERE account_id = ? AND revoked_at IS NULL
+        """,
+        (utc_text(), account_id),
+    ).rowcount
+    conn.execute(
+        """
+        INSERT INTO v4_audit_log(
+            actor_account_id, action, entity_type, entity_id, metadata_json
+        ) VALUES (?, 'identity.unlinked', 'account', ?, ?)
+        """,
+        (
+            actor_account_id,
+            str(row["public_id"]),
+            json.dumps(
+                {"provider_code": "max", "sessions_revoked": int(sessions_revoked)},
+                separators=(",", ":"),
+            ),
+        ),
+    )
+    return {"provider_code": "max", "sessions_revoked": int(sessions_revoked)}
+
+
 def authenticate_max(
     db_path: str | Path,
     *,

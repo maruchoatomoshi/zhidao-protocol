@@ -41,6 +41,7 @@ from .auth import (
     csrf_is_valid,
     load_principal,
     revoke_session,
+    unlink_max_identity,
 )
 from .max_auth import MaxAuthError, parse_user, verify_launch_params
 from .db import connect_database, immediate_transaction
@@ -611,6 +612,42 @@ def create_app(
         # Plaintext leaves the server exactly once, in this response. The
         # database only ever holds its hash from this point on.
         return {"code": code, "provider_code": "max", "ttl_minutes": 30}
+
+    @app.delete("/api/v4/admin/accounts/{account_id}/identities/max")
+    def unlink_max(
+        account_id: int,
+        principal: Principal = Depends(_operator_writer),
+    ):
+        """Снимает привязку MAX, чтобы аккаунт можно было сопрячь заново.
+
+        До этого единственным выходом из `account_already_linked` была правка
+        базы руками: схема разрешает одну привязку на провайдера, а удалить
+        строку мешал CHECK из 0004 (снят миграцией 0023).
+
+        Операторская, а не архитекторская операция — ровно как выдача кода:
+        разбираться, что ребёнок вошёл под чужой учёткой, приходится вожатому
+        на месте, а не тому, у кого есть доступ к серверу.
+        """
+        conn = connect_database(app.state.db_path)
+        try:
+            with immediate_transaction(conn):
+                account_exists = conn.execute(
+                    "SELECT 1 FROM v4_accounts WHERE id = ?", (account_id,)
+                ).fetchone()
+                if account_exists is None:
+                    raise HTTPException(status_code=404, detail="Account not found")
+                result = unlink_max_identity(
+                    conn,
+                    account_id=account_id,
+                    actor_account_id=principal.account_id,
+                )
+                if result is None:
+                    raise HTTPException(
+                        status_code=404, detail="This account has no linked MAX"
+                    )
+        finally:
+            conn.close()
+        return result
 
     @app.get("/api/v4/seasons")
     def seasons(principal: Principal = Depends(_current_principal)):
