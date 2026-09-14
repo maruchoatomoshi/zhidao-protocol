@@ -29,12 +29,16 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 
-from . import cases, cipher, rooms, shop
+from . import capture, cases, cipher, rooms, shop
 from .cases import CaseError, authorize, encoded, ensure_wallet, replay
 from .diary import full_wallet
 
 CONFIG_PATH = Path(__file__).parent / "static" / "app" / "assets" / "games" / "royale.json"
-SURPRISES = ("fast", "hanzi", "more")
+SURPRISES = ("fast", "hanzi", "more", "mirror", "shuffle")
+SPECIAL_KINDS = ("tone", "number", "odd", "pair")
+TONES = {"a": "āáǎà", "e": "ēéěè", "i": "īíǐì", "o": "ōóǒò", "u": "ūúǔù", "ü": "ǖǘǚǜ"}
+MARKED = {mark: (vowel, tone) for vowel, marks in TONES.items() for tone, mark in enumerate(marks, start=1)}
+DIGITS = "零一二三四五六七八九"
 REVIVE_OPERATION = "royale.revive"
 PRIZE_OPERATION = "royale.prize"
 REFUND_OPERATION = "royale.refund"
@@ -53,8 +57,8 @@ def utcnow() -> datetime:
 @lru_cache(maxsize=1)
 def config() -> dict:
     data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    for key in ("min_players", "max_players", "prize_min_players", "grace_ms", "reveal_seconds", "max_rounds",
-                "revive_price", "keep_minutes"):
+    for key in ("min_players", "max_players", "prize_min_players", "grace_ms", "intro_seconds", "reveal_seconds",
+                "max_rounds", "revive_price", "keep_minutes"):
         if type(data.get(key)) is not int or data[key] <= 0:
             raise ValueError(f"royale.json: {key} должно быть положительным целым")
     if data["min_players"] < 2:
@@ -67,6 +71,26 @@ def config() -> dict:
     for stage in stages:
         if stage["direction"] not in ("zh", "ru") or not 2 <= stage["options"] <= 8 or stage["seconds"] < 3:
             raise ValueError("royale.json: ступень задана неверно")
+    for special in data.get("specials", []):
+        if (special.get("kind") not in SPECIAL_KINDS or type(special.get("from_round")) is not int
+                or type(special.get("every")) is not int or special["from_round"] < 1 or special["every"] < 1):
+            raise ValueError("royale.json: особый раунд задан неверно")
+    if "odd" in {special["kind"] for special in data.get("specials", [])}:
+        topics = data.get("odd_topics") or {}
+        known = {word["zh"] for word in cipher.content()["words"]}
+        seen: set[str] = set()
+        if len(topics) < 2:
+            raise ValueError("royale.json: для «лишнего слова» нужны хотя бы две темы")
+        for code, topic in topics.items():
+            words = topic.get("words") or []
+            if not str(topic.get("ru") or "").strip() or len(words) < 4:
+                raise ValueError(f"royale.json: у темы {code} нужны название и хотя бы 4 слова")
+            for zh in words:
+                if zh not in known or zh in seen:
+                    raise ValueError(f"royale.json: слова {zh} (тема {code}) нет в словаре или оно уже в другой теме")
+                seen.add(zh)
+    if type(data.get("final_seconds")) is not int or data["final_seconds"] < 3:
+        raise ValueError("royale.json: final_seconds — целое не меньше 3")
     return data
 
 
@@ -142,11 +166,53 @@ def _stage(round_no: int) -> dict:
     return dict(current)
 
 
-def _make_question(state: dict, round_no: int, now: datetime) -> None:
+def _kind_for(round_no: int) -> str:
+    """Особые раунды по расписанию royale.json: тоны и числа. Остальные — слово."""
+    for special in config().get("specials", []):
+        if round_no >= special["from_round"] and (round_no - special["from_round"]) % special["every"] == 0:
+            return special["kind"]
+    return "word"
+
+
+def _retone(pinyin: str) -> list[str]:
+    """Тот же слог во всех четырёх тонах. Только для слога с одной отметкой тона."""
+    marks = [i for i, ch in enumerate(pinyin) if ch in MARKED]
+    if len(marks) != 1:
+        return []
+    i = marks[0]
+    vowel, _ = MARKED[pinyin[i]]
+    return [pinyin[:i] + mark + pinyin[i + 1:] for mark in TONES[vowel]]
+
+
+def _number_hanzi(n: int) -> str:
+    """Число 1–99 иероглифами: 十, 十一, 二十, 七十五."""
+    tens, ones = divmod(n, 10)
+    text = ("" if tens == 1 else DIGITS[tens]) + "十" if tens else ""
+    return text + (DIGITS[ones] if ones else "")
+
+
+def _number_options(n: int, count: int) -> list[str]:
+    """Ловушки для числа: соседние, ±10 и переставленные цифры (75 и 57)."""
+    near = {n + 1, n - 1, n + 10, n - 10}
+    if n % 10:
+        near.add(int(str(n)[::-1]))
+    pool = sorted(x for x in near if 11 <= x <= 99 and x != n)
+    picks = _rng.sample(pool, min(count - 1, len(pool)))
+    while len(picks) < count - 1:
+        extra = _rng.randint(11, 99)
+        if extra != n and extra not in picks:
+            picks.append(extra)
+    return [str(x) for x in picks] + [str(n)]
+
+
+def _make_question(state: dict, round_no: int, now: datetime, *, final: bool = False) -> None:
     params = _stage(round_no)
     rules = config()["surprises"]
     surprise = state.get("surprise")
     seconds, options, pinyin = params["seconds"], params["options"], params["pinyin"]
+    direction, kind = params["direction"], _kind_for(round_no)
+    if final:
+        seconds = config()["final_seconds"]
     if surprise == "fast":
         seconds = max(rules["min_seconds"], seconds - rules["fast_seconds"])
     elif surprise == "hanzi":
@@ -155,20 +221,65 @@ def _make_question(state: dict, round_no: int, now: datetime) -> None:
         options = min(rules["max_options"], options + 1)
     words = cipher.content()["words"]
     used = set(state.get("used", []))
-    word = _rng.choice([w for w in words if w["zh"] not in used] or words)
-    state.setdefault("used", []).append(word["zh"])
-    if params["direction"] == "zh":
-        right = word["ru"]
-        others = sorted({w["ru"] for w in words} - {right})
-        prompt = {"zh": word["zh"], "pinyin": word["pinyin"] if pinyin else None}
+    toned = [w for w in words if len(w["zh"]) == 1 and len(_retone(w["pinyin"])) == 4]
+    if kind == "tone" and not toned:
+        kind = "word"
+    explain, hints = None, None
+    by_zh = {w["zh"]: w for w in words}
+    if kind == "number":
+        number = _rng.randint(11, 99)
+        right = str(number)
+        prompt = {"zh": _number_hanzi(number), "pinyin": None}
+        choices = _number_options(number, options)
+        direction = "number"
+    elif kind == "odd":
+        # «Лишнее слово»: все варианты, кроме одного, — из одной темы royale.json.
+        topics = config()["odd_topics"]
+        code = _rng.choice(sorted(topics))
+        same = topics[code]["words"]
+        group = _rng.sample(same, min(options, len(same) + 1) - 1)
+        right = _rng.choice(topics[_rng.choice(sorted(set(topics) - {code}))]["words"])
+        choices = group + [right]
+        prompt = {"task": "odd"}
+        direction = "odd"
+        explain = f"Лишнее — {right} ({by_zh[right]['ru']}), остальные — {topics[code]['ru']}."
+    elif kind == "pair":
+        # «Собери слово»: первый знак и перевод, выбрать второй. Ловушка не должна складываться в другое слово словаря.
+        twos = [w for w in words if len(w["zh"]) == 2]
+        word = _rng.choice([w for w in twos if w["zh"] not in used] or twos)
+        state.setdefault("used", []).append(word["zh"])
+        head, right = word["zh"][0], word["zh"][1]
+        others = sorted(ch for ch in {w["zh"][1] for w in twos} if ch != right and head + ch not in by_zh)
+        choices = _rng.sample(others, min(options - 1, len(others))) + [right]
+        prompt = {"zh": head + "？", "ru": word["ru"], "pinyin": None}
+        direction = "pair"
+        explain = f"{word['zh']} {word['pinyin']} — {word['ru']}."
     else:
-        right = word["zh"]
-        others = sorted({w["zh"] for w in words} - {right})
-        prompt = {"ru": word["ru"]}
-    choices = _rng.sample(others, options - 1) + [right]
+        pool = toned if kind == "tone" else words
+        word = _rng.choice([w for w in pool if w["zh"] not in used] or pool)
+        state.setdefault("used", []).append(word["zh"])
+        if kind == "tone":
+            right = word["pinyin"]
+            others = [p for p in _retone(right) if p != right]
+            prompt = {"zh": word["zh"], "pinyin": None}
+            options = min(options, 4)
+            direction = "tone"
+        elif direction == "zh":
+            right = word["ru"]
+            others = sorted({w["ru"] for w in words} - {right})
+            prompt = {"zh": word["zh"], "pinyin": word["pinyin"] if pinyin else None}
+        else:
+            right = word["zh"]
+            others = sorted({w["zh"] for w in words} - {right})
+            prompt = {"ru": word["ru"]}
+        choices = _rng.sample(others, min(options - 1, len(others))) + [right]
     _rng.shuffle(choices)
+    if kind == "odd" and pinyin:
+        hints = [by_zh[choice]["pinyin"] for choice in choices]
+    # explain — пояснение к разбору; на телефон оно уходит только после конца раунда.
     state["question"] = {"prompt": prompt, "options": choices, "answer": choices.index(right), "seconds": seconds,
-                         "surprise": surprise, "direction": params["direction"]}
+                         "surprise": surprise, "direction": direction, "kind": kind, "final": final,
+                         "explain": explain, "hints": hints}
     state["started_at"] = rooms.iso(now)
     state["deadline"] = rooms.iso(now + timedelta(seconds=seconds))
     state.pop("reveal", None)
@@ -227,7 +338,9 @@ def _next_or_finish(conn, game, state: dict, now: datetime) -> None:
     else:
         state["surprise"] = None
     round_no = game["round"] + 1
-    _make_question(state, round_no, now)
+    # Остались двое из большой игры — финальная дуэль: своё время на ответ и своя заставка на экране.
+    final = int(state.get("starters") or 0) > 2 and _alive_count(conn, game["id"]) == 2
+    _make_question(state, round_no, now, final=final)
     _save(conn, game["id"], status="question", round_no=round_no, state=state, now=now)
 
 
@@ -292,11 +405,14 @@ def advance(conn, game_id: int, now: datetime) -> bool:
 def _public_question(state: dict) -> dict:
     q = state["question"]
     return {"prompt": q["prompt"], "options": q["options"], "seconds": q["seconds"], "surprise": q["surprise"],
-            "direction": q["direction"], "deadline": state["deadline"]}
+            "direction": q["direction"], "deadline": state["deadline"], "opens_at": state["started_at"],
+            "kind": q.get("kind", "word"), "final": bool(q.get("final")), "hints": q.get("hints")}
 
 
-def _view(conn, game, viewer: int, staff: bool) -> dict:
+def _view(conn, game, viewer: int, staff: bool, now: datetime) -> dict:
     state = json.loads(game["state_json"])
+    # Заставка 3-2-1 перед первым вопросом: слово не уходит на телефон, пока идёт отсчёт.
+    intro = game["status"] == "question" and now < rooms.parse(state["started_at"])
     players = _players(conn, game["id"])
     alive = sum(1 for p in players if p["alive"])
     starters = int(state.get("starters") or len(players))
@@ -305,11 +421,16 @@ def _view(conn, game, viewer: int, staff: bool) -> dict:
     view = {"id": int(game["id"]), "status": game["status"], "round": int(game["round"]), "starters": starters,
             "players": len(players), "alive": alive, "revive_price": config()["revive_price"],
             "cancelled": bool(state.get("cancelled")), "history": state.get("history", [])}
-    if game["status"] == "question":
+    if intro:
+        view["intro_until"] = state["started_at"]
+        view["answered"] = 0
+    elif game["status"] == "question":
         view["question"] = _public_question(state)
         view["answered"] = sum(1 for pid in answers if any(int(p["account_id"]) == pid and p["alive"] for p in players))
     elif game["status"] == "reveal":
         view["question"] = _public_question(state)
+        if state["question"].get("explain"):
+            view["question"]["explain"] = state["question"]["explain"]
         votes = {code: 0 for code in SURPRISES}
         for row in conn.execute("SELECT surprise, COUNT(*) AS n FROM v4_royale_votes WHERE game_id=? AND round=? GROUP BY surprise",
                                 (game["id"], game["round"])):
@@ -333,9 +454,12 @@ def _view(conn, game, viewer: int, staff: bool) -> dict:
             view.setdefault("me", {})["place"] = mine["place"] if mine else None
     if staff:
         frames = shop.frames_for(conn, [p["account_id"] for p in players])
+        colors = {code: faction["color"] for code, faction in capture.factions().items()}
         view["grid"] = [{"name": p["display_name"], "alive": bool(p["alive"]), "revived": bool(p["revived"]),
                          "answered": int(p["account_id"]) in answers and game["status"] == "question",
-                         "frame": frames.get(int(p["account_id"]))} for p in players]
+                         "out_round": p["out_round"], "frame": frames.get(int(p["account_id"])),
+                         "color": colors.get(capture.faction_of(conn, game["season_id"], int(p["account_id"])))}
+                        for p in players]
     return view
 
 
@@ -356,7 +480,7 @@ def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
         """SELECT 1 FROM v4_season_memberships m JOIN v4_seasons s ON s.id = m.season_id
            WHERE m.season_id=? AND m.account_id=? AND m.status='active' AND s.status='active'""",
         (season_id, actor)).fetchone() is not None
-    return {"game": _view(conn, game, actor, staff) if game else None, "can_host": staff, "can_play": member,
+    return {"game": _view(conn, game, actor, staff, now) if game else None, "can_host": staff, "can_play": member,
             "revive_price": config()["revive_price"], "prizes": config()["prizes"],
             "prize_min_players": config()["prize_min_players"]}
 
@@ -418,6 +542,8 @@ def answer(conn, actor: int, season_id: int, choice: int) -> dict:
         raise CaseError("Ответ уже принят.", 409)
     state = json.loads(game["state_json"])
     question = state["question"]
+    if now < rooms.parse(state["started_at"]):
+        raise CaseError("Вопрос ещё не открыт: идёт отсчёт.", 409)
     if not 0 <= choice < len(question["options"]):
         raise CaseError("Такого варианта нет.")
     ms = max(0, int((now - rooms.parse(state["started_at"])).total_seconds() * 1000))
@@ -517,7 +643,8 @@ def start(conn, actor: int, season_id: int) -> dict:
     now = utcnow()
     state = json.loads(game["state_json"])
     state.update(starters=count, surprise=None)
-    _make_question(state, 1, now)
+    # Первый вопрос открывается после заставки: отсчёт не съедает время на ответ.
+    _make_question(state, 1, now + timedelta(seconds=config()["intro_seconds"]))
     _save(conn, game["id"], status="question", round_no=1, state=state, now=now)
     conn.execute(
         """INSERT INTO v4_audit_log(actor_account_id, season_id, action, entity_type, entity_id, after_json)

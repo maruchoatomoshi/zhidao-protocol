@@ -15,7 +15,6 @@
     implant_terracota: "terracota", implant_red_dragon: "honglong",
     implant_jade_warden: "jade_warden", implant_diplomat: "diplomat", implant_golden_nexus: "golden_nexus",
   };
-  const FORGE_MS = 1400;
   let session = window.ZhidaoSession || null;
   let contextPromise = null;
   let season = null;
@@ -157,21 +156,6 @@
 
   // --- переплавка -------------------------------------------------------------------------
 
-  /* Декорация «Переплавка…» на время запроса. Результат ждёт её не дольше
-     FORGE_MS и только при включённых анимациях. */
-  function forge() {
-    const panel = $("workshopForge");
-    if (!(window.ZhidaoMotion && window.ZhidaoMotion.enabled())) return null;
-    panel.hidden = false;
-    panel.replaceChildren();
-    const items = node("span", "workshop-forge-items");
-    items.append(node("i"), node("i"), node("i"));
-    const bar = node("span", "workshop-forge-bar");
-    bar.append(node("i"));
-    panel.append(items, bar, node("small", null, "Переплавка…"));
-    return new Promise((resolve) => setTimeout(resolve, FORGE_MS));
-  }
-
   function showResult(result) {
     $("workshopForge").hidden = true;
     const host = $("workshopResult");
@@ -182,7 +166,7 @@
       node("h3", null, result.got.name_ru),
       node("p", "spy-hint", `Ушло: ${result.gave.count} × «${result.gave.name_ru}» и ${result.fee}★. У вас ${result.stars}★.`));
     host.hidden = false;
-    host.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    host.scrollIntoView({ block: "nearest", behavior: window.ZhidaoMotion?.enabled() ? "smooth" : "auto" });
   }
 
   async function craft(recipe) {
@@ -199,14 +183,15 @@
     drawRecipes();
     const key = pending.get(recipe.code) || newKey();
     pending.set(recipe.code, key);
-    const animation = forge();
     try {
       const result = await api(`/api/v4/seasons/${season.id}/workshop/craft`,
         { method: "POST", key, body: { item_code: recipe.code } });
       pending.delete(recipe.code);
-      if (animation) await animation;
       showResult(result);
-      if (window.ZhidaoSounds) window.ZhidaoSounds.play(result.got.tier === "black" ? "rare" : "open");
+      if (!result.replayed && !document.hidden) {
+        window.ZhidaoRetro?.reveal($("workshopResult"));
+        if (window.ZhidaoSounds) window.ZhidaoSounds.play(result.got.tier === "black" ? "rare" : "open");
+      }
     } catch (error) {
       $("workshopForge").hidden = true;
       if (error.status) pending.delete(recipe.code);

@@ -7,7 +7,10 @@ umask 022
 
 repo=/opt/zhidao-v4
 db=/var/lib/zhidao-v4/zhidao.db
-target=18be6a6c69deaf9b39cd13669d34c89e352effc8
+target=83bd19fb3e880cb8cacbc5f93141e3026d387f2b
+# A reviewed full SHA may be passed explicitly; without it the pinned release above is deployed.
+target="${1:-$target}"
+[[ "$target" =~ ^[0-9a-f]{40}$ ]] || { echo 'Expected a full reviewed commit SHA.'; exit 1; }
 
 [[ $(id -u) == 0 ]] || { echo 'Run from the root Termius session.'; exit 1; }
 cd "$repo"
@@ -16,6 +19,9 @@ cd "$repo"
 git diff --quiet
 git diff --cached --quiet
 git cat-file -e "$target^{commit}"
+# Verify the target migration set BEFORE stopping services or changing files.
+target_schema=$(git ls-tree -r --name-only "$target" -- migrations/v4 | sed -n 's|migrations/v4/\([0-9][0-9][0-9][0-9]\)_.*\.sql$|\1|p' | sort | tail -n 1)
+[[ "$target_schema" == 0025 ]] || { echo 'Target release does not match expected schema 25. Nothing changed.'; exit 1; }
 old=$(git rev-parse HEAD)
 git merge-base --is-ancestor "$old" "$target" || {
   echo 'Server history differs from this release. Nothing changed; ask for review.'; exit 1;
@@ -134,7 +140,7 @@ for attempt in range(20):
     try:
         with urlopen(base + '/api/v4/health', timeout=2) as r:
             health = json.load(r)
-        assert health['status'] == 'ok' and health['schema_version'] == 22
+        assert health['status'] == 'ok' and health['schema_version'] == 25
         break
     except Exception:
         if attempt == 19:
@@ -158,7 +164,7 @@ except HTTPError as error:
     assert error.code == 401
 else:
     raise AssertionError('Personal case context unexpectedly public')
-print('Local smoke: schema 22; cases rules and release assets 200; personal API 401')
+print('Local smoke: schema 25; cases rules and release assets 200; personal API 401')
 PY
 
 systemctl start zhidao-v4-bot

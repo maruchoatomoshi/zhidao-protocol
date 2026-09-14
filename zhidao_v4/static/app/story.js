@@ -296,6 +296,10 @@
       portrait.alt = "Архитектор";
       finale.replaceChildren(portrait, ...(data.epilogue || []).map((line) => node("p", "story-epilogue", line)),
         node("p", "story-signature", data.signature || ""));
+      const reward = data.reward;
+      if (reward && reward.received) {
+        finale.append(node("p", "story-reward", `Награда всем участникам: рамка «${reward.name_ru}» и ${reward.stars}★`));
+      }
     }
   }
 

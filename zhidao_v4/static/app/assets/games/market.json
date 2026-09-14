@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "note_ru": "Рынок Контрабанды, этап 2. Решения пользователя 2026-09-13: обмен между игроками; юани сгорают в 07:00; ловят дети-патрульные; топ-3 дня 10/6/3★. Остальные числа — черновик Claude.",
+  "open": "09:00",
+  "close": "21:00",
+  "min_players": 4,
+  "start_money": 20,
+  "kit": 6,
+  "patrol_per": 8,
+  "offer_seconds": 120,
+  "max_offer_items": 8,
+  "max_offer_money": 200,
+  "merchant_rest_minutes": 60,
+  "patrol_rest_seconds": 300,
+  "clean_fine": 3,
+  "set_bonus": 6,
+  "prizes": [10, 6, 3]
+}

@@ -152,6 +152,7 @@
 #gameRoom[data-game="spy"] #gameRoomBody::before { background-image: url("./assets/games/cover-spy.webp"); }
 #gameRoom[data-game="cipher"] #gameRoomBody::before { background-image: url("./assets/games/cover-cipher.webp"); }
 #gameRoom[data-game="outage"] #gameRoomBody::before { background-image: url("./assets/games/cover-outage.webp"); }
+#gameRoom[data-game="smuggle"] #gameRoomBody::before { background-image: url("./assets/games/cover-smuggle.webp"); }
 
 /* --- LCD-табло ----------------------------------------------------------------------- */
 .games-screen .spy-timer {

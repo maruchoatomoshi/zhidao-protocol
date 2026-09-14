@@ -26,7 +26,7 @@ class AnswerPayload(BaseModel):
 
 class VotePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    surprise: Literal["fast", "hanzi", "more"]
+    surprise: Literal["fast", "hanzi", "more", "mirror", "shuffle"]
 
 
 def register_royale(app, current_principal, csrf_principal):

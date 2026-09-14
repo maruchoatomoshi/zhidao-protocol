@@ -164,6 +164,26 @@ class StoryTests(unittest.TestCase):
         self.assertEqual(" ".join(final["message"]), "Они поняли механику, но не поняли, зачем она была создана.")
         self.assertIn("epilogue", final)
 
+        # Награда всем участникам сезона: рамка и 20★, по одному разу, без следа того, кто решил.
+        reward = final["reward"]
+        self.assertEqual((reward["stars"], reward["frame"], reward["name_ru"], reward["received"]),
+                         (20, "fr_architect", "Послание Архитектора", True))
+        members = {row["account_id"] for row in self.sql("SELECT account_id FROM v4_season_memberships WHERE season_id=1")}
+        journal = self.sql("SELECT account_id, actor_account_id, stars_delta FROM v4_economy_operations "
+                           "WHERE operation='story.finale'")
+        self.assertEqual(sorted(row["account_id"] for row in journal), sorted(members))
+        self.assertTrue(all(row["actor_account_id"] == row["account_id"] and row["stars_delta"] == 20 for row in journal))
+        self.assertEqual({row["account_id"] for row in self.sql(
+            "SELECT account_id FROM v4_case_inventory WHERE item_code='fr_architect'")}, members)
+        self.assertEqual({row["stars"] for row in self.sql(
+            "SELECT stars FROM v4_case_wallets WHERE season_id=1 AND account_id IN (SELECT account_id FROM v4_season_memberships)")}, {20})
+        last = list(ANSWERS)[-1]
+        self.assertTrue(self.answer(last, ANSWERS[last], who="kid2").json()["already"])
+        self.assertEqual(len(self.sql("SELECT 1 FROM v4_economy_operations WHERE operation='story.finale'")), len(members))
+        self.assertFalse(self.view("architect")["reward"]["received"])       # вожатый не участник
+        shop = self.clients["kid2"].get("/api/v4/seasons/1/shop").json()
+        self.assertIn("fr_architect", [item["code"] for item in shop["cosmetics"]])
+
     def test_staff_can_read_but_only_members_answer_and_outsiders_see_nothing(self):
         self.assertEqual(self.view("architect")["fragments"][0]["state"], "open")
         self.assertEqual(self.answer("f01", ANSWERS["f01"], who="architect").status_code, 403)

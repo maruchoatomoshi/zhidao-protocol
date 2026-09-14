@@ -103,6 +103,7 @@ class RoyaleTests(unittest.TestCase):
             self.assertEqual(self.post(name, "join").status_code, 200)
         started = self.post("architect", "start")
         self.assertEqual(started.status_code, 200, started.text)
+        self.now += timedelta(seconds=RULES["intro_seconds"])   # заставка 3-2-1 кончилась, вопрос открыт
 
     def state(self):
         return json.loads(self.sql("SELECT state_json FROM v4_royale_games ORDER BY id DESC LIMIT 1")[0]["state_json"])
@@ -146,6 +147,22 @@ class RoyaleTests(unittest.TestCase):
         self.assertEqual(self.post("kid03", "join").status_code, 409)
 
     # --- раунды ------------------------------------------------------------------------------
+
+    def test_the_intro_hides_the_first_word_and_does_not_eat_the_answer_time(self):
+        self.assertEqual(self.post("architect", "create").status_code, 200)
+        for name in ("kid01", "kid02"):
+            self.post(name, "join")
+        self.post("architect", "start")
+        game = self.view("kid01")["game"]
+        self.assertIn("intro_until", game)
+        self.assertNotIn("question", game)
+        self.assertNotIn(self.state()["question"]["options"][0], json.dumps(game, ensure_ascii=False))
+        self.assertEqual(self.post("kid01", "answer", {"choice": 0}).status_code, 409)
+        self.now += timedelta(seconds=RULES["intro_seconds"] + RULES["stages"][0]["seconds"] - 1)
+        game = self.view("kid01")["game"]
+        self.assertEqual(game["status"], "question")
+        self.assertIn("prompt", game["question"])
+        self.answer("kid01")
 
     def test_the_phone_sees_the_answer_only_at_the_reveal(self):
         self.begin()
@@ -203,6 +220,77 @@ class RoyaleTests(unittest.TestCase):
         game = self.after_reveal()["game"]
         seconds = RULES["stages"][0]["seconds"] - RULES["surprises"]["fast_seconds"]
         self.assertEqual((game["round"], game["question"]["surprise"], game["question"]["seconds"]), (2, "fast", seconds))
+
+    def test_mirror_and_shuffle_are_new_surprises(self):
+        self.begin()
+        self.round(KIDS[:10], wrong=["kid11", "kid12"])
+        self.post("kid11", "vote", {"surprise": "mirror"})
+        self.assertEqual(self.post("kid12", "vote", {"surprise": "mirror"}).status_code, 200)
+        self.assertEqual(self.post("kid12", "vote", {"surprise": "shuffle"}).status_code, 200)
+        self.post("kid12", "vote", {"surprise": "mirror"})
+        game = self.after_reveal()["game"]
+        self.assertEqual(game["question"]["surprise"], "mirror")
+
+    # --- особые раунды (этап 2) ------------------------------------------------------------------
+
+    def test_numbers_tones_and_the_round_schedule_are_built_right(self):
+        self.assertEqual([royale._number_hanzi(n) for n in (5, 10, 11, 20, 75, 99)],
+                         ["五", "十", "十一", "二十", "七十五", "九十九"])
+        self.assertEqual(royale._retone("shuǐ"), ["shuī", "shuí", "shuǐ", "shuì"])
+        self.assertEqual(royale._retone("tàiyáng"), [])
+        options = royale._number_options(75, 4)
+        self.assertEqual((len(set(options)), "75" in options), (4, True))
+        schedule = [royale._kind_for(n) for n in range(1, 10)]
+        self.assertEqual(schedule, ["word", "word", "tone", "odd", "number", "word", "tone", "pair", "number"])
+
+    def test_odd_word_and_pair_rounds_are_built_right(self):
+        topic_of = {zh: code for code, topic in RULES["odd_topics"].items() for zh in topic["words"]}
+        known = {word["zh"] for word in royale.cipher.content()["words"]}
+        for _ in range(40):
+            state = {}
+            royale._make_question(state, 4, self.now)
+            question = state["question"]
+            right = question["options"][question["answer"]]
+            rest = [option for i, option in enumerate(question["options"]) if i != question["answer"]]
+            self.assertEqual(question["kind"], "odd")
+            self.assertEqual(len({topic_of[option] for option in rest}), 1)          # все, кроме одного, — одна тема
+            self.assertNotEqual(topic_of[right], topic_of[rest[0]])
+            self.assertEqual(len(question["hints"]), len(question["options"]))    # на ранней ступени есть пиньинь
+            self.assertNotIn("explain", royale._public_question(state))            # пояснение — только на разборе
+
+            state = {}
+            royale._make_question(state, 8, self.now)
+            question = state["question"]
+            head = question["prompt"]["zh"][0]
+            self.assertEqual(question["kind"], "pair")
+            self.assertIn(head + question["options"][question["answer"]], known)
+            self.assertEqual([head + option in known for option in question["options"]].count(True), 1)
+
+    def test_tone_and_number_rounds_and_the_final_duel(self):
+        base = lambda text: "".join(royale.MARKED[ch][0] if ch in royale.MARKED else ch for ch in text)
+        self.begin(players=KIDS[:4])
+        self.round(KIDS[:4])
+        self.after_reveal()
+        self.round(KIDS[:4])
+        question = self.after_reveal()["game"]["question"]
+        self.assertEqual(question["kind"], "tone")
+        self.assertIsNone(question["prompt"]["pinyin"])
+        self.assertEqual(len({base(option) for option in question["options"]}), 1)
+        self.assertEqual(len(set(question["options"])), len(question["options"]))
+
+        self.round(KIDS[:2], wrong=KIDS[2:4])
+        question = self.after_reveal()["game"]["question"]
+        self.assertTrue(question["final"])
+        self.assertEqual(question["seconds"], RULES["final_seconds"])
+        self.assertEqual(question["kind"], "odd")
+        self.assertNotIn("explain", question)
+
+        self.round(KIDS[:2])
+        self.assertIn("остальные", self.view()["game"]["question"]["explain"])
+        question = self.after_reveal()["game"]["question"]
+        self.assertEqual(question["kind"], "number")
+        self.assertTrue(all(option.isdigit() for option in question["options"]))
+        self.assertTrue(set(question["prompt"]["zh"]) <= set(royale.DIGITS + "十"))
 
     # --- итоги ------------------------------------------------------------------------------
 

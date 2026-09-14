@@ -18,22 +18,26 @@
   <link rel="stylesheet" href="./diary.css?v=d01fa4acfe">
   <link rel="stylesheet" href="./economy.css?v=a4d218897e">
   <link rel="stylesheet" href="./shop.css?v=4ef8ad57ea">
-  <link rel="stylesheet" href="./cosmetics.css?v=658303a394">
+  <link rel="stylesheet" href="./cosmetics.css?v=6ea11c867c">
   <link rel="stylesheet" href="./meet.css?v=e396112639">
   <link rel="stylesheet" href="./trade.css?v=dbe9d9aca3">
   <link rel="stylesheet" href="./virus.css?v=1198560e6f">
   <link rel="stylesheet" href="./workshop.css?v=647dbb6dcf">
   <link rel="stylesheet" href="./aero-desktop.css?v=2bedca366a">
   <link rel="stylesheet" href="./xp-home.css?v=27e799f306">
-  <link rel="stylesheet" href="./readability.css?v=ab957914b5">
+  <link rel="stylesheet" href="./readability.css?v=7a6aa971e5">
   <link rel="stylesheet" href="./guide.css?v=bfcb9b167f">
-  <link rel="stylesheet" href="./retro.css?v=8179cf4369">
+  <link rel="stylesheet" href="./retro.css?v=49b76a38ad">
   <link rel="stylesheet" href="./campus-marks.css?v=6bf51bb428">
-  <link rel="stylesheet" href="./story.css?v=b9735a6e21">
-  <link rel="stylesheet" href="./royale.css?v=7b9d5ccb5c">
+  <link rel="stylesheet" href="./story.css?v=e0609b79dc">
+  <link rel="stylesheet" href="./royale.css?v=97efc522e3">
   <link rel="stylesheet" href="./capture.css?v=2f61d0455b">
+  <link rel="stylesheet" href="./market.css?v=76129a76ad">
+  <link rel="stylesheet" href="./sabotage.css?v=10688bea40">
   <link rel="stylesheet" href="./zombie.css?v=93c7303693">
   <link rel="stylesheet" href="./agent.css?v=f86b29a72f">
+  <link rel="stylesheet" href="./games-polish.css?v=a6355669d9">
+  <link rel="stylesheet" href="./design-pass.css?v=2cd84c8778">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -837,29 +841,59 @@
           <button type="button" class="btn btn-secondary" data-game-guide="meet">Пазл встреч: обучение</button>
           <button type="button" class="btn btn-secondary" data-game-guide="trade">Обмен: обучение</button>
           <button type="button" class="btn btn-secondary" data-game-guide="virus">Вирус: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="royale">Протокол 60: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="agent">Тайный агент: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="market">Рынок Контрабанды: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="sabotage">Саботаж: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="zombie">Зомби-протокол: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="capture">Захват кампуса: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="workshop">Мастерская: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="story">Скрытые файлы: обучение</button>
+          <button type="button" class="btn btn-secondary" data-game-guide="map">Туман и метки: обучение</button>
           </div>
         </details>
 
-        <article class="case-window royale-window" id="royaleWindow">
+        <nav class="games-catalog" id="gamesCatalog" aria-label="Все игры"></nav>
+        <div class="games-back" id="gamesBack" hidden><button type="button" class="btn btn-secondary" data-catalog-back>&lsaquo; Все игры</button></div>
+
+        <article class="case-window royale-window" id="royaleWindow" data-catalog="royale">
           <div class="case-titlebar"><h2>Протокол 60</h2><span aria-hidden="true">大逃杀</span></div>
+          <img class="game-banner" src="./assets/games/cover-royale.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
           <div class="spy-body" id="royaleBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="royaleStatus">—</span></div>
         </article>
 
-        <article class="case-window agent-window" id="agentWindow">
+        <article class="case-window agent-window" id="agentWindow" data-catalog="agent">
           <div class="case-titlebar"><h2>Тайный агент</h2><span aria-hidden="true">特工</span></div>
+          <img class="game-banner" src="./assets/games/cover-agent.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
           <div class="spy-body" id="agentBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="agentStatus">—</span></div>
         </article>
 
-        <article class="case-window zombie-window" id="zombieWindow">
+        <article class="case-window zombie-window" id="zombieWindow" data-catalog="zombie">
           <div class="case-titlebar"><h2>Зомби-протокол</h2><span aria-hidden="true">丧尸</span></div>
+          <img class="game-banner" src="./assets/games/cover-zombie.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
           <div class="spy-body" id="zombieBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="zombieStatus">—</span></div>
         </article>
 
-        <article class="case-window" id="captureIntro">
+        <article class="case-window sabotage-window" id="sabotageWindow" data-catalog="sabotage">
+          <div class="case-titlebar"><h2>Саботаж</h2><span aria-hidden="true">破坏</span></div>
+          <img class="game-banner" src="./assets/games/cover-sabotage.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="spy-body" id="sabotageBody" aria-live="polite"></div>
+          <div class="case-statusbar"><span id="sabotageStatus">—</span></div>
+        </article>
+
+        <article class="case-window market-window" id="marketWindow" data-catalog="market">
+          <div class="case-titlebar"><h2>Рынок Контрабанды</h2><span aria-hidden="true">黑市</span></div>
+          <img class="game-banner" src="./assets/games/cover-market.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="spy-body" id="marketBody" aria-live="polite"></div>
+          <div class="case-statusbar"><span id="marketStatus">—</span></div>
+        </article>
+
+        <article class="case-window" id="captureIntro" data-catalog="capture">
           <div class="case-titlebar"><h2>Игры на кампусе</h2><span aria-hidden="true">校园</span></div>
+          <img class="game-banner" src="./assets/games/cover-capture.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
           <div class="spy-body">
             <section class="game-card" aria-labelledby="gameCaptureTitle">
               <h3 id="gameCaptureTitle">Захват кампуса <span aria-hidden="true">占领</span></h3>
@@ -871,7 +905,7 @@
           <div class="case-statusbar"><span>ФРАКЦИЯ ВЫДАЁТСЯ АВТОМАТИЧЕСКИ</span></div>
         </article>
 
-        <article class="case-window" id="gameIntro">
+        <article class="case-window" id="gameIntro" data-catalog="table">
           <div class="case-titlebar"><h2>Игры за столом</h2><span aria-hidden="true">游戏</span></div>
           <div class="spy-body">
             <p class="spy-lead">Собирайтесь компанией: один создаёт комнату, остальные вводят её код. Телефон держит тайны и счёт, а играете вы голосом.</p>
@@ -902,6 +936,7 @@
               <button type="button" class="btn btn-primary" data-create-game="outage">Создать комнату</button>
             </section>
             <section class="game-card" aria-labelledby="gameSmuggleTitle">
+              <span class="game-cover" aria-hidden="true"><img src="./assets/games/cover-smuggle.webp" alt="" width="960" height="360" loading="lazy" decoding="async"></span>
               <h3 id="gameSmuggleTitle">Контрабанда <span aria-hidden="true">走私</span></h3>
               <p>Порт Хайнаня, таможня BlueJoy. Купцы тайно собирают сумки и блефуют, таможенник решает: пропустить за взятку или вскрыть. Во вскрытой сумке — только иероглифы.</p>
               <ul class="spy-facts"><li>3–6 игроков</li><li>юани только на партию</li><li>победителю 10★</li></ul>
@@ -911,7 +946,7 @@
           <div class="case-statusbar"><span>ОЧКИ ТОЛЬКО НА ВЕЧЕР</span></div>
         </article>
 
-        <article class="case-window" id="gameRoom" hidden>
+        <article class="case-window" id="gameRoom" data-catalog="table" hidden>
           <div class="case-titlebar"><h2 id="gameRoomTitle">Комната</h2><button type="button" id="gameLeave" aria-label="Выйти из комнаты">×</button></div>
           <div class="spy-body" id="gameRoomBody"></div>
           <p class="case-message spy-note" id="gameNote" role="status"></p>
@@ -945,31 +980,9 @@
           </button>
         </div>
 
-        <div class="cn-divider"><b>功能</b><span>Разделы</span></div>
+        <div class="cn-divider"><b>游戏</b><span>Игры и находки</span></div>
 
         <div class="hub-grid">
-          <!-- Плитка служебного контура. Скрыта по умолчанию: её показывает
-               admin.js тому, у кого есть служебная роль. Прятать кнопку — не
-               способ ограничить доступ, права проверяет сервер. -->
-          <button type="button" class="hub-tile tone-red" id="adminHubTile" data-open-screen="admin" hidden>
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
-            <span class="hub-name">Админка</span>
-            <span class="hub-cn">管理<i>guǎn lǐ</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-sky" data-app-guide>
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-info.svg" alt=""></span>
-            <span class="hub-name">Инструкция</span><span class="hub-cn">Помощь по приложению</span>
-          </button>
-          <button type="button" class="hub-tile tone-aqua" data-open-screen="campus-map">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
-            <span class="hub-name">Карта кампуса</span>
-            <span class="hub-cn">校园地图<i>xiào yuán dì tú</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-gold" data-open-screen="shop">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
-            <span class="hub-name">Магазин</span>
-            <span class="hub-cn">商店</span>
-          </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="meet" data-new="meet">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
             <span class="hub-name">Встречи</span>
@@ -990,6 +1003,11 @@
             <span class="hub-name">Мастерская</span>
             <span class="hub-cn">工坊<i>gōng fáng</i></span>
           </button>
+          <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-collection.svg" alt=""></span>
+            <span class="hub-name">Коллекция</span>
+            <span class="hub-cn">收藏<i>shōu c&aacute;ng</i></span>
+          </button>
           <button type="button" class="hub-tile tone-steel story-tile" id="storyBinTile" hidden>
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-bin.svg" alt=""></span>
             <span class="hub-name">Корзина</span>
@@ -1005,50 +1023,77 @@
             <span class="hub-name">Архив</span>
             <span class="hub-cn">档案<i>dàng àn</i></span>
           </button>
-          <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-collection.svg" alt=""></span>
-            <span class="hub-name">Коллекция</span>
-            <span class="hub-cn">收藏<i>shōu c&aacute;ng</i></span>
+        </div>
+
+        <div class="cn-divider"><b>校园</b><span>Кампус</span></div>
+
+        <div class="hub-grid">
+          <button type="button" class="hub-tile tone-aqua" data-open-screen="campus-map">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
+            <span class="hub-name">Карта кампуса</span>
+            <span class="hub-cn">校园地图<i>xiào yuán dì tú</i></span>
           </button>
+          <button type="button" class="hub-tile tone-gold" data-open-screen="shop">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
+            <span class="hub-name">Магазин</span>
+            <span class="hub-cn">商店</span>
+          </button>
+        </div>
+
+        <div class="cn-divider"><b>帮助</b><span>Профиль и помощь</span></div>
+
+        <div class="hub-grid">
           <button type="button" class="hub-tile tone-sky" data-open-screen="profile">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-person.svg" alt=""></span>
             <span class="hub-name">Профиль</span>
             <span class="hub-cn">操作员<i>cāo zuò yuán</i></span>
           </button>
-          <button type="button" class="hub-tile tone-lime" data-toast="Отряд появится после распределения участников по группам">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
-            <span class="hub-name">Отряд</span>
-            <span class="hub-cn">小组<i>xiǎo zǔ</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-gold" data-toast="Достижения появятся после первых заданий">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-rating.png" alt=""></span>
-            <span class="hub-name">Достижения</span>
-            <span class="hub-cn">成就<i>chéng jiù</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-aqua" data-toast="Запись на стирку подключим вместе с расписанием">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-wash.svg" alt=""></span>
-            <span class="hub-name">Стирка</span>
-            <span class="hub-cn">洗衣<i>xǐ yī</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-sky" data-toast="Запись на воду подключим вместе с расписанием">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-drop.svg" alt=""></span>
-            <span class="hub-name">Вода</span>
-            <span class="hub-cn">饮水<i>yǐn shuǐ</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-lime" data-toast="Живой прогноз погоды пока не подключён">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-weather.svg" alt=""></span>
-            <span class="hub-name">Погода</span>
-            <span class="hub-cn">天气<i>tiān qì</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-violet" data-toast="Уведомления пока не подключены">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-bell.svg" alt=""></span>
-            <span class="hub-name">Уведомления</span>
-            <span class="hub-cn">通知<i>tōng zhī</i></span>
+          <button type="button" class="hub-tile tone-sky" data-app-guide>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-info.svg" alt=""></span>
+            <span class="hub-name">Инструкция</span><span class="hub-cn">Помощь по приложению</span>
           </button>
           <button type="button" class="hub-tile tone-steel" data-toast="ZHIDAO Hainan · Aero Personal System. Кейсы и коллекция подключены после входа; остальные модули развиваются.">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-info.svg" alt=""></span>
             <span class="hub-name">О приложении</span>
             <span class="hub-cn">关于<i>guān yú</i></span>
+          </button>
+          <!-- Плитка служебного контура. Скрыта по умолчанию: её показывает
+               admin.js тому, у кого есть служебная роль. Прятать кнопку — не
+               способ ограничить доступ, права проверяет сервер. -->
+          <button type="button" class="hub-tile tone-red" id="adminHubTile" data-open-screen="admin" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
+            <span class="hub-name">Админка</span>
+            <span class="hub-cn">管理<i>guǎn lǐ</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-lime" data-toast="Отряд появится после распределения участников по группам" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
+            <span class="hub-name">Отряд</span>
+            <span class="hub-cn">小组<i>xiǎo zǔ</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-gold" data-toast="Достижения появятся после первых заданий" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-rating.png" alt=""></span>
+            <span class="hub-name">Достижения</span>
+            <span class="hub-cn">成就<i>chéng jiù</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-aqua" data-toast="Запись на стирку подключим вместе с расписанием" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-wash.svg" alt=""></span>
+            <span class="hub-name">Стирка</span>
+            <span class="hub-cn">洗衣<i>xǐ yī</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-sky" data-toast="Запись на воду подключим вместе с расписанием" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-drop.svg" alt=""></span>
+            <span class="hub-name">Вода</span>
+            <span class="hub-cn">饮水<i>yǐn shuǐ</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-lime" data-toast="Живой прогноз погоды пока не подключён" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-weather.svg" alt=""></span>
+            <span class="hub-name">Погода</span>
+            <span class="hub-cn">天气<i>tiān qì</i></span>
+          </button>
+          <button type="button" class="hub-tile tone-violet" data-toast="Уведомления пока не подключены" hidden>
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-bell.svg" alt=""></span>
+            <span class="hub-name">Уведомления</span>
+            <span class="hub-cn">通知<i>tōng zhī</i></span>
           </button>
         </div>
 
@@ -1109,33 +1154,36 @@
   <script src="./case-play.js?v=fd93e2e02a" defer></script>
   <script src="./implants.js?v=72985beec8" defer></script>
   <script src="./admin.js?v=cdad17c580" defer></script>
-  <script src="./games.js?v=91ee76d171" defer></script>
+  <script src="./games.js?v=d7a8ff7ff4" defer></script>
   <script src="./game-spy.js?v=1f1256a995" defer></script>
   <script src="./game-cipher.js?v=32871c2395" defer></script>
   <script src="./game-smuggle.js?v=e360fdadc3" defer></script>
   <script src="./game-outage.js?v=776b998494" defer></script>
   <script src="./diary.js?v=fb3ac8d621" defer></script>
   <script src="./economy.js?v=e2532e9054" defer></script>
-  <script src="./cosmetics.js?v=02080f3e5d" defer></script>
+  <script src="./cosmetics.js?v=ea916c862c" defer></script>
   <script src="./shop.js?v=9ef796e7ab" defer></script>
   <script src="./meet.js?v=44e02e65d4" defer></script>
   <script src="./trade.js?v=f1748536b7" defer></script>
   <script src="./virus.js?v=e1285fcef3" defer></script>
-  <script src="./workshop.js?v=7eadb0c69f" defer></script>
+  <script src="./workshop.js?v=7ceac69974" defer></script>
   <script src="./app.js?v=5f514feeef" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
   <script src="./aero-motion.js?v=ff241b0b3e" defer></script>
-  <script src="./guide.js?v=e24a015b1b" defer></script>
-  <script src="./retro.js?v=30022b2992" defer></script>
+  <script src="./guide.js?v=a3e3d5a58d" defer></script>
+  <script src="./retro.js?v=2effc8142a" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>
-  <script src="./story.js?v=a3a1bfb3a5" defer></script>
+  <script src="./story.js?v=90f625f5fe" defer></script>
   <div class="royale-stage" id="royaleStage" role="dialog" aria-label="Протокол 60 — большой экран" hidden></div>
-  <script src="./royale.js?v=847cc26426" defer></script>
+  <script src="./royale.js?v=82e1b4e1d9" defer></script>
   <script src="./capture-duel.js?v=6afd7f08ee" defer></script>
-  <script src="./capture.js?v=5ef056c0b1" defer></script>
-  <script src="./zombie.js?v=5e4b53b5d7" defer></script>
-  <script src="./agent.js?v=8f9aed498f" defer></script>
+  <script src="./capture.js?v=804a3f1087" defer></script>
+  <script src="./market.js?v=315030f463" defer></script>
+  <script src="./sabotage.js?v=e3038c8cfd" defer></script>
+  <script src="./zombie.js?v=f8a5ff6747" defer></script>
+  <script src="./agent.js?v=021f1fccb9" defer></script>
+  <script src="./games-catalog.js?v=e3417864a1" defer></script>
 </body>
 </html>

@@ -28,6 +28,9 @@ from .cases import CaseError, authorize
 
 SCENARIO_PATH = Path(__file__).parent / "story_scenario.json"
 SURFACES = ("icq", "recycle_bin", "error_window", "broken_shortcut", "properties", "place")
+# Решение пользователя 2026-09-14: когда сообщение собрано, награду получают все
+# участники сезона — рамка и ★. Кто разгадал последний фрагмент, не записывается.
+FINALE_OPERATION = "story.finale"
 
 
 def utcnow():
@@ -87,6 +90,11 @@ def scenario() -> dict:
             raise ValueError(f"story_scenario.json: место у {fragment['code']} не совпадает с поверхностью")
         if fragment.get("place") and fragment["place"] not in feature_centres():
             raise ValueError(f"story_scenario.json: объекта {fragment['place']} нет в campus.geojson")
+    reward = data.get("finale_reward") or {}
+    frame = shop.items_by_code().get(reward.get("frame"))
+    if (not isinstance(reward.get("stars"), int) or reward["stars"] < 0 or not frame
+            or frame["kind"] != "award" or frame["slot"] != "frame"):
+        raise ValueError("story_scenario.json: finale_reward — это ★ и наградная рамка из shop.json")
     return data
 
 
@@ -179,7 +187,41 @@ def view(conn, account_id: int, season_id: int) -> dict:
     if complete:
         body["epilogue"] = data["epilogue"]
         body["signature"] = data["signature"]
+        reward = data["finale_reward"]
+        body["reward"] = {"stars": reward["stars"], "frame": reward["frame"],
+                          "name_ru": shop.items_by_code()[reward["frame"]]["name_ru"],
+                          "received": rewarded(conn, season_id, account_id)}
     return body
+
+
+def rewarded(conn, season_id: int, account_id: int) -> bool:
+    return conn.execute("SELECT 1 FROM v4_economy_operations WHERE season_id=? AND account_id=? AND operation=? LIMIT 1",
+                        (season_id, account_id, FINALE_OPERATION)).fetchone() is not None
+
+
+def reward_everyone(conn, season_id: int) -> int:
+    """Финал: всем активным участникам сезона — рамка и ★, каждому один раз.
+
+    В журнале экономики участник сам себе актор: кто разгадал последний
+    фрагмент, нигде не остаётся."""
+    reward = scenario()["finale_reward"]
+    members = [int(row["account_id"]) for row in conn.execute(
+        """SELECT m.account_id FROM v4_season_memberships m JOIN v4_accounts a ON a.id = m.account_id
+           WHERE m.season_id=? AND m.status='active' AND a.status='active' ORDER BY m.account_id""", (season_id,))]
+    given = 0
+    for account_id in members:
+        if rewarded(conn, season_id, account_id):
+            continue
+        cases.ensure_wallet(conn, account_id, season_id)
+        before = cases.wallet(conn, account_id, season_id)
+        conn.execute("UPDATE v4_case_wallets SET stars = stars + ? WHERE season_id=? AND account_id=?",
+                     (reward["stars"], season_id, account_id))
+        cases.record(conn, account_id, account_id, season_id, FINALE_OPERATION, before,
+                     cases.wallet(conn, account_id, season_id), {"frame": reward["frame"]})
+        conn.execute("""INSERT OR IGNORE INTO v4_case_inventory(season_id, account_id, item_code, quantity, effect_state)
+                        VALUES (?,?,?,1,'active')""", (season_id, account_id, reward["frame"]))
+        given += 1
+    return given
 
 
 def answer(conn, actor: int, season_id: int, code: str, text: str) -> dict:
@@ -199,5 +241,8 @@ def answer(conn, actor: int, season_id: int, code: str, text: str) -> dict:
     conn.execute("INSERT OR IGNORE INTO v4_story_solved(season_id, fragment_code, solved_day) VALUES (?,?,?)",
                  (season_id, code, state["today"]))
     solved = state["solved"] | {code}
-    return {"correct": True, "number": number, "word": word,
-            "complete": all(f["code"] in solved for f in scenario()["fragments"])}
+    complete = all(f["code"] in solved for f in scenario()["fragments"])
+    result = {"correct": True, "number": number, "word": word, "complete": complete}
+    if complete:
+        result["rewarded"] = reward_everyone(conn, season_id)
+    return result

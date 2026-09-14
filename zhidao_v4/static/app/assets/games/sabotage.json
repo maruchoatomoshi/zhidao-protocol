@@ -1,0 +1,16 @@
+{
+  "min_players": 5,
+  "max_players": 60,
+  "round_minutes": 30,
+  "saboteur_per": 6,
+  "captain_per": 5,
+  "captain_meetings": 2,
+  "tasks_per_player": 4,
+  "kill_cooldown_seconds": 60,
+  "meeting_seconds": 150,
+  "question_seconds": 45,
+  "wrong_cooldown_seconds": 60,
+  "keep_minutes": 30,
+  "prize_min_players": 8,
+  "prize": {"winner_stars": 10}
+}
