@@ -35,7 +35,7 @@ from .diary import full_wallet
 
 CONFIG_PATH = Path(__file__).parent / "static" / "app" / "assets" / "games" / "royale.json"
 SURPRISES = ("fast", "hanzi", "more", "mirror", "shuffle")
-SPECIAL_KINDS = ("tone", "number")
+SPECIAL_KINDS = ("tone", "number", "odd", "pair")
 TONES = {"a": "āáǎà", "e": "ēéěè", "i": "īíǐì", "o": "ōóǒò", "u": "ūúǔù", "ü": "ǖǘǚǜ"}
 MARKED = {mark: (vowel, tone) for vowel, marks in TONES.items() for tone, mark in enumerate(marks, start=1)}
 DIGITS = "零一二三四五六七八九"
@@ -75,6 +75,20 @@ def config() -> dict:
         if (special.get("kind") not in SPECIAL_KINDS or type(special.get("from_round")) is not int
                 or type(special.get("every")) is not int or special["from_round"] < 1 or special["every"] < 1):
             raise ValueError("royale.json: особый раунд задан неверно")
+    if "odd" in {special["kind"] for special in data.get("specials", [])}:
+        topics = data.get("odd_topics") or {}
+        known = {word["zh"] for word in cipher.content()["words"]}
+        seen: set[str] = set()
+        if len(topics) < 2:
+            raise ValueError("royale.json: для «лишнего слова» нужны хотя бы две темы")
+        for code, topic in topics.items():
+            words = topic.get("words") or []
+            if not str(topic.get("ru") or "").strip() or len(words) < 4:
+                raise ValueError(f"royale.json: у темы {code} нужны название и хотя бы 4 слова")
+            for zh in words:
+                if zh not in known or zh in seen:
+                    raise ValueError(f"royale.json: слова {zh} (тема {code}) нет в словаре или оно уже в другой теме")
+                seen.add(zh)
     if type(data.get("final_seconds")) is not int or data["final_seconds"] < 3:
         raise ValueError("royale.json: final_seconds — целое не меньше 3")
     return data
@@ -210,12 +224,36 @@ def _make_question(state: dict, round_no: int, now: datetime, *, final: bool = F
     toned = [w for w in words if len(w["zh"]) == 1 and len(_retone(w["pinyin"])) == 4]
     if kind == "tone" and not toned:
         kind = "word"
+    explain, hints = None, None
+    by_zh = {w["zh"]: w for w in words}
     if kind == "number":
         number = _rng.randint(11, 99)
         right = str(number)
         prompt = {"zh": _number_hanzi(number), "pinyin": None}
         choices = _number_options(number, options)
         direction = "number"
+    elif kind == "odd":
+        # «Лишнее слово»: все варианты, кроме одного, — из одной темы royale.json.
+        topics = config()["odd_topics"]
+        code = _rng.choice(sorted(topics))
+        same = topics[code]["words"]
+        group = _rng.sample(same, min(options, len(same) + 1) - 1)
+        right = _rng.choice(topics[_rng.choice(sorted(set(topics) - {code}))]["words"])
+        choices = group + [right]
+        prompt = {"task": "odd"}
+        direction = "odd"
+        explain = f"Лишнее — {right} ({by_zh[right]['ru']}), остальные — {topics[code]['ru']}."
+    elif kind == "pair":
+        # «Собери слово»: первый знак и перевод, выбрать второй. Ловушка не должна складываться в другое слово словаря.
+        twos = [w for w in words if len(w["zh"]) == 2]
+        word = _rng.choice([w for w in twos if w["zh"] not in used] or twos)
+        state.setdefault("used", []).append(word["zh"])
+        head, right = word["zh"][0], word["zh"][1]
+        others = sorted(ch for ch in {w["zh"][1] for w in twos} if ch != right and head + ch not in by_zh)
+        choices = _rng.sample(others, min(options - 1, len(others))) + [right]
+        prompt = {"zh": head + "？", "ru": word["ru"], "pinyin": None}
+        direction = "pair"
+        explain = f"{word['zh']} {word['pinyin']} — {word['ru']}."
     else:
         pool = toned if kind == "tone" else words
         word = _rng.choice([w for w in pool if w["zh"] not in used] or pool)
@@ -236,8 +274,12 @@ def _make_question(state: dict, round_no: int, now: datetime, *, final: bool = F
             prompt = {"ru": word["ru"]}
         choices = _rng.sample(others, min(options - 1, len(others))) + [right]
     _rng.shuffle(choices)
+    if kind == "odd" and pinyin:
+        hints = [by_zh[choice]["pinyin"] for choice in choices]
+    # explain — пояснение к разбору; на телефон оно уходит только после конца раунда.
     state["question"] = {"prompt": prompt, "options": choices, "answer": choices.index(right), "seconds": seconds,
-                         "surprise": surprise, "direction": direction, "kind": kind, "final": final}
+                         "surprise": surprise, "direction": direction, "kind": kind, "final": final,
+                         "explain": explain, "hints": hints}
     state["started_at"] = rooms.iso(now)
     state["deadline"] = rooms.iso(now + timedelta(seconds=seconds))
     state.pop("reveal", None)
@@ -364,7 +406,7 @@ def _public_question(state: dict) -> dict:
     q = state["question"]
     return {"prompt": q["prompt"], "options": q["options"], "seconds": q["seconds"], "surprise": q["surprise"],
             "direction": q["direction"], "deadline": state["deadline"], "opens_at": state["started_at"],
-            "kind": q.get("kind", "word"), "final": bool(q.get("final"))}
+            "kind": q.get("kind", "word"), "final": bool(q.get("final")), "hints": q.get("hints")}
 
 
 def _view(conn, game, viewer: int, staff: bool, now: datetime) -> dict:
@@ -387,6 +429,8 @@ def _view(conn, game, viewer: int, staff: bool, now: datetime) -> dict:
         view["answered"] = sum(1 for pid in answers if any(int(p["account_id"]) == pid and p["alive"] for p in players))
     elif game["status"] == "reveal":
         view["question"] = _public_question(state)
+        if state["question"].get("explain"):
+            view["question"]["explain"] = state["question"]["explain"]
         votes = {code: 0 for code in SURPRISES}
         for row in conn.execute("SELECT surprise, COUNT(*) AS n FROM v4_royale_votes WHERE game_id=? AND round=? GROUP BY surprise",
                                 (game["id"], game["round"])):

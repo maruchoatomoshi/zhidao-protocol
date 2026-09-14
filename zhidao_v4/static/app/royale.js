@@ -195,17 +195,30 @@
   // Классы вариантов по типу раунда: иероглифы, пиньинь с тонами, числа.
   function kindClass(question) {
     const kind = question.kind || "word";
-    return `${question.direction === "ru" ? " is-hanzi" : ""}${kind === "tone" ? " is-pinyin" : ""}${kind === "number" ? " is-number" : ""}`;
+    const hanzi = question.direction === "ru" || kind === "odd" || kind === "pair";
+    // В «лишнем слове» нет иероглифа-вопроса: зеркальный сюрприз переворачивает варианты.
+    const mirror = kind === "odd" && question.surprise === "mirror";
+    return `${hanzi ? " is-hanzi" : ""}${kind === "tone" ? " is-pinyin" : ""}${kind === "number" ? " is-number" : ""}${mirror ? " is-mirror" : ""}`;
+  }
+
+  // Пиньинь под вариантом — в «лишнем слове» на ранних ступенях.
+  function withHint(element, question, index) {
+    const hint = question.hints && question.hints[index];
+    if (hint) element.append(node("small", "royale-hint", hint));
+    return element;
   }
 
   function prompt(question, big, fresh) {
     const box = node("div", `royale-question${big ? " is-big" : ""}${fresh ? " is-new" : ""}`);
     const kind = question.kind || "word";
     if (question.final) box.append(node("span", "royale-final", "ФИНАЛЬНАЯ ДУЭЛЬ"));
-    if (question.prompt.zh) {
+    if (kind === "odd") {
+      box.append(node("b", "royale-word", "Какое слово лишнее?"), node("p", "royale-pinyin", "Все, кроме одного, — из одной темы"));
+    } else if (question.prompt.zh) {
       box.append(node("b", `royale-hanzi${question.surprise === "mirror" ? " is-mirror" : ""}`, question.prompt.zh));
       if (kind === "tone") box.append(node("p", "royale-pinyin", "Как это читается? Угадайте тон"));
       else if (kind === "number") box.append(node("p", "royale-pinyin", "Какое это число?"));
+      else if (kind === "pair") box.append(node("p", "royale-pinyin", `«${question.prompt.ru}» — какого знака не хватает?`));
       else if (question.prompt.pinyin) box.append(node("p", "royale-pinyin", question.prompt.pinyin));
     } else {
       box.append(node("b", "royale-word", question.prompt.ru), node("p", "royale-pinyin", "Найдите иероглиф"));
@@ -217,7 +230,7 @@
   function optionsReveal(game, fresh) {
     const list = node("div", `royale-options is-reveal${kindClass(game.question)}`);
     game.question.options.forEach((text, index) => {
-      const item = node("div", "royale-option", text);
+      const item = withHint(node("div", "royale-option", text), game.question, index);
       if (index === game.reveal.answer) item.classList.add("is-right");
       if (index === game.reveal.answer && fresh) item.classList.add("is-flash");
       if (game.me && game.me.choice === index && index !== game.reveal.answer) item.classList.add("is-wrong");
@@ -275,7 +288,8 @@
     if (me && me.alive && !me.answered) {
       const options = node("div", `royale-options${kindClass(game.question)}${fresh ? " is-new" : ""}`);
       if (game.question.surprise === "shuffle") options.dataset.shuffle = "1";
-      game.question.options.forEach((text, index) => options.append(button("btn btn-secondary", text, () => act("answer", { choice: index }))));
+      game.question.options.forEach((text, index) => options.append(
+        withHint(button("btn btn-secondary", text, () => act("answer", { choice: index })), game.question, index)));
       parts.push(options);
     } else if (me && me.alive) {
       parts.push(node("p", "royale-meta is-ok", "Ответ принят. Ждём остальных…"));
@@ -292,6 +306,7 @@
     const head = node("p", "royale-meta", "Выбыло ");
     head.append(roll(game.reveal.eliminated, fresh), ` · осталось ${game.alive} · следующий раунд через `, countdown(game.reveal.until));
     parts.push(head, prompt(game.question, false, false), optionsReveal(game, fresh));
+    if (game.question.explain) parts.push(node("p", "royale-explain", game.question.explain));
     if (me && me.alive) {
       parts.push(node("p", "royale-meta is-ok", me.choice === game.reveal.answer ? "Верно! Вы в игре" : "Вы в игре"));
     } else if (me) {
@@ -439,11 +454,13 @@
       if (game.status === "reveal") {
         const lost = node("p", "royale-stage-head", "Выбыло: ");
         lost.append(roll(game.reveal.eliminated, freshReveal));
-        parts.push(optionsReveal(game, freshReveal), lost);
+        parts.push(optionsReveal(game, freshReveal));
+        if (game.question.explain) parts.push(node("p", "royale-explain", game.question.explain));
+        parts.push(lost);
       } else {
         const options = node("div", `royale-options is-big${kindClass(game.question)}${freshRound ? " is-new" : ""}`);
         if (game.question.surprise === "shuffle") options.dataset.shuffle = "1";
-        game.question.options.forEach((text) => options.append(node("div", "royale-option", text)));
+        game.question.options.forEach((text, index) => options.append(withHint(node("div", "royale-option", text), game.question, index)));
         parts.push(options);
       }
       parts.push(grid(game, "play"));

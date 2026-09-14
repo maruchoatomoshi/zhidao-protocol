@@ -241,7 +241,30 @@ class RoyaleTests(unittest.TestCase):
         options = royale._number_options(75, 4)
         self.assertEqual((len(set(options)), "75" in options), (4, True))
         schedule = [royale._kind_for(n) for n in range(1, 10)]
-        self.assertEqual(schedule, ["word", "word", "tone", "word", "number", "word", "tone", "word", "number"])
+        self.assertEqual(schedule, ["word", "word", "tone", "odd", "number", "word", "tone", "pair", "number"])
+
+    def test_odd_word_and_pair_rounds_are_built_right(self):
+        topic_of = {zh: code for code, topic in RULES["odd_topics"].items() for zh in topic["words"]}
+        known = {word["zh"] for word in royale.cipher.content()["words"]}
+        for _ in range(40):
+            state = {}
+            royale._make_question(state, 4, self.now)
+            question = state["question"]
+            right = question["options"][question["answer"]]
+            rest = [option for i, option in enumerate(question["options"]) if i != question["answer"]]
+            self.assertEqual(question["kind"], "odd")
+            self.assertEqual(len({topic_of[option] for option in rest}), 1)          # все, кроме одного, — одна тема
+            self.assertNotEqual(topic_of[right], topic_of[rest[0]])
+            self.assertEqual(len(question["hints"]), len(question["options"]))    # на ранней ступени есть пиньинь
+            self.assertNotIn("explain", royale._public_question(state))            # пояснение — только на разборе
+
+            state = {}
+            royale._make_question(state, 8, self.now)
+            question = state["question"]
+            head = question["prompt"]["zh"][0]
+            self.assertEqual(question["kind"], "pair")
+            self.assertIn(head + question["options"][question["answer"]], known)
+            self.assertEqual([head + option in known for option in question["options"]].count(True), 1)
 
     def test_tone_and_number_rounds_and_the_final_duel(self):
         base = lambda text: "".join(royale.MARKED[ch][0] if ch in royale.MARKED else ch for ch in text)
@@ -259,8 +282,11 @@ class RoyaleTests(unittest.TestCase):
         question = self.after_reveal()["game"]["question"]
         self.assertTrue(question["final"])
         self.assertEqual(question["seconds"], RULES["final_seconds"])
+        self.assertEqual(question["kind"], "odd")
+        self.assertNotIn("explain", question)
 
         self.round(KIDS[:2])
+        self.assertIn("остальные", self.view()["game"]["question"]["explain"])
         question = self.after_reveal()["game"]["question"]
         self.assertEqual(question["kind"], "number")
         self.assertTrue(all(option.isdigit() for option in question["options"]))

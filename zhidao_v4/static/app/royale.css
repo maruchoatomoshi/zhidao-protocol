@@ -169,6 +169,11 @@
 .royale-options.is-pinyin .btn, .royale-options.is-pinyin .royale-option { font: 700 24px/1 Georgia, "Times New Roman", serif; }
 .royale-options.is-number { grid-template-columns: repeat(2, 1fr); }
 .royale-options.is-number .btn, .royale-options.is-number .royale-option { font: 900 28px/1 "Courier New", monospace; }
+.royale-options.is-mirror .btn, .royale-options.is-mirror .royale-option { transform: scaleX(-1); }
+.royale-hint { display: block; margin-top: 4px; font: 500 13px/1.2 Georgia, "Times New Roman", serif; opacity: .75; }
+.royale-explain { margin: 0; padding: 8px 12px; border-radius: 6px; background: #f1e9ff; color: #2b0d57; font-weight: 700; }
+.royale-stage .royale-explain { font-size: clamp(18px, 2.4vw, 32px); }
+:root[data-theme="dark"] .royale-explain { background: #2a1a47; color: #efe4ff; }
 
 /* Крупные варианты на телефоне: в спешке попасть пальцем. */
 .royale-options .btn { min-height: 56px; font-size: 18px; }
