@@ -47,6 +47,8 @@
   let justOut = 0;
   let fx = null;
   let shuffledAt = 0;
+  let quietRefresh = true;
+  let refreshing = false;
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -65,8 +67,9 @@
 
   const signedIn = () => Boolean(session && session.mode === "authenticated");
   const onGames = () => document.documentElement.dataset.currentScreen === "games";
-  const moving = () => document.documentElement.dataset.motion === "full";
-  const sound = (event) => window.ZhidaoSounds?.play(event);
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const moving = () => document.documentElement.dataset.motion === "full" && !document.hidden && !reducedMotion.matches;
+  const sound = (event) => { if (!document.hidden && !quietRefresh) window.ZhidaoSounds?.play(event); };
   const timeOf = (iso) => Date.parse(String(iso).replace(/\.(\d{3})\d*Z$/, ".$1Z"));
   const newKey = () => `royale-${window.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
   const initial = (name) => (String(name || "?").trim()[0] || "?").toUpperCase();
@@ -151,6 +154,7 @@
       span.textContent = "0";
       const started = performance.now();
       const step = (moment) => {
+        if (!moving()) { span.textContent = String(value); return; }
         const k = Math.min(1, (moment - started) / 700);
         span.textContent = String(Math.round(value * k));
         if (k < 1 && span.isConnected) requestAnimationFrame(step);
@@ -172,22 +176,20 @@
       const bit = node("i");
       bit.style.left = `${Math.random() * 100}%`;
       bit.style.background = CONFETTI[i % CONFETTI.length];
-      bit.style.animationDelay = `${(Math.random() * 1.4).toFixed(2)}s`;
+      bit.style.animationDelay = `${(Math.random() * .3).toFixed(2)}s`;
+      bit.style.animationDuration = "1.4s";
       bit.style.setProperty("--drift", `${Math.round(Math.random() * 200 - 100)}px`);
       layer.append(bit);
     }
     fx.append(layer);
-    setTimeout(() => layer.remove(), 5000);
+    setTimeout(() => layer.remove(), 1800);
   }
 
   function shake(game) {
     const lost = game.reveal.eliminated;
     if (!moving() || lost < 3 || lost * 3 < game.alive + lost) return;
     const stage = $("royaleStage");
-    stage.classList.remove("is-shake");
-    void stage.offsetWidth;
-    stage.classList.add("is-shake");
-    setTimeout(() => stage.classList.remove("is-shake"), 700);
+    window.ZhidaoRetro?.reveal(stage);
   }
 
   // --- куски панели ------------------------------------------------------------------------
@@ -523,16 +525,25 @@
       if (stageOpen || (game.me && game.me.place === 1)) sound("win");
     }
     clearTimeout(introTimer);
-    if (game && game.intro_until) {
+    if (game && game.intro_until && !document.hidden && (onGames() || stageOpen)) {
       introTimer = setTimeout(() => { if (!busy) refresh(); }, Math.max(0, timeOf(game.intro_until) - Date.now()) + 120);
     }
   }
 
   function accept(body) {
-    const before = data && data.game;
-    const first = !data;
+    const first = quietRefresh || !data || document.hidden || !(onGames() || stageOpen);
+    const before = first ? null : data && data.game;
     data = body;
     const after = data.game;
+    if (first) {
+      seenRound = after && after.status === "question" && after.question ? `${after.id}:${after.round}` : null;
+      seenReveal = after && after.status === "reveal" ? `${after.id}:${after.round}` : null;
+      justOut = 0;
+      tickSecond = null;
+      stageAlive = new Map((after?.grid || []).map((p) => [p.name, p.alive]));
+      stageSeen = new Set((after?.grid || []).map((p) => p.name));
+    }
+    quietRefresh = false;
     // Уже законченную игру, открытую позже, не празднуем заново.
     if (first && after && after.status === "over") celebrated = after.id;
     const wasMe = before && before.me;
@@ -543,7 +554,7 @@
     }
     if (wasMe && nowMe && wasMe.alive === false && nowMe.alive && nowMe.revived) sound("rare");
     const next = JSON.stringify(body);
-    if (next !== signature) {
+    if (first || next !== signature) {
       signature = next;
       draw();
     }
@@ -557,10 +568,19 @@
       renderPanel(false, false);
       return;
     }
+    if (refreshing) return;
+    refreshing = true;
+    const account = session?.account?.id;
     try {
-      accept(await api("/api/v4/royale"));
+      const response = await api("/api/v4/royale");
+      if (account !== session?.account?.id) return;
+      accept(response);
     } catch (_) {
-      /* панель подождёт следующего опроса */
+      quietRefresh = true;
+      $("royaleStatus").textContent = "Нет связи · повторяем автоматически";
+    } finally {
+      refreshing = false;
+      schedule();
     }
   }
 
@@ -631,7 +651,8 @@
   function schedule() {
     const status = data && data.game ? data.game.status : null;
     const want = status === "question" || status === "reveal" ? 1000 : status === "lobby" ? 3000 : 15000;
-    if (!signedIn() || !(onGames() || stageOpen)) {
+    if (!signedIn() || !(onGames() || stageOpen) || document.hidden) {
+      clearTimeout(introTimer);
       clearInterval(poll);
       clearInterval(ticker);
       poll = null;
@@ -649,6 +670,7 @@
   // --- подключение -------------------------------------------------------------------------------
 
   window.addEventListener("zhidao:auth", (event) => {
+    quietRefresh = true;
     session = event.detail;
     data = null;
     signature = "";
@@ -659,11 +681,32 @@
     if (onGames()) refresh();
   });
   window.addEventListener("zhidao:screen", (event) => {
+    quietRefresh = true;
     if (event.detail === "games") refresh();
     else schedule();
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && stageOpen) closeStage();
+  });
+  function stopEffects() {
+    if (!moving()) {
+      fx?.replaceChildren();
+      $("royaleStage").classList.remove("is-shake");
+      document.querySelectorAll("#royaleStage, #royaleBody").forEach(host =>
+        host.getAnimations({ subtree:true }).forEach(animation => animation.cancel()));
+    }
+  }
+  reducedMotion.addEventListener("change", stopEffects);
+  new MutationObserver(stopEffects).observe(document.documentElement, { attributes:true, attributeFilter:["data-motion"] });
+  document.addEventListener("visibilitychange", () => {
+    quietRefresh = true;
+    stopEffects();
+    schedule();
+    if (!document.hidden && (onGames() || stageOpen) && !busy) refresh();
+  });
+  window.addEventListener("online", () => {
+    quietRefresh = true;
+    if (!document.hidden && (onGames() || stageOpen) && !busy) refresh();
   });
   renderPanel(false, false);
 }());

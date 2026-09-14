@@ -27,6 +27,19 @@
   let bagDraft = "";
   let peeked = null;
   let lastInspection = null;
+  let epoch = 0;
+  let pending = null;
+  const pendingKey = () => `zhidao.market.pending.${session?.account?.id || "guest"}`;
+  function savePending(value) {
+    pending = value;
+    try {
+      if (value) sessionStorage.setItem(pendingKey(), JSON.stringify(value));
+      else sessionStorage.removeItem(pendingKey());
+    } catch (_) { /* memory still protects retries while this page is open */ }
+  }
+  function restorePending() {
+    try { pending = JSON.parse(sessionStorage.getItem(pendingKey()) || "null"); } catch (_) { pending = null; }
+  }
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -73,6 +86,7 @@
       const cookie = document.cookie.split("; ").find((v) => v.startsWith("zhidao_v4_csrf="));
       init.headers["X-CSRF-Token"] = cookie ? decodeURIComponent(cookie.slice(cookie.indexOf("=") + 1)) : "";
       init.headers["Content-Type"] = "application/json";
+      if (options.key) init.headers["X-Idempotency-Key"] = options.key;
       init.body = JSON.stringify(options.body || {});
     }
     try {
@@ -81,7 +95,9 @@
       if (!response.ok) {
         if (response.status === 401) window.dispatchEvent(new Event("zhidao:session-expired"));
         const detail = Array.isArray(body.detail) ? "Проверьте, что введено." : body.detail;
-        throw new Error(typeof detail === "string" ? detail : "Запрос отклонён.");
+        const error = new Error(typeof detail === "string" ? detail : "Запрос отклонён.");
+        error.status = response.status;
+        throw error;
       }
       return body;
     } catch (error) {
@@ -162,6 +178,9 @@
     };
     row.append(button("btn btn-secondary", "−", () => set(value - (key === "money" ? 5 : 1))),
       node("b", null, String(value)), button("btn btn-secondary", "+", () => set(value + (key === "money" ? 5 : 1))));
+    const label = `${side === "give" ? "Отдаю" : "Хочу"}: ${key === "money" ? "юани" : goodLabel(key)}`;
+    row.firstElementChild.setAttribute("aria-label", `Уменьшить · ${label}`);
+    row.lastElementChild.setAttribute("aria-label", `Увеличить · ${label}`);
     return row;
   }
 
@@ -184,9 +203,9 @@
       const owned = (me.goods || {})[g.code] || 0;
       table.append(stepper("give", g.code, owned),
         node("span", `market-name${g.legal ? "" : " is-contraband"}`, `${g.zh} ${g.ru} · ${g.value} 元`),
-        stepper("want", g.code, 9));
+        stepper("want", g.code, data.max_offer_items));
     });
-    table.append(stepper("give", "money", me.money), node("span", "market-name", "юани 元"), stepper("want", "money", 200));
+    table.append(stepper("give", "money", Math.min(me.money, data.max_offer_money)), node("span", "market-name", "юани 元"), stepper("want", "money", data.max_offer_money));
     box.append(table, button("btn btn-primary", "Показать код", makeOffer));
     parts.push(box);
   }
@@ -223,8 +242,8 @@
     box.append(form);
     if (lastInspection) {
       box.append(node("p", "market-news", lastInspection.clean
-        ? `${lastInspection.merchant}: чисто. Вы заплатили ${lastInspection.fine} 元`
-        : `${lastInspection.merchant}: запрещёнка ${basketText({ goods: lastInspection.caught })}, штраф ${lastInspection.fine} 元 вам`));
+        ? `Сумка чиста. Вы заплатили ${lastInspection.fine} 元`
+        : `Запрещёнка: ${basketText({ goods: lastInspection.caught })}, штраф ${lastInspection.fine} 元 вам`));
     }
     parts.push(box);
   }
@@ -252,6 +271,11 @@
     }
     const focusedId = document.activeElement && document.activeElement.id;
     const parts = [node("p", "spy-lead", LEAD)];
+    if (data.balance_status === "test") parts.push(node("p", "market-meta", "Тестовый баланс · перед сезоном числа будут согласованы"));
+    if (pending) {
+      parts.push(node("p", "market-news", "Проверяемая операция сохранена. Повтор не спишет товары ещё раз."),
+        button("btn btn-secondary", "Проверить результат", () => act(pending.action, pending.body, true)));
+    }
     const prizes = (data.prizes || []).join("/");
     if (data.phase === "before") parts.push(node("p", "market-meta", `Рынок откроется в ${data.open}. Выйти и получить набор можно уже сейчас`));
     else if (data.phase === "open") parts.push(node("p", "market-meta", `Рынок открыт до ${data.close} · торговцев ${data.players} · патрульных ${data.patrols} · призы ${prizes}★`));
@@ -285,7 +309,7 @@
     const before = data && data.me && data.me.news;
     data = body;
     const after = data.me && data.me.news;
-    if (after && (!before || before.at !== after.at)) window.ZhidaoSounds?.play(after.kind === "trade" ? "buy" : "join");
+    if (before && after && before.at !== after.at && !document.hidden) window.ZhidaoSounds?.play(after.kind === "trade" ? "buy" : "join");
     const next = JSON.stringify(body);
     if (next !== signature) {
       signature = next;
@@ -295,6 +319,7 @@
   }
 
   async function refresh() {
+    const requestEpoch = epoch;
     if (!signedIn()) {
       data = null;
       signature = "";
@@ -302,23 +327,39 @@
       return;
     }
     try {
-      accept(await api("/api/v4/market"));
-    } catch (_) {
-      /* панель подождёт следующего опроса */
+      const result = await api("/api/v4/market");
+      if (requestEpoch !== epoch) return;
+      accept(result);
+    } catch (error) {
+      if (requestEpoch !== epoch) return;
+      note = `${error.message} Сохранённые данные остаются на экране.`;
+      draw();
+    } finally {
+      if (requestEpoch === epoch) schedule();
     }
   }
 
-  async function act(action, body) {
+  async function act(action, body, retry = false) {
     if (busy) return;
+    if (pending && !retry) { note = "Сначала нажмите «Проверить результат» предыдущей операции."; draw(); return; }
+    const requestEpoch = epoch;
+    const durable = ["join", "accept", "inspect"].includes(action);
+    if (retry && pending.season !== data?.season_id) {
+      savePending(null); note = "Сезон изменился. Результат старой операции проверьте у организатора."; draw(); return;
+    }
+    if (durable && !retry) savePending({ action, body: body || {}, key: crypto.randomUUID(), season: data?.season_id });
     busy = true;
     note = "";
     draw();
     try {
-      const result = await api(`/api/v4/market/${action}`, { method: "POST", body });
+      const result = await api(`/api/v4/market/${action}`, { method: "POST", body, key: durable ? pending.key : null });
+      if (requestEpoch !== epoch) return;
+      if (durable) savePending(null);
       if (action === "accept") {
         peeked = null;
         codeDraft = "";
-        window.showToast?.(`Обмен прошёл: получили ${basketText(result.trade.got)}`);
+        window.showToast?.(`Обмен подтверждён: получили ${basketText(result.trade.got)}`);
+        if (!result.replayed) window.ZhidaoRetro?.copyFile({ name: basketText(result.trade.got) });
       }
       if (action === "inspect") {
         bagDraft = "";
@@ -327,12 +368,12 @@
       if (action === "offer") builder = { give: { goods: {}, money: 0 }, want: { goods: {}, money: 0 } };
       accept(result);
     } catch (error) {
+      if (requestEpoch !== epoch) return;
+      if (error.status >= 400 && error.status < 500) savePending(null);
       note = error.message;
       await refresh();
     } finally {
-      busy = false;
-      signature = "";
-      draw();
+      if (requestEpoch === epoch) { busy = false; signature = ""; draw(); }
     }
   }
 
@@ -346,6 +387,7 @@
 
   async function peek() {
     if (busy) return;
+    const requestEpoch = epoch;
     const code = digits(codeDraft);
     if (code.length !== 6) {
       note = "Код предложения — шесть цифр";
@@ -356,18 +398,19 @@
     note = "";
     draw();
     try {
-      peeked = await api(`/api/v4/market/offers/${code}`);
+      const result = await api(`/api/v4/market/offers/${code}`);
+      if (requestEpoch === epoch) peeked = result;
     } catch (error) {
+      if (requestEpoch !== epoch) return;
       peeked = null;
       note = error.message;
     } finally {
-      busy = false;
-      draw();
+      if (requestEpoch === epoch) { busy = false; draw(); }
     }
   }
 
   function schedule() {
-    if (!signedIn() || !onGames()) {
+    if (!signedIn() || !onGames() || document.hidden) {
       clearInterval(poll);
       poll = null;
       return;
@@ -378,7 +421,12 @@
   // --- подключение -------------------------------------------------------------------------------
 
   window.addEventListener("zhidao:auth", (event) => {
+    epoch += 1;
+    if (session?.account?.id && session.account.id !== event.detail?.account?.id) savePending(null);
     session = event.detail;
+    restorePending();
+    busy = false;
+    builder = { give: { goods: {}, money: 0 }, want: { goods: {}, money: 0 } };
     data = null;
     signature = "";
     armed = null;
@@ -390,9 +438,15 @@
     draw();
     if (onGames()) refresh();
   });
+  document.addEventListener("visibilitychange", () => {
+    schedule();
+    if (!document.hidden && onGames()) { data = null; refresh(); }
+  });
+  window.addEventListener("online", () => { if (onGames()) refresh(); });
   window.addEventListener("zhidao:screen", (event) => {
     if (event.detail === "games") refresh();
     else schedule();
   });
+  restorePending();
   draw();
 }());

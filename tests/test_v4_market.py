@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
@@ -82,8 +84,9 @@ class MarketTests(unittest.TestCase):
         finally:
             conn.close()
 
-    def post(self, who, path, body=None):
-        return self.clients[who].post(f"/api/v4/market{path}", headers={"X-CSRF-Token": self.tokens[who]}, json=body or {})
+    def post(self, who, path, body=None, key=None):
+        return self.clients[who].post(f"/api/v4/market{path}", headers={"X-CSRF-Token": self.tokens[who],
+            "X-Idempotency-Key": key or str(uuid.uuid4())}, json=body or {})
 
     def ok(self, response):
         self.assertLess(response.status_code, 300, response.text)
@@ -131,7 +134,7 @@ class MarketTests(unittest.TestCase):
         self.open_market(KIDS[:4])
         self.stock("kid1", {"mango": 2})
         self.stock("kid2", {"tea": 1})
-        self.stock("kid3", {})                                                                  # случайный набор мог дать чай
+        self.stock("kid3", {})  # random kit could otherwise contain the requested tea
         self.assertEqual(self.offer("kid1", {"goods": {"tea": 1}}, {}).status_code, 409)       # чая у kid1 нет
         self.assertEqual(self.offer("kid1", {}, {}).status_code, 400)
         code = self.ok(self.offer("kid1", {"goods": {"mango": 1}, "money": 5}, {"goods": {"tea": 1}}))["offer"]["code"]
@@ -225,6 +228,90 @@ class MarketTests(unittest.TestCase):
         results = self.view("kid1")["results"]
         self.assertFalse(results["prizes"])
         self.assertEqual(self.sql("SELECT 1 FROM v4_economy_operations WHERE operation='market.prize'"), [])
+
+    def test_accept_replays_after_process_restart_without_private_counterpart(self):
+        self.open_market(KIDS[:2])
+        self.stock("kid1", {"mango": 2})
+        self.stock("kid2", {})
+        code = self.ok(self.offer("kid1", {"goods": {"mango": 1}}, {"money": 2}))["offer"]["code"]
+        first = self.ok(self.post("kid2", "/accept", {"code": code}, key="durable-accept-001"))
+        market.offers = market.Offers()  # simulate loss of process memory
+        again = self.ok(self.post("kid2", "/accept", {"code": code}, key="durable-accept-001"))
+        self.assertTrue(again["replayed"])
+        self.assertEqual(first["trade"], again["trade"])
+        self.assertEqual(again["me"]["money"], 18)
+        receipt = self.sql("SELECT response_json FROM v4_idempotency_keys WHERE operation='market.accept'")[0][0]
+        self.assertNotIn(code, receipt)
+        self.assertNotIn("kid1", receipt)
+        self.assertNotIn('"me"', receipt)
+        self.assertEqual(self.post("kid2", "/accept", {"code": "000000"}, key="durable-accept-001").status_code, 409)
+
+    def test_concurrent_accept_has_one_winner_and_conserves_goods_and_money(self):
+        self.open_market(KIDS[:3])
+        self.stock("kid1", {"mango": 1})
+        self.stock("kid2", {})
+        self.stock("kid3", {})
+        code = self.ok(self.offer("kid1", {"goods": {"mango": 1}}, {"money": 2}))["offer"]["code"]
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(lambda who: self.post(who, "/accept", {"code": code}), KIDS[1:3]))
+        self.assertEqual(sorted(r.status_code for r in results), [200, 404])
+        rows = self.sql("SELECT money, goods_json FROM v4_market_players")
+        self.assertEqual(sum(r["money"] for r in rows), 60)
+        self.assertEqual(sum(json.loads(r["goods_json"]).get("mango", 0) for r in rows), 1)
+
+    def test_concurrent_join_only_gives_one_kit(self):
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(lambda _: self.post("kid1", "/join", key="one-morning-kit"), range(2)))
+        bodies = [self.ok(r) for r in results]
+        self.assertEqual(sorted(b["replayed"] for b in bodies), [False, True])
+        self.assertEqual(len(self.sql("SELECT 1 FROM v4_market_players")), 1)
+        self.assertEqual(self.me("kid1")["money"], RULES["start_money"])
+
+    def test_concurrent_settlement_does_not_double_prizes_or_change_rep(self):
+        self.open_market(KIDS[:4])
+        self.sql("UPDATE v4_market_players SET traded=1")
+        self.now = MORNING + timedelta(days=1)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            list(pool.map(self.view, KIDS[:2]))
+        rows = self.sql("SELECT stars_delta, rep_delta FROM v4_economy_operations WHERE operation='market.prize'")
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(sum(r["stars_delta"] for r in rows), 19)
+        self.assertEqual(sum(r["rep_delta"] for r in rows), 0)
+
+    def test_receipt_and_transfer_roll_back_together(self):
+        self.open_market(KIDS[:2])
+        self.stock("kid1", {"mango": 1})
+        self.stock("kid2", {})
+        code = self.ok(self.offer("kid1", {"goods": {"mango": 1}}, {"money": 2}))["offer"]["code"]
+        self.sql("""CREATE TRIGGER reject_test_receipt BEFORE INSERT ON v4_idempotency_keys
+            WHEN NEW.operation='market.accept' BEGIN SELECT RAISE(ABORT, 'test failure'); END""")
+        import sqlite3
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.post("kid2", "/accept", {"code": code})
+        self.assertEqual(self.me("kid1")["goods"], {"mango": 1})
+        self.assertEqual(self.me("kid2")["money"], 20)
+        self.assertEqual(self.sql("SELECT 1 FROM v4_idempotency_keys WHERE operation='market.accept'"), [])
+
+    def test_revoked_seller_cannot_trade_and_cross_season_code_is_private(self):
+        self.open_market(KIDS[:2])
+        code = self.ok(self.offer("kid1", {"money": 1}, {}))["offer"]["code"]
+        self.sql("UPDATE v4_season_memberships SET status='completed' WHERE account_id=?", (self.ids["kid1"],))
+        self.assertEqual(self.post("kid2", "/accept", {"code": code}).status_code, 403)
+        self.sql("INSERT INTO v4_seasons(id,code,name,status) VALUES (2,'other','Other','active')")
+        self.sql("UPDATE v4_season_memberships SET status='completed' WHERE account_id=?", (self.ids["kid2"],))
+        self.sql("INSERT INTO v4_season_memberships(season_id,account_id,status) VALUES (2,?,'active')", (self.ids["kid2"],))
+        self.ok(self.post("kid2", "/join"))
+        self.assertEqual(self.clients["kid2"].get(f"/api/v4/market/offers/{code}").status_code, 404)
+
+    def test_exact_expiry_and_strict_quantities_and_auth(self):
+        self.open_market(KIDS[:2])
+        self.assertEqual(self.offer("kid1", {"goods": {"mango": True}}, {}).status_code, 422)
+        code = self.ok(self.offer("kid1", {"money": 1}, {}))["offer"]["code"]
+        self.now += timedelta(seconds=RULES["offer_seconds"])
+        self.assertEqual(self.clients["kid2"].get(f"/api/v4/market/offers/{code}").status_code, 404)
+        self.assertEqual(self.clients["kid1"].post("/api/v4/market/join", json={}).status_code, 403)
+        with TestClient(self.app) as guest:
+            self.assertEqual(guest.get("/api/v4/market").status_code, 401)
 
 
 if __name__ == "__main__":

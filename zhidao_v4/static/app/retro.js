@@ -14,7 +14,16 @@
 
 (function () {
   const root = document.documentElement;
-  const motion = () => root.dataset.motion === "full" && !document.hidden;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const motion = () => root.dataset.motion === "full" && !document.hidden && !reducedMotion.matches;
+  function stopDecoration() {
+    root.dataset.pageHidden = String(document.hidden);
+    if (!motion()) document.querySelectorAll(".zd-finale,.zd-copy,.zd-sparkles > *").forEach((node) => node.remove());
+  }
+  document.addEventListener("visibilitychange", stopDecoration);
+  reducedMotion.addEventListener("change", stopDecoration);
+  new MutationObserver(stopDecoration).observe(root, { attributes:true, attributeFilter:["data-motion"] });
+  stopDecoration();
   let session = window.ZhidaoSession || null;
   const signedIn = () => Boolean(session && session.mode === "authenticated");
   const store = {
@@ -277,12 +286,13 @@
      «синий экран», если Сбой системы проигран; остальным — «Раунд окончен».
      Карточка с итогом остаётся в комнате — оверлей её только предваряет. */
   function finale(options) {
+    if (!motion()) return;
     document.querySelector(".zd-finale")?.remove();
     const overlay = el("div", `zd-finale is-${options.kind}`);
     overlay.setAttribute("role", "status");
     if (options.kind === "bsod") {
       const screen = el("div", "zd-bsod");
-      const hint = el("p", null, "Коснитесь экрана, чтобы продолжить ");
+      const hint = el("p", null, "Итог остаётся в комнате · Esc — скрыть ");
       hint.append(el("span", "zd-bsod-cursor", "_"));
       screen.append(
         el("b", "zd-bsod-head", "ZHIDAO PROTOCOL"),
@@ -292,7 +302,7 @@
         hint);
       overlay.append(screen);
       document.body.append(overlay);
-      dismissible(overlay, 6000);
+      dismissible(overlay, 1800);
       return;
     }
     const win = options.kind === "win";
@@ -317,7 +327,7 @@
       });
     }
     document.body.append(overlay);
-    dismissible(overlay, win ? 3600 : 2400);
+    dismissible(overlay, 1800);
   }
 
   /* Окно «Копирование» перед итогом обмена — чистая декорация: предметы уже
@@ -333,13 +343,26 @@
     bar.append(el("i"));
     const body = el("div", "zd-copy-body");
     body.append(scene, el("b", null, `«${options.name}»`), el("span", null, "Из: собеседник → в: мои предметы"), bar,
-      el("small", null, "Осталось примерно 2 секунды"));
+      el("small", null, "Предмет уже в коллекции"));
     win.append(el("div", "zd-copy-title", "Копирование…"), body);
     document.body.append(win);
-    dismissible(win, 2300);
+    dismissible(win, 1800);
   }
 
-  window.ZhidaoRetro = Object.freeze({ roomEvents, eventText, finale, copyFile });
+  // A short, non-blocking reveal of an already confirmed result.
+  const pulses = new Set();
+  function reveal(host) {
+    if (!host || !motion()) return;
+    const effect = host.animate([{ opacity:.6, transform:"translateY(4px)" }, { opacity:1, transform:"none" }],
+      { duration:240, easing:"ease-out" });
+    pulses.add(effect);
+    effect.finished.catch(() => {}).finally(() => pulses.delete(effect));
+  }
+  function cancelPulses() { if (!motion()) { pulses.forEach((effect) => effect.cancel()); pulses.clear(); } }
+  document.addEventListener("visibilitychange", cancelPulses);
+  reducedMotion.addEventListener("change", cancelPulses);
+  new MutationObserver(cancelPulses).observe(root, { attributes:true, attributeFilter:["data-motion"] });
+  window.ZhidaoRetro = Object.freeze({ roomEvents, eventText, finale, copyFile, reveal });
 
   window.addEventListener("zhidao:auth", (event) => {
     session = event.detail;

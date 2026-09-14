@@ -1,0 +1,41 @@
+/* Individual identity on existing windows, without additional panels. */
+.game-banner { display:block; width:100%; height:auto; aspect-ratio:8/3; object-fit:contain; border-bottom:1px solid var(--border-metal); }
+#royaleWindow { --game-color:#584597; --game-light:#a294d6; }
+#agentWindow { --game-color:#356457; --game-light:#76a292; }
+#zombieWindow { --game-color:#50692b; --game-light:#92ad62; }
+#sabotageWindow { --game-color:#855332; --game-light:#c6986d; }
+#marketWindow { --game-color:#84621d; --game-light:#bd9a50; }
+#captureIntro { --game-color:#245b85; --game-light:#70a3bb; }
+:is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro) > .case-titlebar {
+  background:linear-gradient(var(--game-light),var(--game-color) 48%,var(--game-color)); color:#fff; text-shadow:0 1px 1px #172434;
+}
+:is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro) > .case-titlebar h2 { color:inherit; }
+.agent-target,.agent-mission { line-height:1.5; }
+.agent-card,.market-card,.sabotage-card,.zombie-card { border-radius:5px; }
+.market-form { grid-template-columns:minmax(0,1fr) auto; }
+.market-input { min-width:0; width:100%; box-sizing:border-box; }
+.market-builder { grid-template-columns:auto minmax(0,1fr) auto; }
+.market-name { overflow-wrap:anywhere; }
+.market-stepper { grid-template-columns:36px 22px 36px; }
+.market-stepper .btn { min-height:44px; }
+:root[data-theme="dark"] :is(.market-stats,.market-head) { color:#efd593; }
+:root[data-theme="dark"] .market-stepper b { color:#f5e9c8; }
+.market-chip.is-empty { color:var(--text-secondary); }
+:is(.game-card,.agent-card,.market-card,.sabotage-card,.zombie-card,.workshop-recipe) button:focus-visible { outline:2px solid #f1ac27; outline-offset:3px; }
+:root[data-motion="full"] :is(.game-card,.spy-body,.workshop-recipes) button { transition:transform 120ms ease,filter 120ms ease; }
+:root[data-motion="full"] :is(.game-card,.spy-body,.workshop-recipes) button:active:not(:disabled) { transform:translateY(1px); filter:brightness(.93); }
+.zd-finale,.zd-copy { pointer-events:none; }
+.zd-finale.is-bsod { background:transparent; align-items:flex-start; padding-top:80px; }
+.zd-finale .zd-bsod { max-width:560px; font-size:14px; }
+.zd-copy { max-width:calc(100vw - 32px); }
+:root[data-page-hidden="true"] * { animation-play-state:paused !important; }
+@media(prefers-reduced-motion:reduce) {
+  .zd-finale,.zd-copy,.zd-sparkles { display:none !important; }
+  :is(.game-card,.spy-body,.workshop-recipes) * { animation:none !important; transition:none !important; }
+}
+@media(max-width:390px) {
+  .market-builder { gap:8px 4px; }
+  .market-name { font-size:12px; }
+  .market-stepper { grid-template-columns:32px 20px 32px; }
+  .market-form { grid-template-columns:minmax(0,1fr); }
+}

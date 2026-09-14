@@ -48,6 +48,7 @@
   let armed = null;
   let poll = null;
   let ticker = null;
+  let refreshVersion = 0;
   const cooldownUntil = new Map();
   const poolKeys = new Map();
 
@@ -539,13 +540,17 @@
   // --- данные и часы ---------------------------------------------------------------------------
 
   async function refresh() {
+    const version = ++refreshVersion;
     if (!signedIn()) {
       state = null;
     } else {
       try {
-        state = await api("/api/v4/capture");
+        const response = await api("/api/v4/capture");
+        if (version !== refreshVersion) return;
+        state = response;
       } catch (_) {
-        /* табло подождёт следующего опроса */
+        // Не продлеваем cooldown из прежнего снимка при каждой ошибке связи.
+        return;
       }
     }
     (state && state.points ? state.points : []).forEach((p) => {
@@ -575,6 +580,8 @@
   }
 
   function start() {
+    if (document.hidden) return;
+    tick();
     refresh();
     if (!poll) poll = setInterval(() => { if (!busy && !question) refresh(); }, REFRESH_MS);
     if (!ticker) ticker = setInterval(tick, 1000);
@@ -601,6 +608,7 @@
   window.addEventListener("zhidao:capture-point", (event) => showCard(event.detail));
   window.addEventListener("zhidao:capture-refresh", () => refresh());
   window.addEventListener("zhidao:auth", (event) => {
+    refreshVersion++;
     session = event.detail;
     state = null;
     selected = null;
@@ -618,4 +626,11 @@
     else stop();
   });
   window.addEventListener("resize", resize);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stop();
+    else if (onMap()) start();
+  });
+  window.addEventListener("online", () => {
+    if (!document.hidden && onMap() && !busy && !question) refresh();
+  });
 }());

@@ -351,8 +351,11 @@
 
   // --- данные ------------------------------------------------------------------------------------
 
+  let quietRefresh = true;
+  let refreshing = false;
   function accept(body) {
-    const before = data && data.game;
+    const before = !quietRefresh && !document.hidden && onGames() ? (data && data.game) : null;
+    quietRefresh = false;
     data = body;
     const after = data.game;
     if (before && after && before.me && after.me && before.me.alive && after.me.alive === false) {
@@ -368,6 +371,7 @@
     if (next !== signature) {
       signature = next;
       draw();
+      if (before && after && (before.status !== after.status || before.me?.alive !== after.me?.alive)) window.ZhidaoRetro?.reveal(document.getElementById("sabotageBody"));
     }
     schedule();
   }
@@ -379,10 +383,20 @@
       draw();
       return;
     }
+    if (refreshing) return;
+    refreshing = true;
+    const account = session?.account?.id;
     try {
-      accept(await api("/api/v4/sabotage"));
+      const response = await api("/api/v4/sabotage");
+      if (account !== session?.account?.id) return;
+      accept(response);
     } catch (_) {
-      /* панель подождёт следующего опроса */
+      quietRefresh = true;
+      const status = document.getElementById("sabotageStatus");
+      if (status) status.textContent = "Нет связи · повторяем автоматически";
+    } finally {
+      refreshing = false;
+      schedule();
     }
   }
 
@@ -456,7 +470,7 @@
   function schedule() {
     const status = data && data.game ? data.game.status : null;
     const want = status === "running" || status === "meeting" ? 3000 : status === "lobby" ? 5000 : 20000;
-    if (!signedIn() || !onGames()) {
+    if (!signedIn() || !onGames() || document.hidden) {
       clearInterval(poll);
       clearInterval(ticker);
       poll = null;
@@ -480,6 +494,7 @@
   // --- подключение -------------------------------------------------------------------------------
 
   window.addEventListener("zhidao:auth", (event) => {
+    quietRefresh = true;
     session = event.detail;
     data = null;
     signature = "";
@@ -491,8 +506,18 @@
     if (onGames()) refresh();
   });
   window.addEventListener("zhidao:screen", (event) => {
+    quietRefresh = true;
     if (event.detail === "games") refresh();
     else schedule();
+  });
+  document.addEventListener("visibilitychange", () => {
+    quietRefresh = true;
+    schedule();
+    if (!document.hidden && onGames() && !busy) refresh();
+  });
+  window.addEventListener("online", () => {
+    quietRefresh = true;
+    if (!document.hidden && onGames() && !busy) refresh();
   });
   draw();
 }());

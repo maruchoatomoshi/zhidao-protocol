@@ -147,7 +147,7 @@ class Offers:
 
     def _sweep(self, now: datetime) -> None:
         for code, offer in list(self.by_code.items()):
-            if (now - offer["created"]).total_seconds() > config()["offer_seconds"]:
+            if (now - offer["created"]).total_seconds() >= config()["offer_seconds"]:
                 self.by_code.pop(code, None)
                 if self.by_account.get(offer["account_id"]) == code:
                     self.by_account.pop(offer["account_id"], None)
@@ -303,12 +303,10 @@ def _catch_up(conn, season, now: datetime, allow_write: bool) -> None:
 # --- что видит телефон ------------------------------------------------------------------------
 
 def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
-    season = conn.execute("SELECT * FROM v4_seasons WHERE id=?", (season_id,)).fetchone()
+    staff = cases.can_manage(conn, actor, season_id)
+    season = authorize(conn, actor, season_id, manage=staff)
     now = utcnow()
     _catch_up(conn, season, now, allow_write)
-    staff = cases.can_manage(conn, actor, season_id)
-    if not staff:
-        authorize(conn, actor, season_id)
     member = conn.execute("SELECT status FROM v4_season_memberships WHERE season_id=? AND account_id=?",
                           (season_id, actor)).fetchone()
     day = today(season, now)
@@ -319,6 +317,8 @@ def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
         "season_id": season_id, "day": day, "phase": phase(season, now), "open": rules["open"], "close": rules["close"],
         "players": len(rows), "patrols": sum(1 for r in rows if r["role"] == "patrol"),
         "min_players": rules["min_players"], "prizes": rules["prizes"], "set_bonus": rules["set_bonus"],
+        "max_offer_items": rules["max_offer_items"], "max_offer_money": rules["max_offer_money"],
+        "balance_status": "test",
         "can_play": bool(member and member["status"] == "active" and season["status"] == "active"),
         "catalog": [{k: g[k] for k in ("code", "zh", "pinyin", "ru", "legal", "value", "penalty")}
                     for g in smuggle.content()["goods"]],
@@ -399,8 +399,10 @@ def cancel_offer(conn, actor: int, season_id: int) -> dict:
 
 
 def peek(conn, actor: int, season_id: int, code: str) -> dict:
-    season = authorize(conn, actor, season_id)
+    season = authorize(conn, actor, season_id, write=True)
     now = utcnow()
+    if phase(season, now) != "open" or _row(conn, season_id, today(season, now), actor) is None:
+        raise CaseError("Сначала выйдите на открытый рынок.", 409)
     offer = offers.get(code, now)
     if not offer or offer["season_id"] != season_id or offer["day"] != today(season, now) or offer["account_id"] == actor:
         raise CaseError("Код не найден или истёк. Попросите показать новый.", 404)
@@ -419,6 +421,7 @@ def accept(conn, actor: int, season_id: int, code: str) -> dict:
     them = _row(conn, season_id, day, offer["account_id"])
     if them is None:
         raise CaseError("Код не найден или истёк. Попросите показать новый.", 404)
+    authorize(conn, int(them["account_id"]), season_id, write=True)
     if not _has(them, offer["give"]):
         offers.cancel(offer["account_id"])
         raise CaseError("У торговца уже нет того, что он предлагал.", 409)
