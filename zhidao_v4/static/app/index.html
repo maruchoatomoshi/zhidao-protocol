@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="./zombie.css?v=93c7303693">
   <link rel="stylesheet" href="./agent.css?v=f86b29a72f">
   <link rel="stylesheet" href="./games-polish.css?v=a6355669d9">
-  <link rel="stylesheet" href="./design-pass.css?v=2cd84c8778">
+  <link rel="stylesheet" href="./design-pass.css?v=328f2290f4">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -229,6 +229,12 @@
           <button type="button" data-open-screen="cases"><img src="./assets/icons/nav-cases.png" alt=""><span>Сканер<small>Открыть кейс</small></span><b aria-hidden="true">↗</b></button>
           <button type="button" data-open-screen="campus-map"><span class="shortcut-map-orb" aria-hidden="true">⌖</span><span>Кампус<small>Твои ориентиры</small></span><b aria-hidden="true">↗</b></button>
         </div>
+
+        <article class="glass-card now-card" id="homeNow" aria-labelledby="homeNowTitle" hidden>
+          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-spy.svg" alt=""><h2>Сейчас в сезоне</h2><span aria-hidden="true">现在</span></div>
+          <h3 class="now-title" id="homeNowTitle">Сейчас в сезоне <span aria-hidden="true">现在</span></h3>
+          <ul class="now-list" id="homeNowList"></ul>
+        </article>
 
         <article class="glass-card today-card">
           <div class="xp-only xp-titlebar"><img src="./assets/icons/nav-schedule.png" alt=""><h2>Мой день</h2><span>Расписание</span></div>
@@ -1184,6 +1190,7 @@
   <script src="./sabotage.js?v=e3038c8cfd" defer></script>
   <script src="./zombie.js?v=f8a5ff6747" defer></script>
   <script src="./agent.js?v=021f1fccb9" defer></script>
-  <script src="./games-catalog.js?v=e3417864a1" defer></script>
+  <script src="./games-catalog.js?v=577f331813" defer></script>
+  <script src="./home-now.js?v=9c04633af3" defer></script>
 </body>
 </html>
