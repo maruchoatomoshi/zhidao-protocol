@@ -18,7 +18,8 @@ const path = require('node:path');
     assert.equal(await page.locator('meta[name="color-scheme"]').getAttribute('content'),'only light');
     assert.equal(await page.locator('.internet-toolbar button').count(),0);
     assert.equal(await page.locator('[data-theme-toggle]').count(),1);
-    assert.equal(await page.locator('[data-screen="more"] [data-motion-toggle]').count(),1);
+    // Настройки вида переехали из «Ещё» в профиль (2026-09-15).
+    assert.equal(await page.locator('[data-screen="profile"] [data-motion-toggle]').count(),1);
     await page.waitForTimeout(300);
     assert.equal(await page.locator('.journey-card .online-pill, .journey-card .weather-orb, .journey-card .journey-meta').count(),0);
     assert.equal((await page.locator('#scheduleTitle').innerText()).endsWith('.'),false);
@@ -41,12 +42,13 @@ const path = require('node:path');
     await page.locator('.hub-orb img').first().waitFor({state:'attached'});
     await page.waitForTimeout(200);
     assert.equal(await page.locator('.hub-orb svg').count(),0);
+    await page.evaluate(()=>showScreen('profile'));
     assert.equal(await page.locator('[data-motion-toggle]').isVisible(),true);
     assert.equal(await page.locator('[data-theme-toggle] [data-theme-value]').innerText(),'Дневная');
-    await page.screenshot({path:path.join(out,'more-light.png'),fullPage:true});
+    await page.screenshot({path:path.join(out,'profile-light.png'),fullPage:true});
     await page.locator('[data-theme-toggle]').tap();
     assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');
-    await page.screenshot({path:path.join(out,'more-dark.png'),fullPage:true});
+    await page.screenshot({path:path.join(out,'profile-dark.png'),fullPage:true});
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.waitForFunction(()=>document.documentElement.dataset.motion==='full');
     await page.locator('[data-motion-toggle]').tap();
@@ -66,7 +68,7 @@ const path = require('node:path');
       }
     }
     assert.deepEqual(errors,[]);
-    const result={checks:['day theme on dark OS: explicit only-light','top buttons removed; one theme and motion control in More','all hub SVG silhouettes replaced by illustrated assets','theme labels and switches work','motion-off survives reload','touch highlight transparent; keyboard focus visible','15 screen/width combinations without overflow'],errors,realMax:'not tested',screenshots:out};
+    const result={checks:['day theme on dark OS: explicit only-light','top buttons removed; one theme and motion control in Profile','all hub SVG silhouettes replaced by illustrated assets','theme labels and switches work','motion-off survives reload','touch highlight transparent; keyboard focus visible','15 screen/width combinations without overflow'],errors,realMax:'not tested',screenshots:out};
     fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(result,null,2)); console.log(JSON.stringify(result,null,2));
   }finally{await context.close();await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

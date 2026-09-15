@@ -1,5 +1,16 @@
 # AGENT_JOURNAL — общий журнал находок
 
+## 2026-09-16 · Claude · профиль в Луне-Акве — окно свойств
+
+Подробности — V4_DESIGN.md. **Для других агентов:** в профиле теперь два набора
+настроек вида. Кнопки Аквы (`data-theme-toggle`, `data-motion-toggle`,
+`data-design-toggle`, `data-sound-toggle`) видны только в Акве; в Луне — окно
+свойств с `data-theme-select`, `data-motion-check`, `data-design-choice`,
+`data-sound-select`. Скрипт или проверка, которые жмут кнопку Аквы при
+`data-design="xp"`, упрутся в скрытый элемент. `tools/check_v4_xp_home.cjs` и
+`tools/check_v4_mobile_polish.cjs` искали настройки в «Ещё», хотя со второго
+выпуска они в профиле, — поправлены.
+
 ## 2026-09-16 · Claude · deploy без ручного номера схемы; справочник таблиц из миграций
 
 **`ops/deploy_v4_games.sh`.** Номер схемы берётся из последней миграции

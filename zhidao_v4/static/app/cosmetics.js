@@ -83,7 +83,30 @@
         button.setAttribute("aria-pressed", String(!muted));
       }
     });
+    // Выпадающий список в окне свойств профиля (Луна-Аква). Набор выбирают,
+    // надевая его в магазине, здесь — только включить или выключить.
+    document.querySelectorAll("[data-sound-select]").forEach((select) => {
+      const choices = pack ? [["on", NAMES[pack]], ["off", "Выключены"]] : [["", "Нет набора"]];
+      select.replaceChildren(...choices.map(([value, text]) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = text;
+        return option;
+      }));
+      select.value = pack ? (muted ? "off" : "on") : "";
+      select.disabled = !pack;
+    });
+    document.querySelectorAll("[data-sound-hint]").forEach((hint) => { hint.hidden = Boolean(pack); });
   }
+
+  document.addEventListener("change", (event) => {
+    const select = event.target.closest("[data-sound-select]");
+    if (!select || !pack) return;
+    muted = select.value === "off";
+    try { localStorage.setItem(MUTE_KEY, muted ? "1" : "0"); } catch (_) { /* выбор живёт до перезагрузки */ }
+    drawSoundSetting();
+    if (!muted) window.ZhidaoSounds.play("buy");
+  });
 
   window.ZhidaoSounds = {
     play(event) {

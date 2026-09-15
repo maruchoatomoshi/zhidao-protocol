@@ -62,17 +62,30 @@
       if (cn) cn.textContent = LABEL_CN[mode];
       btn.setAttribute("aria-label", `Тема: ${LABEL[mode]}. Нажмите, чтобы сменить.`);
     });
+    document.querySelectorAll("[data-theme-select]").forEach((select) => {
+      select.value = mode;
+    });
+  }
+
+  function choose(next) {
+    if (!MODES.includes(next)) return;
+    mode = next;
+    writeMode(mode);
+    apply();
   }
 
   function cycle() {
-    mode = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
-    writeMode(mode);
-    apply();
+    choose(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
   }
 
   document.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-theme-toggle]");
     if (btn) cycle();
+  });
+  // Выпадающий список в окне свойств профиля (Луна-Аква) выбирает тему сразу.
+  document.addEventListener("change", (event) => {
+    const select = event.target.closest("[data-theme-select]");
+    if (select) choose(select.value);
   });
 
   // Пока выбрано «как в системе», следим за системной настройкой.

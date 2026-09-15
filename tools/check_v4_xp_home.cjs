@@ -55,18 +55,22 @@ if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw new Error
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.waitForFunction(()=>document.documentElement.dataset.motion==='full');
     assert.equal(await page.locator('.journey-bubbles i').first().evaluate(n=>getComputedStyle(n).animationName),'journey-bubble-float');
-    await page.locator('[data-target="more"]').click();
-    await page.locator('[data-motion-toggle]').click();
+    // Настройки вида живут в профиле (2026-09-15), а в Луне профиль — окно
+    // свойств: анимации там выключает флажок, а не кнопка списка Аквы.
+    await page.locator('.profile-fab').click();
+    await page.locator('[data-screen="profile"] [data-motion-check]').click();
     await page.locator('[data-target="schedule"]').click();
     await page.waitForTimeout(300);
     assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.playState==='running').length),0);
-    await page.locator('.xp-review-note a').click();
+    // Ссылки «сравнить с Аквой» больше нет (72b4577): Аква возвращается, стоит
+    // открыть приложение без ?design — адрес ничего не записывал в настройку.
+    await page.goto(base+'/app/');
     await page.locator('[data-auth-preview]').click();
-    assert.equal(await page.locator('html').getAttribute('data-design'),null);
+    assert.equal(await page.locator('html').getAttribute('data-design'),'aero');
     assert.equal(await page.locator('.xp-titlebar:visible').count(),0);
     assert.deepEqual(errors,[]); assert.deepEqual(failures,[]);
     assert.deepEqual(await page.evaluate(()=>window.__csp),[]);
-    const result={layouts,checks:['14 layouts / both themes / no horizontal overflow','logos loaded; no hero overlap; dock touch targets >=44px','header balance, dock, profile and return navigation','reduced-motion and motion-off: zero running animations','Aero default restored by comparison link','no page exceptions or checked asset errors'],errors,failures,realMAX:'not tested'};
+    const result={layouts,checks:['14 layouts / both themes / no horizontal overflow','logos loaded; no hero overlap; dock touch targets >=44px','header balance, dock, profile and return navigation','reduced-motion and motion-off: zero running animations','Aero back when opened without ?design','no page exceptions or checked asset errors'],errors,failures,realMAX:'not tested'};
     fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(result,null,2)); console.log(JSON.stringify(result,null,2));
   } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});

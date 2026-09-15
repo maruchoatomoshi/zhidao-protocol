@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light dark">
-<script src="./theme.js?v=677205bb34"></script>
-  <script src="./xp-home.js?v=792c47b09e"></script>
+<script src="./theme.js?v=103de18d47"></script>
+  <script src="./xp-home.js?v=f394e72dc3"></script>
   <title>ZHIDAO Hainan · Personal System</title>
   <link rel="stylesheet" href="./tokens.css?v=fa77e0dcbd">
   <link rel="stylesheet" href="./app.css?v=8bfbbafa0e">
@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="./virus.css?v=1198560e6f">
   <link rel="stylesheet" href="./workshop.css?v=647dbb6dcf">
   <link rel="stylesheet" href="./aero-desktop.css?v=2bedca366a">
-  <link rel="stylesheet" href="./xp-home.css?v=27e799f306">
+  <link rel="stylesheet" href="./xp-home.css?v=3e5f967342">
   <link rel="stylesheet" href="./readability.css?v=7a6aa971e5">
   <link rel="stylesheet" href="./guide.css?v=bfcb9b167f">
   <link rel="stylesheet" href="./retro.css?v=49b76a38ad">
@@ -500,6 +500,56 @@
             <b>›</b>
           </button>
         </div>
+        <!-- Луна-Аква: профиль — окно свойств учётной записи (макет одобрен
+             2026-09-15). В Акве этот набор скрыт, в Луне скрыты карточка и
+             списки выше. Оба набора управляют одними настройками: скрипты
+             находят элементы по data-атрибутам, а не по месту. -->
+        <article class="xp-properties" aria-labelledby="xpPropertiesTitle">
+          <div class="xp-properties-title">
+            <img src="./assets/icons/desktop-person.svg" alt="">
+            <h2 id="xpPropertiesTitle">Свойства: учётная запись</h2>
+            <span lang="zh" aria-hidden="true">个人资料</span>
+          </div>
+          <div class="xp-properties-id">
+            <span class="profile-avatar"><img src="./assets/icons/desktop-person.svg" alt=""></span>
+            <div>
+              <strong data-account-name>Гость · просмотр оформления</strong>
+              <span data-account-kind>Вход не выполнен</span>
+            </div>
+          </div>
+        </article>
+
+        <div class="xp-properties-sheet">
+          <div class="xp-properties-tabs" role="tablist" aria-label="Свойства">
+            <button type="button" role="tab" id="xpTabView" aria-controls="xpPanelView" aria-selected="true" data-xp-tab>Вид <span lang="zh" aria-hidden="true">外观</span></button>
+            <button type="button" role="tab" id="xpTabHelp" aria-controls="xpPanelHelp" aria-selected="false" tabindex="-1" data-xp-tab>Помощь <span lang="zh" aria-hidden="true">帮助</span></button>
+          </div>
+          <div class="xp-properties-panel" id="xpPanelView" role="tabpanel" aria-labelledby="xpTabView">
+            <fieldset class="xp-fieldset">
+              <legend>Оформление</legend>
+              <label class="xp-choice"><input type="radio" name="xpDesign" value="xp" data-design-choice> Луна-Аква</label>
+              <label class="xp-choice"><input type="radio" name="xpDesign" value="aero" data-design-choice> Аква</label>
+            </fieldset>
+            <label class="xp-field"><span>Тема <small lang="zh" aria-hidden="true">主题</small></span>
+              <span class="xp-select"><select data-theme-select>
+                <option value="system">Как в системе</option>
+                <option value="light">Дневная</option>
+                <option value="dark">Ночная</option>
+              </select></span>
+            </label>
+            <label class="xp-field"><span>Звуки <small lang="zh" aria-hidden="true">声音</small></span>
+              <span class="xp-select"><select data-sound-select disabled><option value="">Нет набора</option></select></span>
+            </label>
+            <p class="xp-hint" data-sound-hint>Наборы звуков продаются на витрине магазина.</p>
+            <label class="xp-check"><input type="checkbox" data-motion-check checked> Анимации <small lang="zh" aria-hidden="true">动态</small></label>
+            <p class="xp-properties-status">Изменения сохраняются сразу, на этом устройстве.</p>
+          </div>
+          <div class="xp-properties-panel" id="xpPanelHelp" role="tabpanel" aria-labelledby="xpTabHelp" hidden>
+            <button type="button" class="btn btn-secondary" data-app-guide>Инструкция…</button>
+            <button type="button" class="btn btn-secondary" data-toast="ZHIDAO Hainan · Aero Personal System. Кейсы и коллекция подключены после входа; остальные модули развиваются.">О приложении…</button>
+          </div>
+        </div>
+        <p class="xp-properties-note"><img src="./assets/guide/julia-explaining.png" alt=""><span><b>Юлия Витальевна:</b> инструкция и «О приложении» — на вкладке «Помощь».</span></p>
         <button type="button" class="btn btn-secondary story-properties" id="storyProperties" hidden>Свойства…</button>
       </section>
 
@@ -1143,7 +1193,7 @@
   <script src="./diary.js?v=1427d64ce0" defer></script>
   <script src="./rep.js?v=961113eb61" defer></script>
   <script src="./economy.js?v=e2532e9054" defer></script>
-  <script src="./cosmetics.js?v=ea916c862c" defer></script>
+  <script src="./cosmetics.js?v=8ece19ed7f" defer></script>
   <script src="./shop.js?v=9ef796e7ab" defer></script>
   <script src="./meet.js?v=44e02e65d4" defer></script>
   <script src="./trade.js?v=f1748536b7" defer></script>
@@ -1153,7 +1203,7 @@
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
-  <script src="./aero-motion.js?v=ff241b0b3e" defer></script>
+  <script src="./aero-motion.js?v=7840a08380" defer></script>
   <script src="./guide.js?v=2320488fbb" defer></script>
   <script src="./retro.js?v=80d4e651ae" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>

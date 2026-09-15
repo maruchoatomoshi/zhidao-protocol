@@ -15,6 +15,11 @@
         preference === "off" ? "Анимации выключены. Включить" : "Анимации включены. Выключить");
       button.querySelector("[data-motion-label]").textContent = reduced.matches ? "Системное ограничение" : preference === "off" ? "Выключены" : "Включены";
     });
+    // Флажок в окне свойств профиля (Луна-Аква); системный запрет его гасит.
+    document.querySelectorAll("[data-motion-check]").forEach(box => {
+      box.checked = preference !== "off" && !reduced.matches;
+      box.disabled = reduced.matches;
+    });
     if (!enabled()) activeScan?.skip();
   }
   document.querySelectorAll("[data-motion-toggle]").forEach(button => button.addEventListener("click", () => {
@@ -23,6 +28,11 @@
       return;
     }
     preference = preference === "off" ? "auto" : "off";
+    try { localStorage.setItem("zhidao.v4.motion", preference); } catch (_) { /* still works for this session */ }
+    applyPreference();
+  }));
+  document.querySelectorAll("[data-motion-check]").forEach(box => box.addEventListener("change", () => {
+    preference = box.checked ? "auto" : "off";
     try { localStorage.setItem("zhidao.v4.motion", preference); } catch (_) { /* still works for this session */ }
     applyPreference();
   }));

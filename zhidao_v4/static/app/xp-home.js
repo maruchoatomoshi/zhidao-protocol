@@ -65,19 +65,74 @@
       // Пока адрес перебивает настройку, кнопка не врёт о том, что видно.
       btn.dataset.designOverridden = override ? "true" : "false";
     });
+    // Переключатели в окне свойств профиля отмечают то, что видно сейчас.
+    document.querySelectorAll("[data-design-choice]").forEach((input) => {
+      input.checked = input.value === design;
+    });
   }
 
-  function cycle() {
-    mode = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+  function choose(next) {
+    if (!MODES.includes(next)) return;
+    mode = next;
     writeMode(mode);
     // Человек выбрал руками — адрес больше не спорит.
     override = null;
     apply();
   }
 
+  function cycle() {
+    choose(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
+  }
+
   document.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-design-toggle]");
     if (btn) cycle();
+  });
+  document.addEventListener("change", (event) => {
+    const input = event.target.closest("[data-design-choice]");
+    if (input && input.checked) choose(input.value);
+  });
+
+  /* Окно свойств профиля в Луне: вкладки «Вид» и «Помощь» и строка о том,
+     кто вошёл и как. Слушатели делегированы: разметка может появиться
+     позже этого файла. */
+  function selectTab(tab, focus) {
+    const tabs = Array.from(tab.closest("[role='tablist']").querySelectorAll("[data-xp-tab]"));
+    tabs.forEach((other) => {
+      const on = other === tab;
+      other.setAttribute("aria-selected", String(on));
+      other.tabIndex = on ? 0 : -1;
+      const panel = document.getElementById(other.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !on;
+    });
+    if (focus) tab.focus();
+  }
+  document.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-xp-tab]");
+    if (tab) selectTab(tab, false);
+  });
+  document.addEventListener("keydown", (event) => {
+    const tab = event.target.closest("[data-xp-tab]");
+    if (!tab || (event.key !== "ArrowRight" && event.key !== "ArrowLeft")) return;
+    event.preventDefault();
+    const tabs = Array.from(tab.closest("[role='tablist']").querySelectorAll("[data-xp-tab]"));
+    const step = event.key === "ArrowRight" ? 1 : -1;
+    selectTab(tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length], true);
+  });
+
+  const ROLE_LABEL = { system_admin: "Системный администратор", architect: "Архитектор", operator: "Вожатый" };
+  function accountKind(session) {
+    if (!session || session.mode !== "authenticated") return "Вход не выполнен";
+    const codes = (session.roles || []).map((role) => role.code);
+    const role = ["system_admin", "architect", "operator"].find((code) => codes.includes(code));
+    // Мост MAX есть только внутри мини-приложения; в браузере вход — по паролю.
+    const viaMax = Boolean(window.WebApp && window.WebApp.initData);
+    return `${role ? ROLE_LABEL[role] : "Участник"} · ${viaMax ? "вход через MAX" : "вход по паролю"}`;
+  }
+  window.addEventListener("zhidao:auth", (event) => {
+    document.querySelectorAll("[data-account-kind]").forEach((el) => {
+      el.textContent = accountKind(event.detail);
+    });
   });
 
   apply();
