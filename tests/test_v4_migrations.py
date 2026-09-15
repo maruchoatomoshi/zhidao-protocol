@@ -34,6 +34,22 @@ class V4MigrationTests(unittest.TestCase):
         conn.execute("PRAGMA foreign_keys=ON")
         return conn
 
+    def test_migrations_leave_the_database_in_wal_mode(self):
+        apply_migrations(self.db_path)
+        apply_migrations(self.db_path)
+
+        # The mode lives in the file: a fresh connection sees it without
+        # setting anything, which is what the API's connections rely on.
+        conn = self.connect()
+        try:
+            self.assertEqual(conn.execute("PRAGMA journal_mode").fetchone()[0], "wal")
+            self.assertEqual(
+                conn.execute("SELECT value FROM legacy_probe").fetchone()[0],
+                "preserved",
+            )
+        finally:
+            conn.close()
+
     def test_migration_is_additive_and_idempotent(self):
         first = apply_migrations(self.db_path)
         second = apply_migrations(self.db_path)

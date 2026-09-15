@@ -145,6 +145,16 @@ def apply_migrations(
                 ) from exc
             applied_files.append(migration.path.name)
 
+        # WAL lets the API's many short reads run alongside the one writer;
+        # in the default rollback journal every write stalled readers too.
+        # The mode is stored in the database file, so this is a one-time switch
+        # that later runs merely confirm. It needs no other open connection:
+        # the deploy script migrates while the services are stopped, and if a
+        # connection does hold the file SQLite keeps the old mode rather than
+        # failing — /api/v4/health reports which mode is actually in effect.
+        if db_value != ":memory:":
+            conn.execute("PRAGMA journal_mode=WAL")
+
         return applied_files
     finally:
         conn.close()

@@ -52,6 +52,18 @@ readable_code() {
   git ls-files -z -- zhidao_v4 migrations/v4 | xargs -0 -r chmod a+r
   find "$repo/zhidao_v4" "$repo/migrations/v4" -type d -exec chmod a+rx {} +
 }
+# The database runs in WAL: SQLite keeps "$db-wal" and "$db-shm" beside it.
+# The checks in this script open the database as root; if one of them leaves
+# those files owned by root, the www-data service can no longer write. Hand
+# them back to the database owner before anything else opens the file.
+own_wal_files() {
+  local file
+  for file in "$db-wal" "$db-shm"; do
+    if [[ -e $file ]]; then
+      chown --reference="$db" "$file"
+    fi
+  done
+}
 rollback() {
   local code=$1
   trap - ERR INT TERM
@@ -65,6 +77,7 @@ rollback() {
     fi
     readable_code
   fi
+  own_wal_files
   if [[ $stopped == 1 ]]; then
     systemctl start zhidao-v4
     systemctl start zhidao-v4-bot
@@ -105,6 +118,7 @@ finally:
 PY
 chmod 600 "$backup/database.sqlite"
 sha256sum "$backup/database.sqlite" > "$backup/database.sha256"
+own_wal_files
 
 changed=1
 git merge --ff-only "$target"
@@ -128,6 +142,7 @@ finally:
     old.close()
     new.close()
 PY
+own_wal_files
 systemctl start zhidao-v4
 
 "$repo/.venv/bin/python" - <<'PY'
@@ -141,6 +156,7 @@ for attempt in range(20):
         with urlopen(base + '/api/v4/health', timeout=2) as r:
             health = json.load(r)
         assert health['status'] == 'ok' and health['schema_version'] == 25
+        assert health['journal_mode'] == 'wal', health
         break
     except Exception:
         if attempt == 19:
@@ -164,7 +180,7 @@ except HTTPError as error:
     assert error.code == 401
 else:
     raise AssertionError('Personal case context unexpectedly public')
-print('Local smoke: schema 25; cases rules and release assets 200; personal API 401')
+print('Local smoke: schema 25, WAL; cases rules and release assets 200; personal API 401')
 PY
 
 systemctl start zhidao-v4-bot

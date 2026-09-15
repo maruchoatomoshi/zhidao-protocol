@@ -342,9 +342,15 @@ def create_app(
             version = conn.execute(
                 "SELECT COALESCE(MAX(version), 0) FROM v4_schema_migrations"
             ).fetchone()[0]
+            journal_mode = conn.execute("PRAGMA journal_mode").fetchone()[0]
         finally:
             conn.close()
-        return {"status": "ok", "mode": "travel-v4", "schema_version": int(version)}
+        return {
+            "status": "ok",
+            "mode": "travel-v4",
+            "schema_version": int(version),
+            "journal_mode": str(journal_mode),
+        }
 
     @app.post("/api/v4/auth/login")
     def login(payload: LoginPayload, request: Request):

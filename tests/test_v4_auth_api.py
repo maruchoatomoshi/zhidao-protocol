@@ -66,6 +66,7 @@ class V4AuthApiTests(unittest.TestCase):
         health = self.client.get("/api/v4/health")
         self.assertEqual(health.status_code, 200)
         self.assertEqual(health.json()["schema_version"], 25)
+        self.assertEqual(health.json()["journal_mode"], "wal")
 
     def test_architect_console_is_served_with_security_headers(self):
         redirect = self.client.get("/", follow_redirects=False)

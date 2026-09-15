@@ -226,6 +226,17 @@ apply.
   to design against — prefer routing its writes through the API.
 - **Do not add an extra writer executor or thread-pool layer** on top of a write
   lock without benchmarking; it only adds latency.
+- **The V4 database runs in WAL** since 2026-09-15 (it was the default rollback
+  journal before). `apply_migrations` switches it once; the mode is stored in
+  the file, and `/api/v4/health` reports `journal_mode`. Checkpoints stay
+  automatic (`wal_autocheckpoint`, PASSIVE) — add no checkpoint loop. Keep read
+  endpoints in plain `BEGIN` snapshots and writes in `BEGIN IMMEDIATE`: in WAL
+  a deferred transaction that reads and then writes fails at once if another
+  writer committed in between.
+- On the server, open the database as **www-data**, not root, unless the
+  script hands `-wal`/`-shm` back afterwards (`own_wal_files` in
+  `ops/deploy_v4_games.sh`): WAL side files owned by root stop the service
+  from writing.
 
 ### Code
 
