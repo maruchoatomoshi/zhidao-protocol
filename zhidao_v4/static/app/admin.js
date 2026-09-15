@@ -337,6 +337,8 @@
     // Плитка появляется только у служебных аккаунтов. Это удобство, а не
     // защита: сервер всё равно проверит роль на каждом запросе.
     $("adminHubTile").hidden = !privileged();
+    $("adminHubDivider").hidden = !privileged();
+    $("adminHubGrid").hidden = !privileged();
     selectDefaultPanel();
     if (document.documentElement.dataset.currentScreen === "admin") openPanel(currentPanel());
   });

@@ -53,7 +53,7 @@
       if (char !== "/" && previous && previous[index] !== char && motion()) cell.classList.add("is-rolling");
       counter.append(cell);
     });
-    source.closest(".status-module, .header-balance, .rep-me-points")?.classList.add("has-counter");
+    source.closest(".status-module, .header-balance, .rep-me-points, .case-meter")?.classList.add("has-counter");
   }
 
   document.querySelectorAll("[data-counter-for]").forEach((counter) => {

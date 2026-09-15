@@ -41,7 +41,7 @@ if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw new Error
       }
     }
     await page.setViewportSize({width:390,height:844});
-    for(const target of ['rating','games','cases','tasks']) {
+    for(const target of ['rating','games','cases','more']) {
       await page.locator(`.app-dock [data-target="${target}"]`).click();
       assert.equal(await page.locator('html').getAttribute('data-current-screen'),target);
       await page.locator('[data-target="schedule"]').click();

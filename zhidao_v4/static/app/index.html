@@ -9,7 +9,7 @@
   <script src="./xp-home.js?v=792c47b09e"></script>
   <title>ZHIDAO Hainan · Personal System</title>
   <link rel="stylesheet" href="./tokens.css?v=fa77e0dcbd">
-  <link rel="stylesheet" href="./app.css?v=38f972c510">
+  <link rel="stylesheet" href="./app.css?v=8bfbbafa0e">
   <link rel="stylesheet" href="./aero.css?v=9f44369511">
   <link rel="stylesheet" href="./aero-grade.css?v=57fba7a9cf">
   <link rel="stylesheet" href="./case-workstation.css?v=32a11fe8e2">
@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="./zombie.css?v=93c7303693">
   <link rel="stylesheet" href="./agent.css?v=f86b29a72f">
   <link rel="stylesheet" href="./games-polish.css?v=a6355669d9">
-  <link rel="stylesheet" href="./design-pass.css?v=fafc518fa1">
+  <link rel="stylesheet" href="./design-pass.css?v=704dbc559e">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -316,10 +316,10 @@
            ============================================================ -->
       <section class="screen case-workstation" data-screen="cases" aria-labelledby="casesTitle" hidden>
         <div class="screen-intro">
-          <div><h1 id="casesTitle" class="display-title">Кейсы</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng zi <span class="screen-sub-sep">//</span> сканирование и дроп</p></div>
+          <div><h1 id="casesTitle" class="display-title">Кейсы<span class="title-cn" lang="zh" aria-hidden="true">箱子</span></h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng zi <span class="screen-sub-sep">//</span> сканирование и дроп</p></div>
         </div>
 
-        <div class="case-toolbar"><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
+        <div class="case-toolbar" data-case-toolbar><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
         <article class="case-window" id="scanWindow">
           <div class="case-titlebar"><span>✦ signal_scanner.exe</span><span aria-hidden="true">▰ ▣</span></div>
           <div class="scanner-body">
@@ -327,7 +327,7 @@
             <div class="scan-sequence" aria-label="Этапы сканирования"><span data-scan-step="contact">01 · Связь</span><span data-scan-step="scan">02 · Скан</span><span data-scan-step="reveal">03 · Сигнал</span></div>
             <h2>Что по ту сторону?</h2>
             <p>Одна попытка — один сохранённый результат.</p>
-            <div class="case-meters"><div><span>Попытки</span><strong data-case-scans>— / 7</strong></div><div><span>Баланс</span><strong data-case-stars>— ★</strong></div></div>
+            <div class="case-meters is-single"><div class="case-meter"><span>Попытки</span><strong data-case-scans>— / 7</strong><span class="hit-counter" data-counter-for="scans" aria-hidden="true"></span></div></div>
             <div class="scanner-progress" role="progressbar" aria-label="Ожидание ответа сервера" hidden><span></span></div>
             <button class="btn btn-primary scan-button" id="caseOpen" type="button" disabled aria-describedby="caseStatus">Сканировать · 1 попытка</button>
             <p id="caseStatus" class="case-message" role="status">Войдите, чтобы увидеть свои попытки. В предпросмотре доступны только правила.</p>
@@ -335,11 +335,12 @@
         </article>
         <button type="button" class="btn btn-secondary case-collection-link" data-open-screen="collection">Открыть мою коллекцию →</button>
         <section class="case-window case-history-panel" aria-labelledby="caseHistoryTitle">
-          <div class="case-titlebar"><h2 id="caseHistoryTitle">Журнал сигналов</h2><span aria-hidden="true">.log</span></div>
-          <div id="caseHistory" class="case-list"><p>После входа здесь появятся ваши открытия.</p></div>
+          <div class="case-titlebar"><h2 id="caseHistoryTitle">Последние сигналы</h2><span lang="zh" aria-hidden="true">最近</span></div>
+          <div id="caseHistory" class="case-list is-collapsed"><p>После входа здесь появятся ваши открытия.</p></div>
+          <button type="button" class="btn btn-secondary case-history-toggle" id="caseHistoryToggle" aria-controls="caseHistory" hidden>Весь журнал</button>
           <button type="button" class="btn btn-secondary" id="caseHistoryMore" hidden>Ещё открытия</button>
         </section>
-        <details class="case-window case-rules-panel"><summary>Справка: вероятности и награды</summary><div class="case-rules" id="caseRules"><p class="case-loading">Загрузка правил&hellip;</p></div></details>
+        <details class="case-window case-rules-panel"><summary>Шансы и награды</summary><div class="case-rules" id="caseRules"><p class="case-loading">Загрузка правил&hellip;</p></div></details>
         <section class="case-window" id="caseAdmin" hidden aria-labelledby="caseAdminTitle">
           <div class="case-titlebar"><h2 id="caseAdminTitle">Выдача попыток</h2><span>OPERATOR</span></div>
           <form id="caseGrantForm" class="case-admin-form">
@@ -358,31 +359,8 @@
         </section>
       </section>
 
-      <!-- ============================================================
-           ЗАДАНИЯ — доска миссий (рейды / поручения / ивенты)
-           ============================================================ -->
-      <section class="screen placeholder-screen" data-screen="tasks" aria-labelledby="tasksTitle" hidden>
-        <div class="screen-intro">
-          <div><h1 id="tasksTitle" class="display-title">Задания</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> rèn wù bǎn <span class="screen-sub-sep">//</span> доска заданий</p></div>
-        </div>
-
-        <article class="desktop-banner mission-banner"><img src="./assets/icons/nav-tasks.png" alt=""><div><h2>Вместе — дальше.</h2><p>Рейды, события и поручения.</p></div></article>
-        <div class="tabs" role="tablist" aria-label="Раздел заданий" data-tab-group="tasks">
-          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="raids">Рейды</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="contracts">Поручения</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="events">Ивенты</button>
-        </div>
-
-        <div class="board-column" data-tab-panel="tasks:raids">
-          <p class="diary-note">Рейды появятся после старта сезона.</p>
-        </div>
-        <div class="board-column" data-tab-panel="tasks:contracts" hidden>
-          <p class="diary-note">Поручения появятся после старта сезона.</p>
-        </div>
-        <div class="board-column" data-tab-panel="tasks:events" hidden>
-          <p class="diary-note">Ивенты появятся после старта сезона.</p>
-        </div>
-      </section>
+      <!-- Вкладки «Задания» больше нет (решение пользователя 2026-09-15): за ней
+           были только заглушки рейдов, поручений и ивентов. -->
 
       <!-- ============================================================
            КАРТА КАМПУСА — не трогать, рабочая зона пользователя
@@ -441,14 +419,15 @@
       <section class="screen case-workstation" data-screen="collection" aria-labelledby="collectionTitle" hidden>
         <div class="screen-intro">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><h1 id="collectionTitle" class="display-title">Коллекция</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shōu c&aacute;ng <span class="screen-sub-sep">//</span> импланты и карточки</p></div>
+          <div><h1 id="collectionTitle" class="display-title">Коллекция<span class="title-cn" lang="zh" aria-hidden="true">收藏</span></h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shōu c&aacute;ng <span class="screen-sub-sep">//</span> импланты и карточки</p></div>
         </div>
 
-        <div class="case-toolbar"><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
+        <div class="case-toolbar" data-case-toolbar><label>Сезон <select data-case-season disabled><option>Войдите в аккаунт</option></select></label><button class="btn btn-secondary" type="button" data-case-refresh>Обновить</button></div>
         <article class="case-window">
           <div class="case-titlebar"><span>Мои документы / Коллекция</span><span aria-hidden="true">▣</span></div>
           <div class="case-folder-path">Участник / <span data-collection-season>—</span> / Предметы</div>
           <p id="collectionStatus" class="case-message" role="status">Войдите, чтобы открыть личную коллекцию.</p>
+          <p id="collectionNote" class="case-collection-note" hidden>Эффекты имплантов подключат позже. Дубль можно обменять, четыре одинаковых — улучшить в Мастерской.</p>
           <div id="caseInventory" class="case-inventory"></div>
           <div class="case-statusbar"><span id="caseItemCount">0 предметов</span></div>
         </article>
@@ -476,10 +455,9 @@
       <section class="screen placeholder-screen" data-screen="profile" aria-labelledby="profileTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="schedule" aria-label="Назад">‹</button>
-          <div><h1 id="profileTitle" class="display-title">Профиль</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gè rén zī liào <span class="screen-sub-sep">//</span> твой личный контур</p></div>
+          <div><h1 id="profileTitle" class="display-title">Профиль<span class="title-cn" lang="zh" aria-hidden="true">个人资料</span></h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gè rén zī liào <span class="screen-sub-sep">//</span> твой личный контур</p></div>
         </div>
 
-        <button type="button" class="btn btn-secondary" data-app-guide>Инструкция · помощь Юлии Витальевны</button>
         <article class="profile-card aero">
           <span class="profile-avatar"><img src="./assets/icons/desktop-person.svg" alt=""></span>
           <div class="profile-id">
@@ -488,26 +466,40 @@
           </div>
         </article>
 
-        <div class="stat-tiles">
-          <div class="stat-tile">
-            <span>REP</span><strong>—</strong>
-            <div class="gauge is-empty stat-gauge" role="img" aria-label="Шкала REP пуста: данных нет">
-              <div class="gauge-fill"></div>
-            </div>
-          </div>
-          <div class="stat-tile">
-            <span>БАЛАНС</span><strong data-case-stars>— ★</strong><small>Из кейсов сезона</small>
-          </div>
-          <div class="stat-tile">
-            <span>РАНГ</span><strong>—</strong>
-            <div class="gauge-segments stat-gauge" role="img" aria-label="Ранг не присвоен">
-              <i class="gauge-seg"></i><i class="gauge-seg"></i><i class="gauge-seg"></i>
-              <i class="gauge-seg"></i><i class="gauge-seg"></i>
-            </div>
-          </div>
+        <!-- Профиль — кто я и как выглядит приложение (решение пользователя
+             2026-09-15). Плиток REP, «Баланс», «Ранг» и «Моя коллекция» нет:
+             REP — на своём экране, баланс — в шапке, коллекция — в «Ещё». -->
+        <div class="settings-list glass-card">
+          <span class="settings-group-label">ВИД · 外观</span>
+          <button type="button" data-theme-toggle>
+            <span>Тема <small>主题</small></span>
+            <b><span data-theme-value>Как в системе</span> ›</b>
+          </button>
+          <button type="button" data-motion-toggle aria-pressed="true" aria-label="Анимации включены. Выключить">
+            <span>Анимации <small>动态</small></span>
+            <b><span data-motion-label>Включены</span> ›</b>
+          </button>
+          <button type="button" data-design-toggle>
+            <span>Оформление <small>外观</small></span>
+            <b><span data-design-value>Аква</span> ›</b>
+          </button>
+          <button type="button" data-sound-toggle aria-pressed="false">
+            <span>Звуки <small>声音</small></span>
+            <b><span data-sound-value>Нет набора</span> ›</b>
+          </button>
         </div>
 
-        <button type="button" class="profile-collection-link" data-open-screen="collection"><img src="./assets/icons/nav-cases.png" alt=""><span><strong>Моя коллекция</strong><small>Открыть папку предметов →</small></span></button>
+        <div class="settings-list glass-card profile-help">
+          <span class="settings-group-label">ПОМОЩЬ · 帮助</span>
+          <button type="button" data-app-guide>
+            <span>Инструкция <small>Юлия Витальевна расскажет, что где</small></span>
+            <b>›</b>
+          </button>
+          <button type="button" data-toast="ZHIDAO Hainan · Aero Personal System. Кейсы и коллекция подключены после входа; остальные модули развиваются.">
+            <span>О приложении <small>关于</small></span>
+            <b>›</b>
+          </button>
+        </div>
         <button type="button" class="btn btn-secondary story-properties" id="storyProperties" hidden>Свойства…</button>
       </section>
 
@@ -964,26 +956,10 @@
            ЕЩЁ — хаб настроек и второстепенных разделов
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="more" aria-labelledby="moreTitle" hidden>
-        <div class="placeholder-hero pearl"><img src="./assets/icons/nav-more.png" alt=""><h1 id="moreTitle" class="display-title">Ещё</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gèng duō <span class="screen-sub-sep">//</span> настройки и связь</p></div>
-
-        <div class="settings-list glass-card">
-          <span class="settings-group-label">ВИД</span>
-          <button type="button" data-theme-toggle>
-            <span>Тема <small>主题</small></span>
-            <b><span data-theme-value>Как в системе</span> ›</b>
-          </button>
-          <button type="button" data-motion-toggle aria-pressed="true" aria-label="Анимации включены. Выключить">
-            <span>Анимации <small>动态</small></span>
-            <b><span data-motion-label>Включены</span> ›</b>
-          </button>
-          <button type="button" data-design-toggle>
-            <span>Оформление <small>外观</small></span>
-            <b><span data-design-value>Аква</span> ›</b>
-          </button>
-          <button type="button" data-sound-toggle aria-pressed="false">
-            <span>Звуки <small>声音</small></span>
-            <b><span data-sound-value>Нет набора</span> ›</b>
-          </button>
+        <!-- «Ещё» — только разделы, кнопками 88×31 в цветах темы (решение
+             пользователя 2026-09-15). Вид, инструкция и «О приложении» — в профиле. -->
+        <div class="screen-intro">
+          <div><h1 id="moreTitle" class="display-title">Ещё<span class="title-cn" lang="zh" aria-hidden="true">更多</span></h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gèng duō <span class="screen-sub-sep">//</span> все разделы</p></div>
         </div>
 
         <div class="cn-divider"><b>游戏</b><span>Игры и находки</span></div>
@@ -993,41 +969,49 @@
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
             <span class="hub-name">Встречи</span>
             <span class="hub-cn">相遇<i>xiāng yù</i></span>
+            <span class="hub-sub">» пазлы</span>
           </button>
           <button type="button" class="hub-tile tone-aqua" data-open-screen="trade" data-new="trade">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-cases.png" alt=""></span>
             <span class="hub-name">Обмен</span>
             <span class="hub-cn">交换<i>jiāo huàn</i></span>
+            <span class="hub-sub">» дубли</span>
           </button>
           <button type="button" class="hub-tile tone-red" data-open-screen="antivirus" data-new="antivirus">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
             <span class="hub-name">Антивирус</span>
             <span class="hub-cn">杀毒<i>shā dú</i></span>
+            <span class="hub-sub">» лечение</span>
           </button>
           <button type="button" class="hub-tile tone-gold" data-open-screen="workshop" data-new="workshop">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-forge.svg" alt=""></span>
             <span class="hub-name">Мастерская</span>
             <span class="hub-cn">工坊<i>gōng fáng</i></span>
+            <span class="hub-sub">» улучшить</span>
           </button>
           <button type="button" class="hub-tile tone-violet" data-open-screen="collection">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-collection.svg" alt=""></span>
             <span class="hub-name">Коллекция</span>
             <span class="hub-cn">收藏<i>shōu c&aacute;ng</i></span>
+            <span class="hub-sub">» предметы</span>
           </button>
           <button type="button" class="hub-tile tone-steel story-tile" id="storyBinTile" hidden>
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-bin.svg" alt=""></span>
             <span class="hub-name">Корзина</span>
             <span class="hub-cn">回收站<i>huí shōu zhàn</i></span>
+            <span class="hub-sub">» удалённое</span>
           </button>
           <button type="button" class="hub-tile tone-steel story-tile" id="storyLinkTile" hidden>
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
             <span class="hub-name">legacy_pek.lnk</span>
             <span class="hub-cn">快捷方式<i>kuài jié fāng shì</i></span>
+            <span class="hub-sub">» ярлык</span>
           </button>
           <button type="button" class="hub-tile tone-lime" id="storyArchiveTile" data-open-screen="story" hidden>
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-archive.svg" alt=""></span>
             <span class="hub-name">Архив</span>
             <span class="hub-cn">档案<i>dàng àn</i></span>
+            <span class="hub-sub">» файлы</span>
           </button>
         </div>
 
@@ -1036,33 +1020,21 @@
         <div class="hub-grid">
           <button type="button" class="hub-tile tone-aqua" data-open-screen="campus-map">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
-            <span class="hub-name">Карта кампуса</span>
-            <span class="hub-cn">校园地图<i>xiào yuán dì tú</i></span>
+            <span class="hub-name">Карта</span>
+            <span class="hub-cn">地图<i>dì tú</i></span>
+            <span class="hub-sub">» туман и метки</span>
           </button>
           <button type="button" class="hub-tile tone-gold" data-open-screen="shop">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
             <span class="hub-name">Магазин</span>
             <span class="hub-cn">商店</span>
+            <span class="hub-sub">» витрина дня</span>
           </button>
         </div>
 
-        <div class="cn-divider"><b>帮助</b><span>Профиль и помощь</span></div>
+        <div class="cn-divider" id="adminHubDivider" hidden><b>管理</b><span>Служебное</span></div>
 
-        <div class="hub-grid">
-          <button type="button" class="hub-tile tone-sky" data-open-screen="profile">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-person.svg" alt=""></span>
-            <span class="hub-name">Профиль</span>
-            <span class="hub-cn">操作员<i>cāo zuò yuán</i></span>
-          </button>
-          <button type="button" class="hub-tile tone-sky" data-app-guide>
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-info.svg" alt=""></span>
-            <span class="hub-name">Инструкция</span><span class="hub-cn">Помощь по приложению</span>
-          </button>
-          <button type="button" class="hub-tile tone-steel" data-toast="ZHIDAO Hainan · Aero Personal System. Кейсы и коллекция подключены после входа; остальные модули развиваются.">
-            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-info.svg" alt=""></span>
-            <span class="hub-name">О приложении</span>
-            <span class="hub-cn">关于<i>guān yú</i></span>
-          </button>
+        <div class="hub-grid" id="adminHubGrid" hidden>
           <!-- Плитка служебного контура. Скрыта по умолчанию: её показывает
                admin.js тому, у кого есть служебная роль. Прятать кнопку — не
                способ ограничить доступ, права проверяет сервер. -->
@@ -1070,6 +1042,7 @@
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-shield.svg" alt=""></span>
             <span class="hub-name">Админка</span>
             <span class="hub-cn">管理<i>guǎn lǐ</i></span>
+            <span class="hub-sub">» служебный контур</span>
           </button>
           <button type="button" class="hub-tile tone-lime" data-toast="Отряд появится после распределения участников по группам" hidden>
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-group.svg" alt=""></span>
@@ -1103,6 +1076,11 @@
           </button>
         </div>
 
+        <button type="button" class="glass-card more-profile-hint" data-open-screen="profile">
+          <img src="./assets/icons/desktop-person.svg" alt="">
+          <span><b>Вид, помощь и «О приложении»</b> — в профиле: кнопка справа в шапке.</span>
+        </button>
+
       </section>
     </div>
 
@@ -1119,9 +1097,6 @@
       </button>
       <button type="button" data-target="cases" aria-label="Кейсы">
         <span class="dock-icon"><img src="./assets/icons/nav-cases.png" alt=""></span><small>Кейсы<span class="nav-cn">箱子</span></small>
-      </button>
-      <button type="button" data-target="tasks" aria-label="Задания">
-        <span class="dock-icon"><img src="./assets/icons/nav-tasks.png" alt=""></span><small>Задания<span class="nav-cn">任务板</span></small>
       </button>
       <button type="button" data-target="more" aria-label="Ещё">
         <span class="dock-icon"><img src="./assets/icons/nav-more.png" alt=""></span><small>Ещё<span class="nav-cn">更多</span></small>
@@ -1157,9 +1132,9 @@
     <div class="case-result-body"><p id="caseGrantSummary"></p><p>Запас каждого участника ограничен семью попытками. Фактическая выдача будет записана в журнал.</p><button type="button" class="btn btn-primary" id="caseGrantConfirm">Выдать</button><button type="button" class="btn btn-secondary" id="caseGrantCancel">Отмена</button></div>
   </dialog>
   <script src="./cases.js?v=4344700dac" defer></script>
-  <script src="./case-play.js?v=fd93e2e02a" defer></script>
+  <script src="./case-play.js?v=7500121833" defer></script>
   <script src="./implants.js?v=72985beec8" defer></script>
-  <script src="./admin.js?v=2cf59ee550" defer></script>
+  <script src="./admin.js?v=e3b87d172a" defer></script>
   <script src="./games.js?v=d7a8ff7ff4" defer></script>
   <script src="./game-spy.js?v=1f1256a995" defer></script>
   <script src="./game-cipher.js?v=32871c2395" defer></script>
@@ -1179,8 +1154,8 @@
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
   <script src="./aero-motion.js?v=ff241b0b3e" defer></script>
-  <script src="./guide.js?v=a3e3d5a58d" defer></script>
-  <script src="./retro.js?v=3c8c8588d9" defer></script>
+  <script src="./guide.js?v=2320488fbb" defer></script>
+  <script src="./retro.js?v=80d4e651ae" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>
   <script src="./story.js?v=90f625f5fe" defer></script>
   <div class="royale-stage" id="royaleStage" role="dialog" aria-label="Протокол 60 — большой экран" hidden></div>

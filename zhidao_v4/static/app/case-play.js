@@ -11,8 +11,41 @@
     implant_jade_warden: "jade_warden", implant_diplomat: "diplomat", implant_golden_nexus: "golden_nexus",
   };
   const tierNames = { gold: "Обычный / 普通", purple: "Редкий / 稀有", upgraded: "Улучшенный / 进阶", black: "Легендарный / 传说" };
+  const tierShort = { gold: "Обычный", purple: "Редкий", upgraded: "Улучшенный", black: "Легендарный" };
+  const glyphs = { empty: "○", fate_guard: "↻", walk: "◷", scan: "⌖" };
   let session = null, seasons = [], selected = null, snapshot = null;
-  let busy = false, epoch = 0, historyBefore = null, grantBefore = null, grantDraft = null;
+  let busy = false, epoch = 0, historyBefore = null, grantBefore = null, grantDraft = null, historyExpanded = false;
+  let rarity = null;
+
+  /* Редкость и правила дублей — из тех же публичных файлов, что читает сервер
+     (cases.json, workshop.json): экран подсказывает, а решает всё равно сервер.
+     Обмен — предметы из кейсов, кроме купона; Мастерская берёт «вход» одинаковых
+     и оставляет ещё «keep», поэтому подсказка появляется от input + keep штук. */
+  async function loadRarity() {
+    if (rarity) return rarity;
+    try {
+      const [casesRules, workshop] = await Promise.all(["./assets/cases/cases.json", "./assets/workshop/workshop.json"]
+        .map(url => fetch(url, { cache: "force-cache" }).then(r => { if (!r.ok) throw new Error(url); return r.json(); })));
+      const tier = {}, tradeable = new Set();
+      for (const t of casesRules.tiers) for (const p of t.prizes) {
+        tier[p.code] = t.code;
+        if (p.reward.kind === "item" && p.code !== "walk") tradeable.add(p.code);
+      }
+      for (const item of workshop.items) tier[item.code] = item.tier;
+      rarity = { tier, tradeable, notAccepted: new Set(workshop.not_accepted || []),
+        steps: new Set(workshop.steps.map(s => s.from)), craft: workshop.input + workshop.keep };
+    } catch (_) {
+      rarity = { tier: {}, tradeable: new Set(), notAccepted: new Set(), steps: new Set(), craft: Infinity };
+    }
+    return rarity;
+  }
+  function clock(iso) {
+    const moment = new Date(iso);
+    if (Number.isNaN(moment.getTime())) return "";
+    const time = moment.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    return new Date().toDateString() === moment.toDateString() ? time
+      : `${moment.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })} ${time}`;
+  }
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -69,6 +102,8 @@
     $("caseOpen").disabled = busy || !selected || (!retry && !(selected.can_play && snapshot && snapshot.scans > 0));
     $("caseOpen").textContent = retry ? "Восстановить результат" : "Сканировать · 1 попытка";
     document.querySelectorAll("[data-case-season]").forEach(n => { n.disabled = busy || !seasons.length; });
+    // Выбор сезона нужен только тому, у кого сезонов несколько.
+    document.querySelectorAll("[data-case-toolbar]").forEach(n => { n.hidden = seasons.length <= 1; });
     document.querySelectorAll("[data-case-refresh]").forEach(n => { n.disabled = busy; });
     $("caseGrantFields").disabled = busy || (selected && selected.status !== "active") || !!(signedIn() && selected && pending("grant"));
     $("caseGrantSubmit").disabled = busy || !selected || selected.status !== "active";
@@ -78,6 +113,11 @@
   function clearPersonal() {
     snapshot = null;
     $("caseHistory").replaceChildren(node("p", "", "Открытий пока нет."));
+    historyExpanded = false;
+    $("caseHistory").classList.add("is-collapsed");
+    $("caseHistoryToggle").hidden = true;
+    $("collectionNote").hidden = true;
+    $("collectionStatus").hidden = false;
     $("caseInventory").replaceChildren();
     $("caseGrantMembers").replaceChildren();
     $("caseGrantGroup").replaceChildren();
@@ -123,34 +163,63 @@
     if (!append) host.replaceChildren();
     if (!data.items.length && !append) host.append(node("p", "", "Первый сигнал ещё впереди. Все результаты появятся здесь."));
     for (const row of data.items) {
-      const button = node("button", "case-history-row");
+      const prize = row.details.prize;
+      const button = node("button", `case-history-row tier-${row.details.tier}`);
       button.type = "button";
-      button.append(node("strong", "", row.details.prize.name_ru), node("span", "", `№${row.id} · ${new Date(row.created_at).toLocaleString("ru-RU")}`));
+      const thumb = node("span", "case-history-thumb");
+      thumb.setAttribute("aria-hidden", "true");
+      if (art[prize.code]) {
+        const image = node("img"); image.src = `./assets/implants/${art[prize.code]}.webp`; image.alt = ""; image.loading = "lazy";
+        thumb.append(image);
+      } else thumb.textContent = glyphs[prize.code] || (prize.reward.kind === "stars" ? "★" : "◈");
+      const text = node("span", "case-history-text");
+      text.append(node("strong", "", prize.name_ru), node("small", "", `№${row.id} · ${tierShort[row.details.tier] || ""}`));
+      button.append(thumb, text, node("span", "case-history-time", clock(row.created_at)));
       button.addEventListener("click", () => showResult({ ...row.details, opening_id: row.id, stars: row.stars_after, scans: row.scans_after }));
       host.append(button);
     }
     historyBefore = data.next_before;
-    $("caseHistoryMore").hidden = !historyBefore;
+    const rows = host.querySelectorAll(".case-history-row").length;
+    host.classList.toggle("is-collapsed", !historyExpanded);
+    $("caseHistoryToggle").hidden = historyExpanded || (rows <= 3 && !historyBefore);
+    $("caseHistoryMore").hidden = !(historyExpanded && historyBefore);
+  }
+
+  /* Что с предметом можно сделать — по тем же правилам, что у сервера. */
+  function chipFor(item, tier) {
+    if (item.effect_state === "active") return ["active", "работает"];
+    if (item.item_code === "walk") return ["coupon", "у вожатого"];
+    if (item.quantity >= rarity.craft && !rarity.notAccepted.has(item.item_code) && rarity.steps.has(tier)) return ["workshop", "в Мастерскую"];
+    if (item.quantity >= 2 && rarity.tradeable.has(item.item_code)) return ["trade", "дубль · обмен"];
+    if (tier === "black") return ["legend", "легендарный"];
+    return null;
   }
 
   function drawInventory(items) {
     const host = $("caseInventory");
     host.replaceChildren();
-    $("collectionStatus").textContent = items.length ? "Ваши предметы. Метка показывает, подключён ли эффект." : "Пока пусто. Первый предмет появится после выигрыша.";
+    if (!rarity) rarity = { tier: {}, tradeable: new Set(), notAccepted: new Set(), steps: new Set(), craft: Infinity };
+    $("collectionStatus").textContent = items.length ? "" : "Пока пусто. Первый предмет появится после выигрыша.";
+    $("collectionStatus").hidden = items.length > 0;
+    $("collectionNote").hidden = !items.some(item => item.effect_state !== "active" && item.item_code !== "walk");
     let quantity = 0;
     for (const item of items) {
       quantity += item.quantity;
-      const card = node("article", "case-owned-item");
+      const tier = rarity.tier[item.item_code] || "gold";
+      const card = node("article", `case-owned-item tier-${tier}`);
       card.dataset.itemCode = item.item_code;
       if (art[item.item_code]) {
         const image = node("img"); image.src = `./assets/implants/${art[item.item_code]}.webp`; image.alt = ""; image.loading = "lazy";
         card.append(image);
-      } else card.append(node("span", "case-item-glyph", item.item_code === "fate_guard" ? "↻" : "◷"));
-      card.append(node("h3", "", item.name_ru), node("strong", "case-item-quantity", `×${item.quantity}`),
-        node("span", `case-effect ${item.effect_state}`, item.effect_state === "active" ? "Эффект работает" : "Эффект не подключён"));
+      } else card.append(node("span", "case-item-glyph", glyphs[item.item_code] || "◷"));
+      const name = /^(.*?)\s+([㐀-鿿]+)$/.exec(item.name_ru);
+      card.append(node("h3", "", name ? name[1] : item.name_ru),
+        node("span", "case-item-sub", `${name ? `${name[2]} · ` : ""}×${item.quantity}`));
+      const chip = chipFor(item, tier);
+      if (chip) card.append(node("span", `case-item-chip is-${chip[0]}`, chip[1]));
       host.append(card);
     }
-    $("caseItemCount").textContent = `${quantity} шт. / ${items.length} видов`;
+    $("caseItemCount").textContent = `${items.length} видов · ${quantity} шт.`;
   }
 
   function drawGrants(data, append = false) {
@@ -217,7 +286,7 @@
     }
     status("Проверяем доступные сезоны…");
     try {
-      const data = await api("/api/v4/cases/context");
+      const [data] = await Promise.all([api("/api/v4/cases/context"), loadRarity()]);
       if (version !== epoch) return;
       seasons = data.seasons;
       let lastSeason;
@@ -340,6 +409,13 @@
     finally { if (version === epoch) { busy = false; controls(); } }
   }
   $("caseHistoryMore").addEventListener("click", () => more("history"));
+  $("caseHistoryToggle").addEventListener("click", () => {
+    historyExpanded = true;
+    $("caseHistory").classList.remove("is-collapsed");
+    $("caseHistoryToggle").hidden = true;
+    $("caseHistoryMore").hidden = !historyBefore;
+    $("caseHistory").querySelectorAll(".case-history-row")[3]?.focus({ preventScroll: true });
+  });
   $("caseGrantMore").addEventListener("click", () => more("grants"));
   window.addEventListener("zhidao:auth", event => { session = event.detail; connect(); });
   window.addEventListener("zhidao:screen", event => {

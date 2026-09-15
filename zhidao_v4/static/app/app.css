@@ -876,7 +876,7 @@ p {
   left: 50%;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   width: min(100%, 560px);
   min-height: calc(91px + env(safe-area-inset-bottom));
   padding: 8px 6px calc(7px + env(safe-area-inset-bottom));

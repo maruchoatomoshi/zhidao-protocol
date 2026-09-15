@@ -369,3 +369,128 @@
 :root[data-theme="dark"] .royale-prize-row > span:nth-child(3) { color: #9fe0ff; }
 :root[data-theme="dark"] .royale-prize-row > span:nth-child(2) { color: #ffd166; }
 :root[data-design="xp"] .royale-prize-row { font-family: Tahoma, "Segoe UI", sans-serif; }
+
+/* --- «Кейсы» и «Коллекция» (решение пользователя 2026-09-15) ------------------ */
+
+/* Баланс — в шапке; у сканера остаются только попытки, табло рядом с подписью. */
+.case-meters.is-single { grid-template-columns: minmax(0, 1fr); }
+.case-meter { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.case-meter.has-counter strong {
+  position: absolute !important; width: 1px; height: 1px; margin: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.case-meter .hit-counter { display: flex; margin: 0; }
+.case-meter .hit-counter:empty { display: none; }
+.case-toolbar[hidden] { display: none; }
+
+/* Последние три сигнала; остальное — по «Весь журнал». */
+.case-list.is-collapsed .case-history-row:nth-of-type(n+4) { display: none; }
+.case-history-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.case-history-thumb { display: grid; place-items: center; width: 44px; height: 40px; border-radius: 8px; background: var(--case-inset, #eef7fc); font-size: 20px; color: var(--case-muted, #46697d); }
+.case-history-thumb img { width: 36px; height: 36px; object-fit: contain; }
+.case-history-text { display: grid; gap: 1px; min-width: 0; }
+.case-history-text strong { overflow-wrap: anywhere; }
+.case-history-text small { font: 600 12px/1.3 var(--font-ui); color: var(--case-muted, #46697d); }
+.case-history-time { font: 11px/1 "Courier New", monospace; white-space: nowrap; color: var(--case-muted, #46697d); }
+.case-history-row.tier-purple .case-history-thumb { background: linear-gradient(#f4ecff, #e2d2fb); }
+.case-history-row.tier-purple small { color: #7a3fc0; }
+.case-history-row.tier-upgraded small { color: #1c7c93; }
+.case-history-row.tier-black .case-history-thumb { background: linear-gradient(#fffdf4, #fff3cf); box-shadow: inset 0 0 0 1px #f0c14c; }
+.case-history-row.tier-black small { color: #8a5a00; }
+.case-history-toggle[hidden], #caseHistoryMore[hidden] { display: none; }
+.case-history-toggle, #caseHistoryMore { margin: 0 12px 12px; }
+:root[data-theme="dark"] .case-history-row.tier-purple small { color: #cfb3ff; }
+:root[data-theme="dark"] .case-history-row.tier-black small { color: #ffd166; }
+
+/* Коллекция: компактные плитки, редкость — полосой сверху, одна записка вместо
+   «Эффект не подключён» на каждой карточке. */
+.case-collection-note { margin: 8px 14px 0; padding: 7px 10px; border: 1px solid #c9b86d; border-radius: 8px; background: #fff9d6; color: #06304f; font: 12px/1.4 var(--font-ui); }
+.case-collection-note[hidden], #collectionStatus[hidden] { display: none; }
+.case-inventory { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 10px; }
+.screen .case-owned-item { gap: 2px; padding: 8px 5px 7px; border-radius: 10px; border-top-width: 4px; }
+.screen .case-owned-item::before, .screen .case-owned-item::after { display: none; }
+/* Заголовок коллекции — слева от кнопки «Назад», а не по центру экрана. */
+[data-screen="collection"] .screen-intro { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 10px; text-align: left; }
+.case-owned-item.tier-gold { border-top-color: #e0a100; }
+.case-owned-item.tier-purple { border-top-color: #8a4ad0; }
+.case-owned-item.tier-upgraded { border-top-color: #1c9bb8; }
+.case-owned-item.tier-black { border-top-color: #1b1b1b; background: linear-gradient(#fffdf4, #fff3cf); box-shadow: inset 0 0 0 1px #f0c14c; }
+.case-owned-item img { width: 52px; height: 52px; object-fit: contain; }
+.case-owned-item .case-item-glyph { display: grid; place-items: center; width: 52px; height: 52px; font-size: 34px; }
+.case-owned-item h3 { margin: 2px 0 0; font: 700 13px/1.2 var(--font-ui); overflow-wrap: anywhere; }
+.case-item-sub { font: 11px/1.3 var(--font-ui); color: var(--case-muted, #46697d); }
+.case-item-chip { margin-top: 3px; padding: 2px 6px; border: 1px solid transparent; border-radius: 999px; font: 700 10px/1.3 var(--font-ui); white-space: nowrap; }
+.case-item-chip.is-workshop { background: #8a4ad0; color: #fff; }
+.case-item-chip.is-trade { background: #2f9c3f; color: #fff; }
+.case-item-chip.is-active { border-color: #2f9c3f; background: #e3f6e6; color: #1f6e2c; }
+.case-item-chip.is-coupon { border-color: #d99a12; background: #fff6d8; color: #6b4a00; }
+.case-item-chip.is-legend { background: #1b1b1b; color: #f5c84c; }
+:root[data-theme="dark"] .case-owned-item.tier-black { background: linear-gradient(#3a3218, #2a2410); }
+:root[data-theme="dark"] .case-collection-note { border-color: #7a6a30; background: #3a3420; color: #f5e9b8; }
+:root[data-design="xp"] .screen .case-owned-item { border-radius: 3px; }
+:root[data-design="xp"] .case-owned-item h3,
+:root[data-design="xp"] .case-item-sub,
+:root[data-design="xp"] .case-item-chip,
+:root[data-design="xp"] .case-history-text small,
+:root[data-design="xp"] .case-collection-note { font-family: Tahoma, "Segoe UI", sans-serif; }
+:root[data-design="xp"] .case-collection-note { border-radius: 3px; }
+
+/* --- «Ещё»: кнопки 88×31 в цветах темы (решение пользователя 2026-09-15) ------ */
+
+[data-screen="more"] .cn-divider { margin: 16px 0 6px; }
+:root:root [data-screen="more"] .hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+:root:root [data-screen="more"] .hub-grid[hidden] { display: none; }
+[data-screen="more"] .hub-tile { --badge-tint: #dde8ef; --badge-ink: #3d5a6c; }
+[data-screen="more"] .hub-tile[data-open-screen="meet"] { --badge-tint: #eadcfb; --badge-ink: #6a3fb0; }
+[data-screen="more"] .hub-tile[data-open-screen="trade"] { --badge-tint: #d9f1df; --badge-ink: #2f7d3f; }
+[data-screen="more"] .hub-tile[data-open-screen="antivirus"] { --badge-tint: #f8dcd8; --badge-ink: #b0392f; }
+[data-screen="more"] .hub-tile[data-open-screen="workshop"] { --badge-tint: #f7e7bd; --badge-ink: #946300; }
+[data-screen="more"] .hub-tile[data-open-screen="collection"] { --badge-tint: #f6dbea; --badge-ink: #a03a74; }
+[data-screen="more"] .hub-tile[data-open-screen="story"] { --badge-tint: #d3eff5; --badge-ink: #1c7c93; }
+[data-screen="more"] .hub-tile[data-open-screen="campus-map"] { --badge-tint: #d6e9f8; --badge-ink: #1f64a8; }
+[data-screen="more"] .hub-tile[data-open-screen="shop"] { --badge-tint: #fbe3cc; --badge-ink: #a8561c; }
+[data-screen="more"] .hub-tile[data-open-screen="admin"] { --badge-tint: #f8dcd8; --badge-ink: #b0392f; }
+:root [data-screen="more"] .hub-grid .hub-tile {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr); grid-template-rows: 1fr 1fr; align-items: center;
+  column-gap: 0; row-gap: 0; min-height: 50px; padding: 0; text-align: left; color: #062e50;
+  border: 1px solid #9fc5d5; border-radius: 8px;
+  background: linear-gradient(to bottom, #ffffff 0%, #eaf8ff 45%, #c2e6f6 49%, #f4fcff 100%);
+  box-shadow: 0 6px 14px -8px rgba(3, 62, 104, 0.35);
+}
+:root [data-screen="more"] .hub-grid .hub-tile[hidden] { display: none; }
+/* NEW! — на углу иероглифа, чтобы не закрывать подпись раздела. */
+:root [data-screen="more"] .hub-grid .hub-tile > .new-badge { top: -8px; right: auto; bottom: auto; left: -6px; z-index: 2; }
+:root [data-screen="more"] .hub-grid .hub-orb { display: none; }
+:root [data-screen="more"] .hub-grid .hub-cn {
+  grid-column: 1; grid-row: 1 / 3; align-self: stretch; display: grid; place-items: center;
+  border-right: 1px solid #9fc5d5; border-radius: 7px 0 0 7px; background: linear-gradient(#ffffff, var(--badge-tint));
+  color: var(--badge-ink); font: 700 15px/1 "Microsoft YaHei", "PingFang SC", sans-serif; letter-spacing: 0;
+}
+:root [data-screen="more"] .hub-grid .hub-cn i { display: none; }
+:root [data-screen="more"] .hub-grid .hub-name {
+  grid-column: 2; grid-row: 1; align-self: end; padding: 0 8px 1px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font: 700 12px/1.15 Verdana, Tahoma, sans-serif; letter-spacing: 0; text-transform: uppercase; color: #062e50;
+}
+:root [data-screen="more"] .hub-grid .hub-sub {
+  grid-column: 2; grid-row: 2; align-self: start; padding: 1px 8px 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font: 10px/1.15 Verdana, Tahoma, sans-serif; color: #46697d;
+}
+.more-profile-hint {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%; margin: 18px 0 8px;
+  padding: 8px 12px; text-align: left; color: #46697d; cursor: pointer; font: 13px/1.4 var(--font-ui);
+}
+.more-profile-hint img { width: 40px; height: 40px; }
+.more-profile-hint b { color: #062e50; }
+:root[data-theme="dark"] [data-screen="more"] .hub-grid .hub-tile { border-color: #2d5a7c; background: linear-gradient(#173f63, #0e2c48); }
+:root[data-theme="dark"] [data-screen="more"] .hub-grid .hub-cn { border-color: #2d5a7c; background: rgba(255, 255, 255, 0.07); color: var(--badge-tint); }
+:root[data-theme="dark"] [data-screen="more"] .hub-grid .hub-name,
+:root[data-theme="dark"] .more-profile-hint b { color: #e9f5ff; }
+:root[data-theme="dark"] [data-screen="more"] .hub-grid .hub-sub,
+:root[data-theme="dark"] .more-profile-hint { color: #b5cbd9; }
+:root[data-design="xp"] [data-screen="more"] .hub-grid .hub-tile { border-color: #7da2ce; border-radius: 3px; box-shadow: none; }
+:root[data-design="xp"] [data-screen="more"] .hub-grid .hub-cn { border-color: #7da2ce; border-radius: 2px 0 0 2px; }
+:root[data-design="xp"] .more-profile-hint { border: 1px solid var(--xp-note-edge, #c9b86d); border-radius: 0; background: var(--xp-note, #fff9d6); box-shadow: none; color: var(--xp-ink); font-family: Tahoma, sans-serif; }
+
+/* Профиль: вид и помощь списками, как были в «Ещё». */
+.profile-help button small { display: block; margin-top: 1px; font-size: 11px; opacity: 0.8; }
+.profile-help button span { text-align: left; }
