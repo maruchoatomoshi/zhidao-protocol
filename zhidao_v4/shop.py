@@ -159,7 +159,7 @@ def state(conn, account_id: int, season_id: int) -> dict:
         "stars": full_wallet(conn, account_id, season_id)["stars"],
         "vitrine": vitrine,
         "cosmetics": [
-            {**{k: catalogue_items[code][k] for k in ("code", "slot", "name_ru", "note_ru")}}
+            {**{k: catalogue_items[code][k] for k in ("code", "kind", "slot", "name_ru", "note_ru")}}
             for code in sorted(owned) if code in catalogue_items and catalogue_items[code]["kind"] in ("cosmetic", "award")
         ],
         "walk_coupons": owned.get(WALK_CODE, 0),

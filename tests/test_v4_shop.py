@@ -193,6 +193,15 @@ class ShopTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.text)
         self.assertNotIn("fr_gold", [item["item_code"] for item in response.json()["inventory"]])
 
+    def test_owned_cosmetics_say_whether_they_were_bought_or_awarded(self):
+        # Экран подписывает награды («Кубок фракции» и другие) по полю kind из
+        # ответа сервера, а не угадывает по коду предмета.
+        self.sql("""INSERT INTO v4_case_inventory(season_id, account_id, item_code, quantity, effect_state)
+                    VALUES (1, ?, 'fr_cup', 1, 'active'), (1, ?, 'fr_gold', 1, 'active')""",
+                 (self.ids["alice"], self.ids["alice"]))
+        kinds = {item["code"]: item["kind"] for item in self.state()["cosmetics"]}
+        self.assertEqual(kinds, {"fr_cup": "award", "fr_gold": "cosmetic"})
+
     def test_frames_are_visible_to_others(self):
         frame = "fr_gold"
         self.sql("""INSERT INTO v4_case_inventory(season_id, account_id, item_code, quantity, effect_state)

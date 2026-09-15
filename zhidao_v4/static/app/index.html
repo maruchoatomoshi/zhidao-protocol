@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="./games.css?v=2e3faa249d">
   <link rel="stylesheet" href="./diary.css?v=d01fa4acfe">
   <link rel="stylesheet" href="./economy.css?v=a4d218897e">
-  <link rel="stylesheet" href="./shop.css?v=4ef8ad57ea">
+  <link rel="stylesheet" href="./shop.css?v=aaf4ae7d13">
   <link rel="stylesheet" href="./cosmetics.css?v=6ea11c867c">
   <link rel="stylesheet" href="./meet.css?v=e396112639">
   <link rel="stylesheet" href="./trade.css?v=dbe9d9aca3">
@@ -293,22 +293,20 @@
            ============================================================ -->
       <section class="screen case-workstation shop-screen" data-screen="shop" aria-labelledby="shopTitle" hidden>
         <div class="screen-intro">
-          <div><h1 id="shopTitle" class="display-title">Магазин</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> витрина дня</p></div>
-          <span class="preview-chip" id="shopStars">&mdash; ★</span>
+          <div><h1 id="shopTitle" class="display-title">Магазин<span class="title-cn" lang="zh" aria-hidden="true">商店</span></h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shāng diàn <span class="screen-sub-sep">//</span> <span id="shopDay">витрина дня</span></p></div>
         </div>
 
-        <article class="case-window">
-          <div class="case-titlebar"><h2>Витрина дня</h2><span id="shopDay">&mdash;</span></div>
-          <p class="case-message" id="shopStatus" role="status">Войдите, чтобы увидеть витрину дня.</p>
-          <div class="shop-vitrine" id="shopVitrine"></div>
-          <div class="case-statusbar"><span id="shopRefresh">ОБНОВЛЕНИЕ В 07:00</span></div>
-        </article>
+        <!-- Магазин по макету 2026-09-16: «Витрина» и «Моё» — вкладками. Баланса
+             здесь нет: он в шапке. Содержимое панелей рисует shop.js: в Акве —
+             строки с ценой на кнопке, в Луне — таблица с панелью описания. -->
+        <div class="tabs shop-tabs" role="tablist" aria-label="Раздел магазина" data-tab-group="shop">
+          <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="vitrine">Витрина <span lang="zh" aria-hidden="true">橱窗</span></button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-tab="mine">Моё <span lang="zh" aria-hidden="true">我的</span></button>
+        </div>
+        <p class="case-message shop-status" id="shopStatus" role="status">Войдите, чтобы увидеть витрину дня.</p>
 
-        <article class="case-window">
-          <div class="case-titlebar"><h2>Моё</h2><span aria-hidden="true">我的</span></div>
-          <div class="shop-mine" id="shopMine"><p class="case-message">Покупки появятся здесь после входа.</p></div>
-          <div class="case-statusbar"><span id="shopCoupons">КУПОНОВ «+30 МИНУТ»: &mdash;</span></div>
-        </article>
+        <div class="shop-panel" id="shopVitrine" data-tab-panel="shop:vitrine"></div>
+        <div class="shop-panel" id="shopMine" data-tab-panel="shop:mine" hidden><p class="case-message">Покупки появятся здесь после входа.</p></div>
       </section>
 
       <!-- ============================================================
@@ -1194,7 +1192,7 @@
   <script src="./rep.js?v=961113eb61" defer></script>
   <script src="./economy.js?v=e2532e9054" defer></script>
   <script src="./cosmetics.js?v=8ece19ed7f" defer></script>
-  <script src="./shop.js?v=9ef796e7ab" defer></script>
+  <script src="./shop.js?v=2a634192a9" defer></script>
   <script src="./meet.js?v=44e02e65d4" defer></script>
   <script src="./trade.js?v=f1748536b7" defer></script>
   <script src="./virus.js?v=e1285fcef3" defer></script>

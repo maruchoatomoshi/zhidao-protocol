@@ -8,7 +8,7 @@
   "cosmetic_price_min": 20,
   "cosmetic_price_max": 60,
   "items": [
-    {"code": "walk", "kind": "coupon", "slot": null, "price": 120, "name_ru": "+30 минут свободы", "note_ru": "Купон. Гасит вожатый, когда вы отпрашиваетесь."},
+    {"code": "walk", "kind": "coupon", "slot": null, "price": 120, "name_ru": "+30 минут свободы", "note_ru": "Гасит вожатый, когда вы отпрашиваетесь."},
 
     {"code": "wp_bubbles", "kind": "cosmetic", "slot": "wallpaper", "price": 30, "name_ru": "Пузыри Хайнаня", "note_ru": "Обои: стеклянные пузыри над бирюзовой водой."},
     {"code": "wp_grid", "kind": "cosmetic", "slot": "wallpaper", "price": 30, "name_ru": "Сетка Протокола", "note_ru": "Обои: светящаяся сетка на глубоком синем."},
