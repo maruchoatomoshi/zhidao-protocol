@@ -71,7 +71,7 @@ Do not start work from this file alone. Read the document that owns the area:
 | Any V4 scope/product decision | `V4_DECISIONS.md` |
 | V4 login, roles, sessions, CSRF | `V4_AUTH.md` |
 | The MAX bot, its commands and deployment | `V4_BOT.md` |
-| V4 schema, migrations | `V4_SCHEMA.md` |
+| V4 schema, migrations | `V4_SCHEMA.md` (model), `V4_SCHEMA_TABLES.md` (generated table reference — rebuild with `tools/schema_doc.py`) |
 | Hainan visual language | `V4_DESIGN.md` |
 | Hainan app + campus map, in detail | `CLAUDE_HANDOFF_HAINAN_V4_2026-09-03.md` |
 | Blender characters, Unity game | `CLAUDE_HANDOFF_GAME_BLENDER_2026-09-03.md` |

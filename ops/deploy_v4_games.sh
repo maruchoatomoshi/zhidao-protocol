@@ -11,6 +11,10 @@ target=444bac6e9dfbd86cae5382b7dec6cef60b54d4b6
 # A reviewed full SHA may be passed explicitly; without it the pinned release above is deployed.
 target="${1:-$target}"
 [[ "$target" =~ ^[0-9a-f]{40}$ ]] || { echo 'Expected a full reviewed commit SHA.'; exit 1; }
+public_health=https://china.marucho.icu:8443/api/v4/health
+# Deploy backups kept on this disk, newest first; older ones are removed after a
+# successful release. Each holds the database and the previous code.
+keep_backups=10
 
 [[ $(id -u) == 0 ]] || { echo 'Run from the root Termius session.'; exit 1; }
 cd "$repo"
@@ -19,9 +23,18 @@ cd "$repo"
 git diff --quiet
 git diff --cached --quiet
 git cat-file -e "$target^{commit}"
-# Verify the target migration set BEFORE stopping services or changing files.
+# The expected schema is the newest migration in the target release, so a new
+# migration no longer needs a hand edit here. Verify it BEFORE stopping services
+# or changing files, and never deploy a release older than the running schema.
 target_schema=$(git ls-tree -r --name-only "$target" -- migrations/v4 | sed -n 's|migrations/v4/\([0-9][0-9][0-9][0-9]\)_.*\.sql$|\1|p' | sort | tail -n 1)
-[[ "$target_schema" == 0025 ]] || { echo 'Target release does not match expected schema 25. Nothing changed.'; exit 1; }
+[[ "$target_schema" =~ ^[0-9]{4}$ ]] || { echo 'Target release has no V4 migrations. Nothing changed.'; exit 1; }
+expected_schema=$((10#$target_schema))
+current_schema=$(curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8770/api/v4/health |
+  "$repo/.venv/bin/python" -c 'import json, sys; print(int(json.load(sys.stdin)["schema_version"]))') ||
+  { echo 'Running API health did not report its schema. Nothing changed.'; exit 1; }
+(( expected_schema >= current_schema )) || {
+  echo "Target schema $expected_schema is older than running schema $current_schema. Nothing changed."; exit 1;
+}
 old=$(git rev-parse HEAD)
 git merge-base --is-ancestor "$old" "$target" || {
   echo 'Server history differs from this release. Nothing changed; ask for review.'; exit 1;
@@ -44,7 +57,7 @@ backup=$(mktemp -d /var/lib/zhidao-v4/deploy-backup-XXXXXXXX)
 chmod 700 "$backup"
 printf '%s\n' "$old" > "$backup/previous-commit.txt"
 git archive "$old" zhidao_v4 migrations/v4 > "$backup/previous-code.tar"
-printf 'Release: %s\nPrevious: %s\nBackup: %s\n' "$target" "$old" "$backup"
+printf 'Release: %s\nPrevious: %s\nBackup: %s\nSchema: %s -> %s\n' "$target" "$old" "$backup" "$current_schema" "$expected_schema"
 
 stopped=0
 changed=0
@@ -61,6 +74,19 @@ own_wal_files() {
   for file in "$db-wal" "$db-shm"; do
     if [[ -e $file ]]; then
       chown --reference="$db" "$file"
+    fi
+  done
+}
+# Only directories this script creates are candidates, and never the backup of
+# the release in progress.
+prune_backups() {
+  local dir
+  local -a stale
+  mapfile -t stale < <(ls -1dt /var/lib/zhidao-v4/deploy-backup-* | tail -n +$((keep_backups + 1)))
+  for dir in "${stale[@]}"; do
+    if [[ $dir == /var/lib/zhidao-v4/deploy-backup-* && -d $dir && $dir != "$backup" ]]; then
+      rm -rf -- "$dir"
+      echo "Removed old deploy backup: $dir"
     fi
   done
 }
@@ -145,17 +171,19 @@ PY
 own_wal_files
 systemctl start zhidao-v4
 
-"$repo/.venv/bin/python" - <<'PY'
+"$repo/.venv/bin/python" - "$expected_schema" <<'PY'
 import json
+import sys
 import time
 from urllib.request import urlopen
 from urllib.error import HTTPError
+expected_schema = int(sys.argv[1])
 base = 'http://127.0.0.1:8770'
 for attempt in range(20):
     try:
         with urlopen(base + '/api/v4/health', timeout=2) as r:
             health = json.load(r)
-        assert health['status'] == 'ok' and health['schema_version'] == 25
+        assert health['status'] == 'ok' and health['schema_version'] == expected_schema, health
         assert health['journal_mode'] == 'wal', health
         break
     except Exception:
@@ -180,14 +208,36 @@ except HTTPError as error:
     assert error.code == 401
 else:
     raise AssertionError('Personal case context unexpectedly public')
-print('Local smoke: schema 25, WAL; cases rules and release assets 200; personal API 401')
+print(f'Local smoke: schema {expected_schema}, WAL; cases rules and release assets 200; personal API 401')
 PY
 
 systemctl start zhidao-v4-bot
 systemctl is-active --quiet zhidao-v4
 systemctl is-active --quiet zhidao-v4-bot
+# The release is live locally from here on; nothing below rolls it back.
 trap - ERR INT TERM
-printf 'DEPLOY_OK %s\nBACKUP %s\n' "$target" "$backup"
-curl --fail --silent --show-error --max-time 15 https://china.marucho.icu:8443/api/v4/health ||
-  echo 'External HTTPS check failed; local services passed. Send this output for diagnosis.'
-printf '\n'
+printf 'LOCAL_OK %s\nBACKUP %s\n' "$target" "$backup"
+prune_backups || echo 'WARNING: could not prune old deploy backups; the release itself is fine.'
+
+# What people actually reach goes through nginx and TLS on 8443. A local green
+# with a public red is not a finished release: say so and exit non-zero. Code is
+# not rolled back — the cause is outside the app (nginx, certificate, network).
+public_ok=0
+for attempt in 1 2 3 4 5; do
+  if public=$(curl --fail --silent --show-error --max-time 15 "$public_health") &&
+     "$repo/.venv/bin/python" -c '
+import json, sys
+health = json.loads(sys.argv[1])
+assert health["status"] == "ok" and health["schema_version"] == int(sys.argv[2]) and health["journal_mode"] == "wal"
+' "$public" "$expected_schema"; then
+    public_ok=1
+    break
+  fi
+  sleep 3
+done
+if [[ $public_ok == 1 ]]; then
+  printf 'DEPLOY_OK %s\n%s\n' "$target" "$public"
+else
+  echo "PUBLIC_CHECK_FAILED $target: local services run the new release, but $public_health did not confirm schema $expected_schema in WAL. Send this output for diagnosis."
+  exit 2
+fi
