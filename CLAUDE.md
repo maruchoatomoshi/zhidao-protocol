@@ -244,8 +244,10 @@ apply.
 
 ## Validation
 
-CI (`.github/workflows/ci.yml`) runs syntax checks only — it does not prove
-behaviour. Run the checks that match what you touched.
+CI (`.github/workflows/ci.yml`) runs the full `pytest tests` suite on Python
+3.12 (the test server's version), `node --check` for every frontend module
+including `zhidao_v4/static/app/*.js`, and `bash -n` for `ops/*.sh`. It does
+not look at screens. Run the checks that match what you touched before pushing.
 
 Season-1 code:
 

@@ -217,6 +217,34 @@ def provision_local_account(
     }
 
 
+def _read_local_credential(
+    conn: sqlite3.Connection, normalized_username: str
+) -> sqlite3.Row | None:
+    # fetchall, not fetchone: it runs the statement to completion, so no read
+    # lock outlives this call while the caller spends time in scrypt.
+    rows = conn.execute(
+        """
+        SELECT
+            a.id AS account_id,
+            a.public_id,
+            a.display_name,
+            a.status AS account_status,
+            e.id AS identity_id,
+            p.is_enabled AS provider_enabled,
+            c.password_hash,
+            c.failed_attempts,
+            c.locked_until
+        FROM v4_external_identities e
+        JOIN v4_identity_providers p ON p.code = e.provider_code
+        JOIN v4_accounts a ON a.id = e.account_id
+        JOIN v4_local_credentials c ON c.identity_id = e.id
+        WHERE e.provider_code = 'local' AND e.provider_subject = ?
+        """,
+        (normalized_username,),
+    ).fetchall()
+    return rows[0] if rows else None
+
+
 def authenticate_local(
     db_path: str | Path,
     *,
@@ -234,35 +262,29 @@ def authenticate_local(
     failure = False
     result: LoginResult | None = None
     try:
+        # scrypt is slow on purpose. Inside BEGIN IMMEDIATE it held the only
+        # SQLite writer slot for the whole derivation, so a burst of logins
+        # stalled unrelated game writes. Verify outside any transaction, then
+        # decide in a short one that trusts only state re-read under the lock.
+        snapshot = _read_local_credential(conn, normalized_username)
+        password_matches = verify_password(
+            str(password or ""),
+            DUMMY_PASSWORD_HASH if snapshot is None else str(snapshot["password_hash"]),
+        )
         with immediate_transaction(conn):
-            row = conn.execute(
-                """
-                SELECT
-                    a.id AS account_id,
-                    a.public_id,
-                    a.display_name,
-                    a.status AS account_status,
-                    e.id AS identity_id,
-                    p.is_enabled AS provider_enabled,
-                    c.password_hash,
-                    c.failed_attempts,
-                    c.locked_until
-                FROM v4_external_identities e
-                JOIN v4_identity_providers p ON p.code = e.provider_code
-                JOIN v4_accounts a ON a.id = e.account_id
-                JOIN v4_local_credentials c ON c.identity_id = e.id
-                WHERE e.provider_code = 'local' AND e.provider_subject = ?
-                """,
-                (normalized_username,),
-            ).fetchone()
+            row = _read_local_credential(conn, normalized_username)
 
-            if row is None:
-                verify_password(str(password or ""), DUMMY_PASSWORD_HASH)
+            if (
+                snapshot is None
+                or row is None
+                or row["identity_id"] != snapshot["identity_id"]
+                or row["password_hash"] != snapshot["password_hash"]
+            ):
+                # Unknown user, or the password changed while it was being
+                # verified: that verdict is about an old hash. Refuse without
+                # counting it as a failed attempt; the person just tries again.
                 failure = True
             else:
-                password_matches = verify_password(
-                    str(password or ""), str(row["password_hash"])
-                )
                 now = utc_now()
                 now_value = utc_text(now)
                 locked = bool(
