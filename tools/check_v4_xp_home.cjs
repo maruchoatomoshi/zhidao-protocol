@@ -24,13 +24,15 @@ if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw new Error
         await page.setViewportSize({width,height:844});
         await page.waitForTimeout(120);
         assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${theme}/${width}: page overflow`);
-        assert.equal(await page.locator('.desktop-shortcuts button:visible').count(),4);
+        // Главная без дублей (2026-09-15): ярлыков нет, баланс — табло в шапке.
+        assert.equal(await page.locator('.desktop-shortcuts').count(),0);
+        assert.equal(await page.locator('.header-balance [data-counter-for="stars"]').count(),1);
         const title=await page.locator('.journey-copy h2').boundingBox(),logo=await page.locator('.journey-logo').boundingBox();
         assert.ok(title.x+title.width<=logo.x+1,`${theme}/${width}: hero overlap`);
         assert.ok(await page.locator('.journey-logo').evaluate(n=>n.complete && n.naturalWidth>0));
         const profile=await page.locator('.profile-fab').boundingBox();
         assert.ok(profile.width>=44 && profile.height>=44);
-        for(const target of await page.locator('.desktop-shortcuts button').all()) {
+        for(const target of await page.locator('.app-dock button').all()) {
           const b=await target.boundingBox(); assert.ok(b.width>=44 && b.height>=44);
         }
         layouts++;
@@ -39,8 +41,8 @@ if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw new Error
       }
     }
     await page.setViewportSize({width:390,height:844});
-    for(const target of ['cases','campus-map','collection','tasks']) {
-      await page.locator(`.desktop-shortcuts [data-open-screen="${target}"]`).click();
+    for(const target of ['rating','games','cases','tasks']) {
+      await page.locator(`.app-dock [data-target="${target}"]`).click();
       assert.equal(await page.locator('html').getAttribute('data-current-screen'),target);
       await page.locator('[data-target="schedule"]').click();
     }
@@ -61,11 +63,10 @@ if (!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw new Error
     await page.locator('.xp-review-note a').click();
     await page.locator('[data-auth-preview]').click();
     assert.equal(await page.locator('html').getAttribute('data-design'),null);
-    assert.equal(await page.locator('.desktop-shortcuts button:visible').count(),2);
     assert.equal(await page.locator('.xp-titlebar:visible').count(),0);
     assert.deepEqual(errors,[]); assert.deepEqual(failures,[]);
     assert.deepEqual(await page.evaluate(()=>window.__csp),[]);
-    const result={layouts,checks:['14 layouts / both themes / no horizontal overflow','logos loaded; no hero overlap; primary touch targets >=44px','4 shortcuts, profile and return navigation','reduced-motion and motion-off: zero running animations','Aero default restored by comparison link','no page exceptions or checked asset errors'],errors,failures,realMAX:'not tested'};
+    const result={layouts,checks:['14 layouts / both themes / no horizontal overflow','logos loaded; no hero overlap; dock touch targets >=44px','header balance, dock, profile and return navigation','reduced-motion and motion-off: zero running animations','Aero default restored by comparison link','no page exceptions or checked asset errors'],errors,failures,realMAX:'not tested'};
     fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(result,null,2)); console.log(JSON.stringify(result,null,2));
   } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});

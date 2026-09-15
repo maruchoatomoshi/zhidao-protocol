@@ -252,8 +252,22 @@
     const parts = [logo(false), node("p", "spy-lead", LEAD)];
     const prizes = data.prizes || [];
     if (prizes.length) {
-      parts.push(node("p", "royale-meta",
-        `Призы: ${prizes.map((p, i) => `${i + 1} место — ${p.stars}★ и ${p.rep} REP`).join(" · ")} (в играх от ${data.prize_min_players} человек, один приз в день)`));
+      // Призы таблицей, а не абзацем (решение пользователя 2026-09-15).
+      const table = node("div", "royale-prizes");
+      table.setAttribute("role", "table");
+      table.setAttribute("aria-label", "Призы");
+      const head = node("div", "royale-prize-row is-head");
+      head.setAttribute("role", "row");
+      ["Место", "★", "REP"].forEach((text) => { const cell = node("span", null, text); cell.setAttribute("role", "columnheader"); head.append(cell); });
+      table.append(head);
+      prizes.forEach((p, i) => {
+        const row = node("div", `royale-prize-row is-place-${i + 1}`);
+        row.setAttribute("role", "row");
+        [`${i + 1} место`, String(p.stars), String(p.rep)].forEach((text) => { const cell = node("span", null, text); cell.setAttribute("role", "cell"); row.append(cell); });
+        table.append(row);
+      });
+      const revive = data.revive_price ? ` Воскрешение — ${data.revive_price}★ до середины игры.` : "";
+      parts.push(table, node("p", "royale-meta", `В играх от ${data.prize_min_players} человек, один приз в день.${revive}`));
     }
     parts.push(node("p", "royale-meta", data.can_host ? "Откройте лобби, когда смена соберётся" : "Игру открывает вожатый — ждите объявления"));
     return parts;

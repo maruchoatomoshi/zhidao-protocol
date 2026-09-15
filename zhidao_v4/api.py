@@ -31,6 +31,7 @@ from .agent_api import register_agent
 from .zombie_api import register_zombie
 from .sabotage_api import register_sabotage
 from .market_api import register_market
+from .rep_api import register_rep
 from .today_api import register_today
 from .games_api import register_games
 from .auth import (
@@ -797,5 +798,6 @@ def create_app(
     register_sabotage(app, _current_principal, _csrf_principal)
     register_market(app, _current_principal, _csrf_principal)
     register_today(app, _current_principal)
+    register_rep(app, _current_principal)
     register_games(app, _current_principal, _csrf_principal, _architect_writer)
     return app

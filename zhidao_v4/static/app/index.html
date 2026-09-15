@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="./zombie.css?v=93c7303693">
   <link rel="stylesheet" href="./agent.css?v=f86b29a72f">
   <link rel="stylesheet" href="./games-polish.css?v=a6355669d9">
-  <link rel="stylesheet" href="./design-pass.css?v=328f2290f4">
+  <link rel="stylesheet" href="./design-pass.css?v=fafc518fa1">
   </head>
 <body>
   <div class="world" aria-hidden="true">
@@ -182,9 +182,8 @@
           <img class="brand-logo" src="./assets/zhidao-dragon-logo-256.png" width="48" height="48" alt="">
           <span><strong>ZHIDAO<span class="xp-only xp-brand-suffix"> Protocol</span></strong><small>HAINAN PERSONAL SYSTEM</small></span>
         </div>
-        <div class="header-status">
-          <span id="clock">--:--</span>
-          <i aria-label="Система доступна"></i>
+        <div class="header-status header-balance" aria-label="Баланс сезона">
+          <strong data-case-stars>— ★</strong><span class="hit-counter" data-counter-for="stars" aria-hidden="true"></span>
         </div>
         <button class="profile-fab btn btn-icon" type="button" data-open-screen="profile" aria-label="Профиль">
           <span class="profile-fab-orb"><img src="./assets/icons/desktop-person.svg" alt=""></span>
@@ -208,7 +207,7 @@
           <div class="journey-index"><span>18°19′N</span></div>
           <div class="journey-copy">
             <p>ОБЕЩАННОЕ ЗАВТРА</p>
-            <h2>Курс на<br>Хайнань</h2>
+            <h2>Курс на <br>Хайнань</h2>
           </div>
           <img class="journey-logo" src="./assets/zhidao-dragon-logo-256.png" width="128" height="128" alt="ZHIDAO Protocol">
           <div class="journey-bubbles" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -220,29 +219,28 @@
           <div class="zd-ticker-window"><div class="zd-ticker-track" id="homeTicker"><span class="zd-ticker-run"><span>ZHIDAO Hainan на связи</span></span></div></div>
         </div>
 
-        <div class="status-grid" aria-label="Показатели участника">
-          <article class="status-module rep-module"><span>БАЛАНС</span><strong data-case-stars>— ★</strong><span class="hit-counter" data-counter-for="stars" aria-hidden="true"></span><small>Звёзды сезона</small></article>
-          <article class="status-module season-module"><span>СИГНАЛЫ</span><strong data-case-scans>— / 7</strong><span class="hit-counter" data-counter-for="scans" aria-hidden="true"></span><small>Попытки сканирования</small></article>
-        </div>
-
-        <div class="desktop-shortcuts" aria-label="Быстрый доступ">
-          <button type="button" data-open-screen="cases"><img src="./assets/icons/nav-cases.png" alt=""><span>Сканер<small>Открыть кейс</small></span><b aria-hidden="true">↗</b></button>
-          <button type="button" data-open-screen="campus-map"><span class="shortcut-map-orb" aria-hidden="true">⌖</span><span>Кампус<small>Твои ориентиры</small></span><b aria-hidden="true">↗</b></button>
-        </div>
-
         <article class="glass-card now-card" id="homeNow" aria-labelledby="homeNowTitle" hidden>
-          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-spy.svg" alt=""><h2>Сейчас в сезоне</h2><span aria-hidden="true">现在</span></div>
-          <h3 class="now-title" id="homeNowTitle">Сейчас в сезоне <span aria-hidden="true">现在</span></h3>
+          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-spy.svg" alt=""><h2>Сейчас</h2><span lang="zh" aria-hidden="true">现在</span></div>
+          <h3 class="now-title" id="homeNowTitle">Сейчас <span lang="zh" aria-hidden="true">现在</span></h3>
           <ul class="now-list" id="homeNowList"></ul>
         </article>
 
         <article class="glass-card today-card">
-          <div class="xp-only xp-titlebar"><img src="./assets/icons/nav-schedule.png" alt=""><h2>Мой день</h2><span>Расписание</span></div>
-          <div class="section-heading"><div><h3>Сегодня</h3></div><button type="button" class="btn btn-secondary" data-toast="Расписание появится после активации сезона">Все планы</button></div>
+          <div class="xp-only xp-titlebar"><img src="./assets/icons/nav-schedule.png" alt=""><h2>Мой день</h2><span lang="zh" aria-hidden="true">我的一天</span></div>
+          <div class="section-heading"><div><h3>Мой день <span lang="zh" aria-hidden="true">我的一天</span></h3></div><button type="button" class="btn btn-secondary" data-toast="Расписание появится после активации сезона">Все планы</button></div>
           <div class="timeline-empty">
             <span class="timeline-mark"><i></i></span>
             <div><strong>Маршрут ещё не активирован</strong><p>Здесь появятся встречи, выезды и важные точки дня.</p></div>
           </div>
+        </article>
+
+        <!-- «Что нового» с прошлого входа: строки журнала, которые с человеком
+             сделали другие или игра. Рисует home-now.js по GET /api/v4/today. -->
+        <article class="glass-card feed-card" id="homeFeed" aria-labelledby="homeFeedTitle" hidden>
+          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-archive.svg" alt=""><h2>Что нового</h2><span lang="zh" aria-hidden="true">新动态</span></div>
+          <h3 class="now-title feed-title" id="homeFeedTitle">Что нового <span lang="zh" aria-hidden="true">新动态</span></h3>
+          <ul class="feed-list" id="homeFeedList"></ul>
+          <p class="feed-empty" id="homeFeedEmpty" hidden>Пока тихо. Новое появится здесь.</p>
         </article>
       </section>
 
@@ -251,28 +249,36 @@
            ============================================================ -->
       <section class="screen placeholder-screen" data-screen="rating" aria-labelledby="ratingTitle" hidden>
         <div class="screen-intro">
-          <div><h1 id="ratingTitle" class="display-title">Рейтинг REP</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> pái míng <span class="screen-sub-sep">//</span> репутация сезона</p></div>
+          <div><h1 id="ratingTitle" class="display-title">Рейтинг REP<span class="title-cn" lang="zh" aria-hidden="true">排名</span></h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> pái míng <span class="screen-sub-sep">//</span> репутация сезона</p></div>
         </div>
-
-        <article class="desktop-banner reputation-banner"><img src="./assets/icons/nav-rating.png" alt=""><div><h2>Важен твой вклад.</h2><p>REP — репутация сезона.<br>Её нельзя купить за ★.</p></div></article>
         <div class="tabs" role="tablist" aria-label="Раздел рейтинга" data-tab-group="rating">
           <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="season">Сезон</button>
           <button class="tab" type="button" role="tab" aria-selected="false" data-tab="diary">Дневник</button>
         </div>
 
-        <article class="glass-card podium-card" data-tab-panel="rating:season">
-          <div class="podium" aria-label="Топ-3 предпросмотра">
-            <div class="podium-slot second"><span class="podium-avatar"></span><span class="podium-rank">2</span></div>
-            <div class="podium-slot first"><span class="podium-avatar"></span><span class="podium-rank">1</span></div>
-            <div class="podium-slot third"><span class="podium-avatar"></span><span class="podium-rank">3</span></div>
-          </div>
-        </article>
-
-        <article class="glass-card board-list" data-tab-panel="rating:season">
-          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">04</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value"></span></div>
-          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">05</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value"></span></div>
-          <div class="board-row skeleton" aria-hidden="true"><span class="board-rank">06</span><span class="board-avatar"></span><span class="board-lines"><i class="line-lg"></i><i class="line-sm"></i></span><span class="board-value"></span></div>
-        </article>
+        <!-- REP сезона (решение пользователя 2026-09-15): моё место, тройка лидеров
+             и соседи рядом. Всей таблицы нет. Рисует rep.js. -->
+        <div class="rep-season" data-tab-panel="rating:season">
+          <article class="glass-card rep-me" id="repMe" hidden>
+            <div class="xp-only xp-titlebar"><img src="./assets/icons/nav-rating.png" alt=""><h2>Моё место</h2><span lang="zh" aria-hidden="true">我的位置</span></div>
+            <div class="rep-me-body">
+              <div class="rep-me-place"><span class="rep-label">МОЁ МЕСТО <span lang="zh" aria-hidden="true">我的位置</span></span><span class="rep-rank-line"><b id="repRank">—</b> <small id="repTotal"></small></span></div>
+              <div class="rep-me-points"><span class="rep-label">REP</span><strong id="repPoints">—</strong><span class="hit-counter" data-counter-for="rep" aria-hidden="true"></span></div>
+              <div class="rep-next"><span id="repNextLabel"></span><b id="repNextGap"></b></div>
+              <div class="rep-progress" id="repProgress" aria-hidden="true"></div>
+            </div>
+          </article>
+          <article class="glass-card podium-card rep-board">
+            <div class="xp-only xp-titlebar"><img src="./assets/icons/nav-rating.png" alt=""><h2>Таблица сезона</h2><span lang="zh" aria-hidden="true">赛季排名</span></div>
+            <div class="podium" id="repPodium" aria-label="Тройка лидеров">
+              <div class="podium-slot second"><span class="podium-avatar"></span><span class="podium-rank">2</span></div>
+              <div class="podium-slot first"><span class="podium-avatar"></span><span class="podium-rank">1</span></div>
+              <div class="podium-slot third"><span class="podium-avatar"></span><span class="podium-rank">3</span></div>
+            </div>
+            <div class="board-list rep-around" id="repAround"></div>
+            <p class="diary-note" id="repNote">Подиум и таблица появятся после старта сезона.</p>
+          </article>
+        </div>
 
         <!-- Дневник уже настоящий: оценки ставят вожатые по бумажному дневнику,
              список рисует diary.js по ответу сервера. -->
@@ -280,8 +286,6 @@
           <div class="diary-mine" id="diaryMine"><p class="diary-note">Войдите, чтобы увидеть свои оценки и рейтинг дневников.</p></div>
           <div class="board-list" id="diaryBoard"></div>
         </article>
-
-        <p class="diary-note" data-tab-panel="rating:season">Подиум и таблица появятся после старта сезона.</p>
       </section>
 
       <!-- ============================================================
@@ -387,6 +391,7 @@
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">‹</button>
           <div><h1 id="campusMapTitle" class="display-title">Карта кампуса</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiào yuán dì tú <span class="screen-sub-sep">//</span> навигация по кампусу</p></div>
+          <button type="button" class="btn btn-secondary screen-guide" data-game-guide="map">Как играть?</button>
           <span class="map-status"><i></i> WGS-84</span>
         </div>
 
@@ -684,6 +689,7 @@
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
           <div><h1 id="storyTitle" class="display-title">Архив</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> dàng àn <span class="screen-sub-sep">//</span> скрытые файлы</p></div>
+          <button type="button" class="btn btn-secondary screen-guide" data-game-guide="story">Как играть?</button>
         </div>
 
         <article class="case-window">
@@ -708,6 +714,7 @@
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
           <div><h1 id="workshopTitle" class="display-title">Мастерская</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gōng fáng <span class="screen-sub-sep">//</span> три дубликата — ступень выше</p></div>
+          <button type="button" class="btn btn-secondary screen-guide" data-game-guide="workshop">Как играть?</button>
         </div>
 
         <article class="case-window">
@@ -731,6 +738,7 @@
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
           <div><h1 id="antivirusTitle" class="display-title">Антивирус</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> shā dú <span class="screen-sub-sep">//</span> лечение и защита</p></div>
+          <button type="button" class="btn btn-secondary screen-guide" data-game-guide="virus">Как играть?</button>
         </div>
 
         <article class="case-window">
@@ -758,6 +766,7 @@
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
           <div><h1 id="tradeTitle" class="display-title">Обмен</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jiāo huàn <span class="screen-sub-sep">//</span> дубликаты из рук в руки</p></div>
+          <button type="button" class="btn btn-secondary screen-guide" data-game-guide="trade">Как играть?</button>
         </div>
 
         <article class="case-window" id="tradeStart">
@@ -793,6 +802,7 @@
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
           <div><h1 id="meetTitle" class="display-title">Встречи</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiāng yù <span class="screen-sub-sep">//</span> пазл из встреч</p></div>
+          <button type="button" class="btn btn-secondary screen-guide" data-game-guide="meet">Как играть?</button>
         </div>
 
         <article class="case-window">
@@ -832,32 +842,12 @@
            с тайной внутри.
            ============================================================ -->
       <section class="screen case-workstation games-screen" data-screen="games" aria-labelledby="gamesTitle" hidden>
+        <!-- «Ивенты» — вкладка нижней панели, возвращаться некуда: кнопки «Назад» нет.
+             Общий список «Как играть?» разошёлся по окнам игр и по своим разделам
+             (решение пользователя 2026-09-15). -->
         <div class="map-screen-head">
-          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><h1 id="gamesTitle" class="display-title">Ивенты</h1><p class="screen-sub">Игры вместе · общение прежде всего</p></div>
+          <div><h1 id="gamesTitle" class="display-title">Ивенты<span class="title-cn" lang="zh" aria-hidden="true">活动</span></h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> huó dòng <span class="screen-sub-sep">//</span> игры вместе</p></div>
         </div>
-
-        <details class="case-window game-help-panel">
-          <summary>Как играть? · Правила и тренировки</summary>
-          <div class="game-learning-links" aria-label="Помощь по играм">
-          <button type="button" class="btn btn-secondary" data-game-guide="spy">Шпион: правила и обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="cipher">Шифровальщики: правила и обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="outage">Сбой системы: попробовать</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="smuggle">Контрабанда: правила и обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="meet">Пазл встреч: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="trade">Обмен: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="virus">Вирус: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="royale">Протокол 60: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="agent">Тайный агент: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="market">Рынок Контрабанды: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="sabotage">Саботаж: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="zombie">Зомби-протокол: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="capture">Захват кампуса: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="workshop">Мастерская: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="story">Скрытые файлы: обучение</button>
-          <button type="button" class="btn btn-secondary" data-game-guide="map">Туман и метки: обучение</button>
-          </div>
-        </details>
 
         <nav class="games-catalog" id="gamesCatalog" aria-label="Все игры"></nav>
         <div class="games-back" id="gamesBack" hidden><button type="button" class="btn btn-secondary" data-catalog-back>&lsaquo; Все игры</button></div>
@@ -865,6 +855,7 @@
         <article class="case-window royale-window" id="royaleWindow" data-catalog="royale">
           <div class="case-titlebar"><h2>Протокол 60</h2><span aria-hidden="true">大逃杀</span></div>
           <img class="game-banner" src="./assets/games/cover-royale.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="game-help-row"><button type="button" class="btn btn-secondary" data-game-guide="royale">Как играть?</button></div>
           <div class="spy-body" id="royaleBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="royaleStatus">—</span></div>
         </article>
@@ -872,6 +863,7 @@
         <article class="case-window agent-window" id="agentWindow" data-catalog="agent">
           <div class="case-titlebar"><h2>Тайный агент</h2><span aria-hidden="true">特工</span></div>
           <img class="game-banner" src="./assets/games/cover-agent.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="game-help-row"><button type="button" class="btn btn-secondary" data-game-guide="agent">Как играть?</button></div>
           <div class="spy-body" id="agentBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="agentStatus">—</span></div>
         </article>
@@ -879,6 +871,7 @@
         <article class="case-window zombie-window" id="zombieWindow" data-catalog="zombie">
           <div class="case-titlebar"><h2>Зомби-протокол</h2><span aria-hidden="true">丧尸</span></div>
           <img class="game-banner" src="./assets/games/cover-zombie.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="game-help-row"><button type="button" class="btn btn-secondary" data-game-guide="zombie">Как играть?</button></div>
           <div class="spy-body" id="zombieBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="zombieStatus">—</span></div>
         </article>
@@ -886,6 +879,7 @@
         <article class="case-window sabotage-window" id="sabotageWindow" data-catalog="sabotage">
           <div class="case-titlebar"><h2>Саботаж</h2><span aria-hidden="true">破坏</span></div>
           <img class="game-banner" src="./assets/games/cover-sabotage.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="game-help-row"><button type="button" class="btn btn-secondary" data-game-guide="sabotage">Как играть?</button></div>
           <div class="spy-body" id="sabotageBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="sabotageStatus">—</span></div>
         </article>
@@ -893,6 +887,7 @@
         <article class="case-window market-window" id="marketWindow" data-catalog="market">
           <div class="case-titlebar"><h2>Рынок Контрабанды</h2><span aria-hidden="true">黑市</span></div>
           <img class="game-banner" src="./assets/games/cover-market.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="game-help-row"><button type="button" class="btn btn-secondary" data-game-guide="market">Как играть?</button></div>
           <div class="spy-body" id="marketBody" aria-live="polite"></div>
           <div class="case-statusbar"><span id="marketStatus">—</span></div>
         </article>
@@ -900,6 +895,7 @@
         <article class="case-window" id="captureIntro" data-catalog="capture">
           <div class="case-titlebar"><h2>Игры на кампусе</h2><span aria-hidden="true">校园</span></div>
           <img class="game-banner" src="./assets/games/cover-capture.webp" alt="" width="960" height="360" loading="lazy" decoding="async">
+          <div class="game-help-row"><button type="button" class="btn btn-secondary" data-game-guide="capture">Как играть?</button></div>
           <div class="spy-body">
             <section class="game-card" aria-labelledby="gameCaptureTitle">
               <h3 id="gameCaptureTitle">Захват кампуса <span aria-hidden="true">占领</span></h3>
@@ -926,6 +922,7 @@
               <p>Всем за столом приходит одно место и роль. Одному — «вы шпион». Задаёте друг другу вопросы и ищете того, кто не знает, где вы.</p>
               <ul class="spy-facts"><li>4–8 игроков</li><li>раунд 5–12 минут</li><li>места на китайском</li></ul>
               <button type="button" class="btn btn-primary" data-create-game="spy">Создать комнату</button>
+              <button type="button" class="btn btn-secondary" data-game-guide="spy">Как играть?</button>
             </section>
             <section class="game-card" aria-labelledby="gameCipherTitle">
               <span class="game-cover" aria-hidden="true"><img src="./assets/games/cover-cipher.webp" alt="" width="1200" height="450" decoding="async"></span>
@@ -933,6 +930,7 @@
               <p>Две команды и поле из 25 китайских слов. Капитан вслух даёт подсказку — одно слово и число, — а команда ищет свои слова и обходит вирус.</p>
               <ul class="spy-facts"><li>4–8 игроков</li><li>две команды</li><li>слова на китайском</li></ul>
               <button type="button" class="btn btn-primary" data-create-game="cipher">Создать комнату</button>
+              <button type="button" class="btn btn-secondary" data-game-guide="cipher">Как играть?</button>
             </section>
             <section class="game-card" aria-labelledby="gameOutageTitle">
               <span class="game-cover" aria-hidden="true"><img src="./assets/games/cover-outage.webp" alt="" width="1200" height="450" decoding="async"></span>
@@ -940,6 +938,7 @@
               <p>Техник видит сломанные модули с китайскими знаками, эксперты — инструкцию. Починить систему можно, только договорившись вслух.</p>
               <ul class="spy-facts"><li>2–8 игроков</li><li>раунд 4–5 минут</li><li>знаки и числа</li></ul>
               <button type="button" class="btn btn-primary" data-create-game="outage">Создать комнату</button>
+              <button type="button" class="btn btn-secondary" data-game-guide="outage">Как играть?</button>
             </section>
             <section class="game-card" aria-labelledby="gameSmuggleTitle">
               <span class="game-cover" aria-hidden="true"><img src="./assets/games/cover-smuggle.webp" alt="" width="960" height="360" loading="lazy" decoding="async"></span>
@@ -947,6 +946,7 @@
               <p>Порт Хайнаня, таможня BlueJoy. Купцы тайно собирают сумки и блефуют, таможенник решает: пропустить за взятку или вскрыть. Во вскрытой сумке — только иероглифы.</p>
               <ul class="spy-facts"><li>3–6 игроков</li><li>юани только на партию</li><li>победителю 10★</li></ul>
               <button type="button" class="btn btn-primary" data-create-game="smuggle">Создать комнату</button>
+              <button type="button" class="btn btn-secondary" data-game-guide="smuggle">Как играть?</button>
             </section>
           </div>
           <div class="case-statusbar"><span>ОЧКИ ТОЛЬКО НА ВЕЧЕР</span></div>
@@ -1115,7 +1115,7 @@
         <span class="dock-icon"><img src="./assets/icons/nav-rating.png" alt=""></span><small>REP<span class="nav-cn">排名</span></small>
       </button>
       <button type="button" data-target="games" aria-label="Ивенты" data-new="games">
-        <span class="dock-icon"><img src="./assets/icons/desktop-spy.svg" alt=""></span><small>Ивенты<span class="nav-cn">EVENTS</span></small>
+        <span class="dock-icon"><img src="./assets/icons/desktop-spy.svg" alt=""></span><small>Ивенты<span class="nav-cn">活动</span></small>
       </button>
       <button type="button" data-target="cases" aria-label="Кейсы">
         <span class="dock-icon"><img src="./assets/icons/nav-cases.png" alt=""></span><small>Кейсы<span class="nav-cn">箱子</span></small>
@@ -1165,7 +1165,8 @@
   <script src="./game-cipher.js?v=32871c2395" defer></script>
   <script src="./game-smuggle.js?v=e360fdadc3" defer></script>
   <script src="./game-outage.js?v=776b998494" defer></script>
-  <script src="./diary.js?v=fb3ac8d621" defer></script>
+  <script src="./diary.js?v=1427d64ce0" defer></script>
+  <script src="./rep.js?v=961113eb61" defer></script>
   <script src="./economy.js?v=e2532e9054" defer></script>
   <script src="./cosmetics.js?v=ea916c862c" defer></script>
   <script src="./shop.js?v=9ef796e7ab" defer></script>
@@ -1179,18 +1180,18 @@
   <script src="./auth.js?v=8d29d373f2" defer></script>
   <script src="./aero-motion.js?v=ff241b0b3e" defer></script>
   <script src="./guide.js?v=a3e3d5a58d" defer></script>
-  <script src="./retro.js?v=2effc8142a" defer></script>
+  <script src="./retro.js?v=3c8c8588d9" defer></script>
   <script src="./campus-marks.js?v=0cb06daa30" defer></script>
   <script src="./story.js?v=90f625f5fe" defer></script>
   <div class="royale-stage" id="royaleStage" role="dialog" aria-label="Протокол 60 — большой экран" hidden></div>
-  <script src="./royale.js?v=82e1b4e1d9" defer></script>
+  <script src="./royale.js?v=a06be6fffe" defer></script>
   <script src="./capture-duel.js?v=6afd7f08ee" defer></script>
   <script src="./capture.js?v=804a3f1087" defer></script>
   <script src="./market.js?v=315030f463" defer></script>
   <script src="./sabotage.js?v=e3038c8cfd" defer></script>
   <script src="./zombie.js?v=f8a5ff6747" defer></script>
   <script src="./agent.js?v=021f1fccb9" defer></script>
-  <script src="./games-catalog.js?v=577f331813" defer></script>
-  <script src="./home-now.js?v=9c04633af3" defer></script>
+  <script src="./games-catalog.js?v=bf3f88ab23" defer></script>
+  <script src="./home-now.js?v=c94f3db4e2" defer></script>
 </body>
 </html>

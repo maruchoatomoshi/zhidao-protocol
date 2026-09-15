@@ -154,3 +154,218 @@
 :root[data-design="xp"] .now-text b,
 :root[data-design="xp"] .now-text small,
 :root[data-design="xp"] .now-action { font-family: Tahoma, "Segoe UI", sans-serif; }
+
+/* --- главная без дублей (решение пользователя 2026-09-15) -------------------- */
+
+/* Баланс — табло в шапке на всех экранах; «Сигналы» и ярлыки ушли в свои разделы. */
+.header-balance { gap: 0; padding: 5px 9px; }
+.header-balance.has-counter strong {
+  position: absolute !important; width: 1px; height: 1px; margin: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.header-balance .hit-counter { margin: 0; }
+.header-balance .hit-counter b { width: 15px; height: 22px; font-size: 15px; }
+.header-balance .hit-counter[data-counter-for="stars"]::after { margin-left: 4px; font-size: 16px; }
+:root[data-design="xp"] .header-balance .hit-counter { padding: 3px 5px; border: 1px solid #054780; border-radius: 3px; background: rgba(0, 30, 70, 0.35); box-shadow: inset 1px 1px rgba(0, 0, 0, 0.25); }
+:root[data-design="xp"] .header-balance .hit-counter b { width: 14px; height: 20px; font-size: 14px; }
+:root[data-design="xp"] .header-balance .hit-counter[data-counter-for="stars"]::after { font-size: 14px; color: #ffd23f; text-shadow: 0 1px #5a3a00; }
+
+/* Заголовок главной остаётся для скринридера; на экране его место занимает остров. */
+[data-screen="schedule"] .screen-intro {
+  position: absolute !important; width: 1px; height: 1px; margin: 0 !important; padding: 0 !important;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); border: 0 !important;
+}
+
+/* Есть срочное — остров узкой лентой; спокойно — крупный, как раньше. */
+[data-screen="schedule"][data-calm="false"] .journey-copy h2 br,
+[data-screen="schedule"][data-calm="false"] .journey-bubbles,
+[data-screen="schedule"][data-calm="false"] .journey-index,
+[data-screen="schedule"][data-calm="false"] .xp-journey-caption { display: none; }
+:root:not([data-design="xp"]) [data-screen="schedule"][data-calm="false"] .journey-card { height: 132px; min-height: 0; }
+:root:not([data-design="xp"]) [data-screen="schedule"][data-calm="false"] .journey-card .journey-copy { top: 18px; }
+:root:not([data-design="xp"]) [data-screen="schedule"][data-calm="false"] .journey-copy h2 { font-size: 26px; }
+:root:not([data-design="xp"]) [data-screen="schedule"][data-calm="false"] .journey-card .journey-logo { top: 14px; width: 96px; }
+:root[data-design="xp"] [data-screen="schedule"][data-calm="false"] .journey-card { height: 150px; min-height: 150px; }
+:root[data-design="xp"] [data-screen="schedule"][data-calm="false"] .journey-card .journey-copy { top: 44px; }
+:root[data-design="xp"] [data-screen="schedule"][data-calm="false"] .journey-copy h2 { max-width: 70%; font-size: 28px; }
+:root[data-design="xp"] [data-screen="schedule"][data-calm="false"] .journey-card .journey-logo { top: 38px; width: 84px; }
+
+.today-card .section-heading h3 { margin: 0; font: 700 17px/1.25 var(--font-ui); }
+.today-card .section-heading h3 span { margin-left: 6px; font-weight: 400; opacity: 0.6; }
+
+/* «Что нового» */
+.feed-card { margin: 14px 0; padding: 14px 16px; }
+.feed-card[hidden] { display: none; }
+.feed-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.feed-list li + li { border-top: 1px dotted var(--desk-edge, #9fc5d5); }
+.feed-row {
+  position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  width: 100%; min-height: 48px; padding: 6px 2px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer;
+}
+.feed-icon { width: 30px; height: 30px; object-fit: contain; }
+.feed-text { display: grid; gap: 1px; min-width: 0; }
+.feed-text b { font: 600 14px/1.3 var(--font-ui); overflow-wrap: anywhere; }
+.feed-text small { font: 12px/1.3 var(--font-ui); color: var(--desk-muted, #46697d); }
+.feed-time { font: 11px/1 "Courier New", monospace; white-space: nowrap; color: var(--desk-muted, #46697d); }
+.feed-new {
+  position: absolute; top: 0; left: -4px; padding: 2px 4px 1px; border: 1px solid #7a0000; border-radius: 3px;
+  background: linear-gradient(#ffe45c, #ff9d00); color: #b10000; font: bold 9px/1 Verdana, Tahoma, sans-serif; transform: rotate(8deg);
+}
+.feed-empty { margin: 4px 0 0; font: 14px/1.4 var(--font-ui); color: var(--desk-muted, #46697d); }
+.feed-empty[hidden] { display: none; }
+.feed-row:focus-visible { outline: 3px solid var(--desk-accent, #087dab); outline-offset: 2px; }
+:root[data-theme="dark"] .feed-text small,
+:root[data-theme="dark"] .feed-time,
+:root[data-theme="dark"] .feed-empty { color: #b5cbd9; }
+:root[data-design="xp"] .now-card { order: 3; }
+:root[data-design="xp"] .feed-card { order: 5; padding: 0 0 4px; border-radius: 4px; }
+:root[data-design="xp"] .feed-list { padding: 2px 10px 0; }
+:root[data-design="xp"] .feed-empty { padding: 10px 12px 6px; }
+:root[data-design="xp"] .feed-text b,
+:root[data-design="xp"] .feed-text small,
+:root[data-design="xp"] .feed-time,
+:root[data-design="xp"] .feed-empty { font-family: Tahoma, "Segoe UI", sans-serif; }
+
+/* --- REP: моё место, тройка лидеров и соседи (решение пользователя 2026-09-15) --- */
+
+.title-cn { margin-left: 10px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; font-size: 0.6em; font-weight: 400; opacity: 0.75; }
+.rep-season { display: grid; gap: 12px; }
+.rep-season[hidden], .rep-me[hidden] { display: none; }
+.rep-me { margin: 0; padding: 12px 14px; }
+.rep-me-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px 10px; }
+.rep-label { display: block; font: 700 9px/1.2 var(--font-ui); letter-spacing: 0.06em; color: #287795; }
+.rep-label span { margin-left: 4px; font-weight: 400; letter-spacing: 0; }
+.rep-rank-line b { font: 800 38px/1.05 var(--font-ui); color: #0d6ab5; }
+.rep-rank-line small { font: 14px/1 var(--font-ui); color: var(--desk-muted, #46697d); }
+.rep-me-points { display: grid; justify-items: end; gap: 4px; }
+.rep-me-points.has-counter strong {
+  position: absolute !important; width: 1px; height: 1px; margin: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.rep-me-points .hit-counter { margin: 0; }
+.rep-next { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 10px; font: 13px/1.2 var(--font-ui); color: var(--desk-muted, #46697d); }
+.rep-next b { color: #03578e; }
+.rep-progress {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; height: 14px; padding: 2px;
+  border: 1px solid #9fc5d5; border-radius: 3px; background: #fff; box-shadow: inset 1px 1px 2px rgba(7, 39, 57, 0.15);
+}
+.rep-progress:empty { display: none; }
+.rep-progress i.is-on { background: linear-gradient(#c9f7a5, #4fb82a); }
+.rep-board .podium-slot { gap: 4px; }
+.podium-name { font: 700 13px/1.2 var(--font-ui); text-align: center; overflow-wrap: anywhere; }
+.podium-rep { font: 700 12px/1 "Courier New", monospace; color: var(--desk-muted, #46697d); }
+.podium-slot.is-you .podium-avatar { box-shadow: 0 0 0 3px #2ec2ea; }
+.rep-around { margin-top: 12px; gap: 6px; }
+.rep-around:empty { display: none; }
+.rep-value { color: #03578e; }
+.rep-board .diary-note[hidden] { display: none; }
+.diary-rules { margin: 0; padding: 6px 9px; border: 1px solid #c9b86d; border-radius: 8px; background: #fff9d6; color: #06304f; font: 12px/1.4 var(--font-ui); }
+:root[data-theme="dark"] .rep-label { color: #8fd3f0; }
+:root[data-theme="dark"] .rep-rank-line b,
+:root[data-theme="dark"] .rep-next b,
+:root[data-theme="dark"] .rep-value { color: #9fe0ff; }
+:root[data-theme="dark"] .rep-rank-line small,
+:root[data-theme="dark"] .rep-next,
+:root[data-theme="dark"] .podium-rep { color: #b5cbd9; }
+:root[data-theme="dark"] .rep-progress { border-color: #2d5a7c; background: #0b2338; }
+:root[data-theme="dark"] .diary-rules { border-color: #7a6a30; background: #3a3420; color: #f5e9b8; }
+:root[data-design="xp"] .rep-me,
+:root[data-design="xp"] .rep-board { padding: 0 0 8px; border-radius: 4px; overflow: hidden; }
+:root[data-design="xp"] .rep-me-body { padding: 8px 10px 0; }
+:root[data-design="xp"] .rep-me-place .rep-label { display: none; }
+:root[data-design="xp"] .rep-rank-line b { font: bold 34px/1.15 Tahoma, sans-serif; color: #0a6fb4; }
+:root[data-design="xp"] .rep-rank-line small,
+:root[data-design="xp"] .rep-label,
+:root[data-design="xp"] .rep-next,
+:root[data-design="xp"] .podium-name,
+:root[data-design="xp"] .podium-rep,
+:root[data-design="xp"] .diary-rules { font-family: Tahoma, "Segoe UI", sans-serif; }
+:root[data-design="xp"] .rep-progress { border-color: #686868; }
+:root[data-design="xp"] .rep-progress i.is-on { background: linear-gradient(#c9f7a5, #3cb521 60%, #2f9c1a); }
+:root[data-design="xp"] .rep-around { padding: 0 10px; }
+:root[data-design="xp"] .rep-board .diary-note { padding: 0 10px; }
+:root[data-design="xp"] .diary-rules { border-radius: 3px; }
+
+/* Дневник читается как карточка, а не как бледный текст поверх фото. */
+:root:not([data-design="xp"]) .diary-board { padding: 14px 16px; background: rgba(255, 255, 255, 0.9); }
+:root[data-theme="dark"]:not([data-design="xp"]) .diary-board { background: rgba(10, 36, 60, 0.92); }
+.diary-label { font-family: var(--font-ui); letter-spacing: 0.08em; color: #287795; }
+.diary-name, .diary-sub, .diary-value, .diary-row .board-rank { font-family: var(--font-ui); }
+.diary-name { color: #062e50; }
+:root[data-theme="dark"] .diary-label { color: #8fd3f0; }
+:root[data-theme="dark"] .diary-name { color: #e9f5ff; }
+:root[data-design="xp"] .diary-label,
+:root[data-design="xp"] .diary-name,
+:root[data-design="xp"] .diary-sub,
+:root[data-design="xp"] .diary-value,
+:root[data-design="xp"] .diary-row .board-rank { font-family: Tahoma, "Segoe UI", sans-serif; }
+:root[data-design="xp"] .diary-name { color: var(--xp-ink); }
+
+/* --- «Ивенты»: идёт сейчас, по коду комнаты, позже (решение пользователя 2026-09-15) --- */
+
+.games-catalog { display: flex; flex-direction: column; gap: 14px; }
+.catalog-group[hidden] { display: none; }
+.catalog-heading {
+  display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px; padding: 0 4px;
+  font: 700 11px/1.2 var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: #287795;
+}
+.catalog-heading span { font: 400 12px/1 "Microsoft YaHei", "PingFang SC", sans-serif; letter-spacing: 0; text-transform: none; color: #35647d; }
+.catalog-grid { display: grid; gap: 8px; }
+.catalog-group.is-live .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.catalog-group.is-live .catalog-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.catalog-group.is-live .catalog-tile:last-child:nth-child(odd) img { aspect-ratio: 16 / 5; }
+.catalog-group:not(.is-live) .catalog-tile { grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 58px; padding: 6px; }
+.catalog-group:not(.is-live) .catalog-tile img { width: 64px; height: 44px; aspect-ratio: auto; border-radius: 7px; }
+.catalog-group:not(.is-live) .catalog-tile-text { padding: 0; }
+.catalog-group.is-later .catalog-tile { background: rgba(255, 255, 255, 0.62); box-shadow: none; }
+.catalog-group.is-later .catalog-tile img { filter: grayscale(0.7); opacity: 0.85; }
+.catalog-group.is-later .catalog-tile b { font-size: 13px; font-weight: 600; }
+.catalog-badge {
+  position: absolute; top: 6px; left: 6px; padding: 2px 6px; border: 1px solid #fff; border-radius: 4px;
+  font: 800 10px/1.2 var(--font-ui); letter-spacing: 0.04em; color: #fff; background: #d2332b;
+}
+.catalog-badge.is-open { background: #2f9c3f; }
+.catalog-badge[hidden] { display: none; }
+.catalog-group:not(.is-live) .catalog-badge { top: 2px; left: 2px; }
+:root[data-theme="dark"] .catalog-heading { color: #8fd3f0; }
+:root[data-theme="dark"] .catalog-heading span { color: #b5cbd9; }
+:root[data-theme="dark"] .catalog-group.is-later .catalog-tile { background: rgba(10, 36, 60, 0.6); }
+:root[data-design="xp"] .catalog-group { overflow: hidden; border: 1px solid #3b7ccd; border-radius: 5px; background: #fff; box-shadow: inset 0 0 0 2px #eff7ff, 1px 2px 2px rgba(11, 49, 99, 0.13); }
+:root[data-design="xp"] .catalog-heading {
+  min-height: 31px; margin: 0; padding: 3px 8px; align-items: center; background: var(--xp-title); border-bottom: 1px solid #063f70;
+  box-shadow: inset 0 1px #acdfff; color: #fff; font: bold 14px/1.2 Tahoma, sans-serif; letter-spacing: 0; text-transform: none; text-shadow: 1px 1px #063f70;
+}
+:root[data-design="xp"] .catalog-heading span { color: #cfeaff; font-size: 12px; text-shadow: none; }
+:root[data-design="xp"] .catalog-grid { padding: 8px; }
+:root[data-design="xp"] .catalog-group:not(.is-live) .catalog-tile img { border-radius: 0; border: 1px solid #8fbcd6; }
+:root[data-design="xp"] .catalog-badge { border-radius: 2px; font-family: Tahoma, sans-serif; }
+:root[data-design="xp"][data-theme="dark"] .catalog-group { border-color: #3b5f8f; background: #10233f; }
+:root[data-design="xp"] .app-dock .nav-cn { display: block; font: 8px/1 "Microsoft YaHei", "PingFang SC", sans-serif; color: #cfeaff; text-shadow: 0 1px #003782; }
+
+/* Обучение — кнопкой в окне своей игры или в шапке своего раздела. */
+.game-help-row { display: flex; justify-content: flex-end; padding: 8px 12px 0; }
+.game-help-row .btn, .screen-guide { min-height: 44px; white-space: nowrap; }
+.map-screen-head .screen-guide { flex: none; margin-left: auto; align-self: center; }
+/* У «Ивентов» нет кнопки «Назад»: заголовок занимает всю ширину шапки. */
+[data-screen="games"] .map-screen-head { grid-template-columns: minmax(0, 1fr); }
+/* Крупные заголовки Аквы на телефоне не делят строку с кнопкой: она уходит под подзаголовок. */
+@media (max-width: 560px) {
+  :root:not([data-design="xp"]) .map-screen-head .screen-guide { grid-column: 2; grid-row: 2; justify-self: start; margin: 2px 0 0; }
+}
+/* На карте в третьей колонке — метка системы координат; кнопка обучения ей не мешает. */
+:root[data-design="xp"] [data-screen="campus-map"] .map-screen-head .screen-guide { grid-column: 2; grid-row: 2; justify-self: start; margin: 2px 0 0; }
+.game-card [data-game-guide] { margin-top: 6px; }
+
+/* Призы Протокола 60 — таблицей. */
+.royale-prizes { display: grid; margin: 4px 0; }
+.royale-prize-row { display: grid; grid-template-columns: minmax(0, 1fr) 64px 64px; align-items: center; min-height: 30px; border-bottom: 1px dotted var(--case-border, #9fc5d5); font: 14px/1.2 var(--font-ui); }
+.royale-prize-row > span:not(:first-child) { text-align: right; font-weight: 700; }
+.royale-prize-row > span:nth-child(2) { color: #b87800; }
+.royale-prize-row > span:nth-child(3) { color: #03578e; }
+.royale-prize-row.is-head { min-height: 24px; border-bottom-style: solid; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #287795; }
+.royale-prize-row.is-head > span { color: inherit; }
+.royale-prize-row.is-place-1 > span:first-child { font-weight: 700; }
+.royale-prize-row:last-child { border-bottom: 0; }
+:root[data-theme="dark"] .royale-prize-row > span:nth-child(3) { color: #9fe0ff; }
+:root[data-theme="dark"] .royale-prize-row > span:nth-child(2) { color: #ffd166; }
+:root[data-design="xp"] .royale-prize-row { font-family: Tahoma, "Segoe UI", sans-serif; }

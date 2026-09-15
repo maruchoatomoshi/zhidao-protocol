@@ -36,10 +36,12 @@ class TodayTests(unittest.TestCase):
         conn = connect_database(self.db_path)
         try:
             with immediate_transaction(conn):
+                self.ids = {}
                 for name in ("kid1", "kid2", "outsider"):
                     account = provision_local_account(conn, username=name, password=USER_PASSWORD, display_name=name,
                                                       role_code="participant",
                                                       actor_account_id=bootstrap["account"]["id"])
+                    self.ids[name] = account["id"]
                     if name != "outsider":
                         conn.execute("INSERT INTO v4_season_memberships(season_id, account_id, status) VALUES (1, ?, 'active')",
                                      (account["id"],))
@@ -119,6 +121,34 @@ class TodayTests(unittest.TestCase):
         self.assertEqual(self.today("outsider"), {"season_id": None, "items": []})
         with TestClient(self.app) as guest:
             self.assertEqual(guest.get("/api/v4/today").status_code, 401)
+
+    def test_the_feed_lists_what_others_did_for_me_recently_and_nobody_is_named(self):
+        fresh = (MORNING - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        stale = (MORNING - timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        rows = [
+            ("kid1", "diary.rate", 25, 50, fresh),
+            ("kid1", "royale.prize", 30, 30, fresh),
+            ("kid1", "shop.buy", -10, 0, fresh),      # собственная покупка — не новость
+            ("kid1", "trade.swap", 0, 0, stale),       # старше двух суток
+            ("kid2", "diary.rate", 8, 15, fresh),
+        ]
+        for who, operation, stars, rep, at in rows:
+            self.sql("""INSERT INTO v4_economy_operations(season_id, account_id, actor_account_id, operation,
+                            stars_delta, scans_delta, rep_delta, stars_after, scans_after, rep_after, details_json, created_at)
+                        VALUES (1, ?, ?, ?, ?, 0, ?, ?, 0, ?, '{}', ?)""",
+                     (self.ids[who], self.admin_id, operation, stars, rep, max(stars, 0), rep, at))
+        feed = self.today()["feed"]
+        self.assertEqual([(f["kind"], f.get("game")) for f in feed], [("prize", "royale"), ("diary", None)])
+        self.assertEqual((feed[1]["rep"], feed[1]["stars"]), (50, 25))
+        self.assertEqual([f["kind"] for f in self.today("kid2")["feed"]], ["diary"])
+        text = self.clients["kid1"].get("/api/v4/today").text
+        for name in ("kid2", "architect", "Архитектор"):
+            self.assertNotIn(name, text)
+
+    def test_the_home_card_does_not_start_the_story_for_the_season(self):
+        self.sql("UPDATE v4_seasons SET starts_on=NULL WHERE id=1")
+        self.assertNotIn("story", self.items())
+        self.assertEqual(self.sql("SELECT COUNT(*) FROM v4_story_state")[0][0], 0)
 
     def test_reading_the_home_card_writes_nothing_to_the_games(self):
         before = self.sql("SELECT COUNT(*) FROM v4_market_players")[0][0]

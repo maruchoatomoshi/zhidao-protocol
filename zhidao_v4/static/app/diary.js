@@ -102,16 +102,9 @@
 
   // --- участник: мои оценки и рейтинг -------------------------------------------
 
-  function stat(label, value) {
-    const box = node("div", "diary-stat");
-    box.append(node("span", null, label), node("b", null, String(value)));
-    return box;
-  }
-
-  function drawMine(mine) {
-    const head = node("div", "diary-mine-head");
-    head.append(stat("Звёзд", mine.total_stars), stat("Дней", mine.days_rated),
-      stat("Бонусов", mine.bonus_count), stat("REP", mine.rep));
+  // Итоги «Звёзд · Дней · Бонусов · REP» убраны (2026-09-15): всё это уже есть
+  // в своей строке рейтинга дневников ниже. Вместо них — за что дают награду.
+  function drawMine(mine, r) {
     const days = node("div", "diary-days");
     if (!mine.items.length) {
       days.append(node("p", "diary-note", "Оценок пока нет. Их ставит вожатый по бумажному дневнику."));
@@ -124,12 +117,17 @@
       chip.append(node("small", null, `+${item.rep_reward} REP · +${item.stars_reward}★`));
       days.append(chip);
     }
-    $("diaryMine").replaceChildren(node("span", "diary-label", "МОИ ОЦЕНКИ"), head, days);
+    const parts = [node("span", "diary-label", "МОИ ОЦЕНКИ · 我的评分"), days];
+    if (r) {
+      parts.push(node("p", "diary-rules", `Оценку ставит вожатый по бумажному дневнику: 1★ +${r.rep[1]} REP · 2★ +${r.rep[2]} · ` +
+        `3★ +${r.rep[3]}${r.scan_for_three_stars ? " и попытка кейса" : ""} · бонус +${r.rep_bonus}`));
+    }
+    $("diaryMine").replaceChildren(...parts);
   }
 
   function drawBoard(items) {
     const host = $("diaryBoard");
-    host.replaceChildren(node("span", "diary-label", "РЕЙТИНГ ДНЕВНИКОВ"));
+    host.replaceChildren(node("span", "diary-label", "РЕЙТИНГ ДНЕВНИКОВ · 日记排名"));
     if (!items.length) {
       host.append(node("p", "diary-note", "В сезоне пока нет участников."));
       return;
@@ -165,9 +163,9 @@
         $("diaryBoard").replaceChildren();
         return;
       }
-      const board = await api(`/api/v4/seasons/${season.id}/diary/leaderboard`);
+      const [board, r] = await Promise.all([api(`/api/v4/seasons/${season.id}/diary/leaderboard`), loadRules()]);
       if (season.is_member) {
-        drawMine(await api(`/api/v4/seasons/${season.id}/diary/mine`));
+        drawMine(await api(`/api/v4/seasons/${season.id}/diary/mine`), r);
       } else {
         mineHost.replaceChildren(node("p", "diary-note", "Вы смотрите рейтинг как организатор: своих оценок у вас нет."));
       }
