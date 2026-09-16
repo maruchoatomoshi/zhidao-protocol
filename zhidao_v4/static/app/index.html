@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="./meet.css?v=e396112639">
   <link rel="stylesheet" href="./trade.css?v=dbe9d9aca3">
   <link rel="stylesheet" href="./virus.css?v=1198560e6f">
-  <link rel="stylesheet" href="./workshop.css?v=647dbb6dcf">
+  <link rel="stylesheet" href="./workshop.css?v=6f5a35a739">
   <link rel="stylesheet" href="./aero-desktop.css?v=2bedca366a">
   <link rel="stylesheet" href="./xp-home.css?v=3e5f967342">
   <link rel="stylesheet" href="./readability.css?v=7a6aa971e5">
@@ -750,12 +750,13 @@
 
       <!-- ============================================================
            МАСТЕРСКАЯ — переплавка дубликатов (V4_GAMES.md §4.8).
-           Какой предмет выйдет, решает сервер.
+           Четыре одинаковых → один новый, конкретный имплант. Рецепт
+           детерминирован: сервер не выбирает исход случайно.
            ============================================================ -->
       <section class="screen case-workstation workshop-screen" data-screen="workshop" aria-labelledby="workshopTitle" hidden>
         <div class="map-screen-head">
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">&lsaquo;</button>
-          <div><h1 id="workshopTitle" class="display-title">Мастерская</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gōng fáng <span class="screen-sub-sep">//</span> три дубликата — ступень выше</p></div>
+          <div><h1 id="workshopTitle" class="display-title">Мастерская</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> gōng fáng <span class="screen-sub-sep">//</span> четыре дубликата — новый имплант</p></div>
           <button type="button" class="btn btn-secondary screen-guide" data-game-guide="workshop">Как играть?</button>
         </div>
 
@@ -766,7 +767,7 @@
             <div class="workshop-forge" id="workshopForge" hidden aria-hidden="true"></div>
             <div class="workshop-result" id="workshopResult" role="status" hidden></div>
             <div class="workshop-recipes" id="workshopRecipes"><p class="case-message">Войдите, чтобы открыть мастерскую.</p></div>
-            <p class="spy-hint">Три одинаковых предмета становятся одним случайным ступенью выше: обычный → редкий → улучшенный → легендарный. Один экземпляр всегда остаётся у вас.</p>
+            <p class="spy-hint">Четыре одинаковых редких импланта становятся одним новым — заранее видно, каким. Без сбора звёзд, все четыре уходят в переплавку.</p>
           </div>
           <div class="case-statusbar"><span id="workshopStars">&mdash;</span></div>
         </article>
@@ -1185,7 +1186,7 @@
   <script src="./case-play.js?v=7500121833" defer></script>
   <script src="./implants.js?v=72985beec8" defer></script>
   <script src="./admin.js?v=e3b87d172a" defer></script>
-  <script src="./games.js?v=d7a8ff7ff4" defer></script>
+  <script src="./games.js?v=d753d8c0a9" defer></script>
   <script src="./game-spy.js?v=1f1256a995" defer></script>
   <script src="./game-cipher.js?v=32871c2395" defer></script>
   <script src="./game-smuggle.js?v=e360fdadc3" defer></script>
@@ -1198,7 +1199,7 @@
   <script src="./meet.js?v=44e02e65d4" defer></script>
   <script src="./trade.js?v=f1748536b7" defer></script>
   <script src="./virus.js?v=e1285fcef3" defer></script>
-  <script src="./workshop.js?v=7ceac69974" defer></script>
+  <script src="./workshop.js?v=40ca371c93" defer></script>
   <script src="./app.js?v=5f514feeef" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>

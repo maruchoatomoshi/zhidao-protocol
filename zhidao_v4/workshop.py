@@ -1,23 +1,23 @@
 """Мастерская дубликатов (V4_GAMES.md §4.8). Все записи — внутри BEGIN IMMEDIATE.
 
-Решения пользователя 2026-09-12:
+Решения пользователя 2026-09-17 (заменяют решения 2026-09-12):
 
-- три одинаковых предмета → один предмет ступенью выше; один экземпляр
-  всегда остаётся у владельца, поэтому одинаковых нужно хотя бы четыре;
-- сбор сжигается: обычный → редкий 10★, каждая ступень выше — 25★;
-- новые импланты (Нефритовый страж, Дипломат, Золотой нексус) — ступень
-  «Улучшенный» между редким и легендарным, из кейсов не выпадают;
-- ступень гарантирована: обычные → случайный редкий, редкие → случайный
-  улучшенный, улучшенные → случайный легендарный; легендарные дальше не идут.
+- четыре одинаковых редких импланта → один новый имплант, гарантированно,
+  без сбора звёзд;
+- исход детерминирован: у каждого базового импланта ровно один целевой
+  предмет, не случайный выбор внутри ступени, как было раньше;
+- шесть новых имплантов (Чжуцюэ, Цзинь Чань, Мяньцзы, Кои, Тайцзи, Бяньцай)
+  заменяют прежние Нефритовый страж/Дипломат/Золотой нексус — те в мастерской
+  больше не собираются, их коды и картинки в репозитории остаются нетронуты.
+- переплавка — один рецепт за раз.
 
-Исход выбирает сервер, каждый предмет целевой ступени — с равным шансом.
-Купон «+30 минут» в мастерскую не принимается: его гасит вожатый. Числа живут
-в assets/workshop/workshop.json, чтобы экран и сервер не разошлись.
+Числа и рецепты живут в assets/workshop/workshop.json, чтобы экран и сервер
+не разошлись. Купон «+30 минут» в мастерскую не принимается — его гасит
+вожатый, а не переплавка; в списке рецептов его код и не встречается.
 """
 from __future__ import annotations
 
 import json
-import random
 from functools import lru_cache
 
 from . import cases
@@ -25,56 +25,31 @@ from .cases import CaseError, authorize, encoded, ensure_wallet, replay
 from .diary import full_wallet
 
 OPERATION = "workshop.craft"
-_rng = random.SystemRandom()
 
 
 @lru_cache(maxsize=1)
 def config() -> dict:
     data = json.loads(cases.WORKSHOP_PATH.read_text(encoding="utf-8"))
-    if type(data["input"]) is not int or data["input"] < 2 or type(data["keep"]) is not int or data["keep"] < 1:
+    if type(data["input"]) is not int or data["input"] < 2:
         raise ValueError("workshop.json: неверный курс")
-    for step in data["steps"]:
-        if type(step["fee"]) is not int or step["fee"] < 0:
-            raise ValueError("workshop.json: сбор должен быть неотрицательным целым")
-        for tier in (step["from"], step["to"]):
-            if tier not in data["tier_names"]:
-                raise ValueError(f"workshop.json: у ступени {tier} нет названия")
+    codes = {item["code"] for item in data["items"]}
+    seen_from = set()
+    for recipe in data["recipes"]:
+        if recipe["from"] in seen_from:
+            raise ValueError(f"workshop.json: у {recipe['from']} два рецепта")
+        seen_from.add(recipe["from"])
+        if recipe["to"] not in codes:
+            raise ValueError(f"workshop.json: у рецепта нет предмета {recipe['to']}")
     return data
 
 
-@lru_cache(maxsize=1)
-def tiers() -> dict[str, list[dict]]:
-    """Предметы по ступеням: предметы из кейсов (без купона) и из мастерской."""
-    excluded = set(config()["not_accepted"])
-    grouped: dict[str, list[dict]] = {}
-    for tier in cases.rules()["tiers"]:
-        for prize in tier["prizes"]:
-            if prize["reward"]["kind"] == "item" and prize["code"] not in excluded:
-                grouped.setdefault(tier["code"], []).append(
-                    {"code": prize["code"], "name_ru": prize["name_ru"], "effect_state": prize["reward"]["effect_state"]})
-    for item in config()["items"]:
-        grouped.setdefault(item["tier"], []).append(
-            {"code": item["code"], "name_ru": item["name_ru"], "effect_state": item["effect_state"]})
-    for step in config()["steps"]:
-        if not grouped.get(step["to"]):
-            raise ValueError(f"workshop.json: в ступени {step['to']} нет предметов")
-    return grouped
+def items_by_code() -> dict[str, dict]:
+    """Только новые, собираемые в мастерской предметы (не источники)."""
+    return {item["code"]: item for item in config()["items"]}
 
 
-def find(code: str) -> tuple[str, dict] | tuple[None, None]:
-    for tier, items in tiers().items():
-        for item in items:
-            if item["code"] == code:
-                return tier, item
-    return None, None
-
-
-def step_from(tier: str | None) -> dict | None:
-    return next((step for step in config()["steps"] if step["from"] == tier), None)
-
-
-def tier_name(tier: str) -> str:
-    return config()["tier_names"][tier]["name_ru"]
+def recipe_for(item_code: str) -> dict | None:
+    return next((recipe for recipe in config()["recipes"] if recipe["from"] == item_code), None)
 
 
 def quantity(conn, account_id: int, season_id: int, code: str) -> int:
@@ -88,28 +63,28 @@ def quantity(conn, account_id: int, season_id: int, code: str) -> int:
 def state(conn, account_id: int, season_id: int) -> dict:
     """Что человек может переплавить сейчас и чего ему не хватает."""
     season = authorize(conn, account_id, season_id)
-    need = config()["input"] + config()["keep"]
+    need = config()["input"]
+    source_names = cases.items_by_code()
+    target_names = items_by_code()
     recipes = []
     for row in conn.execute(
         "SELECT item_code, quantity FROM v4_case_inventory WHERE season_id=? AND account_id=? AND quantity>0",
         (season_id, account_id),
     ):
-        tier, item = find(row["item_code"])
-        step = step_from(tier)
-        if not step:
+        recipe = recipe_for(row["item_code"])
+        if not recipe:
             continue
         count = int(row["quantity"])
+        target = target_names[recipe["to"]]
         recipes.append({
-            "code": item["code"], "name_ru": item["name_ru"], "tier": tier, "tier_name": tier_name(tier),
-            "quantity": count, "ready": count >= need, "missing": max(0, need - count), "fee": step["fee"],
-            "to_tier": step["to"], "to_tier_name": tier_name(step["to"]),
-            "outcomes": [candidate["name_ru"] for candidate in tiers()[step["to"]]],
+            "code": row["item_code"], "name_ru": source_names[row["item_code"]]["name_ru"],
+            "quantity": count, "ready": count >= need, "missing": max(0, need - count),
+            "to_code": recipe["to"], "to_name_ru": target["name_ru"], "to_name_zh": target.get("name_zh", ""),
         })
-    order = [step["from"] for step in config()["steps"]]
-    recipes.sort(key=lambda r: (not r["ready"], -order.index(r["tier"]), r["code"]))
+    recipes.sort(key=lambda r: (not r["ready"], r["code"]))
     return {"season_id": season_id, "season_status": season["status"],
             "stars": full_wallet(conn, account_id, season_id)["stars"],
-            "input": config()["input"], "keep": config()["keep"], "recipes": recipes}
+            "input": need, "recipes": recipes}
 
 
 def craft(conn, actor: int, season_id: int, item_code: str, key: str, request_id=None):
@@ -118,45 +93,36 @@ def craft(conn, actor: int, season_id: int, item_code: str, key: str, request_id
     if old is not None:
         return old, True
     authorize(conn, actor, season_id, write=True)
-    tier, item = find(item_code)
-    step = step_from(tier)
-    if not step:
+    recipe = recipe_for(item_code)
+    if not recipe:
         raise CaseError("Этот предмет в мастерской не переплавляется.")
-    need = config()["input"] + config()["keep"]
+    need = config()["input"]
     if quantity(conn, actor, season_id, item_code) < need:
-        raise CaseError(f"Нужно {need} одинаковых: {config()['input']} уйдут в переплавку, "
-                        f"{config()['keep']} останется у вас.", 409)
+        raise CaseError(f"Нужно {need} одинаковых.", 409)
     ensure_wallet(conn, actor, season_id)
-    before = full_wallet(conn, actor, season_id)
-    if before["stars"] < step["fee"]:
-        raise CaseError(f"Не хватает звёзд: нужно {step['fee']}★, у вас {before['stars']}★.", 409)
 
-    outcome = _rng.choice(tiers()[step["to"]])
+    target_code = recipe["to"]
+    target = items_by_code()[target_code]
     conn.execute("UPDATE v4_case_inventory SET quantity = quantity - ? WHERE season_id=? AND account_id=? AND item_code=?",
-                 (config()["input"], season_id, actor, item_code))
+                 (need, season_id, actor, item_code))
     conn.execute(
         """INSERT INTO v4_case_inventory(season_id, account_id, item_code, quantity, effect_state)
            VALUES (?,?,?,1,?) ON CONFLICT(season_id, account_id, item_code) DO UPDATE SET quantity = quantity + 1""",
-        (season_id, actor, outcome["code"], outcome["effect_state"]),
+        (season_id, actor, target_code, target["effect_state"]),
     )
-    conn.execute("UPDATE v4_case_wallets SET stars = stars - ? WHERE season_id=? AND account_id=?",
-                 (step["fee"], season_id, actor))
     after = full_wallet(conn, actor, season_id)
-    details = {"gave": item_code, "count": config()["input"], "from_tier": tier,
-               "got": outcome["code"], "to_tier": step["to"], "fee": step["fee"]}
+    details = {"gave": item_code, "count": need, "got": target_code}
     cursor = conn.execute(
         """INSERT INTO v4_economy_operations(season_id, account_id, actor_account_id, operation,
                stars_delta, scans_delta, rep_delta, stars_after, scans_after, rep_after, details_json)
-           VALUES (?,?,?,?,?,0,0,?,?,?,?)""",
-        (season_id, actor, actor, OPERATION, after["stars"] - before["stars"],
-         after["stars"], after["scans"], after["rep"], encoded(details)),
+           VALUES (?,?,?,?,0,0,0,?,?,?,?)""",
+        (season_id, actor, actor, OPERATION, after["stars"], after["scans"], after["rep"], encoded(details)),
     )
     response = {
         "season_id": season_id,
-        "gave": {"code": item_code, "name_ru": item["name_ru"], "count": config()["input"]},
-        "got": {"code": outcome["code"], "name_ru": outcome["name_ru"], "tier": step["to"],
-                "tier_name": tier_name(step["to"])},
-        "fee": step["fee"], "stars": after["stars"], "operation_id": cursor.lastrowid,
+        "gave": {"code": item_code, "name_ru": cases.items_by_code()[item_code]["name_ru"], "count": need},
+        "got": {"code": target_code, "name_ru": target["name_ru"], "name_zh": target.get("name_zh", "")},
+        "stars": after["stars"], "operation_id": cursor.lastrowid,
     }
     cases.finish(conn, actor, season_id, OPERATION, key, digest, response, request_id)
     return response, False

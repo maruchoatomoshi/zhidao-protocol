@@ -5,11 +5,9 @@ import tempfile
 import unittest
 import uuid
 from pathlib import Path
-from unittest import mock
 
 from fastapi.testclient import TestClient
 
-from zhidao_v4 import workshop
 from zhidao_v4.api import create_app
 from zhidao_v4.auth import provision_local_account
 from zhidao_v4.db import connect_database, immediate_transaction
@@ -20,13 +18,14 @@ PASSWORD = "a secure testing password"
 
 
 class WorkshopTests(unittest.TestCase):
-    """Мастерская дубликатов (V4_GAMES.md §4.8).
+    """Мастерская дубликатов (V4_GAMES.md §4.8), решения пользователя 2026-09-17.
 
-    Обещания: три одинаковых превращаются в один предмет ступенью выше, а
-    четвёртый остаётся у владельца; сбор 10★ / 25★ сжигается и пишется в
-    журнал; повтор запроса с тем же ключом не переплавляет дважды; купон и
-    легендарные не принимаются; при нехватке ничего не меняется; улучшенные
-    импланты видны в коллекции; переплавлять может только участник сезона.
+    Обещания: четыре одинаковых редких импланта превращаются в один новый,
+    полностью, без сбора звёзд; исход детерминирован — один базовый предмет
+    даёт ровно один целевой, не случайный выбор; повтор запроса с тем же
+    ключом не переплавляет дважды; предметы без рецепта отказываются; при
+    нехватке ничего не меняется; новые импланты видны в коллекции;
+    переплавлять может только участник сезона.
     """
 
     def setUp(self):
@@ -86,95 +85,77 @@ class WorkshopTests(unittest.TestCase):
             json={"item_code": code},
         )
 
-    def first_outcome(self):
-        return mock.patch.object(workshop._rng, "choice", side_effect=lambda items: items[0])
-
-    def test_three_duplicates_become_one_item_of_the_next_tier(self):
-        self.give("fate_guard", 4)
-        with self.first_outcome():
-            response = self.craft("fate_guard")
+    def test_four_duplicates_become_one_new_deterministic_item(self):
+        self.give("implant_qilin", 4)
+        response = self.craft("implant_qilin")
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
-        self.assertEqual(body["got"]["tier"], "purple")
-        self.assertEqual(self.owned("fate_guard"), 1)
-        self.assertEqual(self.owned(body["got"]["code"]), 1)
-        self.assertEqual(self.stars(), 90)
+        self.assertEqual(body["got"]["code"], "implant_zhuque")
+        self.assertEqual(body["got"]["name_ru"], "Чжуцюэ")
+        self.assertEqual(self.owned("implant_qilin"), 0)
+        self.assertEqual(self.owned("implant_zhuque"), 1)
+        self.assertEqual(self.stars(), 100, "no star fee in the new recipe")
         rows = self.sql("SELECT stars_delta, details_json FROM v4_economy_operations WHERE operation='workshop.craft'")
         self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["stars_delta"], -10)
-        self.assertEqual(json.loads(rows[0]["details_json"])["got"], body["got"]["code"])
+        self.assertEqual(rows[0]["stars_delta"], 0)
+        self.assertEqual(json.loads(rows[0]["details_json"])["got"], "implant_zhuque")
 
-    def test_each_step_above_costs_twenty_five_and_reaches_legendary(self):
-        self.give("implant_qilin", 4)
-        with self.first_outcome():
-            upgraded = self.craft("implant_qilin").json()["got"]
-        self.assertEqual(upgraded["tier"], "upgraded")
-        self.assertEqual(self.stars(), 75)
-        self.give(upgraded["code"], 3)
-        with self.first_outcome():
-            legendary = self.craft(upgraded["code"])
-        self.assertEqual(legendary.status_code, 200, legendary.text)
-        self.assertEqual(legendary.json()["got"]["tier"], "black")
-        self.assertEqual(self.owned(upgraded["code"]), 1)
-        self.assertEqual(self.stars(), 50)
+    def test_every_base_implant_has_its_own_fixed_target(self):
+        expected = {
+            "implant_qilin": "implant_zhuque", "implant_caishen": "implant_jinchan",
+            "implant_guanxi": "implant_mianzi", "implant_panda": "implant_koi",
+            "implant_shaolin": "implant_taiji", "implant_linguasoft": "implant_biancai",
+        }
+        for base, target in expected.items():
+            self.give(base, 4)
+            body = self.craft(base).json()
+            self.assertEqual(body["got"]["code"], target, base)
 
-    def test_outcome_is_chosen_among_the_whole_next_tier(self):
-        self.give("implant_panda", 4)
-        with mock.patch.object(workshop._rng, "choice", side_effect=lambda items: items[-1]) as choice:
-            self.assertEqual(self.craft("implant_panda").status_code, 200)
-        offered = {item["code"] for item in choice.call_args.args[0]}
-        self.assertEqual(offered, {"implant_jade_warden", "implant_diplomat", "implant_golden_nexus"})
-
-    def test_one_copy_always_stays_with_the_owner(self):
+    def test_exactly_four_are_needed_none_are_kept(self):
         self.give("implant_panda", 3)
         response = self.craft("implant_panda")
         self.assertEqual(response.status_code, 409)
         self.assertEqual(self.owned("implant_panda"), 3)
-        self.assertEqual(self.stars(), 100)
 
     def test_retry_with_the_same_key_does_not_craft_twice(self):
-        self.give("fate_guard", 7)
+        self.give("implant_shaolin", 8)
         key = uuid.uuid4().hex
-        first = self.craft("fate_guard", key=key)
-        second = self.craft("fate_guard", key=key)
+        first = self.craft("implant_shaolin", key=key)
+        second = self.craft("implant_shaolin", key=key)
         self.assertEqual(first.status_code, 200)
         self.assertEqual(second.status_code, 200)
         self.assertEqual(second.headers["X-Idempotent-Replayed"], "true")
         self.assertEqual(second.json(), first.json())
-        self.assertEqual(self.owned("fate_guard"), 4)
-        self.assertEqual(self.stars(), 90)
+        self.assertEqual(self.owned("implant_shaolin"), 4)
+        self.assertEqual(self.owned("implant_taiji"), 1)
         self.assertEqual(len(self.sql("SELECT 1 FROM v4_economy_operations WHERE operation='workshop.craft'")), 1)
 
-    def test_coupon_legendary_and_unknown_items_are_refused(self):
-        for code in ("walk", "implant_red_dragon", "nothing_like_this"):
+    def test_items_without_a_recipe_are_refused(self):
+        for code in ("walk", "fate_guard", "implant_red_dragon", "implant_terracota", "nothing_like_this"):
             self.give(code, 5)
             self.assertEqual(self.craft(code).status_code, 400, code)
         self.assertEqual(self.stars(), 100)
 
-    def test_not_enough_stars_changes_nothing(self):
-        self.sql("UPDATE v4_case_wallets SET stars=5 WHERE season_id=1 AND account_id=?", (self.ids["alice"],))
-        self.give("fate_guard", 4)
-        self.assertEqual(self.craft("fate_guard").status_code, 409)
-        self.assertEqual(self.owned("fate_guard"), 4)
-        self.assertEqual(self.stars(), 5)
-
-    def test_state_shows_progress_and_upgraded_items_reach_the_collection(self):
-        self.give("fate_guard", 2)
-        self.give("implant_jade_warden", 1)
+    def test_state_shows_progress_and_new_items_reach_the_collection(self):
+        self.give("implant_caishen", 2)
+        self.give("implant_jinchan", 1)
         state = self.clients["alice"].get("/api/v4/seasons/1/workshop").json()
+        self.assertEqual(state["input"], 4)
         recipes = {recipe["code"]: recipe for recipe in state["recipes"]}
-        self.assertFalse(recipes["fate_guard"]["ready"])
-        self.assertEqual(recipes["fate_guard"]["missing"], 2)
-        self.assertEqual(recipes["implant_jade_warden"]["fee"], 25)
-        self.assertEqual(set(recipes["implant_jade_warden"]["outcomes"]), {"Красный Дракон 红龙", "Терракота 兵马俑"})
+        self.assertFalse(recipes["implant_caishen"]["ready"])
+        self.assertEqual(recipes["implant_caishen"]["missing"], 2)
+        self.assertEqual(recipes["implant_caishen"]["to_code"], "implant_jinchan")
+        self.assertEqual(recipes["implant_caishen"]["to_name_ru"], "Цзинь Чань")
+        # implant_jinchan itself has no recipe (it's a target, not a source).
+        self.assertNotIn("implant_jinchan", recipes)
         collection = self.clients["alice"].get("/api/v4/seasons/1/cases/state")
         self.assertEqual(collection.status_code, 200, collection.text)
         names = {item["item_code"]: item["name_ru"] for item in collection.json()["inventory"]}
-        self.assertEqual(names["implant_jade_warden"], "Нефритовый страж")
+        self.assertEqual(names["implant_jinchan"], "Цзинь Чань")
 
     def test_only_active_members_can_use_the_workshop(self):
         self.assertEqual(self.clients["boris"].get("/api/v4/seasons/1/workshop").status_code, 403)
-        self.assertEqual(self.craft("fate_guard", who="boris").status_code, 403)
+        self.assertEqual(self.craft("implant_qilin", who="boris").status_code, 403)
 
 
 if __name__ == "__main__":

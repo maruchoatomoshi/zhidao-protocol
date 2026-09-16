@@ -120,11 +120,11 @@ class TradeTests(unittest.TestCase):
         self.assertEqual(self.offer(item="walk").status_code, 400)
 
     def test_workshop_upgrades_are_never_traded(self):
-        # Решение пользователя: «Улучшенный» получают только в мастерской и не меняют.
-        self.give("alice", "implant_jade_warden", 3)
+        # Решение пользователя: новые импланты получают только в мастерской и не меняют.
+        self.give("alice", "implant_zhuque", 3)
         items = self.clients["alice"].get("/api/v4/seasons/1/trade").json()["items"]
-        self.assertNotIn("implant_jade_warden", [item["code"] for item in items])
-        self.assertEqual(self.offer(item="implant_jade_warden").status_code, 400)
+        self.assertNotIn("implant_zhuque", [item["code"] for item in items])
+        self.assertEqual(self.offer(item="implant_zhuque").status_code, 400)
 
     # --- обмен ------------------------------------------------------------------------
 

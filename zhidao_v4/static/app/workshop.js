@@ -2,10 +2,11 @@
 
 /* Мастерская дубликатов (V4_GAMES.md §4.8).
 
-   Три одинаковых предмета → один случайный предмет ступенью выше, четвёртый
-   остаётся у владельца. Какой предмет выйдет и сколько звёзд списать, решает
-   сервер; экран показывает рецепты, спрашивает второе касание и отправляет
-   ключ повтора, чтобы обрыв связи не переплавил дважды. */
+   Четыре одинаковых редких импланта → один новый имплант, гарантированно и
+   без сбора звёзд. Какой предмет выйдет, решает не сервер вслепую — у
+   каждого базового импланта ровно один целевой, экран его просто показывает
+   заранее. Спрашивает второе касание и отправляет ключ повтора, чтобы обрыв
+   связи не переплавил дважды. */
 
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -108,22 +109,18 @@
     const active = state.season_status === "active";
     for (const recipe of state.recipes) {
       const card = node("article", "workshop-recipe");
-      card.dataset.tier = recipe.tier;
       const info = node("div", "workshop-info");
       info.append(node("b", null, recipe.name_ru),
-        node("small", null, `${recipe.tier_name} · у вас ×${recipe.quantity}`),
-        node("p", "workshop-route", `${state.input} → 1 · ${recipe.to_tier_name}`),
-        node("p", "spy-hint", `Может выйти: ${recipe.outcomes.join(", ")}`));
+        node("small", null, `у вас ×${recipe.quantity}`),
+        node("p", "workshop-route", `${state.input} → 1 · ${recipe.to_name_ru}`));
       const button = node("button", recipe.ready ? "btn btn-primary" : "btn btn-secondary");
       button.type = "button";
       if (!recipe.ready) {
         button.disabled = true;
         button.textContent = `Нужно ещё ${recipe.missing} шт.`;
       } else {
-        button.textContent = armed === recipe.code
-          ? `Точно? −${state.input} шт. и −${recipe.fee}★`
-          : `Переплавить · ${recipe.fee}★`;
-        button.disabled = busy || !active || state.stars < recipe.fee;
+        button.textContent = armed === recipe.code ? `Точно? −${state.input} шт.` : "Переплавить";
+        button.disabled = busy || !active;
         button.addEventListener("click", () => craft(recipe));
       }
       card.append(art(recipe.code, "workshop-art"), info, button);
@@ -159,12 +156,11 @@
   function showResult(result) {
     $("workshopForge").hidden = true;
     const host = $("workshopResult");
-    host.dataset.tier = result.got.tier;
     host.replaceChildren(
       art(result.got.code, "workshop-result-art"),
-      node("span", "spy-label", result.got.tier_name),
+      node("span", "spy-label", result.got.name_zh || ""),
       node("h3", null, result.got.name_ru),
-      node("p", "spy-hint", `Ушло: ${result.gave.count} × «${result.gave.name_ru}» и ${result.fee}★. У вас ${result.stars}★.`));
+      node("p", "spy-hint", `Ушло: ${result.gave.count} × «${result.gave.name_ru}». У вас ${result.stars}★.`));
     host.hidden = false;
     host.scrollIntoView({ block: "nearest", behavior: window.ZhidaoMotion?.enabled() ? "smooth" : "auto" });
   }
@@ -190,7 +186,7 @@
       showResult(result);
       if (!result.replayed && !document.hidden) {
         window.ZhidaoRetro?.reveal($("workshopResult"));
-        if (window.ZhidaoSounds) window.ZhidaoSounds.play(result.got.tier === "black" ? "rare" : "open");
+        if (window.ZhidaoSounds) window.ZhidaoSounds.play("rare");
       }
     } catch (error) {
       $("workshopForge").hidden = true;

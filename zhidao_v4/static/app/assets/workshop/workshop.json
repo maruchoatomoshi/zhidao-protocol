@@ -1,26 +1,24 @@
 {
   "catalogue": "ZHIDAO workshop",
   "season": "hainan-v4",
-  "decided": "2026-09-12, решения пользователя: 3 → 1 со ступенью выше, один экземпляр остаётся; сбор 10★ за обычный → редкий, 25★ за каждую ступень выше; улучшенные импланты только из мастерской; ступень гарантирована.",
+  "decided": "2026-09-17, решения пользователя (заменяют решения 2026-09-12): 4 одинаковых редких импланта → 1 новый гарантированно, без сбора ★; переплавка — один рецепт за раз; шесть новых имплантов заменяют прежние Нефритовый страж/Дипломат/Золотой нексус, те больше не собираются в мастерской.",
   "reviewed": false,
-  "review_note": "Китайские названия новых имплантов в implants.json не проверены человеком, знающим язык.",
-  "input": 3,
-  "keep": 1,
-  "steps": [
-    {"from": "gold", "to": "purple", "fee": 10},
-    {"from": "purple", "to": "upgraded", "fee": 25},
-    {"from": "upgraded", "to": "black", "fee": 25}
+  "review_note": "Китайские названия новых имплантов не проверены человеком, знающим язык.",
+  "input": 4,
+  "recipes": [
+    {"from": "implant_qilin", "to": "implant_zhuque"},
+    {"from": "implant_caishen", "to": "implant_jinchan"},
+    {"from": "implant_guanxi", "to": "implant_mianzi"},
+    {"from": "implant_panda", "to": "implant_koi"},
+    {"from": "implant_shaolin", "to": "implant_taiji"},
+    {"from": "implant_linguasoft", "to": "implant_biancai"}
   ],
-  "tier_names": {
-    "gold": {"name_ru": "Обычный", "name_zh": "普通"},
-    "purple": {"name_ru": "Редкий", "name_zh": "稀有"},
-    "upgraded": {"name_ru": "Улучшенный", "name_zh": "进阶"},
-    "black": {"name_ru": "Легендарный", "name_zh": "传说"}
-  },
-  "not_accepted": ["walk"],
   "items": [
-    {"code": "implant_jade_warden", "name_ru": "Нефритовый страж", "name_en": "Jade Warden", "tier": "upgraded", "effect_state": "pending"},
-    {"code": "implant_diplomat", "name_ru": "Дипломат", "name_en": "Diplomat", "tier": "upgraded", "effect_state": "pending"},
-    {"code": "implant_golden_nexus", "name_ru": "Золотой нексус", "name_en": "Golden Nexus", "tier": "upgraded", "effect_state": "pending"}
+    {"code": "implant_zhuque", "name_ru": "Чжуцюэ", "name_zh": "朱雀", "pinyin": "zhū què", "effect_state": "pending"},
+    {"code": "implant_jinchan", "name_ru": "Цзинь Чань", "name_zh": "金蟾", "pinyin": "jīn chán", "effect_state": "pending"},
+    {"code": "implant_mianzi", "name_ru": "Мяньцзы", "name_zh": "面子", "pinyin": "miàn zi", "effect_state": "pending"},
+    {"code": "implant_koi", "name_ru": "Кои", "name_zh": "锦鲤", "pinyin": "jǐn lǐ", "effect_state": "pending"},
+    {"code": "implant_taiji", "name_ru": "Тайцзи", "name_zh": "太极", "pinyin": "tài jí", "effect_state": "pending"},
+    {"code": "implant_biancai", "name_ru": "Бяньцай", "name_zh": "辩才", "pinyin": "biàn cái", "effect_state": "pending"}
   ]
 }
