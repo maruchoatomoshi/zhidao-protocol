@@ -1,0 +1,56 @@
+/* Live application adapter for the supplied ZHIDAO design system.
+   IDs, server state, input handling and game layouts retain their contracts. */
+:root { --ds-pane: var(--surface-card-strong); --ds-edge: var(--border-aqua); }
+:root[data-design="xp"] { --ds-pane: var(--xp-pane); --ds-edge: var(--xp-edge); --font-ui: var(--font-luna); }
+html[data-design] body { color: var(--ink); font-family: var(--font-ui); }
+html[data-design] .app-shell { max-width: 620px; }
+html[data-design] .system-rail { display: none; }
+html[data-design="xp"] body { background: var(--xp-paper); }
+html[data-design="xp"] .world { display: none; }
+html[data-design="xp"] .app-stage { background: var(--xp-paper); }
+html[data-design] .app-header {
+  display: flex; align-items: center; gap: 8px; min-height: 56px;
+  padding: 6px 10px; margin: 0 0 8px; border-radius: 9px 9px 0 0;
+}
+html[data-design] .app-brand { min-width: 0; flex: 1; gap: 6px; }
+html[data-design] .app-brand .brand-logo { width: 34px; height: 34px; flex: none; }
+html[data-design] .app-brand strong { font: 600 15px/1.2 var(--font-ui); letter-spacing: 0; }
+html[data-design] .app-brand small { display: none; }
+html[data-design] .header-balance { flex: none; padding: 2px; border: 0; background: none; box-shadow: none; }
+html[data-design] .profile-fab { position: relative; inset: auto; overflow: hidden; transform: none; width: 44px; height: 44px; min-width: 44px; margin: 0; }
+html[data-design] .internet-toolbar { margin: 0 0 14px; }
+html[data-design] .screen-intro, html[data-design] .map-screen-head { margin-bottom: 14px; }
+html[data-design] .screen-intro h1, html[data-design] .display-title {
+  font: 400 clamp(23px,6.5vw,32px)/1.2 var(--font-ui); letter-spacing: 0;
+  color: var(--ink); -webkit-text-fill-color: var(--ink); text-shadow: none;
+}
+html[data-design] .screen-sub { font: 12px/1.5 var(--font-ui); color: var(--ink-soft); }
+html[data-design] :is(.case-window,.game-window,.case-dialog,.glass-card,.profile-card,.settings-list) {
+  border: 1px solid var(--ds-edge); background: var(--ds-pane); color: var(--ink);
+  backdrop-filter: none;
+}
+html[data-design="xp"] :is(.case-window,.game-window,.case-dialog,.glass-card,.profile-card,.settings-list) {
+  border-radius: 5px; box-shadow: inset 1px 1px #ffffff40, 1px 2px 2px #0b316321;
+}
+html[data-design] :is(.case-titlebar,.xp-titlebar,.spy-titlebar) { min-height: 34px; padding: 6px 10px; gap: 8px; }
+html[data-design="xp"] :is(.case-titlebar,.xp-titlebar,.spy-titlebar) { background: var(--xp-title); color: white; }
+html[data-design="xp"] :is(.case-titlebar,.xp-titlebar,.spy-titlebar) :is(h2,span,b) { color: white; }
+html[data-design] .btn { min-height: 44px; font: 600 13px/1.35 var(--font-ui); text-transform: none; letter-spacing: 0; }
+html[data-design="xp"] .btn { border-radius: 3px; }
+html[data-design] :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+  font-family: var(--font-ui); font-size: 16px; color: var(--ink); max-width: 100%;
+}
+html[data-design] :is(.case-note,.spy-hint,.spy-lead,.capture-meta,.shop-note,.story-status) { color: var(--ink-soft); }
+html[data-design] :is(.case-note,.spy-lead,.story-fragment p,.guide-text) { font-size: 14px; line-height: 1.5; }
+html[data-design] .app-dock { grid-template-columns: repeat(5,minmax(0,1fr)); }
+html[data-design] .app-dock button { min-height: 58px; padding: 4px 1px; }
+html[data-design] .app-dock img { width: 31px; height: 31px; object-fit: contain; }
+html[data-design] .app-dock small { font: 11px/1.2 var(--font-ui); }
+html[data-design] :is(button,a,input,select,textarea):focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+html[data-design="xp"] :is(button,a,input,select,textarea):focus-visible { outline: 2px dashed var(--xp-ink); outline-offset: 2px; }
+html[data-design] [hidden] { display: none !important; }
+html:is([data-motion="none"],[data-motion="off"],[data-motion="reduced"],[data-page-hidden="true"]) *,
+html:is([data-motion="none"],[data-motion="off"],[data-motion="reduced"],[data-page-hidden="true"]) *::before,
+html:is([data-motion="none"],[data-motion="off"],[data-motion="reduced"],[data-page-hidden="true"]) *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { html[data-design] * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+@media (max-width: 360px) { html[data-design] .xp-brand-suffix { display: none; } html[data-design] .app-header { gap: 5px; padding-inline: 6px; } }
