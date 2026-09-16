@@ -1825,14 +1825,12 @@ h1.display-title,
     rgba(10, 36, 62, .9) 100%);
 }
 
-.auth-orb {
-  display: grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  border-radius: var(--radius-circle);
-  font-family: var(--font-story, Georgia, serif);
-  font-size: 24px;
+.auth-logo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  justify-self: center;
 }
 
 .auth-title {
