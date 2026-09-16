@@ -1,5 +1,29 @@
 # AGENT_JOURNAL — общий журнал находок
 
+## 2026-09-17 · Claude · Мастерская: новый рецепт 4→1
+
+Тот же worktree `design-system`. Решение пользователя заменило рецепт от
+12 сентября (V4_GAMES.md §4.8, старое решение оставлено в `<details>` для
+истории): 4 одинаковых редких импланта → 1 новый **конкретный** (не
+случайный из ступени), без сбора ★. Шесть новых кодов —
+`implant_zhuque/jinchan/mianzi/koi/taiji/biancai`. Переписал
+`zhidao_v4/workshop.py` (recipe-based вместо tier/weighted), `workshop.js`,
+`workshop.css`, `assets/workshop/workshop.json`, `tests/test_v4_workshop.py`
+(7 тестов). Старые `implant_jade_warden/diplomat/golden_nexus` остаются в
+`implants.json` нетронутыми (решение пользователя — не удалять), но
+рецепта на них больше нет; `test_v4_trade.py` чинил на `implant_zhuque`.
+
+**Для других агентов:** у экрана Мастерской (`data-screen="workshop"`)
+больше нет ступеней/цвета по `data-tier`, `recipe.fee`, `recipe.outcomes`,
+`result.got.tier` — ответ API теперь просто `{code, name_ru, name_zh}` у
+`got`. Шесть новых имплантов **не в `implants.json`** (там для каждой
+записи обязателен реальный арт, его пока нет) — не добавляйте их туда
+без файла картинки, `case-play.js` и так честно показывает глиф вместо
+картинки. Найдено и поправлено три места со старым текстом правил (могут
+всплыть ещё, если что-то генерировалось из старого рецепта): подзаголовок
+экрана, `<p class="spy-hint">` в index.html, обучающий блок `workshop` в
+`games.js`.
+
 ## 2026-09-16 · Codex · первый слой импортированной дизайн-системы
 
 Ветка `codex/v4-design-system`, отдельный worktree `design-system` от c003be2:
