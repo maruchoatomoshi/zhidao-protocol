@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from zhidao_v4 import cases, workshop
 from zhidao_v4.api import create_app
 from zhidao_v4.auth import provision_local_account
 from zhidao_v4.db import connect_database, immediate_transaction
@@ -15,6 +16,27 @@ from zhidao_v4.migrations import apply_migrations
 
 
 PASSWORD = "a secure testing password"
+
+IMPLANTS_PATH = Path(__file__).resolve().parents[1] / "zhidao_v4/static/app/assets/implants/implants.json"
+
+
+class WorkshopCatalogueTests(unittest.TestCase):
+    """Every crafted item needs a real, illustrated entry — not a silent gap.
+
+    workshop.json is the server's source of truth for names; implants.json is
+    the frontend's illustrated reference catalogue. They must agree, and the
+    art file each entry points to must actually exist on disk, or the
+    Коллекция screen shows a broken image instead of an honest placeholder.
+    """
+
+    def test_every_workshop_item_has_an_illustrated_catalogue_entry_with_real_art(self):
+        catalogue = {item["code"]: item for item in json.loads(IMPLANTS_PATH.read_text(encoding="utf-8"))["implants"]}
+        for code, item in workshop.items_by_code().items():
+            self.assertIn(code, catalogue, f"{code} is craftable but missing from implants.json")
+            entry = catalogue[code]
+            self.assertEqual(entry["name_ru"], item["name_ru"], code)
+            art_path = IMPLANTS_PATH.parent / entry["art"]
+            self.assertTrue(art_path.is_file(), f"{code}: art file {entry['art']} does not exist")
 
 
 class WorkshopTests(unittest.TestCase):

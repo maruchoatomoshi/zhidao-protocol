@@ -15,6 +15,8 @@
     implant_linguasoft: "linguasoft", implant_caishen: "caishen", implant_qilin: "qilin",
     implant_terracota: "terracota", implant_red_dragon: "honglong",
     implant_jade_warden: "jade_warden", implant_diplomat: "diplomat", implant_golden_nexus: "golden_nexus",
+    implant_zhuque: "zhuque", implant_jinchan: "jinchan", implant_mianzi: "mianzi",
+    implant_koi: "koi", implant_taiji: "taiji", implant_biancai: "biancai",
   };
   let session = window.ZhidaoSession || null;
   let contextPromise = null;
