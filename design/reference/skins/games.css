@@ -1,0 +1,380 @@
+/* ===========================================================================
+   ОКНА ИГР. Значения взяты из royale.css, games.css и retro.css — новый
+   стиль здесь не изобретается.
+
+   «Протокол 60» — не физическая битва, а игра-шоу на вопросах: своя
+   фиолетово-золотая сцена (#8a4bd6 / #120626 / #ffd54a). «Шпион» —
+   настольная, живёт в бумажном окне игры и берёт цвета case-* обоих
+   оформлений.
+   =========================================================================== */
+
+/* --- общее для окна игры ------------------------------------------------ */
+.spy-body{display:grid;gap:12px;padding:14px}
+.spy-lead{margin:0;color:var(--text-primary);font:15px/1.5 var(--font-ui)}
+.spy-label{display:block;color:var(--ink-muted-aqua);font:11px/1.4 var(--font-system);letter-spacing:var(--tracking-label);text-transform:uppercase}
+.spy-hint{display:block;color:var(--ink-muted-aqua);font:12px/1.4 var(--font-ui)}
+.spy-facts{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.spy-facts li{padding:5px 8px;border:1px solid var(--border-aqua);border-radius:5px;background:rgba(255,255,255,.62);color:var(--text-secondary);font:12px/1.3 var(--font-ui)}
+.spy-actions{display:grid;gap:8px}
+.spy-vote-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.spy-progress{margin:0;color:var(--ink-muted-aqua);font:12px/1.45 var(--font-system);text-align:center}
+/* Янтарная полоса-предупреждение — тот же янтарь, что у is-armed */
+.spy-banner{margin:0;padding:10px 12px;border:1px solid var(--armed-edge);border-radius:8px;background:#ffb65a24;color:var(--text-primary);font:13px/1.45 var(--font-ui)}
+
+/* --- лобби: код комнаты и состав --------------------------------------- */
+.spy-code-plate{display:grid;gap:2px;justify-items:center;padding:10px;border:1px dashed var(--border-aqua);border-radius:8px;background:rgba(255,255,255,.5)}
+.spy-code{color:var(--text-primary);font:700 42px/1.1 var(--font-system);letter-spacing:.18em;font-variant-numeric:tabular-nums}
+.spy-segmented{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.spy-segmented .btn{padding:8px 6px;min-height:44px}
+.spy-segmented .btn[aria-pressed="true"]{border-color:#28add9;box-shadow:inset 0 0 0 2px #28add966}
+.spy-players{display:grid;gap:6px}
+.spy-player{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-height:44px;padding:5px 9px;border:1px solid var(--border-aqua);border-radius:8px;background:rgba(255,255,255,.62);text-align:left}
+.spy-player.is-armed{border-color:var(--armed-edge);background:var(--armed-bg);color:var(--armed-ink);box-shadow:inset 0 0 0 1px var(--armed-edge)}
+.spy-dot{width:10px;height:10px;border-radius:50%;background:#9fb3bf;box-shadow:inset 0 1px 1px rgba(0,0,0,.2)}
+.spy-dot.is-ready{background:#2f9c3f}
+.spy-player-name{min-width:0;overflow-wrap:anywhere;font:13px/1.3 var(--font-ui)}
+.spy-player-name small{display:block;color:var(--ink-muted-aqua);font-size:11px}
+.spy-score{font:700 16px/1 var(--font-system);font-variant-numeric:tabular-nums}
+
+/* --- раунд: карта роли -------------------------------------------------- */
+.spy-card{display:grid;place-items:center;width:100%;min-height:176px;padding:16px;border:2px solid var(--border-aqua);border-radius:12px;background:linear-gradient(145deg,#60bee322,transparent),rgba(255,255,255,.72);box-shadow:inset 0 1px rgba(255,255,255,.5),0 4px 14px rgba(6,48,79,.13);text-align:center}
+.spy-card.is-open{background:rgba(255,255,255,.92)}
+.spy-card-cover{max-width:22ch;color:var(--ink-muted-aqua)}
+.spy-card-face{display:grid;gap:4px;justify-items:center}
+.spy-zh{color:var(--text-primary);font:700 46px/1.15 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.spy-pinyin{color:var(--ink-muted-aqua);font:15px/1.3 var(--font-pinyin)}
+.spy-ru{font:600 17px/1.3 var(--font-ui)}
+.spy-role{margin-top:6px;max-width:30ch;font-size:14px}
+.spy-verdict{color:#b8321f;font:700 30px/1.15 var(--font-ui);letter-spacing:.06em}
+
+/* --- итог --------------------------------------------------------------- */
+.spy-reveal{display:grid;gap:4px;justify-items:center;padding:16px 14px;border:1px solid var(--border-aqua);border-radius:10px;background:rgba(255,255,255,.72);text-align:center}
+.spy-reveal h3{margin:2px 0 6px;color:var(--text-primary);font:700 19px/1.3 var(--font-ui)}
+.spy-points{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+.spy-points li{padding:3px 9px;border:1px solid #4fb487;border-radius:999px;background:#63c99e2e;font:600 12px/1.35 var(--font-ui)}
+.spy-places{border:1px solid var(--border-aqua);border-radius:8px;background:rgba(255,255,255,.62)}
+.spy-places summary{display:flex;align-items:center;min-height:46px;padding:0 12px;cursor:pointer;font:600 13px/1.3 var(--font-ui)}
+.spy-place-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;padding:0 10px 10px}
+.spy-place{display:grid;gap:2px;justify-items:center;min-height:46px;padding:6px 4px;border:1px solid var(--border-aqua);border-radius:6px;background:rgba(255,255,255,.7);font:11px/1.3 var(--font-ui)}
+.spy-place b{font:600 19px/1.2 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+
+/* --- «Протокол 60»: сцена шоу ------------------------------------------ */
+.royale-logo{display:inline-grid;grid-auto-flow:column;align-items:baseline;gap:6px;padding:4px 12px;border:2px solid #8a4bd6;border-radius:6px;background:linear-gradient(180deg,#2b0d57,#120626);box-shadow:inset 0 1px 0 rgba(255,255,255,.33),0 2px 0 rgba(0,0,0,.33)}
+.royale-logo b{font:italic 900 18px/1 "Arial Black",Impact,sans-serif;letter-spacing:.04em;background:linear-gradient(180deg,#fff 0%,#d9c8ff 45%,#8f5cff 55%,#fff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.royale-logo span{color:#ffd54a;font:900 26px/1 "Arial Black",Impact,sans-serif;text-shadow:0 0 8px #ffb300,2px 2px 0 #b02a1a}
+.royale-logo i{color:#ff7ab8;font:normal 700 13px/1 "Noto Sans SC","Microsoft YaHei",sans-serif}
+.royale-marquee{overflow-x:auto;border-block:1px solid #ffd54a88;background:#120626}
+.royale-marquee span{display:block;padding:6px 10px;white-space:nowrap;color:#ffd54a;font:700 13px/1.2 var(--font-system);letter-spacing:var(--tracking-label)}
+.royale-count{display:block;color:var(--text-primary);font:700 28px/1.2 var(--font-story)}
+.royale-meta{margin:0;color:var(--ink-muted-aqua);font:13px/1.45 var(--font-ui)}
+.royale-meta.is-ok{color:#12813d;font-weight:700}
+.royale-left{color:#b02a1a;font:700 13px/1 var(--font-system)}
+.royale-left.is-hot{color:#ff2d55}
+.royale-question{display:grid;gap:4px;justify-items:center;margin:6px 0;padding:14px;border:1px dashed #8a4bd6;border-radius:10px;background:#f8f3ff;text-align:center}
+.royale-hanzi{color:#2b0d57;font:700 48px/1.1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.royale-word{color:#2b0d57;font:700 28px/1.2 var(--font-story)}
+.royale-pinyin{margin:0;color:#5c4a78;font:16px/1.3 var(--font-pinyin)}
+.royale-surprise{margin-top:4px;padding:3px 10px;border:1px solid #ff7ab8;border-radius:12px;background:#ffe9f4;color:#9b1256;font:700 12px/1.3 var(--font-ui)}
+.royale-final{padding:3px 12px;border-radius:12px;background:#b02a1a;color:#ffd54a;font:900 13px/1.3 "Arial Black",Impact,sans-serif;letter-spacing:var(--tracking-label)}
+.royale-options{display:grid;gap:6px}
+.royale-options.is-hanzi{grid-template-columns:repeat(2,1fr)}
+.royale-option{display:flex;align-items:center;justify-content:center;min-height:56px;padding:6px 10px;border:1px solid #c9dbe6;border-radius:8px;background:#fff;color:#062e50;font:18px/1.2 var(--font-ui);text-align:center}
+.royale-options.is-hanzi .royale-option{font:700 26px/1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.royale-option.is-right{border-color:#12813d;background:#e3f7ea;color:#0b5d2a;font-weight:700}
+.royale-option.is-wrong{border-color:#b02a1a;background:#fdeaea;color:#8a1a10;text-decoration:line-through}
+.royale-explain{margin:0;padding:8px 12px;border-radius:6px;background:#f1e9ff;color:#2b0d57;font-weight:700}
+.royale-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:6px}
+.royale-avatar{display:grid;place-items:center;aspect-ratio:1;border:3px solid transparent;border-radius:50%;background:linear-gradient(160deg,#8f5cff,#3b1a8a);box-shadow:inset 0 2px 4px rgba(255,255,255,.4);color:#fff;font:700 13px/1 var(--font-ui)}
+.royale-avatar.is-answered{box-shadow:0 0 0 3px #7dffb0,inset 0 2px 4px rgba(255,255,255,.4)}
+.royale-avatar.is-out{background:#3a3446;color:#7c7390;opacity:.35}
+.royale-out{display:grid;gap:4px;justify-items:center;padding:14px;border-radius:10px;color:#f4ecff;background:repeating-linear-gradient(45deg,#1a0f24 0 10px,#241634 10px 20px);text-align:center}
+.royale-out b{color:#ff2d55;font:900 28px/1.1 "Arial Black",Impact,sans-serif;letter-spacing:.06em}
+.royale-out p{margin:0;color:#d9c8ff;font:13px/1.4 var(--font-ui)}
+.royale-win{display:grid;gap:4px;justify-items:center;padding:14px;border:2px solid #f0a800;border-radius:10px;background:linear-gradient(180deg,#fff6c8,#ffd54a);text-align:center}
+.royale-win b{color:#8a4b00;font:900 32px/1.1 "Arial Black",Impact,sans-serif;text-shadow:1px 1px 0 #fff}
+.royale-win p{margin:0;color:#5a3d00;font:700 14px/1.4 var(--font-ui)}
+.royale-results{display:grid;gap:4px;margin:0;padding-left:24px}
+.royale-results li{color:var(--text-primary);font:14px/1.4 var(--font-ui)}
+.royale-results li span{margin-left:8px;color:var(--ink-muted-aqua);font-size:12px}
+.royale-results li.is-place-1 b{color:#b07800}
+
+/* --- журнал комнаты ---------------------------------------------------- */
+.zd-chatlog{display:grid;gap:1px;max-height:132px;overflow-y:auto;padding:6px 8px;border:1px solid var(--border-aqua);border-radius:4px;background:#fff;box-shadow:inset 1px 1px 3px rgba(0,0,0,.15);font:12px/1.4 var(--font-luna)}
+.zd-chatline{margin:0;color:#5b6b78;overflow-wrap:anywhere}
+.zd-chatline time{margin-right:5px;color:#8a98a3;font:11px/1.4 var(--font-system)}
+.zd-chatline.is-join{color:#23801f}
+.zd-chatline.is-leave{color:#b3261e}
+.zd-chatline.is-away{color:#8f7200}
+
+/* --- Луна-Аква: бумага и прямые углы ----------------------------------- */
+[data-design="xp"] .spy-lead,[data-design="xp"] .spy-hint,[data-design="xp"] .spy-facts li,[data-design="xp"] .spy-player-name,[data-design="xp"] .spy-ru,[data-design="xp"] .spy-reveal h3,[data-design="xp"] .royale-meta,[data-design="xp"] .royale-option,[data-design="xp"] .spy-points li,[data-design="xp"] .spy-place,[data-design="xp"] .spy-banner,[data-design="xp"] .royale-results li{font-family:var(--font-luna)}
+[data-design="xp"] .spy-lead,[data-design="xp"] .spy-ru,[data-design="xp"] .spy-card,[data-design="xp"] .spy-zh{color:var(--xp-ink)}
+[data-design="xp"] .spy-label,[data-design="xp"] .spy-hint,[data-design="xp"] .spy-progress,[data-design="xp"] .royale-meta,[data-design="xp"] .spy-card-cover{color:var(--xp-muted)}
+[data-design="xp"] .spy-facts li,[data-design="xp"] .spy-player,[data-design="xp"] .spy-place,[data-design="xp"] .spy-places{border-radius:var(--radius-luna-field);border-color:var(--xp-edge);background:var(--xp-pane)}
+[data-design="xp"] .spy-card{border:1px solid var(--xp-edge);border-radius:var(--radius-luna-pane);background:var(--xp-pane);box-shadow:inset 1px 1px rgba(255,255,255,.5)}
+[data-design="xp"] .spy-card.is-open{background:var(--xp-soft)}
+[data-design="xp"] .spy-code-plate{border-radius:0;border-color:var(--xp-edge);background:var(--xp-soft)}
+[data-design="xp"] .spy-code{color:var(--xp-ink)}
+[data-design="xp"] .spy-reveal{border-radius:var(--radius-luna-pane);border-color:var(--xp-edge);background:var(--xp-pane)}
+[data-design="xp"] .royale-question{border-radius:var(--radius-luna-pane)}
+[data-design="xp"] .royale-option{border-radius:3px}
+[data-design="xp"] .royale-count{font:bold 26px/1.2 var(--font-luna);color:var(--xp-ink)}
+[data-theme="dark"] .royale-question{background:#1c1030;border-color:#8a5cd6}
+[data-theme="dark"] .royale-hanzi,[data-theme="dark"] .royale-word{color:#efe4ff}
+[data-theme="dark"] .royale-pinyin{color:#c4b0e8}
+[data-theme="dark"] .royale-option{background:#0d2438;border-color:#2d5a7c;color:#dcefff}
+[data-theme="dark"] .royale-option.is-right{background:#10301c;color:#9ff0bb}
+[data-theme="dark"] .royale-explain{background:#2a1a47;color:#efe4ff}
+[data-theme="dark"] .royale-meta.is-ok{color:#5fd88a}
+[data-theme="dark"] .spy-facts li,[data-theme="dark"] .spy-player,[data-theme="dark"] .spy-place,[data-theme="dark"] .spy-places,[data-theme="dark"] .spy-reveal,[data-theme="dark"] .spy-card{background:var(--surface-card-strong);border-color:var(--border-edge);color:var(--text-primary)}
+[data-theme="dark"] .zd-chatlog{background:#07182a}
+[data-theme="dark"] .zd-chatline{color:#a9bccb}
+[data-theme="dark"] .zd-chatline.is-join{color:#7fe07a}
+[data-theme="dark"] .zd-chatline.is-leave{color:#ff8f78}
+
+/* ===========================================================================
+   НАСТОЛЬНЫЕ И РОЛЕВЫЕ ИГРЫ. Значения из smuggle.css, agent.css,
+   zombie.css и sabotage.css — один в один, без нового стиля.
+   =========================================================================== */
+
+/* --- Контрабанда: карты товаров, события, прилавки --------------------- */
+.smuggle-hand{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.smuggle-card{display:grid;gap:2px;justify-items:center;min-height:96px;padding:8px 6px;border:2px solid #c9dbe6;border-radius:10px;background:linear-gradient(180deg,#fff,#eef6fb);color:#062e50;text-align:center}
+.smuggle-card b{font:700 26px/1.1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.smuggle-card small{color:#4f6f82;font:12px/1.2 var(--font-story)}
+.smuggle-card .smuggle-ru{font:12px/1.2 var(--font-luna)}
+.smuggle-price{color:#6a8597;font:11px/1.2 var(--font-system)}
+.smuggle-card.is-legal{border-color:#7cc79a}
+.smuggle-card.is-contraband{border-color:#e0786b;background:linear-gradient(180deg,#fff,#fdeeea)}
+.smuggle-card.is-picked{box-shadow:0 0 0 3px #0a86f0;transform:translateY(-3px)}
+.smuggle-event{display:grid;gap:2px;padding:8px 12px;border:1px dashed #b98a1f;border-radius:8px;background:#fff8e1}
+.smuggle-event b{color:#7a5200;font:700 15px/1.3 var(--font-luna)}
+.smuggle-event span{color:#6b5a2e;font:12px/1.35 var(--font-luna)}
+.smuggle-event.is-raid{border-color:#8a5cd6;background:#f4ecff}
+.smuggle-event.is-typhoon{border-color:#2b8cff;background:#eaf3ff}
+.smuggle-seat,.smuggle-bag{display:grid;gap:6px;padding:10px;border:1px solid #c9dbe6;border-radius:10px;background:#f7fbfe}
+.smuggle-seat.is-officer{border-color:#1f6fd6;background:#eef5ff}
+.smuggle-seat p,.smuggle-bag p{margin:0}
+.smuggle-seat-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.smuggle-money{color:#7a5200;font:700 13px/1 var(--font-system)}
+.smuggle-badge{padding:2px 8px;border-radius:10px;background:#1f6fd6;color:#fff;font:700 11px/1.3 var(--font-luna)}
+.smuggle-stall{display:flex;flex-wrap:wrap;gap:5px}
+.smuggle-chip{padding:2px 8px;border-radius:10px;background:#e3f3e9;color:#0b5d2a;font:13px/1.4 "Noto Sans SC","Microsoft YaHei",sans-serif}
+.smuggle-chip.is-hidden{background:#3a3446;color:#ffd54a}
+.smuggle-chip.is-empty{background:transparent;color:#8aa0ae;font-family:var(--font-luna)}
+.smuggle-scores{display:grid;gap:6px;margin:0;padding-left:22px}
+.smuggle-scores li{display:grid;gap:1px}
+.smuggle-scores small{color:#4f6f82;font:12px/1.3 var(--font-luna)}
+.smuggle-prize{justify-self:start;padding:2px 8px;border-radius:10px;background:#ffd54a;color:#5a3d00;font:700 12px/1.3 var(--font-luna)}
+
+/* --- Тайный агент: карточка цели и задание ----------------------------- */
+.agent-meta{margin:0;color:#4f6f82;font:13px/1.4 var(--font-luna)}
+.agent-meta.is-ok{color:#0b7a3b}
+.agent-stats{margin:0;color:#1b2f3d;font:700 13px/1.4 var(--font-system)}
+.agent-news{margin:0;padding:6px 10px;border-left:3px solid #c9a227;background:#fff8e1;color:#5a4300;font:13px/1.4 var(--font-luna)}
+.agent-card{display:grid;gap:6px;padding:12px;border:2px solid #111418;border-radius:10px;background:linear-gradient(180deg,#f5f7f9,#e3e9ee)}
+.agent-card p{margin:0}
+.agent-card.is-incoming{border-color:#c9a227;background:#fffbea;box-shadow:0 0 0 3px rgba(201,162,39,.25)}
+.agent-card.is-guess{border-style:dashed;border-color:#6a7d8c}
+.agent-target{color:#111418;font:700 20px/1.2 var(--font-luna)}
+.agent-mission{color:#1b2f3d;font:15px/1.4 var(--font-luna)}
+.agent-rating{display:grid;gap:4px;margin:0;padding-left:22px;font:13px/1.4 var(--font-luna)}
+.agent-rating li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px}
+
+/* --- Зомби-протокол: код человека и станции ---------------------------- */
+.zombie-meta{margin:0;color:#4f6f82;font:13px/1.4 var(--font-luna)}
+.zombie-safety{margin:0;padding:6px 10px;border-left:3px solid #d93025;background:#fdecea;color:#7a1f16;font:700 12px/1.4 var(--font-luna)}
+.zombie-headline{margin:0;color:#1b2f3d;font:700 15px/1.3 var(--font-luna)}
+.zombie-card{display:grid;gap:8px;padding:12px;border:2px solid #2d6b3a;border-radius:10px;background:linear-gradient(180deg,#f2fbf4,#dff2e4)}
+.zombie-card p{margin:0}
+.zombie-card.is-zombie{border-color:#5b8a1f;background:linear-gradient(180deg,#eef5e0,#d4e6b5)}
+.zombie-code{color:#062e50;font:700 40px/1.1 var(--font-system);letter-spacing:4px;text-align:center}
+.zombie-tag{display:grid;grid-template-columns:1fr auto;gap:8px}
+.zombie-input{min-height:48px;padding:0 12px;border:2px solid #5b8a1f;border-radius:8px;background:#fff;color:#1b2f3d;font:700 24px/1 var(--font-system);letter-spacing:3px}
+.zombie-question{display:grid;gap:6px;padding:10px;border:1px dashed #5b8a1f;border-radius:8px;background:#fff}
+.zombie-hanzi{color:#1b2f3d;font:700 34px/1.1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;text-align:center}
+.zombie-grid{display:flex;flex-wrap:wrap;gap:5px}
+.zombie-chip{padding:2px 8px;border-radius:10px;background:#e3f3e9;color:#0b5d2a;font:12px/1.5 var(--font-luna)}
+.zombie-chip.is-zombie{background:#3d4a1f;color:#d8f59a}
+
+/* --- Саботаж: роль, задания у станций, собрание ------------------------ */
+.sabotage-meta{margin:0;color:#4f6f82;font:13px/1.4 var(--font-luna)}
+.sabotage-safety{margin:0;padding:6px 10px;border-left:3px solid #d93025;background:#fdecea;color:#7a1f16;font:700 12px/1.4 var(--font-luna)}
+.sabotage-headline{margin:0;color:#1b2f3d;font:700 15px/1.3 var(--font-luna)}
+.sabotage-bar{height:14px;overflow:hidden;border:1px solid #7d93a3;border-radius:7px;background:#e6edf2}
+.sabotage-bar span{display:block;height:100%;background:linear-gradient(90deg,#36b37e,#7be0a8)}
+.sabotage-card{display:grid;gap:8px;padding:12px;border:2px solid #1f6fd6;border-radius:10px;background:linear-gradient(180deg,#f2f7ff,#dfeafa)}
+.sabotage-card p{margin:0}
+.sabotage-card.is-saboteur{border-color:#d93025;background:linear-gradient(180deg,#fff3f1,#f9d9d4)}
+.sabotage-card.is-meeting{border-color:#c9a227;background:#fffbea;box-shadow:0 0 0 3px rgba(201,162,39,.25)}
+.sabotage-card.is-tasks{border-style:dashed;border-color:#36b37e;background:#f4fbf7}
+.sabotage-role{color:#111418;font:700 17px/1.3 var(--font-luna)}
+.sabotage-code{color:#062e50;font:700 36px/1.1 var(--font-system);letter-spacing:4px;text-align:center}
+.sabotage-done{color:#0b7a3b;font:13px/1.4 var(--font-luna)}
+.sabotage-history{display:grid;gap:3px;margin:0;padding-left:20px;font:13px/1.4 var(--font-luna)}
+.sabotage-grid{display:flex;flex-wrap:wrap;gap:5px}
+.sabotage-chip{padding:2px 8px;border-radius:10px;background:#e3eefc;color:#0b3d7a;font:12px/1.5 var(--font-luna)}
+.sabotage-chip.is-saboteur{background:#fbe1dd;color:#8a1f14}
+.sabotage-chip.is-out{opacity:.5;text-decoration:line-through}
+
+/* --- ночь ------------------------------------------------------------- */
+[data-theme="dark"] .smuggle-card{background:linear-gradient(180deg,#12304a,#0d2438);border-color:#2d5a7c;color:#dcefff}
+[data-theme="dark"] .smuggle-card small,[data-theme="dark"] .smuggle-price{color:#9fc3dc}
+[data-theme="dark"] .smuggle-card.is-contraband{background:linear-gradient(180deg,#3a1a18,#2a1210);border-color:#b05a4e}
+[data-theme="dark"] .smuggle-seat,[data-theme="dark"] .smuggle-bag{background:#0d2438;border-color:#2d5a7c}
+[data-theme="dark"] .smuggle-seat.is-officer{background:#10284a;border-color:#4a8ae0}
+[data-theme="dark"] .smuggle-event{background:#2e250e;border-color:#8a6a1a}
+[data-theme="dark"] .smuggle-event b,[data-theme="dark"] .smuggle-event span{color:#ffe29a}
+[data-theme="dark"] .smuggle-chip{background:#10301c;color:#9ff0bb}
+[data-theme="dark"] .agent-card{background:linear-gradient(180deg,#16202a,#0d151d);border-color:#c9a227;color:#dcefff}
+[data-theme="dark"] .agent-card.is-incoming{background:#2e250e}
+[data-theme="dark"] .agent-target,[data-theme="dark"] .agent-mission,[data-theme="dark"] .agent-stats{color:#e8f2fa}
+[data-theme="dark"] .agent-meta{color:#9fc3dc}
+[data-theme="dark"] .agent-news{background:#2e250e;color:#ffe29a}
+[data-theme="dark"] .zombie-card{background:linear-gradient(180deg,#10241a,#0b1a12);color:#dcefff}
+[data-theme="dark"] .zombie-card.is-zombie{background:linear-gradient(180deg,#1c2410,#12180a)}
+[data-theme="dark"] .zombie-code,[data-theme="dark"] .zombie-headline,[data-theme="dark"] .zombie-hanzi{color:#e8f2fa}
+[data-theme="dark"] .zombie-meta{color:#9fc3dc}
+[data-theme="dark"] .zombie-input,[data-theme="dark"] .zombie-question{background:#0d2438;color:#dcefff}
+[data-theme="dark"] .zombie-safety,[data-theme="dark"] .sabotage-safety{background:#3a1a18;color:#ffc9c2}
+[data-theme="dark"] .sabotage-card{background:linear-gradient(180deg,#10243c,#0b1a2c);color:#dcefff}
+[data-theme="dark"] .sabotage-card.is-saboteur{background:linear-gradient(180deg,#3a1a18,#2a1210)}
+[data-theme="dark"] .sabotage-card.is-meeting{background:#2e250e}
+[data-theme="dark"] .sabotage-card.is-tasks{background:#0f2419}
+[data-theme="dark"] .sabotage-role,[data-theme="dark"] .sabotage-code,[data-theme="dark"] .sabotage-headline,[data-theme="dark"] .sabotage-hanzi{color:#e8f2fa}
+[data-theme="dark"] .sabotage-meta{color:#9fc3dc}
+[data-theme="dark"] .sabotage-input,[data-theme="dark"] .sabotage-question{background:#0d2438;color:#dcefff}
+[data-theme="dark"] .sabotage-bar{background:#0d2438;border-color:#2d5a7c}
+
+/* --- Луна-Аква: прямые углы и бумага ----------------------------------- */
+[data-design="xp"] .smuggle-card,[data-design="xp"] .smuggle-seat,[data-design="xp"] .smuggle-bag,[data-design="xp"] .agent-card,[data-design="xp"] .zombie-card,[data-design="xp"] .sabotage-card,[data-design="xp"] .zombie-question,[data-design="xp"] .sabotage-question,[data-design="xp"] .smuggle-event{border-radius:var(--radius-luna-pane)}
+[data-design="xp"] .zombie-input,[data-design="xp"] .sabotage-input{border-radius:var(--radius-luna-field)}
+[data-design="xp"] .smuggle-chip,[data-design="xp"] .zombie-chip,[data-design="xp"] .sabotage-chip,[data-design="xp"] .smuggle-badge,[data-design="xp"] .smuggle-prize{border-radius:2px}
+[data-design="xp"] .sabotage-bar{border-radius:0}
+
+/* ===========================================================================
+   РЫНОК КОНТРАБАНДЫ (market.css), ЗАХВАТ КАМПУСА (capture.css),
+   ШИФРОВАЛЬЩИКИ и СБОЙ СИСТЕМЫ (cipher-* / outage-* из games.css).
+   =========================================================================== */
+
+/* --- Рынок контрабанды: лавка, конструктор обмена, патруль ------------- */
+.market-meta{margin:0;color:#4f6f82;font:13px/1.4 var(--font-luna)}
+.market-news{margin:0;padding:6px 10px;border-left:3px solid #b98a1f;background:#fff8e1;color:#5a4300;font:13px/1.4 var(--font-luna)}
+.market-card{display:grid;gap:8px;padding:12px;border:2px solid #b98a1f;border-radius:10px;background:linear-gradient(180deg,#fffdf5,#f7ecd0)}
+.market-card p{margin:0}
+.market-card.is-patrol{border-color:#1f6fd6;background:linear-gradient(180deg,#f2f7ff,#dfeafa)}
+.market-card.is-offer{border-style:dashed}
+.market-role{color:#3d2c00;font:700 16px/1.3 var(--font-luna)}
+.market-goods{display:flex;flex-wrap:wrap;gap:5px}
+.market-chip{padding:2px 8px;border-radius:10px;background:#e3f3e9;color:#0b5d2a;font:13px/1.5 "Noto Sans SC","Microsoft YaHei",Tahoma,sans-serif}
+.market-chip.is-contraband{background:#fbe1dd;color:#8a1f14}
+.market-chip.is-empty{background:transparent;color:#8aa0ae}
+.market-builder{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 8px}
+.market-head{color:#7a5200;font:700 11px/1.2 var(--font-luna);text-transform:uppercase}
+.market-head:nth-child(2){text-align:center}
+.market-name{color:#1b2f3d;font:13px/1.3 "Noto Sans SC","Microsoft YaHei",Tahoma,sans-serif;text-align:center}
+.market-name.is-contraband{color:#8a1f14}
+.market-stepper{display:inline-grid;grid-template-columns:36px 28px 36px;align-items:center;text-align:center}
+.market-stepper .btn{min-height:36px;padding:0;font-size:18px}
+.market-stepper b{font:700 14px/1 var(--font-system)}
+.market-form{display:grid;grid-template-columns:1fr auto;gap:8px}
+.market-input{min-height:44px;padding:0 12px;border:2px solid #b98a1f;border-radius:8px;background:#fff;color:#1b2f3d;font:700 22px/1 var(--font-system);letter-spacing:3px}
+
+/* --- Захват кампуса: табло фракций, точка, дуэль ----------------------- */
+.capture-hud,.capture-card,.capture-duel{display:grid;gap:8px;padding:14px;border-left:4px solid var(--faction,#0a86f0)}
+.capture-hud p,.capture-card p,.capture-duel p{margin:0}
+.capture-hud-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
+.capture-label{color:#3c6b8c;font:700 10px/1.2 var(--font-system);letter-spacing:var(--tracking-label);text-transform:uppercase}
+.capture-you{padding:3px 10px;border-radius:12px;background:var(--faction,#0a86f0);color:#fff;font:700 12px/1.3 var(--font-luna);text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.capture-board{display:grid;gap:5px}
+.capture-score{display:grid;grid-template-columns:82px 1fr auto;align-items:center;gap:8px}
+.capture-score b{color:var(--text-primary);font:700 13px/1.2 var(--font-luna)}
+.capture-score.is-mine b{text-decoration:underline;text-decoration-color:var(--faction);text-underline-offset:3px}
+.capture-track{height:10px;overflow:hidden;border-radius:5px;background:#dfe9f0;box-shadow:inset 0 1px 2px rgba(0,0,0,.15)}
+.capture-bar{display:block;height:100%;min-width:3px;border-radius:5px;background:linear-gradient(180deg,rgba(255,255,255,.45),transparent 55%),var(--faction)}
+.capture-score-value{color:var(--ink-muted-aqua);font:12px/1 var(--font-system);white-space:nowrap}
+.capture-meta{color:var(--ink-muted-aqua);font:12px/1.4 var(--font-luna)}
+.capture-meta.is-open{color:#12813d;font-weight:700}
+.capture-title{color:var(--text-primary);font:700 19px/1.3 var(--font-story)}
+.capture-zh{color:var(--ink-muted-aqua);font:15px/1.4 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.capture-owner{color:var(--faction,#4f6f82);font:700 14px/1.4 var(--font-luna)}
+.capture-actions{display:flex;flex-wrap:wrap;gap:8px}
+.capture-question{display:grid;gap:4px;justify-items:center;padding:12px;border:1px dashed var(--faction,#0a86f0);border-radius:8px;background:#f6fbff;text-align:center}
+.capture-hanzi{color:#062e50;font:700 44px/1.1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.capture-pinyin{color:#4f6f82;font:15px/1.3 var(--font-pinyin)}
+.capture-badges{display:flex;flex-wrap:wrap;gap:6px}
+.capture-badge{padding:3px 9px;border:1px solid #f0c24a;border-radius:12px;background:#fff6d6;color:#6b4a00;font:12px/1.3 var(--font-luna)}
+.capture-ability{display:grid;gap:5px;padding:10px;border:1px solid #c9dbe6;border-radius:8px;background:#f7fbfe}
+.capture-ability.is-active{border-color:#5fc27e;background:#effaf2}
+.capture-ability small{color:var(--ink-muted-aqua);font:12px/1.35 var(--font-luna)}
+.capture-ability-title{color:var(--text-primary);font:700 14px/1.3 var(--font-luna)}
+.capture-duel{border-left-color:#c0392b}
+.capture-duel-code{justify-self:center;padding:6px 18px;border:2px dashed #c0392b;border-radius:10px;background:#fff7f5;color:#7a1d12;font:700 36px/1.1 var(--font-system);letter-spacing:var(--tracking-label)}
+.capture-duel-moves{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.capture-duel-move{display:grid;gap:2px;justify-items:center;min-height:72px}
+.capture-duel-move b{font:700 30px/1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.capture-duel-move small{font:12px/1 var(--font-luna)}
+.capture-duel-result{color:var(--text-primary);font:700 26px/1.2 var(--font-story)}
+.capture-duel-result.is-win{color:#12813d}
+.capture-duel-result.is-lose{color:#b02a1a}
+
+/* --- Шифровальщики: команды, счёт, поле слов -------------------------- */
+.cipher-teams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cipher-team{display:grid;align-content:start;gap:8px;padding:10px;border:1px solid var(--border-aqua);border-radius:10px;background:rgba(255,255,255,.66)}
+.cipher-team-head{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font:700 15px/1.2 var(--font-ui)}
+.cipher-team-list{display:grid;gap:4px;margin:0;padding:0;list-style:none;font:14px/1.3 var(--font-ui);overflow-wrap:anywhere}
+.cipher-score{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cipher-chip{display:flex;align-items:center;justify-content:space-between;min-height:46px;padding:6px 12px;border:1px solid var(--border-aqua);border-radius:10px;background:rgba(255,255,255,.7);font:13px/1.3 var(--font-ui)}
+.cipher-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.cipher-card{display:grid;align-content:center;justify-items:center;gap:1px;min-width:0;min-height:62px;padding:5px 2px;border:1px solid var(--border-aqua);border-radius:8px;background:rgba(255,255,255,.8);text-align:center}
+.cipher-card b{font:700 18px/1.1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.cipher-card small{color:var(--ink-muted-aqua);font:9px/1.1 var(--font-system)}
+.cipher-card.is-armed{border-color:var(--armed-edge);background:var(--armed-bg);color:var(--armed-ink);box-shadow:inset 0 0 0 1px var(--armed-edge)}
+
+/* --- Сбой системы: лампы промахов, модули, провода, клавиши ----------- */
+.outage-strikes{display:flex;justify-content:center;gap:10px}
+.outage-lamp{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--border-aqua);border-radius:50%;background:rgba(255,255,255,.7);font:700 13px/1 var(--font-system)}
+.outage-lamp.is-on{border-color:#d93025;background:#fdecea;color:#7a1f16}
+.outage-modules{display:grid;gap:10px}
+.outage-module{display:grid;gap:10px;padding:10px;border:1px solid var(--border-aqua);border-left:4px solid var(--armed-edge);border-radius:10px;background:rgba(255,255,255,.72)}
+.outage-module-head{display:flex;justify-content:space-between;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--border-aqua);color:var(--text-primary);font:700 13px/1.3 var(--font-ui)}
+.outage-wires{display:grid;gap:6px}
+.outage-wire{display:grid;grid-template-columns:22px minmax(0,1fr) 44px;align-items:center;gap:8px;width:100%;min-height:46px;padding:4px 10px;border:1px solid var(--border-aqua);border-radius:8px;background:rgba(255,255,255,.7)}
+.outage-wire-no{color:var(--ink-muted-aqua);font:700 12px/1 var(--font-system)}
+.outage-wire-line{height:6px;border-radius:3px;background:repeating-linear-gradient(90deg,#7d8f9b 0 14px,#aab8c1 14px 18px);box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 2px 2px rgba(0,0,0,.25)}
+.outage-wire.is-cut .outage-wire-line{background:linear-gradient(90deg,#7d8f9b 0 42%,transparent 42% 58%,#7d8f9b 58%)}
+.outage-keypad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.outage-key{min-height:72px;border:1px solid var(--border-aqua);border-radius:10px;background:linear-gradient(rgba(255,255,255,.9),#e6f4fb);font:700 22px/1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.outage-number{display:block;color:var(--text-primary);font:700 44px/1.15 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;text-align:center}
+.outage-summary{display:flex;flex-wrap:wrap;gap:6px}
+.outage-chip{padding:4px 9px;border:1px solid var(--armed-edge);border-radius:999px;background:#ffb65a24;color:var(--text-primary);font:600 12px/1.3 var(--font-ui)}
+
+/* --- ночь -------------------------------------------------------------- */
+[data-theme="dark"] .market-card{background:linear-gradient(180deg,#2a2410,#1c180a);color:#f5e9c8}
+[data-theme="dark"] .market-card.is-patrol{background:linear-gradient(180deg,#10243c,#0b1a2c)}
+[data-theme="dark"] .market-role,[data-theme="dark"] .market-name{color:#f5e9c8}
+[data-theme="dark"] .market-meta{color:#c8b98a}
+[data-theme="dark"] .market-news{background:#2e250e;color:#ffe29a}
+[data-theme="dark"] .market-input{background:#0d2438;color:#dcefff}
+[data-theme="dark"] .capture-track{background:#16324a}
+[data-theme="dark"] .capture-score b,[data-theme="dark"] .capture-hanzi{color:#dcefff}
+[data-theme="dark"] .capture-question{background:#0d2438}
+[data-theme="dark"] .capture-label{color:#8fc2e6}
+[data-theme="dark"] .capture-meta.is-open{color:#5fd88a}
+[data-theme="dark"] .capture-badge{background:#33280c;border-color:#8a6a1a;color:#ffe29a}
+[data-theme="dark"] .capture-ability{background:#0d2438;border-color:#2d5a7c}
+[data-theme="dark"] .capture-ability.is-active{background:#10301c;border-color:#3f9a5c}
+[data-theme="dark"] .capture-ability-title{color:#dcefff}
+[data-theme="dark"] .capture-duel-code{background:#2a1210;color:#ffb4a8}
+[data-theme="dark"] .capture-duel-result{color:#dcefff}
+[data-theme="dark"] .capture-duel-result.is-win{color:#5fd88a}
+[data-theme="dark"] .capture-duel-result.is-lose{color:#ff8a7a}
+[data-theme="dark"] .cipher-team,[data-theme="dark"] .cipher-chip,[data-theme="dark"] .cipher-card,[data-theme="dark"] .outage-module,[data-theme="dark"] .outage-wire,[data-theme="dark"] .outage-lamp,[data-theme="dark"] .outage-key{background:var(--surface-card-strong);border-color:var(--border-edge);color:var(--text-primary)}
+
+/* --- Луна-Аква --------------------------------------------------------- */
+[data-design="xp"] .market-card,[data-design="xp"] .capture-question,[data-design="xp"] .capture-ability,[data-design="xp"] .cipher-team,[data-design="xp"] .cipher-card,[data-design="xp"] .cipher-chip,[data-design="xp"] .outage-module,[data-design="xp"] .outage-wire,[data-design="xp"] .outage-key{border-radius:var(--radius-luna-pane);border-color:var(--xp-edge);background:var(--xp-pane)}
+[data-design="xp"] .market-input,[data-design="xp"] .capture-duel-code{border-radius:var(--radius-luna-field)}
+[data-design="xp"] .market-chip,[data-design="xp"] .capture-you,[data-design="xp"] .capture-badge,[data-design="xp"] .outage-chip{border-radius:2px}
+[data-design="xp"] .capture-track,[data-design="xp"] .capture-bar{border-radius:0}
+[data-design="xp"] .capture-title{font:bold 15px/1.3 var(--font-luna)}
+[data-design="xp"] .cipher-team-head,[data-design="xp"] .cipher-team-list,[data-design="xp"] .cipher-chip,[data-design="xp"] .outage-module-head,[data-design="xp"] .outage-chip,[data-design="xp"] .capture-meta,[data-design="xp"] .capture-score b{font-family:var(--font-luna)}

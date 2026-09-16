@@ -1,0 +1,51 @@
+<!-- @dsCard group="Components" viewport="700x520" name="Ядро: окно, карточка, вкладки, таблица, записка, табло" subtitle="Один словарь в двух оформлениях: Аква слева, Луна-Аква справа" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Ядро: окно, карточка, вкладки, таблица, записка, табло</title><link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0}body{padding:14px;background:#eef7fc;font:13px/1.4 var(--font-ui)}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}.pane{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:6px}.pane.aqua{background:linear-gradient(145deg,#deffff,#8fdcf1)}.pane.luna{background:#eef7fc;border:1px solid #8fbcd6}.cap{font:700 9px/1.2 var(--font-system);letter-spacing:.12em;color:#2b7b9e}.stack{display:flex;flex-wrap:wrap;gap:8px;align-items:center}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body><div id="root"></div>
+<script type="text/babel">const { Window, Card, Tabs, DataTable, Note, HitCounter, LcdPanel, Chip, Gauge, StatusBar, EmptyState, Button } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+
+function Demo({ skin }) {
+  const [tab, setTab] = React.useState("shelf");
+  const [sel, setSel] = React.useState("wall");
+  return (
+    <div className="zd" data-design={skin === "luna" ? "xp" : "aqua"}>
+      <div className={"pane " + skin}>
+        <span className="cap">{skin === "luna" ? "ЛУНА-АКВА" : "АКВА"}</span>
+        <Window title="Магазин" titleCn="商店" meta="сезон не начался"
+          status={<StatusBar items={["Сервер: витрина пуста", "Пример в макете"]} />}>
+          <HitCounter value={212} digits={4} />
+          <Tabs value={tab} onChange={setTab}
+            items={[{ id: "shelf", label: "Витрина" }, { id: "mine", label: "Моё" }]}
+            panel={
+              <DataTable selectedId={sel} onSelect={setSel}
+                columns={[{ key: "name", label: "Название" }, { key: "price", label: "★", width: 52 }]}
+                rows={[
+                  { id: "wall", name: "Обои «Прилив»", price: "120" },
+                  { id: "frame", name: "Рамка профиля", price: "90" },
+                  { id: "coupon", name: "Купон «+30 минут»", price: "300" }
+                ]} />
+            } />
+          <div className="stack">
+            <Chip tone="reward">+2 ★</Chip>
+            <Chip tone="dupe">дубль · обмен</Chip>
+            <Chip tone="example">пример</Chip>
+            <Chip dot>идёт сейчас</Chip>
+          </div>
+          <Gauge value={3} segments={5} label="Попытки" />
+        </Window>
+        <Card label="СЕЙЧАС" title="Мой день" titleCn="我的一天" action={<Button variant="system">Как играть?</Button>}>
+          <p className="zd-sub">Расписание вводит вожатый в консоли; здесь показывается только оно.</p>
+        </Card>
+        <Note title="REP нельзя купить за ★" meta="правило сезона">Рейтинг меняют дневник и игры.</Note>
+        <EmptyState title="Коллекция пуста">Импланты появляются из кейсов и обменов.</EmptyState>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <div className="pair"><Demo skin="aqua" /><Demo skin="luna" /></div>
+);</script></body></html>

@@ -1,0 +1,13 @@
+:root{
+  --space-1:4px;--space-2:6px;--space-3:8px;--space-4:10px;--space-5:12px;
+  --space-6:14px;--space-7:16px;--space-8:18px;--space-9:22px;--space-10:26px;
+
+  --radius-xs:6px;--radius-sm:10px;--radius-md:14px;--radius-lg:18px;
+  --radius-xl:22px;--radius-pill:999px;--radius-circle:50%;
+  /* Луна-Аква правит углы: окно 5px, бумага 4px, поле ввода 2px */
+  --radius-luna-window:5px;--radius-luna-pane:4px;--radius-luna-field:2px;
+
+  /* телефон */
+  --artboard-w:390px;--artboard-h:844px;
+  --tap-min:44px;
+}

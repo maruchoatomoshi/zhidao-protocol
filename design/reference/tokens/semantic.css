@@ -1,0 +1,26 @@
+/* Назначение цвета. В новых компонентах берут эти, а не сырые. */
+:root{
+  --surface-app:#8fdcf1;
+  --surface-card:rgba(242,253,255,.76);
+  --surface-card-strong:rgba(255,255,255,.9);
+  --surface-sheet:rgba(238,253,255,.9);
+  --surface-metal:linear-gradient(to bottom,#dbe7ef 0%,#c2d4e0 46%,#9db3c4 47%,#b6cad8 100%);
+  --surface-lcd:linear-gradient(to bottom,#0b2a20 0%,#071b16 60%,#04120e 100%);
+
+  --text-primary:var(--ink);
+  --text-secondary:var(--ink-soft);
+  --text-faint:#6e8fa3;
+  --text-on-dark:#dffcff;
+  --text-lcd:var(--lcd-ink);
+
+  --border-chrome:rgba(255,255,255,.95);
+  --border-edge:rgba(186,220,238,.75);
+  --border-crisp:rgba(150,200,226,.85);
+  --border-metal:#6d8598;
+
+  --accent-primary:var(--sky);
+  --accent-aqua:var(--aqua);
+  --accent-success:var(--leaf);
+  --accent-signal:var(--lime);
+  --accent-danger:var(--alert);
+}

@@ -1,0 +1,40 @@
+/* Материал Аквы: выпуклый предмет со срезом блика, хромовый кант,
+   цветная тень. Не матовое стекло — блёр читается как 2020-е. */
+:root{
+  --gloss-hi:rgba(255,255,255,.92);
+  --gloss-lo:rgba(255,255,255,.34);
+  --gloss-cut:52%;
+  --chrome-lit:rgba(255,255,255,.95);
+  --chrome-mid:rgba(186,220,238,.75);
+
+  --lift-sm:0 2px 6px rgba(4,84,134,.16);
+  --lift-md:0 10px 24px -6px rgba(4,84,134,.34);
+  --lift-lg:0 26px 54px -18px rgba(3,62,104,.52);
+  --glow-aqua:0 0 22px rgba(12,203,208,.45);
+  --glow-lime:0 0 18px rgba(156,233,78,.5);
+
+  --ease-out:cubic-bezier(.2,.75,.22,1); /* @kind other */
+  --dur-press:90ms; /* @kind other */
+  --dur-hover:160ms; /* @kind other */
+  --dur-panel:320ms; /* @kind other */
+  --press-shift:1px;
+
+  --light-strip:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.95) 16%,#7eebff 50%,rgba(255,255,255,.95) 84%,transparent 100%); /* @kind color */
+  --light-strip-glow:0 0 10px rgba(126,235,255,.75);
+  --light-rim:0 0 0 1px rgba(255,255,255,.9),0 0 14px rgba(126,235,255,.55);
+
+  --track-well:linear-gradient(180deg,rgba(6,46,80,.17),rgba(6,46,80,.06)); /* @kind color */
+  --track-well-rim:inset 0 1px 3px rgba(4,60,100,.38),inset 0 -1px 0 rgba(255,255,255,.7); /* @kind shadow */
+  --track-height:12px;
+
+  --display-fill:linear-gradient(180deg,#7fd2f2 0%,#2e9ede 34%,#0d6ab5 66%,#063f7d 100%);
+  --display-stroke-width:3px;
+  --display-stroke-color:#ffffff;
+  --display-shadow:0 2px 0 rgba(255,255,255,.85),0 5px 12px rgba(6,70,120,.4);
+
+  --rail-ink:rgba(9,74,122,.9);
+  --rail-ink-dim:rgba(23,104,156,.6);
+  --rail-tick:rgba(23,104,156,.5);
+
+  --orb-light:#bfe6f4;--orb-mid:#6fb9dd;--orb-deep:#3f86bd;
+}

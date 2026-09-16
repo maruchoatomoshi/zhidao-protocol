@@ -1,0 +1,80 @@
+<!-- @dsCard group="Консоль вожатого" viewport="900x900" name="Обзор, коды MAX, дневники, попытки, расписание" subtitle="Аква и Луна-Аква; ночь — для ростера и листа дневника" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZHIDAO — консоль вожатого</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#dceef6}
+body{padding:20px;font:13px/1.5 var(--font-ui);color:var(--text-primary)}
+h2{margin:26px 0 4px;font:700 20px/1.2 var(--font-ui)}
+h2:first-of-type{margin-top:4px}
+.intro{max-width:74ch;color:var(--ink-muted-aqua)}
+.row{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0 0}
+.slot{display:flex;flex-direction:column;gap:8px;width:390px;margin:0}
+.slot>figcaption{font:700 11px/1.3 var(--font-system);letter-spacing:.1em;color:#2b7b9e;text-transform:uppercase}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body>
+<div id="root"></div>
+<script type="text/babel" src="Console.jsx"></script>
+<script type="text/babel">
+const { PhoneFrame, AppHeader, BottomNav } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+const nav = window.ZHIDAOProtocolDesignSystem_ad77c0.NAV_ITEMS.map((i) => ({ ...i, icon: "../../" + i.icon }));
+
+function Board({ caption, skin, theme, children }) {
+  return (
+    <figure className="slot">
+      <figcaption>{caption}</figcaption>
+      <PhoneFrame skin={skin} theme={theme} label={caption}
+        header={<AppHeader stars={212} logo="../../assets/zhidao-dragon-logo-256.png" />}
+        nav={<BottomNav value="more" items={nav} />}>
+        {children}
+      </PhoneFrame>
+    </figure>
+  );
+}
+
+const Pair = ({ name, Screen, props, night }) => (
+  <div className="row">
+    <Board caption={name + " · Аква"} skin="aqua"><Screen {...props} /></Board>
+    <Board caption={name + " · Луна-Аква"} skin="luna"><Screen {...props} /></Board>
+    {night && <Board caption={name + " · Луна-Аква, ночь"} skin="luna" theme="dark"><Screen {...props} /></Board>}
+  </div>
+);
+
+function Page() {
+  return (
+    <React.Fragment>
+      <h2>Консоль вожатого 值班台</h2>
+      <p className="intro">Тот же телефон и те же оформления, что у участника: отдельного планшетного вида нет. Разделы — вкладками, как в окне свойств. Вожатому по умолчанию открываются «Участники»: «Сводка» требует глобальной роли и ответит ему отказом.</p>
+      <Pair name="Вкладки консоли" Screen={ConsoleTabs} night />
+
+      <h2>Обзор 总览</h2>
+      <p className="intro">Счётчики и журнал приходят одним запросом; SCHEMA — версия схемы базы. Открыто архитектору и системному администратору. Числа на макете подписаны как пример.</p>
+      <Pair name="Сводка" Screen={ConsoleOverview} />
+      <Pair name="Отказ по правам" Screen={ConsoleDenied} />
+
+      <h2>Коды привязки 绑定码</h2>
+      <p className="intro">Поиск по части имени, отметка «MAX привязан / не привязан» и одна кнопка на строку. Выдача аннулирует прежний код, поэтому кнопка требует второго нажатия, а предупреждение стоит рядом со строкой, а не внутри кнопки: длинная надпись съедала колонку с именем. Код показывается один раз.</p>
+      <div className="row">
+        <Board caption="Ростер · Аква" skin="aqua"><ConsoleRoster /></Board>
+        <Board caption="Второе нажатие · Луна-Аква" skin="luna"><ConsoleRoster armed /></Board>
+        <Board caption="Код выдан · Аква" skin="aqua"><ConsoleRoster code /></Board>
+        <Board caption="Код выдан · Луна-Аква, ночь" skin="luna" theme="dark"><ConsoleRoster code /></Board>
+      </div>
+
+      <h2>Оценка дневников 日记</h2>
+      <p className="intro">Лист за один день: 0–3 звезды и бонус на каждого. Награды считает сервер по diary.json, экран их только показывает. Правка несёт ревизию — чужая оценка не затирается.</p>
+      <Pair name="Лист дневника" Screen={ConsoleDiary} night />
+      <Pair name="Оценку изменил другой вожатый" Screen={ConsoleDiary} props={{ conflict: true }} />
+
+      <h2>Попытки и ★ 机会</h2>
+      <p className="intro">Выдача попыток сканера — реальная команда сервера: от 1 до 7 за раз, причина обязательна, повтор с тем же ключом не удваивает выдачу. Отдельной выдачи ★ у сервера нет: ★ приходят оценкой дневника, кейсами и играми — поэтому такой кнопки в макете нет, вопрос вынесен в README.</p>
+      <Pair name="Попытки" Screen={ConsoleGrants} />
+
+      <h2>Расписание дня 日程</h2>
+      <p className="intro">Новая функция из задания. Ввод строками «время — что»; хранения расписания на сервере ещё нет, поэтому сохранение выключено и подписано словами.</p>
+      <Pair name="Расписание" Screen={ConsoleSchedule} />
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Page />);
+</script></body></html>

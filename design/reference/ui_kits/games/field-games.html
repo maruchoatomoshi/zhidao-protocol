@@ -1,0 +1,65 @@
+<!-- @dsCard group="Игры" viewport="900x900" name="Окна игр: Захват кампуса, Шифровальщики, Сбой системы" subtitle="Лобби → идёт раунд → итог, Аква и Луна-Аква, ночь на нагруженных состояниях" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZHIDAO — окна игр, часть 3</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#dceef6}
+body{padding:20px;font:13px/1.5 var(--font-ui);color:var(--text-primary)}
+h2{margin:26px 0 4px;font:700 20px/1.2 var(--font-ui)}
+h2:first-of-type{margin-top:4px}
+.intro{max-width:74ch;color:var(--ink-muted-aqua)}
+.row{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0 0}
+.slot{display:flex;flex-direction:column;gap:8px;width:390px;margin:0}
+.slot>figcaption{font:700 11px/1.3 var(--font-system);letter-spacing:.1em;color:#2b7b9e;text-transform:uppercase}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body>
+<div id="root"></div>
+<script type="text/babel" src="FieldGames.jsx"></script>
+<script type="text/babel">
+const { PhoneFrame, AppHeader, BottomNav } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+const nav = window.ZHIDAOProtocolDesignSystem_ad77c0.NAV_ITEMS.map((i) => ({ ...i, icon: "../../" + i.icon }));
+
+function Board({ caption, skin, theme, children }) {
+  return (
+    <figure className="slot">
+      <figcaption>{caption}</figcaption>
+      <PhoneFrame skin={skin} theme={theme} label={caption}
+        header={<AppHeader stars={212} logo="../../assets/zhidao-dragon-logo-256.png" />}
+        nav={<BottomNav value="events" items={nav} />}>
+        {children}
+      </PhoneFrame>
+    </figure>
+  );
+}
+
+const Trio = ({ name, Lobby, Round, Result, night }) => (
+  <div className="row">
+    <Board caption={name + " · Аква · лобби"} skin="aqua"><Lobby /></Board>
+    <Board caption={name + " · Луна-Аква · лобби"} skin="luna"><Lobby /></Board>
+    <Board caption={name + " · Аква · раунд"} skin="aqua"><Round /></Board>
+    <Board caption={name + " · Луна-Аква · раунд"} skin="luna"><Round /></Board>
+    {night && <Board caption={name + " · Аква · раунд, ночь"} skin="aqua" theme="dark"><Round /></Board>}
+    <Board caption={name + " · Аква · итог"} skin="aqua"><Result /></Board>
+    <Board caption={name + " · Луна-Аква · итог"} skin="luna"><Result /></Board>
+  </div>
+);
+
+function Page() {
+  return (
+    <React.Fragment>
+      <h2>Захват кампуса 校园争夺</h2>
+      <p className="intro">Табло фракций, карточка точки и дуэль — из capture.css. Захват кнопкой у точки, как в «Саботаже»: точность GPS не подразумеваем. Данные: точки и фракции — сервер; проценты и «7 точек» — пример. Карта фракций — переходом на «Карту кампуса» (решение от 2026-09-16): своей схемы в окне игры нет, режим фракций накладывается на настоящую карту.</p>
+      <Trio name="Захват" Lobby={CaptureLobby} Round={CaptureRound} Result={CaptureResult} night />
+
+      <h2>Шифровальщики 密码员</h2>
+      <p className="intro">Две команды, счёт и поле слов пять на пять — из games.css (cipher-*). Выбор слова подтверждается вторым касанием — тот же янтарный is-armed, что у покупки. Подсказку капитан говорит вслух: свободный текст между детьми в приложении недопустим. Приложение показывает только, что подсказка дана и на сколько слов.</p>
+      <Trio name="Шифровальщики" Lobby={CipherLobby} Round={CipherRound} Result={CipherResult} />
+
+      <h2>Сбой системы 系统故障</h2>
+      <p className="intro">Лампы промахов, модули с проводами и клавишами — из games.css (outage-*). Руководство лежит у второго игрока и на своём экране не показывается. Руководство — бумажное, у вожатого: игра настольная, второй телефон эксперту не нужен.</p>
+      <Trio name="Сбой системы" Lobby={OutageLobby} Round={OutageRound} Result={OutageResult} night />
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Page />);
+</script></body></html>

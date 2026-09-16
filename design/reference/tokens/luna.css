@@ -1,0 +1,35 @@
+/* Луна-Аква: форма градиента у Luna, тона у неба приложения.
+   Излом на 49% совпадает со срезом блика Аквы (52%) не случайно —
+   это один и тот же оптический приём. */
+[data-design="xp"]{
+  --xp-paper:#eef7fc;
+  --xp-pane:#fff;
+  --xp-soft:#e6f4fc;
+  --xp-ink:#06304f;
+  --xp-muted:#35647d;
+  --xp-edge:#8fbcd6;
+  --xp-button:linear-gradient(#fff 0%,#eaf8ff 45%,#c2e6f6 49%,#f4fcff 100%); /* @kind color */
+  --xp-title:linear-gradient(#7fd8f4 0%,#1ba7e0 9%,#0a7cc2 48%,#0a6fb4 49%,#0d6fae 85%,#054780 100%); /* @kind color */
+  --xp-title-edge:#075a97;
+  --xp-title-shade:#063f70;
+  --xp-note:#fff9d6;
+  --xp-note-edge:#c9b86d;
+  --xp-note-ink:#7b6a2e;
+  --xp-tab-active-top:#ffc83d;
+  --xp-row-selected:#316ac5;
+  --xp-field-edge:#7f9db9;
+  --xp-heading-font:Tahoma,"Segoe UI",Arial,sans-serif;
+}
+[data-design="xp"][data-theme="dark"],[data-theme="dark"] [data-design="xp"]{
+  --xp-paper:#162b46;
+  --xp-pane:#1c3654;
+  --xp-soft:#244466;
+  --xp-ink:#e9f5ff;
+  --xp-muted:#b9cfe5;
+  --xp-edge:#5f89a6;
+  --xp-button:linear-gradient(#3f6d92,#22506f 45%,#173c55 49%,#2f5c7c); /* @kind color */
+  --xp-title:linear-gradient(#4e9cc4,#1b6d9c 9%,#0f5074 48%,#0d4767 49%,#136894 85%,#07293e); /* @kind color */
+  --xp-note:#343e43;
+  --xp-note-edge:#96895e;
+  --xp-note-ink:#d8c88a;
+}

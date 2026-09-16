@@ -1,0 +1,175 @@
+/* ===========================================================================
+   РАЗДЕЛЫ «ЕЩЁ». Значения из meet.css, trade.css, workshop.css, virus.css
+   и campus-marks.css — один в один. Новый стиль не изобретается.
+   =========================================================================== */
+
+/* --- Встречи: пазл из кусков, код рукопожатия -------------------------- */
+.meet-grid{display:grid;grid-template-columns:repeat(var(--grid,3),minmax(0,1fr));gap:3px;width:100%;overflow:hidden;border:1px solid var(--border-aqua);border-radius:10px;background:rgba(230,244,252,.9)}
+.meet-tile{min-height:0;aspect-ratio:1;background-repeat:no-repeat;background-size:cover}
+.meet-tile.is-missing{display:grid;place-items:center;color:var(--ink-muted-aqua);font:700 20px/1 var(--font-system);background:repeating-linear-gradient(45deg,#e6f4fc 0 8px,#fff 8px 16px)}
+.meet-tile.is-new{box-shadow:inset 0 0 0 3px #f0b430}
+.meet-offer{display:grid;justify-items:center;gap:6px;padding:14px;border:1px dashed var(--border-aqua);border-radius:10px;background:rgba(230,244,252,.9)}
+.meet-code{color:var(--text-primary);font:700 46px/1.1 var(--font-system);letter-spacing:var(--tracking-label);font-variant-numeric:tabular-nums}
+.meet-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.meet-thumb{display:grid;gap:6px;color:var(--text-primary);font:12px/1.3 var(--font-ui)}
+.meet-thumb span{display:block;width:100%;aspect-ratio:4/3;border:1px solid var(--border-aqua);border-radius:8px;background:linear-gradient(145deg,#d9f1fb,#8fcde6);background-size:cover;background-position:center}
+
+/* --- Обмен дублями ----------------------------------------------------- */
+.trade-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.trade-item{display:block;width:100%;padding:0;border:0;background:none;text-align:center;cursor:pointer}
+.trade-item-card{display:grid;justify-items:center;gap:3px;width:100%;min-height:128px;padding:8px 6px;border:1px solid var(--border-aqua);border-left-width:4px;border-radius:10px;background:rgba(255,255,255,.82);color:var(--text-primary)}
+.trade-item-card img{width:64px;height:64px;object-fit:contain}
+.trade-item-card b{font:700 13px/1.25 var(--font-ui);overflow-wrap:anywhere}
+.trade-item-card small{color:var(--ink-muted-aqua);font:11px/1.3 var(--font-ui)}
+.trade-item-card.is-gold{border-left-color:#d99a12}
+.trade-item-card.is-purple{border-left-color:#8e5bd6}
+.trade-item-card.is-black{border-left-color:#2b1d3a}
+.trade-tier{text-transform:uppercase;letter-spacing:.06em}
+.trade-item[aria-pressed="true"] .trade-item-card{border-color:#28add9;box-shadow:inset 0 0 0 2px #28add966}
+.trade-swap{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:6px}
+.trade-side{display:grid;gap:6px}
+.trade-arrow{align-self:center;color:var(--ink-muted-aqua);font:700 22px/1 sans-serif}
+.trade-confirm{color:var(--ink-muted-aqua);font:11px/1.3 var(--font-system);text-align:center}
+.trade-confirm.is-on{color:#2f8a5c;font-weight:700}
+.trade-warning{border-color:#c2410c;background:#ff8a5c2a;font-weight:600}
+
+/* --- Мастерская: рецепты, переплавка, результат ------------------------ */
+[data-tier="gold"]{--tier:#c9a227}
+[data-tier="purple"]{--tier:#8b5cd6}
+[data-tier="upgraded"]{--tier:#1fae8b}
+[data-tier="black"]{--tier:#262638}
+.workshop-recipes{display:grid;gap:8px}
+.workshop-recipe{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:8px 10px;padding:10px;border:1px solid var(--border-aqua);border-left:4px solid var(--tier,#9aa7b2);border-radius:8px;background:rgba(255,255,255,.82)}
+.workshop-recipe .btn{grid-column:1/-1;min-height:44px}
+.workshop-art{display:grid;place-items:center;width:58px;height:58px;overflow:hidden;border-radius:8px;background:radial-gradient(circle at 50% 40%,#fff,#dbe9f3);color:var(--text-primary);font:26px/1 var(--font-ui)}
+.workshop-art img{width:100%;height:100%;object-fit:contain}
+.workshop-info{display:grid;gap:2px;min-width:0}
+.workshop-info b{color:var(--text-primary);font:700 15px/1.3 var(--font-ui)}
+.workshop-info small{color:var(--ink-muted-aqua)}
+.workshop-info p{margin:0}
+.workshop-route{color:var(--tier,var(--text-primary));font:bold 12px/1.4 var(--font-system)}
+.workshop-forge{display:grid;justify-items:center;gap:8px;padding:14px;border:1px solid #6a3a10;border-radius:8px;background:linear-gradient(#2a1606,#120903);color:#ffcf7a;font:12px/1.3 var(--font-system)}
+.workshop-forge-items{position:relative;width:124px;height:44px}
+.workshop-forge-items i{position:absolute;top:8px;width:28px;height:28px;border-radius:6px;background:radial-gradient(circle at 40% 35%,#fff6c8,#ffb000 55%,#b35a00);box-shadow:0 0 10px #ff9a00aa}
+.workshop-forge-items i:nth-child(1){left:0}
+.workshop-forge-items i:nth-child(2){left:48px}
+.workshop-forge-items i:nth-child(3){right:0}
+.workshop-forge-bar{display:block;width:100%;height:14px;padding:2px;border:1px solid #6a3a10;background:#000}
+.workshop-forge-bar i{display:block;height:100%;background:repeating-linear-gradient(90deg,#ff9a00 0 8px,transparent 8px 10px)}
+.workshop-result{display:grid;justify-items:center;gap:4px;padding:16px;border:1px solid var(--border-aqua);border-top:4px solid var(--tier,#1fae8b);border-radius:10px;background:radial-gradient(circle at 50% 30%,#fff,rgba(255,255,255,.82) 70%);text-align:center}
+.workshop-result h3{margin:0;color:var(--text-primary);font:700 20px/1.3 var(--font-ui)}
+.workshop-result p{margin:0}
+.workshop-result-art{display:grid;place-items:center;width:150px;height:150px;color:var(--text-primary);font:64px/1 var(--font-ui)}
+.workshop-result-art img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.2))}
+
+/* --- Антивирус: состояние, окно ошибки, тест --------------------------- */
+.virus-status{display:grid;gap:4px;padding:12px;border:1px solid var(--border-aqua);border-radius:10px;background:rgba(255,255,255,.82);color:var(--text-primary);font:13px/1.45 var(--font-ui)}
+.virus-state{font:700 18px/1.25 var(--font-ui)}
+.virus-state.is-infected{color:#c2410c}
+.virus-state.is-clean{color:#2f8a5c}
+.virus-firewall{color:#1b7fc4;font:12px/1.4 var(--font-system)}
+.virus-question{display:grid;gap:6px;padding:10px;border:1px solid var(--border-aqua);border-radius:10px;background:rgba(255,255,255,.82);text-align:center}
+.virus-zh{color:var(--text-primary);font:700 30px/1.15 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.virus-question small{color:var(--ink-muted-aqua)}
+.virus-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.virus-options .btn{min-height:44px;padding:4px;font-size:13px;overflow-wrap:anywhere}
+.virus-popup{width:100%;overflow:hidden;border:1px solid #2158ad;border-radius:8px;background:#ece9d8;color:#1b1b1b;box-shadow:0 16px 40px rgba(0,28,60,.4);font:13px/1.45 var(--font-luna)}
+.virus-popup-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;color:#fff;background:linear-gradient(#3a8cf0,#1554c7 60%,#0d3fa6)}
+.virus-popup-bar button{width:26px;height:24px;border:1px solid rgba(255,255,255,.6);border-radius:4px;color:#fff;background:linear-gradient(#e2a088,#b0392f);cursor:pointer}
+.virus-popup-body{display:grid;grid-template-columns:40px 1fr;align-items:center;gap:10px;padding:14px}
+.virus-popup-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#ffd23f;font:700 20px/1 var(--font-luna)}
+.virus-popup-body p{margin:0}
+.virus-popup-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 14px 14px}
+
+/* --- Карта: метки и туман ---------------------------------------------- */
+.campus-mark-card,.campus-mark-composer{display:grid;gap:8px;padding:14px;border-left:4px solid #ffb341}
+.campus-mark-card p,.campus-mark-composer p{margin:0}
+.campus-mark-label{color:#b86a00;font:700 10px/1.2 var(--font-system);letter-spacing:var(--tracking-label);text-transform:uppercase}
+.campus-mark-text{color:var(--text-primary);font:700 19px/1.3 var(--font-story)}
+.campus-mark-zh{color:var(--ink-muted-aqua);font:15px/1.4 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.campus-mark-meta{color:var(--ink-muted-aqua);font:12px/1.4 var(--font-luna)}
+.campus-mark-actions{display:flex;flex-wrap:wrap;gap:8px}
+.campus-mark-chips{display:flex;flex-wrap:wrap;gap:6px}
+.campus-mark-chip{min-height:40px;padding:6px 11px;border:1px solid #b9cfdc;border-radius:18px;background:#fff;color:#062e50;font:13px/1.2 var(--font-ui);cursor:pointer}
+.campus-mark-chip small{margin-left:5px;color:#6a8597;font:13px/1 "Noto Sans SC","Microsoft YaHei",sans-serif}
+.campus-mark-chip[aria-pressed="true"]{border-color:#ff9a1f;background:#fff1dc;box-shadow:inset 0 0 0 1px #ff9a1f}
+.campus-mark-preview{display:grid;gap:2px;padding:10px;border:1px dashed #ffb341;border-radius:8px;background:#fffaf0}
+.campus-mark-preview b{color:#062e50;font:700 17px/1.3 var(--font-story)}
+.campus-mark-preview small{color:#6a8597;font:13px/1.4 "Noto Sans SC","Microsoft YaHei",sans-serif}
+/* Схема карты — только подложка макета: настоящую географию даёт провайдер. */
+.map-plate{position:relative;aspect-ratio:4/3;overflow:hidden;border:1px solid var(--border-aqua);border-radius:12px;background:linear-gradient(155deg,#bfeecf,#dbf6d8)}
+.map-plate-note{position:absolute;left:6px;bottom:6px;z-index:5;padding:3px 7px;border-radius:2px;background:rgba(255,255,255,.82);color:#43717c;font:9px/1.3 var(--font-system)}
+.map-fog-cell{position:absolute;background:rgba(120,140,155,.55);backdrop-filter:none}
+.map-fog-grid{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr)}
+.map-fog-grid i{background:rgba(112,132,146,.6);border:1px solid rgba(255,255,255,.35)}
+.map-fog-grid i.is-open{background:transparent;border-color:transparent}
+.map-fog-soft{position:absolute;inset:0;background:radial-gradient(circle at 38% 62%,transparent 0 16%,rgba(112,132,146,.62) 30%),radial-gradient(circle at 70% 34%,transparent 0 12%,rgba(112,132,146,.62) 26%)}
+.map-fog-line{position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(112,132,146,.55) 0 6px,rgba(112,132,146,.2) 6px 12px)}
+.map-fog-line.is-open{clip-path:polygon(0 60%,42% 48%,64% 70%,0 100%);background:none}
+
+/* --- ночь -------------------------------------------------------------- */
+[data-theme="dark"] .trade-item-card,[data-theme="dark"] .workshop-recipe,[data-theme="dark"] .virus-status,[data-theme="dark"] .virus-question,[data-theme="dark"] .meet-grid,[data-theme="dark"] .meet-offer{background:var(--surface-card-strong);border-color:var(--border-edge);color:var(--text-primary)}
+[data-theme="dark"] .meet-tile.is-missing{background:repeating-linear-gradient(45deg,#11314a 0 8px,#173d55 8px 16px)}
+[data-theme="dark"] .workshop-art{background:radial-gradient(circle at 50% 40%,#2c4a63,#0f2233)}
+[data-theme="dark"] .workshop-result{background:radial-gradient(circle at 50% 30%,#1d3a52,rgba(18,58,92,.88) 70%);border-color:var(--border-edge)}
+[data-theme="dark"] .trade-confirm.is-on{color:#7fe0ad}
+[data-theme="dark"] .virus-state.is-infected{color:#ff9a7a}
+[data-theme="dark"] .virus-state.is-clean{color:#7fe0ad}
+[data-theme="dark"] .campus-mark-chip{background:#0d2438;border-color:#2d5a7c;color:#dcefff}
+[data-theme="dark"] .campus-mark-chip small,[data-theme="dark"] .campus-mark-preview small{color:#9fc3dc}
+[data-theme="dark"] .campus-mark-chip[aria-pressed="true"]{background:#3a2a10;border-color:#ff9a1f}
+[data-theme="dark"] .campus-mark-preview{background:#1f1a10}
+[data-theme="dark"] .campus-mark-preview b{color:#ffe6b8}
+[data-theme="dark"] .campus-mark-label{color:#ffb341}
+
+/* --- Луна-Аква --------------------------------------------------------- */
+[data-design="xp"] .meet-grid,[data-design="xp"] .meet-offer,[data-design="xp"] .trade-item-card,[data-design="xp"] .workshop-recipe,[data-design="xp"] .workshop-result,[data-design="xp"] .virus-status,[data-design="xp"] .virus-question,[data-design="xp"] .map-plate,[data-design="xp"] .campus-mark-preview{border-radius:var(--radius-luna-pane);border-color:var(--xp-edge);background:var(--xp-pane)}
+[data-design="xp"] .meet-thumb span,[data-design="xp"] .workshop-art{border-radius:var(--radius-luna-field)}
+[data-design="xp"] .campus-mark-chip{border-radius:2px;background:var(--xp-button);color:var(--xp-ink);font-family:var(--font-luna)}
+[data-design="xp"] .trade-item-card b,[data-design="xp"] .trade-item-card small,[data-design="xp"] .workshop-info b,[data-design="xp"] .virus-state,[data-design="xp"] .virus-status,[data-design="xp"] .workshop-result h3,[data-design="xp"] .meet-thumb{font-family:var(--font-luna)}
+[data-design="xp"] .campus-mark-text{font:bold 15px/1.3 var(--font-luna)}
+
+/* --- Архив скрытых файлов: послание, строки, окно фрагмента, финал ----- */
+.story-message{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.story-word{padding:3px 8px;border:1px dashed var(--border-aqua);border-radius:4px;color:var(--ink-muted-aqua);font:15px/1.3 var(--font-system)}
+.story-word.is-found{border-style:solid;background:#fffaf0;color:var(--text-primary);font:bold 16px/1.3 var(--font-story)}
+.story-list{display:grid;gap:6px}
+.story-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--border-aqua);border-radius:6px;background:rgba(255,255,255,.82)}
+.story-row-info{display:grid;min-width:0;font:13px/1.35 var(--font-ui)}
+.story-row-info small{color:var(--ink-muted-aqua)}
+.story-row.is-locked_previous,.story-row.is-locked_place{opacity:.7}
+.story-dialog{overflow:hidden;border:1px solid #2158ad;border-radius:8px;background:#fbfbf6;color:#1b1b1b;box-shadow:0 20px 50px rgba(0,28,60,.5);font:14px/1.5 var(--font-luna)}
+.story-titlebar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;color:#fff;background:linear-gradient(#3a8cf0,#1554c7 60%,#0d3fa6)}
+.story-titlebar h2{margin:0;font:bold 13px/1.3 var(--font-luna)}
+.story-titlebar button{width:28px;height:26px;border:1px solid rgba(255,255,255,.6);border-radius:4px;color:#fff;background:linear-gradient(#e2a088,#b0392f);cursor:pointer}
+.story-dialog-body{display:grid;gap:8px;padding:14px}
+.story-dialog-body p{margin:0}
+.story-sender{color:#2e8b57;font-weight:bold}
+.story-question{margin-top:4px;font-weight:bold}
+.story-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.story-form input{min-height:44px;padding:0 10px;border:1px solid #7f9db9;border-radius:3px;background:#fff;font:16px/1 var(--font-luna)}
+.story-hint summary{color:#1554c7;cursor:pointer}
+.story-dialog[data-surface="icq"] .story-titlebar{background:linear-gradient(#5fcf7f,#2e8b57)}
+.story-dialog[data-surface="icq"] .story-line{padding:6px 10px;border-radius:10px 10px 10px 2px;background:#eaffea}
+.story-dialog[data-surface="recycle_bin"] .story-titlebar{background:linear-gradient(#7aa7d8,#3d6ea8)}
+.story-dialog[data-surface="recycle_bin"] .story-line{font-family:var(--font-system)}
+.story-dialog[data-surface="broken_shortcut"] .story-titlebar{background:linear-gradient(#9aa3ad,#5d6670)}
+.story-dialog[data-surface="properties"]{background:#ece9d8}
+.story-dialog[data-surface="properties"] .story-line{padding:2px 0;border-bottom:1px solid #d4d0c8}
+.story-dialog[data-surface="place"],.story-dialog[data-surface="error_window"]{background:#06140c;color:#b6f5c4}
+.story-dialog[data-surface="place"] .story-titlebar{background:linear-gradient(#1e3a2a,#0b1d13)}
+.story-dialog[data-surface="error_window"] .story-titlebar{background:linear-gradient(#c0392b,#7b1d14)}
+.story-dialog[data-surface="place"] .story-line,.story-dialog[data-surface="error_window"] .story-line{font-family:var(--font-system);font-size:13px}
+.story-dialog[data-surface="place"] .story-hint summary,.story-dialog[data-surface="error_window"] .story-hint summary{color:#7cc4ff}
+.story-place-card{display:grid;gap:6px;padding:14px;border-left:4px solid #2e8b57}
+.story-place-card p{margin:0;color:var(--ink-muted-aqua)}
+.story-place-label{color:#2e8b57;font:700 10px/1.2 var(--font-system);letter-spacing:var(--tracking-label);text-transform:uppercase}
+#storyFinale{display:grid;justify-items:center;gap:8px;text-align:center}
+.story-architect{width:150px;height:auto;filter:drop-shadow(0 6px 14px rgba(0,0,0,.27))}
+.story-epilogue{margin:0;color:var(--text-primary);font:italic 15px/1.5 var(--font-story)}
+.story-signature{margin:0;color:#b86a00;font:bold 15px/1.3 "Noto Sans SC","Microsoft YaHei",sans-serif}
+.story-reward{margin:4px 0 0;padding:8px 12px;border:1px solid #b86a00;border-radius:6px;background:#fff3d6;color:#6b3d00;font-weight:bold}
+[data-theme="dark"] .story-word.is-found{background:#1f1a10;color:#ffe6b8}
+[data-theme="dark"] .story-row{background:var(--surface-card-strong);border-color:var(--border-edge);color:var(--text-primary)}
+[data-design="xp"] .story-row,[data-design="xp"] .story-word{border-radius:var(--radius-luna-field)}
+[data-design="xp"] .story-row-info,[data-design="xp"] .story-epilogue{font-family:var(--font-luna)}

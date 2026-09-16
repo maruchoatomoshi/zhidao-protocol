@@ -1,0 +1,35 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Формы: переключатель, флажок, список, код" subtitle="В Луне-Акве это органы управления окна свойств" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Формы: переключатель, флажок, список, код</title><link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0}body{padding:14px;background:#eef7fc;font:13px/1.4 var(--font-ui)}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}.pane{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:6px}.pane.aqua{background:linear-gradient(145deg,#deffff,#8fdcf1)}.pane.luna{background:#eef7fc;border:1px solid #8fbcd6}.cap{font:700 9px/1.2 var(--font-system);letter-spacing:.12em;color:#2b7b9e}.stack{display:flex;flex-wrap:wrap;gap:8px;align-items:center}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body><div id="root"></div>
+<script type="text/babel">const { Switch, Checkbox, Select, CodeField } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+
+function Pane({ skin }) {
+  const [night, setNight] = React.useState(skin === "luna");
+  const [motion, setMotion] = React.useState(true);
+  const [sound, setSound] = React.useState(false);
+  const [view, setView] = React.useState(skin === "luna" ? "xp" : "aqua");
+  const [code, setCode] = React.useState("K7QX2");
+  return (
+    <div className="zd" data-design={skin === "luna" ? "xp" : "aqua"}>
+      <div className={"pane " + skin}>
+        <span className="cap">{skin === "luna" ? "ЛУНА-АКВА" : "АКВА"}</span>
+        <fieldset className="zd-fieldset"><legend>Вид</legend>
+          <Select label="Оформление" value={view} onChange={setView}
+            options={[{ value: "aqua", label: "Аква" }, { value: "xp", label: "Луна-Аква" }]} />
+          <Switch checked={night} onChange={setNight} label="Ночная тема" labelCn="夜间" />
+          <Switch checked={motion} onChange={setMotion} label="Анимации" labelCn="动画" hint="Есть вариант без движения" />
+          <Checkbox checked={sound} onChange={setSound} label="Звуки" labelCn="声音" />
+          <Checkbox checked={false} disabled label="Вибрация (позже)" />
+        </fieldset>
+        <CodeField label="Код привязки MAX" value={code} onChange={setCode}
+          error={code === "K7QX2M" ? "Аккаунт уже привязан к другому MAX" : undefined}
+          hint="Код выдаёт вожатый" />
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<div className="pair"><Pane skin="aqua" /><Pane skin="luna" /></div>);</script></body></html>

@@ -1,0 +1,93 @@
+<!-- @dsCard group="Игры" viewport="900x900" name="Окна игр: Протокол 60 и Шпион" subtitle="Лобби → идёт раунд → итог, Аква и Луна-Аква, плюс три варианта хода длинной игры" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZHIDAO — окна игр по состояниям</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#dceef6}
+body{padding:20px;font:13px/1.5 var(--font-ui);color:var(--text-primary)}
+h2{margin:26px 0 4px;font:700 20px/1.2 var(--font-ui)}
+h2:first-of-type{margin-top:4px}
+.intro{max-width:74ch;color:var(--ink-muted-aqua)}
+.row{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0 0}
+.slot{display:flex;flex-direction:column;gap:8px;width:390px}
+.slot>figcaption{font:700 11px/1.3 var(--font-system);letter-spacing:.1em;color:#2b7b9e;text-transform:uppercase}
+.slot .zd-note{width:390px}
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body>
+<div id="root"></div>
+<script type="text/babel" src="Protocol60.jsx"></script>
+<script type="text/babel" src="Spy.jsx"></script>
+<script type="text/babel">
+const { PhoneFrame, AppHeader, BottomNav, Note } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+const nav = window.ZHIDAOProtocolDesignSystem_ad77c0.NAV_ITEMS.map((i) => ({ ...i, icon: "../../" + i.icon }));
+
+function Board({ caption, skin, theme, children, note }) {
+  return (
+    <figure className="slot" style={{ margin: 0 }}>
+      <figcaption>{caption}</figcaption>
+      <PhoneFrame skin={skin} theme={theme} label={caption}
+        header={<AppHeader stars={212} logo="../../assets/zhidao-dragon-logo-256.png" />}
+        nav={<BottomNav value="events" items={nav} />}>
+        {children}
+      </PhoneFrame>
+      {note && <Note meta="заметка к экрану">{note}</Note>}
+    </figure>
+  );
+}
+
+function Page() {
+  return (
+    <React.Fragment>
+      <h2>Протокол 60 — лобби</h2>
+      <p className="intro">Окно игры в «Ивентах». Данные: состав и число живых — сервер; вопрос, таймер и числа на макете — пример. Убрано как дубль: баланс ★ (он в шапке), вход по коду комнаты (он на экране «Ивенты»). Ход игры показывает связка «Живых: N из 60» плюс лента последних трёх выбываний — тот же приём, что у «последних трёх сигналов» в Кейсах (решение от 2026-09-16). Имён в ленте нет.</p>
+      <div className="row">
+        <Board caption="Аква · лобби" skin="aqua"><P60Lobby /></Board>
+        <Board caption="Луна-Аква · лобби" skin="luna"><P60Lobby /></Board>
+      </div>
+
+      <h2>Протокол 60 — идёт раунд</h2>
+      <p className="intro">Одно главное действие: ответить. Таймер — ЖК-поверхность, не счётчик из шапки. Сцена вопроса фиолетово-золотая, как в royale.css. Ход ответов — полоса без цифр, видна всем: точное число живёт в консоли вожатого (решение от 2026-09-16).</p>
+      <div className="row">
+        <Board caption="Аква · раунд" skin="aqua"><P60Round /></Board>
+        <Board caption="Луна-Аква · раунд" skin="luna"><P60Round /></Board>
+        <Board caption="Луна-Аква · раунд, ночь" skin="luna" theme="dark"><P60Round /></Board>
+      </div>
+
+      <h2>Протокол 60 — итог</h2>
+      <p className="intro">Разбор ответа, своё положение и сетка живых без имён. Награда чипом. Оживление — решением вожатого из консоли: сервер его не умеет, а выключенную кнопку рисовать нельзя.</p>
+      <div className="row">
+        <Board caption="Аква · итог" skin="aqua"
+          note="Сетка показывает количество, не людей: имён и того, кто ответил, здесь нет.">
+          <P60Result />
+        </Board>
+        <Board caption="Луна-Аква · итог" skin="luna"><P60Result /></Board>
+        <Board caption="Аква · итог, ночь" skin="aqua" theme="dark"><P60Result /></Board>
+      </div>
+
+      <h2>Шпион — лобби</h2>
+      <p className="intro">Код комнаты, число шпионов, состав. Данные: код и состав — сервер; шесть строк «Игрок N» — пример вместо имён. Убрано как дубль: правила ушли в «Как играть?», счёт — в REP. Открытый вопрос: показывать ли счёт прошлых вечеров в лобби.</p>
+      <div className="row">
+        <Board caption="Аква · лобби" skin="aqua"><SpyLobby /></Board>
+        <Board caption="Луна-Аква · лобби" skin="luna"><SpyLobby /></Board>
+      </div>
+
+      <h2>Шпион — идёт раунд</h2>
+      <p className="intro">Карта роли видна только владельцу, поэтому предупреждение янтарной полосой. Таймер до голосования — ЖК. Журнал комнаты показывает события, не разговор.</p>
+      <div className="row">
+        <Board caption="Аква · раунд" skin="aqua"><SpyRound /></Board>
+        <Board caption="Луна-Аква · раунд" skin="luna"><SpyRound /></Board>
+        <Board caption="Аква · раунд, ночь" skin="aqua" theme="dark"><SpyRound /></Board>
+      </div>
+
+      <h2>Шпион — итог</h2>
+      <p className="intro">Вскрытие: слово, роль, награда. Кто как голосовал — не показываем. Награда без цифры: «+★ угадавшим». Реальных чисел для «Шпиона» в экономике пока нет.</p>
+      <div className="row">
+        <Board caption="Аква · итог" skin="aqua"><SpyResult /></Board>
+        <Board caption="Луна-Аква · итог" skin="luna"><SpyResult /></Board>
+      </div>
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Page />);
+</script></body></html>

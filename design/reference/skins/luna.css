@@ -1,0 +1,134 @@
+/* ===========================================================================
+   ЛУНА-АКВА — окна в духе рабочего стола нулевых.
+   Тот же словарь классов, что в skins/aqua.css: меняется вещество, а не
+   разметка. Правило перекраски одно — убрать блик и полупрозрачность,
+   поставить честный однопиксельный кант и белую бумагу.
+   =========================================================================== */
+
+[data-design="xp"].zd,[data-design="xp"] .zd,.zd[data-design="xp"]{font-family:var(--font-luna);color:var(--xp-ink)}
+[data-design="xp"] .zd-mono,[data-design="xp"] .zd-select select,[data-design="xp"] .zd-statusbar{font-family:var(--font-luna)}
+[data-design="xp"] a{color:#0a6fb4}
+[data-design="xp"] a:hover{color:#054780}
+
+[data-design="xp"] .zd-phone{background:var(--xp-paper)}
+[data-design="xp"] .zd-phone::after{display:none}
+[data-design="xp"] .zd-phone-scroll{padding:8px}
+
+/* --- шапка становится заголовком окна ----------------------------------- */
+[data-design="xp"] .zd-header{min-height:48px;padding:2px 5px;border:1px solid var(--xp-title-edge);border-top-color:#a3e2ff;border-radius:9px 9px 0 0;background:var(--xp-title);box-shadow:inset 1px 0 rgba(179,222,255,.5),inset -1px 0 var(--xp-title-shade)}
+[data-design="xp"] .zd-brand strong{color:#fff;font:bold 17px/1.1 var(--font-luna);letter-spacing:-.35px;text-shadow:1px 1px var(--xp-title-shade)}
+[data-design="xp"] .zd-brand small{display:none}
+[data-design="xp"] .zd-profile-fab{width:44px;height:44px;border-radius:5px;border-color:#d7edff;background:var(--xp-title);box-shadow:inset 1px 1px rgba(255,255,255,.5),inset -1px -1px #06375f}
+/* Счётчик и ЖК — те же приборы: они из железа, а не из оформления,
+   поэтому в Луне-Акве меняется только обвязка вокруг. */
+[data-design="xp"] .hit-counter{gap:1px}
+[data-design="xp"] .zd-lcd{border-radius:0;font-family:var(--font-system)}
+
+/* --- окно с заголовком --------------------------------------------------- */
+[data-design="xp"] .zd-window{border:1px solid #3b7ccd;border-radius:var(--radius-luna-window);background:var(--xp-pane);box-shadow:inset 0 0 0 2px #eff7ff,1px 2px 2px rgba(11,49,99,.13)}
+[data-design="xp"][data-theme="dark"] .zd-window,[data-theme="dark"] [data-design="xp"] .zd-window{box-shadow:1px 2px 2px rgba(0,0,0,.3)}
+[data-design="xp"] .zd-titlebar{min-height:31px;padding:3px 7px;border-bottom:1px solid var(--xp-title-shade);background:var(--xp-title);box-shadow:inset 0 1px #acdfff}
+[data-design="xp"] .zd-titlebar img{width:23px;height:23px}
+[data-design="xp"] .zd-titlebar h2{color:#fff;font:bold 14px/1.2 var(--font-luna);text-shadow:1px 1px var(--xp-title-shade)}
+[data-design="xp"] .zd-titlebar span{color:#cfeaff;font:11px/1.2 var(--font-luna);letter-spacing:0}
+[data-design="xp"] .zd-titlebar .zd-cn{font-family:var(--font-cn);font-size:12px}
+[data-design="xp"] .zd-window-body{padding:10px}
+
+/* --- бумага вместо стекла ------------------------------------------------ */
+[data-design="xp"] .glass-card{border:1px solid var(--xp-edge);border-radius:var(--radius-luna-pane);background:var(--xp-pane);box-shadow:inset 1px 1px rgba(255,255,255,.5);backdrop-filter:none}
+[data-design="xp"] .glass-card::after{display:none}
+[data-design="xp"] .zd-card-head h3{color:var(--xp-ink);font:bold 14px/1.3 var(--font-luna)}
+[data-design="xp"] .zd-card-head .zd-cn,[data-design="xp"] .zd-sub{color:var(--xp-muted)}
+[data-design="xp"] .zd-sub{font-family:var(--font-luna)}
+[data-design="xp"] .zd-label{color:var(--xp-muted);font:bold 10px/1.3 var(--font-luna);letter-spacing:.08em}
+[data-design="xp"] .display-title{background:none;color:var(--xp-ink);-webkit-text-fill-color:var(--xp-ink);-webkit-text-stroke:0;text-shadow:none;filter:none;font:400 clamp(23px,6.5vw,32px)/1.18 var(--xp-heading-font);letter-spacing:0}
+
+/* --- кнопки: скос XP, излом на 49% -------------------------------------- */
+[data-design="xp"] .btn{border-radius:3px;border:1px solid var(--xp-edge);font-family:var(--font-luna);letter-spacing:0;text-transform:none;box-shadow:inset 1px 1px rgba(255,255,255,.6),inset -1px -1px rgba(74,112,147,.15)}
+[data-design="xp"] .btn::before{display:none}
+[data-design="xp"] .btn-secondary,[data-design="xp"] .btn-icon{background:var(--xp-button);color:var(--xp-ink);text-shadow:none}
+[data-design="xp"] .btn-primary,[data-design="xp"] .btn-action{border-color:var(--xp-title-edge);background:linear-gradient(#7fd8f4 0%,#1ba7e0 9%,#0a7cc2 48%,#0a6fb4 49%,#1290d4 85%,#064e8c 100%);color:#fff;text-shadow:1px 1px var(--xp-title-shade);box-shadow:inset 1px 1px rgba(255,255,255,.44),inset -1px -1px #06375f}
+[data-design="xp"] .btn-system{border-color:var(--xp-edge);color:var(--xp-ink);font:bold 11px/1 var(--font-luna);letter-spacing:0;text-transform:none;background:var(--xp-button)}
+[data-design="xp"] .btn-icon{border-radius:4px}
+[data-design="xp"] .btn:active{box-shadow:inset 1px 1px rgba(74,112,147,.67),inset -1px -1px rgba(255,255,255,.6)}
+[data-design="xp"] .btn.is-armed{border-color:var(--armed-edge);background:var(--armed-bg);color:var(--armed-ink);box-shadow:inset 0 0 0 1px var(--armed-edge)}
+
+/* --- вкладки как в окне свойств: у активной жёлтая полоса сверху -------- */
+[data-design="xp"] .tabs{gap:2px;margin:2px 0 0;padding:0 4px;border:0;border-bottom:1px solid var(--xp-edge);border-radius:0;background:none;box-shadow:none}
+[data-design="xp"] .tab{flex:0 1 auto;min-height:var(--tap-min);margin-bottom:-1px;padding:0 16px;border:1px solid var(--xp-edge);border-bottom:0;border-radius:4px 4px 0 0;background:linear-gradient(#f2f9fd,#dceaf4);color:var(--xp-muted);font:13px/1 var(--font-luna);letter-spacing:0;box-shadow:none}
+[data-design="xp"] .tab.active{border-top:3px solid var(--xp-tab-active-top);border-bottom:1px solid var(--xp-pane);background:var(--xp-pane);color:var(--xp-ink);font-weight:bold}
+[data-design="xp"][data-theme="dark"] .tab,[data-theme="dark"] [data-design="xp"] .tab{background:linear-gradient(#22405f,#1a3350)}
+[data-design="xp"][data-theme="dark"] .tab.active,[data-theme="dark"] [data-design="xp"] .tab.active{background:var(--xp-pane)}
+/* панель под вкладками срослась с активной вкладкой */
+[data-design="xp"] .zd-tabpanel{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--xp-edge);border-top:0;background:var(--xp-pane);color:var(--xp-ink);font:13px/1.3 var(--font-luna)}
+
+/* --- таблица: шапка колонок, выбранная строка #316ac5 ------------------- */
+[data-design="xp"] .zd-table{background:var(--xp-pane);font-family:var(--font-luna);font-size:12px}
+[data-design="xp"] .zd-table th{border-bottom:1px solid var(--xp-edge);border-right:1px solid var(--xp-edge);color:var(--xp-ink);font:bold 11px/1.3 var(--font-luna);letter-spacing:0;text-transform:none;background:linear-gradient(#fff,#e4eef5 96%,#cddbe4)}
+[data-design="xp"] .zd-table th:last-child{border-right:0}
+[data-design="xp"] .zd-table td{border-bottom:1px solid var(--xp-soft);color:var(--xp-ink)}
+[data-design="xp"] .zd-table tr[aria-selected="true"] td{background:var(--xp-row-selected);color:#fff}
+
+/* --- записка ------------------------------------------------------------ */
+[data-design="xp"] .zd-note{border:1px solid var(--xp-note-edge);border-radius:0;background:var(--xp-note);color:var(--xp-ink);font:12px/1.4 var(--font-luna);box-shadow:inset 1px 1px rgba(255,255,255,.5),2px 2px 0 rgba(16,44,107,.06)}
+[data-design="xp"] .zd-note span{color:var(--xp-note-ink);font:10px/1.2 var(--font-luna)}
+
+/* --- чипы --------------------------------------------------------------- */
+[data-design="xp"] .chip{border:1px solid var(--xp-note-edge);border-radius:2px;background:var(--xp-note);color:var(--xp-note-ink);font:bold 9px/1.3 var(--font-luna);letter-spacing:.1em;box-shadow:none}
+[data-design="xp"] .chip-reward{border-color:#7fae6a;background:#eaf7e0;color:#2f5c1c}
+[data-design="xp"] .chip-dupe{border-color:#9a8fc4;background:#eeeafa;color:#3f3573}
+[data-design="xp"][data-theme="dark"] .chip,[data-theme="dark"] [data-design="xp"] .chip{color:var(--xp-note-ink)}
+
+/* --- органы управления окна свойств ------------------------------------- */
+[data-design="xp"] .zd-fieldset{margin:0;padding:2px 10px 4px;border:1px solid #c6dcea;border-radius:3px}
+[data-design="xp"] .zd-fieldset legend{padding:0 4px;color:#0a6fb4;font:11px/1 var(--font-luna)}
+[data-design="xp"][data-theme="dark"] .zd-fieldset,[data-theme="dark"] [data-design="xp"] .zd-fieldset{border-color:var(--xp-edge)}
+[data-design="xp"][data-theme="dark"] .zd-fieldset legend,[data-theme="dark"] [data-design="xp"] .zd-fieldset legend{color:#8fd0ff}
+/* Переключатель в Луне — не тумблер, а радиокнопка окна свойств */
+[data-design="xp"] .zd-switch>i{width:14px;height:14px;border:1px solid #1c5180;border-radius:50%;background:#fff;box-shadow:none}
+[data-design="xp"] .zd-switch>i::after{display:none}
+[data-design="xp"] .zd-switch[aria-checked="true"]>i{background:radial-gradient(circle,#2f9c3f 0 3px,#fff 3.5px)}
+[data-design="xp"] .zd-check input{width:14px;height:14px;border:1px solid #1c5180;background:#fff;-webkit-appearance:none;appearance:none}
+[data-design="xp"] .zd-check input:checked{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 8'%3E%3Cpath d='M1 4l3 3 5-6' fill='none' stroke='%232f9c3f' stroke-width='2'/%3E%3C/svg%3E") center / 10px 8px no-repeat}
+[data-design="xp"] .zd-check input:disabled{opacity:.5}
+[data-design="xp"] .zd-select select{border:1px solid var(--xp-field-edge);border-radius:0;background:var(--xp-pane);color:var(--xp-ink);font:13px/1.2 var(--font-luna)}
+[data-design="xp"] .zd-select::after{content:"";position:absolute;top:2px;right:2px;bottom:2px;width:22px;border:1px solid var(--xp-edge);background:var(--xp-button);pointer-events:none}
+[data-design="xp"] .zd-select::before{right:9px;border-top-color:var(--xp-ink)}
+
+/* --- прибор ------------------------------------------------------------- */
+[data-design="xp"] .gauge,[data-design="xp"] .gauge-seg{border-radius:2px;border:1px solid var(--xp-edge);background:#e0edf6;box-shadow:inset 0 1px 2px rgba(0,31,57,.13)}
+[data-design="xp"] .gauge-fill{border-radius:0;background:linear-gradient(#a6e2ff,#2f8fd0 49%,#1673b4);box-shadow:none}
+[data-design="xp"] .gauge-fill::after{display:none}
+[data-design="xp"] .gauge-seg.is-on{background:linear-gradient(#a6e2ff,#2f8fd0 49%,#1673b4);box-shadow:none}
+[data-design="xp"][data-theme="dark"] .gauge,[data-design="xp"][data-theme="dark"] .gauge-seg,[data-theme="dark"] [data-design="xp"] .gauge,[data-theme="dark"] [data-design="xp"] .gauge-seg{background:#11294a;border-color:#2c4c6b}
+
+/* --- строка состояния внизу --------------------------------------------- */
+[data-design="xp"] .system-rail{display:none}
+[data-design="xp"] .zd-statusbar{padding:4px 8px;border-top:1px solid var(--xp-edge);background:var(--xp-paper);color:var(--xp-muted);font:10px/1.3 var(--font-luna)}
+[data-design="xp"] .zd-statusbar span+span{border-left:1px solid var(--xp-edge)}
+
+/* --- пустое состояние --------------------------------------------------- */
+[data-design="xp"] .zd-empty{border:1px solid var(--xp-edge);border-radius:var(--radius-luna-pane);background:var(--xp-soft)}
+[data-design="xp"] .zd-empty::after{display:none}
+[data-design="xp"] .zd-empty strong{color:var(--xp-ink);font:bold 13px/1.4 var(--font-luna)}
+[data-design="xp"] .zd-empty p{color:var(--xp-muted);font-family:var(--font-luna)}
+
+/* --- плитки «Ещё» ------------------------------------------------------- */
+[data-design="xp"] .hub-tile{border-radius:var(--radius-luna-pane);border:1px solid var(--xp-edge);background:var(--xp-button);box-shadow:inset 1px 1px rgba(255,255,255,.6),inset -1px -1px rgba(74,112,147,.15)}
+[data-design="xp"] .hub-name{color:var(--xp-ink);font:bold 12px/1.2 var(--font-luna)}
+[data-design="xp"] .hub-cn{color:var(--xp-muted)}
+
+/* --- нижняя панель: одна настоящая навигация, не поддельный рабочий стол */
+[data-design="xp"] .zd-dock{gap:2px;padding:4px;border-radius:0;border:1px solid #0545a6;border-top-color:#9ad0ff;background:var(--xp-title);box-shadow:inset 0 2px #4fa2fc,0 -3px 10px rgba(9,41,93,.15);backdrop-filter:none}
+[data-design="xp"] .zd-dock button{min-height:56px;border-radius:3px;padding:3px 1px;color:#fff;background:none;box-shadow:none}
+[data-design="xp"] .zd-dock button.active{background:linear-gradient(#235dba,#124999);box-shadow:inset 1px 1px #073472,inset -1px -1px #9eceff}
+[data-design="xp"] .zd-dock img{width:31px;height:31px;filter:drop-shadow(0 1px 1px #002263)}
+[data-design="xp"] .zd-dock small{color:#fff;font:10px/1.2 var(--font-luna);text-shadow:0 1px #003782}
+[data-design="xp"] .zd-dock .zd-cn{display:none}
+
+[data-design="xp"] button:focus-visible,[data-design="xp"] a:focus-visible{outline:2px dashed var(--xp-ink);outline-offset:2px}
+
+/* --- поле кода --------------------------------------------------------- */
+[data-design="xp"] .zd-codefield{border:1px solid var(--xp-field-edge);border-radius:var(--radius-luna-field);background:var(--xp-pane);color:var(--xp-ink);font:bold 18px/1 var(--font-luna);letter-spacing:.24em;box-shadow:inset 0 1px 2px rgba(0,31,57,.13)}
+[data-design="xp"] .zd-field-error{color:#a8302a;font-family:var(--font-luna)}
+[data-design="xp"][data-theme="dark"] .zd-field-error,[data-theme="dark"] [data-design="xp"] .zd-field-error{color:#ff9d95}

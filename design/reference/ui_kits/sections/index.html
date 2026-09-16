@@ -1,0 +1,81 @@
+<!-- @dsCard group="Разделы «Ещё»" viewport="900x900" name="Обмен, Мастерская, Антивирус + варианты Встреч и Карты" subtitle="Аква и Луна-Аква; по Встречам и Карте — по три варианта с плюсами и минусами" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZHIDAO — разделы «Ещё»</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#dceef6}
+body{padding:20px;font:13px/1.5 var(--font-ui);color:var(--text-primary)}
+h2{margin:26px 0 4px;font:700 20px/1.2 var(--font-ui)}
+h2:first-of-type{margin-top:4px}
+.intro{max-width:74ch;color:var(--ink-muted-aqua)}
+.row{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0 0}
+.slot{display:flex;flex-direction:column;gap:8px;width:390px;margin:0}
+.slot>figcaption{font:700 11px/1.3 var(--font-system);letter-spacing:.1em;color:#2b7b9e;text-transform:uppercase}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body>
+<div id="root"></div>
+<script type="text/babel" src="Sections.jsx"></script>
+<script type="text/babel" src="Variants.jsx"></script>
+<script type="text/babel" src="Archive.jsx"></script>
+<script type="text/babel">
+const { PhoneFrame, AppHeader, BottomNav } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+const nav = window.ZHIDAOProtocolDesignSystem_ad77c0.NAV_ITEMS.map((i) => ({ ...i, icon: "../../" + i.icon }));
+
+function Board({ caption, skin, theme, children }) {
+  return (
+    <figure className="slot">
+      <figcaption>{caption}</figcaption>
+      <PhoneFrame skin={skin} theme={theme} label={caption}
+        header={<AppHeader stars={212} logo="../../assets/zhidao-dragon-logo-256.png" />}
+        nav={<BottomNav value="more" items={nav} />}>
+        {children}
+      </PhoneFrame>
+    </figure>
+  );
+}
+
+const Pair = ({ name, Screen, night }) => (
+  <div className="row">
+    <Board caption={name + " · Аква"} skin="aqua"><Screen /></Board>
+    <Board caption={name + " · Луна-Аква"} skin="luna"><Screen /></Board>
+    {night && <Board caption={name + " · Аква, ночь"} skin="aqua" theme="dark"><Screen /></Board>}
+  </div>
+);
+
+function Page() {
+  return (
+    <React.Fragment>
+      <h2>Обмен 交换</h2>
+      <p className="intro">Обмен дублями по коду — из trade.css. Данные: дубли и код — сервер; две карточки в макете помечены как дубли-пример. Убрано как дубль: коллекция живёт в «Кейсах», баланс — в шапке. Подтверждение — янтарное второе касание.</p>
+      <Pair name="Обмен" Screen={TradeScreen} night />
+
+      <h2>Мастерская 工坊</h2>
+      <p className="intro">Четыре одинаковых импланта → один следующей ступени (workshop.css). Ступень несёт цвет через data-tier. Числа «2 из 4» и «4 из 4» — пример; рецепт и шансы берутся как есть.</p>
+      <Pair name="Мастерская" Screen={WorkshopScreen} night />
+
+      <h2>Антивирус 杀毒</h2>
+      <p className="intro">Шуточное заражение и тест — из virus.css. Ничего не ломается и не прячется: значки дрожат, фон съезжает, изредка выскакивает окно. Дрожание гаснет вместе с анимациями.</p>
+      <Pair name="Антивирус" Screen={VirusScreen} night />
+
+      <h2>Встречи 见面</h2>
+      <p className="intro">Кусок приходит только от другого человека, и от кого — не показывается (решение от 2026-09-16). Пометка места и времени отклонена: вдвоём они почти называют человека. Данные: куски и код — сервер; «4 из 9» — пример.</p>
+      <Pair name="Встречи" Screen={MeetScreen} night />
+
+      <h2>Карта кампуса 校园地图</h2>
+      <p className="intro">Туман расходится мягкими пятнами вокруг посещённых мест (решение от 2026-09-16): плитка читалась как точная граница, а точность GPS мы не подразумеваем, пока карта прототип. Схема на артборде — подложка макета: настоящую географию даёт провайдер.</p>
+      <Pair name="Карта" Screen={MapScreen} night />
+
+      <h2>Архив скрытых файлов 档案</h2>
+      <p className="intro">Сюжет Архитектора по местам кампуса — из story.css: послание словами, строки архива с замками «нужно прийти на место» и «сначала предыдущий», окно фрагмента в духе нулевых (поверхность задаётся data-surface), финал с эпилогом. Награда за финал без числа: в экономике она не назначена.</p>
+      <div className="row">
+        <Board caption="Архив · Аква" skin="aqua"><ArchiveScreen /></Board>
+        <Board caption="Архив · Луна-Аква" skin="luna"><ArchiveScreen /></Board>
+        <Board caption="Фрагмент · Аква" skin="aqua"><ArchiveFragment /></Board>
+        <Board caption="Фрагмент · Луна-Аква, ночь" skin="luna" theme="dark"><ArchiveFragment /></Board>
+        <Board caption="Финал · Аква" skin="aqua"><ArchiveFinale /></Board>
+      </div>
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Page />);
+</script></body></html>

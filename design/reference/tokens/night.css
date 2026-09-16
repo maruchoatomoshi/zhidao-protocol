@@ -1,0 +1,48 @@
+/* Ночь на Хайнане. Не инверсия дня: то же место в другое время суток.
+   Блики белые и ночью — они не трогаются, меняются заливки и чернила. */
+[data-theme="dark"]{
+  --surface-app:#04182e;
+  --surface-card:rgba(14,48,78,.72);
+  --surface-card-strong:rgba(18,58,92,.88);
+  --surface-sheet:rgba(10,40,68,.9);
+  --surface-metal:linear-gradient(to bottom,#52708a 0%,#35536f 46%,#22394f 47%,#2e4a63 100%);
+
+  --ink:#dff2ff;
+  --ink-soft:#a3c6dc;
+  --text-primary:var(--ink);
+  --text-secondary:var(--ink-soft);
+  --text-faint:#9dbfd6;
+  /* тёмное стекло Аквы */
+  --glass:rgba(16,55,81,.82);
+  --glass-strong:rgba(16,55,81,.94);
+
+  --border-chrome:rgba(198,232,250,.42);
+  --border-edge:rgba(120,175,210,.38);
+  --border-crisp:rgba(108,160,196,.5);
+  --border-metal:#2a4459;
+  --border-aqua:rgba(95,137,166,.8);
+
+  --gloss-hi:rgba(255,255,255,.55);
+  --gloss-lo:rgba(255,255,255,.12);
+  --chrome-lit:rgba(214,240,255,.5);
+  --chrome-mid:rgba(120,172,206,.42);
+
+  --metal-1:#52708a;--metal-2:#35536f;--metal-3:#22394f;--metal-4:#16273a;
+
+  --lift-sm:0 2px 8px rgba(0,8,18,.5);
+  --lift-md:0 10px 26px -8px rgba(0,10,22,.7);
+  --lift-lg:0 26px 58px -20px rgba(0,6,16,.85);
+  --glow-aqua:0 0 26px rgba(46,194,234,.5);
+  --glow-lime:0 0 22px rgba(156,233,78,.42);
+
+  --display-fill:linear-gradient(180deg,#eafcff 0%,#9fe4fb 34%,#47b4e8 68%,#1d78c0 100%);
+  --display-stroke-color:rgba(11,46,78,.92);
+  --display-shadow:0 2px 0 rgba(4,24,46,.7),0 6px 16px rgba(0,8,20,.6);
+
+  --rail-ink:rgba(206,238,255,.9);
+  --rail-ink-dim:rgba(150,194,222,.6);
+  --rail-tick:rgba(150,194,222,.5);
+
+  --track-well:linear-gradient(180deg,rgba(0,10,22,.6),rgba(0,14,28,.4)); /* @kind color */
+  --track-well-rim:inset 0 1px 3px rgba(0,6,16,.9),inset 0 -1px 0 rgba(255,255,255,.18); /* @kind shadow */
+}

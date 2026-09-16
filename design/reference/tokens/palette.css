@@ -1,0 +1,86 @@
+/* Сырая палитра. Словарь: «что это за цвет», без назначения. */
+:root{
+  --sky:#087ee8;
+  --aqua:#0ccbd0;
+  --leaf:#53c96b;
+  --lime:#9ce94e;
+  --ink:#062e50;
+  --ink-soft:#35647d;
+  --pearl:#f4fdff;
+  --white:#ffffff;
+  --glass:rgba(242,253,255,.76);
+  --glass-strong:rgba(255,255,255,.9);
+  --line:rgba(255,255,255,.76);
+  --line-blue:rgba(26,139,204,.18);
+  --shadow:0 18px 44px rgba(2,78,125,.17);
+  --shadow-soft:0 8px 24px rgba(2,78,125,.11);
+  --dark-core:#04213c;
+
+  /* акценты Аквы из одобренных экранов */
+  --accent-aqua-lit:#0a9ac3;
+  --accent-aqua-deep:#087dab;
+  --ink-muted-aqua:#46697d;
+  --border-aqua:rgba(160,205,226,.8);
+
+  /* цветной прозрачный пластик */
+  --plastic-aqua-light:#a9edf4;
+  --plastic-aqua-mid:#2ec2ea;
+  --plastic-aqua-deep:#0a6ea8;
+  --plastic-sky-light:#bcdcff;
+  --plastic-sky-mid:#3a95ea;
+  --plastic-sky-deep:#0a4f92;
+  --plastic-lime-light:#e2f9b4;
+  --plastic-lime-mid:#9ce94e;
+  --plastic-lime-deep:#4d8f1c;
+
+  /* хром Metalheart */
+  --metal-1:#f2f7fa;
+  --metal-2:#c3d3dd;
+  --metal-3:#8ea6b5;
+  --metal-4:#5d7787;
+
+  /* редкость: это данные, не украшение */
+  --rarity-common:#bfe6f4;
+  --rarity-common-mid:#6fb9dd;
+  --rarity-common-deep:#3f86bd;
+  --rarity-rare:#d7c4f5;
+  --rarity-rare-mid:#a077e0;
+  --rarity-rare-deep:#6a3fbd;
+  --rarity-legendary:#ffe9a8;
+  --rarity-legendary-mid:#f0c14c;
+  --rarity-legendary-deep:#c98f1c;
+
+  /* счётчик в шапке: ячейки с поперечной линией, зелёные цифры */
+  --counter-cell:linear-gradient(#262626 0 49%,#0d0d0d 51%); /* @kind color */
+  --counter-ink:#8dff72;
+  --counter-glow:0 0 6px rgba(110,255,90,.7);
+  --counter-sep:#5b7a90;
+  --counter-star:#f5b400;
+
+  /* крупные ЖК-поверхности: таймеры и приборы игр */
+  --lcd-bg:#071b16;
+  --lcd-ink:#8dff72;
+  --lcd-dim:#6fbf66;
+  --lcd-ghost:rgba(141,255,114,.09);
+  --lcd-low:#ff6a4d;
+  --lcd-edge:#26402c;
+  --lcd-edge-low:#6a2a1c;
+
+  /* подтверждение вторым касанием — янтарное */
+  --armed-edge:#d9822b;
+  --armed-bg:#fff3e2;
+  --armed-ink:#8a4a00;
+
+  /* тревога: красный носит только шильдик системного администратора */
+  --alert:#a8302a;
+  --alert-lit:#e0574e;
+  /* ошибка и «мало осталось» */
+  --warn-ink:#c2410c;
+
+  /* ночь */
+  --night-deep:#04182e;
+  --night-mid:#0a2b48;
+  --night-lift:#12405f;
+  --night-spill:rgba(46,194,234,.22);
+  --night-warm:rgba(240,193,76,.14);
+}

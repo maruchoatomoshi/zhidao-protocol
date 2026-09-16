@@ -1,0 +1,78 @@
+<!-- @dsCard group="Вход и состояния" viewport="900x900" name="Первый вход, привязка MAX, пустые и офлайн-состояния" subtitle="Аква и Луна-Аква; ночь — для экранов входа" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZHIDAO — вход и привязка MAX</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#dceef6}
+body{padding:20px;font:13px/1.5 var(--font-ui);color:var(--text-primary)}
+h2{margin:26px 0 4px;font:700 20px/1.2 var(--font-ui)}
+h2:first-of-type{margin-top:4px}
+.intro{max-width:74ch;color:var(--ink-muted-aqua)}
+.row{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0 0}
+.slot{display:flex;flex-direction:column;gap:8px;width:390px;margin:0}
+.slot>figcaption{font:700 11px/1.3 var(--font-system);letter-spacing:.1em;color:#2b7b9e;text-transform:uppercase}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body>
+<div id="root"></div>
+<script type="text/babel" src="Onboarding.jsx"></script>
+<script type="text/babel">
+const { PhoneFrame, AppHeader, BottomNav } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+const nav = window.ZHIDAOProtocolDesignSystem_ad77c0.NAV_ITEMS.map((i) => ({ ...i, icon: "../../" + i.icon }));
+
+function Board({ caption, skin, theme, chrome = true, children }) {
+  return (
+    <figure className="slot">
+      <figcaption>{caption}</figcaption>
+      <PhoneFrame skin={skin} theme={theme} label={caption}
+        header={chrome ? <AppHeader stars={212} logo="../../assets/zhidao-dragon-logo-256.png" /> : undefined}
+        nav={chrome ? <BottomNav value="today" items={nav} /> : undefined}>
+        {children}
+      </PhoneFrame>
+    </figure>
+  );
+}
+
+const Pair = ({ name, Screen, props, night, chrome }) => (
+  <div className="row">
+    <Board caption={name + " · Аква"} skin="aqua" chrome={chrome}><Screen {...props} /></Board>
+    <Board caption={name + " · Луна-Аква"} skin="luna" chrome={chrome}><Screen {...props} /></Board>
+    {night && <Board caption={name + " · Луна-Аква, ночь"} skin="luna" theme="dark" chrome={chrome}><Screen {...props} /></Board>}
+  </div>
+);
+
+function Page() {
+  return (
+    <React.Fragment>
+      <h2>Первый вход 首次登录</h2>
+      <p className="intro">Приложение само выбирает путь: есть сессия — сразу внутрь; открыто из MAX — входим по подписанным данным запуска; открыто в браузере — логин и пароль. Шапки и нижней панели на входе нет: пока вход не пройден, приложение выключено целиком.</p>
+      <Pair name="Проверяем сессию" Screen={GateChecking} chrome={false} />
+      <Pair name="Входим через MAX" Screen={GateMax} chrome={false} />
+
+      <h2>Код привязки 绑定码</h2>
+      <p className="intro">Сервер отвечает 409 с reason=link_required — это не отказ, а «покажи код сопряжения». Код восьмизначный, выдаётся вожатым в консоли и диктуется вслух группами по четыре. Пример «1543 6364» — подпись поля, а не чей-то код.</p>
+      <Pair name="Ввод кода" Screen={GatePair} chrome={false} night />
+      <Pair name="Код не подошёл" Screen={GatePair} props={{ error: "Код не подошёл: он неверный, уже использован или истёк." }} chrome={false} />
+
+      <h2>Аккаунт уже привязан к другому MAX</h2>
+      <p className="intro">reason=account_already_linked. Новый код не поможет: схема разрешает ровно одну привязку MAX на аккаунт, а команды отвязки пока нет. Поэтому на экране только слова и адресат — кнопки, которой не существует, здесь нет.</p>
+      <Pair name="Привязка занята" Screen={GateLinked} chrome={false} night />
+
+      <h2>Браузер и сессия</h2>
+      <p className="intro">Путь служебных учётных записей: провайдер local. «Посмотреть оформление без входа» — тихая текстовая ссылка, режим preview без личных данных. Пять неверных паролей блокируют вход на 15 минут, отдельный текст — про 429.</p>
+      <div className="row">
+        <Board caption="Логин и пароль · Аква" skin="aqua" chrome={false}><GateLocal /></Board>
+        <Board caption="Неверный пароль · Луна-Аква" skin="luna" chrome={false}><GateLocal error="Неверный логин или пароль." /></Board>
+        <Board caption="Слишком много попыток · Аква" skin="aqua" chrome={false}><GateLocal error="Слишком много попыток входа. Подождите минуту." /></Board>
+        <Board caption="Сессия завершилась · Луна-Аква" skin="luna" chrome={false}><StateExpired /></Board>
+      </div>
+
+      <h2>Пустые, ошибочные и офлайн-состояния</h2>
+      <p className="intro">Причина словами, а не пустое место, и ни одного правдоподобного числа: если данных нет, экран так и говорит. Шапка и нижняя панель на месте — человек уже внутри приложения.</p>
+      <Pair name="Нет связи" Screen={StateToday} night />
+      <Pair name="Сезон не начался" Screen={StateSeason} />
+      <Pair name="Ничего не куплено, коллекция пуста" Screen={StateCollection} night />
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Page />);
+</script></body></html>

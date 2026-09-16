@@ -1,0 +1,33 @@
+<!-- @dsCard group="Components" viewport="700x420" name="Оболочка: шапка, нижняя панель, плитки «Ещё»" subtitle="Баланс — только в шапке; разделы — плитками в «Ещё»" -->
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Оболочка: шапка, нижняя панель, плитки «Ещё»</title><link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0}body{padding:14px;background:#eef7fc;font:13px/1.4 var(--font-ui)}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}.pane{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:6px}.pane.aqua{background:linear-gradient(145deg,#deffff,#8fdcf1)}.pane.luna{background:#eef7fc;border:1px solid #8fbcd6}.cap{font:700 9px/1.2 var(--font-system);letter-spacing:.12em;color:#2b7b9e}.stack{display:flex;flex-wrap:wrap;gap:8px;align-items:center}</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script></head><body><div id="root"></div>
+<script type="text/babel">const { AppHeader, BottomNav, HubTile, Card } = window.ZHIDAOProtocolDesignSystem_ad77c0;
+
+const SECTIONS = [
+  ["Встречи", "见面"], ["Обмен", "交换"], ["Антивирус", "杀毒"],
+  ["Мастерская", "工坊"], ["Архив", "档案"], ["Карта кампуса", "校园地图"],
+  ["Магазин", "商店"], ["Дневник", "日记"]
+];
+
+function Pane({ skin }) {
+  const [screen, setScreen] = React.useState("more");
+  return (
+    <div className="zd" data-design={skin === "luna" ? "xp" : "aqua"} style={{ width: 330 }}>
+      <div className={"pane " + skin}>
+        <span className="cap">{skin === "luna" ? "ЛУНА-АКВА" : "АКВА"}</span>
+        <AppHeader stars={212} />
+        <Card title="Ещё" titleCn="更多">
+          <div className="hub-grid">
+            {SECTIONS.map(([n, cn]) => <HubTile key={n} name={n} nameCn={cn} />)}
+          </div>
+        </Card>
+        <BottomNav value={screen} onChange={setScreen} />
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<div className="pair"><Pane skin="aqua" /><Pane skin="luna" /></div>);</script></body></html>
