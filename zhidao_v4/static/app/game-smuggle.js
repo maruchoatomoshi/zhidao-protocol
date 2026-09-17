@@ -49,6 +49,15 @@
     return el;
   }
 
+  function stampPassed(d) {
+    return d.kind === "hacked" || d.kind === "pass" || Boolean(d.honest);
+  }
+
+  function stampEl(c, d) {
+    const passed = stampPassed(d);
+    return c.node("div", `smuggle-stamp ${passed ? "is-pass" : "is-caught"}`, passed ? "ПРОПУЩЕНО" : "ЗАДЕРЖАНО");
+  }
+
   function decisionText(d) {
     if (d.kind === "hacked") return "Сканер взломан — сумка прошла без досмотра";
     if (d.kind === "pass") return d.bribe ? `Пропущено · взятка ${d.bribe} 元` : "Пропущено";
@@ -147,7 +156,10 @@
       const bag = game.bags && game.bags[String(id)];
       if (bag) seat.append(node("p", "spy-hint", `Заявил: ${bag.count} × ${goodName(bag.declared)}`));
       const decision = game.decisions && game.decisions[String(id)];
-      if (decision) seat.append(node("p", "spy-progress", decisionText(decision)));
+      if (decision) {
+        seat.classList.add("is-decided");
+        seat.append(stampEl(c, decision), node("p", "spy-progress", decisionText(decision)));
+      }
       wrap.append(seat);
     }
     return wrap;
@@ -252,7 +264,8 @@
       box.append(head);
       const decision = game.decisions[pid];
       if (decision) {
-        box.append(node("p", "spy-progress", decisionText(decision)));
+        box.classList.add("is-decided");
+        box.append(stampEl(c, decision), node("p", "spy-progress", decisionText(decision)));
         wrap.append(box);
         continue;
       }

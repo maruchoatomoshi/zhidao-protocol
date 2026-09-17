@@ -913,19 +913,32 @@
     const oldCards = Array.from($("gameRoomBody").querySelectorAll(".cipher-card"), el => el.classList.contains("is-revealed"));
     const oldModules = Array.from($("gameRoomBody").querySelectorAll(".outage-module"), el => el.classList.contains("is-solved"));
     const oldScores = Array.from($("gameRoomBody").querySelectorAll(".cipher-chip b"), el => el.textContent);
+    const oldBags = Array.from($("gameRoomBody").querySelectorAll(".smuggle-bag"), el => el.classList.contains("is-decided"));
+    const oldSeats = Array.from($("gameRoomBody").querySelectorAll(".smuggle-seat"), el => el.classList.contains("is-decided"));
     $("gameRoomBody").replaceChildren(...renderer.draw(c).filter(Boolean));
     if (!phaseEntrance && document.documentElement.dataset.motion === "full" && !motionQuery.matches) {
+      const stampKeyframes = [
+        { transform: "scale(2.2) rotate(-18deg)", opacity: 0 },
+        { transform: "scale(.9) rotate(-11deg)", opacity: 1, offset: .65 },
+        { transform: "scale(1) rotate(-12deg)" },
+      ];
+      const stampOptions = { duration: 420, easing: "cubic-bezier(.2,.9,.3,1.25)" };
       [
-        [".cipher-card", oldCards, "is-revealed",
+        [".cipher-card", oldCards, "is-revealed", null,
           [{ transform: "scale(.75)", opacity: .3 }, { transform: "scale(1.06)", opacity: 1, offset: .7 }, { transform: "scale(1)" }],
           { duration: 340, easing: "cubic-bezier(.2,.8,.3,1.2)" }],
-        [".outage-module", oldModules, "is-solved",
+        [".outage-module", oldModules, "is-solved", null,
           [{ transform: "scale(.94)", opacity: .6 }, { transform: "scale(1)", opacity: 1 }],
           { duration: 260, easing: "ease-out" }],
-      ].forEach(([selector, previous, state, keyframes, options]) => {
+        // Таможенный штамп: бьёт по .smuggle-stamp, а не по всей сумке/прилавку,
+        // чтобы не дёргалось содержимое рядом.
+        [".smuggle-bag", oldBags, "is-decided", ".smuggle-stamp", stampKeyframes, stampOptions],
+        [".smuggle-seat", oldSeats, "is-decided", ".smuggle-stamp", stampKeyframes, stampOptions],
+      ].forEach(([selector, previous, state, childSelector, keyframes, options]) => {
         $("gameRoomBody").querySelectorAll(selector).forEach((el, index) => {
           if (previous[index] === false && el.classList.contains(state)) {
-            el.animate(keyframes, options);
+            const target = (childSelector && el.querySelector(childSelector)) || el;
+            target.animate(keyframes, options);
           }
         });
       });
