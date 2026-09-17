@@ -94,11 +94,23 @@ def write_credentials(path: Path, people: list[dict]) -> None:
 
 # --- играем: реальные HTTP-запросы на локальный API, как настоящий телефон ---
 
+class _LocalCookiePolicy(http.cookiejar.DefaultCookiePolicy):
+    """Боевой ZHIDAO_V4_COOKIE_SECURE=1 ставит на сессионную и CSRF-куку флаг
+    Secure. Это правильно для публичного адреса и трогать эту переменную
+    нельзя, но локальный смок-порт 127.0.0.1:8770 обслуживается без TLS —
+    стандартная политика http.cookiejar тогда молча перестаёт пересылать куку
+    после логина, и каждый следующий запрос падает 401. Разрешаем это только
+    для локального цикла этого скрипта."""
+
+    def return_ok_secure(self, cookie, request):
+        return True
+
+
 class Session:
     """Одна учётка — одна кука-сессия, как в браузере."""
 
     def __init__(self, base: str = API_BASE):
-        self.jar = http.cookiejar.CookieJar()
+        self.jar = http.cookiejar.CookieJar(policy=_LocalCookiePolicy())
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
         self.base = base
 
