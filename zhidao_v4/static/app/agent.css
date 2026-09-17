@@ -1,33 +1,75 @@
 /* Тайный агент: карточка цели, вопрос от агента, рейтинг (V4_GAMES.md §4.12). */
 
-/* Кибер-терминал стелс-агента -- не зависит от темы приложения, как ЖК-панель
-   у Шпиона: это "устройство в руке" (сканер целей), а не страница сайта.
+/* Кибер-терминал стелс-агента -- собственное "устройство в руке" (сканер
+   целей), а не страница сайта. В отличие от ЖК-панели Шпиона (всегда
+   тёмной), у агента терминал живёт в двух режимах: светлый дисплей на
+   солнце в светлой теме приложения и тёмный ночной режим в тёмной --
+   палитра переключается через переменные ниже, а не фиксирована одним
+   тёмным видом, который спорил бы со светлой темой.
 
    design-system.css задаёт свои .agent-* с той же специфичностью и грузится
    позже -- бьём его тем же приёмом, что уже стоит в games.css для этой самой
    коллизии (html .games-screen ...), а не полагаемся на порядок подключения. */
 
+#agentWindow {
+  --agent-bg: linear-gradient(165deg, #f2faf5 0%, #e6f5ec 55%, #d9eee1 100%);
+  --agent-border: #8fc7a8;
+  --agent-card-bg: linear-gradient(165deg, #ffffff 0%, #eaf6ee 70%);
+  --agent-inset: #e6f5ec;
+  --agent-ink: #123521;
+  --agent-muted: #4f8065;
+  --agent-accent: #1f8c53;
+  --agent-glow: #1f8c5355;
+  --agent-alert-bg: linear-gradient(165deg, #fdeeed 0%, #fbdcd9 75%);
+  --agent-alert-border: #d6392c;
+}
+[data-theme="dark"] #agentWindow {
+  --agent-bg: linear-gradient(165deg, #0d211a 0%, #081410 55%, #061009 100%);
+  --agent-border: #1f4a34;
+  --agent-card-bg: linear-gradient(165deg, #0c1f16 0%, #081410 70%);
+  --agent-inset: #06100c;
+  --agent-ink: #d3ffe8;
+  --agent-muted: #6a9b7f;
+  --agent-accent: #7dffb0;
+  --agent-glow: #7dffb055;
+  --agent-alert-bg: linear-gradient(165deg, #23100c 0%, #180907 70%);
+  --agent-alert-border: #ff4a3d;
+}
+
+html .games-screen #agentWindow.case-window { background: var(--agent-bg); border-color: var(--agent-border); }
+html .games-screen #agentWindow .spy-lead { color: var(--agent-muted); }
+html .games-screen #agentWindow .capture-label { color: var(--agent-muted); }
+html .games-screen #agentWindow .capture-label::before { color: var(--agent-accent); }
+html .games-screen #agentWindow .case-message { color: var(--agent-muted); }
+html .games-screen #agentWindow .case-statusbar {
+  background: var(--agent-inset); border-top-color: var(--agent-border); color: var(--agent-muted);
+}
+html .games-screen #agentWindow .case-statusbar span + span { border-left-color: var(--agent-border); }
+html .games-screen #agentWindow .btn-secondary {
+  background: var(--agent-card-bg); border-color: var(--agent-border); color: var(--agent-ink); text-shadow: none;
+}
+
 .agent-window .spy-body { display: grid; gap: 10px; }
-html .games-screen .agent-meta { margin: 0; font: 13px/1.4 "Courier New", monospace; color: #6a9b7f; }
-html .games-screen .agent-meta.is-ok { color: #7dffb0; }
+html .games-screen .agent-meta { margin: 0; font: 13px/1.4 "Courier New", monospace; color: var(--agent-muted); }
+html .games-screen .agent-meta.is-ok { color: var(--agent-accent); }
 .agent-meta.is-ok::after { content: "_"; display: inline-block; margin-left: 2px; animation: agent-cursor-blink 1s steps(1) infinite; }
 @keyframes agent-cursor-blink { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .agent-meta.is-ok::after { animation: none; } }
-html .games-screen .agent-stats { margin: 0; font: 700 12px/1.4 "Courier New", monospace; letter-spacing: .04em; color: #4caf7d; }
+html .games-screen .agent-stats { margin: 0; font: 700 12px/1.4 "Courier New", monospace; letter-spacing: .04em; color: var(--agent-accent); }
 html .games-screen .agent-news {
-  margin: 0; padding: 7px 11px; border-left: 3px solid #7dffb0; border-radius: 2px; background: #081410;
-  font: 13px/1.4 "Courier New", monospace; color: #bfffdb;
+  margin: 0; padding: 7px 11px; border-left: 3px solid var(--agent-accent); border-radius: 2px; background: var(--agent-inset);
+  font: 13px/1.4 "Courier New", monospace; color: var(--agent-ink);
 }
-.agent-news::before { content: "> "; color: #4caf7d; }
+.agent-news::before { content: "> "; color: var(--agent-accent); }
 
 html .games-screen .agent-card {
-  position: relative; display: grid; gap: 6px; padding: 16px; border: 1px solid #1f4a34; border-radius: 4px;
-  background: linear-gradient(165deg, #0c1f16 0%, #081410 70%); color: #d3ffe8;
-  box-shadow: inset 0 1px 0 #ffffff0d, 0 4px 14px #00000060; overflow: hidden;
+  position: relative; display: grid; gap: 6px; padding: 16px; border: 1px solid var(--agent-border); border-radius: 4px;
+  background: var(--agent-card-bg); color: var(--agent-ink);
+  box-shadow: inset 0 1px 0 #ffffff33, 0 4px 14px #00000022; overflow: hidden;
 }
 .agent-card::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(180deg, #ffffff05 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(180deg, #ffffff08 0 1px, transparent 1px 3px);
 }
 html .games-screen .agent-card p { margin: 0; }
 .agent-card > * { position: relative; }
@@ -35,34 +77,34 @@ html .games-screen .agent-card p { margin: 0; }
 .agent-card:not(.is-guess):not(.is-incoming)::before {
   content: ""; position: absolute; inset: 7px; pointer-events: none; opacity: .6;
   background:
-    linear-gradient(#7dffb0, #7dffb0) top left / 12px 2px no-repeat,
-    linear-gradient(#7dffb0, #7dffb0) top left / 2px 12px no-repeat,
-    linear-gradient(#7dffb0, #7dffb0) top right / 12px 2px no-repeat,
-    linear-gradient(#7dffb0, #7dffb0) top right / 2px 12px no-repeat,
-    linear-gradient(#7dffb0, #7dffb0) bottom left / 12px 2px no-repeat,
-    linear-gradient(#7dffb0, #7dffb0) bottom left / 2px 12px no-repeat,
-    linear-gradient(#7dffb0, #7dffb0) bottom right / 12px 2px no-repeat,
-    linear-gradient(#7dffb0, #7dffb0) bottom right / 2px 12px no-repeat;
+    linear-gradient(var(--agent-accent), var(--agent-accent)) top left / 12px 2px no-repeat,
+    linear-gradient(var(--agent-accent), var(--agent-accent)) top left / 2px 12px no-repeat,
+    linear-gradient(var(--agent-accent), var(--agent-accent)) top right / 12px 2px no-repeat,
+    linear-gradient(var(--agent-accent), var(--agent-accent)) top right / 2px 12px no-repeat,
+    linear-gradient(var(--agent-accent), var(--agent-accent)) bottom left / 12px 2px no-repeat,
+    linear-gradient(var(--agent-accent), var(--agent-accent)) bottom left / 2px 12px no-repeat,
+    linear-gradient(var(--agent-accent), var(--agent-accent)) bottom right / 12px 2px no-repeat,
+    linear-gradient(var(--agent-accent), var(--agent-accent)) bottom right / 2px 12px no-repeat;
 }
 /* Входящее сообщение = кто-то заявляет, что раскрыл вас -- тревога, не
-   награда: было золотым (цвет приза), стало красным пульсом. */
-html .games-screen .agent-card.is-incoming { border-color: #ff4a3d; background: linear-gradient(165deg, #23100c 0%, #180907 70%); box-shadow: none; }
+   награда: было золотым (цвет приза), стало пульсирующим красным. */
+html .games-screen .agent-card.is-incoming { border-color: var(--agent-alert-border); background: var(--agent-alert-bg); box-shadow: none; }
 @keyframes agent-alert-pulse { 50% { box-shadow: 0 0 0 4px #ff4a3d33, 0 4px 20px #ff4a3d4d; } }
 :root[data-motion="full"] .agent-card.is-incoming { animation: agent-alert-pulse 1.1s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .agent-card.is-incoming { animation: none; } }
-html .games-screen .agent-card.is-guess { border-style: dashed; border-color: #2d6b4a; background: #081410; }
-html .games-screen .agent-target { font: 700 21px/1.2 "Courier New", monospace; letter-spacing: .02em; color: #eaffef; text-shadow: 0 0 8px #7dffb055; }
-html .games-screen .agent-mission { font: 15px/1.4 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; color: #cdeedb; }
-.agent-select {
-  min-height: 44px; padding: 0 10px; border: 1px solid #2d6b4a; border-radius: 4px;
-  background: #081410; color: #d3ffe8; font: 15px "Courier New", monospace;
+html .games-screen .agent-card.is-guess { border-style: dashed; border-color: var(--agent-border); background: var(--agent-inset); }
+html .games-screen .agent-target { font: 700 21px/1.2 "Courier New", monospace; letter-spacing: .02em; color: var(--agent-ink); text-shadow: 0 0 8px var(--agent-glow); }
+html .games-screen .agent-mission { font: 15px/1.4 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; color: var(--agent-ink); }
+html .games-screen #agentWindow .agent-select {
+  min-height: 44px; padding: 0 10px; border: 1px solid var(--agent-border); border-radius: 4px;
+  background: var(--agent-inset); color: var(--agent-ink); font: 15px "Courier New", monospace;
 }
 .agent-leave { justify-self: start; }
 
-html .games-screen .agent-rating, .agent-staff { margin: 0; display: grid; gap: 4px; font: 13px/1.4 "Courier New", monospace; color: #cdeedb; }
+html .games-screen .agent-rating, .agent-staff { margin: 0; display: grid; gap: 4px; font: 13px/1.4 "Courier New", monospace; color: var(--agent-ink); }
 html .games-screen .agent-rating { padding-left: 0; list-style: none; counter-reset: agent-rank; }
 html .games-screen .agent-rating li { counter-increment: agent-rank; padding-left: 30px; position: relative; }
-.agent-rating li::before { content: counter(agent-rank, decimal-leading-zero) ">"; position: absolute; left: 0; color: #4caf7d; }
+.agent-rating li::before { content: counter(agent-rank, decimal-leading-zero) ">"; position: absolute; left: 0; color: var(--agent-accent); }
 .agent-staff { padding: 0; list-style: none; }
 html .games-screen .agent-rating li, html .games-screen .agent-staff li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; justify-content: space-between; }
-.agent-staff li { padding: 6px 0; border-bottom: 1px solid #1f4a34; }
+.agent-staff li { padding: 6px 0; border-bottom: 1px solid var(--agent-border); }
