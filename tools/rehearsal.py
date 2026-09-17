@@ -92,6 +92,20 @@ def write_credentials(path: Path, people: list[dict]) -> None:
     os.chmod(path, 0o600)
 
 
+def read_existing_credentials(path: Path) -> list[dict]:
+    """Ростер из прошлого запуска: если все логины уже заняты, provision_people
+    ничего не вернёт и играть будет некому -- подхватываем, кто уже заведён,
+    вместо того чтобы остановиться и затереть файл с настоящими паролями."""
+    if not path.exists():
+        return []
+    with path.open("r", newline="", encoding="utf-8") as handle:
+        return [
+            {"username": row["username"], "password": row["password"], "role": row["role"],
+             "account_id": int(row["account_id"]), "display_name": row["display_name"]}
+            for row in csv.DictReader(handle)
+        ]
+
+
 # --- играем: реальные HTTP-запросы на локальный API, как настоящий телефон ---
 
 class _LocalCookiePolicy(http.cookiejar.DefaultCookiePolicy):
@@ -271,12 +285,17 @@ def main() -> int:
                 print("Это был просмотр плана (--apply не передан). Ничего не создано и не отправлено.")
                 return 0
 
-            people = provision_people(conn, actor_id, args.kids, args.operators)
+            report_path = Path(args.credentials_out)
+            roster_by_name = {p["username"]: p for p in read_existing_credentials(report_path)}
+            new_people = provision_people(conn, actor_id, args.kids, args.operators)
+            for person in new_people:
+                roster_by_name[person["username"]] = person
+            people = list(roster_by_name.values())
             kids = [p for p in people if p["role"] == "participant"]
             operators = [p for p in people if p["role"] == "operator"]
-            print(f"Заведено: {len(kids)} участников, {len(operators)} вожатых.")
+            print(f"Заведено новых: {len(new_people)}. Всего в ростере: "
+                  f"{len(kids)} участников, {len(operators)} вожатых.")
 
-            report_path = Path(args.credentials_out)
             write_credentials(report_path, people)
             print(f"Логины и пароли — {report_path.resolve()} (права 600, это настоящие рабочие пароли).")
 
