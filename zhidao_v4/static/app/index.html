@@ -735,6 +735,22 @@
             <div class="case-titlebar"><h2>Сезоны</h2><span aria-hidden="true">▣</span></div>
             <div class="case-list admin-seasons" id="adminSeasons"><p class="case-message">Список появится после входа.</p></div>
           </article>
+          <article class="case-window">
+            <div class="case-titlebar"><h2>Новый сезон</h2><span aria-hidden="true">+</span></div>
+            <p class="case-message admin-note">Создаётся черновиком — участников и экономику включает отдельно тот, кто ведёт сезон. Код — латиницей и цифрами, без пробелов.</p>
+            <form id="seasonCreateForm" class="case-admin-form">
+              <fieldset id="seasonCreateFields">
+                <label>Код <input id="seasonCreateCode" type="text" maxlength="64" required placeholder="hainan-rehearsal"></label>
+                <label>Название <input id="seasonCreateName" type="text" maxlength="120" required placeholder="Хайнань · репетиция"></label>
+                <label>Начало <input id="seasonCreateStart" type="date"></label>
+                <label>Конец <input id="seasonCreateEnd" type="date"></label>
+                <label>Часовой пояс <input id="seasonCreateTimezone" type="text" maxlength="64" value="Asia/Shanghai"></label>
+                <label>Тема (необязательно) <input id="seasonCreateTheme" type="text" maxlength="64" placeholder="hainan-aqua"></label>
+              </fieldset>
+              <button class="btn btn-primary" id="seasonCreateSubmit" type="submit">Создать сезон</button>
+              <p class="case-message" id="seasonCreateStatus" role="status"></p>
+            </form>
+          </article>
         </div>
       </section>
 
@@ -1200,7 +1216,7 @@
   <script src="./cases.js?v=4344700dac" defer></script>
   <script src="./case-play.js?v=450f4471e5" defer></script>
   <script src="./implants.js?v=28d05dae43" defer></script>
-  <script src="./admin.js?v=e3b87d172a" defer></script>
+  <script src="./admin.js?v=857dd96470" defer></script>
   <script src="./games.js?v=d753d8c0a9" defer></script>
   <script src="./game-spy.js?v=1f1256a995" defer></script>
   <script src="./game-cipher.js?v=32871c2395" defer></script>

@@ -69,6 +69,8 @@
       if (options.method === "POST") {
         const cookie = document.cookie.split("; ").find((v) => v.startsWith("zhidao_v4_csrf="));
         headers["X-CSRF-Token"] = cookie ? decodeURIComponent(cookie.slice(cookie.indexOf("=") + 1)) : "";
+        if (options.key) headers["X-Idempotency-Key"] = options.key;
+        if (options.body !== undefined) headers["Content-Type"] = "application/json";
       }
       const response = await fetch(path, {
         method: options.method || "GET",
@@ -76,6 +78,7 @@
         credentials: "same-origin",
         cache: "no-store",
         signal: controller.signal,
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -290,6 +293,46 @@
     }
   }
 
+  function newSeasonKey() {
+    if (window.crypto && crypto.randomUUID) return `season-create-${crypto.randomUUID()}`;
+    return `season-create-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  let seasonCreateBusy = false;
+
+  async function submitSeasonCreate(event) {
+    event.preventDefault();
+    if (seasonCreateBusy) return;
+    const code = $("seasonCreateCode").value.trim();
+    const name = $("seasonCreateName").value.trim();
+    if (!code || !name) {
+      $("seasonCreateStatus").textContent = "Заполните код и название.";
+      return;
+    }
+    const body = {
+      code, name,
+      starts_on: $("seasonCreateStart").value || null,
+      ends_on: $("seasonCreateEnd").value || null,
+      timezone: $("seasonCreateTimezone").value.trim() || "Asia/Shanghai",
+      theme_key: $("seasonCreateTheme").value.trim() || null,
+    };
+    seasonCreateBusy = true;
+    $("seasonCreateSubmit").disabled = true;
+    $("seasonCreateStatus").textContent = "Создаём…";
+    try {
+      const season = await api("/api/v4/seasons", { method: "POST", key: newSeasonKey(), body });
+      $("seasonCreateStatus").textContent = `Готово: «${season.name}» (${season.code}), статус ${season.status}.`;
+      $("seasonCreateForm").reset();
+      $("seasonCreateTimezone").value = "Asia/Shanghai";
+      await loadSeasons();
+    } catch (error) {
+      $("seasonCreateStatus").textContent = explain(error, "архитектор или системный администратор");
+    } finally {
+      seasonCreateBusy = false;
+      $("seasonCreateSubmit").disabled = false;
+    }
+  }
+
   // --- переключение панелей ------------------------------------------------
 
   const LOADERS = {
@@ -361,6 +404,8 @@
     loaded.add("roster");
     loadRoster($("adminRosterQuery").value.trim());
   });
+
+  $("seasonCreateForm").addEventListener("submit", submitSeasonCreate);
 
   $("adminRefresh").addEventListener("click", () => openPanel(currentPanel(), true));
 
