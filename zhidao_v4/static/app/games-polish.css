@@ -6,10 +6,18 @@
 #sabotageWindow { --game-color:#855332; --game-light:#c6986d; }
 #marketWindow { --game-color:#84621d; --game-light:#bd9a50; }
 #captureIntro { --game-color:#245b85; --game-light:#70a3bb; }
-:is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro) > .case-titlebar {
+/* #gameRoom -- общее окно всех настольных игр (спор/шифровальщики/сбой/
+   контрабанда), games.js метит его data-game при входе в комнату. Даём
+   идентичность только Шпиону: тёмная навигационная синь и голубое свечение
+   продолжают уже существующую палитру spy-code-plate/.spy-code в games.css,
+   а не вводят новый цвет с нуля. Остальные комнаты цвет не наследуют. */
+#gameRoom[data-game="spy"] { --game-color:#123a56; --game-light:#4fc7e8; }
+:is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
+    #gameRoom[data-game="spy"]) > .case-titlebar {
   background:linear-gradient(var(--game-light),var(--game-color) 48%,var(--game-color)); color:#fff; text-shadow:0 1px 1px #172434;
 }
-:is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro) > .case-titlebar h2 { color:inherit; }
+:is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
+    #gameRoom[data-game="spy"]) > .case-titlebar h2 { color:inherit; }
 .agent-target,.agent-mission { line-height:1.5; }
 .agent-card,.market-card,.sabotage-card,.zombie-card { border-radius:5px; }
 .market-form { grid-template-columns:minmax(0,1fr) auto; }
