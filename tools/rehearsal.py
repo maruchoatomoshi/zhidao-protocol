@@ -29,6 +29,8 @@ import json
 import os
 import secrets
 import sys
+import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -120,13 +122,35 @@ class _LocalCookiePolicy(http.cookiejar.DefaultCookiePolicy):
         return True
 
 
+class LoginPacer:
+    """Все сессии скрипта логинятся с одного адреса (127.0.0.1) -- сервер
+    считает попытки входа по IP (ZHIDAO_V4_LOGIN_ATTEMPTS_PER_MINUTE), и без
+    паузы 66 учёток легко пробивают лимит за секунды, хотя саму нагрузку
+    сервер тянет без труда. Общий на все потоки, держит темп ниже лимита."""
+
+    def __init__(self, min_interval: float):
+        self.min_interval = min_interval
+        self.lock = threading.Lock()
+        self.next_slot = 0.0
+
+    def wait(self) -> None:
+        with self.lock:
+            now = time.monotonic()
+            start = max(now, self.next_slot)
+            self.next_slot = start + self.min_interval
+        delay = start - now
+        if delay > 0:
+            time.sleep(delay)
+
+
 class Session:
     """Одна учётка — одна кука-сессия, как в браузере."""
 
-    def __init__(self, base: str = API_BASE):
+    def __init__(self, base: str = API_BASE, pacer: LoginPacer | None = None):
         self.jar = http.cookiejar.CookieJar(policy=_LocalCookiePolicy())
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
         self.base = base
+        self.pacer = pacer
 
     def _cookie(self, name: str) -> str | None:
         for cookie in self.jar:
@@ -159,9 +183,11 @@ class Session:
             return False, 0, {"detail": str(exc)}
         return status in expect, status, payload
 
-    def login(self, username: str, password: str) -> bool:
-        ok, _, _ = self.call("POST", "/api/v4/auth/login", {"username": username, "password": password})
-        return ok
+    def login(self, username: str, password: str) -> tuple[bool, int]:
+        if self.pacer:
+            self.pacer.wait()
+        ok, status, _ = self.call("POST", "/api/v4/auth/login", {"username": username, "password": password})
+        return ok, status
 
 
 class Report:
@@ -182,14 +208,15 @@ class Report:
         return "\n".join(lines)
 
 
-def operator_setup(operators: list[dict], kid_ids: list[int], season_id: int, report: Report, api_base: str) -> None:
+def operator_setup(operators: list[dict], kid_ids: list[int], season_id: int, report: Report, api_base: str,
+                    pacer: LoginPacer) -> None:
     """Один вожатый в начале дня выдаёт всем попытки — как это делают в жизни."""
     if not operators or not kid_ids:
         return
     operator = operators[0]
-    session = Session(api_base)
-    ok = session.login(operator["username"], operator["password"])
-    report.add(operator["username"], "login", ok, 200 if ok else 0)
+    session = Session(api_base, pacer)
+    ok, status = session.login(operator["username"], operator["password"])
+    report.add(operator["username"], "login", ok, status)
     if not ok:
         return
     ok, status, _ = session.call(
@@ -209,10 +236,10 @@ def operator_setup(operators: list[dict], kid_ids: list[int], season_id: int, re
         report.add(operator["username"], f"economy.grant→{kid_id}", ok, status)
 
 
-def play_kid(person: dict, season_id: int, report: Report, api_base: str) -> None:
-    session = Session(api_base)
-    ok = session.login(person["username"], person["password"])
-    report.add(person["username"], "login", ok, 200 if ok else 0)
+def play_kid(person: dict, season_id: int, report: Report, api_base: str, pacer: LoginPacer) -> None:
+    session = Session(api_base, pacer)
+    ok, status = session.login(person["username"], person["password"])
+    report.add(person["username"], "login", ok, status)
     if not ok:
         return
     ok, status, _ = session.call("GET", f"/api/v4/seasons/{season_id}/cases/state", expect=(200,))
@@ -230,15 +257,16 @@ def play_kid(person: dict, season_id: int, report: Report, api_base: str) -> Non
     report.add(person["username"], "diary.mine", ok, status)
 
 
-def play_spy_table(players: list[dict], report: Report, api_base: str) -> None:
+def play_spy_table(players: list[dict], report: Report, api_base: str, pacer: LoginPacer) -> None:
     """Небольшая группа садится за Шпиона: комната создана и заполнена — партию
     саму репетиция не разыгрывает, это уже интерактив за столом."""
     if len(players) < 3:
         return
     host, guests = players[0], players[1:]
-    session = Session(api_base)
-    if not session.login(host["username"], host["password"]):
-        report.add(host["username"], "spy.login", False, 0)
+    session = Session(api_base, pacer)
+    ok, status = session.login(host["username"], host["password"])
+    report.add(host["username"], "spy.login", ok, status)
+    if not ok:
         return
     ok, status, body = session.call("POST", "/api/v4/games/rooms", {"game": "spy"}, expect=(200,))
     report.add(host["username"], "games.rooms.create", ok, status)
@@ -246,9 +274,10 @@ def play_spy_table(players: list[dict], report: Report, api_base: str) -> None:
         return
     code = body.get("room", {}).get("code")
     for guest in guests:
-        guest_session = Session(api_base)
-        if not guest_session.login(guest["username"], guest["password"]):
-            report.add(guest["username"], "spy.login", False, 0)
+        guest_session = Session(api_base, pacer)
+        ok, status = guest_session.login(guest["username"], guest["password"])
+        report.add(guest["username"], "spy.login", ok, status)
+        if not ok:
             continue
         ok, status, _ = guest_session.call("POST", "/api/v4/games/rooms/join", {"code": code}, expect=(200,))
         report.add(guest["username"], "games.rooms.join", ok, status)
@@ -263,6 +292,9 @@ def main() -> int:
     parser.add_argument("--concurrency", type=int, default=4, help="Сколько участников играют одновременно")
     parser.add_argument("--credentials-out", default="rehearsal-credentials.csv")
     parser.add_argument("--api-base", default=API_BASE, help="Локальный API (127.0.0.1, не публичный адрес)")
+    parser.add_argument("--login-interval", type=float, default=1.2,
+                         help="Мин. пауза между логинами (сек): все сессии идут с одного IP и делят "
+                              "серверный лимит ZHIDAO_V4_LOGIN_ATTEMPTS_PER_MINUTE")
     parser.add_argument("--apply", action="store_true", help="Без этого — только план, без записи и без сети")
     args = parser.parse_args()
 
@@ -313,19 +345,20 @@ def main() -> int:
         return 0
 
     report = Report()
+    pacer = LoginPacer(args.login_interval)
 
     print(f"\nИграем через {api_base} (локальный порт, не публичный адрес)…")
-    operator_setup(operators, [p["account_id"] for p in kids], season["id"], report, api_base)
+    operator_setup(operators, [p["account_id"] for p in kids], season["id"], report, api_base, pacer)
 
     with ThreadPoolExecutor(max_workers=max(1, args.concurrency)) as pool:
-        futures = [pool.submit(play_kid, kid, season["id"], report, api_base) for kid in kids]
+        futures = [pool.submit(play_kid, kid, season["id"], report, api_base, pacer) for kid in kids]
         for future in as_completed(futures):
             future.result()
 
     for start in range(0, len(kids), 4):
         table = kids[start:start + 4]
         if len(table) >= 3:
-            play_spy_table(table, report, api_base)
+            play_spy_table(table, report, api_base, pacer)
         if (start // 4) + 1 >= ROOM_PAIRS:
             break
 
