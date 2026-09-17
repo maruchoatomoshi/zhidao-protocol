@@ -256,17 +256,54 @@ button.outage-wire { cursor: pointer; }
 .outage-wire.is-cut { opacity: .6; }
 .outage-wire.is-armed { border-color: #d9822b; background: #ffb65a2e; box-shadow: inset 0 0 0 2px #d9822b; }
 .outage-wire.is-answer { box-shadow: inset 0 0 0 2px #3b9b6b; }
-.outage-keypad { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.outage-key { min-height: 72px; border: 1px solid var(--case-border); border-radius: 10px; background: linear-gradient(var(--case-pane), var(--case-inset));
-  color: var(--case-ink); font: 700 36px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; cursor: pointer; }
+/* Сервер шлёт только иероглиф цвета (см. WIRE_COLORS в game-outage.js) --
+   красим саму линию под него, чтобы провод выглядел проводом, а не серой
+   штрихкодной полоской. */
+.outage-wire[data-wire-color="red"] { --wire-hi: #ff9f8f; --wire-mid: #d9483b; --wire-lo: #7a170e; }
+.outage-wire[data-wire-color="blue"] { --wire-hi: #a9cdf2; --wire-mid: #2f6fb5; --wire-lo: #173d63; }
+.outage-wire[data-wire-color="yellow"] { --wire-hi: #ffe58f; --wire-mid: #dba526; --wire-lo: #83600f; }
+.outage-wire[data-wire-color="white"] { --wire-hi: #ffffff; --wire-mid: #d7dee3; --wire-lo: #98a5ad; }
+.outage-wire[data-wire-color="black"] { --wire-hi: #5c6b78; --wire-mid: #2a323b; --wire-lo: #0c1014; }
+.outage-wire[data-wire-color="green"] { --wire-hi: #a8ecc8; --wire-mid: #3b9b6b; --wire-lo: #1b5c3e; }
+.outage-wire[data-wire-color] .outage-wire-line {
+  background: linear-gradient(180deg, var(--wire-hi), var(--wire-mid) 45%, var(--wire-mid) 55%, var(--wire-lo));
+  box-shadow: inset 0 1px 0 #ffffff50, inset 0 -1px 1px #00000050; }
+.outage-wire[data-wire-color].is-cut .outage-wire-line {
+  background: linear-gradient(90deg, var(--wire-mid) 0 42%, transparent 42% 58%, var(--wire-mid) 58%); }
+/* "Замок" -- 2×N сетка кнопок сама по себе ни на что не похожа; тёмная
+   металлическая панель и врезанная скважина делают её похожей на кодовый
+   замок независимо от темы приложения (как spy-code-plate). */
+.outage-module[data-module-type="keypad"] { background: linear-gradient(160deg, #3a4048, #20242b 55%, #14171c); }
+.outage-module[data-module-type="keypad"] .outage-module-head { color: #e7ecf1; }
+.outage-module[data-module-type="keypad"] .outage-module-head span { color: #ffb199; }
+.outage-module[data-module-type="keypad"].is-solved .outage-module-head span { color: #8ff0c0; }
+.outage-keypad { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 28px; }
+.outage-keypad::before, .outage-keypad::after { content: ""; position: absolute; left: 50%; translate: -50% 0; background: linear-gradient(#e8c467, #a67a1f); }
+.outage-keypad::before { top: 0; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 1px 1px #fff8, inset 0 -2px 3px #0004; }
+.outage-keypad::after { top: 15px; width: 10px; height: 14px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.outage-key { min-height: 72px; border: 1px solid #545c66; border-radius: 10px;
+  background: linear-gradient(#565f6a, #2c333c 55%, #1c2129); color: #eef3f7;
+  font: 700 36px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; cursor: pointer;
+  box-shadow: inset 0 1px 0 #ffffff40, inset 0 -2px 3px #00000060, 0 2px 2px #00000040; }
 .outage-key:disabled { cursor: default; }
-.outage-key.is-pressed { border-color: #3b9b6b; background: linear-gradient(#e8fff2, #b9f0d2); color: #0f4a2c; }
+.outage-key:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 4px #00000080; }
+.outage-key.is-pressed { border-color: #3b9b6b; background: linear-gradient(#8ff0c0, #3b9b6b 55%, #1c5c3e); color: #0a2e1c;
+  box-shadow: inset 0 1px 0 #ffffff60, inset 0 -2px 3px #00000040; }
 .outage-sequence { display: flex; justify-content: center; gap: 8px; }
-.outage-sequence b { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--case-border); border-radius: 8px; background: var(--case-paper);
-  font: 700 28px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
-.outage-sequence b.is-done { border-color: #3b9b6b; background: #63c99e33; }
-.outage-arrows { display: grid; grid-template-columns: repeat(3, 60px); grid-template-areas: ". up ." "left . right" ". down ."; justify-content: center; gap: 6px; }
-.outage-arrow { min-height: 52px; border: 1px solid var(--case-border); border-radius: 10px; background: linear-gradient(var(--case-pane), var(--case-inset)); color: var(--case-ink); font: 700 24px/1 sans-serif; cursor: pointer; }
+.outage-sequence b { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--case-border); border-radius: 50%; background: var(--case-paper);
+  font: 700 24px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
+.outage-sequence b.is-done { border-color: #3b9b6b; background: #63c99e33; box-shadow: 0 0 0 3px #63c99e1f; }
+/* Компас: круглая площадка с центральной осью вместо четырёх кнопок
+   вразнобой -- стрелки читаются как навигационная панель, не клавиатура. */
+.outage-arrows { position: relative; display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px);
+  grid-template-areas: ". up ." "left . right" ". down ."; justify-content: center; gap: 4px; padding: 12px; border-radius: 50%;
+  background: radial-gradient(circle, var(--case-inset) 0%, var(--case-pane) 62%, var(--case-border) 100%);
+  box-shadow: inset 0 2px 6px #00000020, 0 1px 0 #ffffff40; }
+.outage-arrows::before { content: ""; position: absolute; top: 50%; left: 50%; translate: -50% -50%; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--case-border); box-shadow: 0 0 0 3px var(--case-pane); }
+.outage-arrow { min-height: unset; border-radius: 50%; border: 1px solid var(--case-border); background: linear-gradient(var(--case-pane), var(--case-inset));
+  color: var(--case-ink); font: 700 22px/1 sans-serif; cursor: pointer; box-shadow: 0 2px 3px #00000020; }
+.outage-arrow:active:not(:disabled) { box-shadow: inset 0 2px 3px #00000030; }
 .outage-arrow.is-up { grid-area: up; } .outage-arrow.is-down { grid-area: down; } .outage-arrow.is-left { grid-area: left; } .outage-arrow.is-right { grid-area: right; }
 .outage-number { display: block; text-align: center; font: 700 44px/1.15 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
 .outage-number-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }

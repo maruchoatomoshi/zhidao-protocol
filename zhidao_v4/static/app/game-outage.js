@@ -12,6 +12,10 @@
   const DIFFICULTY = [["easy", "Лёгкий"], ["normal", "Обычный"], ["hard", "Сложный"]];
   const DIFFICULTY_HINT = { easy: "2 модуля · 5 минут", normal: "3 модуля · 5 минут", hard: "4 модуля · 4 минуты" };
   const TYPE_NAMES = { wires: "Провода", keypad: "Замок", compass: "Навигация", number: "Счётчик" };
+  // Сервер шлёт только иероглиф (outage.py COLORS) -- красим провод по нему
+  // чисто на глаз, это не подсказка: цвет иероглифа и так читает любой,
+  // кто знает 红/蓝/黄/白/黑/绿.
+  const WIRE_COLORS = { "红": "red", "蓝": "blue", "黄": "yellow", "白": "white", "黑": "black", "绿": "green" };
   const ARROWS = { up: "↑", down: "↓", left: "←", right: "→" };
   const ARROW_NAMES = { up: "вверх", down: "вниз", left: "влево", right: "вправо" };
   const ORDINALS = ["первый", "второй", "третий", "четвёртый", "пятый", "шестой"];
@@ -42,6 +46,7 @@
   function moduleShell(c, module, index) {
     const { node } = c;
     const box = node("section", `outage-module${module.solved ? " is-solved" : ""}`);
+    box.dataset.moduleType = module.type;
     const head = node("div", "outage-module-head");
     head.append(node("b", null, `${String(index + 1).padStart(2, "0")} · ${TYPE_NAMES[module.type]}`),
       node("span", null, module.solved ? "ИСПРАВЛЕН" : "СБОЙ"));
@@ -68,6 +73,7 @@
           c.confirmTwice(key, `перерезать ${ORDINALS[i]} провод`, () => c.act("cut", { module: index, wire: i })));
       }
       if (module.answer === i) row.classList.add("is-answer");
+      if (WIRE_COLORS[wire.zh]) row.dataset.wireColor = WIRE_COLORS[wire.zh];
       row.setAttribute("aria-label", `${ORDINALS[i]} провод, ${wire.zh}${wire.cut ? ", перерезан" : ""}`);
       row.append(node("span", "outage-wire-no", String(i + 1)), node("span", "outage-wire-line"), node("b", null, wire.zh));
       list.append(row);

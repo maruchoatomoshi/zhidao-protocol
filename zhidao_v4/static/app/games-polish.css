@@ -17,12 +17,16 @@
    пергамент закрытой карточки (.cipher-card.is-closed) не спорит ни с
    одним из цветов команд. */
 #gameRoom[data-game="cipher"] { --game-color:#7a6338; --game-light:#d9c48f; }
+/* Сбой системы: тревожный красный уже есть в игре как цвет "жизни"
+   (.outage-lamp.is-on) -- берём его же, а не тёплый охра/коричневый,
+   которого и так много у Саботажа/Рынка/Шифровальщиков. */
+#gameRoom[data-game="outage"] { --game-color:#8f1d12; --game-light:#e35c4a; }
 :is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
-    #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"]) > .case-titlebar {
+    #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"],#gameRoom[data-game="outage"]) > .case-titlebar {
   background:linear-gradient(var(--game-light),var(--game-color) 48%,var(--game-color)); color:#fff; text-shadow:0 1px 1px #172434;
 }
 :is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
-    #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"]) > .case-titlebar h2 { color:inherit; }
+    #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"],#gameRoom[data-game="outage"]) > .case-titlebar h2 { color:inherit; }
 .agent-target,.agent-mission { line-height:1.5; }
 .agent-card,.market-card,.sabotage-card,.zombie-card { border-radius:5px; }
 .market-form { grid-template-columns:minmax(0,1fr) auto; }
