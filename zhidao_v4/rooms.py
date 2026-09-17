@@ -81,6 +81,33 @@ def cleanup(conn: sqlite3.Connection, now: datetime) -> None:
     conn.execute("DELETE FROM v4_game_rooms WHERE last_activity_at < ?", (cutoff,))
 
 
+def resolve_season(conn: sqlite3.Connection, account_id: int) -> int:
+    """The one active, playable season a new room counts toward.
+
+    Same query smuggle.award() already uses per-winner (V4_GAMES.md §4.8's
+    sibling problem, closed there ad hoc). An account can hold more than one
+    season membership, so this picks deterministically — the most recent
+    active season where the account is an active member — rather than
+    leaving it to whichever row SQLite happens to return first.
+    """
+    row = conn.execute(
+        """SELECT s.id FROM v4_seasons s JOIN v4_season_memberships m ON m.season_id = s.id
+           WHERE s.status = 'active' AND m.account_id = ? AND m.status = 'active'
+           ORDER BY s.id DESC LIMIT 1""",
+        (account_id,),
+    ).fetchone()
+    if row is None:
+        raise GameError("Вы не участник ни одного активного сезона.", 403)
+    return int(row["id"])
+
+
+def is_season_member(conn: sqlite3.Connection, account_id: int, season_id: int) -> bool:
+    return conn.execute(
+        "SELECT 1 FROM v4_season_memberships WHERE season_id = ? AND account_id = ? AND status = 'active'",
+        (season_id, account_id),
+    ).fetchone() is not None
+
+
 def game_enabled(conn: sqlite3.Connection, game: str) -> bool:
     row = conn.execute("SELECT enabled FROM v4_game_switches WHERE game = ?", (game,)).fetchone()
     return row is None or bool(row["enabled"])
@@ -193,15 +220,16 @@ def create_room(
         raise GameError("Такой игры нет.", 404)
     cleanup(conn, now)
     require_enabled(conn, game)
+    season_id = resolve_season(conn, account_id)
     leave_current(conn, account_id, now)
     stamp = iso(now)
     cursor = conn.execute(
         """
-        INSERT INTO v4_game_rooms(code, game, host_account_id, status, settings_json,
+        INSERT INTO v4_game_rooms(season_id, code, game, host_account_id, status, settings_json,
                                   state_json, created_at, last_activity_at)
-        VALUES (?, ?, ?, 'lobby', ?, '{}', ?, ?)
+        VALUES (?, ?, ?, ?, 'lobby', ?, '{}', ?, ?)
         """,
-        (_new_code(conn), game, account_id, json.dumps(settings), stamp, stamp),
+        (season_id, _new_code(conn), game, account_id, json.dumps(settings), stamp, stamp),
     )
     room_id = int(cursor.lastrowid)
     conn.execute(
@@ -218,6 +246,8 @@ def join_room(
     room = load_room(conn, code)
     if room is None:
         raise GameError("Комнаты с таким кодом нет. Проверьте цифры.", 404)
+    if not is_season_member(conn, account_id, int(room["season_id"])):
+        raise GameError("Эта комната из другого сезона — вам она недоступна.", 403)
     require_enabled(conn, room["game"])
     seated = conn.execute(
         "SELECT 1 FROM v4_game_room_players WHERE room_id = ? AND account_id = ?",

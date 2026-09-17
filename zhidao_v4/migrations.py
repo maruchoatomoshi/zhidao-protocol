@@ -124,6 +124,17 @@ def apply_migrations(
                     )
                 continue
 
+            # A rebuild-pattern migration (CREATE ..._next, copy, DROP, RENAME
+            # -- SQLite's only way to change a CHECK or drop a column a CHECK
+            # references) fails immediately under foreign_keys=ON the moment
+            # it drops a table other tables still hold rows pointing at, even
+            # though the rebuild always finishes with every reference intact.
+            # SQLite's documented procedure for exactly this is to disable
+            # enforcement around the rebuild and verify with
+            # PRAGMA foreign_key_check afterwards -- every migration gets
+            # that now, not just the ones that need it today. Both pragmas
+            # are no-ops inside a transaction, so they sit outside BEGIN/COMMIT.
+            conn.execute("PRAGMA foreign_keys=OFF")
             conn.execute("BEGIN IMMEDIATE")
             try:
                 for statement in _iter_statements(migration.sql):
@@ -138,11 +149,18 @@ def apply_migrations(
                 conn.execute("COMMIT")
             except Exception as exc:
                 conn.execute("ROLLBACK")
+                conn.execute("PRAGMA foreign_keys=ON")
                 if isinstance(exc, MigrationError):
                     raise
                 raise MigrationError(
                     f"Failed to apply migration {migration.path.name}: {exc}"
                 ) from exc
+            conn.execute("PRAGMA foreign_keys=ON")
+            violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+            if violations:
+                raise MigrationError(
+                    f"Migration {migration.path.name} left dangling foreign keys: {violations}"
+                )
             applied_files.append(migration.path.name)
 
         # WAL lets the API's many short reads run alongside the one writer;

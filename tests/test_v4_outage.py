@@ -83,6 +83,9 @@ class OutageGameTests(unittest.TestCase):
                     account = provision_local_account(conn, username=f"kid{index}", password=USER_PASSWORD,
                                                       display_name=name, role_code="participant")
                     self.ids[f"kid{index}"] = int(account["id"])
+                    conn.execute("INSERT INTO v4_season_memberships(season_id, account_id, status) VALUES (1, ?, 'active')",
+                                 (self.ids[f"kid{index}"],))
+                conn.execute("UPDATE v4_seasons SET status='active' WHERE id=1")
         finally:
             conn.close()
         self.app = create_app(self.db_path, cookie_secure=False, session_hours=1)
