@@ -31,6 +31,7 @@
   let poll = null;
   let pollMs = 0;
   let ticker = null;
+  let doneTasks = new Set();
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -199,8 +200,13 @@
     }
     const list = node("div", "sabotage-tasks");
     me.tasks.forEach((t) => {
-      if (t.done) list.append(node("p", "sabotage-done", `✓ ${t.name_ru || t.code}`));
-      else list.append(button("btn btn-secondary", `Я у станции: ${t.name_ru || t.code}`, () => challenge(t.code)));
+      if (t.done) {
+        const fresh = !doneTasks.has(t.code);
+        doneTasks.add(t.code);
+        list.append(node("p", `sabotage-done${fresh ? " is-fresh" : ""}`, `✓ ${t.name_ru || t.code}`));
+      } else {
+        list.append(button("btn btn-secondary", `Я у станции: ${t.name_ru || t.code}`, () => challenge(t.code)));
+      }
     });
     box.append(list);
     if (me.task_wait) box.append(node("p", "sabotage-meta", `После ошибки станция ждёт ${me.task_wait} с`));
@@ -280,7 +286,7 @@
     if (game && game.grid && game.grid.length) {
       const grid = node("div", "sabotage-grid");
       game.grid.forEach((p) => {
-        const label = `${p.name}${p.captain ? " ★" : ""} · ${p.done}/${p.total}`;
+        const label = `${p.role === "saboteur" ? "☠ " : ""}${p.name}${p.captain ? " ★" : ""} · ${p.done}/${p.total}`;
         grid.append(node("span", `sabotage-chip is-${p.role}${p.alive ? "" : " is-out"}`, label));
       });
       parts.push(grid);
@@ -321,7 +327,7 @@
       const head = node("p", "sabotage-headline", `Задания экипажа: ${game.bar}% · в игре ${game.alive} из ${game.players} · до конца `);
       head.append(countdown(game.ends_at));
       parts.push(head);
-      const bar = node("div", "sabotage-bar");
+      const bar = node("div", `sabotage-bar${game.bar >= 90 ? " is-near" : ""}`);
       const fill = node("span");
       fill.style.width = `${game.bar}%`;
       bar.append(fill);
@@ -502,6 +508,7 @@
     note = "";
     codeDraft = "";
     question = null;
+    doneTasks = new Set();
     draw();
     if (onGames()) refresh();
   });

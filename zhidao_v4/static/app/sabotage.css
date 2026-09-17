@@ -46,3 +46,35 @@
 :root[data-theme="dark"] .sabotage-input, :root[data-theme="dark"] .sabotage-question { background: #0d2438; color: #dcefff; }
 :root[data-theme="dark"] .sabotage-safety { background: #3a1a18; color: #ffc9c2; }
 :root[data-theme="dark"] .sabotage-bar { background: #0d2438; border-color: #2d5a7c; }
+
+/* Полоса заданий -- приборный вид: блик пробегает по ней, а на подходе
+   к 100% появляется мягкое зелёное свечение, а не просто цветной прямоугольник. */
+.sabotage-bar span { position: relative; overflow: hidden; }
+.sabotage-bar span::after {
+  content: ""; position: absolute; inset: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, #ffffff66, transparent);
+  transform: translateX(-140%);
+}
+:root[data-motion="full"] .sabotage-bar span::after { animation: sabotage-bar-sweep 2.6s ease-in-out infinite; }
+@keyframes sabotage-bar-sweep { to { transform: translateX(360%); } }
+.sabotage-bar.is-near { box-shadow: 0 0 10px 1px #36b37e99; }
+@media (prefers-reduced-motion: reduce) { .sabotage-bar span::after { animation: none; } }
+
+/* Собрание -- тревога, а не просто жёлтая карточка: пульс между жёлтым
+   предупреждением и красной опасностью, как сирена. */
+@keyframes sabotage-meeting-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(201, 162, 39, .25); }
+  50% { box-shadow: 0 0 0 3px rgba(217, 48, 37, .35), 0 4px 20px #d9302555; }
+}
+:root[data-motion="full"] .sabotage-card.is-meeting { animation: sabotage-meeting-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .sabotage-card.is-meeting { animation: none; } }
+.sabotage-card.is-meeting .sabotage-role::before { content: "⚠ "; }
+
+/* Код для выведения -- тревожный пульс: вас поймали, покажите телефон. */
+@keyframes sabotage-code-pulse { 50% { box-shadow: 0 0 0 6px #d9302533, 0 4px 20px #d9302555; } }
+:root[data-motion="full"] .sabotage-code { border-radius: 8px; animation: sabotage-code-pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .sabotage-code { animation: none; } }
+
+/* Задание выполнено -- маленький "поп", а не просто смена текста на галочку. */
+@keyframes sabotage-task-pop { 0% { transform: scale(.9); opacity: .4; } 60% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+:root[data-motion="full"] .sabotage-done.is-fresh { animation: sabotage-task-pop .4s ease-out; }
