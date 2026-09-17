@@ -34,6 +34,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -124,23 +125,35 @@ class _LocalCookiePolicy(http.cookiejar.DefaultCookiePolicy):
 
 class LoginPacer:
     """Все сессии скрипта логинятся с одного адреса (127.0.0.1) -- сервер
-    считает попытки входа по IP (ZHIDAO_V4_LOGIN_ATTEMPTS_PER_MINUTE), и без
-    паузы 66 учёток легко пробивают лимит за секунды, хотя саму нагрузку
-    сервер тянет без труда. Общий на все потоки, держит темп ниже лимита."""
+    считает попытки входа по IP в скользящем окне 60с (consume_login_slot в
+    api.py, ZHIDAO_V4_LOGIN_ATTEMPTS_PER_MINUTE -- 30 на проде, а не 120 по
+    умолчанию в коде). Общий на все потоки; держит собственное окно на клиенте
+    с запасом (margin) и ждёт, если следующий логин пробил бы лимит, вместо
+    того чтобы просто размазать запросы по фиксированному интервалу и
+    случайно всё равно упереться в границу окна. Запас нужен: клиент метит
+    время ДО отправки запроса, сервер считает своё "сейчас" уже после сетевой
+    задержки и очереди из --concurrency потоков -- без запаса это иногда
+    расходится на один запрос."""
 
-    def __init__(self, min_interval: float):
-        self.min_interval = min_interval
+    def __init__(self, limit_per_minute: int, margin: int = 3):
+        self.limit = max(1, limit_per_minute - margin)
         self.lock = threading.Lock()
-        self.next_slot = 0.0
+        self.attempts: deque[float] = deque()
+
+    def _drop_stale(self, now: float) -> None:
+        while self.attempts and now - self.attempts[0] >= 60:
+            self.attempts.popleft()
 
     def wait(self) -> None:
         with self.lock:
             now = time.monotonic()
-            start = max(now, self.next_slot)
-            self.next_slot = start + self.min_interval
-        delay = start - now
-        if delay > 0:
-            time.sleep(delay)
+            self._drop_stale(now)
+            while len(self.attempts) >= self.limit:
+                sleep_for = 60 - (now - self.attempts[0]) + 0.05
+                time.sleep(max(0.0, sleep_for))
+                now = time.monotonic()
+                self._drop_stale(now)
+            self.attempts.append(now)
 
 
 class Session:
@@ -159,6 +172,7 @@ class Session:
         return None
 
     def call(self, method: str, path: str, body=None, expect=(200,)):
+        self.last_retry_after = None
         data = json.dumps(body).encode("utf-8") if body is not None else None
         request = urllib.request.Request(self.base + path, data=data, method=method)
         request.add_header("Accept", "application/json")
@@ -175,18 +189,34 @@ class Session:
                 payload = json.loads(response.read() or b"{}")
         except urllib.error.HTTPError as exc:
             status = exc.code
+            self.last_retry_after = exc.headers.get("Retry-After") if exc.headers else None
             try:
                 payload = json.loads(exc.read() or b"{}")
             except json.JSONDecodeError:
                 payload = {}
-        except (urllib.error.URLError, TimeoutError) as exc:
+        except OSError as exc:
+            # URLError and TimeoutError are both OSError subclasses, but a
+            # connection dropped mid-read (ConnectionResetError/
+            # ConnectionAbortedError) surfaces as a raw, unwrapped OSError
+            # straight out of http.client -- urllib only wraps failures at
+            # connect time, not every failure while reading the response.
             return False, 0, {"detail": str(exc)}
         return status in expect, status, payload
 
     def login(self, username: str, password: str) -> tuple[bool, int]:
-        if self.pacer:
-            self.pacer.wait()
-        ok, status, _ = self.call("POST", "/api/v4/auth/login", {"username": username, "password": password})
+        # Пейсер держит темп ниже лимита сам по себе, но сервер и клиент метят
+        # "сейчас" в разные моменты (см. LoginPacer) -- если всё-таки прилетел
+        # 429, это не "не судьба", а сигнал подождать ровно Retry-After и
+        # попробовать снова, как и советует сам сервер.
+        for _ in range(3):
+            if self.pacer:
+                self.pacer.wait()
+            ok, status, _ = self.call(
+                "POST", "/api/v4/auth/login", {"username": username, "password": password},
+            )
+            if status != 429:
+                return ok, status
+            time.sleep(float(self.last_retry_after) if self.last_retry_after else 60.0)
         return ok, status
 
 
@@ -292,9 +322,9 @@ def main() -> int:
     parser.add_argument("--concurrency", type=int, default=4, help="Сколько участников играют одновременно")
     parser.add_argument("--credentials-out", default="rehearsal-credentials.csv")
     parser.add_argument("--api-base", default=API_BASE, help="Локальный API (127.0.0.1, не публичный адрес)")
-    parser.add_argument("--login-interval", type=float, default=1.2,
-                         help="Мин. пауза между логинами (сек): все сессии идут с одного IP и делят "
-                              "серверный лимит ZHIDAO_V4_LOGIN_ATTEMPTS_PER_MINUTE")
+    parser.add_argument("--login-limit-per-minute", type=int, default=30,
+                         help="Значение ZHIDAO_V4_LOGIN_ATTEMPTS_PER_MINUTE на сервере (по умолчанию -- "
+                              "боевое значение 30): все сессии идут с одного IP и делят этот лимит")
     parser.add_argument("--apply", action="store_true", help="Без этого — только план, без записи и без сети")
     args = parser.parse_args()
 
@@ -345,15 +375,19 @@ def main() -> int:
         return 0
 
     report = Report()
-    pacer = LoginPacer(args.login_interval)
+    pacer = LoginPacer(args.login_limit_per_minute)
 
     print(f"\nИграем через {api_base} (локальный порт, не публичный адрес)…")
     operator_setup(operators, [p["account_id"] for p in kids], season["id"], report, api_base, pacer)
 
     with ThreadPoolExecutor(max_workers=max(1, args.concurrency)) as pool:
-        futures = [pool.submit(play_kid, kid, season["id"], report, api_base, pacer) for kid in kids]
+        futures = {pool.submit(play_kid, kid, season["id"], report, api_base, pacer): kid for kid in kids}
         for future in as_completed(futures):
-            future.result()
+            try:
+                future.result()
+            except Exception as exc:  # noqa: BLE001 -- one kid's crash must not lose everyone else's report
+                report.add(futures[future]["username"], "play_kid.crash", False, 0)
+                print(f"  ПАДЕНИЕ у {futures[future]['username']}: {exc}")
 
     for start in range(0, len(kids), 4):
         table = kids[start:start + 4]
