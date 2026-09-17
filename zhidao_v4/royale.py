@@ -488,7 +488,7 @@ def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
 # --- действия участников ------------------------------------------------------------------------
 
 def join(conn, actor: int, season_id: int) -> dict:
-    authorize(conn, actor, season_id, write=True)
+    authorize(conn, actor, season_id, write=True, staff_may_play=True)
     game = _active(conn, season_id)
     if game is None:
         raise CaseError("Сейчас нет открытой игры. Её открывает вожатый.", 404)
@@ -503,7 +503,7 @@ def join(conn, actor: int, season_id: int) -> dict:
 
 
 def leave(conn, actor: int, season_id: int) -> dict:
-    authorize(conn, actor, season_id)
+    authorize(conn, actor, season_id, staff_may_play=True)
     game = _active(conn, season_id)
     if game is None or game["status"] != "lobby":
         raise CaseError("Выйти можно только из лобби.", 409)
@@ -512,7 +512,7 @@ def leave(conn, actor: int, season_id: int) -> dict:
 
 
 def _in_play(conn, actor: int, season_id: int, now: datetime):
-    authorize(conn, actor, season_id, write=True)
+    authorize(conn, actor, season_id, write=True, staff_may_play=True)
     game = _active(conn, season_id)
     if game is None:
         raise CaseError("Игра не найдена.", 404)
@@ -572,7 +572,7 @@ def vote(conn, actor: int, season_id: int, surprise: str) -> dict:
 
 
 def revive(conn, actor: int, season_id: int, key: str, request_id=None):
-    authorize(conn, actor, season_id)
+    authorize(conn, actor, season_id, staff_may_play=True)
     game = _active(conn, season_id)
     key, digest, old = replay(conn, actor, REVIVE_OPERATION, key,
                               {"season_id": season_id, "game": int(game["id"]) if game else None})

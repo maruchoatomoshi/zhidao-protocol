@@ -140,7 +140,7 @@ def _consume(conn, season_id: int, account_id: int, day: str) -> None:
 
 
 def _guard(conn, actor: int, season_id: int, now: datetime):
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     if not capture.enabled(conn, season_id):
         raise CaseError("Захват сейчас выключен — дуэли тоже.", 409)
     if not capture.window_state(season, now)["open"]:
@@ -440,7 +440,7 @@ def join(conn, actor: int, season_id: int, code: str) -> dict:
 
 
 def _playing(conn, actor: int, season_id: int, now: datetime):
-    authorize(conn, actor, season_id, write=True)
+    authorize(conn, actor, season_id, write=True, staff_may_play=True)
     row = _active_row(conn, actor)
     if row is None:
         raise CaseError("Дуэль не найдена или уже закончилась.", 404)
@@ -500,7 +500,7 @@ def move(conn, actor: int, season_id: int, choice: str) -> dict:
 def leave(conn, actor: int, season_id: int) -> dict:
     now = utcnow()
     offers.withdraw(actor)
-    authorize(conn, actor, season_id, write=True)
+    authorize(conn, actor, season_id, write=True, staff_may_play=True)
     row = _active_row(conn, actor)
     if row is not None:
         state = json.loads(row["state_json"])

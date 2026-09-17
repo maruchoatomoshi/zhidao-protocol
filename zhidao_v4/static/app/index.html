@@ -694,6 +694,21 @@
             <div class="case-statusbar"><span id="economySeason">СЕЗОН &mdash;</span></div>
           </article>
           <article class="case-window">
+            <div class="case-titlebar"><h2>Начислить ★ и REP</h2><span aria-hidden="true">+</span></div>
+            <p class="case-message admin-note">Ручная поправка, не награда игры — причина обязательна и попадает в журнал. Только участнику, не другому вожатому.</p>
+            <form id="economyGrantForm" class="case-admin-form">
+              <fieldset id="economyGrantFields">
+                <label>Участник <select id="economyGrantTarget"></select></label>
+                <button class="btn btn-secondary" type="button" id="economyGrantReload">Обновить список</button>
+                <label>★ <input id="economyGrantStars" type="number" inputmode="numeric" value="0" step="1"></label>
+                <label>REP <input id="economyGrantRep" type="number" inputmode="numeric" value="0" step="1"></label>
+                <label>Причина <input id="economyGrantReason" type="text" maxlength="300" required placeholder="Например: помог(ла) на кухне"></label>
+              </fieldset>
+              <button class="btn btn-primary" id="economyGrantSubmit" type="submit">Начислить</button>
+              <p class="case-message" id="economyGrantStatus" role="status"></p>
+            </form>
+          </article>
+          <article class="case-window">
             <div class="case-titlebar"><h2>Купоны «+30 минут»</h2><span aria-hidden="true">券</span></div>
             <p class="case-message admin-note">Участник пришёл отпроситься — найдите его здесь и погасите купон. Погашение пишется в журнал и не повторяется при обрыве связи.</p>
             <p class="case-message" id="economyCouponStatus" role="status"></p>
@@ -1193,7 +1208,7 @@
   <script src="./game-outage.js?v=776b998494" defer></script>
   <script src="./diary.js?v=1427d64ce0" defer></script>
   <script src="./rep.js?v=961113eb61" defer></script>
-  <script src="./economy.js?v=e2532e9054" defer></script>
+  <script src="./economy.js?v=7b2308d451" defer></script>
   <script src="./cosmetics.js?v=8ece19ed7f" defer></script>
   <script src="./shop.js?v=2a634192a9" defer></script>
   <script src="./meet.js?v=44e02e65d4" defer></script>

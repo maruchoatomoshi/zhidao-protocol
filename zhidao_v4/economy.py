@@ -12,6 +12,14 @@
 Купон «+30 минут свободы» — единственная трата в реальной жизни. Гасит его
 вожатый, когда участник приходит отпроситься; погашение — операция журнала
 без движения ★, с защитой от повторной отправки и записью в аудит.
+
+Ручное начисление ★ и REP (решение пользователя 2026-09-17, перенесено из
+пекинского /api/admin/points и /api/admin/rep) — на равных правах у вожатого,
+Архитектора и админа: и там, и там штат был одним списком без ступеней.
+Отличия от Пекина: числа не те же (там ±5000★/±1000 REP — не масштаб V4,
+здесь ±100★/±50 REP), причина обязательна, вниз от нуля не уходит, пишется в
+общий журнал операций, а не в отдельную таблицу, и получателем не может быть
+штат — начисляют детям, не друг другу.
 """
 from __future__ import annotations
 
@@ -20,11 +28,15 @@ from datetime import datetime, timezone
 from statistics import median
 from zoneinfo import ZoneInfo
 
-from .cases import CaseError, authorize, encoded, ensure_wallet, replay
+from .cases import CaseError, authorize, can_manage, encoded, ensure_wallet, replay
 from .diary import full_wallet
 
 WALK_CODE = "walk"
 REDEEM_OPERATION = "coupon.redeem"
+GRANT_OPERATION = "staff.grant"
+GRANT_STARS_CAP = 100
+GRANT_REP_CAP = 50
+GRANT_REASON_MAX = 300
 # Накопление: за три дня с операциями потрачено меньше трети заработанного.
 HOARDING_DAYS = 3
 HOARDING_RATIO = 0.3
@@ -142,6 +154,62 @@ def redeem_walk(conn, actor: int, season_id: int, key: str, account_id: int, req
         """INSERT INTO v4_audit_log(actor_account_id, season_id, action, entity_type,
                entity_id, request_id, after_json, metadata_json) VALUES (?,?,?,'coupon',?,?,?,?)""",
         (actor, season_id, REDEEM_OPERATION, str(account_id), request_id, serialized,
+         encoded({"idempotency_key": key})),
+    )
+    return response, False
+
+
+def grant(conn, actor: int, season_id: int, key: str, account_id: int, stars_delta: int, rep_delta: int,
+         reason: str, request_id=None):
+    """Ручная поправка ★/REP одному участнику — не автоматическая награда игры."""
+    authorize(conn, actor, season_id, manage=True)
+    payload = {"season_id": season_id, "account_id": account_id, "stars_delta": stars_delta,
+               "rep_delta": rep_delta, "reason": reason}
+    key, digest, old = replay(conn, actor, GRANT_OPERATION, key, payload)
+    if old is not None:
+        return old, True
+    authorize(conn, actor, season_id, manage=True, write=True)
+    reason = reason.strip()
+    if len(reason) < 3 or len(reason) > GRANT_REASON_MAX:
+        raise CaseError(f"Причина — от 3 до {GRANT_REASON_MAX} символов.")
+    if stars_delta == 0 and rep_delta == 0:
+        raise CaseError("Укажите хотя бы одно ненулевое изменение.")
+    if abs(stars_delta) > GRANT_STARS_CAP:
+        raise CaseError(f"Не больше {GRANT_STARS_CAP}★ за одно начисление.")
+    if abs(rep_delta) > GRANT_REP_CAP:
+        raise CaseError(f"Не больше {GRANT_REP_CAP} REP за одно начисление.")
+    authorize(conn, account_id, season_id, write=True)
+    if can_manage(conn, account_id, season_id):
+        raise CaseError("Начисления — только участникам, не штату.", 409)
+    ensure_wallet(conn, account_id, season_id)
+    before = full_wallet(conn, account_id, season_id)
+    # Не уходит в минус — как в пекинской версии: MAX(0, ...).
+    new_stars = max(0, before["stars"] + stars_delta)
+    new_rep = max(0, before["rep"] + rep_delta)
+    conn.execute("UPDATE v4_case_wallets SET stars=?, rep=? WHERE season_id=? AND account_id=?",
+                 (new_stars, new_rep, season_id, account_id))
+    after = full_wallet(conn, account_id, season_id)
+    details = {"reason": reason, "requested_stars_delta": stars_delta, "requested_rep_delta": rep_delta}
+    cursor = conn.execute(
+        """INSERT INTO v4_economy_operations(season_id, account_id, actor_account_id, operation,
+               stars_delta, scans_delta, rep_delta, stars_after, scans_after, rep_after, details_json)
+           VALUES (?,?,?,?,?,0,?,?,?,?,?)""",
+        (season_id, account_id, actor, GRANT_OPERATION, after["stars"] - before["stars"],
+         after["rep"] - before["rep"], after["stars"], after["scans"], after["rep"], encoded(details)),
+    )
+    response = {"season_id": season_id, "account_id": account_id, "operation_id": cursor.lastrowid,
+                "stars_delta": after["stars"] - before["stars"], "rep_delta": after["rep"] - before["rep"],
+                "reason": reason, "wallet": after}
+    serialized = encoded(response)
+    conn.execute(
+        """INSERT INTO v4_idempotency_keys(account_id, operation, idempotency_key,
+               request_hash, response_status, response_json) VALUES (?,?,?,?,200,?)""",
+        (actor, GRANT_OPERATION, key, digest, serialized),
+    )
+    conn.execute(
+        """INSERT INTO v4_audit_log(actor_account_id, season_id, action, entity_type,
+               entity_id, request_id, after_json, metadata_json) VALUES (?,?,?,'grant',?,?,?,?)""",
+        (actor, season_id, GRANT_OPERATION, str(account_id), request_id, serialized,
          encoded({"idempotency_key": key})),
     )
     return response, False

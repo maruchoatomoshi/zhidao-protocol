@@ -347,7 +347,7 @@ def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
 # --- действия ------------------------------------------------------------------------------------
 
 def join(conn, actor: int, season_id: int) -> dict:
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     now = utcnow()
     _catch_up(conn, season, now, True)
     if phase(season, now) == "closed":
@@ -364,7 +364,7 @@ def join(conn, actor: int, season_id: int) -> dict:
 
 
 def _trading(conn, actor: int, season_id: int):
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     now = utcnow()
     _catch_up(conn, season, now, True)
     state = phase(season, now)
@@ -393,13 +393,13 @@ def make_offer(conn, actor: int, season_id: int, give, want) -> dict:
 
 
 def cancel_offer(conn, actor: int, season_id: int) -> dict:
-    authorize(conn, actor, season_id)
+    authorize(conn, actor, season_id, staff_may_play=True)
     offers.cancel(actor)
     return current(conn, actor, season_id, allow_write=True)
 
 
 def peek(conn, actor: int, season_id: int, code: str) -> dict:
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     now = utcnow()
     if phase(season, now) != "open" or _row(conn, season_id, today(season, now), actor) is None:
         raise CaseError("Сначала выйдите на открытый рынок.", 409)

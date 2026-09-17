@@ -28,6 +28,11 @@ def board(conn, actor: int, season_id: int) -> dict:
            JOIN v4_accounts a ON a.id = m.account_id
            LEFT JOIN v4_case_wallets w ON w.season_id = m.season_id AND w.account_id = m.account_id
            WHERE m.season_id = ? AND m.status IN ('active', 'completed') AND a.status = 'active'
+             -- Штат может играть наравне со всеми (участие выдаёт им
+             -- членство при первой же игре), но не соревнуется за REP.
+             AND NOT EXISTS (SELECT 1 FROM v4_role_assignments ra WHERE ra.account_id = a.id
+                              AND ra.role_code IN ('operator', 'architect', 'system_admin')
+                              AND ra.revoked_at IS NULL)
            ORDER BY rep DESC, a.display_name, a.id""",
         (season_id,),
     ).fetchall()

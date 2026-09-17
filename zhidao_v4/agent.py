@@ -387,7 +387,7 @@ def _in_game(conn, season_id: int, actor: int):
 
 
 def join(conn, actor: int, season_id: int) -> dict:
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     now = utcnow()
     me = _player(conn, season_id, actor)
     if me and me["excluded"]:
@@ -404,7 +404,7 @@ def join(conn, actor: int, season_id: int) -> dict:
 
 
 def leave(conn, actor: int, season_id: int) -> dict:
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     me = _in_game(conn, season_id, actor)
     del me
     _drop(conn, season, actor, utcnow())
@@ -422,7 +422,7 @@ def _today_link(conn, season, actor: int, now: datetime):
 
 def ask(conn, actor: int, season_id: int) -> dict:
     """Агент говорит «миссия выполнена» — цели приходит вопрос. Этим он себя раскрывает."""
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     _in_game(conn, season_id, actor)
     now = utcnow()
     link = _today_link(conn, season, actor, now)
@@ -444,7 +444,7 @@ def ask(conn, actor: int, season_id: int) -> dict:
 
 def answer(conn, actor: int, season_id: int, yes: bool) -> dict:
     """Цель отвечает агенту. «Да» — миссия засчитана; «нет» — миссия остаётся, отказ видит вожатый."""
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     now = utcnow()
     link = conn.execute("SELECT * FROM v4_agent_links WHERE season_id=? AND target_account_id=? AND day=? AND asking=1",
                         (season_id, actor, today(season, now))).fetchone()
@@ -463,7 +463,7 @@ def answer(conn, actor: int, season_id: int, yes: bool) -> dict:
 
 def guess(conn, actor: int, season_id: int, suspect: int) -> dict:
     """Раз в день: назвать, кто за тобой охотится. Угадал — очки и агенту новая цель."""
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     me = _in_game(conn, season_id, actor)
     now = utcnow()
     _ensure_day(conn, season, now, True)

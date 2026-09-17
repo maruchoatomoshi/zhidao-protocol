@@ -150,6 +150,12 @@ def rate(conn, actor: int, season_id: int, key: str, account_id: int, entry_date
     entry_date = check_date(season, entry_date)
     if stars not in (0, 1, 2, 3):
         raise CaseError("Оценка — от 0 до 3 звёзд.")
+    # Штат не оценивается, даже если у него уже есть настоящее членство от
+    # какой-то другой игры (участие в играх выдаёт его на весь сезон, не
+    # только на ту игру) — решение специально не про отсутствие строки, а
+    # про роль: вожатый не участник дневника.
+    if can_manage(conn, account_id, season_id):
+        raise CaseError("Вы не активный участник этого сезона. Обратитесь к организатору.", 403)
     authorize(conn, account_id, season_id, write=True)
 
     current = _rating(conn, season_id, account_id, entry_date)
@@ -289,6 +295,12 @@ def leaderboard(conn, actor: int, season_id: int) -> dict:
            JOIN v4_accounts a ON a.id = m.account_id
            LEFT JOIN v4_diary_ratings r ON r.season_id = m.season_id AND r.account_id = m.account_id
            WHERE m.season_id = ? AND m.status IN ('active', 'completed') AND a.status = 'active'
+             -- Штат играет наравне со всеми, но не соревнуется: они
+             -- попадают в v4_season_memberships, как только сыграют первую
+             -- игру, и без этого условия оказались бы в общем рейтинге.
+             AND NOT EXISTS (SELECT 1 FROM v4_role_assignments ra WHERE ra.account_id = a.id
+                              AND ra.role_code IN ('operator', 'architect', 'system_admin')
+                              AND ra.revoked_at IS NULL)
            GROUP BY m.id
            ORDER BY total_stars DESC, days_rated DESC, bonus_count DESC, a.display_name, a.id""",
         (season_id,),

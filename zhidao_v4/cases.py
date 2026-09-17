@@ -83,7 +83,20 @@ def can_manage(conn, account_id, season_id):
         (account_id, season_id)).fetchone() is not None
 
 
-def authorize(conn, account_id, season_id, *, manage=False, write=False):
+def authorize(conn, account_id, season_id, *, manage=False, write=False, staff_may_play=False):
+    """staff_may_play only widens the self-service branch (manage=False):
+    a caller checking their OWN eligibility to play may pass it so staff
+    (operator/Architect/system_admin) can join without a roster row —
+    and, on first use, actually gets one. Games that pay stars/REP straight
+    into v4_case_wallets need a real row: that table's foreign key is
+    (season_id, account_id) -> v4_season_memberships, so a bare bypass
+    would let staff join a game and then crash the moment it tried to pay
+    them. staff_may_play must never be passed when account_id is someone
+    OTHER than the caller (a diary rating's target, a trade partner, ...)
+    — staff being scoreable is a separately-decided question, and the
+    answer was no (V4_GAMES.md: hidden from the REP/diary leaderboards).
+    Leaderboards filter staff out by role, not by membership shape, since
+    this makes them ordinary active members everywhere else."""
     season = conn.execute('SELECT * FROM v4_seasons WHERE id=?', (season_id,)).fetchone()
     if not season:
         raise CaseError('Сезон не найден.', 404)
@@ -96,7 +109,14 @@ def authorize(conn, account_id, season_id, *, manage=False, write=False):
     else:
         member = conn.execute('SELECT status FROM v4_season_memberships WHERE season_id=? AND account_id=?',
                               (season_id, account_id)).fetchone()
-        if not member or member['status'] not in ('active', 'completed') or (write and member['status'] != 'active'):
+        if not member and staff_may_play and can_manage(conn, account_id, season_id):
+            conn.execute(
+                "INSERT INTO v4_season_memberships(season_id, account_id, status) VALUES (?,?,'active')",
+                (season_id, account_id))
+            member = {'status': 'active'}
+        lacks_membership = (not member or member['status'] not in ('active', 'completed')
+                            or (write and member['status'] != 'active'))
+        if lacks_membership and not (staff_may_play and can_manage(conn, account_id, season_id)):
             raise CaseError('Вы не активный участник этого сезона. Обратитесь к организатору.', 403)
     if write and season['status'] != 'active':
         raise CaseError('Сезон не активен: изменения недоступны.', 409)

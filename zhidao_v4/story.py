@@ -24,7 +24,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from . import campus, cases, shop
-from .cases import CaseError, authorize
+from .cases import CaseError, authorize, can_manage
 
 SCENARIO_PATH = Path(__file__).parent / "story_scenario.json"
 SURFACES = ("icq", "recycle_bin", "error_window", "broken_shortcut", "properties", "place")
@@ -225,6 +225,11 @@ def reward_everyone(conn, season_id: int) -> int:
 
 
 def answer(conn, actor: int, season_id: int, code: str, text: str) -> dict:
+    # Штат читает сюжет (view() уже это разрешает), но не отвечает — даже с
+    # настоящим членством от какой-то другой игры: Архитектор сам написал
+    # сценарий, отвечать на свои же загадки ему нечего.
+    if can_manage(conn, actor, season_id):
+        raise CaseError("Вы не активный участник этого сезона. Обратитесь к организатору.", 403)
     season = authorize(conn, actor, season_id, write=True)
     state = progress(conn, season)
     found = next((item for item in state["states"] if item[1]["code"] == code), None)

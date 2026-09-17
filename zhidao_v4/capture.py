@@ -555,7 +555,7 @@ def view(conn, account_id: int, season_id: int) -> dict:
 # --- ходы ------------------------------------------------------------------------------------------
 
 def _playable(conn, actor: int, season_id: int, code: str, now: datetime):
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     if code not in points():
         raise CaseError("Такой точки нет.", 404)
     row = _point_rows(conn, season_id).get(code)
@@ -621,12 +621,12 @@ def answer(conn, actor: int, season_id: int, code: str, choice: int) -> dict:
 def contribute(conn, actor: int, season_id: int, *, ability: str, target: str | None, amount: int, key: str,
                request_id=None):
     """Взнос в копилку фракции. Когда копилка полна, способность включается сразу."""
-    authorize(conn, actor, season_id)
+    authorize(conn, actor, season_id, staff_may_play=True)
     payload = {"season_id": season_id, "ability": ability, "target": target, "amount": amount}
     key, digest, old = replay(conn, actor, POOL_OPERATION, key, payload)
     if old is not None:
         return old, True
-    season = authorize(conn, actor, season_id, write=True)
+    season = authorize(conn, actor, season_id, write=True, staff_may_play=True)
     now = utcnow()
     if ability not in ABILITIES:
         raise CaseError("Такой способности нет.", 404)

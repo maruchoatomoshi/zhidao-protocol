@@ -173,14 +173,6 @@ def _csrf_principal(
     return principal
 
 
-def _system_admin(
-    principal: Principal = Depends(_csrf_principal),
-) -> Principal:
-    if not principal.has_global_role("system_admin"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
-    return principal
-
-
 def _architect_reader(
     principal: Principal = Depends(_current_principal),
 ) -> Principal:
@@ -635,7 +627,7 @@ def create_app(
     def create_season(
         payload: SeasonCreatePayload,
         request: Request,
-        principal: Principal = Depends(_system_admin),
+        principal: Principal = Depends(_architect_writer),
     ):
         idempotency_key = request.headers.get("x-idempotency-key", "")
         conn = connect_database(app.state.db_path)

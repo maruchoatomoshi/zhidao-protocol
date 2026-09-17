@@ -16,6 +16,14 @@ class RedeemPayload(BaseModel):
     account_id: int = Field(gt=0, strict=True)
 
 
+class GrantPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    account_id: int = Field(gt=0, strict=True)
+    stars_delta: int = Field(default=0, strict=True)
+    rep_delta: int = Field(default=0, strict=True)
+    reason: str = Field(min_length=1, max_length=300)
+
+
 def register_economy(app, current_principal, csrf_principal):
     @contextmanager
     def database():
@@ -43,6 +51,19 @@ def register_economy(app, current_principal, csrf_principal):
                 result, replayed = economy.redeem_walk(
                     conn, principal.account_id, season_id,
                     request.headers.get("x-idempotency-key", ""), payload.account_id,
+                    request.state.request_id,
+                )
+        return JSONResponse(result, headers={"X-Idempotent-Replayed": str(replayed).lower()})
+
+    @app.post("/api/v4/seasons/{season_id}/economy/grant")
+    def economy_grant(season_id: int, payload: GrantPayload, request: Request,
+                      principal=Depends(csrf_principal)):
+        with database() as conn:
+            with immediate_transaction(conn):
+                result, replayed = economy.grant(
+                    conn, principal.account_id, season_id,
+                    request.headers.get("x-idempotency-key", ""), payload.account_id,
+                    payload.stars_delta, payload.rep_delta, payload.reason,
                     request.state.request_id,
                 )
         return JSONResponse(result, headers={"X-Idempotent-Replayed": str(replayed).lower()})

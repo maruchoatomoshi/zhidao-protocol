@@ -20,6 +20,8 @@ import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
 
+from .cases import can_manage
+
 
 GAMES = ("spy", "cipher", "outage", "smuggle")
 MAX_PLAYERS = 8
@@ -89,6 +91,11 @@ def resolve_season(conn: sqlite3.Connection, account_id: int) -> int:
     season membership, so this picks deterministically — the most recent
     active season where the account is an active member — rather than
     leaving it to whichever row SQLite happens to return first.
+
+    Staff (operator/Architect/system_admin) don't need a roster row to
+    play — cases.authorize() gives every other game the same bypass via
+    can_manage(). It doesn't create a membership row, so a staff-hosted
+    room still doesn't put them on anyone's roster or leaderboard.
     """
     row = conn.execute(
         """SELECT s.id FROM v4_seasons s JOIN v4_season_memberships m ON m.season_id = s.id
@@ -96,16 +103,21 @@ def resolve_season(conn: sqlite3.Connection, account_id: int) -> int:
            ORDER BY s.id DESC LIMIT 1""",
         (account_id,),
     ).fetchone()
-    if row is None:
-        raise GameError("Вы не участник ни одного активного сезона.", 403)
-    return int(row["id"])
+    if row is not None:
+        return int(row["id"])
+    row = conn.execute("SELECT id FROM v4_seasons WHERE status = 'active' ORDER BY id DESC LIMIT 1").fetchone()
+    if row is not None and can_manage(conn, account_id, int(row["id"])):
+        return int(row["id"])
+    raise GameError("Вы не участник ни одного активного сезона.", 403)
 
 
 def is_season_member(conn: sqlite3.Connection, account_id: int, season_id: int) -> bool:
-    return conn.execute(
+    if conn.execute(
         "SELECT 1 FROM v4_season_memberships WHERE season_id = ? AND account_id = ? AND status = 'active'",
         (season_id, account_id),
-    ).fetchone() is not None
+    ).fetchone() is not None:
+        return True
+    return can_manage(conn, account_id, season_id)
 
 
 def game_enabled(conn: sqlite3.Connection, game: str) -> bool:

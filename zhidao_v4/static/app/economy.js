@@ -14,6 +14,7 @@
     "diary.rate": "Оценки дневника",
     "coupon.redeem": "Погашение купонов",
     "shop.buy": "Покупки на витрине",
+    "staff.grant": "Ручные начисления",
   };
   let session = window.ZhidaoSession || null;
   let contextPromise = null;
@@ -235,17 +236,79 @@
     }
   }
 
+  // --- начисление ★ и REP (решение 2026-09-17, перенесено из пекинской /api/admin/points и /api/admin/rep) ---
+
+  let rosterLoaded = false;
+
+  async function loadGrantRoster() {
+    const select = $("economyGrantTarget");
+    select.replaceChildren(node("option", null, "Загрузка…"));
+    try {
+      const result = await api("/api/v4/admin/accounts?limit=200");
+      const items = (result.items || []).filter((a) => a.status === "active");
+      select.replaceChildren();
+      for (const account of items) {
+        const option = node("option", null, `${account.display_name} · #${account.id}`);
+        option.value = String(account.id);
+        select.append(option);
+      }
+      rosterLoaded = true;
+    } catch (error) {
+      select.replaceChildren(node("option", null, "Не удалось загрузить"));
+      $("economyGrantStatus").textContent = error.message;
+    }
+  }
+
+  async function submitGrant(event) {
+    event.preventDefault();
+    if (busy || !season) return;
+    const accountId = Number($("economyGrantTarget").value);
+    if (!accountId) {
+      $("economyGrantStatus").textContent = "Сначала выберите участника.";
+      return;
+    }
+    const starsDelta = Math.trunc(Number($("economyGrantStars").value) || 0);
+    const repDelta = Math.trunc(Number($("economyGrantRep").value) || 0);
+    const reason = $("economyGrantReason").value.trim();
+    busy = true;
+    $("economyGrantStatus").textContent = "Начисляем…";
+    $("economyGrantSubmit").disabled = true;
+    try {
+      const result = await api(`/api/v4/seasons/${season.id}/economy/grant`, {
+        method: "POST", key: newKey(),
+        body: { account_id: accountId, stars_delta: starsDelta, rep_delta: repDelta, reason },
+      });
+      $("economyGrantStatus").textContent =
+        `Готово: ${result.stars_delta >= 0 ? "+" : ""}${result.stars_delta}★, ${result.rep_delta >= 0 ? "+" : ""}${result.rep_delta} REP. Баланс: ${result.wallet.stars}★, ${result.wallet.rep} REP.`;
+      $("economyGrantStars").value = "0";
+      $("economyGrantRep").value = "0";
+      $("economyGrantReason").value = "";
+      await load();
+    } catch (error) {
+      $("economyGrantStatus").textContent = error.message;
+    } finally {
+      busy = false;
+      $("economyGrantSubmit").disabled = false;
+    }
+  }
+
   window.addEventListener("zhidao:auth", (event) => {
     session = event.detail;
     contextPromise = null;
     data = null;
     armed = null;
     pending.clear();
+    rosterLoaded = false;
     if (panelVisible()) load();
   });
   window.addEventListener("zhidao:screen", () => { if (panelVisible()) load(); });
   window.addEventListener("zhidao:tab", (event) => {
-    if (event.detail && event.detail.dataset.tabPanel === "admin:economy" && panelVisible()) load();
+    if (event.detail && event.detail.dataset.tabPanel === "admin:economy" && panelVisible()) {
+      load();
+      if (!rosterLoaded) loadGrantRoster();
+    }
   });
   $("adminRefresh").addEventListener("click", () => { if (panelVisible()) load(); });
+  $("economyGrantReload").addEventListener("click", () => loadGrantRoster());
+  $("economyGrantForm").addEventListener("submit", submitGrant);
 }());

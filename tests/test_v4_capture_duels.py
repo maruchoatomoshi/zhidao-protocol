@@ -148,7 +148,10 @@ class DuelTests(unittest.TestCase):
         self.now = MORNING
         self.switch(False)
         self.assertEqual(self.offer(self.a).status_code, 409)
-        self.assertEqual(self.offer("architect").status_code, 403)
+        # Штат теперь тоже может играть (решение 2026-09-17) — architect
+        # упирается в тот же выключенный переключатель, что и участник,
+        # не в старое «вы не участник».
+        self.assertEqual(self.offer("architect").status_code, 409)
         self.assertEqual(self.offer("kid7").status_code, 409)
 
     # --- виды дуэлей ---------------------------------------------------------------------

@@ -266,6 +266,46 @@ class V4AuthApiTests(unittest.TestCase):
         self.assertEqual(rehearsal_count, 1)
         self.assertEqual(audit_count, 2)
 
+    def test_season_creation_is_equally_open_to_architect_and_admin(self):
+        """Решение 2026-09-17: Architect и system_admin равны — раньше создавать
+        сезон мог только system_admin, теперь роли не различаются нигде."""
+        conn = connect_database(self.db_path)
+        with immediate_transaction(conn):
+            architect_only = provision_local_account(
+                conn, username="architect.only", password=OPERATOR_PASSWORD,
+                display_name="Architect Only", role_code="architect",
+            )["id"]
+            operator_only = provision_local_account(
+                conn, username=OPERATOR_USERNAME, password=OPERATOR_PASSWORD,
+                display_name="Operator", role_code="operator",
+            )["id"]
+        conn.close()
+        del architect_only, operator_only
+
+        architect_login = self.client.post(
+            "/api/v4/auth/login", json={"username": "architect.only", "password": OPERATOR_PASSWORD})
+        self.assertEqual(architect_login.status_code, 200, architect_login.text)
+        created = self.client.post(
+            "/api/v4/seasons",
+            json={"code": "architect-made", "name": "Architect Made", "timezone": "Asia/Shanghai",
+                  "theme_key": "hainan-aqua"},
+            headers={"x-csrf-token": architect_login.json()["csrf_token"],
+                     "x-idempotency-key": "season:create:by-architect"},
+        )
+        self.assertEqual(created.status_code, 201, created.text)
+
+        operator_login = self.client.post(
+            "/api/v4/auth/login", json={"username": OPERATOR_USERNAME, "password": OPERATOR_PASSWORD})
+        self.assertEqual(operator_login.status_code, 200, operator_login.text)
+        refused = self.client.post(
+            "/api/v4/seasons",
+            json={"code": "operator-made", "name": "Operator Made", "timezone": "Asia/Shanghai",
+                  "theme_key": "hainan-aqua"},
+            headers={"x-csrf-token": operator_login.json()["csrf_token"],
+                     "x-idempotency-key": "season:create:by-operator"},
+        )
+        self.assertEqual(refused.status_code, 403)
+
     def test_roster_and_link_codes_are_closed_to_participants(self):
         """Ростер и коды сопряжения — инструмент вожатого, не участника.
 

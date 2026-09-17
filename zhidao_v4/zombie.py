@@ -272,7 +272,7 @@ def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
 # --- действия участников ------------------------------------------------------------------------
 
 def join(conn, actor: int, season_id: int) -> dict:
-    authorize(conn, actor, season_id, write=True)
+    authorize(conn, actor, season_id, write=True, staff_may_play=True)
     game = _active(conn, season_id)
     if game is None:
         raise CaseError("Сейчас нет открытого раунда. Его открывает вожатый.", 404)
@@ -288,7 +288,7 @@ def join(conn, actor: int, season_id: int) -> dict:
 
 
 def leave(conn, actor: int, season_id: int) -> dict:
-    authorize(conn, actor, season_id)
+    authorize(conn, actor, season_id, staff_may_play=True)
     game = _active(conn, season_id)
     if game is None or game["status"] != "lobby":
         raise CaseError("Выйти можно только из лобби.", 409)
@@ -298,7 +298,7 @@ def leave(conn, actor: int, season_id: int) -> dict:
 
 def _running(conn, actor: int, season_id: int, now: datetime):
     """Раунд и игрок. (None, None) — раунд только что закончился: итоги записаны, ошибкой их не откатываем."""
-    authorize(conn, actor, season_id, write=True)
+    authorize(conn, actor, season_id, write=True, staff_may_play=True)
     game = _active(conn, season_id)
     if game is None:
         raise CaseError("Сейчас нет раунда.", 404)

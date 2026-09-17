@@ -33,7 +33,8 @@ class EconomyTests(unittest.TestCase):
         conn = connect_database(self.path)
         with immediate_transaction(conn):
             self.ids = {}
-            for name, role in [("staff", "operator"), ("alice", "participant"), ("boris", "participant")]:
+            for name, role in [("staff", "operator"), ("architect", "architect"), ("admin", "system_admin"),
+                               ("alice", "participant"), ("boris", "participant")]:
                 self.ids[name] = provision_local_account(conn, username=name, password=PASSWORD,
                                                          display_name=name.capitalize(), role_code=role)["id"]
             conn.execute("INSERT INTO v4_seasons(id,code,name,status,timezone) VALUES (1,'hainan','Hainan','active','Asia/Shanghai')")
@@ -82,6 +83,13 @@ class EconomyTests(unittest.TestCase):
             "/api/v4/seasons/1/economy/coupons/redeem",
             headers={"X-CSRF-Token": self.tokens[actor], "X-Idempotency-Key": key or uuid.uuid4().hex},
             json={"account_id": self.ids[who]},
+        )
+
+    def grant(self, who="alice", actor="staff", key=None, stars_delta=0, rep_delta=0, reason="за смелость"):
+        return self.clients[actor].post(
+            "/api/v4/seasons/1/economy/grant",
+            headers={"X-CSRF-Token": self.tokens[actor], "X-Idempotency-Key": key or uuid.uuid4().hex},
+            json={"account_id": self.ids[who], "stars_delta": stars_delta, "rep_delta": rep_delta, "reason": reason},
         )
 
     # --- панель -------------------------------------------------------------------
@@ -157,6 +165,62 @@ class EconomyTests(unittest.TestCase):
         self.give_walks()
         self.assertEqual(self.redeem(actor="alice").status_code, 403)
         self.assertEqual(self.redeem(who="boris").status_code, 409)
+
+    # --- ручное начисление ★ и REP (решение 2026-09-17, перенесено из Пекина) ------
+
+    def test_operator_architect_and_admin_grant_on_equal_terms(self):
+        for actor in ("staff", "architect", "admin"):
+            response = self.grant(actor=actor, stars_delta=5, key=f"equal-{actor}")
+            self.assertEqual(response.status_code, 200, response.text)
+        wallet = self.execute("SELECT stars FROM v4_case_wallets WHERE account_id=?", (self.ids["alice"],))[0]
+        self.assertEqual(wallet["stars"], 15)
+
+    def test_participants_cannot_grant(self):
+        self.assertEqual(self.grant(actor="alice").status_code, 403)
+
+    def test_stars_and_rep_move_together_are_journalled_and_never_go_below_zero(self):
+        response = self.grant(stars_delta=30, rep_delta=10, reason="дежурство по столовой")
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertEqual((body["stars_delta"], body["rep_delta"]), (30, 10))
+        wallet = self.execute("SELECT stars, rep FROM v4_case_wallets WHERE account_id=?", (self.ids["alice"],))[0]
+        self.assertEqual((wallet["stars"], wallet["rep"]), (30, 10))
+        op = self.execute(
+            "SELECT operation, actor_account_id, stars_delta, rep_delta, details_json FROM v4_economy_operations "
+            "WHERE operation=?", (economy.GRANT_OPERATION,))[0]
+        self.assertEqual((op["operation"], op["actor_account_id"], op["stars_delta"], op["rep_delta"]),
+                          (economy.GRANT_OPERATION, self.ids["staff"], 30, 10))
+        self.assertIn("дежурство", op["details_json"])
+        # Списание больше остатка останавливается на нуле, не уходит в минус.
+        self.assertEqual(self.grant(stars_delta=-100, key="floor-test").status_code, 200)
+        wallet = self.execute("SELECT stars FROM v4_case_wallets WHERE account_id=?", (self.ids["alice"],))[0]
+        self.assertEqual(wallet["stars"], 0)
+
+    def test_reason_is_required_and_deltas_are_capped(self):
+        self.assertEqual(self.grant(stars_delta=5, reason="ок").status_code, 400)  # короче 3 символов
+        self.assertEqual(self.grant(stars_delta=0, rep_delta=0).status_code, 400)  # нечего менять
+        self.assertEqual(self.grant(stars_delta=101).status_code, 400)
+        self.assertEqual(self.grant(rep_delta=51).status_code, 400)
+        self.assertEqual(self.grant(stars_delta=100).status_code, 200)
+        self.assertEqual(self.grant(rep_delta=-50, key="rep-cap-test").status_code, 200)
+
+    def test_staff_cannot_be_the_target_and_retry_does_not_grant_twice(self):
+        # Без всякого членства архитектор просто не проходит базовую
+        # проверку участника (403). Настоящая защита — на случай, если он
+        # уже играл в какую-то другую игру и получил настоящее членство:
+        # даже тогда начисление ему отказывает, отдельно и по роли.
+        self.assertEqual(self.grant(who="architect", stars_delta=5).status_code, 403)
+        self.execute("INSERT INTO v4_season_memberships(season_id, account_id, status) VALUES (1, ?, 'active')",
+                     (self.ids["architect"],))
+        self.assertEqual(self.grant(who="architect", stars_delta=5, key="staff-target").status_code, 409)
+        key = "grant-once"
+        first = self.grant(stars_delta=7, key=key)
+        second = self.grant(stars_delta=7, key=key)
+        self.assertEqual(first.status_code, 200, first.text)
+        self.assertEqual(second.json(), first.json())
+        self.assertEqual(second.headers["x-idempotent-replayed"], "true")
+        wallet = self.execute("SELECT stars FROM v4_case_wallets WHERE account_id=?", (self.ids["alice"],))[0]
+        self.assertEqual(wallet["stars"], 7)
 
 
 if __name__ == "__main__":
