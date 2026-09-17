@@ -467,6 +467,7 @@ def point_view(code: str, row: dict | None, *, staff: bool, faction: str | None,
                effects: list[dict] | None = None, moves_today: int = 0) -> dict:
     names = story.feature_names().get(points()[code]["feature"], {})
     view = {"code": code, "name_ru": names.get("name_ru"), "name_zh": names.get("name_zh"),
+            "feature": points()[code]["feature"],
             "confirmed": row is not None, "owner": row["owner"] if row else None,
             "level": int(row["level"]) if row else 0, "max_level": config()["max_level"]}
     if row:

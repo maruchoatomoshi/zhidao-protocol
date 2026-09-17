@@ -1056,8 +1056,9 @@ function attachGestures(ui) {
       window.dispatchEvent(new CustomEvent("zhidao:campus-mark", { detail: Number(mark.dataset.markId) }));
       return;
     }
-    // Точка Захвата кампуса (capture.js) — тоже поверх объекта.
-    const point = target.closest ? target.closest(".capture-point[data-point]") : null;
+    // Точка Захвата кампуса (capture.js) — тоже поверх объекта. Зона (реальный
+    // контур здания) и ромб-маркер ведут на одну и ту же точку.
+    const point = target.closest ? target.closest(".capture-point[data-point], .capture-zone[data-point]") : null;
     if (point) {
       window.dispatchEvent(new CustomEvent("zhidao:capture-point", { detail: point.dataset.point }));
       return;
@@ -1303,6 +1304,22 @@ async function initCampusMap() {
    после того, как метка открыла клетку. Геометрию карты слой не трогает. */
 window.ZhidaoCampus = {
   project: (lon, lat) => (campusState.origin ? project(lon, lat, campusState.origin) : null),
+  // Внешний контур полигона объекта по его id из campus.geojson (для Захвата
+  // кампуса: реальная форма здания вместо выдуманной зоны). null, если id не
+  // найден или объект не полигон -- геометрию карты этот слой не придумывает.
+  ring(featureId) {
+    if (!campusState.data) return null;
+    const feature = campusState.data.features.find((f) => f.properties && f.properties.id === featureId);
+    if (!feature || feature.geometry.type !== "Polygon") return null;
+    return feature.geometry.coordinates[0];
+  },
+  // Контур подготовленного сектора -- та же граница, которой уже проверяют
+  // "вы на территории кампуса" (coordinateInPolygon выше). Единственная
+  // законная площадь, которую вообще можно делить между фракциями: за ней
+  // либо неизведанные регионы, либо вообще не сверенные данные.
+  boundary() {
+    return campusState.campusBoundary ? campusState.campusBoundary.geometry.coordinates[0] : null;
+  },
   async reload() {
     if (!campusState.data) return;
     mergeExploration(campusState.data, await fetchExploration());

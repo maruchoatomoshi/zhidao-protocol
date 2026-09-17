@@ -154,10 +154,124 @@
     ui.layer.querySelectorAll(".capture-shape").forEach((shape) => shape.setAttribute("transform", `scale(${k.toFixed(3)})`));
   }
 
+  // Штриховка боя рисуется одним <pattern> в <defs> самой карты и переиспользуется
+  // всеми зонами -- не заводим свою на каждую точку.
+  function ensureContestPattern() {
+    if (!ui || !ui.svg || ui.svg.querySelector("#capture-contest-hatch")) return;
+    let defs = ui.svg.querySelector("defs");
+    if (!defs) {
+      defs = svg("defs", {});
+      ui.svg.insertBefore(defs, ui.svg.firstChild);
+    }
+    const pattern = svg("pattern", {
+      id: "capture-contest-hatch", width: "6", height: "6",
+      patternTransform: "rotate(45)", patternUnits: "userSpaceOnUse",
+    });
+    pattern.append(svg("rect", { width: "6", height: "6", fill: "#ff4a3d", "fill-opacity": ".18" }));
+    pattern.append(svg("rect", { width: "3", height: "6", fill: "#ff4a3d", "fill-opacity": ".55" }));
+    defs.append(pattern);
+  }
+
+  // --- разбиение всей карты между точками (взвешенная диаграмма Вороного) -------------
+  //
+  // Игроки просили не пятно вокруг здания, а настоящую границу: карта делится
+  // между всеми точками захвата целиком, без дыр и нахлёстов, граница одной
+  // упирается ровно в границу соседней. Это степенная (Лагеррова) диаграмма
+  // Вороного, отсечённая по контуру подготовленного сектора (та же граница,
+  // которой уже проверяют "вы на территории кампуса" в campus-map.js) --
+  // ничего не выдумываем, просто честно делим настоящую площадь между
+  // настоящими точками. Вес у "Общий учебный корпус" больше остальных --
+  // её участок нарочно крупнее (решение пользователя 2026-09-17).
+  const ZONE_WEIGHTS = { teaching: 46000 };
+
+  // Sutherland-Hodgman: оставляет часть poly по одну сторону прямой,
+  // заданной точкой (px,py) и внешней нормалью (nx,ny).
+  function clipHalfPlane(poly, px, py, nx, ny) {
+    if (!poly.length) return poly;
+    const out = [];
+    const side = (pt) => (pt.x - px) * nx + (pt.y - py) * ny;
+    for (let i = 0; i < poly.length; i += 1) {
+      const cur = poly[i];
+      const prev = poly[(i + poly.length - 1) % poly.length];
+      const curSide = side(cur);
+      const prevSide = side(prev);
+      if (curSide >= 0) {
+        if (prevSide < 0) {
+          const t = prevSide / (prevSide - curSide);
+          out.push({ x: prev.x + (cur.x - prev.x) * t, y: prev.y + (cur.y - prev.y) * t });
+        }
+        out.push(cur);
+      } else if (prevSide >= 0) {
+        const t = prevSide / (prevSide - curSide);
+        out.push({ x: prev.x + (cur.x - prev.x) * t, y: prev.y + (cur.y - prev.y) * t });
+      }
+    }
+    return out;
+  }
+
+  // Граница между взвешенными точками -- та же прямая, что у обычного
+  // серединного перпендикуляра, но сдвинутая к более лёгкой точке на
+  // (wSite-wOther)/(2|PQ|) вдоль (other-site): тяжелее точка -- дальше от
+  // неё уезжает граница, больше её участок. Нормаль (site-other) указывает
+  // на саму site -- её и оставляем при отсечке половиной плоскости.
+  function voronoiCell(site, others, boundary) {
+    let poly = boundary;
+    for (const other of others) {
+      if (other === site) continue;
+      const dx = other.x - site.x;
+      const dy = other.y - site.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 1e-6) continue;
+      const nx = -dx / dist;
+      const ny = -dy / dist;
+      const shift = ((site.w || 0) - (other.w || 0)) / (2 * dist);
+      const mx = (site.x + other.x) / 2 - shift * nx;
+      const my = (site.y + other.y) / 2 - shift * ny;
+      poly = clipHalfPlane(poly, mx, my, nx, ny);
+      if (!poly.length) break;
+    }
+    return poly;
+  }
+
+  function computeZones(points) {
+    const cells = new Map();
+    const boundaryRing = window.ZhidaoCampus.boundary();
+    if (!boundaryRing) return cells;
+    const boundary = boundaryRing.map(([lon, lat]) => window.ZhidaoCampus.project(lon, lat)).filter(Boolean);
+    if (boundary.length < 3) return cells;
+    const sites = [];
+    for (const p of points) {
+      if (!p.coordinates) continue;
+      const at = window.ZhidaoCampus.project(p.coordinates[0], p.coordinates[1]);
+      if (at) sites.push({ code: p.code, x: at.x, y: at.y, w: ZONE_WEIGHTS[p.code] || 0 });
+    }
+    for (const site of sites) cells.set(site.code, voronoiCell(site, sites, boundary));
+    return cells;
+  }
+
+  function drawZone(cellPts, p, owner, mine, contested) {
+    if (!cellPts || cellPts.length < 3) return null;
+    const classes = ["capture-zone"];
+    if (!p.confirmed) classes.push("is-draft");
+    if (mine) classes.push("is-mine");
+    if (contested) classes.push("is-contested");
+    const zone = svg("polygon", {
+      class: classes.join(" "),
+      points: cellPts.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(" "),
+    });
+    zone.dataset.point = p.code;
+    zone.style.setProperty("--faction", owner ? owner.color : NEUTRAL);
+    return zone;
+  }
+
   function draw() {
     if (!ui || !ui.layer) return;
     ui.layer.querySelector(".capture-points")?.remove();
+    ui.layer.querySelector(".capture-zones")?.remove();
     if (!state || !state.points.length || !window.ZhidaoCampus) return;
+    ensureContestPattern();
+    const zoneCells = computeZones(state.points);
+    const zones = svg("g", { class: "capture-zones" });
     const group = svg("g", { class: "capture-points" });
     for (const p of state.points) {
       if (!p.coordinates) continue;
@@ -165,12 +279,16 @@
       if (!at) continue;
       const owner = faction(p.owner);
       const mine = Boolean(owner && state.you && state.you.faction === owner.code);
+      const contested = Boolean(question && question.code === p.code);
+      const zone = drawZone(zoneCells.get(p.code), p, owner, mine, contested);
+      if (zone) zones.append(zone);
       const classes = ["capture-point"];
       if (!p.confirmed) classes.push("is-draft");
       if (mine) classes.push("is-mine");
       if (p.shield_until) classes.push("is-shielded");
       if (p.double_until) classes.push("is-double");
       if (p.code === selected) classes.push("is-selected");
+      if (contested) classes.push("is-contested");
       const item = svg("g", {
         class: classes.join(" "),
         transform: `translate(${at.x.toFixed(1)} ${at.y.toFixed(1)})`,
@@ -193,8 +311,13 @@
       group.append(item);
     }
     const before = ui.layer.querySelector(".campus-marks") || (ui.me && ui.me.parentNode === ui.layer ? ui.me : null);
-    if (before) ui.layer.insertBefore(group, before);
-    else ui.layer.append(group);
+    if (before) {
+      ui.layer.insertBefore(zones, before);
+      ui.layer.insertBefore(group, before);
+    } else {
+      ui.layer.append(zones);
+      ui.layer.append(group);
+    }
     resize();
   }
 
@@ -398,6 +521,10 @@
     }
     if (selected !== code) noteText = "";
     selected = code;
+    // Каждый вызов идёт сразу после того, как question мог смениться (начали
+    // бой, ответили, истекло время) -- перерисовываем зоны, чтобы штриховка
+    // боя на карте не отставала от карточки точки.
+    draw();
     ui?.layer?.querySelectorAll(".capture-point").forEach((g) => g.classList.toggle("is-selected", g.dataset.point === code));
     const owner = faction(p.owner);
     const mine = Boolean(owner && state.you && state.you.faction === owner.code);

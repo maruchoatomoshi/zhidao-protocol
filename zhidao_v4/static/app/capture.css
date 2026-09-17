@@ -1,5 +1,20 @@
 /* Захват кампуса: ромбы фракций на карте, табло и карточка точки (V4_GAMES.md §4.12). */
 
+/* Зона -- участок настоящей взвешенной диаграммы Вороного (capture.js,
+   computeZones), отсечённый по границе подготовленного сектора. Карта
+   делится между всеми точками целиком, без дыр: граница одной упирается
+   ровно в границу соседней. Черновая (неподтверждённая) точка всё равно
+   получает участок -- иначе на карте была бы дыра там, где ещё не сверили
+   объект на месте. Ромб поверх зоны остаётся целью тапа и индикатором
+   уровня защиты. */
+.capture-zone { fill: var(--faction, #8a9aa6); fill-opacity: .22; stroke: var(--faction, #8a9aa6); stroke-width: 1.6; stroke-opacity: .75; cursor: pointer; }
+.capture-zone.is-draft { fill: #8a9aa6; fill-opacity: .1; stroke: #8a9aa6; stroke-width: 1; stroke-dasharray: 5 4; stroke-opacity: .55; }
+.capture-zone.is-mine { fill-opacity: .34; stroke-opacity: .95; }
+.capture-zone.is-contested { fill: url(#capture-contest-hatch); stroke: #ff4a3d; stroke-width: 2.2; stroke-opacity: .95; }
+@keyframes capture-contest-pulse { 50% { filter: drop-shadow(0 0 5px #ff4a3dcc); } }
+:root[data-motion="full"] .capture-zone.is-contested { animation: capture-contest-pulse 1s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .capture-zone.is-contested { animation: none; } }
+
 .capture-point { cursor: pointer; outline: none; }
 .capture-glow { fill: var(--faction, #8a9aa6); opacity: .22; }
 .capture-core { fill: var(--faction, #8a9aa6); stroke: #fff; stroke-width: 2; filter: drop-shadow(0 0 3px rgba(0, 0, 0, .45)); }
@@ -8,105 +23,114 @@
 .capture-point.is-draft .capture-glow { opacity: 0; }
 .capture-point.is-selected .capture-core, .capture-point:focus-visible .capture-core { stroke: #0a86f0; stroke-width: 3; }
 .capture-point.is-mine .capture-glow { opacity: .32; }
+.capture-point.is-shielded .capture-ring { fill: none; stroke: #ffd54a; stroke-width: 2.5; }
+.capture-point.is-double .capture-core { stroke: #ffd54a; stroke-width: 3; }
+.capture-point.is-contested .capture-core { stroke: #ff4a3d; stroke-width: 3; }
 :root[data-motion="full"] .capture-point:not(.is-draft) .capture-glow {
   transform-box: fill-box; transform-origin: center; animation: capture-pulse 2.8s ease-in-out infinite;
 }
 @keyframes capture-pulse { 50% { opacity: .08; transform: scale(1.25); } }
 
-.capture-hud, .capture-card { display: grid; gap: 8px; padding: 14px; border-left: 4px solid var(--faction, #0a86f0); }
-.capture-hud p, .capture-card p { margin: 0; }
+/* --- боевая шапка, карточка точки, дуэли: тактическая панель ------------------------------
+   Не зависит от светлой/тёмной темы приложения -- это "устройство в руке"
+   (как ЖК-таймер у Шпиона), а не страница сайта. .glass-card даёт светлый
+   глянец и грузится позже capture.css -- бьём его составным селектором
+   .glass-card.capture-*, а не полагаемся на порядок подключения. */
+.glass-card.capture-hud, .glass-card.capture-card, .glass-card.capture-duel {
+  --case-ink: #e7f2fa; --case-muted: #93b4c9;
+  display: grid; gap: 8px; padding: 14px 16px; border-radius: 0;
+  background: linear-gradient(165deg, #142735 0%, #0d1b26 65%, #0a141c 100%);
+  border: 1px solid #2c4a5e; border-left: 4px solid var(--faction, #0a86f0);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  box-shadow: inset 0 1px 0 #ffffff14, 0 4px 16px #00000040;
+  color: var(--case-ink);
+}
+.glass-card.capture-duel { border-left-color: #c0392b; }
+.glass-card.capture-hud::after, .glass-card.capture-card::after, .glass-card.capture-duel::after { display: none; }
+.capture-hud p, .capture-card p, .capture-duel p { margin: 0; }
 .capture-hud-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
-.capture-label { font: 700 10px/1.2 "Courier New", monospace; letter-spacing: .12em; text-transform: uppercase; color: #3c6b8c; }
+.capture-label {
+  padding-left: 13px; position: relative; font: 700 10px/1.2 "Courier New", monospace;
+  letter-spacing: .14em; text-transform: uppercase; color: #ffb347;
+}
+.capture-label::before { content: "▸"; position: absolute; left: 0; color: #ff4a3d; }
 .capture-you {
-  padding: 3px 10px; border-radius: 12px; background: var(--faction, #0a86f0); color: #fff;
-  font: 700 12px/1.3 Tahoma, "Trebuchet MS", sans-serif; text-shadow: 0 1px 1px rgba(0, 0, 0, .35);
+  padding: 3px 10px; background: var(--faction, #0a86f0); color: #fff;
+  font: 700 12px/1.3 Tahoma, "Trebuchet MS", sans-serif; text-shadow: 0 1px 1px rgba(0, 0, 0, .5);
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
 }
 .capture-board { display: grid; gap: 5px; }
 .capture-score { display: grid; grid-template-columns: 82px 1fr auto; align-items: center; gap: 8px; }
-.capture-score b { font: 700 13px/1.2 Tahoma, sans-serif; color: var(--case-ink, #062e50); }
+.capture-score b { font: 700 13px/1.2 Tahoma, sans-serif; color: var(--case-ink); text-transform: uppercase; letter-spacing: .02em; }
 .capture-score.is-mine b { text-decoration: underline; text-decoration-color: var(--faction); text-underline-offset: 3px; }
-.capture-track { height: 10px; border-radius: 5px; background: #dfe9f0; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .15); }
+.capture-track { height: 10px; border-radius: 2px; background: #061019; overflow: hidden; box-shadow: inset 0 1px 3px #00000080, inset 0 0 0 1px #1c3444; }
 .capture-bar {
-  display: block; height: 100%; min-width: 3px; border-radius: 5px;
+  display: block; height: 100%; min-width: 3px;
   background: linear-gradient(180deg, rgba(255, 255, 255, .45), transparent 55%), var(--faction);
 }
-.capture-score-value { font: 12px/1 "Courier New", monospace; color: var(--case-muted, #4f6f82); white-space: nowrap; }
-.capture-meta { font: 12px/1.4 Tahoma, "Trebuchet MS", sans-serif; color: var(--case-muted, #4f6f82); }
-.capture-meta.is-open { color: #12813d; font-weight: 700; }
+.capture-score-value { font: 12px/1 "Courier New", monospace; color: var(--case-muted); white-space: nowrap; }
+.capture-meta { font: 12px/1.4 Tahoma, "Trebuchet MS", sans-serif; color: var(--case-muted); }
+.capture-meta.is-open { color: #5fe88a; font-weight: 700; }
 .capture-hud .btn, .capture-actions .btn { min-height: 44px; }
 
-.capture-title { font: 700 19px/1.3 Georgia, "Trebuchet MS", serif; color: var(--case-ink, #062e50); }
-.capture-zh { font: 15px/1.4 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-muted, #4f6f82); }
-.capture-owner { font: 700 14px/1.4 Tahoma, sans-serif; color: var(--faction, #4f6f82); }
+.capture-title { font: 700 19px/1.3 Georgia, "Trebuchet MS", serif; color: var(--case-ink); }
+.capture-zh { font: 15px/1.4 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-muted); }
+.capture-owner { font: 700 14px/1.4 Tahoma, sans-serif; color: var(--faction, var(--case-muted)); }
 .capture-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Кнопки внутри боевых панелей -- срезанные углы вместо скруглений, только
+   здесь: глобальную .btn не трогаем, чтобы не тащить это на весь интерфейс. */
+.capture-hud .btn, .capture-card .btn, .capture-duel .btn, .capture-actions .btn {
+  border-radius: 0; clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+  text-transform: uppercase; letter-spacing: .04em;
+}
 
 .capture-question {
   display: grid; gap: 4px; justify-items: center; padding: 12px; border: 1px dashed var(--faction, #0a86f0);
-  border-radius: 8px; background: #f6fbff; text-align: center;
+  background: #0a141c; text-align: center;
 }
-.capture-hanzi { font: 700 44px/1.1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: #062e50; }
-.capture-pinyin { font: 15px/1.3 Georgia, serif; color: #4f6f82; }
+.capture-hanzi { font: 700 44px/1.1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--case-ink); }
+.capture-pinyin { font: 15px/1.3 Georgia, serif; color: var(--case-muted); }
 .capture-options { display: grid; gap: 6px; width: 100%; margin-top: 6px; }
 .capture-options .btn { min-height: 44px; }
 
 /* --- способности, кубки ------------------------------------------------------------------- */
-.capture-point.is-shielded .capture-ring { fill: none; stroke: #ffd54a; stroke-width: 2.5; }
-.capture-point.is-double .capture-core { stroke: #ffd54a; stroke-width: 3; }
 .capture-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .capture-badge {
-  padding: 3px 9px; border-radius: 12px; background: #fff6d6; border: 1px solid #f0c24a;
-  font: 12px/1.3 Tahoma, sans-serif; color: #6b4a00;
+  padding: 3px 9px; border-radius: 2px; background: #2a2008; border: 1px solid #8a6a1a;
+  font: 12px/1.3 Tahoma, sans-serif; color: #ffe29a;
 }
 .capture-abilities { display: grid; gap: 8px; }
-.capture-ability { display: grid; gap: 5px; padding: 10px; border: 1px solid #c9dbe6; border-radius: 8px; background: #f7fbfe; }
-.capture-ability.is-active { border-color: #5fc27e; background: #effaf2; }
-.capture-ability small { font: 12px/1.35 Tahoma, sans-serif; color: var(--case-muted, #4f6f82); }
-.capture-ability-title { font: 700 14px/1.3 Tahoma, "Trebuchet MS", sans-serif; color: var(--case-ink, #062e50); }
+.capture-ability { display: grid; gap: 5px; padding: 10px; border: 1px solid #2c4a5e; border-radius: 4px; background: #0d1b26; }
+.capture-ability.is-active { border-color: #3f9a5c; background: #0f2418; }
+.capture-ability small { font: 12px/1.35 Tahoma, sans-serif; color: #93b4c9; }
+.capture-ability-title { font: 700 14px/1.3 Tahoma, "Trebuchet MS", sans-serif; color: #e7f2fa; }
 .capture-pool { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
 .capture-pool .capture-bar { --faction: #f0a800; }
 .capture-chip { min-height: 40px !important; padding: 0 12px; }
-.capture-cup { font: 700 14px/1.4 Tahoma, sans-serif; color: #8a5a00; }
-
-:root[data-theme="dark"] .capture-badge { background: #33280c; border-color: #8a6a1a; color: #ffe29a; }
-:root[data-theme="dark"] .capture-ability { background: #0d2438; border-color: #2d5a7c; }
-:root[data-theme="dark"] .capture-ability.is-active { background: #10301c; border-color: #3f9a5c; }
-:root[data-theme="dark"] .capture-ability-title { color: #dcefff; }
-:root[data-theme="dark"] .capture-cup { color: #ffd166; }
+.capture-cup { font: 700 14px/1.4 Tahoma, sans-serif; color: #ffd166; }
 
 /* --- дуэли --------------------------------------------------------------------------- */
-.capture-duel { display: grid; gap: 8px; padding: 14px; border-left: 4px solid #c0392b; }
-.capture-duel p { margin: 0; }
 .capture-duel-code {
-  justify-self: center; padding: 6px 18px; border: 2px dashed #c0392b; border-radius: 10px; background: #fff7f5;
-  font: 700 36px/1.1 "Courier New", monospace; letter-spacing: .12em; color: #7a1d12;
+  justify-self: center; padding: 6px 18px; border: 2px dashed #ff4a3d; border-radius: 4px; background: #1a0b09;
+  font: 700 36px/1.1 "Courier New", monospace; letter-spacing: .12em; color: #ff8a7a;
 }
 .capture-duel-join { display: flex; gap: 8px; }
 .capture-duel-join input {
-  flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid #b9cfdc; border-radius: 8px;
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid #2c4a5e; border-radius: 4px;
+  background: #0a141c; color: #e7f2fa;
   font: 700 20px/1 "Courier New", monospace; letter-spacing: .2em; text-align: center;
 }
 .capture-duel-join .btn { min-height: 44px; }
-.capture-duel-word { font: 700 26px/1.2 Georgia, "Trebuchet MS", serif; color: #062e50; }
+.capture-duel-word { font: 700 26px/1.2 Georgia, "Trebuchet MS", serif; color: #e7f2fa; }
 .capture-options.is-hanzi { grid-template-columns: repeat(3, 1fr); }
 .capture-options.is-hanzi .btn { font: 700 26px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; min-height: 56px; }
 .capture-duel-moves { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .capture-duel-move { display: grid; gap: 2px; justify-items: center; min-height: 72px; }
 .capture-duel-move b { font: 700 30px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
 .capture-duel-move small { font: 12px/1 Tahoma, sans-serif; }
-.capture-duel-result { font: 700 26px/1.2 Georgia, serif; color: #062e50; }
-.capture-duel-result.is-win { color: #12813d; }
-.capture-duel-result.is-lose { color: #b02a1a; }
+.capture-duel-result { font: 700 26px/1.2 Georgia, serif; color: #e7f2fa; }
+.capture-duel-result.is-win { color: #5fe88a; }
+.capture-duel-result.is-lose { color: #ff8a7a; }
 :root[data-motion="full"] .capture-duel-result.is-win { animation: capture-win .6s steps(6) 2; }
 @keyframes capture-win { 50% { transform: scale(1.12); } }
-
-:root[data-theme="dark"] .capture-duel-code { background: #2a1210; color: #ffb4a8; }
-:root[data-theme="dark"] .capture-duel-join input { background: #0d2438; border-color: #2d5a7c; color: #dcefff; }
-:root[data-theme="dark"] .capture-duel-word, :root[data-theme="dark"] .capture-duel-result { color: #dcefff; }
-:root[data-theme="dark"] .capture-duel-result.is-win { color: #5fd88a; }
-:root[data-theme="dark"] .capture-duel-result.is-lose { color: #ff8a7a; }
-
-:root[data-theme="dark"] .capture-track { background: #16324a; }
-:root[data-theme="dark"] .capture-score b, :root[data-theme="dark"] .capture-hanzi { color: #dcefff; }
-:root[data-theme="dark"] .capture-question { background: #0d2438; }
-:root[data-theme="dark"] .capture-label { color: #8fc2e6; }
-:root[data-theme="dark"] .capture-meta.is-open { color: #5fd88a; }
