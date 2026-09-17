@@ -912,14 +912,29 @@
     $("gameRoomPhase").textContent = renderer.phaseName(c.game, c.room);
     const oldCards = Array.from($("gameRoomBody").querySelectorAll(".cipher-card"), el => el.classList.contains("is-revealed"));
     const oldModules = Array.from($("gameRoomBody").querySelectorAll(".outage-module"), el => el.classList.contains("is-solved"));
+    const oldScores = Array.from($("gameRoomBody").querySelectorAll(".cipher-chip b"), el => el.textContent);
     $("gameRoomBody").replaceChildren(...renderer.draw(c).filter(Boolean));
     if (!phaseEntrance && document.documentElement.dataset.motion === "full" && !motionQuery.matches) {
-      [[".cipher-card", oldCards, "is-revealed"], [".outage-module", oldModules, "is-solved"]].forEach(([selector, previous, state]) => {
+      [
+        [".cipher-card", oldCards, "is-revealed",
+          [{ transform: "scale(.75)", opacity: .3 }, { transform: "scale(1.06)", opacity: 1, offset: .7 }, { transform: "scale(1)" }],
+          { duration: 340, easing: "cubic-bezier(.2,.8,.3,1.2)" }],
+        [".outage-module", oldModules, "is-solved",
+          [{ transform: "scale(.94)", opacity: .6 }, { transform: "scale(1)", opacity: 1 }],
+          { duration: 260, easing: "ease-out" }],
+      ].forEach(([selector, previous, state, keyframes, options]) => {
         $("gameRoomBody").querySelectorAll(selector).forEach((el, index) => {
           if (previous[index] === false && el.classList.contains(state)) {
-            el.animate([{ transform: "scale(.94)", opacity: .6 }, { transform: "scale(1)", opacity: 1 }], { duration: 260, easing: "ease-out" });
+            el.animate(keyframes, options);
           }
         });
+      });
+      // Счёт слов у команды меняется в конце хода -- лёгкий поп, чтобы это
+      // было видно и без сравнения чисел до/после.
+      $("gameRoomBody").querySelectorAll(".cipher-chip b").forEach((el, index) => {
+        if (oldScores[index] !== undefined && oldScores[index] !== el.textContent) {
+          el.animate([{ transform: "scale(1.4)" }, { transform: "scale(1)" }], { duration: 280, easing: "ease-out" });
+        }
       });
     }
     $("gameRoom").dataset.game = view.room.game;

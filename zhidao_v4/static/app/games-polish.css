@@ -6,18 +6,23 @@
 #sabotageWindow { --game-color:#855332; --game-light:#c6986d; }
 #marketWindow { --game-color:#84621d; --game-light:#bd9a50; }
 #captureIntro { --game-color:#245b85; --game-light:#70a3bb; }
-/* #gameRoom -- общее окно всех настольных игр (спор/шифровальщики/сбой/
-   контрабанда), games.js метит его data-game при входе в комнату. Даём
-   идентичность только Шпиону: тёмная навигационная синь и голубое свечение
-   продолжают уже существующую палитру spy-code-plate/.spy-code в games.css,
-   а не вводят новый цвет с нуля. Остальные комнаты цвет не наследуют. */
+/* #gameRoom -- общее окно всех настольных игр (шпион/шифровальщики/сбой/
+   контрабанда), games.js метит его data-game при входе в комнату. Красим
+   игру за игрой, только когда цвет ничему не мешает: у Шпиона и
+   Шифровальщиков берём оттенок из их собственных уже существующих палитр
+   (spy-code-plate/.spy-code и cipher-card.is-closed соответственно), а не
+   вводим новый с нуля. Комнаты без своего блока цвет не наследуют. */
 #gameRoom[data-game="spy"] { --game-color:#123a56; --game-light:#4fc7e8; }
+/* Шифровальщики уже двухцветные (синяя/красная команда) -- нейтральный
+   пергамент закрытой карточки (.cipher-card.is-closed) не спорит ни с
+   одним из цветов команд. */
+#gameRoom[data-game="cipher"] { --game-color:#7a6338; --game-light:#d9c48f; }
 :is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
-    #gameRoom[data-game="spy"]) > .case-titlebar {
+    #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"]) > .case-titlebar {
   background:linear-gradient(var(--game-light),var(--game-color) 48%,var(--game-color)); color:#fff; text-shadow:0 1px 1px #172434;
 }
 :is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
-    #gameRoom[data-game="spy"]) > .case-titlebar h2 { color:inherit; }
+    #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"]) > .case-titlebar h2 { color:inherit; }
 .agent-target,.agent-mission { line-height:1.5; }
 .agent-card,.market-card,.sabotage-card,.zombie-card { border-radius:5px; }
 .market-form { grid-template-columns:minmax(0,1fr) auto; }

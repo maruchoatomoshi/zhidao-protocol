@@ -253,6 +253,9 @@
 
   --ink:#dff2ff;
   --ink-soft:#a3c6dc;
+  --ink-muted-aqua:#a0c3da; /* было не переопределено -- на тёмных карточках (напр. .cipher-card
+    small) оставался светлотемный #46697d и читался как "слишком тёмный" текст. Значение рядом
+    с --ink-soft/--case-muted тёмной темы (#accbdc), а не новый цвет с нуля. */
   --text-primary:var(--ink);
   --text-secondary:var(--ink-soft);
   --text-faint:#9dbfd6;
