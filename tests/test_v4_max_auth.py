@@ -141,6 +141,9 @@ class MaxSignInTests(unittest.TestCase):
         return int(self.participant["id"])
 
     def issue_code(self) -> str:
+        return self.issue_code_for(self.account_id())
+
+    def issue_code_for(self, target_account_id: int) -> str:
         response = self.client.post(
             "/api/v4/auth/login",
             json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD},
@@ -148,13 +151,35 @@ class MaxSignInTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.text)
         csrf = response.json()["csrf_token"]
         issued = self.client.post(
-            f"/api/v4/admin/accounts/{self.account_id()}/link-codes",
+            f"/api/v4/admin/accounts/{target_account_id}/link-codes",
             headers={"X-CSRF-Token": csrf},
         )
         self.assertEqual(issued.status_code, 200, issued.text)
         self.client.post("/api/v4/auth/logout", headers={"X-CSRF-Token": csrf})
         self.client.cookies.clear()
         return issued.json()["code"]
+
+    def login_as(self, username: str, password: str) -> str:
+        response = self.client.post(
+            "/api/v4/auth/login", json={"username": username, "password": password}
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()["csrf_token"]
+
+    def provision_operator(self, username: str) -> dict:
+        conn = connect_database(self.db_path)
+        try:
+            with immediate_transaction(conn):
+                return provision_local_account(
+                    conn,
+                    username=username,
+                    password="operator secure passphrase",
+                    display_name="Оператор Смены",
+                    role_code="operator",
+                    actor_account_id=self.bootstrap["account"]["id"],
+                )
+        finally:
+            conn.close()
 
     def sign_in(self, launch_params: str, link_code: str | None = None):
         body: dict[str, str] = {"launch_params": launch_params}
@@ -226,6 +251,72 @@ class MaxSignInTests(unittest.TestCase):
         self.assertEqual(second.status_code, 409, second.text)
         self.assertEqual(second.json()["detail"]["reason"], "account_already_linked")
         self.assertNotIn(SESSION_COOKIE, self.client.cookies)
+
+    def test_operator_cannot_hijack_a_staff_session_via_unlink_and_relink(self):
+        # The exact chain a review found: unlink an already-linked architect's
+        # MAX (removing the only thing blocking a takeover), issue a fresh
+        # code for that same account, consume it with your own MAX identity.
+        # authenticate_max hands a session for the target account, roles and
+        # all -- so this was operator -> architect privilege escalation.
+        architect_id = self.bootstrap["account"]["id"]
+        self.assertEqual(
+            self.sign_in(
+                sign_launch_params(user_id=550055, username="real_architect"),
+                self.issue_code_for(architect_id),
+            ).status_code,
+            200,
+        )
+        self.client.cookies.clear()
+
+        self.provision_operator("opstaff")
+        csrf = self.login_as("opstaff", "operator secure passphrase")
+
+        blocked_unlink = self.client.request(
+            "DELETE",
+            f"/api/v4/admin/accounts/{architect_id}/identities/max",
+            headers={"X-CSRF-Token": csrf},
+        )
+        self.assertEqual(blocked_unlink.status_code, 403, blocked_unlink.text)
+
+        # Defence in depth: even if unlink were somehow bypassed, issuing a
+        # fresh code for the architect's account is refused too.
+        blocked_code = self.client.post(
+            f"/api/v4/admin/accounts/{architect_id}/link-codes",
+            headers={"X-CSRF-Token": csrf},
+        )
+        self.assertEqual(blocked_code.status_code, 403, blocked_code.text)
+
+        self.client.post("/api/v4/auth/logout", headers={"X-CSRF-Token": csrf})
+        self.client.cookies.clear()
+
+        # The real architect's MAX identity is untouched by the attempt.
+        still_theirs = self.sign_in(
+            sign_launch_params(user_id=550055, username="real_architect")
+        )
+        self.assertEqual(still_theirs.status_code, 200, still_theirs.text)
+
+    def test_operator_can_manage_a_participants_max_link(self):
+        # The guard must not overreach: an operator handling an ordinary
+        # participant -- the entire point of the roster screen -- still works.
+        self.provision_operator("opstaff")
+        csrf = self.login_as("opstaff", "operator secure passphrase")
+        issued = self.client.post(
+            f"/api/v4/admin/accounts/{self.account_id()}/link-codes",
+            headers={"X-CSRF-Token": csrf},
+        )
+        self.assertEqual(issued.status_code, 200, issued.text)
+
+    def test_operator_can_manage_their_own_max_link(self):
+        # Not an escalation: the session this produces carries the roles the
+        # operator already had. Blocking self-service here would just be
+        # collateral damage from the fix above.
+        operator = self.provision_operator("opstaff")
+        csrf = self.login_as("opstaff", "operator secure passphrase")
+        issued = self.client.post(
+            f"/api/v4/admin/accounts/{operator['id']}/link-codes",
+            headers={"X-CSRF-Token": csrf},
+        )
+        self.assertEqual(issued.status_code, 200, issued.text)
 
     def unlink(self, account_id: int | None = None):
         """Снимает привязку MAX от имени администратора и выходит обратно."""
