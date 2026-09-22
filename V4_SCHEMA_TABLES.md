@@ -3,7 +3,7 @@
 <!-- Сгенерировано tools/schema_doc.py из migrations/v4. Не править руками:
      python tools/schema_doc.py пересобирает файл, тест сверяет его со схемой. -->
 
-Последняя миграция: **0026**. Таблиц: **66**, явных индексов: **32**, триггеров: **7**.
+Последняя миграция: **0027**. Таблиц: **66**, явных индексов: **32**, триггеров: **7**.
 
 Здесь только то, что SQLite сообщает о структуре: колонки, внешние ключи,
 индексы, триггеры. CHECK-ограничения, комментарии и причины решений — в
@@ -39,6 +39,7 @@
 | 0024 | `0024_royale_surprises.sql` | Протокол 60, этап 2 (V4_GAMES.md §4.12): новые сюрпризы выбывших — |
 | 0025 | `0025_smuggle_market.sql` | Рынок Контрабанды, этап 2 (V4_GAMES.md §4.12): торговля на весь кампус на один день. |
 | 0026 | `0026_drop_disabled_at_scope_rooms.sql` | Two small schema defects, found while auditing the games work: a dead |
+| 0027 | `0027_link_code_identity_unlink.sql` | Makes detaching a MAX account possible at all. |
 
 ## Таблицы
 
@@ -346,7 +347,7 @@ _создана в 0002_
 
 #### `v4_link_codes`
 
-_создана в 0004, колонки, ключи или индексы последний раз менялись в 0005_
+_создана в 0004, колонки, ключи или индексы последний раз менялись в 0027_
 
 | Колонка | Тип | NOT NULL | По умолчанию | PK |
 |---|---|---|---|---|
@@ -363,11 +364,11 @@ _создана в 0004, колонки, ключи или индексы пос
 | `revoked_by_account_id` | INTEGER |  |  |  |
 
 Внешние ключи:
+- (revoked_by_account_id) → `v4_accounts`(id) ON DELETE RESTRICT
 - (created_by_account_id) → `v4_accounts`(id) ON DELETE RESTRICT
 - (consumed_identity_id) → `v4_external_identities`(id) ON DELETE SET NULL
 - (provider_code) → `v4_identity_providers`(code) ON DELETE RESTRICT
 - (account_id) → `v4_accounts`(id) ON DELETE RESTRICT
-- (revoked_by_account_id) → `v4_accounts`(id) ON DELETE RESTRICT
 
 Индексы и уникальность:
 - из определения таблицы: UNIQUE-ограничение — (code_hash)
