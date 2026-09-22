@@ -2,7 +2,9 @@
 
 Context and working rules for Claude / Claude Code in the `ZHIDAO Protocol` repository.
 
-Last restructured: 2026-09-03.
+Last restructured: 2026-09-03. Refreshed 2026-09-22 against `main` at `cb04bd7`
+— the sections below on Hainan V4's shape and the campus map were stale by
+roughly two weeks of active development; see the dated notes for what changed.
 
 ## What this repository is now
 
@@ -24,11 +26,27 @@ baseline. It is not the foundation of the Hainan V4 interface.
 
 ## Current state — read this before planning anything
 
+**Update 2026-09-22:** the two weeks since the test server went live grew V4
+from a cases/collection prototype into most of the intended MVP: 18 domain
+`*_api.py` modules registered in `api.py` (cases, shop, diary, economy, meet,
+trade, virus, workshop, marks, story, capture, royale, agent, zombie,
+sabotage, market, rep, today), ten of the eleven `V4_GAMES.md` §1 mechanics on
+`china.marucho.icu` (Порталы групп is the one exception, still blocked — see
+"Campus map" below), staff playing every game on equal terms with real
+star/REP economy, a season-creation form and a `tools/rehearsal.py` load-test
+tool that provisions and actually plays through a whole test season over
+HTTP, the database in WAL, and a generated design system (Aqua + Luna-Aqua +
+an XP-styled skin) compiled by `tools/build_design_system.py` from
+`design/reference/`. **The active work these two weeks was games, economy,
+staff tooling and visual design — not the campus map**, which is unchanged
+(see the dated note under "Campus map" below). `AGENT_JOURNAL.md` is the
+detailed, dated record of all of this — find its newest entries as described
+in the routing table below before assuming something here is still current.
+
 **Update 2026-09-08:** Hainan V4 now has a test server (`china.marucho.icu`)
 and MAX integration, confirmed working by the user. The dead-server statements
-below refer to **Beijing**, not this new deployment. Current local direction:
-cases, collection and 2000s-style interface; implementation and validation are
-documented in `V4_CASES.md`. No deployment permission follows from this update.
+below refer to **Beijing**, not this new deployment. No deployment permission
+follows from this update.
 
 **The Beijing production server is dead.** `hk.marucho.icu` (API on 8443, media
 on 8444) is gone, and so is the production database. Confirmed by the user
@@ -68,6 +86,7 @@ Do not start work from this file alone. Read the document that owns the area:
 
 | Working on | Read first |
 |---|---|
+| What actually happened recently, dated, in detail | `AGENT_JOURNAL.md` — not append-only at the literal end; `grep -n "^## 2026-"` and read the newest dates, wherever they land |
 | Any V4 scope/product decision | `V4_DECISIONS.md` |
 | V4 login, roles, sessions, CSRF | `V4_AUTH.md` |
 | The MAX bot, its commands and deployment | `V4_BOT.md` |
@@ -95,12 +114,22 @@ Layout:
 - `zhidao_v4/auth.py`, `security.py` — local accounts, scrypt password hashing,
   session/CSRF token hashes, lockout, rate limiting.
 - `zhidao_v4/seasons.py`, `db.py`, `migrations.py` — seasons, storage,
-  versioned additive migrations (`migrations/v4/`).
-- `zhidao_v4/static/app/` — participant app (Сегодня / REP / Магазин / Кейсы /
-  Задания / Ещё). Most sections are deliberate placeholders — they must not
-  display invented users, balances or events.
+  versioned additive migrations (`migrations/v4/`, 26 as of `main` `cb04bd7`).
+- One `<domain>.py` + `<domain>_api.py` pair per feature (`shop`, `cases`,
+  `economy`, `capture`, `royale`, `sabotage`, `market`, `rep`, `today`, …),
+  registered in `api.py`'s `create_app`. Follow this pattern for a new
+  feature rather than growing `api.py` itself.
+- `zhidao_v4/static/app/` — participant app. Bottom nav is five tabs: Сегодня
+  / REP / Ивенты (`data-target="games"` — the games catalog, not a managed
+  events feed; see `V4_GAMES.md`) / Кейсы / Ещё. There is no "Задания" tab and
+  no separate "Магазин" tab — the shop moved under "Ещё". Do not invent users,
+  balances or events even in sections that now have real data behind them.
 - `zhidao_v4/static/architect/` — Architect console.
-- `tests/` — the first automated tests in this repository. Keep them passing.
+- `design/reference/` — source CSS/asset tree for the generated design system;
+  `zhidao_v4/static/app/design-system.css` is compiled from it by
+  `tools/build_design_system.py` and must never be hand-edited (see Generated
+  files below — this exact mistake broke `main`'s CI on 2026-09-21).
+- `tests/` — 424 passing as of `main` `cb04bd7`. Keep them passing.
 
 Identity model: an internal `account_id` independent of any messenger, with
 `ExternalIdentity` rows (`local` | `telegram` | `max`). A Beijing Telegram ID
@@ -123,10 +152,18 @@ Stack decisions, already made — do not relitigate them without the user:
 - Critical POST requests take an idempotency key; economy, purchases, review and
   admin corrections go to a shared operation journal and AuditLog.
 
-### Campus map — the current active task
+### Campus map — digitizing the real campus, currently stalled
 
-Digitize the real Lingshui Li'an campus inside the participant app. The
-governing rule, from the user:
+Digitize the real Lingshui Li'an campus inside the participant app. This is
+**not** presently the active task — despite the heading this section used to
+carry, no commit has touched `campus.geojson` since it was written, while two
+weeks of work went into games, economy, staff tooling and design (see
+"Current state" above). **Update 2026-09-22:** every one of its 89 features is
+still `verified: false`; this is the blocker on Portals (`V4_GAMES.md` §4.3)
+and on point confirmation for Захват кампуса (§4.12). Advancing it needs
+someone on the physical campus with the satellite reference, not more code —
+do not treat it as a task you can pick up and finish from here. The governing
+rule, from the user, still holds whenever this does become active work again:
 
 > First make the geography true; then make it look like ZHIDAO.
 
@@ -191,6 +228,22 @@ file is generated:
 - Unity Editor builders under `Assets/Campus/Editor`
   (`CampusFirstMeetingBuilder.AssembleAndBuild`, `CampusSceneBuilder`)
   regenerate scenes and prefabs from a preserved baseline.
+- `zhidao_v4/static/app/design-system.css` — compiled by
+  `tools/build_design_system.py` from `design/reference/`. **A real incident,
+  2026-09-21:** a contrast fix (`--ink-muted-aqua` for the dark theme) was
+  added to this compiled file directly instead of to its source
+  (`design/reference/tokens/night.css`), which left `main`'s own CI red on
+  `test_design_system.py::test_generated_stylesheet_is_current` for at least
+  two commits before anyone noticed. Blindly rerunning the generator to "fix"
+  the red check would have silently deleted the contrast fix instead of
+  restoring it — the failing test was correct, the checked-in file was
+  correct, only the *source* was missing the change. If this test is red,
+  diff the compiled file against a fresh `tools/build_design_system.py` run
+  first to see what the checked-in file has that the source doesn't, then
+  port that into the right file under `design/reference/`.
+- `V4_SCHEMA_TABLES.md` — generated by `tools/schema_doc.py` from
+  `migrations/v4/`. Regenerate it after adding a migration, or
+  `tests/test_v4_schema_doc.py` fails.
 
 If manual work matters, save it to a new path or update the builder as the
 source of truth. Never rerun a builder that will erase it.
@@ -257,8 +310,11 @@ apply.
 
 CI (`.github/workflows/ci.yml`) runs the full `pytest tests` suite on Python
 3.12 (the test server's version), `node --check` for every frontend module
-including `zhidao_v4/static/app/*.js`, and `bash -n` for `ops/*.sh`. It does
-not look at screens. Run the checks that match what you touched before pushing.
+including `zhidao_v4/static/app/*.js` and `tools/*.cjs`, and `bash -n` for
+`ops/*.sh`. It triggers on every push to `main`, not only on pull requests —
+a direct push that breaks something shows up as CI red on `main` itself, as
+happened 2026-09-21 (see "Generated files" above). It does not look at
+screens. Run the checks that match what you touched before pushing.
 
 Season-1 code:
 
