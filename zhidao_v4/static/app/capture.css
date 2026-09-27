@@ -7,9 +7,12 @@
    получает участок -- иначе на карте была бы дыра там, где ещё не сверили
    объект на месте. Ромб поверх зоны остаётся целью тапа и индикатором
    уровня защиты. */
-.capture-zone { fill: var(--faction, #8a9aa6); fill-opacity: .22; stroke: var(--faction, #8a9aa6); stroke-width: 1.6; stroke-opacity: .75; cursor: pointer; }
+/* Кварталы по дорогам (capture-zones.json): заливка плотнее, чем у прежних
+   пятен, — карта читается как карта фракций; дороги остаются светлыми
+   щелями между кварталами. */
+.capture-zone { fill: var(--faction, #8a9aa6); fill-opacity: .3; stroke: var(--faction, #8a9aa6); stroke-width: 2; stroke-opacity: .85; stroke-linejoin: round; cursor: pointer; }
 .capture-zone.is-draft { fill: #8a9aa6; fill-opacity: .1; stroke: #8a9aa6; stroke-width: 1; stroke-dasharray: 5 4; stroke-opacity: .55; }
-.capture-zone.is-mine { fill-opacity: .34; stroke-opacity: .95; }
+.capture-zone.is-mine { fill-opacity: .42; stroke-opacity: 1; }
 .capture-zone.is-contested { fill: url(#capture-contest-hatch); stroke: #ff4a3d; stroke-width: 2.2; stroke-opacity: .95; }
 @keyframes capture-contest-pulse { 50% { filter: drop-shadow(0 0 5px #ff4a3dcc); } }
 :root[data-motion="full"] .capture-zone.is-contested { animation: capture-contest-pulse 1s ease-in-out infinite; }

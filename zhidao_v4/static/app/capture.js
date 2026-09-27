@@ -172,7 +172,25 @@
     defs.append(pattern);
   }
 
-  // --- разбиение всей карты между точками (взвешенная диаграмма Вороного) -------------
+  // --- кварталы по дорогам (основной способ, решение пользователя 2026-09-27) ----------
+  //
+  // Кампус разрезан настоящими дорогами из campus.geojson на кварталы, квартал
+  // принадлежит точке, чей объект ближе (tools/capture_zones.py, файл
+  // assets/campus/capture-zones.json — генерируется, руками не правится).
+  // Граница идёт по дороге, а не сквозь здание. Пока файл не загрузился или
+  // его нет — работает прежнее деление ниже.
+  let blockZones = null;
+  fetch("./assets/campus/capture-zones.json", { cache: "no-cache" })
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => {
+      if (data && data.zones) {
+        blockZones = data.zones;
+        draw();
+      }
+    })
+    .catch(() => { /* остаётся деление по Вороному */ });
+
+  // --- запасное разбиение всей карты между точками (взвешенная диаграмма Вороного) ------
   //
   // Игроки просили не пятно вокруг здания, а настоящую границу: карта делится
   // между всеми точками захвата целиком, без дыр и нахлёстов, граница одной
@@ -233,7 +251,22 @@
     return poly;
   }
 
+  // Участки зоны — список многоугольников, у каждого внешний контур и дыры.
   function computeZones(points) {
+    if (blockZones) {
+      const cells = new Map();
+      const project = ([lon, lat]) => window.ZhidaoCampus.project(lon, lat);
+      for (const p of points) {
+        const polys = blockZones[p.code];
+        if (!polys) continue;
+        cells.set(p.code, polys.map((rings) => rings.map((ring) => ring.map(project).filter(Boolean))));
+      }
+      return cells;
+    }
+    return new Map([...voronoiZones(points)].map(([code, pts]) => [code, [[pts]]]));
+  }
+
+  function voronoiZones(points) {
     const cells = new Map();
     const boundaryRing = window.ZhidaoCampus.boundary();
     if (!boundaryRing) return cells;
@@ -249,19 +282,34 @@
     return cells;
   }
 
-  function drawZone(cellPts, p, owner, mine, contested) {
-    if (!cellPts || cellPts.length < 3) return null;
+  function drawZone(polys, p, owner, mine, contested) {
+    const rings = (polys || []).flat().filter((ring) => ring.length >= 3);
+    if (!rings.length) return null;
     const classes = ["capture-zone"];
     if (!p.confirmed) classes.push("is-draft");
     if (mine) classes.push("is-mine");
     if (contested) classes.push("is-contested");
-    const zone = svg("polygon", {
-      class: classes.join(" "),
-      points: cellPts.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(" "),
-    });
+    const d = rings.map((ring) => `M${ring.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join("L")}Z`).join("");
+    const zone = svg("path", { class: classes.join(" "), d, "fill-rule": "evenodd" });
     zone.dataset.point = p.code;
     zone.style.setProperty("--faction", owner ? owner.color : NEUTRAL);
     return zone;
+  }
+
+  // Название объекта с точкой Захвата уходит под её знак: знак стоит в
+  // середине объекта — ровно там, где подпись. Сдвиг в em, поэтому
+  // переживает зум (подписи держат размер на экране, campus-map.js).
+  function lowerLabels(points) {
+    for (const p of points) {
+      if (!p.coordinates || !p.feature) continue;
+      ui.layer.querySelectorAll(`.campus-label[data-feature~="${CSS.escape(p.feature)}"]`).forEach((label) => {
+        const first = label.querySelector("tspan");
+        if (first && !label.classList.contains("is-under-point")) {
+          label.classList.add("is-under-point");
+          first.setAttribute("dy", "1.7em");
+        }
+      });
+    }
   }
 
   function draw() {
@@ -270,6 +318,7 @@
     ui.layer.querySelector(".capture-zones")?.remove();
     if (!state || !state.points.length || !window.ZhidaoCampus) return;
     ensureContestPattern();
+    lowerLabels(state.points);
     const zoneCells = computeZones(state.points);
     const zones = svg("g", { class: "capture-zones" });
     const group = svg("g", { class: "capture-points" });

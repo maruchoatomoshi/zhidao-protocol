@@ -343,6 +343,9 @@ function appendLabel(layer, NS, opts) {
   label.setAttribute("text-anchor", "middle");
   label.dataset.baseSize = String(opts.size);
   label.dataset.priority = String(opts.priority ?? 9);
+  // Чья это подпись: слой Захвата сдвигает подписи своих объектов под знак
+  // точки (capture.js), иначе знак ложится ровно на название.
+  if (opts.feature) label.dataset.feature = opts.feature;
   if (opts.minScale) label.dataset.minScale = String(opts.minScale);
 
   const ru = document.createElementNS(NS, "tspan");
@@ -554,6 +557,7 @@ function buildSvg(host, data) {
       : base;
     appendLabel(layer, NS, {
       className: `campus-label campus-label-${p.category}`,
+      feature: p.id,
       x: sx / labelPoints.length,
       y: sy / labelPoints.length,
       size,
@@ -585,6 +589,8 @@ function buildSvg(host, data) {
       size: (bounds.maxX - bounds.minX) / 43,
       minScale: 0,
       priority: LABEL_PRIORITY.group,
+      // Подпись группы относится ко всем её объектам — список через пробел.
+      feature: group.feature_ids.join(" "),
       ru: `${group.name_ru}${mark}`,
       zh: group.name_zh || "",
     });
