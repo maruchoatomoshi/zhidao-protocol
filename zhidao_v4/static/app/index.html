@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#bdefff">
   <meta name="color-scheme" content="light dark">
 <script src="./theme.js?v=103de18d47"></script>
+  <script src="./intro.js?v=17b4154825"></script>
+  <link rel="stylesheet" href="./intro.css?v=7fdc21cda8">
+  <link rel="stylesheet" href="./intro-layers.css?v=8f060e593e">
   <script src="./xp-home.js?v=f394e72dc3"></script>
   <title>ZHIDAO Hainan · Personal System</title>
   <link rel="stylesheet" href="./tokens.css?v=b7493e443e">
@@ -44,6 +47,24 @@
   <link rel="stylesheet" href="./game-shell.css?v=50315e9de9">
   </head>
 <body>
+  <!-- Заставка при запуске (intro.js, intro.css). Слои — tools/intro_layers.py. -->
+  <div class="app-intro" id="appIntro" aria-hidden="true">
+    <div class="intro-backdrop"></div>
+    <div class="intro-stage">
+      <span class="intro-halo"></span>
+      <svg class="intro-ring" viewBox="0 0 100 100" focusable="false"><circle cx="49.9" cy="50" r="48.3"/></svg>
+      <img class="intro-plate" data-src="./assets/intro/plate.webp" alt="" decoding="async">
+      <img class="intro-dragon" data-src="./assets/intro/dragon.webp" alt="" decoding="async">
+      <img class="intro-pix" data-src="./assets/intro/pix.webp" alt="" decoding="async">
+      <img class="intro-text" data-src="./assets/intro/text.webp" alt="" decoding="async">
+      <img class="intro-glass" data-src="./assets/intro/glass.webp" alt="" decoding="async">
+      <span class="intro-shock"></span>
+      <span class="intro-flare intro-flare-eye"></span>
+      <span class="intro-flare intro-flare-pearl"></span>
+      <img class="intro-logo" data-src="./assets/intro/logo.webp" alt="" decoding="async">
+      <span class="intro-sheen"></span>
+    </div>
+  </div>
   <div class="world" aria-hidden="true">
     <span class="world-glow"></span>
     <span class="world-bubble bubble-one"></span>

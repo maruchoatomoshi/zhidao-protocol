@@ -252,6 +252,14 @@ file is generated:
   nearest. Rerun it after changing any of those, then
   `python tools/capture_zones.py --check`. Never draw zones by hand.
 
+- `zhidao_v4/static/app/assets/intro/*.webp` and
+  `zhidao_v4/static/app/intro-layers.css` — the launch intro's layers
+  (globe, dragon, wordmark, pixels, glass squares, the whole logo) and
+  their placement, cut from `assets/zhidao-dragon-logo.png` by
+  `tools/intro_layers.py` (needs OpenCV and scipy, which the app and CI do
+  not). The choreography itself is hand-written in `intro.css`/`intro.js`.
+  If the logo changes, rerun the generator; never retouch a layer by hand.
+
 If manual work matters, save it to a new path or update the builder as the
 source of truth. Never rerun a builder that will erase it.
 
