@@ -139,6 +139,8 @@
     const table = tiles.get("table");
     table.badge.hidden = !inRoom();
     table.badge.textContent = inRoom() ? "В КОМНАТЕ" : "";
+    // Открытая игра занимает весь экран (game-shell.js); каталог — нет.
+    window.dispatchEvent(new CustomEvent("zhidao:game-open", { detail: onGames() ? open : null }));
   }
 
   function show(key) {

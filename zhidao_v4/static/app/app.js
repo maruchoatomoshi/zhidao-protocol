@@ -118,6 +118,12 @@ window.addEventListener("DOMContentLoaded", () => {
   bridge.BackButton.onClick(() => {
     const dialog = document.querySelector("dialog[open]");
     if (dialog) { dialog.close(); return; }
+    // Игра на весь экран: «Назад» сворачивает её к списку игр, а не уводит
+    // в «Ещё» и тем более не выводит из комнаты.
+    if (document.documentElement.dataset.gameFull) {
+      document.querySelector("[data-catalog-back]")?.click();
+      return;
+    }
     showScreen(document.documentElement.dataset.currentScreen === "implants" ? "collection" : "more");
   });
 });

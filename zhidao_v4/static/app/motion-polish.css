@@ -148,10 +148,10 @@
 }
 
 /* --- 6. Раскрытия в играх ------------------------------------------------
-   Карточка роли откидывается сверху, как крышка; открытая карточка
-   «Шифровальщиков» переворачивается; карточка «Шпиона» под пальцем
-   поворачивается лицом. Всё короткое: карточку держат пальцем, ждать её
-   нельзя. */
+   Карточка роли откидывается сверху, как крышка; карточка «Шпиона» под
+   пальцем поворачивается лицом. Переворот открытой карточки
+   «Шифровальщиков» — в games.js, вместе с остальными анимациями стола.
+   Всё короткое: карточку держат пальцем, ждать её нельзя. */
 :root[data-motion="full"] .role-arrive {
   transform-origin: 50% 0;
   animation: role-arrive 620ms cubic-bezier(.2, .75, .22, 1) both;
@@ -160,12 +160,6 @@
   0% { opacity: 0; transform: perspective(700px) rotateX(-68deg); }
   60% { opacity: 1; transform: perspective(700px) rotateX(7deg); }
   100% { opacity: 1; transform: none; }
-}
-:root[data-motion="full"] .cipher-card.is-flipping { animation: cipher-flip 520ms cubic-bezier(.2, .75, .22, 1) both; }
-@keyframes cipher-flip {
-  0% { transform: perspective(500px) rotateY(0); }
-  45% { transform: perspective(500px) rotateY(90deg); filter: brightness(1.4); }
-  100% { transform: none; }
 }
 :root[data-motion="full"] .spy-card.is-open .spy-card-face { animation: spy-face-in 240ms cubic-bezier(.2, .75, .22, 1) both; }
 @keyframes spy-face-in {

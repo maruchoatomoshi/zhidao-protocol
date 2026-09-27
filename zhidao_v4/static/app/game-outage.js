@@ -250,7 +250,7 @@
       wrap.append(node("p", "spy-hint", "Коснитесь игрока ниже, чтобы сделать его техником. Не выберете — техник сменится по кругу."));
       const start = button("btn btn-primary", game.phase === "over" ? "Следующий раунд" : "Начать раунд", () => c.act("start"));
       start.disabled = c.view.players.length < room.min_players;
-      wrap.append(start);
+      wrap.append(c.bar(start));
     }
     if (c.view.players.length < room.min_players) {
       wrap.append(node("p", "spy-progress", `За столом ${c.view.players.length}, нужно минимум ${room.min_players}`));
@@ -304,5 +304,18 @@
   }
 
   const finished = (game) => Boolean(game.result);
-  window.ZhidaoGames.register("outage", { phaseKey, phaseName, sync, draw, finished });
+  // Звук и вибрация: отсчёт пошёл; новая ошибка — тревога всему столу.
+  function cue(prev, next) {
+    if (next.phase !== "defuse") return null;
+    if (prev.phase !== "defuse") {
+      return next.you_technician
+        ? { name: "start", title: "Вы техник", sub: "Рассказывайте, что видите" }
+        : { name: "start", title: "Сбой!", sub: "Эксперты — к инструкции" };
+    }
+    if ((next.strikes || 0) > (prev.strikes || 0)) {
+      return { name: "alert", title: "Ошибка!", sub: `${next.strikes} из ${next.max_strikes}` };
+    }
+    return null;
+  }
+  window.ZhidaoGames.register("outage", { phaseKey, phaseName, sync, draw, finished, cue });
 }());

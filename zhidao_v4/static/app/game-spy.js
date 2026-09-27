@@ -71,7 +71,7 @@
     if (room.is_host) {
       const start = button("btn btn-primary", round ? "Следующий раунд" : "Начать раунд", () => c.act("start"));
       start.disabled = count < room.min_players;
-      wrap.append(start);
+      wrap.append(c.bar(start));
     }
     if (count < room.min_players) {
       wrap.append(node("p", "spy-progress", `За столом ${count}, нужно минимум ${room.min_players}`));
@@ -149,7 +149,7 @@
       return items;
     }
     items.push(drawCard(c, round.you));
-    const actions = node("div", "spy-actions");
+    const actions = node("div", "spy-actions game-actionbar");
     if (round.can_accuse) {
       actions.append(button(local.pick === "accuse" ? "btn btn-primary" : "btn btn-secondary",
         local.pick === "accuse" ? "Отменить обвинение" : "Обвинить игрока", () => togglePick(c, "accuse")));
@@ -160,8 +160,8 @@
       actions.append(button(local.pick === "guess" ? "btn btn-primary" : "btn btn-action",
         local.pick === "guess" ? "Отмена" : "Я знаю место", () => togglePick(c, "guess")));
     }
-    if (local.pick === "accuse") actions.append(c.banner("Выберите игрока в списке ниже. Голосуют все остальные: одно «нет» — и обвинение снято."));
-    if (local.pick === "guess") actions.append(c.banner("Выберите место в списке ниже. Ошибётесь — раунд за агентами."));
+    if (local.pick === "accuse") actions.append(c.banner("Коснитесь игрока в списке «За столом». Голосуют все остальные: одно «нет» — и обвинение снято."));
+    if (local.pick === "guess") actions.append(c.banner("Коснитесь места в списке «Возможные места». Ошибётесь — раунд за агентами."));
     items.push(actions);
     return items;
   }
@@ -176,7 +176,7 @@
       ? `${c.nameOf(vote.accuser)} обвиняет вас. Защищайтесь голосом.`
       : `${c.nameOf(vote.accuser)} обвиняет: ${c.nameOf(vote.target)}`));
     if (vote.can_vote && vote.your_vote == null) {
-      const row = node("div", "spy-vote-buttons");
+      const row = node("div", "spy-vote-buttons game-actionbar");
       row.append(
         button("btn btn-primary", "Да, это шпион", () => c.act("vote", { yes: true })),
         button("btn btn-secondary", "Нет", () => c.act("vote", { yes: false })),
@@ -309,5 +309,23 @@
   }
 
   const finished = (game) => Boolean(game.round && game.round.result);
-  window.ZhidaoGames.register("spy", { phaseKey, phaseName, sync, draw, finished });
+
+  /* Событие для звука и вибрации (game-shell.js): новый раунд, обвинение
+     (если обвиняют тебя — тревога), финальное голосование. */
+  function cue(prev, next, you) {
+    const a = (prev && prev.round) || {};
+    const b = (next && next.round) || {};
+    if (!b.phase || (b.phase === a.phase && b.number === a.number)) return null;
+    if (b.phase === "discussion" && a.number !== b.number) {
+      return { name: "start", title: `Раунд ${b.number}`, sub: "Держите карточку, чтобы увидеть место" };
+    }
+    if (b.phase === "vote") {
+      return b.vote && b.vote.target === you
+        ? { name: "alert", title: "Вас обвиняют!", sub: "Защищайтесь голосом" }
+        : { name: "turn", title: "Голосование", sub: "Шпион или нет?" };
+    }
+    if (b.phase === "final_vote") return { name: "turn", title: "Кто шпион?", sub: "Время вышло — голосует весь стол" };
+    return null;
+  }
+  window.ZhidaoGames.register("spy", { phaseKey, phaseName, sync, draw, finished, cue });
 }());

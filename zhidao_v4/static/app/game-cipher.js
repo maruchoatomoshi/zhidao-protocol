@@ -77,7 +77,7 @@
     }
     const count = c.view.players.length;
     if (room.is_host) {
-      const row = node("div", "spy-vote-buttons");
+      const row = node("div", "spy-vote-buttons game-actionbar");
       row.append(button("btn btn-secondary", "Перемешать", () => c.act("shuffle")));
       const start = button("btn btn-primary", game.phase === "over" ? "Новая партия" : "Начать партию", () => c.act("start"));
       start.disabled = count < room.min_players;
@@ -120,7 +120,7 @@
         const send = button("btn btn-primary", local.count ? `Подсказка на ${local.count}` : "Выберите число",
           () => c.act("clue", { count: local.count }));
         send.disabled = !local.count;
-        wrap.append(send);
+        wrap.append(c.bar(send));
       } else {
         wrap.append(c.banner(`Ход: ${TEAM[turn.team]}. Капитан придумывает подсказку.`));
         if (mine) {
@@ -134,7 +134,7 @@
         wrap.append(node("p", "spy-hint",
           `Найдите ${turn.clue} карточ${turn.clue === 1 ? "ку" : turn.clue < 5 ? "ки" : "ек"} к слову капитана. Своя — открывайте дальше, чужая или нейтральная — ход переходит, вирус — поражение`));
         wrap.append(node("p", "spy-hint", "Коснитесь карточки дважды, чтобы открыть её."));
-        if (turn.guesses_made >= 1) wrap.append(button("btn btn-secondary", "Закончить ход", () => c.act("end-turn")));
+        if (turn.guesses_made >= 1) wrap.append(c.bar(button("btn btn-secondary", "Закончить ход", () => c.act("end-turn"))));
       } else if (mine) {
         wrap.append(node("p", "spy-hint", "Капитан молчит, пока команда отгадывает."));
       }
@@ -146,17 +146,8 @@
     return wrap;
   }
 
-  // Какие карточки уже были открыты на прошлой отрисовке этой доски: доска
-  // перерисовывается целиком при каждом изменении, и переворачиваться
-  // должна только та, что открылась сейчас, а не все открытые разом.
-  let seenBoard = "";
-  let seenOpen = new Set();
-
   function drawBoard(c, live) {
     const { node, game } = c;
-    const boardKey = game.board.map((card) => card.word.zh).join("|");
-    const fresh = boardKey === seenBoard;
-    if (!fresh) { seenBoard = boardKey; seenOpen = new Set(game.board.filter((card) => card.revealed).map((card) => card.index)); }
     const wrap = node("div", "spy-actions");
     const banner = c.armedBanner("card:");
     if (banner) wrap.append(banner);
@@ -169,10 +160,6 @@
       if (!openable) el.setAttribute("role", "listitem");
       if (card.key) el.classList.add(`is-${card.key}`);
       el.classList.add(card.revealed ? "is-revealed" : card.key ? "is-hint" : "is-closed");
-      if (card.revealed && fresh && !seenOpen.has(card.index)) {
-        el.classList.add("is-flipping");
-        seenOpen.add(card.index);
-      }
       el.append(node("b", null, card.word.zh));
       if (card.word.pinyin) el.append(node("small", null, card.word.pinyin));
       if (card.word.ru) el.append(node("small", "cipher-ru", card.word.ru));
@@ -233,5 +220,20 @@
   }
 
   const finished = (game) => Boolean(game.result);
-  window.ZhidaoGames.register("cipher", { phaseKey, phaseName, draw, finished });
+
+  /* Звук и вибрация: партия началась; ход перешёл к твоей команде и
+     действовать тебе — капитану подсказывать, отгадчикам открывать. */
+  function cue(prev, next) {
+    if (!inGame(next)) return null;
+    if (!inGame(prev)) return { name: "start", title: "Партия!", sub: `Первыми ходят ${TEAM[(next.turn || {}).team] || ""}`.trim() };
+    const a = prev.turn || {};
+    const b = next.turn || {};
+    if (a.team === b.team && prev.phase === next.phase) return null;
+    const you = next.you || {};
+    if (you.team !== b.team) return null;
+    if (next.phase === "clue" && you.captain) return { name: "turn", title: "Ваш ход, капитан", sub: "Одно слово и число — вслух" };
+    if (next.phase === "guess" && !you.captain) return { name: "turn", title: "Отгадывайте!", sub: `Подсказка на ${b.clue}` };
+    return null;
+  }
+  window.ZhidaoGames.register("cipher", { phaseKey, phaseName, draw, finished, cue });
 }());

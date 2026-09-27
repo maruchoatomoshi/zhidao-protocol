@@ -86,7 +86,7 @@
     if (room.is_host) {
       const start = button("btn btn-primary", game.phase === "over" ? "Новая партия" : "Начать партию", () => c.act("start"));
       start.disabled = count < room.min_players;
-      wrap.append(start);
+      wrap.append(c.bar(start));
     }
     if (count < room.min_players) wrap.append(node("p", "spy-progress", `За столом ${count}, нужно минимум ${room.min_players}`));
     return wrap;
@@ -239,7 +239,7 @@
         c.act("pack", body);
       });
     send.disabled = !local.pick.length || !local.declared;
-    wrap.append(send);
+    wrap.append(c.bar(send));
     wrap.append(node("p", "spy-hint", "Число товаров в заявлении всегда честное, а тип — как решите. Торгуйтесь голосом"));
     return wrap;
   }
@@ -338,7 +338,19 @@
   }
 
   const finished = (game) => Boolean(game.result);
-  const renderer = { phaseKey, phaseName, draw, finished };
+  // Звук и вибрация: новый раунд; сумки собраны — таможеннику пора досматривать.
+  const cue = (prev, next) => {
+    if (!inRound(next)) return null;
+    if (!inRound(prev) || prev.round !== next.round || prev.game !== next.game) {
+      const officer = next.you && next.you.officer;
+      return { name: "start", title: `Раунд ${next.round} из ${next.rounds}`, sub: officer ? "Вы на таможне" : "Собирайте сумку" };
+    }
+    if (next.phase === "inspect" && prev.phase !== "inspect" && next.you && next.you.officer) {
+      return { name: "turn", title: "Досмотр!", sub: "Пропустить или вскрыть" };
+    }
+    return null;
+  };
+  const renderer = { phaseKey, phaseName, draw, finished, cue };
   window.ZhidaoGames.register("smuggle", renderer);
   fetch("./assets/games/smuggle.json", { cache: "no-cache" })
     .then((response) => (response.ok ? response.json() : null))

@@ -109,6 +109,9 @@
   });
 
   window.ZhidaoSounds = {
+    // Купленный набор звучит сам (открытие, победа, вход в комнату); звуки
+    // игр (game-shell.js) не дублируют его там, где он уже есть.
+    hasPack: () => Boolean(pack) && !muted,
     play(event) {
       if (muted || !pack || !PACKS[pack][event]) return;
       melody(PACKS[pack][event]);

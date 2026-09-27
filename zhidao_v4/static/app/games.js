@@ -506,6 +506,7 @@
   let holding = false;      // палец на скрытой карточке: перерисовку откладываем
   let pendingDraw = false;
   let timers = {};          // ключ → момент конца по performance.now()
+  let ticked = {};          // ключ таймера → последняя секунда, на которой тикнули
   const zeroRefreshed = new Set();
   let chatLog = [];         // системные строки комнаты: кто зашёл, вышел, пропал
 
@@ -596,6 +597,12 @@
       el.firstChild.textContent = format(left);
       el.classList.toggle("is-low", left <= 30);
       el.classList.toggle("is-critical", left > 0 && left <= 10);
+      // Последние пять секунд тикают — раз в секунду, тихо.
+      const whole = Math.ceil(left);
+      if (whole > 0 && whole <= 5 && ticked[key] !== whole) {
+        ticked[key] = whole;
+        window.ZhidaoGameShell?.cue("tick");
+      }
       // Время вышло на экране — спрашиваем сервер сразу, не дожидаясь опроса.
       if (left <= 0 && !zeroRefreshed.has(key)) {
         zeroRefreshed.add(key);
@@ -657,8 +664,10 @@
     local = {};
     armed = null;
     timers = {};
+    ticked = {};
     zeroRefreshed.clear();
     chatLog = [];
+    window.ZhidaoGameShell?.setLive(false);
   }
 
   function apply(data) {
@@ -684,13 +693,16 @@
       if (phaseKey !== null) $("gameNote").textContent = "";
       // Партия только что закончилась у меня на глазах — звук и финал (retro.js).
       if (!quiet && phaseKey !== null && renderer.finished && renderer.finished(data.game)) {
+        const finale = finaleFor(data);
         if (window.ZhidaoSounds) window.ZhidaoSounds.play("win");
-        if (window.ZhidaoRetro) window.ZhidaoRetro.finale(finaleFor(data));
+        if (window.ZhidaoRetro) window.ZhidaoRetro.finale(finale);
+        window.ZhidaoGameShell?.cue(finale.kind === "win" ? "win" : "lose");
       }
       phaseKey = key;
       local = {};
       armed = null;
       timers = {};
+      ticked = {};
       zeroRefreshed.clear();
     }
     // Системные строки комнаты — из разницы списков игроков между опросами.
@@ -708,7 +720,17 @@
         if (!quiet && sameRoom && events.some((event) => event.kind === "join") && window.ZhidaoSounds) window.ZhidaoSounds.play("join");
       }
     }
+    const prevGame = view && view.room.code === data.room.code && view.room.game === data.room.game ? view.game : null;
     view = data;
+    // Звук и вибрация на событиях игры (game-shell.js): модуль сравнивает
+    // прошлое состояние с новым и называет событие — «твой ход», «тебя
+    // обвинили». Итог партии отмечен выше вместе с финалом.
+    if (!quiet && prevGame && renderer.cue) {
+      const name = renderer.cue(prevGame, data.game, data.you);
+      if (name) window.ZhidaoGameShell?.cue(name);
+    }
+    // Пока идёт раунд, MAX переспрашивает перед закрытием приложения.
+    window.ZhidaoGameShell?.setLive(data.room.status === "playing" && !(renderer.finished && renderer.finished(data.game)));
     if (renderer.sync) renderer.sync(context());
     const next = [
       data.room.revision,
@@ -879,6 +901,13 @@
       armed: () => armed,
       disarm: () => { armed = null; },
       banner: (text) => node("p", "spy-banner", text),
+      // Главное действие фазы. На весь экран оно прилипает к низу, под
+      // большой палец (game-shell.css); draw() уносит его в конец окна.
+      bar: (...children) => {
+        const el = node("div", "game-actionbar");
+        el.append(...children.filter(Boolean));
+        return el;
+      },
       act: (action, body) => run(() => post(`/${view.room.game}/${action}`, body)),
       settings: (body) => run(() => post("/settings", body)),
       setHolding: (value) => {
@@ -917,6 +946,7 @@
     const oldBags = Array.from($("gameRoomBody").querySelectorAll(".smuggle-bag"), el => el.classList.contains("is-decided"));
     const oldSeats = Array.from($("gameRoomBody").querySelectorAll(".smuggle-seat"), el => el.classList.contains("is-decided"));
     $("gameRoomBody").replaceChildren(...renderer.draw(c).filter(Boolean));
+    $("gameRoomBody").querySelectorAll(".game-actionbar").forEach((bar) => $("gameRoomBody").append(bar));
     if (!phaseEntrance && document.documentElement.dataset.motion === "full" && !motionQuery.matches) {
       const stampKeyframes = [
         { transform: "scale(2.2) rotate(-18deg)", opacity: 0 },
@@ -926,8 +956,11 @@
       const stampOptions = { duration: 420, easing: "cubic-bezier(.2,.9,.3,1.25)" };
       [
         [".cipher-card", oldCards, "is-revealed", null,
-          [{ transform: "scale(.75)", opacity: .3 }, { transform: "scale(1.06)", opacity: 1, offset: .7 }, { transform: "scale(1)" }],
-          { duration: 340, easing: "cubic-bezier(.2,.8,.3,1.2)" }],
+          // Открытая карточка переворачивается лицом, а не просто вспыхивает.
+          [{ transform: "perspective(500px) rotateY(90deg)", filter: "brightness(1.5)" },
+            { transform: "perspective(500px) rotateY(-8deg)", filter: "brightness(1.1)", offset: .75 },
+            { transform: "none", filter: "none" }],
+          { duration: 480, easing: "cubic-bezier(.2,.8,.3,1.2)" }],
         [".outage-module", oldModules, "is-solved", null,
           [{ transform: "scale(.94)", opacity: .6 }, { transform: "scale(1)", opacity: 1 }],
           { duration: 260, easing: "ease-out" }],

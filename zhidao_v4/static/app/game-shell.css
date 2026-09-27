@@ -1,0 +1,153 @@
+/* Игра на весь экран — пара к game-shell.js.
+
+   Признак data-game-full на <html> ставит каталог игр, когда открыта игра.
+   Тогда уходит всё, что не игра: шапка с табло, адресная строка, нижняя
+   панель и строка состояния. Окно игры встаёт поверх фоновой фотографии
+   острова на весь экран и прокручивается само; его заголовок прилипает к
+   верху и служит верхней полосой, а «‹ Игры» лежит в ней слева. */
+
+html[data-game-full] body { overflow: hidden; }
+html[data-game-full] :is(.app-header, .internet-toolbar, .app-dock, .terminal-footer) { display: none !important; }
+html[data-game-full] [data-screen="games"] > .map-screen-head { display: none; }
+
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog]:not([data-catalog-hidden]):not([hidden]) {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Верхняя полоса: заголовок окна прилипает к верху, слева под «‹ Игры»
+   оставлено место. Отступ сверху — под вырез и строку состояния телефона. */
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .case-titlebar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  min-height: 52px;
+  padding: calc(env(safe-area-inset-top) + 8px) 12px 8px 162px;
+  border-radius: 0;
+}
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .case-titlebar h2 {
+  overflow: hidden;
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+html[data-game-full] #gamesBack {
+  position: fixed;
+  z-index: 70;
+  top: calc(env(safe-area-inset-top) + 8px);
+  left: max(8px, calc(50% - 302px));
+  margin: 0;
+}
+html[data-game-full] #gamesBack { display: flex; gap: 6px; }
+html[data-game-full] #gamesBack .btn {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* Звук игры: динамик с волнами — включён, с крестом — выключен. */
+html:not([data-game-full]) .game-sound-toggle { display: none; }
+html[data-game-full] #gamesBack .game-sound-toggle { width: 40px; padding: 0; }
+.game-sound-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.game-sound-toggle svg path:first-child { fill: currentColor; stroke: none; }
+.game-sound-toggle[data-on="1"] .game-sound-cross,
+.game-sound-toggle[data-on="0"] .game-sound-waves { display: none; }
+
+/* Строка состояния окна — снизу, как у настоящего окна. */
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .case-statusbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+}
+
+/* Всплывающие сообщения — над игрой, а не под ней. */
+html[data-game-full] .app-toast { z-index: 80; bottom: calc(76px + env(safe-area-inset-bottom)); }
+
+/* Полноэкранный вход — окно разворачивается, а не подменяется. */
+:root[data-motion="full"][data-game-full] [data-screen="games"] > .case-window[data-catalog]:not([data-catalog-hidden]):not([hidden]) {
+  animation: game-full-open 360ms cubic-bezier(.2, .75, .22, 1) backwards;
+}
+@keyframes game-full-open {
+  from { opacity: 0; scale: .96; }
+  to { opacity: 1; scale: 1; }
+}
+
+/* Главное действие фазы — внизу, под большим пальцем: «Начать раунд»,
+   «Обвинить игрока», «Да, это шпион», «Подсказка на 3», «Отдать сумку».
+   Модули игр кладут его в .game-actionbar (games.js уносит его в конец
+   окна), а здесь он прилипает к низу над строкой состояния окна. Пока
+   человек читает поле выше, кнопка остаётся на месте. */
+html[data-game-full] #gameRoomBody > .game-actionbar {
+  position: sticky;
+  bottom: 28px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 -14px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--ds-edge);
+  background: var(--ds-pane);
+  box-shadow: 0 -10px 24px -14px rgba(3, 40, 70, .55);
+}
+html[data-game-full] #gameRoomBody > .game-actionbar > .btn {
+  flex: 1 1 0;
+  min-height: 52px;
+  font-size: 16px;
+}
+html[data-game-full] #gameRoomBody > .game-actionbar > :not(.btn) { flex-basis: 100%; margin: 0; }
+
+/* --- моменты игры (ZhidaoGameShell.cue) ----------------------------------
+   Плашка события — в цвете игры (--game-color из games-polish.css), крупно,
+   посреди экрана, на секунду. Под ней можно продолжать играть. */
+.game-callout {
+  position: fixed;
+  z-index: 66;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+}
+.game-callout > div {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  max-width: 320px;
+  padding: 16px 22px 14px;
+  border: 2px solid rgba(255, 255, 255, .85);
+  border-radius: 16px;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(180deg, var(--game-light, #2ec2ea), var(--game-color, #0a6fb4) 55%);
+  box-shadow: 0 18px 40px -12px rgba(0, 20, 40, .6), inset 0 1px 0 rgba(255, 255, 255, .6);
+  animation: callout-life 1.6s cubic-bezier(.2, .75, .22, 1) both;
+}
+.game-callout b {
+  font: 700 clamp(28px, 9vw, 40px)/1.05 Impact, "Arial Black", sans-serif;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .35);
+}
+.game-callout small { font: 600 14px/1.3 var(--font-ui); opacity: .95; }
+.game-callout.is-alert > div { background: linear-gradient(180deg, #ff7a66, #b3261e 55%); }
+@keyframes callout-life {
+  0% { opacity: 0; transform: scale(.6) rotate(-3deg); }
+  14% { opacity: 1; transform: scale(1.06) rotate(1deg); }
+  22% { transform: scale(1) rotate(0); }
+  78% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-18px) scale(.96); }
+}
