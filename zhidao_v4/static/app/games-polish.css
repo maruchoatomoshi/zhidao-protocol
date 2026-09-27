@@ -33,6 +33,12 @@
 :is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
     #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"],#gameRoom[data-game="outage"],
     #gameRoom[data-game="smuggle"]) > .case-titlebar h2 { color:inherit; }
+/* Китайская подпись в цветном заголовке игры: общее правило дизайн-системы
+   красит её приглушёнными чернилами для белого стекла — на цветной плашке
+   это тёмное на тёмном. */
+:is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
+    #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"],#gameRoom[data-game="outage"],
+    #gameRoom[data-game="smuggle"]) > .case-titlebar span { color:rgba(255,255,255,.88); }
 .agent-target,.agent-mission { line-height:1.5; }
 .agent-card,.market-card,.sabotage-card,.zombie-card { border-radius:5px; }
 .market-form { grid-template-columns:minmax(0,1fr) auto; }

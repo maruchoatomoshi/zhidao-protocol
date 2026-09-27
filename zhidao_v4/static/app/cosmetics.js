@@ -118,6 +118,27 @@
     },
   };
 
+  /* Лицо игрока — инициалы на стеклянном шарике. Раньше аватар был пустым
+     белым шаром, и шесть шаров за столом «Шпиона» или на подиуме ничем не
+     отличались. Буквы — из того же имени, что стоит рядом, цвет — от имени
+     же: один человек всегда одного цвета. Ничего не выдумано, фото нет. */
+  const hueOf = (text) => {
+    let hash = 0;
+    for (const ch of String(text || "")) hash = (hash * 31 + ch.codePointAt(0)) >>> 0;
+    return hash % 360;
+  };
+  window.ZhidaoAvatar = Object.freeze({
+    paint(el, name, key) {
+      if (!el) return el;
+      const words = String(name || "").trim().split(/[\s\-]+/).filter(Boolean);
+      const letters = words.slice(0, 2).map((w) => Array.from(w)[0]).join("").toUpperCase();
+      if (!letters) return el;
+      el.dataset.initials = letters;
+      el.style.setProperty("--avatar-hue", String(hueOf(key ?? name)));
+      return el;
+    },
+  });
+
   function apply(equipped) {
     const root = document.documentElement;
     if (equipped && equipped.wallpaper) root.dataset.wallpaper = equipped.wallpaper;

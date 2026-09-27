@@ -53,6 +53,36 @@ html[data-wallpaper="wp_night_market"] body, [data-wallpaper-preview="wp_night_m
 /* --- рамки ------------------------------------------------------------------ */
 .cosmetic-avatar { display: inline-block; flex: none; width: 34px; height: 34px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff, #bfe3f2 60%, #7fb8d4); }
+
+/* Инициалы на шарике (ZhidaoAvatar.paint в cosmetics.js). Стекло окрашено
+   оттенком имени, буквы — глубокий тон того же оттенка с белым бликом.
+   Подиум своё вещество сохраняет: золото, серебро, бронза — меняются только
+   буквы. Рамки из магазина рисуются тенью и контуром, букв не касаются. */
+.cosmetic-avatar[data-initials] { position: relative; }
+.cosmetic-avatar[data-initials]::after {
+  content: attr(data-initials);
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font: 700 13px/1 var(--font-ui); letter-spacing: -.02em;
+  color: hsl(var(--avatar-hue, 200) 55% 22%);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .7);
+  pointer-events: none;
+}
+.cosmetic-avatar[data-initials]:not(.podium-avatar) {
+  background: radial-gradient(circle at 35% 30%, #fff,
+    hsl(var(--avatar-hue, 200) 75% 84%) 58%, hsl(var(--avatar-hue, 200) 50% 64%));
+}
+.spy-avatar[data-initials]::after { font-size: 10px; }
+.podium-avatar[data-initials]::after { font-size: 17px; color: #1d3a52; }
+.podium-slot.first .podium-avatar[data-initials]::after { font-size: 21px; color: #5a3a00; text-shadow: 0 1px 0 rgba(255, 244, 200, .8); }
+.podium-slot.second .podium-avatar {
+  background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .95), rgba(255, 255, 255, .2) 40%, transparent 60%),
+    linear-gradient(150deg, #f4f7fa, #c3ced8 55%, #8a9aa8 100%);
+}
+.podium-slot.third .podium-avatar {
+  background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .9), rgba(255, 255, 255, .15) 40%, transparent 60%),
+    linear-gradient(150deg, #f6d2b0, #d0925c 55%, #9a5d2c 100%);
+}
+.podium-slot.third .podium-avatar[data-initials]::after { color: #3f2210; text-shadow: 0 1px 0 rgba(255, 230, 205, .7); }
 [data-frame="fr_chrome"] { box-shadow: 0 0 0 3px #e4ebef, 0 0 0 5px #7d8f9b, 0 0 0 6px #ffffff !important; }
 [data-frame="fr_aqua"] { box-shadow: 0 0 0 3px #8fdcf6, 0 0 0 6px rgba(27, 167, 224, .65), 0 0 12px rgba(27, 167, 224, .7) !important; }
 [data-frame="fr_pixel"] { box-shadow: none !important; outline: 3px dashed #1b7fc4; outline-offset: 2px; }

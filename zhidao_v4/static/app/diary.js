@@ -138,6 +138,7 @@
       const avatar = node("span", "board-avatar cosmetic-avatar");
       if (item.frame) avatar.dataset.frame = item.frame;
       avatar.setAttribute("aria-hidden", "true");
+      window.ZhidaoAvatar?.paint(avatar, item.display_name);
       row.append(avatar);
       const lines = node("span", "board-lines");
       lines.append(node("b", "diary-name", item.display_name),

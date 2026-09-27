@@ -14,7 +14,7 @@
 .market-goods { display: flex; flex-wrap: wrap; gap: 5px; }
 .market-chip { padding: 2px 8px; border-radius: 10px; background: #e3f3e9; color: #0b5d2a; font: 13px/1.5 "Noto Sans SC", "Microsoft YaHei", Tahoma, sans-serif; }
 .market-chip.is-contraband { background: #fbe1dd; color: #8a1f14; }
-.market-chip.is-empty { background: transparent; color: #8aa0ae; }
+.market-chip.is-empty { background: transparent; color: var(--text-faint); }
 
 .market-builder { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 8px; align-items: center; }
 .market-head { font: 700 11px/1.2 Tahoma, sans-serif; text-transform: uppercase; color: #7a5200; }

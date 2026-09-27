@@ -113,6 +113,27 @@
     }).observe(list, { childList: true });
   });
 
+  /* --- 2б. Карточка роли раскрывается --------------------------------------
+     «Вы человек», «Вы первый зомби», цель агента, роль в Саботаже — главная
+     новость экрана, а появлялась она так же, как абзац правил. Карточка
+     раскрывается, когда появляется впервые и когда роль сменилась (заразили,
+     вывели); опрос сервера, перерисовывающий то же самое, её не трогает. */
+  const ROLE_HOSTS = { zombieBody: ".zombie-card", agentBody: ".agent-card", sabotageBody: ".sabotage-card" };
+  Object.entries(ROLE_HOSTS).forEach(([id, selector]) => {
+    const host = document.getElementById(id);
+    if (!host) return;
+    let lastKey = "";
+    new MutationObserver(() => {
+      const card = host.querySelector(selector);
+      const key = card ? `${card.className}|${(card.firstElementChild && card.firstElementChild.textContent) || ""}` : "";
+      if (key === lastKey) return;
+      lastKey = key;
+      if (!card || !full()) return;
+      card.classList.add("role-arrive");
+      card.addEventListener("animationend", () => card.classList.remove("role-arrive"), { once: true });
+    }).observe(host, { childList: true });
+  });
+
   /* --- 3. Один проход света по табло при переходе -------------------------
      Приём из описания дизайн-системы («один проход света по табло при
      входе экрана»): счётчик ★ в шапке ловит блик и отзывается на каждый

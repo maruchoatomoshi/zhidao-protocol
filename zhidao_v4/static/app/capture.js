@@ -416,6 +416,7 @@
     if (mine) {
       const badge = node("b", "capture-you", `Вы — ${mine.ru} ${mine.zh}`);
       badge.style.setProperty("--faction", mine.color);
+      badge.dataset.faction = mine.code;
       head.append(badge);
     }
     parts.push(head);

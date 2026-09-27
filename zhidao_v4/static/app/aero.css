@@ -518,6 +518,7 @@
 }
 
 .podium-slot.first .podium-rank { color: #a5720a; }
+:root[data-theme="dark"] .podium-slot.first .podium-rank { color: #ffd166; } /* охра на ночном стекле — 2.6:1 */
 
 /* --- board list (rating rows) --------------------------------------------- */
 

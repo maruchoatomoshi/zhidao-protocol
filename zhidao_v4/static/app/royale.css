@@ -189,3 +189,10 @@
 :root[data-theme="dark"] .royale-option.is-right { background: #10301c; color: #9ff0bb; }
 :root[data-theme="dark"] .royale-option.is-wrong { background: #3a1210; color: #ffb0a8; }
 :root[data-theme="dark"] .royale-meta.is-ok { color: #5fd88a; }
+
+/* Итог смены у игрока — подиум рейтинга (разметка .podium из aero.css),
+   поднимается при показе: второе, третье, и первое — последним. */
+.royale-results-podium { margin: 4px 0 8px; }
+:root[data-motion="full"] .royale-results-podium .podium-slot { animation: podium-rise 560ms cubic-bezier(.2, .75, .22, 1) both; }
+:root[data-motion="full"] .royale-results-podium .podium-slot.third { animation-delay: 120ms; }
+:root[data-motion="full"] .royale-results-podium .podium-slot.first { animation-delay: 260ms; }

@@ -58,7 +58,7 @@ button.smuggle-card { cursor: pointer; }
 .smuggle-stall { display: flex; flex-wrap: wrap; gap: 5px; }
 .smuggle-chip { padding: 2px 8px; border-radius: 10px; background: #e3f3e9; font: 13px/1.4 "Noto Sans SC", "Microsoft YaHei", sans-serif; color: #0b5d2a; }
 .smuggle-chip.is-hidden { background: #3a3446; color: #ffd54a; }
-.smuggle-chip.is-empty { background: transparent; color: #8aa0ae; font-family: Tahoma, sans-serif; }
+.smuggle-chip.is-empty { background: transparent; color: var(--text-faint); font-family: Tahoma, sans-serif; }
 
 .smuggle-scores { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
 .smuggle-scores li { display: grid; gap: 1px; }
@@ -72,4 +72,6 @@ button.smuggle-card { cursor: pointer; }
 :root[data-theme="dark"] .smuggle-seat.is-officer { background: #10284a; border-color: #4a8ae0; }
 :root[data-theme="dark"] .smuggle-event { background: #2e250e; border-color: #8a6a1a; }
 :root[data-theme="dark"] .smuggle-event b, :root[data-theme="dark"] .smuggle-event span { color: #ffe29a; }
+/* Деньги и взятка набраны тёмной охрой для светлой бумаги; ночью — золото. */
+:root[data-theme="dark"] .smuggle-money, :root[data-theme="dark"] .smuggle-bribe b { color: #ffd166; }
 :root[data-theme="dark"] .smuggle-chip { background: #10301c; color: #9ff0bb; }

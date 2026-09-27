@@ -830,6 +830,7 @@
       const avatar = node("span", "spy-avatar cosmetic-avatar");
       if (player.frame) avatar.dataset.frame = player.frame;
       avatar.setAttribute("aria-hidden", "true");
+      window.ZhidaoAvatar?.paint(avatar, player.display_name);
       const dot = node("span", `spy-dot${player.present ? " is-on" : ""}`);
       avatar.append(dot);
       const name = node("span", "spy-player-name", player.display_name);

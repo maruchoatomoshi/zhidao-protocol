@@ -101,7 +101,7 @@
 /* --- журнал комнаты ---------------------------------------------------- */
 .zd-chatlog{display:grid;gap:1px;max-height:132px;overflow-y:auto;padding:6px 8px;border:1px solid var(--border-aqua);border-radius:4px;background:#fff;box-shadow:inset 1px 1px 3px rgba(0,0,0,.15);font:12px/1.4 var(--font-luna)}
 .zd-chatline{margin:0;color:#5b6b78;overflow-wrap:anywhere}
-.zd-chatline time{margin-right:5px;color:#8a98a3;font:11px/1.4 var(--font-system)}
+.zd-chatline time{margin-right:5px;color:var(--text-faint);font:11px/1.4 var(--font-system)}
 .zd-chatline.is-join{color:#23801f}
 .zd-chatline.is-leave{color:#b3261e}
 .zd-chatline.is-away{color:#8f7200}
@@ -161,7 +161,7 @@
 .smuggle-stall{display:flex;flex-wrap:wrap;gap:5px}
 .smuggle-chip{padding:2px 8px;border-radius:10px;background:#e3f3e9;color:#0b5d2a;font:13px/1.4 "Noto Sans SC","Microsoft YaHei",sans-serif}
 .smuggle-chip.is-hidden{background:#3a3446;color:#ffd54a}
-.smuggle-chip.is-empty{background:transparent;color:#8aa0ae;font-family:var(--font-luna)}
+.smuggle-chip.is-empty{background:transparent;color:var(--text-faint);font-family:var(--font-luna)}
 .smuggle-scores{display:grid;gap:6px;margin:0;padding-left:22px}
 .smuggle-scores li{display:grid;gap:1px}
 .smuggle-scores small{color:#4f6f82;font:12px/1.3 var(--font-luna)}
@@ -268,7 +268,7 @@
 .market-goods{display:flex;flex-wrap:wrap;gap:5px}
 .market-chip{padding:2px 8px;border-radius:10px;background:#e3f3e9;color:#0b5d2a;font:13px/1.5 "Noto Sans SC","Microsoft YaHei",Tahoma,sans-serif}
 .market-chip.is-contraband{background:#fbe1dd;color:#8a1f14}
-.market-chip.is-empty{background:transparent;color:#8aa0ae}
+.market-chip.is-empty{background:transparent;color:var(--text-faint)}
 .market-builder{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 8px}
 .market-head{color:#7a5200;font:700 11px/1.2 var(--font-luna);text-transform:uppercase}
 .market-head:nth-child(2){text-align:center}
@@ -344,7 +344,7 @@
 .outage-wire-line{height:6px;border-radius:3px;background:repeating-linear-gradient(90deg,#7d8f9b 0 14px,#aab8c1 14px 18px);box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 2px 2px rgba(0,0,0,.25)}
 .outage-wire.is-cut .outage-wire-line{background:linear-gradient(90deg,#7d8f9b 0 42%,transparent 42% 58%,#7d8f9b 58%)}
 .outage-keypad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.outage-key{min-height:72px;border:1px solid var(--border-aqua);border-radius:10px;background:linear-gradient(rgba(255,255,255,.9),#e6f4fb);font:700 22px/1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+.outage-key{min-height:72px;border:1px solid var(--border-aqua);border-radius:10px;color:var(--text-primary);background:linear-gradient(rgba(255,255,255,.9),#e6f4fb);font:700 22px/1 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
 .outage-number{display:block;color:var(--text-primary);font:700 44px/1.15 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;text-align:center}
 .outage-summary{display:flex;flex-wrap:wrap;gap:6px}
 .outage-chip{padding:4px 9px;border:1px solid var(--armed-edge);border-radius:999px;background:#ffb65a24;color:var(--text-primary);font:600 12px/1.3 var(--font-ui)}
@@ -378,3 +378,25 @@
 [data-design="xp"] .capture-track,[data-design="xp"] .capture-bar{border-radius:0}
 [data-design="xp"] .capture-title{font:bold 15px/1.3 var(--font-luna)}
 [data-design="xp"] .cipher-team-head,[data-design="xp"] .cipher-team-list,[data-design="xp"] .cipher-chip,[data-design="xp"] .outage-module-head,[data-design="xp"] .outage-chip,[data-design="xp"] .capture-meta,[data-design="xp"] .capture-score b{font-family:var(--font-luna)}
+
+/* --- поправки читаемости игр (аудит 2026-09-27) --------------------------
+   Замок «Сбоя»: клавиши стали светлым стеклом, а цвет иероглифа остался от
+   прежней тёмной металлической клавиши — белое на белом. В Луне то же с
+   заголовком модуля: модуль побелел, подпись осталась светлой. */
+[data-design="xp"] .outage-key{color:var(--xp-ink)}
+[data-design="xp"] .outage-module[data-module-type="keypad"] .outage-module-head{color:var(--xp-ink)}
+[data-design="xp"] .outage-module[data-module-type="keypad"] .outage-module-head span{color:#c2410c}
+/* Счёт «Шифровальщиков» — плашки команд. Дизайн-система выбеливала их, а
+   ночью и в Луне заменяла цвет команды общей поверхностью; белая надпись
+   оставалась на белом. Цвет команды — это смысл плашки, он нужен везде.
+   Команда не на ходу гасится насыщенностью, а не прозрачностью: надпись
+   остаётся читаемой. */
+.cipher-chip{opacity:1}
+.cipher-chip.is-blue,[data-theme="dark"] .cipher-chip.is-blue,[data-design="xp"] .cipher-chip.is-blue{border-color:#135a94;color:#fff;background:linear-gradient(#2b8fd0,#135a94)}
+.cipher-chip.is-red,[data-theme="dark"] .cipher-chip.is-red,[data-design="xp"] .cipher-chip.is-red{border-color:#a92e24;color:#fff;background:linear-gradient(#e0645a,#a92e24)}
+.cipher-chip:not(.is-turn){filter:saturate(.45) brightness(.92)}
+/* Метка «СБОЙ» у модуля — жжёная охра для светлой бумаги; ночью светлее. */
+[data-theme="dark"] .outage-module-head span{color:#ff9b7a}
+[data-theme="dark"] .outage-module.is-solved .outage-module-head span{color:#6fe093}
+/* Подсказка-ответ внутри тёмного металлического замка (дневная Аква). */
+:root:not([data-design="xp"]) .outage-module[data-module-type="keypad"] .spy-hint{color:#c9d3dc}

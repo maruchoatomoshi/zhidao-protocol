@@ -146,8 +146,17 @@
     return wrap;
   }
 
+  // Какие карточки уже были открыты на прошлой отрисовке этой доски: доска
+  // перерисовывается целиком при каждом изменении, и переворачиваться
+  // должна только та, что открылась сейчас, а не все открытые разом.
+  let seenBoard = "";
+  let seenOpen = new Set();
+
   function drawBoard(c, live) {
     const { node, game } = c;
+    const boardKey = game.board.map((card) => card.word.zh).join("|");
+    const fresh = boardKey === seenBoard;
+    if (!fresh) { seenBoard = boardKey; seenOpen = new Set(game.board.filter((card) => card.revealed).map((card) => card.index)); }
     const wrap = node("div", "spy-actions");
     const banner = c.armedBanner("card:");
     if (banner) wrap.append(banner);
@@ -160,6 +169,10 @@
       if (!openable) el.setAttribute("role", "listitem");
       if (card.key) el.classList.add(`is-${card.key}`);
       el.classList.add(card.revealed ? "is-revealed" : card.key ? "is-hint" : "is-closed");
+      if (card.revealed && fresh && !seenOpen.has(card.index)) {
+        el.classList.add("is-flipping");
+        seenOpen.add(card.index);
+      }
       el.append(node("b", null, card.word.zh));
       if (card.word.pinyin) el.append(node("small", null, card.word.pinyin));
       if (card.word.ru) el.append(node("small", "cipher-ru", card.word.ru));

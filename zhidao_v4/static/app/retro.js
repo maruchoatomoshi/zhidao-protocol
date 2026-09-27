@@ -305,9 +305,14 @@
       dismissible(overlay, 1800);
       return;
     }
+    // title/sub — для больших игр, где итог не «очки вечера», а место,
+    // сторона или звёзды: их финал собран из того же WordArt и фейерверка.
     const win = options.kind === "win";
-    overlay.append(el("div", `zd-wordart${win ? "" : " is-muted"}`, win ? "ПОБЕДА!" : "РАУНД ОКОНЧЕН"));
-    if (win) overlay.append(el("p", "zd-finale-sub", `+${options.points} ${plural(options.points, "очко", "очка", "очков")} вечера`));
+    const title = options.title || (win ? "ПОБЕДА!" : "РАУНД ОКОНЧЕН");
+    overlay.append(el("div", `zd-wordart${win ? "" : " is-muted"}`, title));
+    const sub = options.sub !== undefined ? options.sub
+      : win ? `+${options.points} ${plural(options.points, "очко", "очка", "очков")} вечера` : "";
+    if (sub) overlay.append(el("p", "zd-finale-sub", sub));
     if (win && motion()) {
       [48, 200, 330].forEach((hue, burst) => {
         const firework = el("span", "zd-firework");

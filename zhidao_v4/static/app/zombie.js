@@ -310,10 +310,19 @@
   let refreshing = false;
   function accept(body) {
     const before = !quietRefresh && !document.hidden && onGames() ? (data && data.game && data.game.me) : null;
+    const wasStatus = before ? data.game.status : null;
     quietRefresh = false;
     data = body;
     const after = data.game && data.game.me;
+    if (wasStatus && wasStatus !== "over" && data.game.status === "over" && !data.game.cancelled && after) {
+      const r = data.game.results || {};
+      // Награда видна в итогах под оверлеем; здесь — только сам исход.
+      if (after.survived) window.ZhidaoRetro?.finale({ kind: "win", title: "ВЫЖИЛИ!", sub: "Продержались до конца раунда" });
+      else if (after.best_zombie) window.ZhidaoRetro?.finale({ kind: "win", title: "ЛУЧШИЙ ЗОМБИ", sub: "Больше всех заражений" });
+      else window.ZhidaoRetro?.finale({ kind: "lose", title: r.reason === "all_turned" ? "ЗОМБИ ПОБЕДИЛИ" : "РАУНД ОКОНЧЕН", sub: "" });
+    }
     if (before && after && before.side === "human" && after.side === "zombie") {
+      window.ZhidaoRetro?.finale({ kind: "infected", title: "ВЫ ЗОМБИ", sub: "Касайтесь плеча и берите код" });
       window.showToast?.("Вас заразили! Теперь вы зомби");
       window.ZhidaoSounds?.play("buy");
       question = null;

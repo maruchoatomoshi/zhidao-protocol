@@ -46,6 +46,7 @@
     const face = node("span", `${className} cosmetic-avatar`);
     if (item.frame) face.dataset.frame = item.frame;
     face.setAttribute("aria-hidden", "true");
+    window.ZhidaoAvatar?.paint(face, item.display_name);
     return face;
   }
 

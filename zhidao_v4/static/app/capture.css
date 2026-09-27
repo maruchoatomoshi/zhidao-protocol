@@ -134,3 +134,6 @@
 .capture-duel-result.is-lose { color: #ff8a7a; }
 :root[data-motion="full"] .capture-duel-result.is-win { animation: capture-win .6s steps(6) 2; }
 @keyframes capture-win { 50% { transform: scale(1.12); } }
+
+/* Белое на золотой фракции — 2:1. Золотым надпись набирается тёмным. */
+.capture-you[data-faction="gold"] { color: #3a2600; text-shadow: 0 1px 0 rgba(255, 255, 255, .35); }

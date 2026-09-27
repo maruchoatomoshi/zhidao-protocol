@@ -175,7 +175,7 @@
   box-shadow: inset 1px 1px 3px rgba(0, 0, 0, .15); font: 12px/1.4 Tahoma, Verdana, sans-serif;
 }
 .zd-chatline { margin: 0; color: #5b6b78; overflow-wrap: anywhere; }
-.zd-chatline time { margin-right: 5px; color: #8a98a3; font: 11px/1.4 "Courier New", monospace; }
+.zd-chatline time { margin-right: 5px; color: var(--text-faint); font: 11px/1.4 "Courier New", monospace; }
 .zd-chatline.is-join { color: #23801f; }
 .zd-chatline.is-leave { color: #b3261e; }
 .zd-chatline.is-away { color: #8f7200; }
@@ -215,6 +215,17 @@
 @keyframes zd-burst { 0% { transform: translate(0, 0); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
 
 .zd-finale.is-bsod { place-items: stretch; align-content: stretch; padding: 0; background: #0000aa; }
+/* Заражение в «Зомби-протоколе»: не победа и не поражение, а смена стороны.
+   Ядовито-зелёная вспышка с помехами — тот же WordArt, другой цвет. */
+.zd-finale.is-infected { background: radial-gradient(circle at 50% 45%, rgba(40, 90, 20, .55), rgba(6, 20, 4, .88)); }
+.zd-finale.is-infected .zd-wordart { background: linear-gradient(180deg, #eaffb0, #9cf04a 40%, #3f9a1c 70%, #1f5a0c); -webkit-text-stroke-color: #0b2404; filter: drop-shadow(4px 4px 0 #0b2404); }
+.zd-finale.is-infected .zd-finale-sub { background: #d9f7c0e6; color: #173a08; }
+:root[data-motion="full"] .zd-finale.is-infected::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(160, 255, 90, .08) 0 2px, transparent 2px 5px);
+  animation: zd-infect-flicker .9s steps(6) 2;
+}
+@keyframes zd-infect-flicker { 0%, 100% { opacity: .2; } 30% { opacity: 1; } 60% { opacity: .4; } 80% { opacity: .9; } }
 .zd-bsod { display: grid; align-content: center; gap: 12px; padding: 28px 22px; color: #fff; text-align: left; font: 15px/1.5 "Lucida Console", "Courier New", monospace; }
 .zd-bsod p { margin: 0; }
 .zd-bsod-head { justify-self: center; padding: 0 8px; background: #aaaaaa; color: #0000aa; }

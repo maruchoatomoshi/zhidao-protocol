@@ -353,15 +353,39 @@
     } else if (place && place <= 3) {
       parts.push(node("p", "royale-meta is-ok", `Вы в тройке лучших: ${place} место`));
     }
-    const list = node("ol", "royale-results");
-    game.results.forEach((r) => {
-      const item = node("li", r.place <= 3 ? `is-top is-place-${r.place}` : "");
-      item.append(node("b", null, r.name));
-      if (r.prize) item.append(node("span", null, `+${r.prize.stars}★ · +${r.prize.rep} REP`));
-      else if (r.limited) item.append(node("span", null, "приз сегодня уже был"));
-      list.append(item);
-    });
-    parts.push(list);
+    // Тройка — на подиуме, как в рейтинге: золото, серебро, бронза с
+    // инициалами. Раньше итог смены был просто нумерованным списком.
+    const prizeText = (r) => (r.prize ? `+${r.prize.stars}★ · +${r.prize.rep} REP` : r.limited ? "приз сегодня уже был" : "");
+    const top = game.results.filter((r) => r.place <= 3);
+    if (top.length) {
+      const podium = node("div", "podium royale-results-podium");
+      [[2, "second"], [1, "first"], [3, "third"]].forEach(([placeNo, cls]) => {
+        const r = top.find((row) => row.place === placeNo);
+        if (!r) return;
+        const slot = node("div", `podium-slot ${cls}${placeNo === place ? " is-you" : ""}`);
+        const face = node("span", "podium-avatar cosmetic-avatar");
+        face.setAttribute("aria-hidden", "true");
+        window.ZhidaoAvatar?.paint(face, r.name);
+        slot.append(face, node("span", "podium-rank", String(placeNo)), node("b", "podium-name", r.name));
+        const prize = prizeText(r);
+        if (prize) slot.append(node("small", "podium-rep", prize));
+        podium.append(slot);
+      });
+      parts.push(podium);
+    }
+    const rest = game.results.filter((r) => r.place > 3);
+    if (rest.length) {
+      const list = node("ol", "royale-results");
+      list.start = 4;
+      rest.forEach((r) => {
+        const item = node("li");
+        item.append(node("b", null, r.name));
+        const prize = prizeText(r);
+        if (prize) item.append(node("span", null, prize));
+        list.append(item);
+      });
+      parts.push(list);
+    }
     if (place && place > 3) parts.push(node("p", "royale-meta", `Ваше место: ${place}`));
     return parts;
   }
@@ -537,6 +561,15 @@
       celebrated = game.id;
       if (stageOpen) confetti();
       if (stageOpen || (game.me && game.me.place === 1)) sound("win");
+      // Игроку — свой финал: раньше победа смены отмечалась только звуком.
+      const place = !stageOpen && game.me && game.me.place;
+      if (place) {
+        const row = (game.results || []).find((r) => r.place === place);
+        const prize = row && row.prize ? `+${row.prize.stars}★ · +${row.prize.rep} REP` : "";
+        window.ZhidaoRetro?.finale(place <= 3
+          ? { kind: "win", title: place === 1 ? "ПОБЕДА!" : `${place} МЕСТО`, sub: prize || "Тройка лучших смены" }
+          : { kind: "lose", title: "ИГРА ОКОНЧЕНА", sub: `Ваше место: ${place}` });
+      }
     }
     clearTimeout(introTimer);
     if (game && game.intro_until && !document.hidden && (onGames() || stageOpen)) {

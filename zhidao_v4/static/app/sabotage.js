@@ -364,6 +364,13 @@
     quietRefresh = false;
     data = body;
     const after = data.game;
+    if (before && after && before.me && before.status !== "over" && after.status === "over" && !after.cancelled) {
+      const r = after.results || {};
+      const side = r.winner === "crew" ? "Победил экипаж" : "Победили саботажники";
+      window.ZhidaoRetro?.finale(after.me && after.me.won
+        ? { kind: "win", title: "ПОБЕДА!", sub: side }
+        : { kind: "lose", title: "ПОРАЖЕНИЕ", sub: side });
+    }
     if (before && after && before.me && after.me && before.me.alive && after.me.alive === false) {
       window.showToast?.(after.me.ejected ? "Вас выгнали на собрании" : "Вас вывели! Молчите — вы призрак");
       window.ZhidaoSounds?.play("buy");
