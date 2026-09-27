@@ -191,6 +191,21 @@ class CaseTests(unittest.TestCase):
         self.sql("UPDATE v4_accounts SET status='disabled' WHERE id=?", (self.ids['boris'],))
         self.assertEqual(self.clients['boris'].get('/api/v4/cases/context').status_code, 401)
 
+    def test_staff_receive_attempts_and_open_cases(self):
+        # Решение 2026-09-27: штат получает кейсы наравне с участниками, в том
+        # числе от самого себя. Строки состава у вожатого нет — её создаёт
+        # первая выдача, и после неё он открывает кейс как обычный участник.
+        roster = self.clients['staff'].get('/api/v4/seasons/1/cases/admin/roster').json()
+        self.assertEqual([m['id'] for m in roster['staff']], [self.ids['staff']])
+        self.assertNotIn(self.ids['staff'], [m['id'] for m in roster['members']])
+        self.assertEqual(self.grant(2, name='staff').status_code, 200)
+        self.assertEqual(self.state('staff')['scans'], 2)
+        self.assertEqual(self.open('staff').status_code, 200)
+        self.assertEqual(len(self.state('staff')['history']['items']), 1)
+        # Участник без строки состава по-прежнему не получатель.
+        self.sql("UPDATE v4_season_memberships SET status='withdrawn' WHERE account_id=? AND season_id=1", (self.ids['boris'],))
+        self.assertEqual(self.grant(name='boris').status_code, 403)
+
     def test_season_and_participant_isolation(self):
         self.grant(4)
         self.assertEqual(self.state('boris')['scans'], 0)

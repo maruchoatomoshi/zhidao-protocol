@@ -18,8 +18,9 @@
 Архитектора и админа: и там, и там штат был одним списком без ступеней.
 Отличия от Пекина: числа не те же (там ±5000★/±1000 REP — не масштаб V4,
 здесь ±100★/±50 REP), причина обязательна, вниз от нуля не уходит, пишется в
-общий журнал операций, а не в отдельную таблицу, и получателем не может быть
-штат — начисляют детям, не друг другу.
+общий журнал операций, а не в отдельную таблицу. Получателем с 2026-09-27
+может быть и штат, в том числе сам себе (решение пользователя); в рейтингах
+REP и дневника штат всё равно не показывается.
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ from datetime import datetime, timezone
 from statistics import median
 from zoneinfo import ZoneInfo
 
-from .cases import CaseError, authorize, can_manage, encoded, ensure_wallet, replay
+from .cases import CaseError, authorize, encoded, ensure_wallet, replay
 from .diary import full_wallet
 
 WALK_CODE = "walk"
@@ -178,9 +179,9 @@ def grant(conn, actor: int, season_id: int, key: str, account_id: int, stars_del
         raise CaseError(f"Не больше {GRANT_STARS_CAP}★ за одно начисление.")
     if abs(rep_delta) > GRANT_REP_CAP:
         raise CaseError(f"Не больше {GRANT_REP_CAP} REP за одно начисление.")
-    authorize(conn, account_id, season_id, write=True)
-    if can_manage(conn, account_id, season_id):
-        raise CaseError("Начисления — только участникам, не штату.", 409)
+    # Штат получает ★ и REP наравне с участниками, в том числе сам себе
+    # (решение 2026-09-27); в рейтингах REP и дневника его по-прежнему нет.
+    authorize(conn, account_id, season_id, write=True, staff_may_play=True)
     ensure_wallet(conn, account_id, season_id)
     before = full_wallet(conn, account_id, season_id)
     # Не уходит в минус — как в пекинской версии: MAX(0, ...).

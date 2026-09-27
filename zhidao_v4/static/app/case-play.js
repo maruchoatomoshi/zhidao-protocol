@@ -263,6 +263,12 @@
           $("caseGrantMembers").append(label);
         }
         if (!roster.members.length) $("caseGrantMembers").append(node("p", "", "Нет активных участников сезона. Сначала настройте состав сезона."));
+        // Штат получает попытки наравне с участниками (решение 2026-09-27).
+        for (const member of roster.staff || []) {
+          const label = node("label"); const input = node("input"); input.type = "checkbox"; input.value = member.id;
+          label.append(input, node("span", "", `${member.display_name} · штат · #${member.id} · ${member.scans}/7`));
+          $("caseGrantMembers").append(label);
+        }
         for (const group of roster.groups) { const option = node("option", "", group.name); option.value = group.id; $("caseGrantGroup").append(option); }
         drawGrants(grants);
         const recovery = pending("grant");

@@ -91,12 +91,14 @@ def authorize(conn, account_id, season_id, *, manage=False, write=False, staff_m
     into v4_case_wallets need a real row: that table's foreign key is
     (season_id, account_id) -> v4_season_memberships, so a bare bypass
     would let staff join a game and then crash the moment it tried to pay
-    them. staff_may_play must never be passed when account_id is someone
-    OTHER than the caller (a diary rating's target, a trade partner, ...)
-    — staff being scoreable is a separately-decided question, and the
-    answer was no (V4_GAMES.md: hidden from the REP/diary leaderboards).
-    Leaderboards filter staff out by role, not by membership shape, since
-    this makes them ordinary active members everywhere else."""
+    them. For someone OTHER than the caller it is passed in exactly one
+    kind of place: an organiser's grant of case attempts or of ★/REP
+    (grant() here, economy.grant) — decision 2026-09-27: staff receive
+    cases and points too, a grant to oneself included. Never for a diary
+    rating's target, a trade partner and the like: the diary stays closed
+    to staff, and the REP/diary leaderboards keep hiding them (V4_GAMES.md
+    §5). Leaderboards filter staff out by role, not by membership shape,
+    since this makes them ordinary active members everywhere else."""
     season = conn.execute('SELECT * FROM v4_seasons WHERE id=?', (season_id,)).fetchone()
     if not season:
         raise CaseError('Сезон не найден.', 404)
@@ -253,14 +255,31 @@ def open_case(conn, actor, season_id, key, request_id=None):
     return response, False
 
 
+STAFF_ROLE_SQL = '''EXISTS (SELECT 1 FROM v4_role_assignments ra WHERE ra.account_id=a.id
+        AND ra.role_code IN ('operator','architect','system_admin') AND ra.revoked_at IS NULL
+        AND (ra.season_id IS NULL OR ra.season_id=?))'''
+
+
 def roster(conn, actor, season_id):
     authorize(conn, actor, season_id, manage=True)
-    members = conn.execute('''SELECT a.id, a.display_name, COALESCE(w.scans,0) AS scans
+    members = conn.execute(f'''SELECT a.id, a.display_name, COALESCE(w.scans,0) AS scans
         FROM v4_season_memberships m JOIN v4_accounts a ON a.id=m.account_id
         LEFT JOIN v4_case_wallets w ON w.season_id=m.season_id AND w.account_id=m.account_id
-        WHERE m.season_id=? AND m.status='active' AND a.status='active' ORDER BY a.display_name,a.id''', (season_id,)).fetchall()
+        WHERE m.season_id=? AND m.status='active' AND a.status='active' AND NOT {STAFF_ROLE_SQL}
+        ORDER BY a.display_name,a.id''', (season_id, season_id)).fetchall()
+    # Штат получает попытки наравне с участниками (решение 2026-09-27), в том
+    # числе без строки состава — её создаст первая выдача. Отдельным списком:
+    # «Состав сезона» в боте и выбор нулевого пациента вируса — это участники.
+    staff = conn.execute(f'''SELECT a.id, a.display_name, COALESCE(w.scans,0) AS scans
+        FROM v4_accounts a
+        LEFT JOIN v4_season_memberships m ON m.season_id=? AND m.account_id=a.id
+        LEFT JOIN v4_case_wallets w ON w.season_id=? AND w.account_id=a.id
+        WHERE a.status='active' AND {STAFF_ROLE_SQL}
+          AND (m.id IS NULL OR m.status='active')
+        ORDER BY a.display_name,a.id''', (season_id, season_id, season_id)).fetchall()
     groups = conn.execute("SELECT id,name FROM v4_groups WHERE season_id=? AND status='active' ORDER BY name", (season_id,)).fetchall()
-    return {'members': [dict(r) for r in members], 'groups': [dict(r) for r in groups]}
+    return {'members': [dict(r) for r in members], 'staff': [dict(r) for r in staff],
+            'groups': [dict(r) for r in groups]}
 
 
 def grant(conn, actor, season_id, key, account_ids, group_id, amount, reason, request_id=None):
@@ -287,7 +306,9 @@ def grant(conn, actor, season_id, key, account_ids, group_id, amount, reason, re
     if not account_ids:
         raise CaseError('Нет активных участников для выдачи.')
     for target in account_ids:
-        authorize(conn, target, season_id, write=True)
+        # Штат — тоже получатель (решение 2026-09-27); без строки состава она
+        # создаётся здесь, иначе кошелёк не ляжет по внешнему ключу.
+        authorize(conn, target, season_id, write=True, staff_may_play=True)
     results = []
     for target in account_ids:
         before = wallet(conn, target, season_id)

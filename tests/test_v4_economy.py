@@ -204,15 +204,18 @@ class EconomyTests(unittest.TestCase):
         self.assertEqual(self.grant(stars_delta=100).status_code, 200)
         self.assertEqual(self.grant(rep_delta=-50, key="rep-cap-test").status_code, 200)
 
-    def test_staff_cannot_be_the_target_and_retry_does_not_grant_twice(self):
-        # Без всякого членства архитектор просто не проходит базовую
-        # проверку участника (403). Настоящая защита — на случай, если он
-        # уже играл в какую-то другую игру и получил настоящее членство:
-        # даже тогда начисление ему отказывает, отдельно и по роли.
-        self.assertEqual(self.grant(who="architect", stars_delta=5).status_code, 403)
-        self.execute("INSERT INTO v4_season_memberships(season_id, account_id, status) VALUES (1, ?, 'active')",
-                     (self.ids["architect"],))
-        self.assertEqual(self.grant(who="architect", stars_delta=5, key="staff-target").status_code, 409)
+    def test_staff_receive_grants_even_from_themselves_and_retry_does_not_grant_twice(self):
+        # Решение 2026-09-27: штат получает ★ и REP, в том числе сам себе.
+        # Строки состава у архитектора нет — её создаёт начисление.
+        self.assertEqual(self.grant(who="architect", stars_delta=5).status_code, 200)
+        self.assertEqual(self.grant(who="staff", actor="staff", rep_delta=3).status_code, 200)
+        wallets = {row["account_id"]: (row["stars"], row["rep"]) for row in
+                   self.execute("SELECT account_id, stars, rep FROM v4_case_wallets")}
+        self.assertEqual(wallets[self.ids["architect"]], (5, 0))
+        self.assertEqual(wallets[self.ids["staff"]], (0, 3))
+        # В рейтинге REP штата по-прежнему нет.
+        board = self.clients["alice"].get("/api/v4/seasons/1/rep/board").json()
+        self.assertEqual(board["total"], 2)
         key = "grant-once"
         first = self.grant(stars_delta=7, key=key)
         second = self.grant(stars_delta=7, key=key)
