@@ -89,7 +89,9 @@
 
 **Тип.** Аква — «ZHIDAO Sans» (это Open Sans из репозитория, файлы в
 `assets/fonts`, лицензия `OFL.txt`; так гарнитура названа в
-`aero-grade.css`), служебное и адреса — Courier New. Луна-Аква — Tahoma целиком. Китайские подписи — Microsoft YaHei
+`aero-grade.css`), служебное и адреса — Courier New (под этим именем
+отдаётся IBM Plex Mono). Луна-Аква — Tahoma целиком (под этим именем
+отдаётся PT Sans). Китайские подписи — Microsoft YaHei
 / PingFang SC. Шкала: дисплей `clamp(32px,9.5vw,46px)`, заголовок 23,
 подзаголовок 16, текст 13, мелкий 11, метка 9 с разрядкой `.12em`.
 Дисплейное начертание (градиентная заливка плюс белый контур) — только
@@ -182,11 +184,15 @@ rgba(49,161,215,.32))`, плюс редкие «пузыри» и световы
 1. **Шрифт Аквы** — «ZHIDAO Sans» из `aero-grade.css`, объявлен
    `@font-face` из локальных `open-sans-cyrillic.woff2` и
    `open-sans-latin.woff2`. С Google Fonts ничего не подставлено.
-2. **Tahoma, Courier New, Lucida Console, Microsoft YaHei, PingFang SC,
-   Cambria — системные, файлов не будет.** Запасные стеки оставлены как
-   есть. Проверка дизайн-системы продолжает отмечать их как «шрифт без
-   `@font-face`»: это предупреждение снимается только файлами, поэтому
-   считаем его закрытым по договорённости.
+2. **Tahoma, Verdana, Trebuchet MS, Courier New, Lucida Console, Georgia и
+   Impact — с 2026-09-27 это наши файлы под системными именами**
+   (`tokens/typography.css`): PT Sans, IBM Plex Mono, PT Serif и Oswald,
+   все OFL, с кириллицей. Причина — телефон: на Android ни одной из этих
+   гарнитур нет, и Луна-Аква рисовалась Roboto. Имена в листах остались
+   прежними, `local()` нарочно не используется, чтобы компьютер и телефон
+   показывали одно и то же. Системными остались только Microsoft YaHei /
+   PingFang SC (китайские подписи) и Cambria (пиньинь): на Android их
+   подменяет Noto, и это приемлемо.
 3. **Два прибора вместо одного табло** — счётчик в шапке (`HitCounter`,
    `retro.css`) и ЖК-поверхность (`LcdPanel`, `tokens.css` +
    `retro.css`). Фоны не смешиваются.
