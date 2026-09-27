@@ -45,6 +45,7 @@ from .auth import (
     csrf_is_valid,
     load_principal,
     revoke_session,
+    unlink_max_identity,
 )
 from .max_auth import MaxAuthError, parse_user, verify_launch_params
 from .db import connect_database, immediate_transaction
@@ -583,6 +584,46 @@ def create_app(
             ]
         }
 
+    def _refuse_if_operator_targets_a_privileged_account(
+        conn, principal: Principal, account_id: int
+    ) -> None:
+        """Blocks a plain operator from touching an architect/admin's MAX link.
+
+        `_operator_writer` admits `operator`, `architect` and `system_admin`
+        alike, and neither this endpoint nor `unlink_max` checked *whose*
+        identity was being issued a code for or detached. An operator could
+        therefore: unlink an already-linked architect's MAX, issue a fresh
+        code for that same account (`create_link_code` never checked either),
+        and consume it with their own MAX — `authenticate_max` hands out a
+        session carrying whatever roles the target account holds. Reported
+        against `unlink_max`, but `issue_max_link_code` is the other half of
+        the same chain and just as reachable by a plain operator, so both get
+        the same guard: acting on an account that holds `operator`,
+        `architect` or `system_admin` globally requires the actor to hold
+        `architect` or `system_admin` themselves.
+
+        Exempts acting on your own account: an operator managing their own
+        MAX pairing is ordinary onboarding, not an escalation — the session
+        it produces carries the roles they already had.
+        """
+        if principal.account_id == account_id:
+            return
+        if principal.has_global_role("architect") or principal.has_global_role("system_admin"):
+            return
+        privileged = conn.execute(
+            """
+            SELECT 1 FROM v4_role_assignments
+            WHERE account_id = ? AND season_id IS NULL AND revoked_at IS NULL
+              AND role_code IN ('operator', 'architect', 'system_admin')
+            """,
+            (account_id,),
+        ).fetchone()
+        if privileged is not None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only an architect or system administrator can do this for a staff account",
+            )
+
     @app.post("/api/v4/admin/accounts/{account_id}/link-codes")
     def issue_max_link_code(
         account_id: int,
@@ -602,6 +643,7 @@ def create_app(
                 ).fetchone()
                 if account_exists is None:
                     raise HTTPException(status_code=404, detail="Account not found")
+                _refuse_if_operator_targets_a_privileged_account(conn, principal, account_id)
                 code = create_link_code(
                     conn,
                     account_id=account_id,
@@ -613,6 +655,47 @@ def create_app(
         # Plaintext leaves the server exactly once, in this response. The
         # database only ever holds its hash from this point on.
         return {"code": code, "provider_code": "max", "ttl_minutes": 30}
+
+    @app.delete("/api/v4/admin/accounts/{account_id}/identities/max")
+    def unlink_max(
+        account_id: int,
+        principal: Principal = Depends(_operator_writer),
+    ):
+        """Снимает привязку MAX, чтобы аккаунт можно было сопрячь заново.
+
+        До этого единственным выходом из `account_already_linked` была правка
+        базы руками: схема разрешает одну привязку на провайдера, а удалить
+        строку мешал CHECK из 0004 (снят миграцией 0027).
+
+        Операторская, а не архитекторская операция — ровно как выдача кода:
+        разбираться, что ребёнок вошёл под чужой учёткой, приходится вожатому
+        на месте, а не тому, у кого есть доступ к серверу. Но не для другого
+        оператора, архитектора или администратора — см.
+        `_refuse_if_operator_targets_a_privileged_account`: без этой границы
+        оператор мог снять привязку MAX архитектору, выдать код себе же и
+        получить сессию с его ролью.
+        """
+        conn = connect_database(app.state.db_path)
+        try:
+            with immediate_transaction(conn):
+                account_exists = conn.execute(
+                    "SELECT 1 FROM v4_accounts WHERE id = ?", (account_id,)
+                ).fetchone()
+                if account_exists is None:
+                    raise HTTPException(status_code=404, detail="Account not found")
+                _refuse_if_operator_targets_a_privileged_account(conn, principal, account_id)
+                result = unlink_max_identity(
+                    conn,
+                    account_id=account_id,
+                    actor_account_id=principal.account_id,
+                )
+                if result is None:
+                    raise HTTPException(
+                        status_code=404, detail="This account has no linked MAX"
+                    )
+        finally:
+            conn.close()
+        return result
 
     @app.get("/api/v4/seasons")
     def seasons(principal: Principal = Depends(_current_principal)):

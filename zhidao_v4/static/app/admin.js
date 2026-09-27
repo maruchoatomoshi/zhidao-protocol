@@ -36,6 +36,7 @@
   let session = null;
   const loaded = new Set();
   let armedAccountId = null;   // подтверждение выдачи кода: второй клик
+  let armedAction = null;      // какое именно действие взведено в этой строке
 
   function node(tag, className, text) {
     const n = document.createElement(tag);
@@ -66,7 +67,10 @@
     const timer = setTimeout(() => controller.abort(), 15000);
     try {
       const headers = { Accept: "application/json" };
-      if (options.method === "POST") {
+      // Любой изменяющий метод, а не только POST: сервер требует
+      // X-CSRF-Token на всех них, и DELETE без заголовка получал бы 403,
+      // неотличимый от нехватки прав.
+      if (options.method && options.method !== "GET" && options.method !== "HEAD") {
         const cookie = document.cookie.split("; ").find((v) => v.startsWith("zhidao_v4_csrf="));
         headers["X-CSRF-Token"] = cookie ? decodeURIComponent(cookie.slice(cookie.indexOf("=") + 1)) : "";
         if (options.key) headers["X-Idempotency-Key"] = options.key;
@@ -180,10 +184,24 @@
 
   function disarm() {
     armedAccountId = null;
-    document.querySelectorAll("[data-code-button]").forEach((button) => {
-      button.textContent = "Код MAX";
+    armedAction = null;
+    // Подпись восстанавливается из dataset, а не из строки здесь: в строке
+    // ростера теперь две взводимые кнопки с разными надписями.
+    document.querySelectorAll("[data-arm-label]").forEach((button) => {
+      button.textContent = button.dataset.armLabel;
       button.classList.remove("is-armed");
     });
+  }
+
+  function armed(account, action, button, warning) {
+    if (armedAccountId === account.id && armedAction === action) return true;
+    disarm();
+    armedAccountId = account.id;
+    armedAction = action;
+    button.textContent = "Точно?";
+    button.classList.add("is-armed");
+    $("adminRosterStatus").textContent = warning;
+    return false;
   }
 
   async function issueCode(account, button) {
@@ -194,16 +212,12 @@
     // Предупреждение при этом стоит рядом, а не на кнопке: длинная надпись
     // внутри кнопки съедала колонку с именем, и строка ростера рассыпалась
     // по букве в строку.
-    if (armedAccountId !== account.id) {
-      disarm();
-      armedAccountId = account.id;
-      button.textContent = "Точно?";
-      button.classList.add("is-armed");
-      $("adminRosterStatus").textContent =
-        `Нажмите ещё раз, чтобы выдать код для «${account.display_name}». Прежний код этого участника перестанет работать.`;
+    if (!armed(account, "code", button,
+      `Нажмите ещё раз, чтобы выдать код для «${account.display_name}». Прежний код этого участника перестанет работать.`)) {
       return;
     }
     armedAccountId = null;
+    armedAction = null;
     button.classList.remove("is-armed");
     $("adminRosterStatus").textContent = "";
     button.disabled = true;
@@ -216,6 +230,33 @@
     } finally {
       button.disabled = false;
       button.textContent = "Код MAX";
+    }
+  }
+
+  async function unlinkMax(account, button) {
+    // Лекарство от «этот аккаунт уже привязан к другому MAX»: снять прежнюю
+    // привязку. Заодно обрывает сессию того, кто вошёл по ошибке, — поэтому
+    // предупреждение говорит именно об этом, а не только о самой привязке.
+    if (!armed(account, "unlink", button,
+      `Нажмите ещё раз, чтобы отвязать MAX у «${account.display_name}». Тот, кто вошёл по этой привязке, сразу потеряет доступ.`)) {
+      return;
+    }
+    armedAccountId = null;
+    armedAction = null;
+    button.classList.remove("is-armed");
+    button.disabled = true;
+    button.textContent = "Отвязываем…";
+    try {
+      await api(`/api/v4/admin/accounts/${account.id}/identities/max`, { method: "DELETE" });
+      // Сначала перерисовка, потом надпись: loadRoster очищает строку
+      // состояния на входе и стёр бы сообщение, поставленное до неё.
+      await loadRoster($("adminRosterQuery").value.trim());
+      $("adminRosterStatus").textContent =
+        `MAX отвязан у «${account.display_name}». Теперь можно выдать код заново.`;
+    } catch (error) {
+      $("adminRosterStatus").textContent = explain(error, "оператор, архитектор или системный администратор");
+      button.disabled = false;
+      button.textContent = "Отвязать MAX";
     }
   }
 
@@ -243,9 +284,19 @@
 
       const button = node("button", "btn btn-secondary admin-code-btn", "Код MAX");
       button.type = "button";
-      button.dataset.codeButton = "1";
+      button.dataset.armLabel = "Код MAX";
       button.addEventListener("click", () => issueCode(account, button));
       row.append(button);
+
+      // Кнопка есть только там, где есть что отвязывать: у непривязанного
+      // участника она предлагала бы операцию, которая вернёт 404.
+      if (account.max_linked) {
+        const unlink = node("button", "btn btn-secondary admin-code-btn", "Отвязать MAX");
+        unlink.type = "button";
+        unlink.dataset.armLabel = "Отвязать MAX";
+        unlink.addEventListener("click", () => unlinkMax(account, unlink));
+        row.append(unlink);
+      }
       host.append(row);
     }
     $("adminRosterCount").textContent = `${items.length} ${items.length === 1 ? "запись" : "записей"}`;
@@ -367,6 +418,7 @@
   function reset() {
     loaded.clear();
     armedAccountId = null;
+    armedAction = null;
     $("adminCodeCard").hidden = true;
     $("adminRosterStatus").textContent = "";
   }
