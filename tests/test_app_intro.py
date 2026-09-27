@@ -38,6 +38,17 @@ class IntroTests(unittest.TestCase):
         self.assertNotIn("defer", tag.group(0))
         self.assertLess(head.index("intro.js"), head.index("intro.css"))
 
+    def test_springs_load_before_the_intro(self):
+        # Заставка берёт пружины из motion-kit.js: он обязан стоять раньше
+        # и тоже без defer, а его стили — последними, поверх соседей.
+        head = self.html[:self.html.index("</head>")]
+        kit = re.search(r'<script src="\./motion-kit\.js\?v=\w+"[^>]*>', head)
+        self.assertIsNotNone(kit)
+        self.assertNotIn("defer", kit.group(0))
+        self.assertLess(head.index("motion-kit.js"), head.index("intro.js"))
+        sheets = re.findall(r'<link rel="stylesheet" href="\./([\w-]+\.css)', head)
+        self.assertEqual(sheets[-1], "motion-kit.css")
+
 
 if __name__ == "__main__":
     unittest.main()

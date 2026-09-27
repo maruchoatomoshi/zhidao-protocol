@@ -1,0 +1,166 @@
+/* Пружины — пара к motion-kit.js.
+
+   Кривые --spring-<имя> и их длительности --spring-<имя>-ms считает
+   motion-kit.js настоящей физикой пружины и ставит на <html>; здесь они
+   заменяют прежние кривые у того, что уже двигалось. Запасное значение в
+   var(…) — на кадр до скрипта. Анимации, где отскок нарисован ключевыми
+   кадрами (70 % — перелёт), переписаны в два кадра: перелёт теперь даёт
+   сама пружина, иначе отскок удвоился бы.
+
+   Ступенчатые анимации нулевых (steps() в retro.css: печать чата, WordArt,
+   модем) не трогаются — там рывок и есть стиль. Файл подключается
+   последним: он переопределяет кривые, не ключевые кадры соседей. */
+
+/* --- панели, строки, подиум (motion-polish.css) ------------------------- */
+:root[data-motion="full"] .motion-enter {
+  animation-duration: var(--spring-glide-ms, 440ms);
+  animation-timing-function: var(--spring-glide, cubic-bezier(.2, .75, .22, 1));
+}
+:root[data-motion="full"] .motion-row {
+  animation-duration: var(--spring-pop-ms, 380ms);
+  animation-timing-function: var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1));
+}
+:root[data-motion="full"] .podium-slot.motion-row {
+  animation-name: kit-podium;
+  animation-duration: var(--spring-wobbly-ms, 560ms);
+  animation-timing-function: var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1));
+}
+@keyframes kit-podium {
+  from { opacity: 0; translate: 0 22px; scale: .78; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+/* Капля нижней панели переплывает к вкладке на пружине. */
+.dock-glide {
+  transition-duration: var(--spring-glide-ms, 420ms);
+  transition-timing-function: var(--spring-glide, cubic-bezier(.2, .75, .22, 1));
+}
+
+/* --- уходящий экран (motion-kit.js, leaveScreen) ------------------------ */
+.screen-ghost {
+  position: fixed;
+  z-index: 5;
+  top: var(--ghost-top);
+  left: var(--ghost-left);
+  width: var(--ghost-width);
+  margin: 0;
+  pointer-events: none;
+}
+.screen-ghost,
+.screen-ghost * { animation: none !important; transition: none !important; }
+
+/* --- окна: появление пружиной, уход — плавно, а не кадром ---------------- */
+:root[data-motion="full"] .case-dialog[open] {
+  animation-duration: var(--spring-pop-ms, 350ms);
+  animation-timing-function: var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1));
+}
+:root[data-motion="full"] .case-dialog[open] :is(.result-seal, #caseResultArt) {
+  animation-duration: var(--spring-wobbly-ms, 650ms);
+  animation-timing-function: var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1));
+}
+:root[data-motion="full"] dialog[open]:not(.case-dialog) {
+  animation: kit-window var(--spring-pop-ms, 350ms) var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1)) both;
+}
+@keyframes kit-window {
+  from { opacity: 0; translate: 0 14px; scale: .94; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+/* Уход окна (AnimatePresence для <dialog>): закрытое окно ещё 180 мс
+   остаётся в верхнем слое и растворяется. Где браузер этого не умеет
+   (overlay/display allow-discrete), окно просто закрывается, как раньше. */
+:root[data-motion="full"] dialog {
+  transition:
+    opacity 180ms cubic-bezier(.4, 0, 1, 1),
+    translate 180ms cubic-bezier(.4, 0, 1, 1),
+    scale 180ms cubic-bezier(.4, 0, 1, 1),
+    overlay 180ms allow-discrete,
+    display 180ms allow-discrete;
+}
+:root[data-motion="full"] dialog:not([open]) { opacity: 0; translate: 0 10px; scale: .97; }
+:root[data-motion="full"] dialog::backdrop {
+  transition: opacity 180ms linear, overlay 180ms allow-discrete, display 180ms allow-discrete;
+}
+:root[data-motion="full"] dialog:not([open])::backdrop { opacity: 0; }
+
+/* --- игры ---------------------------------------------------------------- */
+/* Разворот игры на весь экран (game-shell.css). */
+:root[data-motion="full"][data-game-full] [data-screen="games"] > .case-window[data-catalog]:not([data-catalog-hidden]):not([hidden]) {
+  animation-duration: var(--spring-glide-ms, 360ms);
+  animation-timing-function: var(--spring-glide, cubic-bezier(.2, .75, .22, 1));
+}
+
+/* Плашка события: влетает пружиной с отскоком, держится, уходит вверх.
+   Два отдельных движения вместо одной кривой на всё. */
+.game-callout > div {
+  animation:
+    kit-callout-in var(--spring-wobbly-ms, 600ms) var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1)) both,
+    kit-callout-out 300ms cubic-bezier(.4, 0, 1, 1) 1.3s forwards;
+}
+@keyframes kit-callout-in {
+  from { opacity: 0; scale: .5; rotate: -4deg; }
+  to { opacity: 1; scale: 1; rotate: 0deg; }
+}
+@keyframes kit-callout-out {
+  to { opacity: 0; translate: 0 -18px; scale: .96; }
+}
+
+/* Карточка роли откидывается крышкой на пружине (motion-polish.css). */
+:root[data-motion="full"] .role-arrive {
+  animation-name: kit-role;
+  animation-duration: var(--spring-pop-ms, 620ms);
+  animation-timing-function: var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1));
+}
+@keyframes kit-role {
+  from { opacity: 0; transform: perspective(700px) rotateX(-75deg); }
+  to { opacity: 1; transform: perspective(700px) rotateX(0deg); }
+}
+:root[data-motion="full"] .spy-card.is-open .spy-card-face {
+  animation-duration: var(--spring-stiff-ms, 240ms);
+  animation-timing-function: var(--spring-stiff, cubic-bezier(.2, .75, .22, 1));
+}
+/* Раскрытие «Шпиона» (games.css): карточка встаёт пружиной. */
+:root[data-motion="full"] .spy-reveal {
+  animation-duration: var(--spring-pop-ms, 450ms);
+  animation-timing-function: var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1));
+}
+
+/* Протокол 60: вопрос, варианты, новые игроки и подиум — на пружинах
+   вместо рывков; остальной «телевизор» (бегущая строка, мигание) как был. */
+:root[data-motion="full"] .royale-question.is-new {
+  animation: kit-royale-pop var(--spring-wobbly-ms, 450ms) var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1)) both;
+}
+@keyframes kit-royale-pop {
+  from { opacity: 0; scale: .45; rotate: -4deg; }
+  to { opacity: 1; scale: 1; rotate: 0deg; }
+}
+:root[data-motion="full"] .royale-options.is-new > * {
+  animation: kit-rise var(--spring-pop-ms, 350ms) var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1)) both;
+}
+:root[data-motion="full"] .royale-options.is-new > :nth-child(2) { animation-delay: 50ms; }
+:root[data-motion="full"] .royale-options.is-new > :nth-child(3) { animation-delay: 100ms; }
+:root[data-motion="full"] .royale-options.is-new > :nth-child(4) { animation-delay: 150ms; }
+:root[data-motion="full"] .royale-avatar.is-joining {
+  animation: kit-royale-pop var(--spring-wobbly-ms, 400ms) var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1)) both;
+}
+:root[data-motion="full"] .royale-podium-place {
+  animation: kit-podium-rise var(--spring-wobbly-ms, 900ms) var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1)) both;
+}
+:root[data-motion="full"] .royale-podium-place.is-place-1 { animation-delay: 240ms; }
+:root[data-motion="full"] .royale-podium-place.is-place-3 { animation-delay: 120ms; }
+@keyframes kit-podium-rise {
+  from { opacity: 0; translate: 0 60%; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes kit-rise {
+  from { opacity: 0; translate: 0 14px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+/* Саботаж: выполненное задание встаёт отметкой с отскоком. */
+:root[data-motion="full"] .sabotage-done.is-fresh {
+  animation: kit-done var(--spring-wobbly-ms, 400ms) var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1)) both;
+}
+@keyframes kit-done {
+  from { opacity: .4; scale: .85; }
+  to { opacity: 1; scale: 1; }
+}

@@ -948,22 +948,23 @@
     $("gameRoomBody").replaceChildren(...renderer.draw(c).filter(Boolean));
     $("gameRoomBody").querySelectorAll(".game-actionbar").forEach((bar) => $("gameRoomBody").append(bar));
     if (!phaseEntrance && document.documentElement.dataset.motion === "full" && !motionQuery.matches) {
+      // Пружины — из motion-kit.js; перелёт даёт сама пружина, поэтому
+      // ключевых кадров два, а не три с нарисованным отскоком.
+      const kit = window.ZhidaoKit;
+      const springOf = (name, fallback) => (kit ? kit.spring(name) : fallback);
       const stampKeyframes = [
-        { transform: "scale(2.2) rotate(-18deg)", opacity: 0 },
-        { transform: "scale(.9) rotate(-11deg)", opacity: 1, offset: .65 },
+        { transform: "scale(2.2) rotate(-18deg)" },
         { transform: "scale(1) rotate(-12deg)" },
       ];
-      const stampOptions = { duration: 420, easing: "cubic-bezier(.2,.9,.3,1.25)" };
+      const stampOptions = springOf({ stiffness: 420, damping: 18 }, { duration: 420, easing: "cubic-bezier(.2,.9,.3,1.25)" });
       [
         [".cipher-card", oldCards, "is-revealed", null,
           // Открытая карточка переворачивается лицом, а не просто вспыхивает.
-          [{ transform: "perspective(500px) rotateY(90deg)", filter: "brightness(1.5)" },
-            { transform: "perspective(500px) rotateY(-8deg)", filter: "brightness(1.1)", offset: .75 },
-            { transform: "none", filter: "none" }],
-          { duration: 480, easing: "cubic-bezier(.2,.8,.3,1.2)" }],
+          [{ transform: "perspective(500px) rotateY(90deg)" }, { transform: "perspective(500px) rotateY(0deg)" }],
+          springOf("pop", { duration: 480, easing: "cubic-bezier(.2,.8,.3,1.2)" })],
         [".outage-module", oldModules, "is-solved", null,
-          [{ transform: "scale(.94)", opacity: .6 }, { transform: "scale(1)", opacity: 1 }],
-          { duration: 260, easing: "ease-out" }],
+          [{ transform: "scale(.9)" }, { transform: "scale(1)" }],
+          springOf("wobbly", { duration: 260, easing: "ease-out" })],
         // Таможенный штамп: бьёт по .smuggle-stamp, а не по всей сумке/прилавку,
         // чтобы не дёргалось содержимое рядом.
         [".smuggle-bag", oldBags, "is-decided", ".smuggle-stamp", stampKeyframes, stampOptions],
@@ -973,6 +974,9 @@
           if (previous[index] === false && el.classList.contains(state)) {
             const target = (childSelector && el.querySelector(childSelector)) || el;
             target.animate(keyframes, options);
+            // Свет и прозрачность — отдельно и без перелёта: у пружины он есть.
+            target.animate([{ opacity: 0.4, filter: "brightness(1.5)" }, { opacity: 1, filter: "none" }],
+              { duration: 240, easing: "ease-out" });
           }
         });
       });
@@ -980,14 +984,15 @@
       // было видно и без сравнения чисел до/после.
       $("gameRoomBody").querySelectorAll(".cipher-chip b").forEach((el, index) => {
         if (oldScores[index] !== undefined && oldScores[index] !== el.textContent) {
-          el.animate([{ transform: "scale(1.4)" }, { transform: "scale(1)" }], { duration: 280, easing: "ease-out" });
+          el.animate([{ transform: "scale(1.5)" }, { transform: "scale(1)" }], springOf("wobbly", { duration: 280, easing: "ease-out" }));
         }
       });
     }
     $("gameRoom").dataset.game = view.room.game;
     if (phaseEntrance && document.documentElement.dataset.motion === "full" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
       phaseAnimation?.cancel();
-      phaseAnimation = $("gameRoomBody").animate([{ opacity: .55, transform: "translateY(6px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 220, easing: "ease-out" });
+      const glide = window.ZhidaoKit ? window.ZhidaoKit.spring("glide") : { duration: 220, easing: "ease-out" };
+      phaseAnimation = $("gameRoomBody").animate([{ opacity: .55, transform: "translateY(8px)" }, { opacity: 1, transform: "translateY(0)" }], glide);
     }
     phaseEntrance = false;
     tickClocks();

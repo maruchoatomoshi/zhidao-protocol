@@ -89,25 +89,26 @@
       intro.classList.add("is-leaving");
       const from = stage.getBoundingClientRect();
       const to = !fast && target();
-      let keyframes;
+      // Полёт — пружиной (motion-kit.js), как layoutId в Motion: логотип
+      // доезжает до своего места и чуть качается; к концу он тает, и под
+      // ним уже настоящий логотип приложения.
+      const glide = window.ZhidaoKit ? window.ZhidaoKit.spring({ stiffness: 190, damping: 22 })
+        : { duration: LEAVE_MS, easing: "cubic-bezier(.55, 0, .25, 1)" };
+      const duration = fast ? 260 : Math.min(glide.duration, 900);
+      let flight;
       if (to) {
         const dx = to.left + to.width / 2 - (from.left + from.width / 2);
         const dy = to.top + to.height / 2 - (from.top + from.height / 2);
         const k = to.width / from.width;
-        keyframes = [
-          { transform: "none", opacity: 1 },
-          { transform: `translate(${dx * 0.55}px, ${dy * 0.45}px) scale(${0.5 + k * 0.5})`, opacity: 1, offset: 0.55 },
-          { transform: `translate(${dx}px, ${dy}px) scale(${k})`, opacity: 1, offset: 0.92 },
-          { transform: `translate(${dx}px, ${dy}px) scale(${k})`, opacity: 0 },
-        ];
+        flight = stage.animate([{ transform: "none" }, { transform: `translate(${dx}px, ${dy}px) scale(${k})` }],
+          { duration, easing: glide.easing, fill: "forwards" });
+        stage.animate([{ opacity: 1 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], { duration, fill: "forwards" });
       } else {
-        keyframes = [{ transform: "none", opacity: 1 }, { transform: "scale(.86)", opacity: 0 }];
+        flight = stage.animate([{ transform: "none", opacity: 1 }, { transform: "scale(.86)", opacity: 0 }],
+          { duration: fast ? 260 : LEAVE_MS, easing: "cubic-bezier(.4, 0, 1, 1)", fill: "forwards" });
       }
-      const flight = stage.animate(keyframes, {
-        duration: fast ? 260 : LEAVE_MS, easing: "cubic-bezier(.55, 0, .25, 1)", fill: "forwards",
-      });
       flight.finished.then(finish, finish);
-      setTimeout(finish, (fast ? 260 : LEAVE_MS) + 400);   // страховка, если анимация не отчиталась
+      setTimeout(finish, (fast ? 260 : 900) + 400);   // страховка, если анимация не отчиталась
     }
 
     function run() {

@@ -110,28 +110,43 @@ html[data-intro="play"] .app-intro {
   100% { stroke-dashoffset: 0; opacity: 0; }
 }
 
-.intro-plate { animation: intro-plate 640ms cubic-bezier(.2, .75, .22, 1) var(--t-plate) both; }
+/* Движение — пружиной (motion-kit.js), свет — отдельной плавной кривой:
+   у пружины перелёт, а яркость и прозрачность перелетать не должны. */
+.intro-plate {
+  animation:
+    intro-plate var(--spring-glide-ms, 640ms) var(--spring-glide, cubic-bezier(.2, .75, .22, 1)) var(--t-plate) both,
+    intro-light 520ms ease-out var(--t-plate) both;
+}
 @keyframes intro-plate {
-  0% { opacity: 0; transform: scale(.72) rotate(-28deg); filter: brightness(2.2); }
-  70% { opacity: 1; filter: brightness(1.15); }
-  100% { opacity: 1; transform: none; filter: none; }
+  from { scale: .72; rotate: -28deg; }
+  to { scale: 1; rotate: 0deg; }
+}
+@keyframes intro-light {
+  from { opacity: 0; filter: brightness(2.2); }
+  60% { opacity: 1; }
+  to { opacity: 1; filter: brightness(1); }
 }
 
 /* Дракон поднимается снизу, из-за шара, чуть перелетает и садится. */
 .intro-dragon {
   transform-origin: 40% 90%;
-  animation: intro-dragon 720ms cubic-bezier(.2, .75, .22, 1) var(--t-dragon) both;
+  animation:
+    intro-dragon var(--spring-pop-ms, 720ms) var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1)) var(--t-dragon) both,
+    intro-light 420ms ease-out var(--t-dragon) both;
 }
 @keyframes intro-dragon {
-  0% { opacity: 0; transform: translate(6%, 26%) scale(.74) rotate(8deg); filter: brightness(1.9); }
-  55% { opacity: 1; transform: translate(0, -2.5%) scale(1.04) rotate(-1.5deg); filter: brightness(1.2); }
-  100% { opacity: 1; transform: none; filter: none; }
+  from { transform: translate(6%, 26%) scale(.74) rotate(8deg); }
+  to { transform: none; }
 }
 
-.intro-glass { animation: intro-glass 480ms cubic-bezier(.3, 1.5, .5, 1) var(--t-glass) both; }
+.intro-glass {
+  animation:
+    intro-glass var(--spring-wobbly-ms, 480ms) var(--spring-wobbly, cubic-bezier(.34, 1.56, .64, 1)) var(--t-glass) both,
+    intro-light 240ms ease-out var(--t-glass) both;
+}
 @keyframes intro-glass {
-  0% { opacity: 0; transform: translate(40%, -30%) scale(.3) rotate(24deg); }
-  100% { opacity: 1; transform: none; }
+  from { transform: translate(40%, -30%) scale(.3) rotate(24deg); }
+  to { transform: none; }
 }
 
 /* Пиксели влетают рывками — как данные, а не как предметы. */
@@ -145,13 +160,18 @@ html[data-intro="play"] .app-intro {
 /* Надпись падает сверху крупнее, ударяется и встаёт на место. */
 .intro-text {
   transform-origin: 50% 60%;
-  animation: intro-text 520ms cubic-bezier(.2, .75, .22, 1) var(--t-text) both;
+  animation:
+    intro-text var(--spring-pop-ms, 520ms) var(--spring-pop, cubic-bezier(.34, 1.56, .64, 1)) var(--t-text) both,
+    intro-text-light 360ms ease-out var(--t-text) both;
 }
 @keyframes intro-text {
-  0% { opacity: 0; transform: translateY(-18%) scale(1.55); filter: brightness(2.4) blur(2px); }
-  45% { opacity: 1; transform: translateY(2%) scale(.96); filter: brightness(1.5); }
-  70% { transform: translateY(-1%) scale(1.015); }
-  100% { opacity: 1; transform: none; filter: none; }
+  from { transform: translateY(-18%) scale(1.55); }
+  to { transform: none; }
+}
+@keyframes intro-text-light {
+  from { opacity: 0; filter: brightness(2.4) blur(2px); }
+  50% { opacity: 1; filter: brightness(1.5) blur(0); }
+  to { opacity: 1; filter: brightness(1) blur(0); }
 }
 /* Удар надписи — вспышка-полоса по её линии. */
 .intro-shock {

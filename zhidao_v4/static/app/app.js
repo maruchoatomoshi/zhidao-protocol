@@ -18,6 +18,9 @@ function updateClock() {
 function showScreen(target) {
   const next = screens.find((screen) => screen.dataset.screen === target);
   if (!next) return;
+  // Прежний экран уходит снимком (motion-kit.js), а не пропадает кадром.
+  const prev = screens.find((screen) => screen.classList.contains("active") && !screen.hidden);
+  const prevRect = prev && prev !== next ? prev.getBoundingClientRect() : null;
 
   screens.forEach((screen) => {
     const isActive = screen === next;
@@ -32,6 +35,7 @@ function showScreen(target) {
   });
 
   document.documentElement.dataset.currentScreen = target;
+  if (prevRect) window.ZhidaoKit?.leaveScreen(prev, prevRect);
   window.scrollTo({ top: 0, behavior: window.ZhidaoMotion?.enabled() ? "smooth" : "auto" });
 
   // Карта строится при первом открытии, а не на старте: данные и SVG нужны
