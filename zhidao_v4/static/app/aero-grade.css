@@ -1337,11 +1337,13 @@ h1.display-title,
 .app-dock .nav-cn {
   display: block;
   margin-top: 1px;
-  font-family: var(--font-serif, Georgia, serif);
-  font-size: 8px;
+  /* Рубленый, а не антиква: засечки CJK-антиквы на 8–9px на телефоне
+     рассыпаются, а приглушение прозрачностью .62 доводило подпись до
+     контраста 1.6. Приглушённость теперь даёт цвет (design-system.css). */
+  font-family: var(--font-cn);
+  font-size: 9px;
   line-height: 1;
   letter-spacing: 0.06em;
-  opacity: 0.62;
 }
 
 
@@ -1491,13 +1493,16 @@ h1.display-title,
    в app.css и потому не переворачиваются подменой переменных. */
 :root[data-theme="dark"] .app-brand strong { color: #cfeaff; }
 :root[data-theme="dark"] .app-brand small { color: #7fb4d4; }
-:root[data-theme="dark"] .app-dock small { color: #7fb4d4; }
+:root[data-theme="dark"] .app-dock small { color: #9cc6e0; }
 :root[data-theme="dark"] .app-dock button.active small { color: #dff2ff; }
 :root[data-theme="dark"] .header-status { color: var(--ink-soft); }
 :root[data-theme="dark"] .map-disclaimer,
 :root[data-theme="dark"] .map-point-copy span,
 :root[data-theme="dark"] .settings-list small { color: var(--text-faint); }
 :root[data-theme="dark"] .campus-legend { color: var(--ink-soft); }
+/* Сама подпись легенды задана тёмными чернилами с белым ореолом — ночью это
+   тёмное на тёмном. */
+:root[data-theme="dark"] .campus-legend-item { color: var(--ink); text-shadow: 0 1px 0 rgba(0, 10, 22, .8); }
 
 /* Ночью подсветка активной плитки — не белое пятно, а свечение снизу вверх.
    Белая радиальная заливка днём читается как «плитка поймала солнце»,
@@ -1721,9 +1726,11 @@ h1.display-title,
   font-size: 12px;
   font-weight: 400;
   letter-spacing: 0.1em;
-  color: var(--accent-aqua);
-  opacity: 0.85;
+  /* Светлая аква на белом стекле — 1.5:1; днём иероглиф берёт глубокую
+     акву, ночью — светлую, на тёмном она и так горит. */
+  color: var(--accent-aqua-deep);
 }
+:root[data-theme="dark"] .cn-divider b { color: var(--accent-aqua); }
 
 @media (prefers-reduced-motion: reduce) {
   .screen.active .hub-tile { animation: none; }
@@ -2012,8 +2019,9 @@ h1.display-title,
 
 .implant-group small {
   font-size: 10px;
-  color: var(--accent-aqua);
+  color: var(--accent-aqua-deep); /* светлая аква на белом — 1.5:1 */
 }
+:root[data-theme="dark"] .implant-group small { color: var(--accent-aqua); }
 
 /* --- карточка -------------------------------------------------------- */
 

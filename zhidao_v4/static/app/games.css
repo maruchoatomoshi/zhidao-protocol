@@ -80,7 +80,10 @@ html .games-screen .spy-segmented .btn[aria-pressed="true"] { border-color: #307
 button.spy-player { cursor: pointer; }
 button.spy-player:hover { border-color: #28add9; }
 .spy-player.is-armed, .spy-place.is-armed { border-color: #d9822b; background: #ffb65a2e; box-shadow: inset 0 0 0 1px #d9822b; }
-.spy-player.is-away { opacity: .62; }
+/* Отошедший игрок: гаснет аватар, а не строка. Прозрачность на всю строку
+   роняла подпись «нет на связи» — ту самую, ради которой строка и
+   меняется, — до контраста 1.4. */
+.spy-player.is-away .spy-avatar { opacity: .45; filter: grayscale(1); }
 .spy-avatar { position: relative; width: 26px; height: 26px; }
 .spy-avatar .spy-dot { position: absolute; right: -2px; bottom: -2px; box-shadow: 0 0 0 2px var(--case-paper); }
 .spy-dot { width: 10px; height: 10px; border-radius: 50%; background: #9fb3bf; box-shadow: inset 0 1px 1px #0003; }

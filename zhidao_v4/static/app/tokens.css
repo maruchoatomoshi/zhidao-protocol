@@ -25,7 +25,7 @@
   /* --- text ------------------------------------------------------------- */
   --text-primary: var(--ink);
   --text-secondary: var(--ink-soft);
-  --text-faint: #6e8fa3;
+  --text-faint: #4f6f82; /* тот же сдвиг, что в design/reference/tokens/semantic.css */
   --text-on-dark: #dffcff;
   --text-lcd: #7dfcb4;
 

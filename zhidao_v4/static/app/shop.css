@@ -30,7 +30,15 @@ button.shop-sound { cursor: pointer; }
 .shop-buy.is-wide { padding: 0 18px; border-color: #0a5f9e; background: linear-gradient(#7fd8f4 0%,#1ba7e0 45%,#0a7cc2 50%,#0d6fae 100%);
   box-shadow: inset 0 1px #ffffffb3; color: #fff; font-size: 14px; font-weight: 700; text-shadow: 0 1px #063f70; }
 .shop-buy.is-armed { border-color: #d9822b; background: #fff3e2; box-shadow: inset 0 0 0 1px #d9822b; color: #8a4a00; font-size: 13px; text-shadow: none; }
-.shop-buy:disabled { cursor: not-allowed; opacity: .55; }
+.shop-buy:disabled { cursor: not-allowed; }
+/* Нехватка звёзд выключает кнопку, но цену человек читает именно на ней:
+   прежняя прозрачность .55 роняла «Нужно 50★» до 1.8:1. Выключенное —
+   матовая сталь без блика, как у остальных кнопок (design-system.css). */
+.shop-buy.shop-buy:disabled:not(.is-armed) { color: #4d6879; text-shadow: none; box-shadow: none; border-color: rgba(120,160,185,.45);
+  background: linear-gradient(#eef4f7 0%,#e2ebf0 52%,#d6e1e8 100%); }
+:root:not([data-design="xp"])[data-theme="dark"] .shop-buy.shop-buy:disabled:not(.is-armed) { color: #a8c0d0; border-color: rgba(120,172,206,.3);
+  background: linear-gradient(#2c4659 0%,#223a4c 52%,#1b3142 100%); }
+:root[data-design="xp"] .shop-buy.shop-buy:disabled:not(.is-armed) { color: var(--xp-muted); border-color: var(--xp-edge); background: var(--xp-soft); }
 .shop-owned-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; padding: 0 12px; border: 1px solid #9cd3a6;
   border-radius: 999px; background: #e9f7ec; color: #1f6e2c; font: 700 12px/1 "Trebuchet MS",sans-serif; }
 .shop-owned-chip svg, .shop-chip svg { flex: none; width: 12px; height: 10px; }

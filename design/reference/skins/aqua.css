@@ -72,8 +72,17 @@
 .btn:active:not(:disabled){transform:translateY(var(--press-shift))}
 .btn:active:not(:disabled)::before{opacity:.6;height:calc(var(--gloss-cut) - 8%)}
 .btn:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
-.btn:disabled{cursor:default;filter:grayscale(.35);opacity:.55;box-shadow:none}
-.btn-primary{color:#fff;text-shadow:0 1px 2px rgba(4,60,100,.55);background:linear-gradient(180deg,var(--plastic-sky-light) 0%,var(--plastic-sky-mid) var(--gloss-cut),var(--plastic-sky-deep) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),var(--lift-md)}
+/* Выключенная кнопка остаётся читаемой. Раньше её гасили целиком
+   (opacity .55 + grayscale): белая надпись на бледнеющем пластике падала до
+   контраста 1.3 — «Сканировать · 1 попытка» без попыток было не прочесть,
+   а человеку как раз нужно понять, что это за кнопка и почему она спит.
+   Теперь выключенное — это плоская матовая сталь без блика и тени, с
+   тёмной надписью: видно, что нажать нельзя, и видно, что написано. */
+.btn:disabled{cursor:default;filter:none;opacity:1;box-shadow:none;color:#4d6879;text-shadow:none;border-color:rgba(120,160,185,.45);background:linear-gradient(180deg,#eef4f7 0%,#e2ebf0 52%,#d6e1e8 100%)}
+.btn:disabled::before{opacity:.3}
+/* Белая надпись верхней половиной лежит на блике: одной тени вниз мало,
+   нужен ещё мягкий тёмный ореол — он и держит буквы на белом срезе. */
+.btn-primary{color:#fff;text-shadow:0 1px 1px rgba(3,45,80,.7),0 0 6px rgba(3,45,80,.45);background:linear-gradient(180deg,var(--plastic-sky-light) 0%,var(--plastic-sky-mid) var(--gloss-cut),var(--plastic-sky-deep) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),var(--lift-md)}
 .btn-secondary{background:linear-gradient(180deg,rgba(255,255,255,.96) 0%,rgba(232,249,255,.86) var(--gloss-cut),rgba(206,236,249,.9) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,1),var(--lift-sm)}
 .btn-system{color:#23425c;font:700 10px/1 var(--font-system);letter-spacing:var(--tracking-label);text-transform:uppercase;border-color:var(--metal-3);background:linear-gradient(to bottom,var(--metal-1) 0%,var(--metal-2) 46%,var(--metal-3) 47%,var(--metal-2) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,1),var(--lift-sm)}
 .btn-action{color:#14400a;background:linear-gradient(180deg,var(--plastic-lime-light) 0%,var(--plastic-lime-mid) var(--gloss-cut),var(--plastic-lime-deep) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.92),var(--lift-md),var(--glow-lime)}
@@ -156,7 +165,9 @@
 .zd-dock button{display:flex;flex-direction:column;align-items:center;gap:1px;min-height:var(--tap-min);padding:3px 1px;border:0;border-radius:14px;background:transparent;cursor:pointer}
 .zd-dock img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(4,70,116,.4))}
 .zd-dock small{color:#396c82;font:700 9px/1.1 var(--font-ui)}
-.zd-dock .zd-cn{color:#5c8ea1;font-size:8px}
+/* Китайская подпись под значком: 8px и #5c8ea1 давали контраст около 2 — она
+   была, но прочесть её было нельзя. */
+.zd-dock .zd-cn{color:#3f6f84;font-size:9px}
 .zd-dock button.active{background:linear-gradient(to bottom,rgba(255,255,255,.98) 0%,rgba(198,240,255,.85) 50%,rgba(120,205,240,.9) 51%,rgba(163,226,248,.95) 100%);box-shadow:inset 0 1px 0 #fff,inset 0 -8px 14px -10px rgba(6,70,116,.5),var(--glow-aqua)}
 .zd-dock button.active small{color:#006b9d}
 
@@ -173,3 +184,27 @@
 .zd-codefield:focus-visible{outline:2px solid var(--aqua);outline-offset:1px}
 .zd-codefield[aria-invalid="true"]{border-color:var(--alert)}
 .zd-field-error{margin:5px 0 0;color:var(--alert);font-size:var(--text-body-sm);line-height:1.4}
+
+/* --- ночь Аквы ----------------------------------------------------------
+   Компоненты выше нарисованы белым стеклом прямо в правилах, а не через
+   токены, и ночная тема (tokens/night.css) меняла им только чернила: текст
+   светлел, а заголовок окна, вторичная кнопка и строка состояния оставались
+   белыми. Так ночью получались белые надписи на белом — «Сообщение»,
+   «Файлы», «Как играть?», «Личный контур» не читались вовсе.
+
+   Здесь то же стекло в ночном веществе: заголовок окна — тёмный пластик
+   с тем же изломом блика (такой он был в case-workstation.css до дизайн-
+   системы), вторичная кнопка — тёмное стекло, чипы и плитки — ночная
+   глазурь. Луна-Аква исключена явно: у неё своя ночь в luna.css. */
+:root[data-theme="dark"]:not([data-design="xp"]) .zd-titlebar{border-bottom-color:rgba(120,172,206,.42);background:linear-gradient(180deg,#437d9f 0%,#174d70 48%,#103e5e 51%,#285c7c 100%)}
+:root[data-theme="dark"]:not([data-design="xp"]) .zd-titlebar h2{color:#fff;text-shadow:0 1px 2px #003657}
+:root[data-theme="dark"]:not([data-design="xp"]) .zd-titlebar span{color:#b8d6e9}
+:root[data-theme="dark"]:not([data-design="xp"]) .btn-secondary{color:var(--ink);border-color:rgba(160,210,240,.45);background:linear-gradient(180deg,#4f84a6 0%,#2a5f82 var(--gloss-cut),#1b4a6a calc(var(--gloss-cut) + 1%),#245878 100%);box-shadow:inset 0 1px 0 rgba(214,240,255,.45),var(--lift-sm)}
+:root[data-theme="dark"]:not([data-design="xp"]) .btn:disabled{color:#a8c0d0;border-color:rgba(120,172,206,.3);background:linear-gradient(180deg,#2c4659 0%,#223a4c 52%,#1b3142 100%);box-shadow:none}
+:root[data-theme="dark"]:not([data-design="xp"]) .tabs{background:linear-gradient(to bottom,rgba(4,22,40,.72),rgba(14,48,78,.6));box-shadow:inset 0 2px 5px -2px rgba(0,6,16,.8)}
+:root[data-theme="dark"]:not([data-design="xp"]) .tab.active{background:linear-gradient(to bottom,#4f84a6 0%,#2a5f82 48%,#1b4a6a 49%,#245878 100%);box-shadow:inset 0 1px 0 rgba(214,240,255,.45),var(--lift-sm)}
+:root[data-theme="dark"]:not([data-design="xp"]) .chip{color:#bfe9ff;border-color:rgba(120,190,230,.35);background:linear-gradient(#1f4d6c,#163b55);box-shadow:inset 0 1px rgba(214,240,255,.25)}
+:root[data-theme="dark"]:not([data-design="xp"]) .zd-statusbar{color:#b8d6e9;background:rgba(4,22,40,.8)}
+:root[data-theme="dark"]:not([data-design="xp"]) .hub-tile{background:linear-gradient(180deg,#2d5f82 0%,#1d4a6a 48%,#153d5a 49%,#1d4868 100%);box-shadow:inset 0 1px 0 rgba(214,240,255,.35),var(--lift-sm)}
+:root[data-theme="dark"]:not([data-design="xp"]) .hub-cn{color:#a9cde0}
+:root[data-theme="dark"]:not([data-design="xp"]) .zd-dock .zd-cn{color:#a9cde0}

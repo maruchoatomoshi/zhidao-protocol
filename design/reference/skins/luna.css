@@ -51,6 +51,11 @@
 [data-design="xp"] .btn-system{border-color:var(--xp-edge);color:var(--xp-ink);font:bold 11px/1 var(--font-luna);letter-spacing:0;text-transform:none;background:var(--xp-button)}
 [data-design="xp"] .btn-icon{border-radius:4px}
 [data-design="xp"] .btn:active{box-shadow:inset 1px 1px rgba(74,112,147,.67),inset -1px -1px rgba(255,255,255,.6)}
+/* Выключенная кнопка в Луне — как у системы: ровная бумажная заливка и
+   приглушённые чернила. Без этого правила синяя главная кнопка оставалась
+   синей и после отключения: прозрачность, которой гасили её раньше, убрана
+   (см. aqua.css), а цвет Луна задаёт сама. */
+[data-design="xp"] .btn:disabled{color:var(--xp-muted);text-shadow:none;border-color:var(--xp-edge);background:var(--xp-soft);box-shadow:none}
 [data-design="xp"] .btn.is-armed{border-color:var(--armed-edge);background:var(--armed-bg);color:var(--armed-ink);box-shadow:inset 0 0 0 1px var(--armed-edge)}
 
 /* --- вкладки как в окне свойств: у активной жёлтая полоса сверху -------- */

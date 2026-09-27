@@ -861,7 +861,8 @@
 
 .btn.btn-primary {
   color: #ffffff;
-  text-shadow: 0 1px 2px rgba(4, 60, 100, .55);
+  /* Тень плюс ореол: верх букв лежит на белом срезе блика (см. aqua.css). */
+  text-shadow: 0 1px 1px rgba(3, 45, 80, .7), 0 0 6px rgba(3, 45, 80, .45);
   background: linear-gradient(180deg,
     var(--plastic-sky-light) 0%,
     var(--plastic-sky-mid) var(--gloss-cut),

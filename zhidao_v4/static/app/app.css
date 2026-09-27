@@ -1152,7 +1152,7 @@ p {
 .map-provider-links { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .map-provider-links a { padding: 10px; border: 1px solid rgba(38,164,194,.18); border-radius: 13px; color: #08749a; font-size: 10px; font-weight: 800; text-align: center; text-decoration: none; background: rgba(235,252,253,.72); }
 .map-disclaimer { margin: 10px 7px 0; color: #66818a; font-size: 8px; line-height: 1.45; text-align: center; }
-.settings-list small { margin-left: 5px; color: #77a3b0; font-size: 8px; }
+.settings-list small { margin-left: 5px; color: var(--text-faint); font-size: 9px; }
 
 /* Central campus quarter: 立德路 → east unnamed road, north edge 博学大道. */
 .campus-map { min-height: 470px; background: linear-gradient(155deg, #bfeecf, #dbf6d8); }
