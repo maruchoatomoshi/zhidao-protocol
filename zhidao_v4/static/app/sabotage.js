@@ -124,6 +124,13 @@
 
   // --- куски панели ------------------------------------------------------------------------
 
+  // Главное действие — в полосу у низа экрана (game-shell.js: settle).
+  function actionBar(...children) {
+    const el = node("div", "game-actionbar");
+    el.append(...children);
+    return el;
+  }
+
   function drawRole(game, me, parts) {
     const box = node("section", `sabotage-card is-${me.alive ? me.role : "ghost"}`);
     if (!me.alive) {
@@ -143,8 +150,8 @@
     }
     if (me.alive && me.captain && game.status === "running") {
       if (me.meetings_left > 0) {
-        box.append(armedButton("meeting", "btn btn-primary", `Созвать собрание (осталось ${me.meetings_left})`,
-          "Точно созвать? Все пойдут к вам", () => act("meeting")));
+        box.append(actionBar(armedButton("meeting", "btn btn-primary", `Созвать собрание (осталось ${me.meetings_left})`,
+          "Точно созвать? Все пойдут к вам", () => act("meeting"))));
       } else {
         box.append(node("p", "sabotage-meta", "Свои собрания вы уже созвали"));
       }
@@ -183,7 +190,7 @@
       }
       act("eliminate", { code: digits });
     });
-    box.append(form);
+    box.append(actionBar(form));
   }
 
   function drawTasks(game, me, parts) {
@@ -318,9 +325,9 @@
     } else if (game.status === "lobby") {
       parts.push(node("b", "sabotage-count", `В лобби: ${game.players}`));
       if (data.can_play) {
-        parts.push(game.me
+        parts.push(actionBar(game.me
           ? button("btn btn-secondary", "Выйти из лобби", () => act("leave"))
-          : button("btn btn-primary", "Войти в игру", () => act("join")));
+          : button("btn btn-primary", "Войти в игру", () => act("join"))));
       }
       status.textContent = "ЛОББИ";
     } else if (game.status === "running" || game.status === "meeting") {
@@ -348,6 +355,8 @@
     if (data.can_host) drawStaff(game, parts);
     parts.push(node("p", "case-message", note));
     body.replaceChildren(...parts);
+    window.ZhidaoGameShell?.settle(body);
+    $("sabotageWindow").dataset.phase = game && (game.status === "running" || game.status === "meeting") && game.me ? "live" : (game ? game.status : "idle");
     if (focused && $("sabotageCode")) {
       const input = $("sabotageCode");
       input.focus();
@@ -370,7 +379,23 @@
       window.ZhidaoRetro?.finale(after.me && after.me.won
         ? { kind: "win", title: "ПОБЕДА!", sub: side }
         : { kind: "lose", title: "ПОРАЖЕНИЕ", sub: side });
+      window.ZhidaoGameShell?.cue(after.me && after.me.won ? "win" : "lose", "sabotage");
     }
+    // Звук, вибрация и плашка (game-shell.js).
+    const shell = window.ZhidaoGameShell;
+    if (before && after && after.me && before.status === "lobby" && after.status === "running") {
+      const me = after.me;
+      shell?.cue(me.role === "saboteur"
+        ? { name: "start", title: "Вы саботажник", sub: "Никто не должен догадаться" }
+        : { name: "start", title: me.captain ? "Вы капитан" : "Вы в экипаже", sub: "Выполняйте задания у станций" }, "sabotage");
+    }
+    if (before && after && before.me && after.me && before.me.alive && after.me.alive === false) {
+      shell?.cue({ name: "alert", title: after.me.ejected ? "Вас выгнали" : "Вас вывели", sub: "Молчите до конца игры" }, "sabotage");
+    }
+    if (before && after && before.status === "running" && after.status === "meeting") {
+      shell?.cue({ name: "alert", title: "Собрание!", sub: `Все к капитану ${after.meeting.caller}` }, "sabotage");
+    }
+    shell?.setLive(Boolean(after && (after.status === "running" || after.status === "meeting") && after.me), "sabotage");
     if (before && after && before.me && after.me && before.me.alive && after.me.alive === false) {
       window.showToast?.(after.me.ejected ? "Вас выгнали на собрании" : "Вас вывели! Молчите — вы призрак");
       window.ZhidaoSounds?.play("buy");

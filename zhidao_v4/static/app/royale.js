@@ -241,6 +241,13 @@
     return list;
   }
 
+  // Главное действие — в полосу у низа экрана (game-shell.js: settle).
+  function actionBar(...children) {
+    const el = node("div", "game-actionbar");
+    el.append(...children);
+    return el;
+  }
+
   function outCard(me, game) {
     const card = node("section", `royale-out${Date.now() < justOut ? " is-just-out" : ""}`);
     card.append(node("b", null, "ВЫ ВЫБЫЛИ"),
@@ -276,7 +283,7 @@
   function drawLobby(game) {
     const parts = [logo(false), marquee(), node("b", "royale-count", `В лобби: ${game.players}`)];
     if (data.can_play) {
-      const actions = node("div", "capture-actions");
+      const actions = node("div", "capture-actions game-actionbar");
       if (game.me) {
         parts.push(node("p", "royale-meta is-ok", "Вы в игре. Ждём старта"));
         actions.append(button("btn btn-secondary", "Выйти из лобби", () => act("leave")));
@@ -326,7 +333,7 @@
     if (me && me.alive) {
       parts.push(node("p", "royale-meta is-ok", me.choice === game.reveal.answer ? "Верно! Вы в игре" : "Вы в игре"));
     } else if (me) {
-      if (me.can_revive) parts.push(button("btn btn-primary", `Воскреснуть за ${game.revive_price}★`, revive));
+      if (me.can_revive) parts.push(actionBar(button("btn btn-primary", `Воскреснуть за ${game.revive_price}★`, revive)));
       parts.push(node("span", "capture-label", "Сюрприз выжившим в следующем раунде"));
       const votes = node("div", "royale-votes");
       Object.entries(SURPRISE).forEach(([code, label]) => {
@@ -445,6 +452,8 @@
     if (data.can_host) parts.push(staffControls(game));
     parts.push(node("p", "case-message royale-note", note));
     body.replaceChildren(...parts);
+    window.ZhidaoGameShell?.settle(body);
+    $("royaleWindow").dataset.phase = game && (game.status === "question" || game.status === "reveal") && game.me ? "live" : (game ? game.status : "idle");
   }
 
   // --- большой экран -------------------------------------------------------------------------
@@ -552,6 +561,9 @@
     if (freshRound) {
       seenRound = roundKey;
       sound("join");
+      if (!stageOpen && game.me && game.me.alive) {
+        window.ZhidaoGameShell?.cue({ name: "start", title: `Раунд ${game.round}`, sub: `Живых ${game.alive} из ${game.starters}` }, "royale");
+      }
     }
     if (freshReveal) {
       seenReveal = revealKey;
@@ -569,6 +581,7 @@
         window.ZhidaoRetro?.finale(place <= 3
           ? { kind: "win", title: place === 1 ? "ПОБЕДА!" : `${place} МЕСТО`, sub: prize || "Тройка лучших смены" }
           : { kind: "lose", title: "ИГРА ОКОНЧЕНА", sub: `Ваше место: ${place}` });
+        window.ZhidaoGameShell?.cue(place <= 3 ? "win" : "lose", "royale");
       }
     }
     clearTimeout(introTimer);
@@ -598,8 +611,14 @@
     if (wasMe && nowMe && wasMe.alive && nowMe.alive === false) {
       justOut = Date.now() + 1800;
       sound("buy");
+      window.ZhidaoGameShell?.cue({ name: "alert", title: "Вы выбыли",
+        sub: nowMe.can_revive ? `Воскрешение — ${after.revive_price}★` : "Следите за битвой" }, "royale");
     }
-    if (wasMe && nowMe && wasMe.alive === false && nowMe.alive && nowMe.revived) sound("rare");
+    if (wasMe && nowMe && wasMe.alive === false && nowMe.alive && nowMe.revived) {
+      sound("rare");
+      window.ZhidaoGameShell?.cue({ name: "turn", title: "Снова в игре!", sub: "Не ошибитесь" }, "royale");
+    }
+    window.ZhidaoGameShell?.setLive(Boolean(after && (after.status === "question" || after.status === "reveal") && nowMe && nowMe.alive), "royale");
     const next = JSON.stringify(body);
     if (first || next !== signature) {
       signature = next;

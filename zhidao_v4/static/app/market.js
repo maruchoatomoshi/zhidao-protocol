@@ -206,7 +206,9 @@
         stepper("want", g.code, data.max_offer_items));
     });
     table.append(stepper("give", "money", Math.min(me.money, data.max_offer_money)), node("span", "market-name", "юани 元"), stepper("want", "money", data.max_offer_money));
-    box.append(table, button("btn btn-primary", "Показать код", makeOffer));
+    const bar = node("div", "game-actionbar");
+    bar.append(button("btn btn-primary", "Показать код", makeOffer));
+    box.append(table, bar);
     parts.push(box);
   }
 
@@ -282,7 +284,11 @@
     else parts.push(node("p", "market-meta", "Рынок закрыт до утра"));
     const me = data.me;
     if (!me) {
-      if (data.can_play && data.phase !== "closed") parts.push(button("btn btn-primary", "Выйти на рынок", () => act("join")));
+      if (data.can_play && data.phase !== "closed") {
+        const bar = node("div", "game-actionbar");
+        bar.append(button("btn btn-primary", "Выйти на рынок", () => act("join")));
+        parts.push(bar);
+      }
     } else {
       drawNews(me, parts);
       drawStall(me, parts);
@@ -295,6 +301,8 @@
     drawResults(parts);
     parts.push(node("p", "case-message", note));
     body.replaceChildren(...parts);
+    window.ZhidaoGameShell?.settle(body);
+    $("marketWindow").dataset.phase = me && data.phase === "open" ? "live" : (data.phase || "idle");
     status.textContent = data.phase === "open" ? `ТОРГ ДО ${data.close}` : data.phase === "before" ? `ОТКРЫТИЕ В ${data.open}` : "ЗАКРЫТО";
     if (focusedId && $(focusedId)) {
       const input = $(focusedId);
@@ -309,7 +317,16 @@
     const before = data && data.me && data.me.news;
     data = body;
     const after = data.me && data.me.news;
-    if (before && after && before.at !== after.at && !document.hidden) window.ZhidaoSounds?.play(after.kind === "trade" ? "buy" : "join");
+    if (before && after && before.at !== after.at && !document.hidden) {
+      window.ZhidaoSounds?.play(after.kind === "trade" ? "buy" : "join");
+      // Звук, вибрация и плашка (game-shell.js): сделка прошла, патруль вскрыл сумку.
+      if (after.kind === "trade") window.ZhidaoGameShell?.cue({ name: "turn", title: "Сделка!", sub: "Товары уже у вас" }, "market");
+      else if (after.kind === "inspected") {
+        window.ZhidaoGameShell?.cue(after.clean
+          ? { name: "turn", title: "Патруль: чисто", sub: `+${after.fine} 元 вам` }
+          : { name: "alert", title: "Патруль!", sub: `Штраф ${after.fine} 元` }, "market");
+      }
+    }
     const next = JSON.stringify(body);
     if (next !== signature) {
       signature = next;

@@ -25,7 +25,11 @@
   const quiet = (promise) => { if (promise && typeof promise.catch === "function") promise.catch(() => {}); };
 
   let full = false;
+  let openKey = null;   // какая игра открыта: "table", "zombie", "royale"…
   let live = false;
+  // Модули игр опрашивают сервер и в фоне; событие или «идёт раунд» от игры,
+  // которая сейчас не открыта, этот экран не касается.
+  const mine = (key) => !key || key === openKey;
 
   function setSwipes(locked) {
     const app = bridge();
@@ -45,6 +49,7 @@
   }
 
   function setFull(key) {
+    openKey = key || null;
     const next = Boolean(key);
     if (next) root.dataset.gameFull = key;
     else delete root.dataset.gameFull;
@@ -56,7 +61,8 @@
 
   /* Идёт ли раунд, в котором человек участвует: тогда закрытие MAX
      переспрашивает. Вызывают модули игр при смене статуса. */
-  function setLive(on) {
+  function setLive(on, key) {
+    if (!mine(key)) return;
     const next = Boolean(on) && full;
     if (next === live) return;
     live = next;
@@ -185,8 +191,8 @@
     setTimeout(() => callout.remove(), 1700);
   }
 
-  function cue(event) {
-    if (!full || !event) return;
+  function cue(event, key) {
+    if (!full || !event || !mine(key)) return;
     const { name, title, sub } = typeof event === "string" ? { name: event } : event;
     if (HAPTIC_OF[name]) haptic(HAPTIC_OF[name]);
     show(name, title, sub);
@@ -234,9 +240,24 @@
   window.addEventListener("zhidao:game-open", (event) => setFull(event.detail || null));
   window.addEventListener("zhidao:screen", (event) => { if (event.detail !== "games") setFull(null); });
 
+  /* Главное действие — вниз, под палец. Модуль большой игры помечает его
+     .game-actionbar и после отрисовки зовёт settle(body): полосы уезжают в
+     конец окна (там их прилепит game-shell.css), а строка с ответом
+     сервера («Код — шесть цифр…») встаёт в полосу над кнопкой — рядом с
+     тем, что её вызвало. */
+  function settle(body) {
+    if (!body) return;
+    const bars = Array.from(body.querySelectorAll(".game-actionbar"));
+    if (!bars.length) return;
+    bars.forEach((bar) => body.append(bar));
+    const message = Array.from(body.children).find((el) => el.classList.contains("case-message"));
+    if (message && message.textContent.trim()) bars[0].prepend(message);
+  }
+
   window.ZhidaoGameShell = Object.freeze({
     haptic,
     cue,
+    settle,
     setLive,
     isFull: () => full,
   });

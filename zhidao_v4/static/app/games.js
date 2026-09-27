@@ -601,7 +601,7 @@
       const whole = Math.ceil(left);
       if (whole > 0 && whole <= 5 && ticked[key] !== whole) {
         ticked[key] = whole;
-        window.ZhidaoGameShell?.cue("tick");
+        window.ZhidaoGameShell?.cue("tick", "table");
       }
       // Время вышло на экране — спрашиваем сервер сразу, не дожидаясь опроса.
       if (left <= 0 && !zeroRefreshed.has(key)) {
@@ -667,7 +667,7 @@
     ticked = {};
     zeroRefreshed.clear();
     chatLog = [];
-    window.ZhidaoGameShell?.setLive(false);
+    window.ZhidaoGameShell?.setLive(false, "table");
   }
 
   function apply(data) {
@@ -696,7 +696,7 @@
         const finale = finaleFor(data);
         if (window.ZhidaoSounds) window.ZhidaoSounds.play("win");
         if (window.ZhidaoRetro) window.ZhidaoRetro.finale(finale);
-        window.ZhidaoGameShell?.cue(finale.kind === "win" ? "win" : "lose");
+        window.ZhidaoGameShell?.cue(finale.kind === "win" ? "win" : "lose", "table");
       }
       phaseKey = key;
       local = {};
@@ -727,10 +727,10 @@
     // обвинили». Итог партии отмечен выше вместе с финалом.
     if (!quiet && prevGame && renderer.cue) {
       const name = renderer.cue(prevGame, data.game, data.you);
-      if (name) window.ZhidaoGameShell?.cue(name);
+      if (name) window.ZhidaoGameShell?.cue(name, "table");
     }
     // Пока идёт раунд, MAX переспрашивает перед закрытием приложения.
-    window.ZhidaoGameShell?.setLive(data.room.status === "playing" && !(renderer.finished && renderer.finished(data.game)));
+    window.ZhidaoGameShell?.setLive(data.room.status === "playing" && !(renderer.finished && renderer.finished(data.game)), "table");
     if (renderer.sync) renderer.sync(context());
     const next = [
       data.room.revision,

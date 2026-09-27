@@ -117,6 +117,13 @@
 
   // --- куски панели ------------------------------------------------------------------------
 
+  // Главное действие — в полосу у низа экрана (game-shell.js: settle).
+  function bar(...children) {
+    const el = node("div", "game-actionbar");
+    el.append(...children);
+    return el;
+  }
+
   function rulesLine() {
     const r = data.rules;
     if (!r) return null;
@@ -159,6 +166,7 @@
     submit.type = "submit";
     submit.disabled = busy;
     form.append(input, submit);
+    box.append(bar(form));
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const digits = codeDraft.replace(/\D/g, "");
@@ -169,7 +177,6 @@
       }
       act("tag", { code: digits });
     });
-    box.append(form);
   }
 
   function drawVaccine(me, box) {
@@ -277,9 +284,9 @@
       if (rules) parts.push(rules);
       parts.push(node("b", "zombie-count", `В лобби: ${game.players}`));
       if (data.can_play) {
-        parts.push(game.me
+        parts.push(bar(game.me
           ? button("btn btn-secondary", "Выйти из лобби", () => act("leave"))
-          : button("btn btn-primary", "Войти в раунд", () => act("join")));
+          : button("btn btn-primary", "Войти в раунд", () => act("join"))));
       }
       status.textContent = "ЛОББИ";
     } else if (game.status === "running") {
@@ -297,6 +304,8 @@
     if (data.can_host) drawStaff(game, parts);
     parts.push(node("p", "case-message", note));
     body.replaceChildren(...parts);
+    window.ZhidaoGameShell?.settle(body);
+    $("zombieWindow").dataset.phase = game && game.status === "running" && game.me ? "live" : (game ? game.status : "idle");
     if (focused && $("zombieCode")) {
       const input = $("zombieCode");
       input.focus();
@@ -314,15 +323,28 @@
     quietRefresh = false;
     data = body;
     const after = data.game && data.game.me;
-    if (wasStatus && wasStatus !== "over" && data.game.status === "over" && !data.game.cancelled && after) {
+    if (wasStatus && data.game && wasStatus !== "over" && data.game.status === "over" && !data.game.cancelled && after) {
       const r = data.game.results || {};
       // Награда видна в итогах под оверлеем; здесь — только сам исход.
       if (after.survived) window.ZhidaoRetro?.finale({ kind: "win", title: "ВЫЖИЛИ!", sub: "Продержались до конца раунда" });
       else if (after.best_zombie) window.ZhidaoRetro?.finale({ kind: "win", title: "ЛУЧШИЙ ЗОМБИ", sub: "Больше всех заражений" });
       else window.ZhidaoRetro?.finale({ kind: "lose", title: r.reason === "all_turned" ? "ЗОМБИ ПОБЕДИЛИ" : "РАУНД ОКОНЧЕН", sub: "" });
+      window.ZhidaoGameShell?.cue(after.survived || after.best_zombie ? "win" : "lose", "zombie");
     }
+    // Звук, вибрация и плашка (game-shell.js): начало раунда со своей ролью,
+    // удачное заражение. Само заражение показывает финал-вспышка ниже.
+    if (wasStatus === "lobby" && data.game && data.game.status === "running" && after) {
+      window.ZhidaoGameShell?.cue(after.side === "zombie"
+        ? { name: "start", title: "Вы первый зомби", sub: "Касайтесь плеча и берите код" }
+        : { name: "start", title: "Раунд начался", sub: "Не дайте себя заразить" }, "zombie");
+    }
+    if (before && after && before.side === "zombie" && after.side === "zombie" && after.tags > before.tags) {
+      window.ZhidaoGameShell?.cue({ name: "turn", title: "Есть заражение!", sub: `Всего: ${after.tags}` }, "zombie");
+    }
+    window.ZhidaoGameShell?.setLive(Boolean(data.game && data.game.status === "running" && after), "zombie");
     if (before && after && before.side === "human" && after.side === "zombie") {
       window.ZhidaoRetro?.finale({ kind: "infected", title: "ВЫ ЗОМБИ", sub: "Касайтесь плеча и берите код" });
+      window.ZhidaoGameShell?.cue("alert", "zombie");
       window.showToast?.("Вас заразили! Теперь вы зомби");
       window.ZhidaoSounds?.play("buy");
       question = null;

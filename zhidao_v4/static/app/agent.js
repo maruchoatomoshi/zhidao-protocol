@@ -112,7 +112,7 @@
       node("p", "agent-mission", data.incoming.mission_text),
       node("p", "agent-meta", "Это правда?"),
     );
-    const actions = node("div", "capture-actions");
+    const actions = node("div", "capture-actions game-actionbar");
     actions.append(
       button("btn btn-primary", "Да, меня поймали", () => act("answer", { yes: true })),
       armedButton("refuse", "btn btn-secondary", "Нет", "Точно нет?", () => act("answer", { yes: false })),
@@ -140,7 +140,11 @@
     );
     if (t.mission.kind === "confirm") {
       if (t.asking) box.append(node("p", "agent-meta is-ok", "Ждём ответа цели…"));
-      else if (t.asks_left > 0) box.append(armedButton("ask", "btn btn-primary", "Миссия выполнена", "Точно? Цель узнает, что вы её агент", () => act("ask")));
+      else if (t.asks_left > 0) {
+        const bar = node("div", "game-actionbar");
+        bar.append(armedButton("ask", "btn btn-primary", "Миссия выполнена", "Точно? Цель узнает, что вы её агент", () => act("ask")));
+        box.append(bar);
+      }
       else box.append(node("p", "agent-meta", "На сегодня вопросов этой цели больше нет"));
     }
     parts.push(box);
@@ -181,7 +185,11 @@
     const you = data.you;
     if (!you || !you.joined) {
       if (you && you.excluded) parts.push(node("p", "agent-meta", "Вожатый исключил вас из этой смены агентов"));
-      else if (data.can_play) parts.push(button("btn btn-primary", "Вступить в игру", () => act("join")));
+      else if (data.can_play) {
+        const bar = node("div", "game-actionbar");
+        bar.append(button("btn btn-primary", "Вступить в игру", () => act("join")));
+        parts.push(bar);
+      }
       return;
     }
     parts.push(node("p", "agent-stats",
@@ -261,6 +269,8 @@
     if (data.can_manage) drawStaff(parts);
     parts.push(node("p", "case-message", note));
     body.replaceChildren(...parts);
+    window.ZhidaoGameShell?.settle(body);
+    $("agentWindow").dataset.phase = data.running && data.you && data.you.joined ? "live" : "idle";
     status.textContent = data.running ? `СМЕНА ${data.shift} · МИССИИ ${data.hours[0]}–${data.hours[1]}` : "СМЕНА НЕ ИДЁТ";
   }
 
@@ -269,10 +279,22 @@
   let quietRefresh = true;
   let refreshing = false;
   function accept(body) {
-    const before = !quietRefresh && !document.hidden && onGames() ? (data && data.you && data.you.news) : null;
+    const watching = !quietRefresh && !document.hidden && onGames();
+    const before = watching ? (data && data.you && data.you.news) : null;
+    const hadIncoming = watching ? Boolean(data && data.incoming) : true;
     quietRefresh = false;
     data = body;
     const after = data.you && data.you.news;
+    // Звук, вибрация и плашка (game-shell.js): агент говорит, что поймал
+    // тебя, — ответить надо сейчас; новость по своей миссии.
+    if (!hadIncoming && data.incoming) {
+      window.ZhidaoGameShell?.cue({ name: "alert", title: "Вас поймали?", sub: `Агент ${data.incoming.agent} ждёт ответа` }, "agent");
+    }
+    if (before && after && before.at !== after.at) {
+      const good = after.kind === "mission" || (after.kind === "guess" && after.right);
+      const titles = { mission: "Миссия засчитана", refused: "Цель сказала «нет»", exposed: "Вас вычислили!", guess: after.right ? "Агент раскрыт!" : "Мимо" };
+      window.ZhidaoGameShell?.cue({ name: good ? "turn" : "alert", title: titles[after.kind] || "Новость", sub: "" }, "agent");
+    }
     if (before && after && after.kind === "mission" && before.at !== after.at && !document.hidden && window.ZhidaoSounds) {
       window.ZhidaoSounds.play("rare");
     }

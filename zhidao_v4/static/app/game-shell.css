@@ -25,7 +25,23 @@ html[data-game-full] [data-screen="games"] > .case-window[data-catalog]:not([dat
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: env(safe-area-inset-bottom);
+  /* Короткая фаза (лобби, итоги) не оставляет строку состояния посреди
+     экрана: тело игры растягивается, строка стоит у нижнего края. */
+  display: flex;
+  flex-direction: column;
 }
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > * { flex-shrink: 0; }
+/* Тело — колонка, а не сетка: в растянутой сетке строки раздвигаются по
+   всей высоте, а в колонке содержимое стоит сверху, и только полоса
+   главного действия уходит вниз, под палец (margin-top: auto). Элементы,
+   которые в сетке центрировались сами (justify-self), выравниваются тут. */
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .spy-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .spy-body > .royale-logo { align-self: center; }
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .spy-body > .agent-leave { align-self: flex-start; }
 
 /* Верхняя полоса: заголовок окна прилипает к верху, слева под «‹ Игры»
    оставлено место. Отступ сверху — под вырез и строку состояния телефона. */
@@ -90,25 +106,25 @@ html[data-game-full] .app-toast { z-index: 80; bottom: calc(76px + env(safe-area
    Модули игр кладут его в .game-actionbar (games.js уносит его в конец
    окна), а здесь он прилипает к низу над строкой состояния окна. Пока
    человек читает поле выше, кнопка остаётся на месте. */
-html[data-game-full] #gameRoomBody > .game-actionbar {
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .spy-body > .game-actionbar {
   position: sticky;
   bottom: 28px;
   z-index: 3;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0 -14px;
+  margin: auto -14px 0;
   padding: 10px 14px 12px;
   border-top: 1px solid var(--ds-edge);
   background: var(--ds-pane);
   box-shadow: 0 -10px 24px -14px rgba(3, 40, 70, .55);
 }
-html[data-game-full] #gameRoomBody > .game-actionbar > .btn {
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .spy-body > .game-actionbar > .btn {
   flex: 1 1 0;
   min-height: 52px;
   font-size: 16px;
 }
-html[data-game-full] #gameRoomBody > .game-actionbar > :not(.btn) { flex-basis: 100%; margin: 0; }
+html[data-game-full] [data-screen="games"] > .case-window[data-catalog] > .spy-body > .game-actionbar > :not(.btn) { flex-basis: 100%; margin: 0; }
 
 /* --- моменты игры (ZhidaoGameShell.cue) ----------------------------------
    Плашка события — в цвете игры (--game-color из games-polish.css), крупно,
@@ -151,3 +167,11 @@ html[data-game-full] #gameRoomBody > .game-actionbar > :not(.btn) { flex-basis: 
   78% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(-18px) scale(.96); }
 }
+
+/* Идущая игра на кампусе: вводный абзац правил уходит (он есть в «Как
+   играть?»), обложка сжимается в полоску — место отдаётся самой игре.
+   Строка про безопасность («Только шагом…») остаётся всегда. Фазу окну
+   ставит модуль игры (data-phase). */
+html[data-game-full] .case-window[data-phase="live"] > .game-banner { height: 56px; object-fit: cover; }
+html[data-game-full] .case-window[data-phase="live"] > .game-help-row { display: none; }
+html[data-game-full] .case-window[data-phase="live"] > .spy-body > .spy-lead:first-child { display: none; }
