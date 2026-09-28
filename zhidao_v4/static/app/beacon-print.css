@@ -1,0 +1,94 @@
+/* Таблички меток на печать (beacon-print.html). Бумага — белая, текст —
+   чёрный, никаких фонов: табличку печатают на обычном принтере и ламинируют.
+   По две на лист A4, каждая — половина листа; QR — 80 мм, его читают с
+   вытянутой руки. */
+
+@page { size: A4 portrait; margin: 10mm; }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: #111;
+  background: #eef2f5;
+  font: 15px/1.4 "PT Sans", "Trebuchet MS", system-ui, sans-serif;
+}
+
+.print-bar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #c9d3db;
+}
+.print-bar h1 { margin: 0; font-size: 20px; }
+.print-bar p { margin: 2px 0 0; color: #3b4a56; }
+.print-bar button {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #0a6fb4;
+  font: 600 16px/1 inherit;
+  cursor: pointer;
+}
+.print-bar button:disabled { background: #8aa1b1; cursor: default; }
+
+main {
+  display: grid;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.label {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6mm;
+  width: 190mm;
+  height: 134mm;
+  padding: 8mm 10mm;
+  border: 1.5mm solid #111;
+  border-radius: 6mm;
+  background: #fff;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.label-top {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 13pt;
+  letter-spacing: .04em;
+}
+.label-names { display: grid; justify-items: center; }
+.label-names strong { font-size: 24pt; line-height: 1.1; }
+.label-zh { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.label-names .label-zh { font-size: 20pt; }
+
+/* QR и текст стоят рядом: слева код, справа — код для ручного ввода, как
+   играть и просьба не снимать, сверху вниз. */
+.label { grid-template-columns: 80mm 1fr; column-gap: 8mm; justify-items: start; }
+.label-top, .label-names { grid-column: 1 / -1; }
+.label-names { justify-items: start; }
+.label-qr { width: 80mm; height: 80mm; }
+.label-side { display: flex; flex-direction: column; gap: 4mm; height: 80mm; }
+.label-side p { margin: 0; }
+.label-code { font-size: 12pt; }
+.label-code b { display: block; margin-top: 2mm; font: 700 22pt/1 "IBM Plex Mono", "Courier New", monospace; letter-spacing: .06em; }
+.label-how { font-size: 12pt; }
+.label-keep { margin-top: auto; font-size: 10pt; color: #333; }
+.label-keep p { margin: 0 0 1mm; }
+
+@media print {
+  body { background: #fff; }
+  .print-bar { display: none; }
+  main { display: block; padding: 0; }
+  .label { margin: 0 auto 8mm; }
+  .label:nth-child(2n) { page-break-after: always; break-after: page; }
+}

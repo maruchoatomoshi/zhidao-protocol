@@ -46,6 +46,7 @@
   <link rel="stylesheet" href="./design-system-bridge.css?v=707707df76">
   <link rel="stylesheet" href="./motion-polish.css?v=b818241cbc">
   <link rel="stylesheet" href="./game-shell.css?v=50315e9de9">
+  <link rel="stylesheet" href="./beacon.css?v=b363b2cd9c">
   <link rel="stylesheet" href="./motion-kit.css?v=2d3acaecd7">
   </head>
 <body>
@@ -402,10 +403,12 @@
           <button id="campusLocate" class="campus-locate btn btn-primary" type="button">Где я</button>
           <span id="campusStatus" class="campus-status">GPS не запрошен</span>
           <button id="campusMarkOpen" class="btn btn-secondary campus-mark-open" type="button" hidden>✦ Оставить метку</button>
+          <button id="campusBeaconScan" class="btn btn-secondary campus-beacon-scan" type="button"><span aria-hidden="true">&#x1F4F7;</span> Метка</button>
         </div>
 
         <section class="glass-card capture-hud" id="captureHud" aria-label="Захват кампуса" aria-live="polite" hidden></section>
         <section class="glass-card capture-duel" id="captureDuel" aria-label="Дуэли" aria-live="polite" hidden></section>
+        <section class="glass-card beacon-panel" id="beaconPanel" aria-label="Метки на кампусе" aria-live="polite" hidden></section>
 
         <article class="campus-map" aria-label="Векторная карта кампуса">
           <div id="campusCanvas" class="campus-canvas"></div>
@@ -1268,11 +1271,13 @@
   <script src="./story.js?v=90f625f5fe" defer></script>
   <div class="royale-stage" id="royaleStage" role="dialog" aria-label="Протокол 60 — большой экран" hidden></div>
   <script src="./royale.js?v=63682d1e4f" defer></script>
-  <script src="./capture-duel.js?v=6afd7f08ee" defer></script>
-  <script src="./capture.js?v=725ca6ff24" defer></script>
+  <script src="./beacon.js?v=38599f0e61" defer></script>
+  <script src="./capture-duel.js?v=a4be33861e" defer></script>
+  <script src="./capture.js?v=b9d4d97c58" defer></script>
+  <script src="./beacon-admin.js?v=50407a36ed" defer></script>
   <script src="./market.js?v=716a3f4dac" defer></script>
-  <script src="./sabotage.js?v=5979fda531" defer></script>
-  <script src="./zombie.js?v=79c2865294" defer></script>
+  <script src="./sabotage.js?v=29de2516f3" defer></script>
+  <script src="./zombie.js?v=4ada39d4f0" defer></script>
   <script src="./agent.js?v=7bfeabe126" defer></script>
   <script src="./game-shell.js?v=4701c48ab8" defer></script>
   <script src="./games-catalog.js?v=8ac23adfea" defer></script>

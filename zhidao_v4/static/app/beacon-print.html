@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZHIDAO · таблички меток</title>
+  <link rel="stylesheet" href="./beacon-print.css">
+</head>
+<body>
+  <!-- Таблички меток на печать (beacon-print.js, сервер — beacons.py).
+       Открывается из «Карта кампуса → Метки на кампусе → Печать табличек»,
+       печатать — с компьютера, по две таблички на лист A4. -->
+  <header class="print-bar">
+    <div>
+      <h1>Таблички меток</h1>
+      <p id="printStatus">Загрузка…</p>
+    </div>
+    <button type="button" id="printNow" disabled>Печать</button>
+  </header>
+  <main id="labels"></main>
+  <script src="./beacon-print.js"></script>
+</body>
+</html>

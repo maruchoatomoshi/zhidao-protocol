@@ -30,7 +30,9 @@
 
 Точку нельзя выдумать (правило CLAUDE.md): точки — объекты campus.geojson, и
 играть на точке можно только после того, как вожатый подтвердил её, стоя на
-месте с точным GPS. До подтверждения участники точку не видят.
+месте с точным GPS. До подтверждения участники точку не видят. С 2026-09-28
+у точки может висеть QR-метка (beacons.py): тогда её ставит и подтверждает
+скан таблички, а ход — только скан таблички рядом с ней.
 
 Приватность: точки, отрезки удержания, эффекты, копилки и счётчики ходов
 принадлежат фракции. Кто захватил, пробил, укрепил или сколько внёс в копилку,
@@ -464,7 +466,7 @@ def action_for(row: dict | None, faction: str | None) -> str | None:
 
 
 def point_view(code: str, row: dict | None, *, staff: bool, faction: str | None, cooldown: int,
-               effects: list[dict] | None = None, moves_today: int = 0) -> dict:
+               effects: list[dict] | None = None, moves_today: int = 0, beacon: bool = False) -> dict:
     names = story.feature_names().get(points()[code]["feature"], {})
     view = {"code": code, "name_ru": names.get("name_ru"), "name_zh": names.get("name_zh"),
             "feature": points()[code]["feature"],
@@ -473,6 +475,8 @@ def point_view(code: str, row: dict | None, *, staff: bool, faction: str | None,
     if row:
         effects = effects or []
         view["coordinates"] = [row["lon"], row["lat"]]
+        # На точке висит метка (beacons.py): ход — только сканом таблички.
+        view["beacon"] = beacon
         view["action"] = action_for(row, faction)
         view["cooldown_seconds"] = cooldown
         owner = row["owner"]
@@ -508,6 +512,8 @@ def view(conn, account_id: int, season_id: int) -> dict:
     if season["status"] == "active":
         settle_days(conn, season, now)
     rows = _point_rows(conn, season_id)
+    from . import beacons   # здесь, а не наверху: beacons сам опирается на этот модуль
+    tagged = {code for code, b in beacons.rows(conn, season_id).items() if b["installed_at"]}
     effects = active_effects(conn, season_id, now)
     counts = {row["faction"]: int(row["n"]) for row in conn.execute(
         "SELECT faction, COUNT(*) AS n FROM v4_capture_factions WHERE season_id=? GROUP BY faction", (season_id,))}
@@ -539,7 +545,7 @@ def view(conn, account_id: int, season_id: int) -> dict:
                       "members": counts.get(code, 0)} for code in factions()],
         "points": [point_view(code, rows.get(code), staff=staff, faction=faction,
                               cooldown=challenges.cooldown_left(account_id, code, now) if faction else 0,
-                              effects=effects, moves_today=moves.get(code, 0))
+                              effects=effects, moves_today=moves.get(code, 0), beacon=code in tagged)
                    for code in visible],
         "abilities": {code: {**spec, "target": TARGETS[code]} for code, spec in abilities().items()},
         "daily_reward": config()["daily_reward"],
@@ -578,14 +584,16 @@ def _present(row: dict, lon: float, lat: float, accuracy_m: float) -> None:
         raise CaseError(f"Подойдите ближе: точка засчитывается в радиусе {config()['radius_m']} м.")
 
 
-def challenge(conn, actor: int, season_id: int, code: str, *, lon: float, lat: float, accuracy_m: float) -> dict:
+def challenge(conn, actor: int, season_id: int, code: str, *, lon: float, lat: float, accuracy_m: float,
+              beacon: str | None = None) -> dict:
     now = utcnow()
     season, row = _playable(conn, actor, season_id, code, now)
     faction = assign_faction(conn, season_id, actor)
     wait = challenges.cooldown_left(actor, code, now)
     if wait:
         raise CaseError(f"Эта точка ждёт вас через {wait} с.", 429)
-    _present(row, lon, lat, accuracy_m)
+    from . import beacons
+    beacons.check(conn, season_id, actor, code, row, beacon=beacon, lon=lon, lat=lat, accuracy_m=accuracy_m)
     action = action_for(row, faction)
     if action is None:
         raise CaseError("Точка вашей фракции уже укреплена до предела.", 409)
@@ -702,11 +710,18 @@ def contribute(conn, actor: int, season_id: int, *, ability: str, target: str | 
 
 # --- вожатый ---------------------------------------------------------------------------------------
 
-def confirm(conn, actor: int, season_id: int, code: str, *, lon: float, lat: float, accuracy_m: float) -> dict:
-    """Вожатый стоит у объекта и подтверждает точку. Координата — его, а не выдуманная."""
+def confirm(conn, actor: int, season_id: int, code: str, *, lon: float, lat: float, accuracy_m: float,
+            via_beacon: bool = False) -> dict:
+    """Вожатый стоит у объекта и подтверждает точку. Координата — его, а не выдуманная.
+
+    Если для точки выпущена метка, точку подтверждает только установка метки
+    (beacons.install): иначе координата точки разошлась бы с табличкой."""
     authorize(conn, actor, season_id, manage=True, write=True)
     if code not in points():
         raise CaseError("Такой точки нет.", 404)
+    if not via_beacon and conn.execute("SELECT 1 FROM v4_beacons WHERE season_id=? AND point_code=?",
+                                       (season_id, code)).fetchone():
+        raise CaseError("У этой точки есть метка: подтвердите точку, отсканировав табличку на месте.", 409)
     if accuracy_m is None or accuracy_m > config()["confirm_accuracy_m"]:
         raise CaseError(f"Для подтверждения нужна точность не хуже {config()['confirm_accuracy_m']} м.")
     if not campus.inside_campus(lon, lat):

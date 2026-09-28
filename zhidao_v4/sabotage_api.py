@@ -31,6 +31,7 @@ class StationPayload(BaseModel):
     lat: float = Field(ge=-90.0, le=90.0)
     lon: float = Field(ge=-180.0, le=180.0)
     accuracy_m: float = Field(ge=0.0, le=100000.0)
+    beacon: str | None = Field(default=None, min_length=1, max_length=300)   # что отсканировано с метки
 
 
 class AnswerPayload(BaseModel):
@@ -127,7 +128,8 @@ def register_sabotage(app, current_principal, csrf_principal):
     @app.post("/api/v4/sabotage/task/challenge")
     def sabotage_task_challenge(payload: StationPayload, principal=Depends(csrf_principal)):
         return write(principal, lambda conn, actor, season_id: sabotage.task_challenge(
-            conn, actor, season_id, payload.point, lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m),
+            conn, actor, season_id, payload.point, lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m,
+            beacon=payload.beacon),
             kind="task", limit=TASKS_PER_MINUTE)
 
     @app.post("/api/v4/sabotage/task/answer")

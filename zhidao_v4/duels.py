@@ -35,7 +35,7 @@ import random
 import threading
 from datetime import datetime, timedelta
 
-from . import agent, capture, cipher, rooms, shop, story
+from . import agent, beacons, capture, cipher, rooms, shop, story
 from .cases import CaseError, authorize
 from .meet import Offers
 
@@ -373,7 +373,8 @@ def current(conn, actor: int, season_id: int, *, allow_write: bool) -> dict:
 
 # --- ходы ----------------------------------------------------------------------------------------
 
-def offer(conn, actor: int, season_id: int, *, point: str | None, lon, lat, accuracy_m) -> dict:
+def offer(conn, actor: int, season_id: int, *, point: str | None, lon, lat, accuracy_m,
+          beacon: str | None = None) -> dict:
     now = utcnow()
     season, _ = _guard(conn, actor, season_id, now)
     purge(conn, now)
@@ -389,7 +390,7 @@ def offer(conn, actor: int, season_id: int, *, point: str | None, lon, lat, accu
             raise CaseError("Точка ещё не подтверждена вожатым.", 404)
         if lon is None or lat is None:
             raise CaseError("Для дуэли за точку нужна ваша позиция.")
-        capture._present(row, lon, lat, accuracy_m)
+        beacons.check(conn, season_id, actor, point, row, beacon=beacon, lon=lon, lat=lat, accuracy_m=accuracy_m)
     return offers.create_for(actor, season_id, point)
 
 

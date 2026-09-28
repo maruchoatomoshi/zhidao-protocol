@@ -97,7 +97,9 @@
       if (!response.ok) {
         if (response.status === 401) window.dispatchEvent(new Event("zhidao:session-expired"));
         const detail = Array.isArray(body.detail) ? "Проверьте, что введено." : body.detail;
-        throw new Error(typeof detail === "string" ? detail : "Запрос отклонён.");
+        const error = new Error(typeof detail === "string" ? detail : "Запрос отклонён.");
+        error.status = response.status;   // 428 — «отсканируйте метку» (beacon.js)
+        throw error;
       }
       return body;
     } catch (error) {
@@ -467,9 +469,10 @@
     draw();
     try {
       const coords = await position();
-      const result = await api("/api/v4/sabotage/task/challenge", {
-        method: "POST", body: { point, lat: coords.latitude, lon: coords.longitude, accuracy_m: coords.accuracy },
-      });
+      const body = { point, lat: coords.latitude, lon: coords.longitude, accuracy_m: coords.accuracy };
+      // На станции висит метка — сервер попросит скан (428), beacon.js откроет сканер.
+      const send = (extra) => api("/api/v4/sabotage/task/challenge", { method: "POST", body: { ...body, ...extra } });
+      const result = window.ZhidaoBeacon ? await window.ZhidaoBeacon.withScan(send) : await send({});
       if (result.question) {
         question = { ...result.question };
         note = `Ответьте за ${result.seconds} с`;

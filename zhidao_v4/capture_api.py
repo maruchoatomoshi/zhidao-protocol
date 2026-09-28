@@ -28,6 +28,7 @@ class PositionPayload(BaseModel):
     lat: float = Field(ge=-90.0, le=90.0)
     lon: float = Field(ge=-180.0, le=180.0)
     accuracy_m: float = Field(ge=0.0, le=100000.0)
+    beacon: str | None = Field(default=None, min_length=1, max_length=300)   # что отсканировано с метки
 
 
 class AnswerPayload(BaseModel):
@@ -46,6 +47,7 @@ class DuelOfferPayload(BaseModel):
     lat: float | None = Field(default=None, ge=-90.0, le=90.0)
     lon: float | None = Field(default=None, ge=-180.0, le=180.0)
     accuracy_m: float | None = Field(default=None, ge=0.0, le=100000.0)
+    beacon: str | None = Field(default=None, min_length=1, max_length=300)   # что отсканировано с метки
 
 
 class DuelJoinPayload(BaseModel):
@@ -116,7 +118,8 @@ def register_capture(app, current_principal, csrf_principal):
             season_id = season_of(conn, principal.account_id)
             with immediate_transaction(conn):
                 return capture.challenge(conn, principal.account_id, season_id, code,
-                                         lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m)
+                                         lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m,
+                                         beacon=payload.beacon)
 
     @app.post("/api/v4/capture/points/{code}/answer")
     def capture_answer(code: str, payload: AnswerPayload, principal=Depends(csrf_principal)):
@@ -161,7 +164,8 @@ def register_capture(app, current_principal, csrf_principal):
             season_id = season_of(conn, principal.account_id)
             with immediate_transaction(conn):
                 return duels.offer(conn, principal.account_id, season_id, point=payload.point,
-                                   lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m)
+                                   lon=payload.lon, lat=payload.lat, accuracy_m=payload.accuracy_m,
+                                   beacon=payload.beacon)
 
     @app.post("/api/v4/capture/duels/join")
     def duel_join(payload: DuelJoinPayload, principal=Depends(csrf_principal)):

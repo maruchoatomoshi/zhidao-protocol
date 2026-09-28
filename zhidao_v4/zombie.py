@@ -33,7 +33,7 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 
-from . import capture, cases, cipher, rooms, shop, story, virus
+from . import beacons, capture, cases, cipher, rooms, shop, story, virus
 from .cases import CaseError, authorize, encoded, ensure_wallet
 from .diary import full_wallet
 
@@ -383,7 +383,8 @@ class Vaccines:
 vaccines = Vaccines()
 
 
-def vaccine_challenge(conn, actor: int, season_id: int, point: str, *, lon: float, lat: float, accuracy_m: float) -> dict:
+def vaccine_challenge(conn, actor: int, season_id: int, point: str, *, lon: float, lat: float, accuracy_m: float,
+                      beacon: str | None = None) -> dict:
     now = utcnow()
     game, me = _running(conn, actor, season_id, now)
     if game is None:
@@ -400,7 +401,7 @@ def vaccine_challenge(conn, actor: int, season_id: int, point: str, *, lon: floa
     row = capture._point_rows(conn, season_id).get(point)
     if row is None:
         raise CaseError("Станция ещё не подтверждена вожатым.", 404)
-    capture._present(row, lon, lat, accuracy_m)
+    beacons.check(conn, season_id, actor, point, row, beacon=beacon, lon=lon, lat=lat, accuracy_m=accuracy_m)
     return {"point": point, "question": vaccines.make(actor, int(game["id"]), now),
             "seconds": config()["question_seconds"]}
 

@@ -162,7 +162,12 @@ weeks of work went into games, economy, staff tooling and design (see
 still `verified: false`; this is the blocker on Portals (`V4_GAMES.md` §4.3)
 and on point confirmation for Захват кампуса (§4.12). Advancing it needs
 someone on the physical campus with the satellite reference, not more code —
-do not treat it as a task you can pick up and finish from here. The governing
+do not treat it as a task you can pick up and finish from here. **Update
+2026-09-28:** game *points* now have an on-site route — QR tags (`beacons.py`,
+`V4_GAMES.md` §3.7): staff installing a printed tag at a point confirms that
+point with their phone's GPS, and play there then needs a scan of that tag
+nearby. This verifies points, not outlines or roads; `campus.geojson` stays
+`verified: false`. The governing
 rule, from the user, still holds whenever this does become active work again:
 
 > First make the geography true; then make it look like ZHIDAO.

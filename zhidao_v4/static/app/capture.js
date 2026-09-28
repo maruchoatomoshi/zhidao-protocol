@@ -619,7 +619,9 @@
             () => window.dispatchEvent(new CustomEvent("zhidao:duel-offer", { detail: p.code }))));
         }
         if (reason instanceof Node) parts.push(reason);
-        else parts.push(node("p", "capture-meta", reason || `Встаньте у точки (до ${state.radius_m} м) и ответьте на вопрос`));
+        else parts.push(node("p", "capture-meta", reason || (p.beacon
+          ? `Отсканируйте метку на табличке у точки (до ${state.radius_m} м) и ответьте на вопрос`
+          : `Встаньте у точки (до ${state.radius_m} м) и ответьте на вопрос`)));
       }
       if (state.can_manage) {
         actions.append(button("btn btn-secondary", p.confirmed ? "Уточнить точку здесь" : "Подтвердить точку здесь", () => confirmPoint(p)));
@@ -655,14 +657,17 @@
     setNote("Ищем вас…");
     try {
       const coords = await position();
-      const result = await api(`/api/v4/capture/points/${p.code}/challenge`, {
-        method: "POST", body: { lat: coords.latitude, lon: coords.longitude, accuracy_m: coords.accuracy },
-      });
+      const place = { lat: coords.latitude, lon: coords.longitude, accuracy_m: coords.accuracy };
+      // На точке висит метка — ход только со сканом таблички (beacon.js).
+      const send = (extra) => api(`/api/v4/capture/points/${p.code}/challenge`, { method: "POST", body: { ...place, ...extra } });
+      const result = window.ZhidaoBeacon
+        ? await window.ZhidaoBeacon.withScan(send, { known: Boolean(p.beacon), pointName: p.name_ru })
+        : await send({});
       question = { code: p.code, action: result.action, ...result.question, deadline: Date.now() + result.seconds * 1000 };
       noteText = "";
       window.ZhidaoCampus?.reload();   // ход у точки открывает туман
     } catch (error) {
-      noteText = error.message;
+      if (!error.cancelled) noteText = error.message;
       if (error.status === 429 || error.status === 409) refresh();
     } finally {
       busy = false;
@@ -810,4 +815,6 @@
   window.addEventListener("online", () => {
     if (!document.hidden && onMap() && !busy && !question) refresh();
   });
+  // Вожатый установил или перевыпустил метку (beacon-admin.js) — точки поменялись.
+  window.addEventListener("zhidao:beacons-changed", () => refresh());
 }());

@@ -8,7 +8,9 @@ Among Us вживую. Экипаж ходит по станциям — под�
 капитану, обсуждают вслух и голосуют в приложении; кого выбрало большинство,
 тот покидает игру.
 
-Решения пользователя 2026-09-13: станции — точки по GPS, без табличек с QR;
+Решения пользователя 2026-09-13: станции — точки по GPS, без табличек с QR
+(с 2026-09-28 на точке может висеть QR-метка — тогда задание берётся её
+сканом, beacons.py);
 саботажники **только выводят** (без поломок станций); задания — **вопрос у
 станции**; собрания созывают **капитаны** (предложение пользователя).
 
@@ -40,7 +42,7 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 
-from . import capture, cases, cipher, rooms, shop, story
+from . import beacons, capture, cases, cipher, rooms, shop, story
 from .cases import CaseError, authorize, encoded, ensure_wallet
 from .diary import full_wallet
 
@@ -475,7 +477,8 @@ def eliminate(conn, actor: int, season_id: int, code: str) -> dict:
     return result
 
 
-def task_challenge(conn, actor: int, season_id: int, point: str, *, lon: float, lat: float, accuracy_m: float) -> dict:
+def task_challenge(conn, actor: int, season_id: int, point: str, *, lon: float, lat: float, accuracy_m: float,
+                   beacon: str | None = None) -> dict:
     now = utcnow()
     game, me = _live(conn, actor, season_id, now)
     if game is None:
@@ -492,7 +495,7 @@ def task_challenge(conn, actor: int, season_id: int, point: str, *, lon: float, 
     row = capture._point_rows(conn, season_id).get(point)
     if row is None:
         raise CaseError("Станция ещё не подтверждена вожатым.", 404)
-    capture._present(row, lon, lat, accuracy_m)
+    beacons.check(conn, season_id, actor, point, row, beacon=beacon, lon=lon, lat=lat, accuracy_m=accuracy_m)
     return {"point": point, "question": questions.make(actor, int(game["id"]), point, now),
             "seconds": config()["question_seconds"]}
 

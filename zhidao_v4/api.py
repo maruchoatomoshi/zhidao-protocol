@@ -25,6 +25,7 @@ from .virus_api import register_virus
 from .workshop_api import register_workshop
 from .marks_api import register_marks
 from .story_api import register_story
+from .beacons_api import register_beacons
 from .capture_api import register_capture
 from .royale_api import register_royale
 from .agent_api import register_agent
@@ -790,6 +791,7 @@ def create_app(
     register_marks(app, _current_principal, _csrf_principal)
     register_story(app, _current_principal, _csrf_principal)
     register_capture(app, _current_principal, _csrf_principal)
+    register_beacons(app, _current_principal, _csrf_principal)
     register_royale(app, _current_principal, _csrf_principal)
     register_agent(app, _current_principal, _csrf_principal)
     register_zombie(app, _current_principal, _csrf_principal)

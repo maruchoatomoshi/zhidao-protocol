@@ -348,7 +348,9 @@
         const coords = await position();
         Object.assign(body, { point, lat: coords.latitude, lon: coords.longitude, accuracy_m: coords.accuracy });
       }
-      const offer = await api("/api/v4/capture/duels/offer", { method: "POST", body });
+      // Дуэль за точку с меткой — со сканом таблички (beacon.js, по ответу 428).
+      const send = (extra) => api("/api/v4/capture/duels/offer", { method: "POST", body: { ...body, ...extra } });
+      const offer = point && window.ZhidaoBeacon ? await window.ZhidaoBeacon.withScan(send) : await send({});
       note = "";
       offerDeadline = Date.now() + offer.expires_in * 1000;
       accept({ ...(data || {}), duel: null, offer });
