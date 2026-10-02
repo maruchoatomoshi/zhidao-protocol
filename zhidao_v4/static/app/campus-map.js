@@ -661,6 +661,8 @@ function selectFeature(id, ui, options = {}) {
   const f = featureById(id);
   if (!f || !featureIsExplored(f, campusState.origin, campusState.exploredRegion)) return;
   campusState.selected = id;
+  const picker = document.querySelector("#campusPlace");
+  if (picker) picker.value = id;
   const preserveRoute = options.preserveRoute === true;
   if (!preserveRoute) clearRoute(ui);
 
@@ -912,6 +914,10 @@ function applyView(ui) {
   const v = campusState.view;
   ui.layer.setAttribute("transform", `translate(${v.x} ${v.y}) scale(${v.scale})`);
   applyLabelScale(v.scale);
+  const zoomIn = document.querySelector("#campusZoomIn");
+  const zoomOut = document.querySelector("#campusZoomOut");
+  if (zoomIn) zoomIn.disabled = v.scale >= 8;
+  if (zoomOut) zoomOut.disabled = v.scale <= 0.5;
   // Слой меток (campus-marks.js) держит размер знаков на экране постоянным.
   window.dispatchEvent(new CustomEvent("zhidao:campus-view", { detail: v.scale }));
 }
@@ -1151,6 +1157,56 @@ const LEGEND_LABELS = {
   "living-zone": "Жилые зоны", civic: "Общественные", park: "Парк",
 };
 
+// Именованные доступные объекты: не дублируем безымянные корпуса и не раскрываем туман.
+function buildPlacePicker(ui) {
+  const picker = document.querySelector("#campusPlace");
+  const controls = document.querySelector("#campusControls");
+  if (!picker || !controls) return;
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Выберите место";
+  picker.replaceChildren(placeholder);
+  const places = Array.from(ui.svg.querySelectorAll('.campus-feat[data-interactive="true"]'))
+    .map((node) => featureById(node.dataset.featureId))
+    .filter((feature) => feature?.properties.named && featureIsExplored(feature, campusState.origin, campusState.exploredRegion))
+    .sort((a, b) => a.properties.name_ru.localeCompare(b.properties.name_ru, "ru"));
+  places.forEach(({ properties: p }) => {
+    const option = document.createElement("option");
+    option.value = p.id;
+    option.textContent = p.name_ru;
+    picker.append(option);
+  });
+  picker.value = campusState.selected || "";
+  picker.onchange = () => {
+    const feature = featureById(picker.value);
+    if (!feature) return;
+    selectFeature(picker.value, ui);
+    const point = centroidOf(feature);
+    const center = project(point.lon, point.lat, campusState.origin);
+    const vb = ui.svg.viewBox.baseVal;
+    const scale = Math.max(2, campusState.view.scale);
+    campusState.view = { x: vb.x + vb.width / 2 - center.x * scale,
+      y: vb.y + vb.height / 2 - center.y * scale, scale };
+    applyView(ui);
+  };
+  const zoom = (factor) => {
+    const v = campusState.view;
+    const scale = clampScale(v.scale * factor);
+    const vb = ui.svg.viewBox.baseVal;
+    const x = vb.x + vb.width / 2, y = vb.y + vb.height / 2;
+    campusState.view = { x: x - (x - v.x) * scale / v.scale,
+      y: y - (y - v.y) * scale / v.scale, scale };
+    applyView(ui);
+  };
+  document.querySelector("#campusZoomIn").onclick = () => zoom(1.5);
+  document.querySelector("#campusZoomOut").onclick = () => zoom(1 / 1.5);
+  document.querySelector("#campusZoomReset").onclick = () => {
+    campusState.view = { x: 0, y: 0, scale: 1 };
+    applyView(ui);
+  };
+  controls.hidden = false;
+}
+
 function buildLegend(data) {
   const host = document.querySelector("#campusLegend");
   if (!host) return;
@@ -1266,6 +1322,7 @@ async function initCampusMap() {
   routeGraph = buildRouteGraph(data.features, campusState.origin, campusState.exploredRegion);
   applyView(ui);
   attachGestures(ui);
+  buildPlacePicker(ui);
   window.dispatchEvent(new CustomEvent("zhidao:campus-drawn", { detail: ui }));
 
   const status = document.querySelector("#campusStatus");
@@ -1284,6 +1341,7 @@ async function initCampusMap() {
     );
     applyView(ui);
     attachGestures(ui);
+    buildPlacePicker(ui);
     buildLegend(campusState.data);
     window.dispatchEvent(new CustomEvent("zhidao:campus-drawn", { detail: ui }));
     return ui;

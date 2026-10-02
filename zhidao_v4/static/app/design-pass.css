@@ -494,3 +494,17 @@
 /* Профиль: вид и помощь списками, как были в «Ещё». */
 .profile-help button small { display: block; margin-top: 1px; font-size: 11px; opacity: 0.8; }
 .profile-help button span { text-align: left; }
+
+/* Проверяемый статус важнее декоративной подписи. Палитра и оформление прежние. */
+.catalog-status { margin: 0; font: 14px/1.5 var(--font-ui); color: var(--text-secondary, var(--case-muted)); }
+html .catalog-heading { font-size: 13px; letter-spacing: 0.04em; line-height: 1.4; }
+html .catalog-tile small { font-size: 14px; line-height: 1.4; }
+html .catalog-group.is-later .catalog-tile b { font-size: 15px; font-weight: 700; }
+html .catalog-group.is-later .catalog-tile img { filter: none; opacity: 1; }
+html .catalog-group:not(.is-live) .catalog-badge { position: static; grid-column: 2; justify-self: start; }
+.campus-controls { display: grid; gap: 8px; margin: 12px 0; }
+.campus-controls[hidden] { display: none; }
+.campus-controls label { font: 700 15px/1.4 var(--font-ui); }
+.campus-controls select { width: 100%; min-width: 0; min-height: 44px; padding: 8px; font: 15px/1.4 var(--font-ui); color: var(--case-ink); background: var(--case-inset); border: 1px solid var(--case-border); border-radius: 8px; }
+.campus-zoom { display: flex; gap: 8px; }
+.campus-zoom .btn { min-width: 44px; min-height: 44px; }

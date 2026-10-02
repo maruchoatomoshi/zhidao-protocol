@@ -34,12 +34,13 @@
   const GROUPS = [
     { key: "live", title: "Идёт сейчас", zh: "进行中" },
     { key: "room", title: "По коду комнаты", zh: "房间" },
-    { key: "later", title: "Позже", zh: "稍后" },
+    { key: "later", title: "Игры сезона", zh: "赛季游戏" },
   ];
 
   let session = window.ZhidaoSession || null;
   let open = null;
   let timer = null;
+  let requestId = 0;
   const signedIn = () => Boolean(session && session.mode === "authenticated");
   const onGames = () => document.documentElement.dataset.currentScreen === "games";
   const inRoom = () => Boolean(room && !room.hidden);
@@ -52,6 +53,10 @@
     return n;
   }
 
+  const status = node("p", "catalog-status");
+  status.setAttribute("role", "status");
+  catalog.append(status);
+
   const groups = {};
   GROUPS.forEach((group) => {
     const section = node("section", `catalog-group is-${group.key}`);
@@ -63,7 +68,7 @@
     const grid = node("div", "catalog-grid");
     section.append(heading, grid);
     catalog.append(section);
-    groups[group.key] = { section, grid };
+    groups[group.key] = { section, grid, heading };
   });
 
   const tiles = new Map();
@@ -102,7 +107,16 @@
     groups[group].grid.append(entry.tile);
   }
 
-  function classify(items) {
+  function classify(items, state = signedIn() ? "loading" : "preview") {
+    const messages = {
+      preview: "Правила доступны без входа. Войдите в аккаунт, чтобы увидеть текущие игры и участвовать.",
+      loading: "Проверяем, какие игры доступны…",
+      error: "Не удалось обновить статус игр. Проверьте связь; правила можно открыть сейчас.",
+      empty: "У аккаунта пока нет активного сезона. Уточните доступ у вожатого; правила доступны ниже.",
+      ready: "Выберите игру: на карточках показано её текущее состояние.",
+    };
+    status.textContent = messages[state];
+    groups.later.heading.firstChild.textContent = state === "ready" ? "Сейчас не идут" : "Игры сезона";
     const by = Object.fromEntries((items || []).map((item) => [item.key, item]));
     GAMES.forEach(({ key }) => {
       const item = by[key];
@@ -123,7 +137,8 @@
         if (item.state === "open") place(key, "live", "ОКНО ОТКРЫТО", "open", `захват до ${hhmm(item.until)}`);
         else place(key, "later", "", "", item.until ? `окно захвата откроется в ${hhmm(item.until)}` : "окон сегодня больше нет");
       } else {
-        place(key, "later");
+        const idle = ["royale", "zombie", "sabotage"].includes(key) ? "Раунд не запущен · запускает вожатый" : "Сейчас не идёт · откройте подробности";
+        place(key, "later", "", "", state === "ready" ? idle : undefined);
       }
     });
     GROUPS.forEach((group) => { groups[group.key].section.hidden = groups[group.key].grid.childElementCount === 0; });
@@ -152,18 +167,24 @@
 
   async function refresh() {
     clearTimeout(timer);
+    const request = ++requestId;
     if (!onGames() || document.hidden) return;
     if (!signedIn()) { classify([]); return; }
     const account = session?.account?.id;
     try {
       const response = await fetch("/api/v4/today", { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
-      if (account !== session?.account?.id) return;
-      if (response.ok) classify((await response.json()).items);
+      if (request !== requestId || account !== session?.account?.id) return;
+      if (response.ok) {
+        const data = await response.json();
+        if (request !== requestId || account !== session?.account?.id) return;
+        classify(data.items, data.season_id == null ? "empty" : "ready");
+      }
       else if (response.status === 401) window.dispatchEvent(new Event("zhidao:session-expired"));
+      else classify([], "error");
     } catch (_) {
-      /* плитки остаются на прежних местах */
+      if (request === requestId && account === session?.account?.id) classify([], "error");
     } finally {
-      if (signedIn() && onGames() && !document.hidden) timer = setTimeout(refresh, REFRESH_MS);
+      if (request === requestId && signedIn() && onGames() && !document.hidden) timer = setTimeout(refresh, REFRESH_MS);
     }
   }
 
