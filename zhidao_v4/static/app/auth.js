@@ -42,6 +42,34 @@
   setShellInert(true);
 
   let stepShown = false;
+  let returnFocus = null;
+
+  function updateSignInButtons() {
+    document.querySelectorAll("[data-auth-sign-in]").forEach((button) => {
+      button.hidden = window.ZhidaoSession?.mode === "authenticated";
+    });
+  }
+
+  function restoreFocus() {
+    if (returnFocus?.isConnected) returnFocus.focus();
+    returnFocus = null;
+  }
+
+  // Возвращаемся в ту же игру; вход сам по себе не создаёт комнату.
+  function requestSignIn(source) {
+    if (window.ZhidaoSession?.mode === "authenticated") return;
+    returnFocus = source || document.activeElement;
+    gate.hidden = false;
+    setShellInert(true);
+    showError("");
+    if (previewBtn) previewBtn.hidden = false;
+    showStep(maxLaunchParams() ? "pair" : "local");
+  }
+  window.ZhidaoAuth = Object.freeze({ requestSignIn });
+  document.querySelectorAll("[data-auth-sign-in]").forEach((button) => {
+    button.addEventListener("click", () => requestSignIn(button));
+  });
+  window.addEventListener("zhidao:auth", updateSignInButtons);
 
   function showStep(name) {
     steps.forEach((el) => { el.hidden = el.dataset.step !== name; });
@@ -74,6 +102,11 @@
     });
     window.ZhidaoSession = { mode: "authenticated", account, roles: payload.roles || [] };
     window.dispatchEvent(new CustomEvent("zhidao:auth", { detail: window.ZhidaoSession }));
+    // Кнопка входа исчезает после авторизации: переводим фокус на экран,
+    // а кнопка создания комнаты остаётся на месте и получает фокус сама.
+    if (returnFocus?.hidden) returnFocus = document.querySelector(".screen.active h1");
+    if (returnFocus?.tagName === "H1") returnFocus.tabIndex = -1;
+    restoreFocus();
   }
 
   async function call(url, body) {
@@ -213,6 +246,7 @@
       document.body.classList.remove("is-signed-in");
       window.ZhidaoSession = { mode: "preview" };
       window.dispatchEvent(new CustomEvent("zhidao:auth", { detail: window.ZhidaoSession }));
+      restoreFocus();
     });
   }
 

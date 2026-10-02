@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="./aero-grade.css?v=d13129874b">
   <link rel="stylesheet" href="./case-workstation.css?v=8913a1de0c">
   <link rel="stylesheet" href="./smuggle.css?v=d299cc2e39">
-  <link rel="stylesheet" href="./games.css?v=d393db0cfa">
+  <link rel="stylesheet" href="./games.css?v=e8a50a6fdd">
   <link rel="stylesheet" href="./diary.css?v=d01fa4acfe">
   <link rel="stylesheet" href="./economy.css?v=a4d218897e">
   <link rel="stylesheet" href="./shop.css?v=fc834f6778">
@@ -41,7 +41,7 @@
   <link rel="stylesheet" href="./zombie.css?v=93c7303693">
   <link rel="stylesheet" href="./agent.css?v=70d2ea3482">
   <link rel="stylesheet" href="./games-polish.css?v=c98975043c">
-  <link rel="stylesheet" href="./design-pass.css?v=704dbc559e">
+  <link rel="stylesheet" href="./design-pass.css?v=801e0928da">
   <link rel="stylesheet" href="./design-system.css?v=5c58c6f229">
   <link rel="stylesheet" href="./design-system-bridge.css?v=707707df76">
   <link rel="stylesheet" href="./motion-polish.css?v=b818241cbc">
@@ -230,6 +230,12 @@
           <div><h1 id="scheduleTitle">Привет,<br>путешественник</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> jīn tiān <span class="screen-sub-sep">//</span> твоя точка подключения</p></div>
         </div>
 
+        <article class="glass-card now-card" id="homeNow" aria-labelledby="homeNowTitle" hidden>
+          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-spy.svg" alt=""><h2>Сейчас</h2><span lang="zh" aria-hidden="true">现在</span></div>
+          <h3 class="now-title" id="homeNowTitle">Сейчас <span lang="zh" aria-hidden="true">现在</span></h3>
+          <ul class="now-list" id="homeNowList"></ul>
+        </article>
+
         <article class="journey-card">
           <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-map.svg" alt=""><h2>Окно в Хайнань</h2><span aria-hidden="true">海南</span></div>
           <div class="journey-index"><span>18°19′N</span></div>
@@ -247,11 +253,6 @@
           <div class="zd-ticker-window"><div class="zd-ticker-track" id="homeTicker"><span class="zd-ticker-run"><span>ZHIDAO Hainan на связи</span></span></div></div>
         </div>
 
-        <article class="glass-card now-card" id="homeNow" aria-labelledby="homeNowTitle" hidden>
-          <div class="xp-only xp-titlebar"><img src="./assets/icons/desktop-spy.svg" alt=""><h2>Сейчас</h2><span lang="zh" aria-hidden="true">现在</span></div>
-          <h3 class="now-title" id="homeNowTitle">Сейчас <span lang="zh" aria-hidden="true">现在</span></h3>
-          <ul class="now-list" id="homeNowList"></ul>
-        </article>
 
         <article class="glass-card today-card">
           <div class="xp-only xp-titlebar"><img src="./assets/icons/nav-schedule.png" alt=""><h2>Мой день</h2><span lang="zh" aria-hidden="true">我的一天</span></div>
@@ -396,7 +397,6 @@
           <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">‹</button>
           <div><h1 id="campusMapTitle" class="display-title">Карта кампуса</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiào yuán dì tú <span class="screen-sub-sep">//</span> навигация по кампусу</p></div>
           <button type="button" class="btn btn-secondary screen-guide" data-game-guide="map">Как играть?</button>
-          <span class="map-status"><i></i> WGS-84</span>
         </div>
 
         <div class="campus-toolbar">
@@ -410,10 +410,16 @@
         <section class="glass-card capture-duel" id="captureDuel" aria-label="Дуэли" aria-live="polite" hidden></section>
         <section class="glass-card beacon-panel" id="beaconPanel" aria-label="Метки на кампусе" aria-live="polite" hidden></section>
 
-        <article class="campus-map" aria-label="Векторная карта кампуса">
-          <div id="campusCanvas" class="campus-canvas"></div>
-          <span class="map-north">N<br>&uarr;</span>
-        </article>
+        <div class="campus-controls" id="campusControls" hidden>
+          <label for="campusPlace">Быстрый выбор места</label>
+          <select id="campusPlace"><option value="">Выберите место</option></select>
+          <small>Другие здания можно выбрать на карте.</small>
+          <div class="campus-zoom" role="group" aria-label="Масштаб карты">
+            <button type="button" class="btn btn-secondary" id="campusZoomIn" aria-label="Приблизить карту">+</button>
+            <button type="button" class="btn btn-secondary" id="campusZoomOut" aria-label="Отдалить карту">−</button>
+            <button type="button" class="btn btn-secondary" id="campusZoomReset">Весь кампус</button>
+          </div>
+        </div>
 
         <article class="glass-card map-point-card" id="campusInfo" aria-live="polite" hidden>
           <div class="map-point-copy">
@@ -426,6 +432,12 @@
             <p class="campus-route-summary" data-field="route" hidden></p>
           </div>
         </article>
+
+        <article class="campus-map" aria-label="Векторная карта кампуса">
+          <div id="campusCanvas" class="campus-canvas"></div>
+          <span class="map-north">N<br>&uarr;</span>
+        </article>
+
 
         <article class="glass-card campus-mark-card" id="campusMarkCard" aria-live="polite" hidden></article>
         <section class="glass-card campus-mark-composer" id="campusMarkComposer" aria-label="Новая метка" hidden></section>
@@ -493,6 +505,8 @@
             <span class="profile-path-badge">HAINAN · PATH: —</span>
           </div>
         </article>
+
+        <button type="button" class="btn btn-primary" data-auth-sign-in>Войти в аккаунт</button>
 
         <!-- Профиль — кто я и как выглядит приложение (решение пользователя
              2026-09-15). Плиток REP, «Баланс», «Ранг» и «Моя коллекция» нет:
@@ -1217,9 +1231,9 @@
   <dialog id="gameGuide" class="case-dialog game-guide" aria-labelledby="gameGuideTitle">
     <div class="case-titlebar"><h2 id="gameGuideTitle">Правила</h2><button type="button" data-guide-close aria-label="Закрыть обучение">×</button></div>
     <div class="spy-body">
-      <p>Можно пройти одному. Это учебный пример: он не создаёт комнату, не меняет счёт и не показывает секреты вашей партии.</p>
+      <p class="guide-intro">Тренировка для одного — без комнаты, таймера и изменения счёта.</p>
       <div id="gameGuideBody"></div>
-      <button type="button" class="btn btn-secondary" data-guide-close>Вернуться</button>
+      <button type="button" class="btn btn-secondary guide-return" data-guide-close>Закрыть обучение</button>
     </div>
   </dialog>
   <dialog id="appGuide" class="case-dialog app-guide" aria-labelledby="appGuideTitle">
@@ -1232,7 +1246,7 @@
     <div class="virus-popup-body"><span class="virus-popup-icon" aria-hidden="true">!</span><p id="virusPopupText"></p></div>
     <div class="virus-popup-actions"><button type="button" class="btn btn-primary" id="virusPopupCure">Лечиться</button><button type="button" class="btn btn-secondary" id="virusPopupOk">ОК</button></div>
   </div>
-  <script src="./campus-map.js?v=2568e7ca3e" defer></script>
+  <script src="./campus-map.js?v=442e048b22" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
     <div class="case-result-body"><div class="result-halo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="caseResultTier" class="case-result-tier"></span><div class="result-seal" id="caseResultSeal" aria-hidden="true">✦</div><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
@@ -1245,7 +1259,7 @@
   <script src="./case-play.js?v=bde18a7176" defer></script>
   <script src="./implants.js?v=28d05dae43" defer></script>
   <script src="./admin.js?v=857dd96470" defer></script>
-  <script src="./games.js?v=ab213408d9" defer></script>
+  <script src="./games.js?v=48a9b29aa2" defer></script>
   <script src="./game-spy.js?v=113217f05f" defer></script>
   <script src="./game-cipher.js?v=5048a33442" defer></script>
   <script src="./game-smuggle.js?v=11d4f61eab" defer></script>
@@ -1262,7 +1276,7 @@
   <script src="./app.js?v=b06a2a4c10" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
-  <script src="./auth.js?v=8d29d373f2" defer></script>
+  <script src="./auth.js?v=989ac4027f" defer></script>
   <script src="./aero-motion.js?v=7840a08380" defer></script>
   <script src="./motion-polish.js?v=dca0b3f03a" defer></script>
   <script src="./guide.js?v=2320488fbb" defer></script>
@@ -1280,7 +1294,7 @@
   <script src="./zombie.js?v=4ada39d4f0" defer></script>
   <script src="./agent.js?v=7bfeabe126" defer></script>
   <script src="./game-shell.js?v=4701c48ab8" defer></script>
-  <script src="./games-catalog.js?v=8ac23adfea" defer></script>
+  <script src="./games-catalog.js?v=38073c4f03" defer></script>
   <script src="./home-now.js?v=c94f3db4e2" defer></script>
 </body>
 </html>

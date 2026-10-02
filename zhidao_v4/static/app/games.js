@@ -420,25 +420,41 @@
     }
   };
   const make = (tag, text) => { const el = document.createElement(tag); el.textContent = text; return el; };
-  function button(text, action) {
-    const el = make("button", text); el.type = "button"; el.className = "btn btn-secondary";
+  function button(text, action, primary = false) {
+    const el = make("button", text); el.type = "button"; el.className = primary ? "btn btn-primary guide-primary" : "btn btn-secondary";
     el.addEventListener("click", action); return el;
   }
   function rules(lesson) {
     body.replaceChildren();
+    body.append(button(`Попробовать · ${lesson.steps.length} шага`, () => step(lesson, 0), true));
+    if (lesson === lessons.spy) {
+      const summary = make("dl", "");
+      summary.className = "guide-summary";
+      [["Цель", "Найти шпиона. Шпиону — угадать общее место."],
+        ["Ход", "Задавайте вопросы голосом, не называя место. Держите свою роль в секрете."],
+        ["Победа", "Обвините шпиона и убедите остальных. Шпион может победить, назвав место."]]
+        .forEach(([title, text]) => summary.append(make("dt", title), make("dd", text)));
+      body.append(summary);
+    }
+    const details = document.createElement("details");
+    details.className = "guide-details";
+    details.append(make("summary", "Полные правила"));
     const list = document.createElement("ol");
     lesson.rules.forEach(text => list.append(make("li", text)));
-    body.append(list, button("Попробовать · 3 шага", () => step(lesson, 0)));
+    details.append(list);
+    body.append(details);
+    dialog.scrollTop = 0;
   }
   function step(lesson, index) {
     body.replaceChildren();
+    dialog.scrollTop = 0;
     if (index === lesson.steps.length) {
-      body.append(make("h3", "Основы пройдены"), make("p", "Теперь соберите компанию. Правила доступны и во время партии; таймер настоящей игры при чтении не останавливается."), button("Повторить обучение", () => step(lesson, 0)), button("Посмотреть правила", () => rules(lesson)));
+      body.append(make("h3", "Основы пройдены"), make("p", "Правила доступны и во время игры. Таймер настоящей игры при чтении не останавливается."), button("Готово", () => dialog.close(), true), button("Повторить обучение", () => step(lesson, 0)), button("Посмотреть правила", () => rules(lesson)));
       return;
     }
     const task = lesson.steps[index];
     const feedback = make("p", ""); feedback.setAttribute("role", "status");
-    const next = button("Далее", () => step(lesson, index + 1)); next.disabled = true;
+    const next = button(index === lesson.steps.length - 1 ? "Завершить тренировку" : "Далее", () => step(lesson, index + 1), true); next.disabled = true;
     body.append(make("h3", `Шаг ${index + 1} из ${lesson.steps.length}`), make("p", task.text));
     task.options.forEach((text, choice) => body.append(button(text, () => {
       feedback.textContent = choice === task.correct ? `Верно. ${task.why}` : "Попробуйте другой ответ. Это безопасная тренировка — штрафов нет.";
@@ -923,11 +939,13 @@
     $("gameIntro").hidden = false;
     $("gameRoom").hidden = true;
     document.querySelectorAll("[data-create-game]").forEach((b) => {
-      b.disabled = !signedIn() || switches[b.dataset.createGame] === false;
+      b.disabled = signedIn() && switches[b.dataset.createGame] === false;
+      b.textContent = signedIn() ? "Создать комнату" : "Войти, чтобы создать комнату";
     });
-    $("gameJoinSubmit").disabled = !signedIn();
+    $("gameJoinSubmit").disabled = false;
+    $("gameJoinSubmit").textContent = signedIn() ? "Войти" : "Войти в аккаунт";
     const off = Object.entries(switches).filter(([, on]) => on === false).map(([game]) => TITLES[game] || game);
-    if (!signedIn()) $("gameIntroStatus").textContent = "Войдите, чтобы играть.";
+    if (!signedIn()) $("gameIntroStatus").textContent = "Правила и тренировка доступны без входа. Для игры войдите в аккаунт.";
     else if (off.length) $("gameIntroStatus").textContent = `Сейчас выключено организаторами: ${off.join(", ")}.`;
   }
 
@@ -1034,8 +1052,10 @@
   });
 
   document.querySelectorAll("[data-create-game]").forEach((b) => {
-    b.addEventListener("click", () =>
-      run(() => api("/api/v4/games/rooms", { method: "POST", body: { game: b.dataset.createGame } })));
+    b.addEventListener("click", () => {
+      if (!signedIn()) { window.ZhidaoAuth?.requestSignIn(b); return; }
+      run(() => api("/api/v4/games/rooms", { method: "POST", body: { game: b.dataset.createGame } }));
+    });
   });
 
   $("gameJoinCode").addEventListener("input", (event) => {
@@ -1044,6 +1064,7 @@
 
   $("gameJoinForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    if (!signedIn()) { window.ZhidaoAuth?.requestSignIn($("gameJoinSubmit")); return; }
     const code = $("gameJoinCode").value.replace(/\D/g, "");
     if (code.length !== 4) {
       $("gameIntroStatus").textContent = "Код комнаты — четыре цифры.";
