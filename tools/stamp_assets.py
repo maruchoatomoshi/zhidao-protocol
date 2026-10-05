@@ -39,6 +39,10 @@ IN_CODE = {
         re.compile(r'(?P<prefix>CAMPUS_SOURCE = "\./)(?P<path>[^"?]+)\?v=(?P<version>[^"]*)"'),
         None,
     ),
+    APP_DIR / "campus-model.js": (
+        re.compile(r'(?P<prefix>(?:DIORAMA_SCRIPT|DIORAMA_MODEL) = "\./)(?P<path>[^"?]+)\?v=(?P<version>[^"]*)"'),
+        None,
+    ),
     APP_DIR / "implants.js": (
         re.compile(r'(?P<prefix>SOURCE = "\./)(?P<path>[^"?]+)\?v=(?P<version>[^"]*)"'),
         None,

@@ -43,6 +43,9 @@ function showScreen(target) {
   if (target === "campus-map" && typeof window.initCampusMap === "function") {
     window.initCampusMap();
   }
+  if (target === "campus-model" && typeof window.initCampusModel === "function") {
+    window.initCampusModel();
+  }
   // Каталог имплантов — по той же причине: девять картинок грузить на старте
   // незачем, они нужны только тому, кто открыл каталог.
   if (target === "implants" && typeof window.initImplantCatalogue === "function") {
@@ -54,7 +57,7 @@ function showScreen(target) {
   window.dispatchEvent(new CustomEvent("zhidao:screen", { detail: target }));
   const back = window.WebApp && window.WebApp.initData && window.WebApp.BackButton;
   if (back) {
-    if (["collection", "implants", "campus-map", "profile", "admin", "games", "meet", "trade", "antivirus", "workshop", "story"].includes(target)) back.show();
+    if (["collection", "implants", "campus-map", "campus-model", "profile", "admin", "games", "meet", "trade", "antivirus", "workshop", "story"].includes(target)) back.show();
     else back.hide();
   }
 }

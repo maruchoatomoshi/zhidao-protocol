@@ -1,0 +1,7 @@
+{
+  "name": "zhidao-diorama-build",
+  "private": true,
+  "description": "Сборка 3D-макета кампуса: three + esbuild -> один обычный скрипт (CSP приложения запрещает import map и inline).",
+  "scripts": { "build": "node build.mjs" },
+  "devDependencies": { "esbuild": "^0.25.0", "three": "^0.180.0" }
+}

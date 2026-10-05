@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="./sabotage.css?v=e9d98cb9a1">
   <link rel="stylesheet" href="./zombie.css?v=93c7303693">
   <link rel="stylesheet" href="./agent.css?v=70d2ea3482">
+  <link rel="stylesheet" href="./campus-model.css?v=6cb924a293">
   <link rel="stylesheet" href="./games-polish.css?v=c98975043c">
   <link rel="stylesheet" href="./design-pass.css?v=704dbc559e">
   <link rel="stylesheet" href="./design-system.css?v=5c58c6f229">
@@ -387,6 +388,40 @@
 
       <!-- Вкладки «Задания» больше нет (решение пользователя 2026-09-15): за ней
            были только заглушки рейдов, поручений и ивентов. -->
+
+      <section class="screen campus-model-screen" data-screen="campus-model" aria-labelledby="campusModelTitle" hidden>
+        <div class="map-screen-head">
+          <button class="map-back btn btn-icon btn-secondary" type="button" data-open-screen="more" aria-label="Назад">‹</button>
+          <div><h1 id="campusModelTitle" class="display-title">Макет кампуса</h1><p class="screen-sub"><span class="screen-sub-mark">&gt;</span> xiào yuán mó xíng <span class="screen-sub-sep">//</span> объёмная иллюстрация</p></div>
+        </div>
+        <article class="diorama-stage" id="dioramaStage" data-mood="day" aria-label="Объёмный макет кампуса под стеклянным колпаком">
+          <div class="diorama-view" id="dioramaView" role="img" aria-label="Объёмный макет кампуса: крутите, чтобы осмотреть"></div>
+          <div class="diorama-status" id="dioramaStatus" role="status" data-busy="1">Откройте экран, чтобы собрать макет</div>
+          <div class="diorama-panel diorama-about">
+            <b>Кампус под колпаком</b>
+            <p id="dioramaCaption"></p>
+            <p class="diorama-fine">Иллюстрация: здания и расстояния условные. Настоящая карта кампуса — в разделе «Карта».</p>
+          </div>
+          <div class="diorama-panel diorama-controls">
+            <div class="diorama-row" role="group" aria-label="Время суток">
+              <span class="diorama-label">Время</span>
+              <button type="button" class="diorama-chip" data-diorama-mood="morning" aria-pressed="false">Утро</button>
+              <button type="button" class="diorama-chip" data-diorama-mood="day" aria-pressed="true">День</button>
+              <button type="button" class="diorama-chip" data-diorama-mood="evening" aria-pressed="false">Вечер</button>
+              <button type="button" class="diorama-chip" data-diorama-mood="night" aria-pressed="false">Ночь</button>
+            </div>
+            <div class="diorama-row" role="group" aria-label="Ракурс">
+              <span class="diorama-label">Ракурс</span>
+              <button type="button" class="diorama-chip" data-diorama-view="overview" aria-pressed="true">Обзор</button>
+              <button type="button" class="diorama-chip" data-diorama-view="plaza" aria-pressed="false">Площадь</button>
+              <button type="button" class="diorama-chip" data-diorama-view="sports" aria-pressed="false">Стадион</button>
+              <button type="button" class="diorama-chip" data-diorama-view="dorms" aria-pressed="false">Общежития</button>
+              <button type="button" class="diorama-chip" data-diorama-view="coast" aria-pressed="false">Берег</button>
+              <button type="button" class="diorama-chip" id="dioramaSpin" aria-pressed="false">Вращать</button>
+            </div>
+          </div>
+        </article>
+      </section>
 
       <!-- ============================================================
            КАРТА КАМПУСА — не трогать, рабочая зона пользователя
@@ -1134,6 +1169,12 @@
             <span class="hub-cn">地图<i>dì tú</i></span>
             <span class="hub-sub">» туман и метки</span>
           </button>
+          <button type="button" class="hub-tile tone-aqua" data-open-screen="campus-model">
+            <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/desktop-map.svg" alt=""></span>
+            <span class="hub-name">Макет</span>
+            <span class="hub-cn">模型<i>mó xíng</i></span>
+            <span class="hub-sub">» кампус в 3D</span>
+          </button>
           <button type="button" class="hub-tile tone-gold" data-open-screen="shop">
             <span class="hub-orb aero-object" aria-hidden="true"><img src="./assets/icons/nav-shop.png" alt=""></span>
             <span class="hub-name">Магазин</span>
@@ -1233,6 +1274,7 @@
     <div class="virus-popup-actions"><button type="button" class="btn btn-primary" id="virusPopupCure">Лечиться</button><button type="button" class="btn btn-secondary" id="virusPopupOk">ОК</button></div>
   </div>
   <script src="./campus-map.js?v=2568e7ca3e" defer></script>
+  <script src="./campus-model.js?v=259a545c56" defer></script>
   <dialog id="caseResultDialog" class="case-dialog" aria-labelledby="caseResultTitle">
     <div class="case-titlebar"><span>Сигнал получен</span><button type="button" data-case-close aria-label="Закрыть результат">×</button></div>
     <div class="case-result-body"><div class="result-halo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="caseResultTier" class="case-result-tier"></span><div class="result-seal" id="caseResultSeal" aria-hidden="true">✦</div><img id="caseResultArt" alt="" hidden><h2 id="caseResultTitle"></h2><p id="caseResultNote"></p><p id="caseResultBalance"></p><button type="button" class="btn btn-primary" data-case-close>Сохранено · Отлично</button></div>
@@ -1259,7 +1301,7 @@
   <script src="./trade.js?v=f1748536b7" defer></script>
   <script src="./virus.js?v=e1285fcef3" defer></script>
   <script src="./workshop.js?v=fc86f3d2dc" defer></script>
-  <script src="./app.js?v=b06a2a4c10" defer></script>
+  <script src="./app.js?v=582509f3c2" defer></script>
   <script src="./player.js?v=5c43c36467" defer></script>
   <script src="./vendor/max-web-app.js?v=aaadc8b1e4" defer></script>
   <script src="./auth.js?v=8d29d373f2" defer></script>
