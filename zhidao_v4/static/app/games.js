@@ -953,7 +953,7 @@
       const kit = window.ZhidaoKit;
       const springOf = (name, fallback) => (kit ? kit.spring(name) : fallback);
       const stampKeyframes = [
-        { transform: "scale(2.2) rotate(-18deg)" },
+        { transform: "scale(2.8) rotate(-24deg)" },
         { transform: "scale(1) rotate(-12deg)" },
       ];
       const stampOptions = springOf({ stiffness: 420, damping: 18 }, { duration: 420, easing: "cubic-bezier(.2,.9,.3,1.25)" });
@@ -974,6 +974,14 @@
           if (previous[index] === false && el.classList.contains(state)) {
             const target = (childSelector && el.querySelector(childSelector)) || el;
             target.animate(keyframes, options);
+            if (childSelector) {
+              // Штамп -- удар по бумаге: лист вздрагивает, от штампа расходится
+              // кольцо чернил (smuggle.css). translate, а не transform: у
+              // декларации уже есть свой лёгкий наклон.
+              target.classList.add("is-slam");
+              el.animate([{ translate: "0 0" }, { translate: "0 3px", offset: 0.4 }, { translate: "0 0" }],
+                { duration: 220, delay: 110, easing: "ease-out" });
+            }
             // Свет и прозрачность — отдельно и без перелёта: у пружины он есть.
             target.animate([{ opacity: 0.4, filter: "brightness(1.5)" }, { opacity: 1, filter: "none" }],
               { duration: 240, easing: "ease-out" });

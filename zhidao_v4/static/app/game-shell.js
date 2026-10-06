@@ -74,7 +74,7 @@
      alert — с тобой что-то случилось (заразили, вывели, собрание);
      win / lose — итог. Выключенные анимации вибрацию не гасят: это не
      движение на экране, а сигнал, который ребёнок чувствует рукой. */
-  const PATTERNS = { tap: 12, turn: [30, 60, 30], alert: [80, 60, 80, 60, 120], win: [40, 50, 40, 50, 160], lose: [200] };
+  const PATTERNS = { tap: 12, turn: [30, 60, 30], alert: [80, 60, 80, 60, 120], win: [40, 50, 40, 50, 160], lose: [200], stamp: 45, hard: [70, 40, 50] };
   function haptic(kind) {
     const app = bridge();
     const hf = app && app.HapticFeedback;
@@ -85,6 +85,8 @@
         else if (kind === "alert") quiet(hf.notificationOccurred("warning"));
         else if (kind === "win") quiet(hf.notificationOccurred("success"));
         else if (kind === "lose") quiet(hf.notificationOccurred("error"));
+        else if (kind === "stamp") quiet(hf.impactOccurred("heavy"));
+        else if (kind === "hard") quiet(hf.notificationOccurred("warning"));
         return;
       }
     } catch (_) { /* падаем на navigator.vibrate */ }
@@ -108,6 +110,58 @@
     win: [[523, 0.1, "triangle"], [659, 0.1, "triangle"], [784, 0.1, "triangle"], [1047, 0.32, "sine"]],
     lose: [[392, 0.14, "triangle"], [330, 0.14, "triangle"], [262, 0.34, "sine"]],
   };
+  /* Удар штампа: низкий «тум» с падающим тоном и короткий шлепок бумаги
+     (шум через полосовой фильтр). «Задержано» -- ниже, тяжелее и с резким
+     зуммером сверху. Задержка нужна, чтобы звук пришёл ровно в тот момент,
+     когда анимированный штамп долетает до бумаги. */
+  const STAMPS = {
+    stamp: { from: 190, to: 62, body: 0.5, slap: 0.28, buzz: 0 },
+    "stamp-hard": { from: 140, to: 44, body: 0.65, slap: 0.34, buzz: 196 },
+  };
+  function stamp(spec, delay) {
+    const ctx = context();
+    if (!ctx) return;
+    const t = ctx.currentTime + 0.005 + delay;
+    const osc = ctx.createOscillator();
+    const body = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(spec.from, t);
+    osc.frequency.exponentialRampToValueAtTime(spec.to, t + 0.13);
+    body.gain.setValueAtTime(0.0001, t);
+    body.gain.exponentialRampToValueAtTime(spec.body, t + 0.008);
+    body.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    osc.connect(body).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.22);
+    const length = Math.floor(ctx.sampleRate * 0.09);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+    const noise = ctx.createBufferSource();
+    const band = ctx.createBiquadFilter();
+    const slap = ctx.createGain();
+    noise.buffer = buffer;
+    band.type = "bandpass";
+    band.frequency.value = 1900;
+    band.Q.value = 0.9;
+    slap.gain.setValueAtTime(spec.slap, t);
+    slap.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    noise.connect(band).connect(slap).connect(ctx.destination);
+    noise.start(t);
+    if (spec.buzz) {
+      const buzz = ctx.createOscillator();
+      const gain = ctx.createGain();
+      buzz.type = "square";
+      buzz.frequency.value = spec.buzz;
+      gain.gain.setValueAtTime(0.0001, t + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.08, t + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
+      buzz.connect(gain).connect(ctx.destination);
+      buzz.start(t + 0.05);
+      buzz.stop(t + 0.19);
+    }
+  }
+
   let audio = null;
   function context() {
     if (!audio) {
@@ -143,7 +197,7 @@
 
   /* Событие игры: звук и вибрация одним вызовом. Модули описывают, что
      случилось (start, turn, alert, tick, win, lose), а не как это звучит. */
-  const HAPTIC_OF = { start: "turn", turn: "turn", alert: "alert", win: "win", lose: "lose" };
+  const HAPTIC_OF = { start: "turn", turn: "turn", alert: "alert", win: "win", lose: "lose", stamp: "stamp", "stamp-hard": "hard" };
   const motionOn = () => root.dataset.motion === "full" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
   const openWindow = () => document.querySelector('[data-screen="games"] > .case-window[data-catalog]:not([data-catalog-hidden]):not([hidden])');
 
@@ -196,6 +250,12 @@
     const { name, title, sub } = typeof event === "string" ? { name: event } : event;
     if (HAPTIC_OF[name]) haptic(HAPTIC_OF[name]);
     show(name, title, sub);
+    if (STAMPS[name]) {
+      if (soundOn && !document.hidden) {
+        try { stamp(STAMPS[name], motionOn() ? 0.11 : 0); } catch (_) { /* без звука игра не ломается */ }
+      }
+      return;
+    }
     if (!soundOn || !TUNES[name] || document.hidden) return;
     // Победу купленный набор уже сыграл (games.js) — второй мелодии не нужно.
     if (name === "win" && window.ZhidaoSounds?.hasPack?.()) return;

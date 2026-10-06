@@ -341,6 +341,12 @@
   // Звук и вибрация: новый раунд; сумки собраны — таможеннику пора досматривать.
   const cue = (prev, next) => {
     if (!inRound(next)) return null;
+    // Удар штампа слышен всем за столом: чьё-то решение только что вынесено.
+    if (inRound(prev) && prev.game === next.game && prev.round === next.round) {
+      const before = prev.decisions || {};
+      const fresh = Object.entries(next.decisions || {}).filter(([id]) => !before[id]);
+      if (fresh.length) return { name: fresh.some(([, d]) => !stampPassed(d)) ? "stamp-hard" : "stamp" };
+    }
     if (!inRound(prev) || prev.round !== next.round || prev.game !== next.game) {
       const officer = next.you && next.you.officer;
       return { name: "start", title: `Раунд ${next.round} из ${next.rounds}`, sub: officer ? "Вы на таможне" : "Собирайте сумку" };
