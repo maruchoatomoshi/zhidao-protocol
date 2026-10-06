@@ -75,3 +75,147 @@ button.smuggle-card { cursor: pointer; }
 /* Деньги и взятка набраны тёмной охрой для светлой бумаги; ночью — золото. */
 :root[data-theme="dark"] .smuggle-money, :root[data-theme="dark"] .smuggle-bribe b { color: #ffd166; }
 :root[data-theme="dark"] .smuggle-chip { background: #10301c; color: #9ff0bb; }
+
+/* ================= Таможенный стол в духе «Papers, Please» =================
+   Только стиль и собственные формы: стол, бумаги, штампы. Бумага остаётся
+   бумагой в любой теме, меняется только стол под ней. Всё под id комнаты --
+   design-system.css держит свои классы smuggle и кнопки той же специфичности. */
+
+#gameRoom[data-game="smuggle"] {
+  --pp-desk: #b6b09a; --pp-desk-2: #a39d86; --pp-desk-ink: #26241c; --pp-desk-faint: #3f3b2a;
+  --pp-paper: #efe7cd; --pp-paper-2: #e3d9b6; --pp-edge: #b7a97f; --pp-ink: #2b2a22; --pp-faint: #6d664f;
+  --pp-red: #a3271f; --pp-green: #2b6a38; --pp-blue: #2c4a76; --pp-brass: #8a6b25;
+  --pp-metal: #4d5542; --pp-metal-2: #383e2f; --pp-plate-ink: #ece5c8;
+}
+:root[data-theme="dark"] #gameRoom[data-game="smuggle"] {
+  --pp-desk: #2c2f27; --pp-desk-2: #22251f; --pp-desk-ink: #dcd6bd; --pp-desk-faint: #a29c82;
+  --pp-paper: #d9d0b2; --pp-paper-2: #cbc19e; --pp-edge: #8d8160;
+  --pp-red: #9e2a22; --pp-green: #2a6336; --pp-blue: #2c4a76; --pp-brass: #8a6b25;
+  --pp-metal: #444b3a; --pp-metal-2: #30352a;
+}
+
+#gameRoom[data-game="smuggle"] #gameRoomBody {
+  counter-reset: pp-decl;
+  background:
+    radial-gradient(ellipse at 50% 0%, #ffffff1c, transparent 60%),
+    repeating-linear-gradient(90deg, #00000008 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, var(--pp-desk), var(--pp-desk-2));
+  box-shadow: inset 0 0 38px #00000040;
+  color: var(--pp-desk-ink);
+}
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-label,
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-lead { color: var(--pp-desk-ink); font-family: "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase; }
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-hint,
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-progress { color: var(--pp-desk-faint); font-family: "Courier New", monospace; }
+#gameRoom[data-game="smuggle"] #gameRoomBody .game-banner { border: 3px solid var(--pp-metal-2); border-radius: 2px; filter: sepia(.35) saturate(.8) contrast(1.05); }
+
+/* Табличка смены */
+#gameRoom[data-game="smuggle"] .spy-banner {
+  margin: 0; padding: 8px 12px; border: 2px solid #1d2118; border-radius: 3px; color: var(--pp-plate-ink);
+  background: linear-gradient(180deg, var(--pp-metal), var(--pp-metal-2)); box-shadow: inset 0 1px 0 #ffffff26, 0 2px 0 #00000040;
+  font: 700 12px/1.4 "Courier New", monospace; letter-spacing: .1em; text-transform: uppercase;
+}
+
+/* Объявление на доске */
+#gameRoom[data-game="smuggle"] .smuggle-event {
+  position: relative; margin-top: 6px; padding: 12px 14px 10px; border: 0; border-radius: 1px;
+  background: #efe3a4; box-shadow: 0 3px 8px #00000040; transform: rotate(-.6deg);
+}
+#gameRoom[data-game="smuggle"] .smuggle-event::before {
+  content: ""; position: absolute; top: -7px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e4574a, #8d1d16); box-shadow: 0 2px 3px #00000066;
+}
+#gameRoom[data-game="smuggle"] .smuggle-event b { color: #4a3a0a; font: 700 14px/1.3 "Courier New", monospace; text-transform: uppercase; }
+#gameRoom[data-game="smuggle"] .smuggle-event span { color: #4d4220; font: 12px/1.4 "Courier New", monospace; }
+#gameRoom[data-game="smuggle"] .smuggle-event.is-raid { background: #e1d6ee; }
+#gameRoom[data-game="smuggle"] .smuggle-event.is-typhoon { background: #d3e3ee; }
+#gameRoom[data-game="smuggle"] .smuggle-event.is-blackmarket { background: #cfcbc2; }
+
+/* Бумаги: декларация (сумка) и карточка за столом */
+#gameRoom[data-game="smuggle"] .smuggle-bag,
+#gameRoom[data-game="smuggle"] .smuggle-seat {
+  position: relative; padding: 12px 14px 12px; border: 1px solid var(--pp-edge); border-radius: 2px; color: var(--pp-ink);
+  background:
+    repeating-linear-gradient(180deg, transparent 0 25px, #2c4a7614 25px 26px),
+    linear-gradient(180deg, var(--pp-paper), var(--pp-paper-2));
+  box-shadow: 0 3px 8px #00000040, inset 0 0 0 1px #ffffff55;
+}
+#gameRoom[data-game="smuggle"] .smuggle-bag { counter-increment: pp-decl; }
+#gameRoom[data-game="smuggle"] .smuggle-bag::before {
+  content: "Таможенная декларация № " counter(pp-decl, decimal-leading-zero);
+  padding-bottom: 5px; margin-bottom: 2px; border-bottom: 2px double var(--pp-faint);
+  color: var(--pp-faint); font: 700 10px/1.3 "Courier New", monospace; letter-spacing: .14em; text-transform: uppercase;
+}
+#gameRoom[data-game="smuggle"] .smuggle-bag:nth-of-type(3n+1) { transform: rotate(-.4deg); }
+#gameRoom[data-game="smuggle"] .smuggle-bag:nth-of-type(3n+2) { transform: rotate(.35deg); }
+#gameRoom[data-game="smuggle"] .smuggle-seat.is-officer { background: linear-gradient(180deg, #f3e9c6, #e8dcb0); border-left: 6px solid var(--pp-brass); }
+#gameRoom[data-game="smuggle"] .smuggle-seat b,
+#gameRoom[data-game="smuggle"] .smuggle-bag b { color: var(--pp-ink); font-family: "Courier New", monospace; }
+#gameRoom[data-game="smuggle"] .smuggle-bag .spy-hint,
+#gameRoom[data-game="smuggle"] .smuggle-seat .spy-hint,
+#gameRoom[data-game="smuggle"] .smuggle-bag .spy-progress,
+#gameRoom[data-game="smuggle"] .smuggle-seat .spy-progress { color: var(--pp-faint); }
+#gameRoom[data-game="smuggle"] .smuggle-badge { border-radius: 2px; background: var(--pp-brass); color: #fff6d6; font: 700 10px/1.4 "Courier New", monospace; letter-spacing: .1em; text-transform: uppercase; }
+#gameRoom[data-game="smuggle"] .smuggle-money {
+  padding: 2px 8px; border: 1px dashed var(--pp-green); border-radius: 2px; background: #2b6a381a; color: var(--pp-green);
+  font: 700 12px/1.3 "Courier New", monospace;
+}
+#gameRoom[data-game="smuggle"] .smuggle-chip { border-radius: 2px; border: 1px solid var(--pp-green); background: transparent; color: var(--pp-green); font-weight: 700; }
+#gameRoom[data-game="smuggle"] .smuggle-chip.is-hidden { border-color: #20241b; background: #2b2d24; color: #f0d36a; }
+#gameRoom[data-game="smuggle"] .smuggle-chip.is-empty { border-style: dashed; border-color: var(--pp-edge); color: var(--pp-faint); }
+
+/* Бирки-карточки товаров */
+#gameRoom[data-game="smuggle"] .smuggle-card {
+  position: relative; padding-top: 16px; border: 1px solid var(--pp-edge); border-top: 6px solid var(--pp-green); border-radius: 3px 3px 10px 3px;
+  background: linear-gradient(180deg, var(--pp-paper), var(--pp-paper-2)); color: var(--pp-ink); box-shadow: 0 2px 4px #00000040;
+}
+#gameRoom[data-game="smuggle"] .smuggle-card::before {
+  content: ""; position: absolute; top: 3px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%;
+  background: var(--pp-desk-2); box-shadow: inset 0 1px 2px #000000a0;
+}
+#gameRoom[data-game="smuggle"] .smuggle-card.is-contraband { border-top-color: var(--pp-red); background: linear-gradient(180deg, #f0ddc8, #e6cbb0); }
+#gameRoom[data-game="smuggle"] .smuggle-card b { color: var(--pp-ink); }
+#gameRoom[data-game="smuggle"] .smuggle-card small,
+#gameRoom[data-game="smuggle"] .smuggle-price { color: var(--pp-faint); font-family: "Courier New", monospace; }
+#gameRoom[data-game="smuggle"] .smuggle-card.is-picked { box-shadow: 0 0 0 3px var(--pp-blue), 0 4px 8px #00000050; transform: translateY(-4px) rotate(-1deg); }
+#gameRoom[data-game="smuggle"] .smuggle-card.is-marked { box-shadow: 0 0 0 3px var(--pp-red), 0 4px 8px #00000050; background: linear-gradient(180deg, #f0cbc3, #e7b3a8); }
+
+/* Штамп весомее: толще рамка, чернила чуть «живые» */
+#gameRoom[data-game="smuggle"] .smuggle-stamp {
+  top: 44px; right: 16px; padding: 3px 10px; border-width: 4px; border-radius: 3px; font-size: 14px; opacity: .92;
+  text-shadow: 0 0 1px currentColor; box-shadow: inset 0 0 0 1px currentColor;
+}
+:root[data-theme="dark"] #gameRoom[data-game="smuggle"] .smuggle-stamp.is-pass { color: var(--pp-green); }
+:root[data-theme="dark"] #gameRoom[data-game="smuggle"] .smuggle-stamp.is-caught { color: var(--pp-red); }
+:root[data-theme="dark"] #gameRoom[data-game="smuggle"] .smuggle-stamp { mix-blend-mode: multiply; }
+
+/* Кнопки: металл стола и два штампа решения вместо глянцевых пилюль */
+#gameRoom[data-game="smuggle"] .btn {
+  border: 2px solid #1d2118; border-radius: 3px; text-shadow: none; box-shadow: inset 0 1px 0 #ffffff22, 0 2px 0 #00000055;
+  font: 700 12px/1.2 "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase;
+}
+#gameRoom[data-game="smuggle"] .btn::before { display: none; }
+#gameRoom[data-game="smuggle"] .btn-secondary { background: linear-gradient(180deg, var(--pp-paper), var(--pp-paper-2)); color: var(--pp-ink); border-color: #4a4630; }
+#gameRoom[data-game="smuggle"] .btn-primary { background: linear-gradient(180deg, var(--pp-metal), var(--pp-metal-2)); color: var(--pp-plate-ink); }
+#gameRoom[data-game="smuggle"] .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 #ffffff22; }
+#gameRoom[data-game="smuggle"] .spy-vote-buttons .btn-secondary {
+  background: transparent; border: 3px double var(--pp-green); color: var(--pp-green); box-shadow: none; font-size: 13px;
+}
+#gameRoom[data-game="smuggle"] .spy-vote-buttons .btn-primary {
+  background: transparent; border: 3px double var(--pp-red); color: var(--pp-red); box-shadow: none; font-size: 13px;
+}
+#gameRoom[data-game="smuggle"] .spy-vote-buttons .btn-secondary { background: #2b6a3814; }
+#gameRoom[data-game="smuggle"] .spy-vote-buttons .btn-primary { background: #a3271f14; }
+#gameRoom[data-game="smuggle"] .spy-vote-buttons .btn:hover:not(:disabled) { background: #00000018; }
+#gameRoom[data-game="smuggle"] .case-statusbar { background: var(--pp-metal-2); color: var(--pp-plate-ink); border-top: 2px solid #1d2118; font-family: "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase; }
+#gameRoom[data-game="smuggle"] .smuggle-bribe b { color: var(--pp-desk-ink); font-family: "Courier New", monospace; }
+#gameRoom[data-game="smuggle"] .spy-segmented .btn[aria-pressed="true"] { background: linear-gradient(180deg, var(--pp-metal), var(--pp-metal-2)); color: var(--pp-plate-ink); box-shadow: inset 0 0 0 2px #e0c76a; }
+
+/* Липкая панель главного действия -- металл стола, а не белая плашка */
+html[data-game-full] #gameRoom[data-game="smuggle"] .game-actionbar {
+  border-top: 2px solid #1d2118; background: linear-gradient(180deg, var(--pp-metal-2), #262a20); box-shadow: 0 -8px 18px -10px #000000a0;
+}
+html[data-game-full] #gameRoom[data-game="smuggle"] .game-actionbar > .btn { font-size: 14px; }
+html[data-game-full] #gameRoom[data-game="smuggle"] .game-actionbar > .btn-primary {
+  background: linear-gradient(180deg, #d8ccaa, #c3b78f); color: #26241c; border-color: #1d2118;
+}

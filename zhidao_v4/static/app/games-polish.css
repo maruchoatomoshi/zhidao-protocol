@@ -24,7 +24,7 @@
 /* Контрабанда: тёмный слив + золото уже есть как цвет спрятанного товара
    (.smuggle-chip.is-hidden) -- ночной чёрный рынок, а не ещё один тёплый
    коричневый (тех уже три: Саботаж/Рынок/Шифровальщики). */
-#gameRoom[data-game="smuggle"] { --game-color:#3a3446; --game-light:#ffd54a; }
+#gameRoom[data-game="smuggle"] { --game-color:#454b3a; --game-light:#8d9772; }
 :is(#royaleWindow,#agentWindow,#zombieWindow,#sabotageWindow,#marketWindow,#captureIntro,
     #gameRoom[data-game="spy"],#gameRoom[data-game="cipher"],#gameRoom[data-game="outage"],
     #gameRoom[data-game="smuggle"]) > .case-titlebar {
