@@ -226,3 +226,32 @@ html[data-game-full] #gameRoom[data-game="smuggle"] .game-actionbar > .btn-prima
   animation: smuggle-ink .55s ease-out .1s;
 }
 @keyframes smuggle-ink { 0% { opacity: .7; transform: scale(1); } 100% { opacity: 0; transform: scale(1.8); } }
+
+/* Читаемость: Courier New 10-12 px с капсом и разрядкой плохо читается на
+   телефоне, особенно кириллица и мелкий текст на бумаге. Мелкое и длинное --
+   обычным шрифтом, крупнее и контрастнее; моноширинный оставлен меткам и
+   числам, где он работает как «печатный бланк». */
+#gameRoom[data-game="smuggle"] { --pp-faint: #4f4934; --pp-desk-faint: #34301f; }
+:root[data-theme="dark"] #gameRoom[data-game="smuggle"] { --pp-faint: #4f4934; --pp-desk-faint: #c9c3a8; }
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-hint,
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-progress,
+#gameRoom[data-game="smuggle"] .smuggle-event span {
+  font: 14px/1.5 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; letter-spacing: 0; text-transform: none;
+}
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-label,
+#gameRoom[data-game="smuggle"] #gameRoomBody .spy-lead { font-size: 13px; letter-spacing: .05em; font-weight: 700; }
+#gameRoom[data-game="smuggle"] .spy-banner { font-size: 14px; letter-spacing: .05em; }
+#gameRoom[data-game="smuggle"] .smuggle-event b { font-size: 16px; }
+#gameRoom[data-game="smuggle"] .smuggle-bag::before { font-size: 12px; letter-spacing: .08em; color: var(--pp-faint); }
+#gameRoom[data-game="smuggle"] .smuggle-seat b,
+#gameRoom[data-game="smuggle"] .smuggle-bag b { font: 700 16px/1.35 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+#gameRoom[data-game="smuggle"] .smuggle-money,
+#gameRoom[data-game="smuggle"] .smuggle-badge { font-size: 13px; }
+#gameRoom[data-game="smuggle"] .smuggle-chip { font-size: 15px; padding: 3px 9px; }
+#gameRoom[data-game="smuggle"] .smuggle-card small,
+#gameRoom[data-game="smuggle"] .smuggle-price { font: 13px/1.3 Tahoma, "Noto Sans SC", sans-serif; letter-spacing: 0; }
+#gameRoom[data-game="smuggle"] .smuggle-card b { font-size: 30px; }
+#gameRoom[data-game="smuggle"] .btn { font-size: 14px; letter-spacing: .04em; }
+#gameRoom[data-game="smuggle"] .spy-vote-buttons .btn { font-size: 15px; }
+#gameRoom[data-game="smuggle"] .smuggle-bribe b { font-size: 17px; }
+#gameRoom[data-game="smuggle"] .case-statusbar { font-size: 12px; letter-spacing: .04em; }
