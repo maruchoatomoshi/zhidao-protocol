@@ -196,3 +196,88 @@
 :root[data-motion="full"] .royale-results-podium .podium-slot { animation: podium-rise 560ms cubic-bezier(.2, .75, .22, 1) both; }
 :root[data-motion="full"] .royale-results-podium .podium-slot.third { animation-delay: 120ms; }
 :root[data-motion="full"] .royale-results-podium .podium-slot.first { animation-delay: 260ms; }
+
+/* ===================== Протокол 60: телевикторина на телефоне ================================
+   Окно участника подтянуто к уже готовому большому экрану: фиолетовая сцена, золото,
+   варианты как плашки A-D, вопрос под лучом прожектора. Две палитры (светлая и тёмная
+   тема). Всё под id окна: design-system.css держит свои классы royale той же специфичности. */
+
+#royaleWindow {
+  --ry-bg1: #f4eeff; --ry-bg2: #e5daff; --ry-glow: #b58cff55; --ry-panel: #ffffffee; --ry-panel2: #f3ebffee;
+  --ry-line: #7b3fd6; --ry-gold: #a86e00; --ry-ink: #2b0d57; --ry-mute: #5c4a78; --ry-pink: #c2186f;
+  --ry-ok: #12813d; --ry-ok-bg: #12813d1a; --ry-bad: #b02a1a; --ry-bad-bg: #b02a1a1a;
+  --ry-pill-1: #ffffff; --ry-pill-2: #efe5ff; --ry-halo: 0 2px 8px #7b3fd633; --ry-text-glow: none;
+}
+:root[data-theme="dark"] #royaleWindow {
+  --ry-bg1: #12062a; --ry-bg2: #1f0f49; --ry-glow: #8f5cff55; --ry-panel: #2a1558dd; --ry-panel2: #1a0b3dee;
+  --ry-line: #b58cff; --ry-gold: #ffd54a; --ry-ink: #f4ecff; --ry-mute: #cdbcf0; --ry-pink: #ff7ab8;
+  --ry-ok: #7dffb0; --ry-ok-bg: #1f9d5533; --ry-bad: #ff8a7a; --ry-bad-bg: #ff452e26;
+  --ry-pill-1: #3a1c78; --ry-pill-2: #26104f; --ry-halo: 0 0 14px #8f5cff55; --ry-text-glow: 0 0 12px #b58cffaa;
+}
+
+#royaleWindow {
+  color: var(--ry-ink);
+  background:
+    radial-gradient(ellipse at 50% -8%, var(--ry-glow), transparent 58%),
+    linear-gradient(180deg, var(--ry-bg1), var(--ry-bg2));
+}
+#royaleWindow .royale-meta { color: var(--ry-mute); font: 14px/1.5 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+#royaleWindow .royale-meta.is-ok { color: var(--ry-ok); }
+#royaleWindow .royale-count { color: var(--ry-gold); text-shadow: var(--ry-text-glow); }
+#royaleWindow .royale-left { color: var(--ry-pink); font: 700 16px/1 "Courier New", monospace; text-shadow: var(--ry-text-glow); }
+
+/* Вопрос под прожектором: золотые уголки и свечение */
+#royaleWindow .royale-question {
+  position: relative; padding: 18px 14px; border: 1px solid var(--ry-line); border-radius: 6px; color: var(--ry-ink);
+  background:
+    linear-gradient(var(--ry-gold), var(--ry-gold)) top left / 18px 3px no-repeat,
+    linear-gradient(var(--ry-gold), var(--ry-gold)) top left / 3px 18px no-repeat,
+    linear-gradient(var(--ry-gold), var(--ry-gold)) top right / 18px 3px no-repeat,
+    linear-gradient(var(--ry-gold), var(--ry-gold)) top right / 3px 18px no-repeat,
+    linear-gradient(var(--ry-gold), var(--ry-gold)) bottom left / 18px 3px no-repeat,
+    linear-gradient(var(--ry-gold), var(--ry-gold)) bottom left / 3px 18px no-repeat,
+    linear-gradient(var(--ry-gold), var(--ry-gold)) bottom right / 18px 3px no-repeat,
+    linear-gradient(var(--ry-gold), var(--ry-gold)) bottom right / 3px 18px no-repeat,
+    radial-gradient(ellipse at 50% 0%, var(--ry-glow), transparent 70%),
+    linear-gradient(180deg, var(--ry-panel), var(--ry-panel2));
+  box-shadow: var(--ry-halo);
+}
+#royaleWindow .royale-hanzi,
+#royaleWindow .royale-word { color: var(--ry-ink); text-shadow: var(--ry-text-glow); }
+#royaleWindow .royale-pinyin { color: var(--ry-mute); }
+#royaleWindow .royale-surprise { border-color: var(--ry-pink); background: transparent; color: var(--ry-pink); }
+
+/* Варианты ответа: плашки A-D */
+#royaleWindow .royale-options { counter-reset: ry-opt; }
+#royaleWindow .royale-options .btn,
+#royaleWindow .royale-option {
+  position: relative; justify-content: flex-start; gap: 12px; min-height: 52px; padding: 8px 14px 8px 46px; border: 1px solid var(--ry-line);
+  border-radius: 6px; background: linear-gradient(180deg, var(--ry-pill-1), var(--ry-pill-2)); color: var(--ry-ink); text-shadow: none;
+  font: 700 16px/1.25 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; text-align: left; box-shadow: var(--ry-halo);
+}
+#royaleWindow .royale-options .btn::before,
+#royaleWindow .royale-option::before {
+  counter-increment: ry-opt; content: counter(ry-opt, upper-latin); display: grid; place-items: center; position: absolute;
+  inset: 50% auto auto 10px; width: 26px; height: 26px; margin-top: -13px; border-radius: 50%; opacity: 1;
+  background: var(--ry-gold); color: #1a1000; font: 900 14px/1 "Arial Black", Impact, sans-serif;
+}
+#royaleWindow .royale-options .btn:hover:not(:disabled) { border-color: var(--ry-gold); box-shadow: 0 0 14px var(--ry-gold); filter: none; }
+#royaleWindow .royale-options .btn:active:not(:disabled) { transform: scale(.985); }
+#royaleWindow .royale-options.is-hanzi .btn,
+#royaleWindow .royale-options.is-hanzi .royale-option { justify-content: center; padding-left: 40px; font: 700 26px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+#royaleWindow .royale-option.is-right { border-color: var(--ry-ok); background: var(--ry-ok-bg); color: var(--ry-ok); }
+#royaleWindow .royale-option.is-right::before { background: var(--ry-ok); color: #021a0c; }
+#royaleWindow .royale-option.is-wrong { border-color: var(--ry-bad); background: var(--ry-bad-bg); color: var(--ry-bad); }
+#royaleWindow .royale-option.is-wrong::before { background: var(--ry-bad); color: #1a0300; }
+
+/* Голосование за сюрприз, итоги */
+#royaleWindow .royale-votes .btn { justify-content: center; padding-left: 14px; }
+#royaleWindow .royale-votes .btn::before { display: none; }
+#royaleWindow .royale-votes .btn[aria-pressed="true"] { border-color: var(--ry-pink); background: var(--ry-bad-bg); color: var(--ry-pink); }
+#royaleWindow .royale-results li { color: var(--ry-ink); }
+#royaleWindow .royale-results li span { color: var(--ry-mute); }
+#royaleWindow .royale-results li.is-place-1 b { color: var(--ry-gold); }
+
+/* Прочие кнопки окна (вход, выход, воскрешение) -- фиолетово-золотые */
+#royaleWindow .btn-primary { background: linear-gradient(180deg, #a678ff, #6a35c9); border-color: var(--ry-gold); color: #fff; }
+#royaleWindow .case-statusbar { background: var(--ry-panel2); color: var(--ry-mute); border-top: 1px solid var(--ry-line); }
