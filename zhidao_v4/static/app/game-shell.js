@@ -115,8 +115,8 @@
      зуммером сверху. Задержка нужна, чтобы звук пришёл ровно в тот момент,
      когда анимированный штамп долетает до бумаги. */
   const STAMPS = {
-    stamp: { from: 190, to: 62, body: 0.5, slap: 0.28, buzz: 0 },
-    "stamp-hard": { from: 140, to: 44, body: 0.65, slap: 0.34, buzz: 196 },
+    stamp: { from: 190, to: 62, body: 0.5, slap: 0.28, buzz: 0, zap: [500, 2600] },
+    "stamp-hard": { from: 140, to: 44, body: 0.65, slap: 0.34, buzz: 196, zap: [2400, 300] },
   };
   function stamp(spec, delay) {
     const ctx = context();
@@ -148,6 +148,20 @@
     slap.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
     noise.connect(band).connect(slap).connect(ctx.destination);
     noise.start(t);
+    if (spec.zap) {
+      // Цифровой «зап»: пропущено -- звук идёт вверх, задержано -- вниз.
+      const zap = ctx.createOscillator();
+      const zapGain = ctx.createGain();
+      zap.type = "sawtooth";
+      zap.frequency.setValueAtTime(spec.zap[0], t);
+      zap.frequency.exponentialRampToValueAtTime(spec.zap[1], t + 0.09);
+      zapGain.gain.setValueAtTime(0.0001, t);
+      zapGain.gain.exponentialRampToValueAtTime(0.05, t + 0.01);
+      zapGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+      zap.connect(zapGain).connect(ctx.destination);
+      zap.start(t);
+      zap.stop(t + 0.13);
+    }
     if (spec.buzz) {
       const buzz = ctx.createOscillator();
       const gain = ctx.createGain();

@@ -981,6 +981,7 @@
               target.classList.add("is-slam");
               el.animate([{ translate: "0 0" }, { translate: "0 3px", offset: 0.4 }, { translate: "0 0" }],
                 { duration: 220, delay: 110, easing: "ease-out" });
+              el.animate([{ filter: "brightness(1.9) saturate(1.5)" }, { filter: "none" }], { duration: 300, delay: 110, easing: "ease-out" });
             }
             // Свет и прозрачность — отдельно и без перелёта: у пружины он есть.
             target.animate([{ opacity: 0.4, filter: "brightness(1.5)" }, { opacity: 1, filter: "none" }],
@@ -1001,6 +1002,19 @@
       phaseAnimation?.cancel();
       const glide = window.ZhidaoKit ? window.ZhidaoKit.spring("glide") : { duration: 220, easing: "ease-out" };
       phaseAnimation = $("gameRoomBody").animate([{ opacity: .55, transform: "translateY(8px)" }, { opacity: 1, transform: "translateY(0)" }], glide);
+      if (view.room.game === "smuggle") {
+        // Документы въезжают по очереди, с мерцанием голограммы; по декларации
+        // один раз проходит луч сканера (класс is-scan, smuggle.css).
+        $("gameRoomBody").querySelectorAll(".smuggle-bag, .smuggle-hand .smuggle-card, .smuggle-seat").forEach((el, index) => {
+          el.animate([
+            { opacity: 0, translate: "0 16px" },
+            { opacity: .9, translate: "0 6px", offset: .35 },
+            { opacity: .3, translate: "0 3px", offset: .5 },
+            { opacity: 1, translate: "0 0" },
+          ], { duration: 420, delay: 60 + Math.min(index, 8) * 80, easing: "ease-out", fill: "backwards" });
+          if (el.classList.contains("smuggle-bag")) el.classList.add("is-scan");
+        });
+      }
     }
     phaseEntrance = false;
     tickClocks();
