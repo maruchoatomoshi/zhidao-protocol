@@ -85,7 +85,7 @@ button.smuggle-card { cursor: pointer; }
    же специфичности. Комментарий без закрывающей звёздочки со слэшем внутри -- один
    такой уже съел соседнее правило. */
 
-#gameRoom[data-game="smuggle"] {
+:is(#gameRoom[data-game="smuggle"], #marketWindow) {
   --cy-bg1: #e8f1f8; --cy-bg2: #d4e2ee; --cy-grid: #0a8fa21c; --cy-scan: #0a2a4010; --cy-bloom: #ffffffb0;
   --cy-panel: #ffffffeb; --cy-panel2: #eaf4faf2; --cy-line: #0a9db2;
   --cy-cyan: #00788a; --cy-mag: #b3117f; --cy-yel: #7a5c00; --cy-pass: #08804a; --cy-bad: #c21f45;
@@ -93,7 +93,7 @@ button.smuggle-card { cursor: pointer; }
   --cy-halo: 0 2px 8px #0a8fa233; --cy-halo-mag: 0 2px 8px #b3117f33; --cy-text-glow: none;
   --cy-btn-ink: #ffffff; --cy-btn-1: #0fb6cb; --cy-btn-2: #08899b;
 }
-:root[data-theme="dark"] #gameRoom[data-game="smuggle"] {
+:root[data-theme="dark"] :is(#gameRoom[data-game="smuggle"], #marketWindow) {
   --cy-bg1: #080716; --cy-bg2: #100d2c; --cy-grid: #19f3ff12; --cy-scan: #00000040; --cy-bloom: #5b2cff26;
   --cy-panel: #14112ed6; --cy-panel2: #0b0a22ee; --cy-line: #19c9e6;
   --cy-cyan: #25f2ff; --cy-mag: #ff3fd8; --cy-yel: #f6ff4a; --cy-pass: #3dffa0; --cy-bad: #ff4568;

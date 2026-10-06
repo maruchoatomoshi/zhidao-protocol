@@ -35,3 +35,116 @@
 :root[data-theme="dark"] .market-meta { color: #c8b98a; }
 :root[data-theme="dark"] .market-news { background: #2e250e; color: #ffe29a; }
 :root[data-theme="dark"] .market-input { background: #0d2438; color: #dcefff; }
+
+/* ===================== Рынок: киберпанк-терминал ===================================
+   Те же неоновые токены, что у Контрабанды (--cy-*, объявлены в smuggle.css для обеих
+   игр). Светлая тема -- «дневной HUD», тёмная -- неон. Всё под id окна: design-system.css
+   держит свои классы market той же специфичности. */
+
+#marketWindow {
+  --cy-border: var(--cy-line);
+  background:
+    repeating-linear-gradient(0deg, var(--cy-scan) 0 1px, transparent 1px 3px),
+    linear-gradient(var(--cy-grid) 1px, transparent 1px) 0 0 / 100% 36px,
+    linear-gradient(90deg, var(--cy-grid) 1px, transparent 1px) 0 0 / 36px 100%,
+    radial-gradient(ellipse at 50% -10%, var(--cy-bloom), transparent 62%),
+    linear-gradient(180deg, var(--cy-bg1), var(--cy-bg2));
+  color: var(--cy-ink);
+}
+#marketWindow .game-banner { border: 1px solid var(--cy-line); box-shadow: var(--cy-halo); filter: saturate(1.25) contrast(1.06) hue-rotate(-12deg); }
+
+/* Текст */
+#marketWindow .market-meta,
+#marketWindow .market-results { color: var(--cy-mute); font: 14px/1.5 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+#marketWindow .spy-lead { color: var(--cy-ink); font: 700 13px/1.5 Consolas, "Courier New", monospace; letter-spacing: .05em; }
+#marketWindow .capture-label { color: var(--cy-cyan); font: 700 13px/1.4 Consolas, "Courier New", monospace; letter-spacing: .1em; text-transform: uppercase; }
+#marketWindow .capture-label::before { color: var(--cy-mag); }
+#marketWindow .market-news {
+  margin: 0; padding: 9px 12px; border: 1px solid var(--cy-yel); border-left: 4px solid var(--cy-yel); border-radius: 3px;
+  background: var(--cy-panel2); color: var(--cy-yel); font: 700 14px/1.45 Tahoma, "Noto Sans SC", sans-serif; box-shadow: var(--cy-halo);
+}
+#marketWindow .market-news::before { content: "▲ "; color: var(--cy-mag); }
+
+/* Голографические карточки */
+#marketWindow .market-card {
+  position: relative; padding: 14px 16px; border: 1px solid #00000000; border-radius: 3px; color: var(--cy-ink);
+  background:
+    linear-gradient(var(--cy-line), var(--cy-line)) top left / 14px 2px no-repeat,
+    linear-gradient(var(--cy-line), var(--cy-line)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--cy-line), var(--cy-line)) top right / 14px 2px no-repeat,
+    linear-gradient(var(--cy-line), var(--cy-line)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--cy-line), var(--cy-line)) bottom left / 14px 2px no-repeat,
+    linear-gradient(var(--cy-line), var(--cy-line)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--cy-line), var(--cy-line)) bottom right / 14px 2px no-repeat,
+    linear-gradient(var(--cy-line), var(--cy-line)) bottom right / 2px 14px no-repeat,
+    linear-gradient(180deg, var(--cy-panel), var(--cy-panel2));
+  box-shadow: var(--cy-halo), inset 0 0 0 1px #ffffff10;
+}
+#marketWindow .market-card.is-patrol {
+  background:
+    linear-gradient(var(--cy-bad), var(--cy-bad)) top left / 14px 2px no-repeat,
+    linear-gradient(var(--cy-bad), var(--cy-bad)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--cy-bad), var(--cy-bad)) top right / 14px 2px no-repeat,
+    linear-gradient(var(--cy-bad), var(--cy-bad)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--cy-bad), var(--cy-bad)) bottom left / 14px 2px no-repeat,
+    linear-gradient(var(--cy-bad), var(--cy-bad)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--cy-bad), var(--cy-bad)) bottom right / 14px 2px no-repeat,
+    linear-gradient(var(--cy-bad), var(--cy-bad)) bottom right / 2px 14px no-repeat,
+    linear-gradient(180deg, var(--cy-panel), var(--cy-panel2));
+}
+#marketWindow .market-card.is-offer { border: 1px dashed var(--cy-mag); background: linear-gradient(180deg, var(--cy-panel), var(--cy-panel2)); box-shadow: var(--cy-halo-mag); }
+#marketWindow .market-role { color: var(--cy-ink); font: 700 17px/1.3 Tahoma, "Noto Sans SC", sans-serif; text-shadow: var(--cy-text-glow); }
+#marketWindow .market-card.is-patrol .market-role { color: var(--cy-bad); }
+#marketWindow .market-stats { color: var(--cy-yel); font: 700 14px/1.4 Consolas, "Courier New", monospace; }
+
+/* Код сумки и код предложения -- крупное неоновое табло */
+#marketWindow .market-code {
+  padding: 8px 10px; border: 1px solid var(--cy-line); border-radius: 3px; background: var(--cy-panel2); color: var(--cy-cyan);
+  font: 700 34px/1.1 Consolas, "Courier New", monospace; letter-spacing: 6px; text-shadow: var(--cy-text-glow); text-align: center; box-shadow: var(--cy-halo);
+}
+#marketWindow .market-code.is-new { animation: cy-code-in .6s steps(6, end); }
+@keyframes cy-code-in {
+  0% { opacity: 0; filter: drop-shadow(4px 0 #ff2bd6) drop-shadow(-4px 0 #19f3ff); transform: scaleX(1.08); }
+  40% { opacity: 1; filter: drop-shadow(-3px 0 #ff2bd6) drop-shadow(3px 0 #19f3ff); }
+  70% { opacity: .5; }
+  100% { opacity: 1; filter: none; transform: none; }
+}
+:root[data-motion="full"] #marketWindow .market-card.is-offer { animation: cy-breathe-mag 3s ease-in-out infinite; }
+@keyframes cy-breathe-mag { 50% { box-shadow: 0 0 18px #ff3fd866; } }
+
+/* Товары: зелёное -- разрешённое, пурпурно-красное -- запрещёнка */
+#marketWindow .market-chip { padding: 3px 9px; border: 1px solid var(--cy-pass); border-radius: 2px; background: var(--cy-pass-bg); color: var(--cy-pass); font-size: 15px; font-weight: 700; }
+#marketWindow .market-chip.is-contraband { border-color: var(--cy-mag); background: transparent; color: var(--cy-mag); }
+#marketWindow .market-chip.is-empty { border-style: dashed; border-color: var(--cy-mute); background: transparent; color: var(--cy-mute); }
+
+/* Конструктор обмена */
+#marketWindow .market-head { color: var(--cy-cyan); font: 700 12px/1.2 Consolas, "Courier New", monospace; letter-spacing: .1em; }
+#marketWindow .market-name { color: var(--cy-ink); font: 700 14px/1.3 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+#marketWindow .market-name.is-contraband { color: var(--cy-mag); }
+#marketWindow .market-stepper b { color: var(--cy-yel); font: 700 16px/1 Consolas, "Courier New", monospace; }
+#marketWindow .market-input {
+  border: 1px solid var(--cy-line); border-radius: 3px; background: var(--cy-panel2); color: var(--cy-cyan);
+  font: 700 22px/1 Consolas, "Courier New", monospace; letter-spacing: 4px; box-shadow: inset 0 0 8px #00000030;
+}
+#marketWindow .market-input:focus { outline: 2px solid var(--cy-mag); outline-offset: 1px; }
+
+/* Итоги дня: неоновый рейтинг, как у Агента */
+#marketWindow .market-results { list-style: none; padding-left: 0; counter-reset: cy-rank; }
+#marketWindow .market-results li { counter-increment: cy-rank; position: relative; padding-left: 34px; color: var(--cy-ink); }
+#marketWindow .market-results li::before { content: counter(cy-rank, decimal-leading-zero) ">"; position: absolute; left: 0; color: var(--cy-mag); font: 700 13px/1.5 Consolas, "Courier New", monospace; }
+
+/* Кнопки */
+#marketWindow .btn {
+  border: 1px solid var(--cy-line); border-radius: 3px; text-shadow: none; box-shadow: none;
+  font: 700 14px/1.2 Consolas, "Courier New", monospace; letter-spacing: .05em; text-transform: uppercase;
+}
+#marketWindow .btn::before { display: none; }
+#marketWindow .btn-secondary { background: var(--cy-panel2); color: var(--cy-cyan); }
+#marketWindow .btn-primary { background: linear-gradient(180deg, var(--cy-btn-1), var(--cy-btn-2)); color: var(--cy-btn-ink); border-color: var(--cy-btn-1); }
+#marketWindow .btn:hover:not(:disabled) { box-shadow: var(--cy-halo); filter: none; }
+#marketWindow .btn:active:not(:disabled) { transform: translateY(1px); }
+#marketWindow .btn.is-armed { border-color: var(--cy-mag); color: var(--cy-mag); background: var(--cy-bad-bg); }
+
+/* Строка состояния */
+#marketWindow .case-statusbar { background: var(--cy-panel2); color: var(--cy-cyan); border-top: 1px solid var(--cy-line); font: 12px/1.5 Consolas, "Courier New", monospace; letter-spacing: .06em; text-transform: uppercase; }
+#marketWindow .case-message { color: var(--cy-mute); }

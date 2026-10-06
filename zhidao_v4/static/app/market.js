@@ -300,7 +300,14 @@
     }
     drawResults(parts);
     parts.push(node("p", "case-message", note));
+    const codeKeys = () => [...body.querySelectorAll(".market-code")].map((el) => el.parentElement.className);
+    const hadCodes = codeKeys();
     body.replaceChildren(...parts);
+    // Код сумки или предложения, которого раньше не было, появляется с цифровым сбоем;
+    // при обычном обновлении, когда меняется только таймер, табло не дёргается.
+    body.querySelectorAll(".market-code").forEach((el) => {
+      if (!hadCodes.includes(el.parentElement.className)) el.classList.add("is-new");
+    });
     window.ZhidaoGameShell?.settle(body);
     $("marketWindow").dataset.phase = me && data.phase === "open" ? "live" : (data.phase || "idle");
     status.textContent = data.phase === "open" ? `ТОРГ ДО ${data.close}` : data.phase === "before" ? `ОТКРЫТИЕ В ${data.open}` : "ЗАКРЫТО";
