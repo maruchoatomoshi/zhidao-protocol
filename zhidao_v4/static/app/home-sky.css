@@ -1,0 +1,57 @@
+/* Главная: небо в баннере по времени суток на Хайнане (home-sky.js).
+   Только оформление: утро -- тёплый рассвет, день -- как было, вечер -- закат,
+   ночь -- тёмное небо со звёздами. В XP-оформлении баннер другой, там слоя нет. */
+
+.journey-card .journey-sky {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit; opacity: 0; overflow: hidden;
+  transition: opacity 1.2s ease;
+}
+:root[data-design="xp"] .journey-card .journey-sky { inset: 32px 0 32px 0; border-radius: 0; }
+
+.journey-card[data-phase="dawn"] .journey-sky {
+  opacity: 1;
+  background:
+    radial-gradient(100% 80% at 8% 108%, #ffb040e6, transparent 66%),
+    linear-gradient(180deg, #ff8fb04d 0%, #ffd0a033 48%, transparent 75%);
+}
+.journey-card[data-phase="evening"] .journey-sky {
+  opacity: 1;
+  background:
+    radial-gradient(100% 75% at 92% 108%, #ff6a1ae6, transparent 68%),
+    linear-gradient(180deg, #5a1f8c88 0%, #c0307a55 55%, #ff7a3a33 80%, transparent);
+}
+.journey-card[data-phase="night"] .journey-sky {
+  opacity: 1;
+  background: linear-gradient(180deg, #030820f2 0%, #081a52e0 55%, #06285f99 100%);
+}
+/* Ночью белые блики баннера глушат небо -- приглушаем их */
+.journey-card[data-phase="night"]::before { opacity: .12; }
+.journey-card[data-phase="night"]::after { opacity: .3; }
+
+/* Звёзды: точки на одном крошечном элементе, мерцают только при включённых анимациях */
+.journey-card .journey-sky::before {
+  content: ""; position: absolute; left: 0; top: 0; width: 3px; height: 3px; border-radius: 50%; opacity: 0; background: #fff;
+  box-shadow:
+    28px 18px 0 #ffffffcc, 74px 52px 0 #ffffff99, 120px 14px 0 #fff, 162px 70px 0 #ffffffaa, 214px 30px 0 #ffffffcc,
+    256px 84px 0 #ffffff88, 298px 22px 0 #fff, 330px 60px 0 #ffffffaa, 52px 96px 0 #ffffff88, 188px 108px 0 #ffffffcc,
+    96px 128px 0 #ffffff77, 276px 140px 0 #ffffff99, 340px 112px 0 #ffffffcc, 10px 150px 0 #ffffff66, 232px 160px 0 #ffffff88;
+  transition: opacity 1.2s ease;
+}
+.journey-card[data-phase="night"] .journey-sky::before { opacity: .9; }
+:root[data-motion="full"] .journey-card[data-phase="night"] .journey-sky::before { animation: home-twinkle 3.4s ease-in-out infinite; }
+@keyframes home-twinkle { 50% { opacity: .35; } }
+
+/* Падающая звезда -- раз в десяток секунд */
+.journey-card .journey-sky::after {
+  content: ""; position: absolute; top: 16%; left: -20%; width: 70px; height: 2px; opacity: 0; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #ffffffee); transform: rotate(18deg);
+}
+:root[data-motion="full"] .journey-card[data-phase="night"] .journey-sky::after { animation: home-shooting 11s ease-in infinite; }
+@keyframes home-shooting {
+  0%, 82% { opacity: 0; transform: translate(0, 0) rotate(18deg); }
+  84% { opacity: 1; }
+  96%, 100% { opacity: 0; transform: translate(520px, 170px) rotate(18deg); }
+}
+
+/* Часы и координаты читаются: 8 px на телефоне не прочесть */
+.journey-card .journey-index span { font-size: 11px; font-variant-numeric: tabular-nums; }
