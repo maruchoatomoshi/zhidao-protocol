@@ -295,3 +295,28 @@ html[data-game-full] #gameRoom[data-game="smuggle"] .game-actionbar > .btn { fon
   font: 12px/1.5 Consolas, "Courier New", monospace; letter-spacing: .06em; text-transform: uppercase;
 }
 #gameRoom[data-game="smuggle"] .case-message { color: var(--cy-mute); }
+
+/* Накладная и весы: проверка документов */
+#gameRoom[data-game="smuggle"] .smuggle-tare {
+  margin: 0; padding: 8px 12px; border: 1px solid var(--cy-yel); border-left: 4px solid var(--cy-yel); border-radius: 3px;
+  background: var(--cy-panel2); color: var(--cy-yel); font: 700 14px/1.4 Consolas, "Courier New", monospace;
+}
+#gameRoom[data-game="smuggle"] .smuggle-weights { border: 1px solid var(--cy-line); border-radius: 3px; background: var(--cy-panel2); padding: 8px 12px; }
+#gameRoom[data-game="smuggle"] .smuggle-weights summary { cursor: pointer; color: var(--cy-cyan); font: 700 13px/1.4 Consolas, "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase; }
+#gameRoom[data-game="smuggle"] .smuggle-weights-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+#gameRoom[data-game="smuggle"] .smuggle-manifest {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; margin: 2px 0;
+  padding: 8px 10px; border: 1px dashed var(--cy-line); border-radius: 3px; background: var(--cy-pass-bg);
+}
+#gameRoom[data-game="smuggle"] .smuggle-manifest-label { color: var(--cy-mute); font: 700 12px/1.4 Consolas, "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase; }
+#gameRoom[data-game="smuggle"] .smuggle-manifest b { font-size: 15px; }
+#gameRoom[data-game="smuggle"] .smuggle-verdict {
+  grid-column: 1 / -1; justify-self: start; padding: 3px 10px; border: 1px solid currentColor; border-radius: 2px;
+  font: 700 13px/1.4 Consolas, "Courier New", monospace; letter-spacing: .06em; text-transform: uppercase;
+}
+#gameRoom[data-game="smuggle"] .smuggle-verdict.is-ok { color: var(--cy-pass); background: var(--cy-pass-bg); }
+#gameRoom[data-game="smuggle"] .smuggle-verdict.is-bad { color: var(--cy-bad); background: var(--cy-bad-bg); }
+:root[data-motion="full"] #gameRoom[data-game="smuggle"] .smuggle-verdict.is-bad { animation: cy-alarm 1.2s ease-in-out infinite; }
+@keyframes cy-alarm { 50% { box-shadow: 0 0 12px var(--cy-bad); } }
+#gameRoom[data-game="smuggle"] .smuggle-preview { margin: 0; color: var(--cy-mute); font: 14px/1.6 Tahoma, "Noto Sans SC", sans-serif; }
+#gameRoom[data-game="smuggle"] .smuggle-preview .smuggle-verdict { display: inline-block; margin-left: 4px; }

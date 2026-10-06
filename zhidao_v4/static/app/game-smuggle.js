@@ -49,6 +49,43 @@
     return el;
   }
 
+  // --- весы и накладная (слой 2) ---------------------------------------------------------
+  // Вес товара берётся из справочника; тару раунда присылает сервер. Сходится вес
+  // с заявленным -- это ещё не честная сумка: запрещёнку можно подобрать по весу.
+  const weightOf = (code) => {
+    const g = good(code);
+    return g && g.weight ? g.weight : 0;
+  };
+
+  function weightsRef(c) {
+    if (!catalog || !catalog.goods.some((g) => g.weight)) return null;
+    const details = c.node("details", "smuggle-weights");
+    details.append(c.node("summary", null, "Справочник весов"));
+    const row = c.node("div", "smuggle-weights-list");
+    catalog.goods.forEach((g) => row.append(c.node("span", `smuggle-chip${g.legal ? "" : " is-hidden"}`, `${g.zh} ${g.ru} · ${g.weight} кг`)));
+    details.append(row, c.node("p", "spy-hint", "Вес сошёлся — ещё не значит, что сумка честная: запрещёнку можно подобрать по весу."));
+    return details;
+  }
+
+  function verdictEl(c, weight, expected) {
+    const diff = weight - expected;
+    return c.node("span", `smuggle-verdict ${diff === 0 ? "is-ok" : "is-bad"}`,
+      diff === 0 ? "Вес сходится" : `Расхождение ${diff > 0 ? "+" : ""}${diff} кг`);
+  }
+
+  function manifestEl(c, bag, manifest, tare) {
+    const box = c.node("div", "smuggle-manifest");
+    const unit = weightOf(bag.declared);
+    const rows = [
+      ["Заявлено", `${bag.count} × ${goodName(bag.declared)}`],
+      ["Должно быть", `${bag.count} × ${unit} кг${tare ? ` + тара ${tare}` : ""} = ${manifest.expected} кг`],
+      ["Весы показали", `${manifest.weight} кг`],
+    ];
+    rows.forEach(([label, value]) => box.append(c.node("span", "smuggle-manifest-label", label), c.node("b", null, value)));
+    box.append(verdictEl(c, manifest.weight, manifest.expected));
+    return box;
+  }
+
   function stampPassed(d) {
     return d.kind === "hacked" || d.kind === "pass" || Boolean(d.honest);
   }
@@ -127,6 +164,11 @@
       card.append(node("b", null, `${event.zh} ${event.ru}`), node("span", null, event.note_ru));
       wrap.append(card);
     }
+    if (game.tare > 0) {
+      wrap.append(c.node("p", "smuggle-tare", `⚖ Тара мешка сегодня: +${game.tare} кг к показанию весов`));
+    }
+    const refs = weightsRef(c);
+    if (refs) wrap.append(refs);
     const you = game.you;
     const role = you && roleOf(you.role);
     if (role) {
@@ -223,6 +265,16 @@
     wrap.append(bribe);
 
     const trick = MERCHANT_TRICKS[you.role];
+    if (local.pick.length && local.declared) {
+      const tare = game.tare || 0;
+      const cards = local.pick.map((index) => you.hand[index]);
+      const disguised = local.trick && trick === "compartment" ? cards.findIndex((card) => card.legal === false) : -1;
+      const weight = tare + cards.reduce((sum, card, index) => sum + (index === disguised ? weightOf(local.declared) : (card.weight || 0)), 0);
+      const expected = tare + cards.length * weightOf(local.declared);
+      const preview = node("p", "smuggle-preview");
+      preview.append(`⚖ Весы покажут ${weight} кг, по заявлению должно быть ${expected} кг${tare ? ` (тара ${tare})` : ""} `, verdictEl(c, weight, expected));
+      wrap.insertBefore(preview, bribe);
+    }
     if (trick && !you.role_used) {
       const role = roleOf(you.role);
       const toggle = button("btn btn-secondary", `${local.trick ? "✓ " : ""}${role ? role.ru : "Способность роли"}: применить к этой сумке`,
@@ -269,6 +321,8 @@
         wrap.append(box);
         continue;
       }
+      const manifest = you.manifest && you.manifest[pid];
+      if (manifest) box.append(manifestEl(c, bag, manifest, game.tare || 0));
       if (you.double && you.double.includes(Number(pid))) box.append(node("p", "spy-hint", "Инспектор NetWatch: штрафы с этого купца вдвое"));
       const peek = you.peek && you.peek[pid];
       if (peek) box.append(node("p", "spy-hint", `Осведомитель: карта №${peek.index + 1} — ${peek.card.zh}${peek.card.ru ? ` (${peek.card.ru})` : ""}`));

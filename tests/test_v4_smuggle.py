@@ -110,13 +110,14 @@ class SmuggleTests(unittest.TestCase):
             self.ok(self.post(host, f"/api/v4/games/rooms/{self.code}/settings", {"mode": mode}))
         self.ok(self.act(host, "start"))
 
-    def rig(self, players=KIDS, officer="kid1", event="calm", hands=None, roles=None, stalls=None, rounds=None):
+    def rig(self, players=KIDS, officer="kid1", event="calm", hands=None, roles=None, stalls=None, rounds=None, tare=0):
         """Раскладывает раунд по-своему: кто таможенник, что на руках, какие роли."""
         state = self.state()
         hands, roles, stalls = hands or {}, roles or {}, stalls or {}
         state["order"] = [self.pid(p) for p in players]
         state["officer"] = self.pid(officer)
         state["event"] = event
+        state["tare"] = tare
         state["round"] = 1
         state["rounds"] = rounds or len(players)
         for who in players:
@@ -334,6 +335,55 @@ class SmuggleTests(unittest.TestCase):
         self.ok(self.post("kid3", f"/api/v4/games/rooms/{self.code}/leave"))
         game = self.seen("kid1")
         self.assertEqual((game["phase"], game["result"]["reason"]), ("over", "too_few"))
+
+    # --- весы и накладная (слой 2: проверка документов) ----------------------------------
+
+    def test_every_good_has_a_weight_and_round_one_has_no_tare(self):
+        for good in smuggle.content()["goods"]:
+            self.assertIsInstance(good["weight"], int)
+            self.assertGreater(good["weight"], 0)
+        self.assertIn(0, smuggle.content()["tare_options"])
+        self.table()
+        self.assertEqual(self.seen("kid1")["tare"], 0)
+        self.assertEqual(self.seen("kid2")["you"]["hand"][0]["weight"], smuggle.goods()[self.seen("kid2")["you"]["hand"][0]["code"]]["weight"])
+
+    def test_the_manifest_shows_the_scale_and_the_expected_weight_only_to_the_officer(self):
+        self.table()
+        # манго 2 кг, жемчуг 1 кг; тара +2: честные два манго = 2*2+2 = 6; манго+жемчуг под видом двух манго = 2+1+2 = 5
+        self.rig(tare=2, hands={"kid2": ["mango", "mango", "mango"], "kid3": ["mango", "pearl", "mango"], "kid4": ["tea", "tea", "tea"]})
+        self.ok(self.pack("kid2", cards=(0, 1)))
+        self.ok(self.pack("kid3", cards=(0, 1)))
+        self.ok(self.pack("kid4", cards=(0, 1), declared="tea"))
+        manifest = self.seen("kid1")["you"]["manifest"]
+        self.assertEqual(manifest[self.pid("kid2")], {"weight": 6, "expected": 6})
+        self.assertEqual(manifest[self.pid("kid3")], {"weight": 5, "expected": 6})      # расхождение -- улика
+        self.assertEqual(manifest[self.pid("kid4")], {"weight": 4, "expected": 4})      # чай 1 кг + тара 2 = 2*1+2
+        self.assertEqual(self.seen("kid1")["tare"], 2)
+        for who in ("kid2", "kid3", "kid4"):
+            self.assertNotIn("manifest", self.seen(who).get("you", {}))
+        self.assertNotIn("manifest", json.dumps(self.seen("kid2")))
+
+    def test_the_double_bottom_weighs_like_the_declared_good(self):
+        self.table()
+        self.rig(roles={"kid2": "virtuoso"}, hands={"kid2": ["pearl", "mango", "mango"]})
+        self.ok(self.pack("kid2", cards=(0, 1), trick="compartment"))      # жемчуг 1 кг выдаёт себя за манго 2 кг
+        self.ok(self.pack("kid3"))
+        self.ok(self.pack("kid4"))
+        manifest = self.seen("kid1")["you"]["manifest"]
+        self.assertEqual(manifest[self.pid("kid2")], {"weight": 4, "expected": 4})
+
+    def test_a_weight_clue_never_decides_for_the_officer(self):
+        self.table()
+        # Весы сошлись, хотя в сумке запрещёнка: диск 1 кг + диск 1 кг = два чая по 1 кг.
+        self.rig(hands={"kid2": ["disc", "disc", "tea"]})
+        self.ok(self.pack("kid2", cards=(0, 1), declared="tea"))
+        self.ok(self.pack("kid3"))
+        self.ok(self.pack("kid4"))
+        manifest = self.seen("kid1")["you"]["manifest"][self.pid("kid2")]
+        self.assertEqual(manifest["weight"], manifest["expected"])
+        self.ok(self.act("kid1", "open", {"merchant": self.ids["kid2"]}))
+        self.ok(self.act("kid1", "judge", {"merchant": self.ids["kid2"], "marks": [0, 1]}))
+        self.assertEqual(self.stall("kid2"), [])                              # запрещёнка всё равно поймана при вскрытии
 
 
 if __name__ == "__main__":

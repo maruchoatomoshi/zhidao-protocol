@@ -71,13 +71,15 @@ def content() -> dict:
         if good["code"] in codes:
             raise RuntimeError(f"smuggle.json: повтор товара {good['code']}")
         codes.add(good["code"])
-        for key in ("value", "penalty", "count"):
+        for key in ("value", "penalty", "count", "weight"):
             if type(good.get(key)) is not int or good[key] <= 0:
                 raise RuntimeError(f"smuggle.json: {good['code']}.{key} — положительное целое")
     if sum(1 for g in data["goods"] if g["legal"]) < 3 or sum(1 for g in data["goods"] if not g["legal"]) < 2:
         raise RuntimeError("smuggle.json: нужно хотя бы 3 разрешённых и 2 запрещённых товара")
     if {r["code"] for r in data["roles"]} != set(ROLES):
         raise RuntimeError("smuggle.json: роли — ровно informant, virtuoso, inspector, hacker")
+    if not data["tare_options"] or any(type(t) is not int or t < 0 for t in data["tare_options"]) or 0 not in data["tare_options"]:
+        raise RuntimeError("smuggle.json: tare_options — неотрицательные целые, среди них 0")
     if not data["events"] or data["events"][0]["code"] != "calm":
         raise RuntimeError("smuggle.json: первое событие — спокойный день")
     return data
@@ -172,6 +174,8 @@ def _begin_round(state: dict) -> None:
     state["officer"] = state["order"][(state["round"] - 1) % len(state["order"])]
     events = [e["code"] for e in content()["events"]]
     state["event"] = "calm" if state["round"] == 1 else _rng.choice(events)
+    # Тара мешка: правило дня для весов. В первом раунде её нет -- сначала привыкнуть.
+    state["tare"] = 0 if state["round"] == 1 else _rng.choice(content()["tare_options"])
     for pid in state["order"]:
         hand = state["players"][pid]["hand"]
         hand.extend(_draw(state, content()["hand"] - len(hand)))
@@ -306,6 +310,25 @@ def _pack(state: dict, me: str, body: dict | None) -> None:
                          "hack": trick == "hack", "compartment": trick == "compartment"}
 
 
+def _disguised(bag: dict) -> int | None:
+    """Номер запрещёнки под двойным дном: она выглядит как заявленный товар."""
+    if not bag["compartment"]:
+        return None
+    return next((i for i, code in enumerate(bag["cards"]) if not goods()[code]["legal"]), None)
+
+
+def _bag_weight(bag: dict, tare: int) -> int:
+    """Сколько показывают весы: вес товаров плюс тара. Под двойным дном вес как у заявленного."""
+    disguised = _disguised(bag)
+    return tare + sum(goods()[bag["declared"] if i == disguised else code]["weight"]
+                      for i, code in enumerate(bag["cards"]))
+
+
+def _expected_weight(bag: dict, tare: int) -> int:
+    """Сколько должны показать весы, если сумка честная."""
+    return tare + len(bag["cards"]) * goods()[bag["declared"]]["weight"]
+
+
 def _pass(state: dict, target: str) -> None:
     bag = state["bags"][target]
     paid = 0 if bag["hack"] else _pay(state, target, state["officer"], bag["bribe"])
@@ -318,9 +341,7 @@ def _judge(state: dict, target: str, marks: list[int]) -> None:
     bag = state["bags"][target]
     officer = state["officer"]
     declared = bag["declared"]
-    disguised = None
-    if bag["compartment"]:
-        disguised = next((i for i, code in enumerate(bag["cards"]) if not goods()[code]["legal"]), None)
+    disguised = _disguised(bag)
     mismatched = [i for i, code in enumerate(bag["cards"]) if code != declared and i != disguised]
     factor = (2 if state["event"] == "raid" else 1) * (2 if target in state["double"] else 1)
     decision = {"kind": "inspect", "count": len(bag["cards"]), "honest": not mismatched, "confiscated": [],
@@ -469,7 +490,7 @@ def award(conn, state: dict, now: datetime) -> None:
 
 def _card(code: str) -> dict:
     g = goods()[code]
-    return {k: g[k] for k in ("code", "zh", "pinyin", "ru", "legal", "value", "penalty")}
+    return {k: g[k] for k in ("code", "zh", "pinyin", "ru", "legal", "value", "penalty", "weight")}
 
 
 def _seen_card(code: str, mode: str) -> dict:
@@ -495,7 +516,7 @@ def view(state: dict, viewer: int, settings: dict, seated: set[int], now: dateti
         return out
     me = str(viewer)
     officer = state.get("officer")
-    out.update(officer=int(officer) if officer else None, event=state.get("event"),
+    out.update(officer=int(officer) if officer else None, event=state.get("event"), tare=state.get("tare", 0),
                order=[int(pid) for pid in state["order"]])
     out["table"] = {}
     for pid in state["order"]:
@@ -526,6 +547,10 @@ def view(state: dict, viewer: int, settings: dict, seated: set[int], now: dateti
                               "bribe": bag["bribe"], "hack": bag["hack"], "compartment": bag["compartment"]}
             if me == officer and state["phase"] == "inspect":
                 you["bribes"] = {pid: bag["bribe"] for pid, bag in state["bags"].items()}
+                # Накладная: показание весов и ожидаемый вес по заявлению -- видит только таможенник.
+                tare = state.get("tare", 0)
+                you["manifest"] = {pid: {"weight": _bag_weight(bag, tare), "expected": _expected_weight(bag, tare)}
+                                   for pid, bag in state["bags"].items()}
                 you["inspecting"] = {pid: [_seen_card(code, mode) for code in state["bags"][pid]["cards"]]
                                      for pid in state["opened"] if pid not in state["decisions"]}
                 you["peek"] = {pid: {"index": index, "card": _seen_card(state["bags"][pid]["cards"][index], mode)}
