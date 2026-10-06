@@ -448,6 +448,7 @@
 [data-screen="more"] .hub-tile[data-open-screen="collection"] { --badge-tint: #f6dbea; --badge-ink: #a03a74; }
 [data-screen="more"] .hub-tile[data-open-screen="story"] { --badge-tint: #d3eff5; --badge-ink: #1c7c93; }
 [data-screen="more"] .hub-tile[data-open-screen="campus-map"] { --badge-tint: #d6e9f8; --badge-ink: #1f64a8; }
+[data-screen="more"] .hub-tile[data-open-screen="campus-model"] { --badge-tint: #d0f0ee; --badge-ink: #0f7a74; }
 [data-screen="more"] .hub-tile[data-open-screen="shop"] { --badge-tint: #fbe3cc; --badge-ink: #a8561c; }
 [data-screen="more"] .hub-tile[data-open-screen="admin"] { --badge-tint: #f8dcd8; --badge-ink: #b0392f; }
 :root [data-screen="more"] .hub-grid .hub-tile {
