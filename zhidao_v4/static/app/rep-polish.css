@@ -1,0 +1,106 @@
+/* REP: моё место медалью, подиум со ступенями, что изменилось с прошлого раза (rep.js).
+   Только оформление поверх готовой разметки; движение -- при data-motion="full". */
+
+/* --- Моё место: медаль по ярусам ------------------------------------------------------------ */
+
+.rep-me { position: relative; }
+.rep-season .rep-rank-line { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.rep-season .rep-rank-line b {
+  display: inline-grid; place-items: center; min-width: 64px; height: 64px; padding: 0 8px; border-radius: 50%;
+  font: 800 30px/1 var(--font-ui); color: #fff; text-shadow: 0 1px 2px #00000066;
+  background: radial-gradient(circle at 32% 24%, #ffffffcc, #ffffff22 38%, transparent 60%), linear-gradient(150deg, #7cc4ee, #2f86c8 55%, #1c5f9e);
+  box-shadow: inset 0 2px 3px #ffffffaa, inset 0 -3px 6px #00000033, 0 0 0 3px #ffffffaa, 0 4px 10px #0a4a7a40;
+}
+.rep-me[data-tier="1"] .rep-rank-line b {
+  color: #5a3a00; text-shadow: none;
+  background: radial-gradient(circle at 32% 24%, #fffbe0, #ffffff22 40%, transparent 62%), linear-gradient(150deg, #ffe9a8, #f0c14c 55%, #c98f1c);
+  box-shadow: inset 0 2px 3px #fff, inset 0 -3px 6px #7a4f0066, 0 0 0 3px #fff3c4, 0 0 18px #ffd54a99;
+}
+.rep-me[data-tier="2"] .rep-rank-line b {
+  color: #2a3947; text-shadow: none;
+  background: radial-gradient(circle at 32% 24%, #fff, #ffffff22 40%, transparent 62%), linear-gradient(150deg, #f4f7fa, #b8c4cf 55%, #8896a4);
+  box-shadow: inset 0 2px 3px #fff, inset 0 -3px 6px #3d4c5a55, 0 0 0 3px #ffffffcc, 0 4px 12px #5a6b7a55;
+}
+.rep-me[data-tier="3"] .rep-rank-line b {
+  background: radial-gradient(circle at 32% 24%, #ffe6cf, #ffffff22 40%, transparent 62%), linear-gradient(150deg, #f0b98a, #cd7f3c 55%, #8f4f1e);
+  box-shadow: inset 0 2px 3px #ffe6cf, inset 0 -3px 6px #4a240866, 0 0 0 3px #ffe0c4, 0 4px 12px #8f4f1e55;
+}
+
+/* Что изменилось с прошлого открытия на этом устройстве */
+.rep-delta { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 8px; }
+.rep-delta[hidden] { display: none; }
+.rep-delta span { padding: 2px 9px; border-radius: 999px; border: 1px solid; font: 700 12px/1.45 var(--font-ui); }
+.rep-delta .is-up { color: #0d6e34; background: #d9f7e3; border-color: #7ed19a; }
+.rep-delta .is-gain { color: #03578e; background: #dbefff; border-color: #8cc6ee; }
+.rep-delta .is-down { color: #a3271f; background: #fde5e2; border-color: #f0a49b; }
+:root[data-theme="dark"] .rep-delta .is-up { color: #7dffb0; background: #1f9d5526; border-color: #2f8f58; }
+:root[data-theme="dark"] .rep-delta .is-gain { color: #8fd3f0; background: #2f86c826; border-color: #2f6f9a; }
+:root[data-theme="dark"] .rep-delta .is-down { color: #ff9a8e; background: #ff452e22; border-color: #a8483d; }
+:root[data-motion="full"] .rep-delta span { animation: rep-pop .5s cubic-bezier(.2, .9, .3, 1.4) both; }
+:root[data-motion="full"] .rep-delta span:nth-child(2) { animation-delay: .12s; }
+@keyframes rep-pop { from { transform: scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Полоса до места выше: сегменты загораются по очереди, последний «дышит» */
+:root[data-motion="full"] .rep-progress i.is-on { animation: rep-fill .35s ease-out both; animation-delay: calc(var(--n, 0) * 55ms); }
+@keyframes rep-fill { from { transform: scaleY(.2); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Поднялся в рейтинге -- вспышка конфетти вокруг медали */
+.rep-me.is-rankup::after { content: none; }
+:root[data-motion="full"] .rep-me.is-rankup::after {
+  content: ""; position: absolute; left: 46px; top: 50%; width: 7px; height: 7px; border-radius: 50%; pointer-events: none;
+  box-shadow: 0 -34px 0 #ffd54a, 30px -18px 0 #7dffb0, 34px 16px 0 #6ec3ff, 0 34px 0 #ffd54a, -30px 18px 0 #ff7ab8, -34px -16px 0 #6ec3ff;
+  animation: rep-burst 1.6s ease-out both;
+}
+@keyframes rep-burst { 0% { opacity: 1; transform: scale(.2); } 65% { opacity: 1; } 100% { opacity: 0; transform: scale(2.4); } }
+:root[data-motion="full"] .rep-me.is-rankup .rep-rank-line b { animation: rep-medal .9s cubic-bezier(.2, .9, .3, 1.5); }
+@keyframes rep-medal { 0% { transform: scale(.6) rotate(-14deg); } 100% { transform: none; } }
+
+/* --- Подиум: ступени, корона, подъём ------------------------------------------------------- */
+
+.rep-board .podium { gap: 8px; padding: 22px 6px 0; background: radial-gradient(ellipse at 50% 100%, #ffd54a30, transparent 64%); }
+.rep-board .podium-slot { position: relative; max-width: 106px; justify-content: flex-end; }
+.rep-board .podium-rank { display: none; }
+.rep-board .podium-name { margin-top: 2px; }
+.rep-board .podium-step {
+  display: grid; place-items: start center; width: 100%; padding-top: 7px; border-radius: 7px 7px 0 0;
+  font: 800 22px/1 var(--font-ui); color: #fff; text-shadow: 0 1px 2px #00000055;
+  background: linear-gradient(180deg, #8cc9ee, #2f86c8 70%, #1c5f9e);
+}
+.rep-board .podium-slot.first .podium-step {
+  height: 70px; color: #5a3a00; text-shadow: none; box-shadow: inset 0 2px 0 #fff9, 0 0 16px #ffd54a66;
+  background: linear-gradient(180deg, #ffe38a, #e0a82a 62%, #b9801a);
+}
+.rep-board .podium-slot.second .podium-step {
+  height: 50px; color: #2a3947; text-shadow: none; box-shadow: inset 0 2px 0 #fff9;
+  background: linear-gradient(180deg, #f4f7fa, #b8c4cf 62%, #8896a4);
+}
+.rep-board .podium-slot.third .podium-step {
+  height: 36px; box-shadow: inset 0 2px 0 #ffe6cf99;
+  background: linear-gradient(180deg, #f0b98a, #cd7f3c 62%, #8f4f1e);
+}
+.podium-crown {
+  width: 30px; height: 20px; margin-bottom: -8px; z-index: 1; filter: drop-shadow(0 2px 2px #00000040);
+  background: linear-gradient(180deg, #ffe38a, #e0a82a); clip-path: polygon(0 100%, 0 22%, 22% 56%, 50% 0, 78% 56%, 100% 22%, 100% 100%);
+}
+:root[data-motion="full"] .podium-crown { animation: rep-crown 3.2s ease-in-out infinite; }
+@keyframes rep-crown { 50% { transform: translateY(-3px) rotate(-4deg); } }
+.rep-board .podium-slot.is-you .podium-avatar { box-shadow: 0 0 0 3px #2ec2ea; }
+:root[data-motion="full"] .rep-board .podium-slot.is-you .podium-avatar { animation: rep-ring 2s ease-in-out infinite; }
+@keyframes rep-ring { 50% { box-shadow: 0 0 0 5px #2ec2ea66; } }
+
+/* Ступени вырастают, аватары опускаются на них */
+:root[data-motion="full"] .rep-board .podium-step { transform-origin: bottom; animation: rep-rise .6s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--i, 0) * 130ms); }
+:root[data-motion="full"] .rep-board .podium-slot > .podium-avatar,
+:root[data-motion="full"] .rep-board .podium-slot > .podium-name,
+:root[data-motion="full"] .rep-board .podium-slot > .podium-rep { animation: rep-drop .55s ease-out both; animation-delay: calc(var(--i, 0) * 130ms + 260ms); }
+@keyframes rep-rise { from { transform: scaleY(.05); opacity: .2; } to { transform: none; opacity: 1; } }
+@keyframes rep-drop { from { transform: translateY(-22px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Соседи: «ты» выделен, строки въезжают по очереди */
+.rep-around .board-row.is-you { border-radius: 8px; background: linear-gradient(90deg, #2ec2ea2e, transparent 85%); box-shadow: inset 3px 0 0 #2ec2ea; }
+:root[data-motion="full"] .rep-around .board-row { animation: rep-slide .4s ease-out both; }
+:root[data-motion="full"] .rep-around .board-row:nth-child(2) { animation-delay: .07s; }
+:root[data-motion="full"] .rep-around .board-row:nth-child(3) { animation-delay: .14s; }
+:root[data-motion="full"] .rep-around .board-row:nth-child(4) { animation-delay: .21s; }
+:root[data-motion="full"] .rep-around .board-row:nth-child(n+5) { animation-delay: .28s; }
+@keyframes rep-slide { from { transform: translateX(18px); opacity: 0; } to { transform: none; opacity: 1; } }

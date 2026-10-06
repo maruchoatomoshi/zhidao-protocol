@@ -60,11 +60,15 @@
 
   function drawPodium(leaders) {
     const places = [["second", 1], ["first", 0], ["third", 2]];
-    podium.replaceChildren(...places.filter(([, index]) => leaders[index]).map(([place, index]) => {
+    podium.replaceChildren(...places.filter(([, index]) => leaders[index]).map(([place, index], order) => {
       const item = leaders[index];
       const slot = node("div", `podium-slot ${place}${item.is_you ? " is-you" : ""}`);
+      slot.style.setProperty("--i", String(order));
+      if (place === "first") slot.append(node("span", "podium-crown"));
+      // Ступень постамента: место крупно на самой ступени (rep-polish.css).
       slot.append(avatar(item, "podium-avatar"), node("span", "podium-rank", String(item.rank)),
-        node("b", "podium-name", item.display_name), node("small", "podium-rep", `${item.rep} REP`));
+        node("b", "podium-name", item.display_name), node("small", "podium-rep", `${item.rep} REP`),
+        node("span", "podium-step", String(item.rank)));
       return slot;
     }));
   }
@@ -82,9 +86,58 @@
     }));
   }
 
+  const plural = (n, forms) => {
+    const a = Math.abs(n) % 100;
+    const b = a % 10;
+    if (a > 10 && a < 20) return forms[2];
+    if (b === 1) return forms[0];
+    if (b > 1 && b < 5) return forms[1];
+    return forms[2];
+  };
+
+  let baseline;
+  let baselineKey = "";
+
+  // Что изменилось с прошлого открытия на этом устройстве. Сервер ничего не присылает:
+  // прошлые место и REP помнит само устройство, поэтому в первый раз сравнивать не с чем.
+  function drawDelta(data) {
+    let delta = $("repDelta");
+    if (!delta) {
+      delta = node("span", "rep-delta");
+      delta.id = "repDelta";
+      document.querySelector(".rep-me-place")?.append(delta);
+    }
+    const key = `zhidao.v4.rep.last.${session?.account?.id || "guest"}`;
+    // Точка отсчёта -- то, что запомнено до открытия этой страницы. Экран перерисовывается
+    // несколько раз за открытие; сравнивать надо с одним и тем же, а не с самим собой.
+    if (baseline === undefined || baselineKey !== key) {
+      baselineKey = key;
+      try { baseline = JSON.parse(localStorage.getItem(key) || "null"); } catch (_) { baseline = null; }
+    }
+    const last = baseline;
+    try { localStorage.setItem(key, JSON.stringify({ rank: data.me.rank, rep: data.me.rep })); } catch (_) { /* только до перезагрузки */ }
+    delta.replaceChildren();
+    delta.className = "rep-delta";
+    delta.hidden = true;
+    if (!last || typeof last.rank !== "number" || typeof last.rep !== "number") return 0;
+    const places = last.rank - data.me.rank;
+    const points = data.me.rep - last.rep;
+    if (places > 0) delta.append(node("span", "is-up", `▲ на ${places} ${plural(places, ["место", "места", "мест"])} выше`));
+    else if (places < 0) delta.append(node("span", "is-down", `▼ на ${-places} ${plural(places, ["место", "места", "мест"])} ниже`));
+    if (points !== 0) delta.append(node("span", points > 0 ? "is-gain" : "is-down", `${points > 0 ? "+" : "−"}${Math.abs(points)} REP с прошлого раза`));
+    delta.hidden = !delta.childElementCount;
+    return places;
+  }
+
   function drawMe(data) {
     me.hidden = !data.me;
     if (!data.me) return;
+    me.dataset.tier = data.me.rank <= 3 ? String(data.me.rank) : "n";
+    const moved = drawDelta(data);
+    if (moved > 0) {
+      me.classList.add("is-rankup");
+      setTimeout(() => me.classList.remove("is-rankup"), 2200);
+    }
     $("repRank").textContent = String(data.me.rank);
     $("repTotal").textContent = `из ${data.total}`;
     $("repPoints").textContent = String(data.me.rep);
@@ -99,7 +152,11 @@
       ratio = data.me.next_rep > 0 ? data.me.rep / data.me.next_rep : 0;
     }
     const lit = Math.max(0, Math.min(SEGMENTS, Math.round(ratio * SEGMENTS)));
-    $("repProgress").replaceChildren(...Array.from({ length: SEGMENTS }, (_, i) => node("i", i < lit ? "is-on" : null)));
+    $("repProgress").replaceChildren(...Array.from({ length: SEGMENTS }, (_, i) => {
+      const segment = node("i", i < lit ? "is-on" : null);
+      segment.style.setProperty("--n", String(i));
+      return segment;
+    }));
   }
 
   function reset(text) {
