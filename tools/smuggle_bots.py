@@ -40,6 +40,7 @@ import itertools
 import json
 import os
 import random
+import secrets
 import sys
 import time
 import urllib.error
@@ -92,10 +93,19 @@ def provision(args: argparse.Namespace) -> int:
 
 # --- клиент API ----------------------------------------------------------------------------
 
+class _LocalCookiePolicy(http.cookiejar.DefaultCookiePolicy):
+    """Боевой ZHIDAO_V4_COOKIE_SECURE=1 ставит на сессионную и CSRF-куку флаг Secure. По
+    http://127.0.0.1 стандартная политика молча перестаёт их пересылать, и каждый запрос после
+    входа падает с «Authentication required». Разрешаем это только для этого скрипта."""
+
+    def return_ok_secure(self, cookie, request):
+        return True
+
+
 class Bot:
     def __init__(self, base: str, username: str, password: str, label: str, rng: random.Random):
         self.base, self.username, self.password, self.label, self.rng = base.rstrip("/"), username, password, label, rng
-        self.jar = http.cookiejar.CookieJar()
+        self.jar = http.cookiejar.CookieJar(policy=_LocalCookiePolicy())
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
         self.csrf = ""
         self.account_id = 0
@@ -108,6 +118,7 @@ class Bot:
         if data is not None:
             request.add_header("Content-Type", "application/json")
             request.add_header("X-CSRF-Token", self.csrf)
+            request.add_header("X-Idempotency-Key", secrets.token_hex(16))
         try:
             with self.opener.open(request, timeout=20) as response:
                 return response.status, json.loads(response.read() or b"{}")
