@@ -137,7 +137,7 @@
     const box = node("section", "zombie-card is-human");
     box.append(node("span", "capture-label", "Вы человек · ваш код"));
     const code = String(me.code || "");
-    box.append(node("b", "zombie-code", `${code.slice(0, 3)} ${code.slice(3)}`));
+    box.append(node("b", "zombie-code", `${code.slice(0, 3)} ${code.slice(3)}`), node("span", "zombie-ecg"));
     box.append(node("p", "zombie-meta", "Зомби коснулся вашего плеча — покажите ему этот код. Прятать и спорить нельзя"));
     if (me.immune_until) {
       const line = node("p", "zombie-meta is-ok", "Иммунитет после вакцины ещё ");
@@ -209,7 +209,7 @@
   function drawZombie(me, parts) {
     const box = node("section", "zombie-card is-zombie");
     box.append(node("span", "capture-label", me.starter ? "Вы первый зомби" : "Вы зомби"),
-      node("p", "zombie-meta", `Заражений: ${me.tags}`));
+      node("p", "zombie-meta zombie-tags", `Заражений: ${me.tags}`));
     drawTagForm(me, box);
     drawVaccine(me, box);
     parts.push(box);
@@ -356,6 +356,12 @@
     if (next !== signature) {
       signature = next;
       draw();
+      // Превращение и удачное заражение видно на самой карточке (zombie.css).
+      if (before && after && before.side === "human" && after.side === "zombie") {
+        document.querySelector("#zombieBody .zombie-card")?.classList.add("is-infected");
+      } else if (before && after && after.tags > before.tags) {
+        document.querySelector("#zombieBody .zombie-tags")?.classList.add("is-pop");
+      }
       if (before && after && before.side !== after.side) window.ZhidaoRetro?.reveal(document.getElementById("zombieBody"));
     }
     schedule();

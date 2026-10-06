@@ -30,3 +30,142 @@
 :root[data-theme="dark"] .zombie-meta { color: #9fc3dc; }
 :root[data-theme="dark"] .zombie-input, :root[data-theme="dark"] .zombie-question { background: #0d2438; color: #dcefff; }
 :root[data-theme="dark"] .zombie-safety { background: #3a1a18; color: #ffc9c2; }
+
+/* ===================== Зомби-протокол: биохазард-терминал =====================
+   Токсичный неон, штриховка опасности, ЭКГ у людей, сбой при заражении. Две
+   палитры: «дневная лаборатория» для светлой темы и «вспышка» для тёмной.
+   Всё под id окна: design-system.css держит свои классы zombie той же
+   специфичности. */
+
+#zombieWindow {
+  --zb-bg1: #e9f3ea; --zb-bg2: #d3e5d6; --zb-grid: #2c8a4a1c; --zb-scan: #0a2a1210; --zb-bloom: #ffffffb0;
+  --zb-panel: #fffffff0; --zb-panel2: #eaf5ecf2; --zb-line: #2c8a4a; --zb-human: #0a8aa0;
+  --zb-acid: #4d7a00; --zb-haz: #d9ac00; --zb-hazink: #1c1a10; --zb-bad: #c2301f; --zb-bad-bg: #c2301f14;
+  --zb-ink: #12281a; --zb-mute: #3a5a45; --zb-vital: #1a9b52;
+  --zb-halo: 0 2px 8px #2c8a4a33; --zb-text-glow: none;
+  --zb-btn-1: #35b86a; --zb-btn-2: #1f8a4a; --zb-btn-ink: #ffffff;
+}
+:root[data-theme="dark"] #zombieWindow {
+  --zb-bg1: #040e08; --zb-bg2: #09170e; --zb-grid: #7dff6a12; --zb-scan: #00000045; --zb-bloom: #2cff6a1f;
+  --zb-panel: #0b1d13d9; --zb-panel2: #06140cee; --zb-line: #3dff7a; --zb-human: #25e0f2;
+  --zb-acid: #b6ff3d; --zb-haz: #ffd23d; --zb-hazink: #0a0a06; --zb-bad: #ff4d3d; --zb-bad-bg: #ff4d3d1c;
+  --zb-ink: #dcffe8; --zb-mute: #8fc4a0; --zb-vital: #3dff7a;
+  --zb-halo: 0 0 14px #3dff7a40; --zb-text-glow: 0 0 10px #3dff7a80;
+  --zb-btn-1: #3dff7a; --zb-btn-2: #19b855; --zb-btn-ink: #03180b;
+}
+
+#zombieWindow {
+  color: var(--zb-ink);
+  background:
+    repeating-linear-gradient(0deg, var(--zb-scan) 0 1px, transparent 1px 3px),
+    linear-gradient(var(--zb-grid) 1px, transparent 1px) 0 0 / 100% 36px,
+    linear-gradient(90deg, var(--zb-grid) 1px, transparent 1px) 0 0 / 36px 100%,
+    radial-gradient(ellipse at 50% -10%, var(--zb-bloom), transparent 62%),
+    linear-gradient(180deg, var(--zb-bg1), var(--zb-bg2));
+}
+#zombieWindow .game-banner { border: 1px solid var(--zb-line); box-shadow: var(--zb-halo); filter: saturate(1.2) contrast(1.06); }
+
+/* Текст */
+#zombieWindow .zombie-meta,
+#zombieWindow .zombie-list { color: var(--zb-mute); font: 14px/1.5 Tahoma, "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+#zombieWindow .zombie-meta.is-ok { color: var(--zb-acid); font-weight: 700; }
+#zombieWindow .spy-lead { color: var(--zb-ink); font: 700 13px/1.5 Consolas, "Courier New", monospace; letter-spacing: .05em; }
+#zombieWindow .capture-label { color: var(--zb-acid); font: 700 13px/1.4 Consolas, "Courier New", monospace; letter-spacing: .1em; text-transform: uppercase; }
+#zombieWindow .capture-label::before { color: var(--zb-bad); }
+#zombieWindow .zombie-headline { color: var(--zb-ink); font: 700 15px/1.4 Consolas, "Courier New", monospace; letter-spacing: .04em; text-shadow: var(--zb-text-glow); }
+#zombieWindow .zombie-count { color: var(--zb-acid); font: 700 20px/1.2 Consolas, "Courier New", monospace; text-shadow: var(--zb-text-glow); }
+
+/* Правило безопасности -- предупреждающая лента */
+#zombieWindow .zombie-safety {
+  margin: 0; padding: 9px 12px 9px 26px; border: 1px solid var(--zb-haz); border-radius: 3px; position: relative;
+  background: var(--zb-panel2); color: var(--zb-ink); font: 700 13px/1.45 Tahoma, "Noto Sans SC", sans-serif; box-shadow: var(--zb-halo);
+}
+#zombieWindow .zombie-safety::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 14px;
+  background: repeating-linear-gradient(135deg, var(--zb-haz) 0 7px, var(--zb-hazink) 7px 14px);
+}
+
+/* Карточки: человек -- голубые уголки, зомби -- токсичные с лентой опасности */
+#zombieWindow .zombie-card {
+  position: relative; padding: 14px 16px; border: 1px solid #00000000; border-radius: 3px; color: var(--zb-ink);
+  background:
+    linear-gradient(var(--zb-human), var(--zb-human)) top left / 14px 2px no-repeat,
+    linear-gradient(var(--zb-human), var(--zb-human)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--zb-human), var(--zb-human)) top right / 14px 2px no-repeat,
+    linear-gradient(var(--zb-human), var(--zb-human)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--zb-human), var(--zb-human)) bottom left / 14px 2px no-repeat,
+    linear-gradient(var(--zb-human), var(--zb-human)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--zb-human), var(--zb-human)) bottom right / 14px 2px no-repeat,
+    linear-gradient(var(--zb-human), var(--zb-human)) bottom right / 2px 14px no-repeat,
+    linear-gradient(180deg, var(--zb-panel), var(--zb-panel2));
+  box-shadow: var(--zb-halo), inset 0 0 0 1px #ffffff10;
+}
+#zombieWindow .zombie-card.is-zombie {
+  border: 1px solid var(--zb-acid); border-top: 12px solid transparent; padding-top: 10px;
+  background:
+    repeating-linear-gradient(135deg, var(--zb-haz) 0 9px, var(--zb-hazink) 9px 18px) top / 100% 12px no-repeat border-box,
+    linear-gradient(180deg, var(--zb-panel), var(--zb-panel2)) padding-box;
+  background-origin: border-box, padding-box;
+  box-shadow: 0 0 16px #b6ff3d33;
+}
+:root[data-theme="light"] #zombieWindow .zombie-card.is-zombie,
+:root:not([data-theme]) #zombieWindow .zombie-card.is-zombie { box-shadow: 0 2px 8px #4d7a0033; }
+#zombieWindow .zombie-card.is-zombie .capture-label { color: var(--zb-bad); }
+
+/* Код человека -- табло; ЭКГ под ним бежит, пока человек жив */
+#zombieWindow .zombie-code {
+  padding: 8px 10px; border: 1px solid var(--zb-human); border-radius: 3px; background: var(--zb-panel2); color: var(--zb-human);
+  font: 700 38px/1.1 Consolas, "Courier New", monospace; letter-spacing: 6px; text-align: center; text-shadow: var(--zb-text-glow); box-shadow: var(--zb-halo);
+}
+#zombieWindow .zombie-ecg {
+  display: block; height: 30px; background: var(--zb-vital); opacity: .9;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='30'%3E%3Cpath d='M0 15H26l4-3 4 3h4l4-12 5 26 5-14h38' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") 0 0 / 90px 30px repeat-x;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='30'%3E%3Cpath d='M0 15H26l4-3 4 3h4l4-12 5 26 5-14h38' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") 0 0 / 90px 30px repeat-x;
+}
+:root[data-motion="full"] #zombieWindow .zombie-ecg { animation: zb-ecg 1.6s linear infinite; }
+@keyframes zb-ecg { to { -webkit-mask-position: -90px 0; mask-position: -90px 0; } }
+
+/* Заражение: сбой карточки при превращении и «поп» счётчика заражений */
+#zombieWindow .zombie-card.is-infected { animation: zb-glitch .8s steps(2, end); }
+@keyframes zb-glitch {
+  0% { filter: drop-shadow(5px 0 #ff2b4d) drop-shadow(-5px 0 #3dff7a); transform: translateX(-4px); }
+  25% { filter: drop-shadow(-6px 0 #ff2b4d) drop-shadow(6px 0 #3dff7a); transform: translateX(5px); }
+  50% { filter: drop-shadow(3px 0 #ff2b4d) drop-shadow(-3px 0 #3dff7a); transform: translateX(-2px); }
+  100% { filter: none; transform: none; }
+}
+#zombieWindow .zombie-tags.is-pop { animation: zb-pop .5s ease-out; color: var(--zb-acid); font-weight: 700; }
+@keyframes zb-pop { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+/* Ввод кода, вакцина, вопрос станции */
+#zombieWindow .zombie-input {
+  border: 1px solid var(--zb-acid); border-radius: 3px; background: var(--zb-panel2); color: var(--zb-acid);
+  font: 700 24px/1 Consolas, "Courier New", monospace; letter-spacing: 4px; box-shadow: inset 0 0 8px #00000030;
+}
+#zombieWindow .zombie-input:focus { outline: 2px solid var(--zb-bad); outline-offset: 1px; }
+#zombieWindow .zombie-question { border: 1px dashed var(--zb-human); border-radius: 3px; background: var(--zb-panel2); }
+#zombieWindow .zombie-hanzi { color: var(--zb-ink); text-shadow: var(--zb-text-glow); }
+
+/* Список у вожатого и итоги */
+#zombieWindow .zombie-chip { padding: 3px 9px; border: 1px solid var(--zb-human); border-radius: 2px; background: transparent; color: var(--zb-human); font-size: 13px; font-weight: 700; }
+#zombieWindow .zombie-chip.is-zombie { border-color: var(--zb-acid); background: var(--zb-bad-bg); color: var(--zb-acid); }
+#zombieWindow .zombie-chip.is-zombie::before { content: "☣ "; }
+#zombieWindow .zombie-list { list-style: none; padding-left: 0; counter-reset: zb-rank; }
+#zombieWindow .zombie-list li { counter-increment: zb-rank; position: relative; padding-left: 34px; color: var(--zb-ink); }
+#zombieWindow .zombie-list li::before { content: counter(zb-rank, decimal-leading-zero) ">"; position: absolute; left: 0; color: var(--zb-bad); font: 700 13px/1.5 Consolas, "Courier New", monospace; }
+
+/* Кнопки */
+#zombieWindow .btn {
+  border: 1px solid var(--zb-line); border-radius: 3px; text-shadow: none; box-shadow: none;
+  font: 700 14px/1.2 Consolas, "Courier New", monospace; letter-spacing: .05em; text-transform: uppercase;
+}
+#zombieWindow .btn::before { display: none; }
+#zombieWindow .btn-secondary { background: var(--zb-panel2); color: var(--zb-acid); }
+#zombieWindow .btn-primary { background: linear-gradient(180deg, var(--zb-btn-1), var(--zb-btn-2)); color: var(--zb-btn-ink); border-color: var(--zb-btn-1); }
+#zombieWindow .zombie-tag .btn-primary { background: var(--zb-bad-bg); border: 2px solid var(--zb-bad); color: var(--zb-bad); }
+#zombieWindow .btn:hover:not(:disabled) { box-shadow: var(--zb-halo); filter: none; }
+#zombieWindow .btn:active:not(:disabled) { transform: translateY(1px); }
+#zombieWindow .btn.is-armed { border-color: var(--zb-bad); color: var(--zb-bad); background: var(--zb-bad-bg); }
+
+/* Строка состояния */
+#zombieWindow .case-statusbar { background: var(--zb-panel2); color: var(--zb-acid); border-top: 1px solid var(--zb-line); font: 12px/1.5 Consolas, "Courier New", monospace; letter-spacing: .06em; text-transform: uppercase; }
+#zombieWindow .case-message { color: var(--zb-mute); }

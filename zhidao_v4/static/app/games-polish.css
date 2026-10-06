@@ -2,7 +2,7 @@
 .game-banner { display:block; width:100%; height:auto; aspect-ratio:8/3; object-fit:contain; border-bottom:1px solid var(--border-metal); }
 #royaleWindow { --game-color:#584597; --game-light:#a294d6; }
 #agentWindow { --game-color:#356457; --game-light:#76a292; }
-#zombieWindow { --game-color:#50692b; --game-light:#92ad62; }
+#zombieWindow { --game-color:#14532d; --game-light:#a6f23c; }
 #sabotageWindow { --game-color:#855332; --game-light:#c6986d; }
 #marketWindow { --game-color:#4a1d6e; --game-light:#ff5ad8; }
 #captureIntro { --game-color:#245b85; --game-light:#70a3bb; }
