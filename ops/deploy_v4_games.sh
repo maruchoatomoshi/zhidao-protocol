@@ -7,7 +7,7 @@ umask 022
 
 repo=/opt/zhidao-v4
 db=/var/lib/zhidao-v4/zhidao.db
-target=d93bb933b83b85c8c53311b53c2d6647a01336ed
+target=37effba8025426d52579514cb1543504f4d0b724
 # A reviewed full SHA may be passed explicitly; without it the pinned release above is deployed.
 target="${1:-$target}"
 [[ "$target" =~ ^[0-9a-f]{40}$ ]] || { echo 'Expected a full reviewed commit SHA.'; exit 1; }
