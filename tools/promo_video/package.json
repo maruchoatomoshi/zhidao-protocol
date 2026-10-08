@@ -1,0 +1,7 @@
+{
+  "name": "zhidao-promo-video",
+  "private": true,
+  "description": "25-секундный ролик ZHIDAO Protocol: HTML-анимация по времени t -> кадры из Edge (CDP) -> MP4 через ffmpeg.",
+  "scripts": { "capture": "node capture.mjs", "render": "node render.mjs" },
+  "dependencies": { "ffmpeg-static": "^5.2.0", "puppeteer-core": "^24.0.0" }
+}

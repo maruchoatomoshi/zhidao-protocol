@@ -20,3 +20,6 @@ data/*.db-*
 uploads/learning/*
 !uploads/learning/.gitkeep
 node_modules/
+
+tools/promo_video/out/
+tools/promo_video/captures/
